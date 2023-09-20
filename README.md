@@ -6,7 +6,7 @@ When adding a new folder please write up about it in the correct README.md and a
 
 # Stack
 - Frontend
-  - Python
-  - PYQT
+  - Python 3.11.4
+  - PYQT6
 - Backend
   - C++

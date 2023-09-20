@@ -5,4 +5,4 @@ A monorepo for the IMechE 2024 challenge
 - Python
   - PYQT -> Frontend telemetry 
 - CPP
-  - TBD -> Backend telemtry
+  - TBD -> Backend telemetry

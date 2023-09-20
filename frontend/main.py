@@ -11,5 +11,5 @@ if __name__ == "__main__":
     helloMsg = qtw.QLabel("<h1>Hello, World!</h1>", parent=window)
     helloMsg.move(60, 15)
     window.show()
-    
+
     sys.exit(app.exec())

@@ -4,14 +4,37 @@ This should contain the frontend code using `Python` and `PYQT`
 # Setup
 To setup this project please make your own venv with `python3.11 -m venv venv`, once this is created you'll need to activate it; this is different on different operating systems so please below.
 
-- On Unix or MacOS, using the bash shell: source /path/to/venv/bin/activate
-- On Unix or MacOS, using the csh shell: source /path/to/venv/bin/activate.csh
-- On Unix or MacOS, using the fish shell: source /path/to/venv/bin/activate.fish
-- On Windows using the Command Prompt: path\to\venv\Scripts\activate.bat
-- On Windows using PowerShell: path\to\venv\Scripts\Activate.ps1
+- On Unix or MacOS, using the bash shell: `source /path/to/venv/bin/activate`
+- On Unix or MacOS, using the csh shell: `source /path/to/venv/bin/activate.csh`
+- On Unix or MacOS, using the fish shell: `source /path/to/venv/bin/activate.fish`
+- On Windows using the Command Prompt: `path\to\venv\Scripts\activate.bat`
+- On Windows using PowerShell: `path\to\venv\Scripts\Activate.ps1`
+- One Linux using Bash: `source path/to/venv/activate`
 > You'll need to run this each time you want to use the venv (basically every time you want to code)
 
 Once you have activated your venv you can then install all required packages with `pip install -r requirements.txt`. Once this is done you are free to code :thumbs_up:
+
+# Code style
+> Please feel free to add to this its not complete
+Try to stick to this code style:
+
+```python
+def nameOfFunction(variable_name: type) -> return_type:
+  """Description of function"""
+  variable_name = "something"
+
+  # Comments line above
+  variable_name = "New something"
+  return variable_name
+
+class nameOfClass:
+  """Description of class"""
+
+  def __init__(self):
+    self.variable_name = "variable"
+```
+
+- Keep filenames in `snake_case.ext`
 
 # Notes
 - Basic tutorial: https://realpython.com/python-pyqt-gui-calculator/

@@ -2,15 +2,7 @@ import sys
 
 from PyQt6.QtCore import Qt
 
-from PyQt6.QtWidgets import (
-    QApplication,
-    QGridLayout,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QApplication, QGridLayout, QLabel, QMainWindow, QVBoxLayout, QWidget
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
@@ -18,7 +10,6 @@ WINDOW_HEIGHT = 800
 
 class PyCalcWindow(QMainWindow):
     """The main window (GUI or view)."""
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Project Falcon GCS")
@@ -57,14 +48,9 @@ class PyCalcWindow(QMainWindow):
         self.generalLayout.addLayout(buttonsLayout)
 
 
-def main():
-    """The main function."""
+if __name__ == "__main__":
     pycalcApp = QApplication([])
     pycalcWindow = PyCalcWindow()
     pycalcWindow.show()
 
     sys.exit(pycalcApp.exec())
-
-
-if __name__ == "__main__":
-    main()

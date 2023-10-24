@@ -6,7 +6,7 @@ When adding a new folder please write up about it in the correct README.md and a
 
 # Stack
 - GUI
-  - Python 3.11.4
+  - Python 3.9.18
   - PYQT6
 - Radio
   - C++

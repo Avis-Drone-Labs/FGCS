@@ -198,3 +198,6 @@ cython_debug/
 *.exe
 *.out
 *.app
+
+# Ruff
+.ruff_cache

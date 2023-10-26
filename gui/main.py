@@ -15,7 +15,7 @@ WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
 
 
-class PyCalcWindow(QMainWindow):
+class MainWindow(QMainWindow):
     """The main window (GUI or view)."""
 
     def __init__(self):
@@ -57,8 +57,8 @@ class PyCalcWindow(QMainWindow):
 
 
 if __name__ == "__main__":
-    pycalcApp = QApplication([])
-    pycalcWindow = PyCalcWindow()
-    pycalcWindow.show()
+    app = QApplication([])
+    mainWindow = MainWindow()
+    mainWindow.show()
 
-    sys.exit(pycalcApp.exec())
+    sys.exit(app.exec())

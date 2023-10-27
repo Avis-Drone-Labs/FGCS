@@ -1,7 +1,7 @@
 import sys
 
 from PyQt6.QtCore import Qt
-
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
@@ -12,48 +12,47 @@ from PyQt6.QtWidgets import (
 )
 
 WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 800
+WINDOW_HEIGHT = 700
 
 
 class MainWindow(QMainWindow):
     """The main window (GUI or view)."""
 
     def __init__(self):
+        # Window Setup
         super().__init__()
         self.setWindowTitle("Project Falcon GCS")
-        self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+
+        # Variable Setup
+        # TelemetryLabels will be in format {"labelName": [value, labelWidget]}
+        self.telemetryLabels = {
+            "Altitude": [9.2, None],
+            "Airspeed": [12.5, None],
+            "Groundspeed": [12.4, None],
+            "Battery": ["79%", None],
+        }
+        self.labelFont = QFont("Ubuntu Mono", 30)
+
+        # Layout Setup
         self.generalLayout = QVBoxLayout()
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.generalLayout)
         self.setCentralWidget(centralWidget)
-        self._createLabels()
+        self._createTelemetryLabels()
 
-    def _createLabels(self):
-        exampleTelemetry = [
-            ["Altitude", 9.2],
-            ["Airspeed", 12.5],
-            ["Groundspeed", 12.4],
-            ["Battery", "79%"],
-        ]
-        buttonsLayout = QGridLayout()
+    def _createTelemetryLabels(self):
+        """A function to create telemetry labels initially, to update use self._updateTElemetryLabels"""
+        labelLayout: QGridLayout = QGridLayout()
+        for index, (key, label) in enumerate(self.telemetryLabels.items()):
+            labelWidget = QLabel(f"{key}: {label[0]}")
+            labelWidget.setFont(self.labelFont)
+            labelLayout.addWidget(labelWidget, index, 0)
+            self.telemetryLabels[key][1] = labelWidget
 
-        for idx, vals in enumerate(exampleTelemetry):
-            key = QLabel(f"{vals[0]}:")
-            font = key.font()
-            font.setPointSize(30)
-            key.setFont(font)
-
-            value = QLabel(str(vals[1]))
-            font = value.font()
-            font.setPointSize(30)
-            value.setFont(font)
-
-            buttonsLayout.addWidget(key, idx, 0)
-            buttonsLayout.addWidget(value, idx, 1)
-
-        buttonsLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.generalLayout.addLayout(buttonsLayout)
+        # Add labelLayout to generalLayout
+        labelLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.generalLayout.addLayout(labelLayout)
 
 
 if __name__ == "__main__":

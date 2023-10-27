@@ -6,8 +6,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PyQt6.QtCore import QThreadPool
 
 from widgets.telemetry import TelemetryDataWidget
+from loops.telemetry_updater import TelemetryUpdaterLoop
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 700
@@ -29,6 +31,24 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(centralWidget)
         self.telemetryWidget = TelemetryDataWidget()
         self.generalLayout.addWidget(self.telemetryWidget)
+
+        # Create threadpool
+        self.threadpool = QThreadPool()
+        self.activeThreads = []
+
+        # Add and run telemetry loop
+        self.telemetryUpdaterLoop = TelemetryUpdaterLoop(self.telemetryWidget)
+        self.activeThreads.append(self.telemetryUpdaterLoop)
+        self.threadpool.start(self.telemetryUpdaterLoop)
+
+    def closeEvent(self, _):
+        """Runs on GUI close, currently stopping all threads"""
+        self.threadpool.clear()
+        for thread in self.activeThreads:
+            try:
+                thread.stop()
+            except Exception as e:
+                print(f"Couldn't close thread: {e}")
 
 
 if __name__ == "__main__":

@@ -18,9 +18,10 @@ Once you have activated your venv you can then install all required packages wit
 
 ## Code style
 
-Use Black for code styling. This should be installed automatically along with the other requirements, so you can just run `black .` in the terminal to format all files in the current working directory.
+Use Ruff for code styling. This should be installed automatically along with the other requirements, so you can just run `ruff format .` in the terminal to format all files in the current working directory.
 
 - Keep filenames in `snake_case.py`
+- Keep variable and function names in `camelCase`
 
 ## Notes
 

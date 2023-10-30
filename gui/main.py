@@ -64,7 +64,7 @@ if __name__ == "__main__":
     mainWindow.show()
 
     # Set the stylesheet of the application
-    with open("gui/styles/styles.qss", "r") as f:
+    with open("styles/styles.qss", "r") as f:
         styles = f.read()
         app.setStyleSheet(styles)
 

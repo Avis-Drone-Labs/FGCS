@@ -1,6 +1,5 @@
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel
+from PyQt6.QtWidgets import QWidget, QGridLayout, QLabel
 
 
 class TelemetryDataWidget(QWidget):
@@ -9,32 +8,40 @@ class TelemetryDataWidget(QWidget):
     def __init__(self):
         # Widget Setup
         super().__init__(parent=None)
-        self.layout: QVBoxLayout = QVBoxLayout()
+        self.layout: QGridLayout = QGridLayout()
+        self.layout.setVerticalSpacing(0)
         self.setLayout(self.layout)
 
         # Create and display labels
         # TelemetryLabels will be in format {"labelName": [value, labelWidget]}
         self.telemetryLabels = {
-            "altitude": [9.2, None],
-            "airspeed": [12.5, None],
-            "groundspeed": [12.4, None],
-            "battery": ["79%", None],
+            "status": ["BOOT", None],
+            "altitude": [0, None],
+            "airspeed": [0, None],
+            "groundspeed": [0, None],
+            "battery_remaining": [0, None],
+            "battery_voltage": [0, None],
+            "battery_current": [0, None],
         }
-        self.labelFont = QFont("Ubuntu Mono", 30)
+        self.font = QFont("Ubuntu Mono", 30)
+
         self._createTelemetryLabels()
 
     def _createTelemetryLabels(self):
-        """A function to create telemetry labels initially, to update use self._updateTElemetryLabels"""
-        labelLayout: QGridLayout = QGridLayout()
+        """A function to create telemetry labels initially, to update use self._updateTelemetryLabels"""
         for index, (key, label) in enumerate(self.telemetryLabels.items()):
-            labelWidget = QLabel(f"{key.capitalize()}: {label[0]}")
-            labelWidget.setFont(self.labelFont)
-            labelLayout.addWidget(labelWidget, index, 0)
-            self.telemetryLabels[key][1] = labelWidget
+            keyWidget = QLabel(key)
+            keyWidget.setFont(self.font)
+            keyWidget.setObjectName("telemetry-key")
 
-        # Add labelLayout to generalLayout
-        labelLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.layout.addLayout(labelLayout)
+            valueWidget = QLabel(f"{label[0]}")
+            valueWidget.setFont(self.font)
+            valueWidget.setObjectName("telemetry-value")
+
+            self.layout.addWidget(keyWidget, index, 0)
+            self.layout.addWidget(valueWidget, index, 1)
+
+            self.telemetryLabels[key][1] = valueWidget
 
     def updateTelemetryLabels(self, label_values: dict):
         """
@@ -48,7 +55,7 @@ class TelemetryDataWidget(QWidget):
                 and self.telemetryLabels[key][1] is not None
             ):
                 self.telemetryLabels[key][0] = value
-                self.telemetryLabels[key][1].setText(f"{key.capitalize()}: {value}")
+                self.telemetryLabels[key][1].setText(f"{value}")
 
     def getTelemetryLabels(self):
         """

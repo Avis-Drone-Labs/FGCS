@@ -4,7 +4,7 @@ This should contain the frontend code using `Python` and `PYQT`
 
 ## Setup
 
-To setup this project please make your own venv with `python3.11 -m venv venv`, once this is created you'll need to activate it; this is different on different operating systems so please below.
+To setup this project please make your own venv with `python -m venv venv`, once this is created you'll need to activate it; this is different on different operating systems so please below.
 
 - On Unix or MacOS, using the bash shell: `source /path/to/venv/bin/activate`
 - On Unix or MacOS, using the csh shell: `source /path/to/venv/bin/activate.csh`

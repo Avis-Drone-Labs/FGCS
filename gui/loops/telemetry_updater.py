@@ -1,11 +1,15 @@
-from PyQt6.QtCore import QRunnable, pyqtSlot
-from widgets.telemetry import TelemetryDataWidget
 import time
-import random
+
+from PyQt6.QtCore import QRunnable, pyqtSlot
+
+from mocking.telemetry_mocker import mockTelemetryData
+from widgets.telemetry import TelemetryDataWidget
 
 
 class TelemetryUpdaterLoop(QRunnable):
-    """Randomly change the values of the telemetry data"""
+    """Update the values of the telemetry data displayed"""
+
+    UPDATE_INTERVAL = 0.5
 
     def __init__(self, telemetryWidget: TelemetryDataWidget) -> None:
         super().__init__()
@@ -15,16 +19,10 @@ class TelemetryUpdaterLoop(QRunnable):
 
     @pyqtSlot()
     def run(self):
-        """Generate random numbers and update all labels"""
+        """Update all labels"""
         while self.running:
-            new_labels = {
-                "altitude": round(random.random() * 12, 2),
-                "airspeed": round(random.random() * 20, 2),
-                "groundspeed": round(random.random() * 20, 2),
-                "battery": f"{round(random.random()*100, 2)}%",
-            }
-            self.telemetryWidget.updateTelemetryLabels(new_labels)
-            time.sleep(0.5)
+            self.telemetryWidget.updateTelemetryLabels(mockTelemetryData())
+            time.sleep(self.UPDATE_INTERVAL)
 
     @pyqtSlot()
     def stop(self):

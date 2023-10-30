@@ -3,16 +3,17 @@ import sys
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
-    QVBoxLayout,
+    QHBoxLayout,
     QWidget,
 )
 from PyQt6.QtCore import QThreadPool
 
 from widgets.telemetry import TelemetryDataWidget
+from widgets.map import MapWidget
 from loops.telemetry_updater import TelemetryUpdaterLoop
 
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 700
+WINDOW_WIDTH = 1366
+WINDOW_HEIGHT = 768
 
 
 class MainWindow(QMainWindow):
@@ -25,18 +26,24 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # Layout Setup
-        self.generalLayout = QVBoxLayout()
+        self.general_layout = QHBoxLayout()
+
         centralWidget = QWidget(self)
-        centralWidget.setLayout(self.generalLayout)
+        centralWidget.setLayout(self.general_layout)
+        # centralWidget.setFixedWidth(700)
+
         self.setCentralWidget(centralWidget)
         self.telemetryWidget = TelemetryDataWidget()
-        self.generalLayout.addWidget(self.telemetryWidget)
+        self.general_layout.addWidget(self.telemetryWidget)
+
+        self.mapWidget = MapWidget()
+        self.general_layout.addWidget(self.mapWidget)
 
         # Create threadpool
         self.threadpool = QThreadPool()
         self.activeThreads = []
 
-        # Add and run telemetry loop
+        # Add run telemetry loop
         self.telemetryUpdaterLoop = TelemetryUpdaterLoop(self.telemetryWidget)
         self.activeThreads.append(self.telemetryUpdaterLoop)
         self.threadpool.start(self.telemetryUpdaterLoop)
@@ -52,8 +59,13 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication([])
+    app = QApplication(["test"])
     mainWindow = MainWindow()
     mainWindow.show()
+
+    # Set the stylesheet of the application
+    with open("gui/styles/styles.qss", "r") as f:
+        styles = f.read()
+        app.setStyleSheet(styles)
 
     sys.exit(app.exec())

@@ -1,0 +1,13 @@
+QLabel#telemetry-key {
+  font-size: 20pt;
+  max-width: 7.5em;
+  max-height: 2em;
+  padding: 0px;
+}
+
+QLabel#telemetry-value {
+  font-size: 20pt;
+  max-width: 10em;
+  max-height: 2em;
+  padding: 0px;
+}

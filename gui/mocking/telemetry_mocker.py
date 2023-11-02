@@ -1,6 +1,5 @@
 import random
 
-
 def mockTelemetryData():
     mock_data = {
         "status": random.choice(

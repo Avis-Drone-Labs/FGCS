@@ -23,7 +23,8 @@ class TelemetryUpdaterLoop(QRunnable):
     def run(self):
         """Update all labels"""
         while self.running:
-            self.telemetryWidget.updateTelemetryLabels(mockTelemetryData())
+            tel_labels, esc_labels = mockTelemetryData()
+            self.telemetryWidget.updateTelemetryLabels(tel_labels, esc_labels)
             self.mapWidget.updateDronePosition()
 
             self.telemetryWidget.telemetryLabels["longitude"][0] = self.mapWidget.map.position[0]

@@ -22,7 +22,35 @@ def mockTelemetryData():
         "latitude": round(random.uniform(5, 60), 4)
     }
 
-    return mock_data
+    esc_data = [
+        {
+            "name": "motor 1",
+            "voltage": round(random.uniform(18, 22.2), 4),
+            "rpm": round(random.randint(0, 8000), 4),
+            "temperature": round(random.uniform(30, 50), 4),
+        },
+        {
+            "name": "motor 2",
+            "voltage": round(random.uniform(18, 22.2), 4),
+            "rpm": round(random.randint(0, 8000), 4),
+            "temperature": round(random.uniform(30, 50), 4),
+        },
+        {
+            "name": "motor 3",
+            "voltage": round(random.uniform(18, 22.2), 4),
+            "rpm": round(random.randint(0, 8000), 4),
+            "temperature": round(random.uniform(30, 50), 4),
+        },
+        {
+            "name": "motor 4",
+            "voltage": round(random.uniform(18, 22.2), 4),
+            "rpm": round(random.randint(0, 8000), 4),
+            "temperature": round(random.uniform(30, 50), 4),
+        },
+    ]
+
+    return mock_data, esc_data
+
 
 """
 Box Coordinates:

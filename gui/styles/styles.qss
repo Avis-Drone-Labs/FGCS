@@ -3,6 +3,7 @@ QLabel#telemetry-key {
   max-width: 7.5em;
   max-height: 2em;
   padding: 0px;
+  color: white;
 }
 
 QLabel#telemetry-value {
@@ -10,4 +11,24 @@ QLabel#telemetry-value {
   max-width: 10em;
   max-height: 2em;
   padding: 0px;
+  color: white;
+}
+QLabel#ESC-Key{
+  font-size: 20pt;
+  max-width: 7.5em;
+  max-height: 2em;
+  padding: 0px;
+  color: white;
+}
+
+QLabel#ESC-Value{
+  font-size: 20pt;
+  max-width: 10em;
+  max-height: 2em;
+  padding: 0px;
+  color: white;
+}
+
+QMainWindow{
+  background-color: #2E2E2E;
 }

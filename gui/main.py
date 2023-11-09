@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         self.activeThreads = []
 
         # Add run telemetry loop
-        self.telemetryUpdaterLoop = TelemetryUpdaterLoop(self.telemetryWidget)
+        self.telemetryUpdaterLoop = TelemetryUpdaterLoop(self.telemetryWidget, self.mapWidget)
         self.activeThreads.append(self.telemetryUpdaterLoop)
         self.threadpool.start(self.telemetryUpdaterLoop)
 

@@ -16,6 +16,8 @@ class MapWidget(QWebEngineView):
 
         self._setupMap()
         self._setupDroneMarker()
+        self._setupMapBorder()
+        self._setupFlightPath()
 
         self._updateMap()
 
@@ -38,9 +40,51 @@ class MapWidget(QWebEngineView):
             icon=folium.Icon(color="red"),
         ).add_to(self.map)
 
+    def _setupMapBorder(self):
+        """A function to add the temporary border to the map"""
+
+        border_coordinates = [(52.7829, -0.7098), (52.7799, -0.7098), (52.7799, -0.7042), (52.7829, -0.7042), (52.7829, -0.7098)]
+
+        self.map_border = folium.PolyLine(
+            border_coordinates,
+            color="red",
+            weight=2.5,
+            opacity=1).add_to(self.map)
+    
+    def _setupFlightPath(self):
+        """A function to add the flight path to the map"""
+
+        file = open("mocking/flight_path.txt", "r")
+        file_lines = [x.strip() for x in file.readlines()]
+        file.close()
+        
+        self.flight_progress = 0.0
+        self.flight_path_coordinates = [(float(x.split()[0]), float(x.split()[1])) for x in file_lines]
+        self.flight_path_coordinates.append(self.flight_path_coordinates[0])
+
+        self.flight_path = folium.PolyLine(
+            self.flight_path_coordinates,
+            color="blue",
+            weight=2.0,
+            opacity=1,
+            dash_array="20"
+        ).add_to(self.map)
+
+
     def _updateMap(self):
         """A function to update the map view"""
 
         data = io.BytesIO()
         self.map.save(data, close_file=False)
         self.setHtml(data.getvalue().decode())
+    
+    def updateDronePosition(self):
+        """A function that moves the drone icon to the correct location"""
+        idx = int(self.flight_progress)
+        multiplier = self.flight_progress-int(self.flight_progress)
+        position = (self.flight_path_coordinates[idx][0] + (self.flight_path_coordinates[idx+1][0]-self.flight_path_coordinates[idx][0]) * (multiplier),
+        self.flight_path_coordinates[idx][1] + (self.flight_path_coordinates[idx+1][1]-self.flight_path_coordinates[idx][1]) * (multiplier))
+        self.map.position = position
+        self.flight_progress += 0.5
+        if int(self.flight_progress) + 1 >= len(self.flight_path_coordinates) - 1:
+            self.flight_progress -= len(self.flight_path_coordinates)

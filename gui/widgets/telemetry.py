@@ -22,6 +22,8 @@ class TelemetryDataWidget(QWidget):
             "battery_remaining": [0, None],
             "battery_voltage": [0, None],
             "battery_current": [0, None],
+            "longitude": [0, None],
+            "latitude": [0, None]
         }
         self.font = QFont("Ubuntu Mono", 30)
 

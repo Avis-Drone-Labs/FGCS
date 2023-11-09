@@ -25,6 +25,12 @@ class TelemetryUpdaterLoop(QRunnable):
         while self.running:
             self.telemetryWidget.updateTelemetryLabels(mockTelemetryData())
             self.mapWidget.updateDronePosition()
+
+            self.telemetryWidget.telemetryLabels["longitude"][0] = self.mapWidget.map.position[0]
+            self.telemetryWidget.telemetryLabels["longitude"][1].setText(f"{self.mapWidget.map.position[0]}")
+            self.telemetryWidget.telemetryLabels["latitude"][0] = self.mapWidget.map.position[1]
+            self.telemetryWidget.telemetryLabels["latitude"][1].setText(f"{self.mapWidget.map.position[1]}")
+
             time.sleep(self.UPDATE_INTERVAL)
 
     @pyqtSlot()

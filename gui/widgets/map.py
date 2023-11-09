@@ -94,6 +94,7 @@ class MapWidget(QWebEngineView):
         multiplier = self.flight_progress-int(self.flight_progress)
         position = (self.flight_path_coordinates[idx][0] + (self.flight_path_coordinates[idx+1][0]-self.flight_path_coordinates[idx][0]) * (multiplier),
         self.flight_path_coordinates[idx][1] + (self.flight_path_coordinates[idx+1][1]-self.flight_path_coordinates[idx][1]) * (multiplier))
+        position = round(position[0], 4), round(position[1], 4)
         self.map.position = position
         self.flight_progress += 0.5
         if int(self.flight_progress) + 1 >= len(self.flight_path_coordinates) - 1:

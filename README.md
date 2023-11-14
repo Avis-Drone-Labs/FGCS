@@ -25,4 +25,4 @@ We will be using `ruff` as the code style for python, please look at the documen
 
 ## Pre-commit
 
-When cloning the repo for the first time, please install `pre-commit`. This can be done with a simple `pip install pre-commit`. Our pre-commit hooks will run every time you try to push something, if any of the checks fail then you will not be able to push that commit and receive an error message, often the files will be fixed but not staged, so make sure to re-stage and retry the with pushing commit.
+When cloning the repo for the first time, please install `pre-commit`. This can be done with a simple `pip install pre-commit` and then `pre-commit install`. Our pre-commit hooks will run every time you try to push something, if any of the checks fail then you will not be able to push that commit and receive an error message, often the files will be fixed but not staged, so make sure to re-stage and retry the with pushing commit.

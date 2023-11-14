@@ -1,0 +1,16 @@
+cfgv==3.4.0
+colorama==0.4.6
+distlib==0.3.7
+dronekit @ git+https://github.com/1blademaster/dronekit-python.git@main # Made some fixes to dronekit which aren't implemented in the latest PyPi release
+filelock==3.13.1
+future==0.18.3
+identify==2.5.31
+lxml==4.9.3
+monotonic==1.6
+nodeenv==1.8.0
+platformdirs==3.11.0
+pre-commit==3.5.0
+pymavlink==2.4.40
+pyserial==3.5
+PyYAML==6.0.1
+virtualenv==20.24.6

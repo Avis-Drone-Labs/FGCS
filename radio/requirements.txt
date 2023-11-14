@@ -1,7 +1,7 @@
 cfgv==3.4.0
 colorama==0.4.6
 distlib==0.3.7
-dronekit @ git+https://github.com/1blademaster/dronekit-python.git@main # Made some fixes to dronekit which aren't implemented in the latest PyPi release
+# dronekit @ git+https://github.com/1blademaster/dronekit-python.git@main # Made some fixes to dronekit which aren't implemented in the latest PyPi release
 filelock==3.13.1
 future==0.18.3
 identify==2.5.31

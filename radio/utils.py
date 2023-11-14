@@ -35,3 +35,7 @@ def getComPort() -> str:
         port_name = ports[inp_port_num].name
 
     return port_name
+
+
+def secondsToMicroseconds(secs):
+    return secs * 1e6

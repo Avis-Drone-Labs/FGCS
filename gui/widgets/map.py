@@ -1,9 +1,7 @@
 import io
 
 import folium
-
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-
 
 
 class MapWidget(QWebEngineView):
@@ -38,7 +36,7 @@ class MapWidget(QWebEngineView):
             min_lat=self.min_lat,
             max_lat=self.max_lat,
             min_lon=self.min_lon,
-            max_lon=self.max_lon
+            max_lon=self.max_lon,
         )
 
     def _setupDroneMarker(self):
@@ -53,23 +51,29 @@ class MapWidget(QWebEngineView):
     def _setupMapBorder(self):
         """A function to add the temporary border to the map"""
 
-        border_coordinates = [(52.7829, -0.7098), (52.7799, -0.7098), (52.7799, -0.7042), (52.7829, -0.7042), (52.7829, -0.7098)]
+        border_coordinates = [
+            (52.7829, -0.7098),
+            (52.7799, -0.7098),
+            (52.7799, -0.7042),
+            (52.7829, -0.7042),
+            (52.7829, -0.7098),
+        ]
 
         self.map_border = folium.PolyLine(
-            border_coordinates,
-            color="red",
-            weight=2.5,
-            opacity=1).add_to(self.map)
-    
+            border_coordinates, color="red", weight=2.5, opacity=1
+        ).add_to(self.map)
+
     def _setupFlightPath(self):
         """A function to add the flight path to the map"""
 
         file = open("mocking/flight_path.txt", "r")
         file_lines = [x.strip() for x in file.readlines()]
         file.close()
-        
+
         self.flight_progress = 0.0
-        self.flight_path_coordinates = [(float(x.split()[0]), float(x.split()[1])) for x in file_lines]
+        self.flight_path_coordinates = [
+            (float(x.split()[0]), float(x.split()[1])) for x in file_lines
+        ]
         self.flight_path_coordinates.append(self.flight_path_coordinates[0])
 
         self.flight_path = folium.PolyLine(
@@ -77,9 +81,8 @@ class MapWidget(QWebEngineView):
             color="blue",
             weight=2.0,
             opacity=1,
-            dash_array="20"
+            dash_array="20",
         ).add_to(self.map)
-
 
     def _updateMap(self):
         """A function to update the map view"""
@@ -87,13 +90,25 @@ class MapWidget(QWebEngineView):
         data = io.BytesIO()
         self.map.save(data, close_file=False)
         self.setHtml(data.getvalue().decode())
-    
+
     def updateDronePosition(self):
         """A function that moves the drone icon to the correct location"""
         idx = int(self.flight_progress)
-        multiplier = self.flight_progress-int(self.flight_progress)
-        position = (self.flight_path_coordinates[idx][0] + (self.flight_path_coordinates[idx+1][0]-self.flight_path_coordinates[idx][0]) * (multiplier),
-        self.flight_path_coordinates[idx][1] + (self.flight_path_coordinates[idx+1][1]-self.flight_path_coordinates[idx][1]) * (multiplier))
+        multiplier = self.flight_progress - int(self.flight_progress)
+        position = (
+            self.flight_path_coordinates[idx][0]
+            + (
+                self.flight_path_coordinates[idx + 1][0]
+                - self.flight_path_coordinates[idx][0]
+            )
+            * (multiplier),
+            self.flight_path_coordinates[idx][1]
+            + (
+                self.flight_path_coordinates[idx + 1][1]
+                - self.flight_path_coordinates[idx][1]
+            )
+            * (multiplier),
+        )
         position = round(position[0], 4), round(position[1], 4)
         self.map.position = position
         self.flight_progress += 0.5

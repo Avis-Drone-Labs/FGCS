@@ -1,2 +1,3 @@
 # Backend
-This should contain the backend code using `cpp` and will be linked to the frontend
+
+This should contain any radio telemetry code.

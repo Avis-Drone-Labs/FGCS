@@ -1,10 +1,9 @@
 import time
 
-from PyQt6.QtCore import QRunnable, pyqtSlot
-
 from mocking.telemetry_mocker import mockTelemetryData
-from widgets.telemetry import TelemetryDataWidget
+from PyQt6.QtCore import QRunnable, pyqtSlot
 from widgets.map import MapWidget
+from widgets.telemetry import TelemetryDataWidget
 
 
 class TelemetryUpdaterLoop(QRunnable):

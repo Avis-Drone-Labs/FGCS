@@ -1,16 +1,10 @@
 import sys
 
-from PyQt6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QHBoxLayout,
-    QWidget,
-)
-from PyQt6.QtCore import QThreadPool
-
-from widgets.telemetry import TelemetryDataWidget
-from widgets.map import MapWidget
 from loops.telemetry_updater import TelemetryUpdaterLoop
+from PyQt6.QtCore import QThreadPool
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QWidget
+from widgets.map import MapWidget
+from widgets.telemetry import TelemetryDataWidget
 
 WINDOW_WIDTH = 1366
 WINDOW_HEIGHT = 768
@@ -44,7 +38,9 @@ class MainWindow(QMainWindow):
         self.activeThreads = []
 
         # Add run telemetry loop
-        self.telemetryUpdaterLoop = TelemetryUpdaterLoop(self.telemetryWidget, self.mapWidget)
+        self.telemetryUpdaterLoop = TelemetryUpdaterLoop(
+            self.telemetryWidget, self.mapWidget
+        )
         self.activeThreads.append(self.telemetryUpdaterLoop)
         self.threadpool.start(self.telemetryUpdaterLoop)
 

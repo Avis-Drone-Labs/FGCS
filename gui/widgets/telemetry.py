@@ -1,5 +1,5 @@
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QWidget, QGridLayout, QLabel, QHBoxLayout
+from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QWidget
 
 
 class TelemetryDataWidget(QWidget):

@@ -1,0 +1,33 @@
+import { Card, CategoryBar, Metric, Text } from '@tremor/react'
+
+import InfoCard from './infoCard'
+
+export default function BatterySection({ data }) {
+  return (
+    <div className="w-full flex flex-row gap-2 mx-2 my-4">
+      <InfoCard
+        text="Battery voltage"
+        metric={data['battery_voltage']}
+        unit="V"
+        className="mx-0"
+      />
+      <InfoCard
+        text="Battery current"
+        metric={data['battery_current']}
+        unit="A"
+        className="mx-0"
+      />
+      <Card className="ring-0 bg-falcongrey-80">
+        <Text className="text-neutral-200">Battery level</Text>
+        <Metric className="text-neutral-50">
+          {data['battery_remaining']}%
+        </Metric>
+        <CategoryBar
+          categoryPercentageValues={[10, 25, 45, 20]}
+          colors={['rose', 'orange', 'yellow', 'emerald']}
+          percentageValue={data['Battery level']}
+        />
+      </Card>
+    </div>
+  )
+}

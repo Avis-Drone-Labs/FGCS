@@ -9,8 +9,7 @@ When adding a new folder please write up about it in the correct README.md and a
 ## Stack
 
 - GUI
-  - Python 3.9.13
-  - PYQT6
+  - Vite + React (JavaScript)
 - Radio
   - Python
   - C++

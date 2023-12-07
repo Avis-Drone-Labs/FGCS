@@ -87,27 +87,42 @@ export default function App() {
   }, [connected])
 
   return (
-    <>
-      <div className="columns-3 w-full p-2">
-        <div className="w-full grid grid-cols-2 gap-2 mx-2 my-4">
-          <InfoCard
-            text="Altitude"
-            metric={telemetryData['altitude']}
-            unit="m"
-          />
-          <InfoCard
-            text="Airspeed"
-            metric={telemetryData['airspeed']}
-            unit="m/s"
-          />
-          <InfoCard text="System Status" metric={telemetryData['status']} />
-          <InfoCard text="FTS Active" metric={'FALSE'} />
-        </div>
-        <TelemetrySection data={telemetryData} />
-        <BatterySection data={batteryData} />
+    <div className="bg-zinc-600 w-sreen h-screen flex flex-col justify-around">
+      <div className="flex flex-row w-full"> 
+      {/* grid wrapper for flight telemetry */}
+      <div className="grid grid-cols-1 grid-rows-4 gap-3 m-2  w-2/6">
+        <InfoCard
+          text="Altitude"
+          metric={telemetryData['altitude']}
+          unit="m"
+        />
+        <InfoCard
+          text="Airspeed"
+          metric={telemetryData['airspeed']}
+          unit="m/s"
+        />
+        <InfoCard text="System Status" metric={telemetryData['status']} />
+        <InfoCard text="FTS Active" metric={'FALSE'} />
+        <InfoCard text="Ground Speed" metric={telemetryData['groundspeed']} unit='m/s' />
+      </div>
+
+      {/** grid wrapper for map data */}
+      <div className="grid grid-cols-1 grid-rows-1 gap-3 p-2 w-3/6">
         <MapSection data={gpsData} />
+      </div>
+    
+      {/** grid wrapper for battery data */}
+      <div className="grid grid-cols-1 grid-rows-1 gap-2 m-2  w-2/6">
+        <BatterySection data={batteryData} />
+      </div>
+        
+        {/**
+         Removed telemetry section due to duplicate data
+        <TelemetrySection data={telemetryData} />
+        */}
         {/* <LoraSection data={loraData} /> */}
       </div>
+
       <GraphArray
         graphs={[
           {
@@ -139,7 +154,9 @@ export default function App() {
             maxNumberOfDataPoints: 50,
           },
         ]}
-      />
-    </>
+        />
+    
+    </div>
+
   )
 }

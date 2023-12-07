@@ -27,3 +27,4 @@ simple-websocket==1.0.0
 virtualenv==20.24.6
 Werkzeug==3.0.1
 wsproto==1.2.0
+

@@ -87,7 +87,7 @@ export default function App() {
   }, [connected])
 
   return (
-    <div className="bg-zinc-600 w-sreen h-screen flex flex-col justify-center">
+    <div className="bg-zinc-600 w-sreen h-screen flex flex-col justify-around">
       <div className="flex flex-row w-full"> 
       {/* grid wrapper for flight telemetry */}
       <div className="grid grid-cols-1 grid-rows-4 gap-3 m-2  w-2/6">

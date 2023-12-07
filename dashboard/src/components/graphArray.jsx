@@ -2,7 +2,7 @@ import Graph from './graph'
 
 export default function GraphArray({ graphs }) {
   return (
-    <div className="flex flex-row flex-wrap">
+    <div className="flex flex-row flex-wrap justify-center gap-4">
       {graphs.map((graph) => {
         return (
           <Graph

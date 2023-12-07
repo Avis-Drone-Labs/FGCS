@@ -115,7 +115,7 @@ export default function Graph({
   }, [data, chartRef])
 
   return (
-    <div className={`basis-1/4 ${className}`} {...props}>
+    <div className={`basis-1/4 bg-falcongrey-80 rounded-lg ${className}`} {...props}>
       <Scatter ref={chartRef} options={options} data={chartData} />
     </div>
   )

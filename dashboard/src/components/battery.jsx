@@ -4,7 +4,7 @@ import InfoCard from './infoCard'
 
 export default function BatterySection({ data }) {
   return (
-    <div className="w-full flex flex-row gap-2 mx-2 my-4">
+    <div className="w-full grid grid-cols-1 grid-row-3 gap-2 p-2 ">
       <InfoCard
         text="Battery voltage"
         metric={data['battery_voltage']}

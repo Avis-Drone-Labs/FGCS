@@ -33,7 +33,7 @@ export default function MapSection({ data }) {
   }, [data])
 
   return (
-    <div className="w-initial h-[34rem] m-2 pt-4 pb-[0.55rem]" id="map">
+    <div className="w-initial h-full m-2 pb-[0.55rem]" id="map">
       <Map
         mapLib={maplibregl}
         initialViewState={{

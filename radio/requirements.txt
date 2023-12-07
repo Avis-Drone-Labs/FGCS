@@ -1,7 +1,9 @@
 bidict==0.22.1
 blinker==1.7.0
+certifi==2023.11.17
 cfgv==3.4.0
 click==8.1.7
+colorama==0.4.6
 distlib==0.3.7
 filelock==3.13.1
 Flask==3.0.0
@@ -9,6 +11,7 @@ Flask-SocketIO==5.3.6
 future==0.18.3
 h11==0.14.0
 identify==2.5.31
+influxdb-client==1.39.0
 itsdangerous==2.1.2
 Jinja2==3.1.2
 lxml==4.9.3
@@ -19,11 +22,16 @@ platformdirs==3.11.0
 pre-commit==3.5.0
 pymavlink==2.4.40
 pyserial==3.5
+python-dateutil==2.8.2
 python-engineio==4.8.0
 python-socketio==5.10.0
 PyYAML==6.0.1
+reactivex==4.0.4
 ruff==0.1.2
 simple-websocket==1.0.0
+six==1.16.0
+typing_extensions==4.8.0
+urllib3==2.1.0
 virtualenv==20.24.6
 Werkzeug==3.0.1
 wsproto==1.2.0

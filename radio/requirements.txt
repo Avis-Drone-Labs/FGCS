@@ -14,3 +14,5 @@ pymavlink==2.4.40
 pyserial==3.5
 PyYAML==6.0.1
 virtualenv==20.24.6
+flask==3.0.0
+Flask-SocketIO==5.3.6

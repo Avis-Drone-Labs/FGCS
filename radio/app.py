@@ -69,8 +69,8 @@ def sendTelemetry(msg):
         "airspeed": f"{msg.airspeed:.2f}",
         "groundspeed": f"{msg.groundspeed:.2f}",
         "altitude": f"{msg.alt:.2f}",
-        "throttle": str(msg.throttle).zfill(3),
-        "heading": str(msg.heading).zfill(3)
+        "throttle": str(msg.throttle).zfill(2),
+        "heading": str(msg.heading).zfill(2)
     }
     socketio.emit("ret_telemetry", data)
 

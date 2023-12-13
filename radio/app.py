@@ -1,5 +1,9 @@
 import time
 
+from pymavlink import mavutil
+from utils import getComPort
+from drone import Drone
+
 from flask import Flask
 from flask_socketio import SocketIO, emit
 from mocking.telemetry_mocker import (
@@ -58,6 +62,28 @@ def reqGps():
     gps_data = mockGpsData()
     emit("ret_gps", gps_data)
 
+def sendTelemetry(msg):
+    print(f"Got telemetry data: {msg.id}")
+    data = {
+        "status": "ACTIVE",
+        "airspeed": msg.airspeed,
+        "groundspeed": msg.groundspeed,
+        "altitude": msg.alt
+    }
+    socketio.emit("ret_telemetry", data)
+
+def setupCallBacks(drone):
+    drone.addMessageListener(
+        mavutil.mavlink.MAVLINK_MSG_ID_VFR_HUD, sendTelemetry, interval=0.25
+    )
+
+def setupDroneTelemetry():
+    time.sleep(3)
+    port = getComPort()
+    drone = Drone(port)
+    setupCallBacks(drone)
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    socketio.start_background_task(setupDroneTelemetry)
+    socketio.run(app, allow_unsafe_werkzeug=True)
+    

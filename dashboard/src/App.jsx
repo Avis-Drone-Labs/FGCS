@@ -70,19 +70,19 @@ export default function App() {
       return
     }
 
-    function requestData() {
-      console.log('requesting data')
-      socket.emit('req_time')
-      socket.emit('req_telemetry')
-      socket.emit('req_battery')
-      socket.emit('req_gps')
-    }
+    // function requestData() {
+    //   console.log('requesting data')
+    //   socket.emit('req_time')
+    //   socket.emit('req_telemetry')
+    //   socket.emit('req_battery')
+    //   socket.emit('req_gps')
+    // }
 
-    const interval = setInterval(requestData, 1000)
+    // const interval = setInterval(requestData, 1000)
 
-    return () => {
-      clearInterval(interval)
-    }
+    // return () => {
+    //   clearInterval(interval)
+    // }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected])
 

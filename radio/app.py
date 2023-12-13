@@ -63,12 +63,14 @@ def reqGps():
     emit("ret_gps", gps_data)
 
 def sendTelemetry(msg):
-    print(f"Got telemetry data: {msg.id}")
+    print(f"Got telemetry data: {msg.id}, {msg.throttle}")
     data = {
         "status": "ACTIVE",
-        "airspeed": msg.airspeed,
-        "groundspeed": msg.groundspeed,
-        "altitude": msg.alt
+        "airspeed": f"{msg.airspeed:.2f}",
+        "groundspeed": f"{msg.groundspeed:.2f}",
+        "altitude": f"{msg.alt:.2f}",
+        "throttle": str(msg.throttle).zfill(3),
+        "heading": str(msg.heading).zfill(3)
     }
     socketio.emit("ret_telemetry", data)
 

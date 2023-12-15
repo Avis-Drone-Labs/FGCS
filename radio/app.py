@@ -1,6 +1,5 @@
 import time
 
-from pymavlink import mavutil
 from utils import getComPort
 from drone import Drone
 

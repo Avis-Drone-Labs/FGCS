@@ -86,9 +86,23 @@ def sendTelemetry(msg):
     socketio.emit("set_telemetry", data)
 
 
+def sendAttitude(msg):
+    data = {
+        "status": "ACTIVE",
+        "roll": f"{msg.roll:.2f}",
+        "pitch": f"{msg.pitch:.2f}",
+        "yaw": f"{msg.yaw:.2f}",
+        "rollspeed": f"{msg.rollspeed:.2f}",
+        "pitchspeed": f"{msg.pitchspeed:.2f}",
+        "yawspeed": f"{msg.yawspeed:.2f}"
+    }
+    socketio.emit("set_attitude", data)
+
+
 def setupCallBacks(drone):
     drone.addMessageListener("VFR_HUD", sendTelemetry)
     drone.addMessageListener("BATTERY_STATUS", sendBattery)
+    drone.addMessageListener("ATTITUDE", sendAttitude)
 
 
 def setupDroneTelemetry():

@@ -73,7 +73,7 @@ def battery_status_cb(msg):
 
 
 def esc_status_cb(msg):
-    pass
+    print(msg.current_battery)
     # print(datetime.datetime.now().time(), datetime.datetime.fromtimestamp(msg._timestamp).time(), msg.rpm)
 
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # drone.addMessageListener(
     #     mavutil.mavlink.MAVLINK_MSG_ID_BATTERY_STATUS, battery_status_cb
     # )
-    drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_5_TO_8, esc_status_cb)
+    drone.addMessageListener("BATTERY_STATUS", esc_status_cb)
 
     try:
         while True:

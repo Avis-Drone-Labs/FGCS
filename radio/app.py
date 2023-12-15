@@ -63,18 +63,17 @@ def reqGps():
     emit("ret_gps", gps_data)
 
 def sendBattery(msg):
-    print("Got battery data")
+    print(msg.current_battery)
     data = {
         "status": "ACTIVE",
-        "voltage_battery": f"{(msg.voltage_battery / 1000):.2f}",
-        "current_battery": f"{(msg.current_battery / 100):.2f}",
+        "battery_voltage": f"{(msg.voltages[0] / 1000):.2f}",
+        "battery_current": f"{(msg.current_battery / 100):.2f}",
         "battery_remaining": msg.battery_remaining
     }
     socketio.emit("set_battery", data)
     
 
 def sendTelemetry(msg):
-    print("Got telemetry data")
     data = {
         "status": "ACTIVE",
         "airspeed": f"{msg.airspeed:.2f}",
@@ -86,8 +85,8 @@ def sendTelemetry(msg):
     socketio.emit("set_telemetry", data)
 
 def setupCallBacks(drone):
-    drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_VFR_HUD, sendTelemetry, interval=0.25)
-    drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_SYS_STATUS, sendBattery)
+    drone.addMessageListener("VFR_HUD", sendTelemetry)
+    drone.addMessageListener("BATTERY_STATUS", sendBattery)
 
 def setupDroneTelemetry():
     time.sleep(2)

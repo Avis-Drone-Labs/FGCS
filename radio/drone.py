@@ -32,7 +32,7 @@ class Drone:
         self.master.mav.request_data_stream_send(self.target_system, self.target_component, 
                 mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 5, 1) # BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
 
-    def addMessageListener(self, message_id, func=None, interval=1):
+    def addMessageListener(self, message_id, func=None):
         if message_id not in self.message_listeners:
             self.message_listeners[message_id] = func
             return True
@@ -61,9 +61,8 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                # print(msg.msgname)
-                if self.message_listeners.get(msg.id):
-                    self.message_listeners[msg.id](msg)
+                if self.message_listeners.get(msg.msgname):
+                    self.message_listeners[msg.msgname](msg)
 
     def startThread(self):
         self.listener_thread = Thread(target=self.checkForMessages, daemon=True)

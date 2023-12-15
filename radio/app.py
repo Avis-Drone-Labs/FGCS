@@ -94,7 +94,7 @@ def sendAttitude(msg):
         "yaw": f"{msg.yaw:.2f}",
         "rollspeed": f"{msg.rollspeed:.2f}",
         "pitchspeed": f"{msg.pitchspeed:.2f}",
-        "yawspeed": f"{msg.yawspeed:.2f}"
+        "yawspeed": f"{msg.yawspeed:.2f}",
     }
     socketio.emit("set_attitude", data)
 

@@ -3,7 +3,7 @@ import time
 from pymavlink import mavutil
 from utils import getComPort
 from drone import Drone
-
+import datetime
 # from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS
 
@@ -18,7 +18,7 @@ from drone import Drone
 
 
 def sys_status_cb(msg):
-    print(msg.id)
+    print(datetime.datetime.now().time(), msg.msgname)
     # point = (
     #     Point("sys_status")
     #     .field("voltage_battery", msg.voltage_battery / 1000)
@@ -27,9 +27,14 @@ def sys_status_cb(msg):
     # )
     # write_api.write(bucket=bucket, org="Project Falcon", record=point)
 
-
+prev_time = 0
 def attitude_cb(msg):
-    print(msg.id)
+    # global prev_time
+    # if prev_time:
+    #     print(time.perf_counter() - prev_time)
+
+    # prev_time = time.perf_counter()
+    print(datetime.datetime.now().time(), msg.msgname)
     # point = (
     #     Point("attitude")
     #     .field("pitch", msg.pitch)
@@ -40,7 +45,7 @@ def attitude_cb(msg):
 
 
 def gps_raw_int_cb(msg):
-    print(msg.id)
+    print(datetime.datetime.now().time(), msg.msgname)
     # point = (
     #     Point("gps_raw_int")
     #     .field("lat", msg.lat)
@@ -51,7 +56,7 @@ def gps_raw_int_cb(msg):
 
 
 def vfr_hud_cb(msg):
-    print(msg.id)
+    print(datetime.datetime.now().time(), msg.msgname)
     # point = (
     #     Point("vfr_hud")
     #     .field("airspeed", msg.airspeed)
@@ -64,11 +69,12 @@ def vfr_hud_cb(msg):
 
 
 def battery_status_cb(msg):
-    print(msg)
+    print(msg.msgname)
 
 
 def esc_status_cb(msg):
-    print(msg)
+    pass
+    # print(datetime.datetime.now().time(), datetime.datetime.fromtimestamp(msg._timestamp).time(), msg.rpm)
 
 
 if __name__ == "__main__":
@@ -76,18 +82,18 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port)
 
-    drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_SYS_STATUS, sys_status_cb)
-    drone.addMessageListener(
-        mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE, attitude_cb, interval=0.25
-    )
-    drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_GPS_RAW_INT, gps_raw_int_cb)
-    drone.addMessageListener(
-        mavutil.mavlink.MAVLINK_MSG_ID_VFR_HUD, vfr_hud_cb, interval=0.25
-    )
-    drone.addMessageListener(
-        mavutil.mavlink.MAVLINK_MSG_ID_BATTERY_STATUS, battery_status_cb
-    )
-    drone.addMessageListener(291, esc_status_cb)
+    # drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_SYS_STATUS, sys_status_cb)
+    # drone.addMessageListener(
+    #     mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE, attitude_cb, interval=0.1
+    # )
+    # drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_GPS_RAW_INT, gps_raw_int_cb)
+    # drone.addMessageListener(
+    #     mavutil.mavlink.MAVLINK_MSG_ID_VFR_HUD, vfr_hud_cb, interval=0.25
+    # )
+    # drone.addMessageListener(
+    #     mavutil.mavlink.MAVLINK_MSG_ID_BATTERY_STATUS, battery_status_cb
+    # )
+    drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_ESC_TELEMETRY_5_TO_8, esc_status_cb)
 
     try:
         while True:

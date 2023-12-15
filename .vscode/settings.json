@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
+        "mavutil",
+        "pymavlink",
         "PYQT"
     ]
 }

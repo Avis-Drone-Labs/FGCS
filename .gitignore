@@ -201,3 +201,5 @@ cython_debug/
 
 # Ruff
 .ruff_cache
+
+influxdb/data/*

@@ -43,24 +43,19 @@ export default function App() {
         setConnected(false)
       })
 
-      _socket.on('ret_time', (data) => {
-        setTime(moment.unix(data))
-      })
-
-      _socket.on('ret_telemetry', (data) => {
+      _socket.on('set_telemetry', (data) => {
         setTelemetryData(data)
+        setTime(moment.unix(data._timestamp))
       })
 
-      _socket.on('ret_esc', () => {
-        // TODO
-      })
-
-      _socket.on('ret_battery', (data) => {
+      _socket.on('set_battery', (data) => {
         setBatteryData(data)
+        setTime(moment.unix(data._timestamp))
       })
 
-      _socket.on('ret_gps', (data) => {
+      _socket.on('set_gps', (data) => {
         setGpsData(data)
+        setTime(moment.unix(data._timestamp))
       })
     }
   }, [listening])

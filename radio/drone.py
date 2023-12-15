@@ -1,6 +1,7 @@
 import copy
 import traceback
 from threading import Thread
+from queue import Queue
 
 from pymavlink import mavutil
 
@@ -8,7 +9,6 @@ from pymavlink import mavutil
 class Drone:
     def __init__(self, port):
         self.master = mavutil.mavlink_connection(port, baud=57600)
-
         self.master.wait_heartbeat()
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component
@@ -18,11 +18,10 @@ class Drone:
         )
 
         self.message_listeners = {}
-
+        self.message_queue = Queue()
         self.is_active = True
 
         self.startThread()
-
         self.setupDataStreams()
 
     def setupDataStreams(self):
@@ -77,12 +76,19 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                if self.message_listeners.get(msg.msgname):
-                    self.message_listeners[msg.msgname](msg)
+                if msg.msgname in self.message_listeners:
+                    self.message_queue.put([msg.msgname, msg])
+
+    def executeMessages(self):
+        while True:
+            q = self.message_queue.get()
+            self.message_listeners[q[0]](q[1])
 
     def startThread(self):
         self.listener_thread = Thread(target=self.checkForMessages, daemon=True)
+        self.sender_thread = Thread(target=self.executeMessages, daemon=True)
         self.listener_thread.start()
+        self.sender_thread.start()
 
     def close(self):
         self.is_active = False

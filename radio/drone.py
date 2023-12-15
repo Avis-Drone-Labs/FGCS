@@ -46,6 +46,13 @@ class Drone:
             5,
             1,
         )  # BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
+        self.master.mav.request_data_stream_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_POSITION,
+            5,
+            1,
+        )  # LOCAL_POSITION, GLOBAL_POSITION_INT
 
     def addMessageListener(self, message_id, func=None):
         if message_id not in self.message_listeners:

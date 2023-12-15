@@ -97,12 +97,17 @@ def sendAttitude(msg):
         "yawspeed": f"{msg.yawspeed:.2f}",
     }
     socketio.emit("set_attitude", data)
+    
+def sendPosition(msg):
+    data = {"status": "ACTIVE", "lat": f"{msg.lat:.2f}", "lon": f"{msg.lon:.2f}"}
+    socketio.emit("set_gps", data)
 
 
 def setupCallBacks(drone):
     drone.addMessageListener("VFR_HUD", sendTelemetry)
     drone.addMessageListener("BATTERY_STATUS", sendBattery)
     drone.addMessageListener("ATTITUDE", sendAttitude)
+    drone.addMessageListener("GLOBAL_POSITION_INT", sendPosition)
 
 
 def setupDroneTelemetry():

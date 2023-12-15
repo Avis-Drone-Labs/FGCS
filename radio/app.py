@@ -62,16 +62,17 @@ def reqGps():
     gps_data = mockGpsData()
     emit("ret_gps", gps_data)
 
+
 def sendBattery(msg):
     print(msg.current_battery)
     data = {
         "status": "ACTIVE",
         "battery_voltage": f"{(msg.voltages[0] / 1000):.2f}",
         "battery_current": f"{(msg.current_battery / 100):.2f}",
-        "battery_remaining": msg.battery_remaining
+        "battery_remaining": msg.battery_remaining,
     }
     socketio.emit("set_battery", data)
-    
+
 
 def sendTelemetry(msg):
     data = {
@@ -80,13 +81,15 @@ def sendTelemetry(msg):
         "groundspeed": f"{msg.groundspeed:.2f}",
         "altitude": f"{msg.alt:.2f}",
         "throttle": str(msg.throttle).zfill(2),
-        "heading": str(msg.heading).zfill(2)
+        "heading": str(msg.heading).zfill(2),
     }
     socketio.emit("set_telemetry", data)
+
 
 def setupCallBacks(drone):
     drone.addMessageListener("VFR_HUD", sendTelemetry)
     drone.addMessageListener("BATTERY_STATUS", sendBattery)
+
 
 def setupDroneTelemetry():
     time.sleep(2)
@@ -94,7 +97,7 @@ def setupDroneTelemetry():
     drone = Drone(port)
     setupCallBacks(drone)
 
+
 if __name__ == "__main__":
     socketio.start_background_task(setupDroneTelemetry)
     socketio.run(app, allow_unsafe_werkzeug=True)
-    

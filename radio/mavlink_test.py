@@ -27,7 +27,10 @@ def sys_status_cb(msg):
     # )
     # write_api.write(bucket=bucket, org="Project Falcon", record=point)
 
+
 prev_time = 0
+
+
 def attitude_cb(msg):
     # global prev_time
     # if prev_time:

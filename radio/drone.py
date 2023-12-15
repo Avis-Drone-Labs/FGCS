@@ -4,6 +4,7 @@ from threading import Thread
 
 from pymavlink import mavutil
 
+
 class Drone:
     def __init__(self, port):
         self.master = mavutil.mavlink_connection(port, baud=57600)
@@ -25,12 +26,27 @@ class Drone:
         self.setupDataStreams()
 
     def setupDataStreams(self):
-        self.master.mav.request_data_stream_send(self.target_system, self.target_component, 
-                mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 5, 1) # ESC_TELEMETRY_5_TO_8, ATTITUDE
-        self.master.mav.request_data_stream_send(self.target_system, self.target_component, 
-                mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 5, 1) # VFR_HUD
-        self.master.mav.request_data_stream_send(self.target_system, self.target_component, 
-                mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 5, 1) # BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
+        self.master.mav.request_data_stream_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_EXTRA1,
+            5,
+            1,
+        )  # ESC_TELEMETRY_5_TO_8, ATTITUDE
+        self.master.mav.request_data_stream_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_EXTRA2,
+            5,
+            1,
+        )  # VFR_HUD
+        self.master.mav.request_data_stream_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_EXTRA3,
+            5,
+            1,
+        )  # BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
 
     def addMessageListener(self, message_id, func=None):
         if message_id not in self.message_listeners:
@@ -73,8 +89,13 @@ class Drone:
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 
-        self.master.mav.request_data_stream_send(self.target_system, self.target_component, 
-		mavutil.mavlink.MAV_DATA_STREAM_ALL, 1, 0)
+        self.master.mav.request_data_stream_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_ALL,
+            1,
+            0,
+        )
 
         self.master.close()
 

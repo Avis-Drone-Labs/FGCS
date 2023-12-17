@@ -40,7 +40,6 @@ export default function App() {
       })
 
       _socket.on('incoming_msg', (msg) => {
-        msg = JSON.parse(msg)
         switch (msg.mavpackettype) {
           case 'VFR_HUD':
             setTelemetryData(msg)

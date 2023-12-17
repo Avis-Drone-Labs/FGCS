@@ -37,17 +37,17 @@ class Drone:
         EXTRA3: BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
         """
         if self.wireless:
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 1)
+            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 1)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 1)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 1)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 10)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 10)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 2)
+            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 1)
+            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1)
+            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 4)
+            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 3)
+            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 1)
         else:
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 2)
+            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 2)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 2)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2)
+            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 20)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 10)
@@ -91,6 +91,7 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
+                print(msg.msgname)
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])
 

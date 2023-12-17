@@ -27,7 +27,7 @@ def disconnect():
     print("Client disconnected!")
 
 def sendMessage(msg):
-    socketio.emit("incoming_msg", msg.to_json())
+    socketio.emit("incoming_msg", msg.to_dict())
 
 def setupCallBacks(drone):
     drone.addMessageListener("VFR_HUD", sendMessage)
@@ -39,7 +39,7 @@ def setupCallBacks(drone):
 def setupDroneTelemetry():
     time.sleep(2)
     port = getComPort()
-    drone = Drone(port)
+    drone = Drone(port, wireless=True)
     setupCallBacks(drone)
 
 

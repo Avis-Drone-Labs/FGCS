@@ -45,7 +45,6 @@ export default function App() {
             setTelemetryData(msg)
             break
           case 'BATTERY_STATUS':
-            console.log(msg)
             setBatteryData(msg)
             break
           case 'ATTITUDE':

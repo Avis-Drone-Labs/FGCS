@@ -27,7 +27,9 @@ def disconnect():
     print("Client disconnected!")
 
 def sendMessage(msg):
-    socketio.emit("incoming_msg", msg.to_dict())
+    data = msg.to_dict()
+    data['timestamp'] = msg._timestamp
+    socketio.emit("incoming_msg", data)
 
 def setupCallBacks(drone):
     drone.addMessageListener("VFR_HUD", sendMessage)

@@ -57,7 +57,7 @@ export default function App() {
           default:
             break
         }
-        // setTime(moment.unix(data._timestamp))
+        setTime(moment.unix(msg.timestamp))
       })
     }
   }, [listening])
@@ -109,31 +109,33 @@ export default function App() {
           {
             data: {
               x: time,
-              y: parseFloat(batteryData['battery_voltage']),
+              y: parseFloat(
+                batteryData.voltages && batteryData.voltages[0] / 1000
+              )
             },
             datasetLabel: 'Battery Voltage',
             lineColor: tailwindColors.red['400'],
-            pointColor: tailwindColors.red['600'],
+            pointColor: tailwindColors.red['600']
           },
           {
             data: {
               x: time,
-              y: parseFloat(batteryData['battery_current']),
+              y: parseFloat(batteryData['current_battery'] / 100)
             },
             datasetLabel: 'Battery Current',
             lineColor: tailwindColors.cyan['400'],
-            pointColor: tailwindColors.cyan['600'],
+            pointColor: tailwindColors.cyan['600']
           },
           {
             data: {
               x: time,
-              y: parseFloat(telemetryData['airspeed']),
+              y: parseFloat(telemetryData['airspeed'])
             },
             datasetLabel: 'Airspeed',
             lineColor: tailwindColors.yellow['400'],
             pointColor: tailwindColors.yellow['600'],
-            maxNumberOfDataPoints: 50,
-          },
+            maxNumberOfDataPoints: 50
+          }
         ]}
       />
     </div>

@@ -1,13 +1,13 @@
-# Dashboard
+# GCS
 
-## Initialising the dashboard
+## Initialising the GCS
 
-1. `cd dashboard`
+1. `cd gcs`
 2. `yarn`
 
-## Launching the dashboard
+## Launching the GCS
 
-1. `cd dashboard`
+1. `cd gcs`
 2. `yarn dev`
 
 ### Vite shortcuts

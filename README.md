@@ -1,27 +1,30 @@
-# GCS
+# FGCS
 
-A monorepo for the ground control system
+Falcon Ground Control Station.
 
 ## How to update
 
 When adding a new folder please write up about it in the correct README.md and also ask for permission with folders (this is so that we don't end up with clutter, you will most likely be allowed to add it).
 
 ## How to run
+
 1. Install concurrently with `npm i concurrently -g`
 2. Make sure that you are in your virtual environment and then run `./run.bat` and both the frontend and backend will load. If you want to do run them individually then:
 
 ### Running Frontend Manually
-1. `cd dashboard`
+
+1. `cd gcs`
 2. `yarn dev`
 
 ### Running Backend Manually
+
 1. Make sure you're in a virtual environment with `requirements.txt` installed
 2. python app.py
 
 ## Stack
 
 - GUI
-  - Vite + React (JavaScript)
+  - Electron + Vite + React (JavaScript)
 - Radio
   - Python
   - C++

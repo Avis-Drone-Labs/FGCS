@@ -8,7 +8,7 @@ import {
   PointElement,
   TimeScale,
   Title,
-  Tooltip
+  Tooltip,
 } from 'chart.js'
 import { useEffect, useRef, useState } from 'react'
 
@@ -22,7 +22,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  Tooltip
+  Tooltip,
 )
 
 ChartJS.defaults.color = '#fafafa'
@@ -33,8 +33,8 @@ const options = {
   animation: false,
   plugins: {
     legend: {
-      position: 'top'
-    }
+      position: 'top',
+    },
   },
   scales: {
     x: {
@@ -42,8 +42,8 @@ const options = {
       time: {
         unit: 'second',
         displayFormats: {
-          second: 'HH:mm:ss'
-        }
+          second: 'HH:mm:ss',
+        },
       },
       ticks: {
         callback: (value, index, ticks) => {
@@ -56,21 +56,21 @@ const options = {
             return moment(value).format('hh:mm:ss')
           }
           return null
-        }
-      }
-    }
+        },
+      },
+    },
   },
   elements: {
     line: {
-      borderWidth: 1
+      borderWidth: 1,
     },
     point: {
       radius: 2,
       borderWidth: 0,
       hoverBorderWidth: 0,
-      hitRadius: 10
-    }
-  }
+      hitRadius: 10,
+    },
+  },
 }
 
 export default function Graph({
@@ -86,9 +86,9 @@ export default function Graph({
     datasets: [
       {
         label: 'Unknown dataset',
-        data: []
-      }
-    ]
+        data: [],
+      },
+    ],
   })
   const chartRef = useRef()
 

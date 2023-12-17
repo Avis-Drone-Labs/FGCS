@@ -1,8 +1,9 @@
+import datetime
 import time
 
-from utils import getComPort
 from drone import Drone
-import datetime
+from utils import getComPort
+
 # from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS
 

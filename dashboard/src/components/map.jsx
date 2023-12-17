@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 
 function MapInformationPanel({ data }) {
+  // TODO: Change to display satellites visible, GPS fix
   return (
     <div className="z-10 relative bg-falcongrey/80 w-1/2 p-4 rounded-br-lg">
       <div className="flex flex-col">
@@ -27,32 +28,47 @@ function MapInformationPanel({ data }) {
 
 export default function MapSection({ data }) {
   const [position, setPosition] = useState({})
+  const [defaultLat, setDefaultLat] = useState(null)
+  const [defaultLon, setDefaultLon] = useState(null)
 
   useEffect(() => {
-    setPosition({ lat: data['lat'], lon: data['lng'] })
+    if (!data.lat || !data.lon) return
+    let lat = data.lat * 1e-7
+    let lon = data.lon * 1e-7
+    setPosition({ latitude: lat, longitude: lon })
+    if (!defaultLat || !defaultLon) {
+      console.log('test')
+      setDefaultLat(lat)
+      setDefaultLon(lon)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   return (
     <div className="w-initial h-full m-2 pb-[0.55rem]" id="map">
-      <Map
-        mapLib={maplibregl}
-        initialViewState={{
-          latitude: 52.780812,
-          longitude: -0.707359,
-          zoom: 7,
-        }}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
-          import.meta.env.VITE_MAPTILER_API_KEY
-        }`}
-        style={{ borderRadius: '0.5rem' }}
-      >
-        {position && position.lat && position.lon && (
-          <Marker latitude={position.lat} longitude={position.lon} scale={0.1}>
+      {position?.latitude && position?.longitude && (
+        <Map
+          mapLib={maplibregl}
+          initialViewState={{
+            latitude: defaultLat,
+            longitude: defaultLon,
+            zoom: 16
+          }}
+          mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
+            import.meta.env.VITE_MAPTILER_API_KEY
+          }`}
+          style={{ borderRadius: '0.5rem' }}
+        >
+          <Marker
+            latitude={position.latitude}
+            longitude={position.longitude}
+            scale={0.1}
+          >
             <img src="/drone_1.png" className="w-10 h-10" />
           </Marker>
-        )}
-        <MapInformationPanel data={data} />
-      </Map>
+          <MapInformationPanel data={data} />
+        </Map>
+      )}
     </div>
   )
 }

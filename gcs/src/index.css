@@ -18,9 +18,12 @@
 
 html,
 body {
-  @apply min-h-screen;
+  height: 100%;
+  margin: 0;
 }
 
 #root {
-  @apply min-h-screen;
+  display: flex;
+  flex-flow: column;
+  height: 100%;
 }

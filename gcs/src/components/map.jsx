@@ -8,7 +8,7 @@ import maplibregl from 'maplibre-gl'
 function MapInformationPanel({ data }) {
   // TODO: Change to display satellites visible, GPS fix
   return (
-    <div className="z-10 relative bg-falcongrey/80 w-1/2 p-4 rounded-br-lg">
+    <div className="z-10 relative bg-falcongrey/70 w-1/3 p-4 rounded-bl-lg float-right">
       <div className="flex flex-col">
         {Object.keys(data).map((name, i) => {
           let value = data[name]
@@ -43,21 +43,23 @@ export default function MapSection({ data }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
+  console.log(data)
+
   return (
-    <div className="w-initial h-full m-2 pb-[0.55rem]" id="map">
-      {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
-        <Map
-          mapLib={maplibregl}
-          initialViewState={{
-            latitude: defaultLat,
-            longitude: defaultLon,
-            zoom: 16,
-          }}
-          mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
-            import.meta.env.VITE_MAPTILER_API_KEY
-          }`}
-          style={{ borderRadius: '0.5rem' }}
-        >
+    <div className="w-initial h-full" id="map">
+      <Map
+        mapLib={maplibregl}
+        initialViewState={{
+          latitude: defaultLat,
+          longitude: defaultLon,
+          zoom: 1,
+        }}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
+          import.meta.env.VITE_MAPTILER_API_KEY
+        }`}
+        style={{ borderRadius: '0.5rem' }}
+      >
+        {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
           <Marker
             latitude={position.latitude}
             longitude={position.longitude}
@@ -65,9 +67,9 @@ export default function MapSection({ data }) {
           >
             <img src="/drone_1.png" className="w-10 h-10" />
           </Marker>
-          <MapInformationPanel data={data} />
-        </Map>
-      )}
+        )}
+        {Object.keys(data).length && <MapInformationPanel data={data} />}
+      </Map>
     </div>
   )
 }

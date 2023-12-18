@@ -8,6 +8,7 @@ import { io } from 'socket.io-client'
 import moment from 'moment'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
+import Layout from './components/layout'
 
 const URL = 'http://127.0.0.1:5000'
 
@@ -72,7 +73,7 @@ export default function App() {
   }, [connected])
 
   return (
-    <div className="bg-zinc-600 w-sreen h-screen flex flex-col justify-around">
+    <Layout currentPage="dashboard">
       <div className="flex flex-row w-full">
         {/* grid wrapper for flight telemetry */}
         <div className="grid grid-cols-1 grid-rows-4 gap-3 m-2  w-2/6">
@@ -137,6 +138,6 @@ export default function App() {
           },
         ]}
       />
-    </div>
+    </Layout>
   )
 }

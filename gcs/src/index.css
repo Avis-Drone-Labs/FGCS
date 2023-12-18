@@ -15,12 +15,3 @@
 
   @apply bg-falcongrey-100 text-neutral-50;
 }
-
-html,
-body {
-  @apply min-h-screen;
-}
-
-#root {
-  @apply min-h-screen;
-}

@@ -74,9 +74,9 @@ export default function App() {
 
   return (
     <Layout currentPage="dashboard">
-      <div className="flex flex-row w-full">
+      <div className="flex w-full flex-auto">
         {/* grid wrapper for flight telemetry */}
-        <div className="grid grid-cols-1 grid-rows-4 gap-3 m-2  w-2/6">
+        <div className="flex-auto">
           <InfoCard text="Altitude" metric={telemetryData['alt']} unit="m" />
           <InfoCard
             text="Airspeed"
@@ -93,51 +93,10 @@ export default function App() {
         </div>
 
         {/** grid wrapper for map data */}
-        <div className="grid grid-cols-1 grid-rows-1 gap-3 p-2 w-3/6">
+        <div className="w-7/12">
           <MapSection data={gpsData} />
         </div>
-
-        {/** grid wrapper for battery data */}
-        <div className="grid grid-cols-1 grid-rows-1 gap-2 m-2  w-2/6">
-          <BatterySection data={batteryData} />
-        </div>
       </div>
-
-      <GraphArray
-        // TODO: Fix graphs
-        graphs={[
-          {
-            data: {
-              x: time,
-              y: parseFloat(
-                batteryData.voltages && batteryData.voltages[0] / 1000,
-              ),
-            },
-            datasetLabel: 'Battery Voltage',
-            lineColor: tailwindColors.red['400'],
-            pointColor: tailwindColors.red['600'],
-          },
-          {
-            data: {
-              x: time,
-              y: parseFloat(batteryData['current_battery'] / 100),
-            },
-            datasetLabel: 'Battery Current',
-            lineColor: tailwindColors.cyan['400'],
-            pointColor: tailwindColors.cyan['600'],
-          },
-          {
-            data: {
-              x: time,
-              y: parseFloat(telemetryData['airspeed']),
-            },
-            datasetLabel: 'Airspeed',
-            lineColor: tailwindColors.yellow['400'],
-            pointColor: tailwindColors.yellow['600'],
-            maxNumberOfDataPoints: 50,
-          },
-        ]}
-      />
     </Layout>
   )
 }

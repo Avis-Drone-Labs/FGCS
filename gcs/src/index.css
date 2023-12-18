@@ -15,3 +15,15 @@
 
   @apply bg-falcongrey-100 text-neutral-50;
 }
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}

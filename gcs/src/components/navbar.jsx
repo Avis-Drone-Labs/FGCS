@@ -5,7 +5,7 @@ export default function Navbar({ currentPage }) {
   const linkClassName =
     'text-md hover:text-falconred-60 transition-colors delay-50'
   return (
-    <div className="flex flex-row space-x-6 justify-center my-2">
+    <div className="flex flex-row space-x-6 justify-center py-2">
       <Link
         to="/"
         className={twMerge(

@@ -1,0 +1,50 @@
+{
+  "name": "gcs",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "lint": "eslint src --ext js,jsx",
+    "lint:fix": "eslint src --ext js,jsx --fix",
+    "prettier": "npx prettier src --check",
+    "prettier:fix": "npx prettier src --write",
+    "format": "yarn prettier:fix && yarn lint:fix",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tremor/react": "^3.12.1",
+    "chart.js": "^4.4.1",
+    "chartjs-adapter-moment": "^1.0.1",
+    "eslint-config-prettier": "^9.1.0",
+    "mapbox-gl": "^3.0.1",
+    "maplibre-gl": "^3.6.2",
+    "moment": "^2.29.4",
+    "prettier": "^3.1.1",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-map-gl": "^7.1.6",
+    "socket.io-client": "^4.7.2",
+    "tailwindcss": "^3.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^6.6.0",
+    "@typescript-eslint/parser": "^6.6.0",
+    "@vitejs/plugin-react": "^4.0.4",
+    "autoprefixer": "^10.4.16",
+    "electron": "^26.1.0",
+    "electron-builder": "^24.6.4",
+    "eslint": "^8.48.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "postcss": "^8.4.32",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9",
+    "vite-plugin-electron": "^0.14.0",
+    "vite-plugin-electron-renderer": "^0.14.5"
+  },
+  "main": "dist-electron/main.js"
+}

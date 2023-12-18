@@ -32,12 +32,11 @@ export default function MapSection({ data }) {
   const [defaultLon, setDefaultLon] = useState(null)
 
   useEffect(() => {
-    if (!data.lat || !data.lon) return
+    if (isNaN(data.lat) || isNaN(data.lon)) return
     let lat = data.lat * 1e-7
     let lon = data.lon * 1e-7
     setPosition({ latitude: lat, longitude: lon })
-    if (!defaultLat || !defaultLon) {
-      console.log('test')
+    if (!isNaN(defaultLat) || !isNaN(defaultLon)) {
       setDefaultLat(lat)
       setDefaultLon(lon)
     }
@@ -46,13 +45,13 @@ export default function MapSection({ data }) {
 
   return (
     <div className="w-initial h-full m-2 pb-[0.55rem]" id="map">
-      {position?.latitude && position?.longitude && (
+      {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
         <Map
           mapLib={maplibregl}
           initialViewState={{
             latitude: defaultLat,
             longitude: defaultLon,
-            zoom: 16
+            zoom: 16,
           }}
           mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
             import.meta.env.VITE_MAPTILER_API_KEY

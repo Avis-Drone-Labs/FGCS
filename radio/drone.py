@@ -21,10 +21,16 @@ class Drone:
 
         self.message_listeners = {}
         self.message_queue = Queue()
+
         self.is_active = True
+        self.is_requesting_params = False
+        self.current_param_index = 0
+        self.total_number_of_params = 0
+        self.params = {}
 
         self.startThread()
-        self.setupDataStreams()
+        # self.setupDataStreams()
+        # self.getAllParams()
 
     def setupDataStreams(self):
         """
@@ -62,6 +68,15 @@ class Drone:
             1,
         )
 
+    def stopAllDataStreams(self):
+        self.master.mav.request_data_stream_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_ALL,
+            1,
+            0,
+        )
+
     def addMessageListener(self, message_id, func=None):
         if message_id not in self.message_listeners:
             self.message_listeners[message_id] = func
@@ -91,9 +106,26 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                print(msg.msgname)
+                if self.is_requesting_params and msg.msgname != 'PARAM_VALUE':
+                    continue
+
+                if self.is_requesting_params and msg.msgname == 'PARAM_VALUE':
+                    self.params[msg.param_id] = msg.to_dict()
+
+                    self.current_param_index = msg.param_index
+                    
+                    if self.total_number_of_params != msg.param_count:
+                        self.total_number_of_params = msg.param_count
+
+                    if msg.param_index == msg.param_count - 1:
+                        self.is_requesting_params = False
+                        self.current_param_index = 0
+                        self.total_number_of_params = 0
+
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])
+
+                
 
     def executeMessages(self):
         while True:
@@ -106,18 +138,18 @@ class Drone:
         self.listener_thread.start()
         self.sender_thread.start()
 
+    def getAllParams(self):
+        self.stopAllDataStreams()
+
+        self.master.param_fetch_all()
+        self.is_requesting_params = True
+
     def close(self):
         self.is_active = False
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 
-        self.master.mav.request_data_stream_send(
-            self.target_system,
-            self.target_component,
-            mavutil.mavlink.MAV_DATA_STREAM_ALL,
-            1,
-            0,
-        )
+        self.stopAllDataStreams()
 
         self.master.close()
 

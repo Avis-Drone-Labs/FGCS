@@ -1,4 +1,3 @@
-import datetime
 import time
 
 from drone import Drone
@@ -17,86 +16,18 @@ from utils import getComPort
 # write_api = db_client.write_api(write_options=SYNCHRONOUS)
 
 
-def sys_status_cb(msg):
-    print(datetime.datetime.now().time(), msg.msgname)
-    # point = (
-    #     Point("sys_status")
-    #     .field("voltage_battery", msg.voltage_battery / 1000)
-    #     .field("current_battery", msg.current_battery / 100)
-    #     .field("battery_remaining", msg.battery_remaining)
-    # )
-    # write_api.write(bucket=bucket, org="Project Falcon", record=point)
-
-
-prev_time = 0
-
-
-def attitude_cb(msg):
-    # global prev_time
-    # if prev_time:
-    #     print(time.perf_counter() - prev_time)
-
-    # prev_time = time.perf_counter()
-    print(datetime.datetime.now().time(), msg.msgname)
-    # point = (
-    #     Point("attitude")
-    #     .field("pitch", msg.pitch)
-    #     .field("roll", msg.roll)
-    #     .field("yaw", msg.yaw)
-    # )
-    # write_api.write(bucket=bucket, org="Project Falcon", record=point)
-
-
-def gps_raw_int_cb(msg):
-    print(datetime.datetime.now().time(), msg.msgname)
-    # point = (
-    #     Point("gps_raw_int")
-    #     .field("lat", msg.lat)
-    #     .field("lon", msg.lon)
-    #     .field("satellites_visible", msg.satellites_visible)
-    # )
-    # write_api.write(bucket=bucket, org="Project Falcon", record=point)
-
-
-def vfr_hud_cb(msg):
-    print(datetime.datetime.now().time(), msg.msgname)
-    # point = (
-    #     Point("vfr_hud")
-    #     .field("airspeed", msg.airspeed)
-    #     .field("groundspeed", msg.groundspeed)
-    #     .field("heading", msg.heading)
-    #     .field("throttle", msg.throttle)
-    #     .field("altitude", msg.alt)
-    # )
-    # write_api.write(bucket=bucket, org="Project Falcon", record=point)
-
-
-def battery_status_cb(msg):
-    print(msg.msgname)
-
-
-def esc_status_cb(msg):
-    print(msg.current_battery)
+def test_cb(msg):
+    print(msg.param_id)
     # print(datetime.datetime.now().time(), datetime.datetime.fromtimestamp(msg._timestamp).time(), msg.rpm)
 
 
 if __name__ == "__main__":
-    # port = "COM11"
     port = getComPort()
     drone = Drone(port)
 
-    # drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_SYS_STATUS, sys_status_cb)
-    # drone.addMessageListener(
-    #     mavutil.mavlink.MAVLINK_MSG_ID_ATTITUDE, attitude_cb, interval=0.1
-    # )
-    # drone.addMessageListener(mavutil.mavlink.MAVLINK_MSG_ID_GPS_RAW_INT, gps_raw_int_cb)
-    # drone.addMessageListener(
-    #     mavutil.mavlink.MAVLINK_MSG_ID_VFR_HUD, vfr_hud_cb, interval=0.25
-    # )
-    # drone.addMessageListener(
-    #     mavutil.mavlink.MAVLINK_MSG_ID_BATTERY_STATUS, battery_status_cb
-    # )
-    drone.addMessageListener("BATTERY_STATUS", esc_status_cb)
+    drone.getAllParams()
+
+    drone.addMessageListener("PARAM_VALUE", test_cb)
 
     try:
         while True:

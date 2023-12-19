@@ -80,6 +80,32 @@ def set_multiple_params(params_list):
     else:
         socketio.emit('error', {'message': 'Failed to save parameters.'})
 
+@socketio.on('refresh_params')
+def refresh_params():
+    global state
+    if state != 'config':
+        socketio.emit('error', {'message': 'You must be on the config screen to refresh the parameters.'})
+        print(f'Current state: {state}')
+        return
+
+    drone.getAllParams()
+
+    timeout = time.time() + 60*3   # 3 minutes from now
+    last_index_sent = -1
+
+    while drone.is_requesting_params:
+        if time.time() > timeout:
+            socketio.emit('error', {'message': 'Parameter request timed out after 3 minutes.'})
+            return
+            
+        if last_index_sent != drone.current_param_index and drone.current_param_index > last_index_sent:
+            socketio.emit('param_request_update', {'current_param_index': drone.current_param_index, 'total_number_of_params': drone.total_number_of_params})
+            last_index_sent = drone.current_param_index
+
+        time.sleep(0.2)
+
+    socketio.emit('params', drone.params)
+
 def sendMessage(msg):
     data = msg.to_dict()
     data['timestamp'] = msg._timestamp

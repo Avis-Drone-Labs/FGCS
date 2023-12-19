@@ -9,7 +9,7 @@ import {
   Group,
   Button,
 } from '@mantine/core'
-import { useDebouncedValue } from '@mantine/hooks'
+import { useDebouncedValue, useListState } from '@mantine/hooks'
 import {
   IconPencil,
   IconRefresh,
@@ -22,6 +22,7 @@ export default function Config() {
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
   const [params, setParams] = useState(null)
   const [shownParams, setShownParams] = useState(null)
+  const [modifiedParams, modifiedParamsHandler] = useListState([])
   const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 350)
 
@@ -45,6 +46,20 @@ export default function Config() {
       )
     })
 
+    socket.on('param_set_success', (msg) => {
+      console.log(msg.message)
+      const clonedParams = structuredClone(params)
+      const clonedShownParams = structuredClone(shownParams)
+      modifiedParams.forEach((param) => {
+        clonedParams[param.param_id].param_value = param.param_value
+        if (clonedShownParams[param.param_id]) {
+          clonedShownParams[param.param_id].param_value = param.param_value
+        }
+      })
+
+      modifiedParamsHandler.setState([])
+    })
+
     socket.on('error', (err) => {
       console.error(err.message)
       setFetchingVars(false)
@@ -53,6 +68,7 @@ export default function Config() {
     return () => {
       socket.off('params')
       socket.off('param_request_update')
+      socket.off('param_set_success')
       socket.off('error')
     }
   })
@@ -74,6 +90,27 @@ export default function Config() {
     setShownParams(filteredParams)
   }, [debouncedSearchValue])
 
+  function addToModifiedParams(value, param) {
+    // TODO: Can this logic be tidied up?
+    if (
+      modifiedParams.find((obj) => {
+        return obj.param_id === param.param_id
+      })
+    ) {
+      modifiedParamsHandler.applyWhere(
+        (item) => item.param_id === param.param_id,
+        (item) => ({ ...item, param_value: value }),
+      )
+    } else {
+      param.param_value = value
+      modifiedParamsHandler.append(param)
+    }
+  }
+
+  function saveModifiedParams() {
+    socket.emit('set_multiple_params', modifiedParams)
+  }
+
   return (
     <Layout currentPage="config">
       {fetchingVars && <Progress radius="xs" value={fetchingVarsProgress} />}
@@ -86,7 +123,12 @@ export default function Config() {
               value={searchValue}
               onChange={(event) => setSearchValue(event.currentTarget.value)}
             />
-            <Button size="sm" rightSection={<IconPencil size={14} />}>
+            <Button
+              size="sm"
+              rightSection={<IconPencil size={14} />}
+              disabled={!modifiedParams.length}
+              onClick={saveModifiedParams}
+            >
               Save params
             </Button>
             <Button size="sm" rightSection={<IconRefresh size={14} />}>
@@ -113,7 +155,11 @@ export default function Config() {
                     <Table.Td>{param}</Table.Td>
                     <Table.Td>
                       <NumberInput
-                        value={+params[param].param_value.toFixed(5)}
+                        value={params[param].param_value}
+                        onChange={(value) => {
+                          addToModifiedParams(value, params[param])
+                        }}
+                        decimalScale={5}
                       />
                     </Table.Td>
                   </Table.Tr>

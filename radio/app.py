@@ -1,8 +1,9 @@
 import time
 
-from drone import Drone
 from flask import Flask
 from flask_socketio import SocketIO
+
+from drone import Drone
 from utils import getComPort
 
 app = Flask(__name__)
@@ -31,6 +32,7 @@ def disconnect():
 
 @socketio.on('set_state')
 def set_state(data):
+    global state
     state = data.get('state')
 
     if state == 'dashboard':
@@ -64,6 +66,19 @@ def set_state(data):
 
         socketio.emit('params', drone.params)
         
+@socketio.on('set_multiple_params')
+def set_multiple_params(params_list):
+    global state
+    if state != 'config':
+        socketio.emit('error', {'message': 'You must be on the config screen to save parameters.'})
+        print(f'Current state: {state}')
+        return
+    
+    success = drone.setMultipleParams(params_list)
+    if success:
+        socketio.emit('param_set_success', {'message': 'Parameters saved successfully.'})
+    else:
+        socketio.emit('error', {'message': 'Failed to save parameters.'})
 
 def sendMessage(msg):
     data = msg.to_dict()

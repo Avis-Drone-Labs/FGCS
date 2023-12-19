@@ -114,7 +114,8 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                print(msg.msgname)
+                if msg.msgname != 'HEARTBEAT':
+                    print(msg.msgname)
                 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
                 
@@ -160,7 +161,7 @@ class Drone:
             return False
 
         for param in params_list:
-            done = self.setParam(param.get('param_name'), param.get('param_value'), param.get('param_type'))
+            done = self.setParam(param.get('param_id'), param.get('param_value'), param.get('param_type'))
             if not done:
                 return False
 

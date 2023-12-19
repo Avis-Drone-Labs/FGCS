@@ -106,6 +106,7 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
+                print(msg.msgname)
                 if self.is_requesting_params and msg.msgname != 'PARAM_VALUE':
                     continue
 
@@ -121,6 +122,7 @@ class Drone:
                         self.is_requesting_params = False
                         self.current_param_index = 0
                         self.total_number_of_params = 0
+                        self.params = dict(sorted(self.params.items()))
 
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])

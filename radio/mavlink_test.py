@@ -1,5 +1,6 @@
 import time
 
+
 from drone import Drone
 from utils import getComPort
 
@@ -17,7 +18,7 @@ from utils import getComPort
 
 
 def test_cb(msg):
-    print(msg.param_id)
+    print(msg.msgname)
     # print(datetime.datetime.now().time(), datetime.datetime.fromtimestamp(msg._timestamp).time(), msg.rpm)
 
 
@@ -25,9 +26,27 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port)
 
+    # drone.setupDataStreams()
     drone.getAllParams()
 
-    drone.addMessageListener("PARAM_VALUE", test_cb)
+    params_to_set = [
+        {
+            'param_name': 'FLTMODE5',
+            'param_value': 0,
+            'param_type': 2,
+        },
+        {
+            'param_name': 'FLTMODE6',
+            'param_value': 9,
+            'param_type': 2,
+        },
+    ]
+
+    time.sleep(1)
+    print(drone.setMultipleParams(params_to_set))
+    print(drone.params)
+
+    # drone.addMessageListener("PARAM_VALUE", test_cb)
 
     try:
         while True:

@@ -1,10 +1,12 @@
 import copy
+import os
 import traceback
 from queue import Queue
 from threading import Thread
 
 from pymavlink import mavutil
 
+os.environ['MAVLINK20'] = '1'
 
 class Drone:
     def __init__(self, port, baud=57600, wireless=False):

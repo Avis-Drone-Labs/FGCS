@@ -1,10 +1,9 @@
 import time
 
-from utils import getComPort
 from drone import Drone
-
 from flask import Flask
 from flask_socketio import SocketIO
+from utils import getComPort
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret-key"

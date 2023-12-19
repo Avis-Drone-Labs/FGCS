@@ -1,5 +1,6 @@
-from influxdb_client import InfluxDBClient
 import time
+
+from influxdb_client import InfluxDBClient
 
 token = "EKU_pTBZbvTIAF7mRPiNerKdS69vBXVY0zfXtWmvkdFLcD6DGGhel89J9IuzAjg9jljbuB06fQOJZIkI1rJ35g=="
 

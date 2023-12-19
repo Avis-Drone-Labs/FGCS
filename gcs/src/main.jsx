@@ -6,9 +6,13 @@ import Graphs from './graphs.jsx'
 import Config from './config.jsx'
 import AllData from './allData.jsx'
 import { HashRouter, Route, Routes } from 'react-router-dom'
+import '@mantine/core/styles.css'
+
+import { MantineProvider } from '@mantine/core'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+  // <React.StrictMode>
+  <MantineProvider defaultColorScheme="dark">
     <HashRouter>
       <Routes>
         <Route path="/" element={<App />} />
@@ -17,7 +21,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/all-data" element={<AllData />} />
       </Routes>
     </HashRouter>
-  </React.StrictMode>,
+  </MantineProvider>,
+  // </React.StrictMode>,
 )
 
 // Remove Preload scripts loading

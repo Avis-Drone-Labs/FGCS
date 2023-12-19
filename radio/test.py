@@ -1,5 +1,6 @@
-from influxdb_client import InfluxDBClient, WriteOptions
 import time
+
+from influxdb_client import InfluxDBClient, WriteOptions
 
 token = "EKU_pTBZbvTIAF7mRPiNerKdS69vBXVY0zfXtWmvkdFLcD6DGGhel89J9IuzAjg9jljbuB06fQOJZIkI1rJ35g=="
 

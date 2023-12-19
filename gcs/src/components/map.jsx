@@ -43,8 +43,6 @@ export default function MapSection({ data }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
-  console.log(data)
-
   return (
     <div className="w-initial h-full" id="map">
       <Map

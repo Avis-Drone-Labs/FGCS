@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import BatterySection from './components/battery'
-import GraphArray from './components/graphArray'
 import InfoCard from './components/infoCard'
 import Layout from './components/layout'
 import MapSection from './components/map'
@@ -9,8 +7,13 @@ import moment from 'moment'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import { socket } from './socket'
 import tailwindConfig from '../tailwind.config.js'
+<<<<<<< Updated upstream
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+=======
+import Layout from './components/layout'
+import { dialog } from 'electron'
+>>>>>>> Stashed changes
 
 export default function App() {
   const [listening, setListening] = useState(false)
@@ -57,6 +60,8 @@ export default function App() {
       setListening(false)
     }
   }, [listening])
+
+  console.log(dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] }))
 
   return (
     <Layout currentPage="dashboard">

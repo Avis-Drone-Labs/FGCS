@@ -1,23 +1,24 @@
-import Layout from './components/layout'
-import { socket } from './socket'
-import { useEffect, useState } from 'react'
 import {
+  Button,
+  Group,
   NumberInput,
   Progress,
+  ScrollArea,
   Table,
   TextInput,
-  Group,
-  Button,
-  ScrollArea,
 } from '@mantine/core'
+import { IconPencil, IconPower, IconRefresh } from '@tabler/icons-react'
 import { useDebouncedValue, useListState } from '@mantine/hooks'
-import { IconPencil, IconRefresh, IconPower } from '@tabler/icons-react'
+import { useEffect, useState } from 'react'
+
+import Layout from './components/layout.jsx'
 import resolveConfig from 'tailwindcss/resolveConfig'
+import { socket } from './socket.js'
 import tailwindConfig from '../tailwind.config.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Config() {
+export default function Params() {
   const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
   const [params, setParams] = useState(null)
@@ -29,7 +30,7 @@ export default function Config() {
   useEffect(() => {
     if (params === null && !fetchingVars) {
       console.log('setting state')
-      socket.emit('set_state', { state: 'config' })
+      socket.emit('set_state', { state: 'params' })
       setFetchingVars(true)
     }
 
@@ -121,7 +122,7 @@ export default function Config() {
   console.log(tailwindColors)
 
   return (
-    <Layout currentPage="config">
+    <Layout currentPage="params">
       {fetchingVars && (
         <Progress
           radius="xs"

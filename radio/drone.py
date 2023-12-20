@@ -9,7 +9,8 @@ from threading import Thread
 from pymavlink import mavutil
 
 
-os.environ['MAVLINK20'] = '1'
+os.environ["MAVLINK20"] = "1"
+
 
 class Drone:
     def __init__(self, port, baud=57600, wireless=False):
@@ -52,19 +53,31 @@ class Drone:
         """
         if self.wireless:
             # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 1)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 1)
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 1
+            )
             # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 1)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1)
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1
+            )
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 4)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 3)
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 1)
         else:
             # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 2)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 2)
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 2
+            )
             # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 20)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 10)
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3
+            )
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 20
+            )
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 10
+            )
             self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 3)
 
     def sendDataStreamRequestMessage(self, stream, rate):
@@ -114,19 +127,27 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                if msg.msgname != 'HEARTBEAT':
-                    print(msg.msgname)
-                
-                # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
-                
-                if self.is_requesting_params and msg.msgname != 'PARAM_VALUE':
+                if msg.msgname == "HEARTBEAT":
                     continue
-                
-                if self.is_requesting_params and msg.msgname == 'PARAM_VALUE':
+
+                if msg.msgname == "TIMESYNC":
+                    component_timestamp = msg.ts1
+                    local_timestamp = time.time_ns()
+                    self.master.mav.timesync_send(local_timestamp, component_timestamp)
+                    continue
+
+                print(msg.msgname)
+
+                # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
+
+                if self.is_requesting_params and msg.msgname != "PARAM_VALUE":
+                    continue
+
+                if self.is_requesting_params and msg.msgname == "PARAM_VALUE":
                     self.saveParam(msg.param_id, msg.param_value, msg.param_type)
 
                     self.current_param_index = msg.param_index
-                    
+
                     if self.total_number_of_params != msg.param_count:
                         self.total_number_of_params = msg.param_count
 
@@ -161,7 +182,9 @@ class Drone:
             return False
 
         for param in params_list:
-            done = self.setParam(param.get('param_id'), param.get('param_value'), param.get('param_type'))
+            done = self.setParam(
+                param.get("param_id"), param.get("param_value"), param.get("param_type")
+            )
             if not done:
                 return False
 
@@ -174,7 +197,10 @@ class Drone:
         try:
             # Check if value fits inside the param type
             # https://github.com/ArduPilot/pymavlink/blob/4d8c4ff274d41b9bc8da1a411cb172d39786e46b/mavparm.py#L30C10-L30C10
-            if param_type is not None and param_type != mavutil.mavlink.MAV_PARAM_TYPE_REAL32:
+            if (
+                param_type is not None
+                and param_type != mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+            ):
                 # need to encode as a float for sending - not being used
                 if param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT8:
                     struct.pack(">xxxB", int(param_value))
@@ -195,7 +221,7 @@ class Drone:
                 # vfloat, = struct.unpack(">f", vstr)
             vfloat = float(param_value)
         except struct.error as e:
-            print(f'Could not set parameter {param_name} with value {param_value}: {e}')
+            print(f"Could not set parameter {param_name} with value {param_value}: {e}")
             self.is_listening = True
             return False
 
@@ -204,7 +230,7 @@ class Drone:
             self.master.param_set_send(param_name.upper(), vfloat, parm_type=param_type)
             tstart = time.time()
             while time.time() - tstart < 1:
-                ack = self.master.recv_match(type='PARAM_VALUE', blocking=False)
+                ack = self.master.recv_match(type="PARAM_VALUE", blocking=False)
                 if ack is None:
                     time.sleep(0.1)
                     continue
@@ -223,12 +249,12 @@ class Drone:
 
     def saveParam(self, param_name, param_value, param_type):
         if param_name in self.params:
-            self.params[param_name]['param_value'] = param_value
+            self.params[param_name]["param_value"] = param_value
         else:
             self.params[param_name] = {
-                'param_id': param_name,
-                'param_value': param_value,
-                'param_type': param_type,
+                "param_id": param_name,
+                "param_value": param_value,
+                "param_type": param_type,
             }
 
     def close(self):

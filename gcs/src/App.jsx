@@ -7,8 +7,10 @@ import Layout from './components/layout'
 import MapSection from './components/map'
 import moment from 'moment'
 import resolveConfig from 'tailwindcss/resolveConfig'
-import { socket } from './socket'
 import tailwindConfig from '../tailwind.config.js'
+import { socket } from './socket'
+import { useDisclosure } from '@mantine/hooks';
+import { Modal, Button } from '@mantine/core';
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -18,6 +20,7 @@ export default function App() {
   const [gpsData, setGpsData] = useState({})
   const [batteryData, setBatteryData] = useState({})
   const [time, setTime] = useState(null)
+  const [opened, { open, close }] = useDisclosure(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function App() {
 
   return (
     <Layout currentPage="dashboard">
+      <Modal opened={opened}></Modal>
       <div className="flex w-full flex-auto">
         {/* grid wrapper for flight telemetry */}
         <div className="flex-auto">

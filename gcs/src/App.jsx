@@ -7,13 +7,8 @@ import moment from 'moment'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import { socket } from './socket'
 import tailwindConfig from '../tailwind.config.js'
-<<<<<<< Updated upstream
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-=======
-import Layout from './components/layout'
-import { dialog } from 'electron'
->>>>>>> Stashed changes
 
 export default function App() {
   const [listening, setListening] = useState(false)
@@ -60,8 +55,6 @@ export default function App() {
       setListening(false)
     }
   }, [listening])
-
-  console.log(dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] }))
 
   return (
     <Layout currentPage="dashboard">

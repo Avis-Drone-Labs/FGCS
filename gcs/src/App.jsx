@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react'
 import BatterySection from './components/battery'
 import GraphArray from './components/graphArray'
 import InfoCard from './components/infoCard'
+import Layout from './components/layout'
 import MapSection from './components/map'
-import { socket } from './socket'
 import moment from 'moment'
 import resolveConfig from 'tailwindcss/resolveConfig'
+import { socket } from './socket'
 import tailwindConfig from '../tailwind.config.js'
-import Layout from './components/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -19,8 +19,18 @@ export default function App() {
   const [batteryData, setBatteryData] = useState({})
   const [time, setTime] = useState(null)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    socket.emit('set_state', { state: 'dashboard' })
+    if (!listening) {
+      socket.emit('set_state', { state: 'dashboard' })
+      setListening(true)
+    }
+  })
+
+  useEffect(() => {
+    if (!listening) {
+      return
+    }
 
     socket.on('incoming_msg', (msg) => {
       switch (msg.mavpackettype) {
@@ -44,8 +54,9 @@ export default function App() {
 
     return () => {
       socket.off('incoming_msg')
+      setListening(false)
     }
-  })
+  }, [listening])
 
   return (
     <Layout currentPage="dashboard">

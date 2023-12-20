@@ -25,13 +25,13 @@ export default function Navbar({ currentPage }) {
         Graphs
       </Link>
       <Link
-        to="/config"
+        to="/params"
         className={twMerge(
           linkClassName,
-          currentPage === 'config' && 'text-falconred font-bold',
+          currentPage === 'params' && 'text-falconred font-bold',
         )}
       >
-        Config
+        Params
       </Link>
       <Link
         to="/all-data"

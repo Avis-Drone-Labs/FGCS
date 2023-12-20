@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import BatterySection from './components/battery'
-import GraphArray from './components/graphArray'
 import InfoCard from './components/infoCard'
 import Layout from './components/layout'
 import MapSection from './components/map'
@@ -11,8 +9,6 @@ import tailwindConfig from '../tailwind.config.js'
 import { socket } from './socket'
 import { useDisclosure } from '@mantine/hooks';
 import { Modal, Button } from '@mantine/core';
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function App() {
   const [listening, setListening] = useState(false)
@@ -60,6 +56,8 @@ export default function App() {
       setListening(false)
     }
   }, [listening])
+
+  console.log(dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] }))
 
   return (
     <Layout currentPage="dashboard">

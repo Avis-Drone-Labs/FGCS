@@ -1,24 +1,31 @@
 import {
   Button,
-  Group,
   NumberInput,
   Progress,
   ScrollArea,
   Table,
   TextInput,
 } from '@mantine/core'
+import {
+  useDebouncedValue,
+  useListState,
+  useLocalStorage,
+} from '@mantine/hooks'
 import { IconPencil, IconPower, IconRefresh } from '@tabler/icons-react'
-import { useDebouncedValue, useListState } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
-import Layout from './components/layout.jsx'
 import resolveConfig from 'tailwindcss/resolveConfig'
-import { socket } from './socket.js'
 import tailwindConfig from '../tailwind.config.js'
+import Layout from './components/layout.jsx'
+import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Params() {
+  const [connected] = useLocalStorage({
+    key: 'connectedToDrone',
+    defaultValue: false,
+  })
   const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
   const [params, setParams] = useState(null)
@@ -28,7 +35,17 @@ export default function Params() {
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 350)
 
   useEffect(() => {
-    if (params === null && !fetchingVars) {
+    if (!connected) {
+      setFetchingVars(false)
+      setFetchingVarsProgress(0)
+      setParams(null)
+      setShownParams([])
+      modifiedParamsHandler.setState([])
+      setSearchValue('')
+      return
+    }
+
+    if (connected && params === null && !fetchingVars) {
       console.log('setting state')
       socket.emit('set_state', { state: 'params' })
       setFetchingVars(true)
@@ -72,7 +89,7 @@ export default function Params() {
       socket.off('param_set_success')
       socket.off('error')
     }
-  })
+  }, [connected])
 
   useEffect(() => {
     if (!params) return
@@ -118,8 +135,6 @@ export default function Params() {
     socket.emit('refresh_params')
     setFetchingVars(true)
   }
-
-  console.log(tailwindColors)
 
   return (
     <Layout currentPage="params">

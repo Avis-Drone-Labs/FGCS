@@ -1,33 +1,31 @@
 import { useEffect, useState } from 'react'
 
+import { useLocalStorage } from '@mantine/hooks'
+import moment from 'moment'
 import InfoCard from './components/infoCard'
 import Layout from './components/layout'
 import MapSection from './components/map'
-import moment from 'moment'
-import resolveConfig from 'tailwindcss/resolveConfig'
 import { socket } from './socket'
-import tailwindConfig from '../tailwind.config.js'
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function App() {
-  const [listening, setListening] = useState(false)
+  const [connected] = useLocalStorage({
+    key: 'connectedToDrone',
+    defaultValue: false,
+  })
   const [telemetryData, setTelemetryData] = useState({})
   const [gpsData, setGpsData] = useState({})
   const [batteryData, setBatteryData] = useState({})
   const [time, setTime] = useState(null)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!listening) {
-      socket.emit('set_state', { state: 'dashboard' })
-      setListening(true)
-    }
-  })
-
-  useEffect(() => {
-    if (!listening) {
+    if (!connected) {
+      setTelemetryData({})
+      setGpsData({})
+      setBatteryData({})
+      setTime(null)
       return
+    } else {
+      socket.emit('set_state', { state: 'dashboard' })
     }
 
     socket.on('incoming_msg', (msg) => {
@@ -52,9 +50,8 @@ export default function App() {
 
     return () => {
       socket.off('incoming_msg')
-      setListening(false)
     }
-  }, [listening])
+  }, [connected])
 
   return (
     <Layout currentPage="dashboard">

@@ -1,11 +1,10 @@
-import time
 import sys
-
-from serial.tools import list_ports
-from flask import Flask
-from flask_socketio import SocketIO
+import time
 
 from drone import Drone
+from flask import Flask
+from flask_socketio import SocketIO
+from serial.tools import list_ports
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret-key"
@@ -29,10 +28,18 @@ def connection():
 
 @socketio.on("disconnect")
 def disconnect():
-    global drone
-    drone.close()
+    global drone, state
+    if drone:
+        drone.close()
     drone = None
+    state = None
     print("Client disconnected!")
+
+
+@socketio.on("is_connected_to_drone")
+def isConnectedToDrone():
+    global drone
+    socketio.emit("is_connected_to_drone", bool(drone))
 
 
 @socketio.on("get_com_ports")
@@ -55,8 +62,8 @@ def getComPort():
 
         port_name = f"{port_name}: {port.description}"
         correct_ports.append(port_name)
-    print(correct_ports)
     socketio.emit("list_com_ports", correct_ports)
+
 
 @socketio.on("set_com_port")
 def setComPort(data):
@@ -64,15 +71,28 @@ def setComPort(data):
     if drone:
         drone.close()
         drone = None
-    
+
     port = data.get("port").split(":")[0]
     baud = data.get("baud")
     drone = Drone(port, wireless=True, baud=baud)
+    time.sleep(1)
     socketio.emit("connected_to_drone")
+
+
+@socketio.on("disconnect_from_drone")
+def disconnectFromDrone():
+    global drone, state
+    drone.close()
+    drone = None
+    state = None
+    socketio.emit("disconnected_from_drone")
+
 
 @socketio.on("set_state")
 def set_state(data):
-    global state
+    global drone, state
+    if not drone:
+        return
     state = data.get("state")
 
     if state == "dashboard":
@@ -186,5 +206,5 @@ def sendMessage(msg):
 
 if __name__ == "__main__":
     socketio.run(app, allow_unsafe_werkzeug=True)
-    if drone: 
+    if drone:
         drone.close()

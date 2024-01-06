@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { useLocalStorage } from '@mantine/hooks'
 import moment from 'moment'
+import { AttitudeIndicator } from './components/indicator'
 import InfoCard from './components/infoCard'
 import Layout from './components/layout'
 import MapSection from './components/map'
@@ -14,6 +15,7 @@ export default function App() {
   })
   const [telemetryData, setTelemetryData] = useState({})
   const [gpsData, setGpsData] = useState({})
+  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
   const [batteryData, setBatteryData] = useState({})
   const [time, setTime] = useState(null)
 
@@ -37,7 +39,7 @@ export default function App() {
           setBatteryData(msg)
           break
         case 'ATTITUDE':
-          // TODO
+          setAttitudeData(msg)
           break
         case 'GLOBAL_POSITION_INT':
           setGpsData(msg)
@@ -55,9 +57,18 @@ export default function App() {
 
   return (
     <Layout currentPage="dashboard">
-      <div className="flex w-full h-full flex-auto">
-        {/* grid wrapper for flight telemetry */}
-        <div className="h-full w-5/12">
+      <div className="flex w-full h-full flex-auto relative">
+        <div className="w-full">
+          <MapSection data={gpsData} />
+        </div>
+        <div className="absolute top-0 left-0">
+          <AttitudeIndicator
+            roll={attitudeData.roll * (180 / Math.PI)}
+            pitch={attitudeData.pitch * (180 / Math.PI)}
+            size="300px"
+          />
+        </div>
+        <div className="w-1/3 absolute bottom-0 left-0">
           <InfoCard text="Altitude" metric={telemetryData['alt']} unit="m" />
           <InfoCard
             text="Airspeed"
@@ -71,11 +82,6 @@ export default function App() {
             metric={telemetryData['groundspeed']}
             unit="m/s"
           />
-        </div>
-
-        {/** grid wrapper for map data */}
-        <div className="w-7/12">
-          <MapSection data={gpsData} />
         </div>
       </div>
     </Layout>

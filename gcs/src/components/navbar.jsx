@@ -36,7 +36,6 @@ export default function Navbar({ currentPage }) {
     })
 
     socket.on('list_com_ports', (msg) => {
-      console.log(msg)
       setComPorts(msg)
       const possibleComPort = msg.find((port) =>
         port.toLowerCase().includes('mavlink'),
@@ -66,6 +65,10 @@ export default function Navbar({ currentPage }) {
       setConnected(false)
     }
   }, [])
+
+  useEffect(() => {
+    socket.emit('get_com_ports')
+  }, [opened])
 
   function saveCOMData() {
     socket.emit('set_com_port', {

@@ -65,7 +65,7 @@ export default function App() {
           <AttitudeIndicator
             roll={attitudeData.roll * (180 / Math.PI)}
             pitch={attitudeData.pitch * (180 / Math.PI)}
-            size="300px"
+            size="400px"
           />
         </div>
         <div className="w-1/3 absolute bottom-0 left-0">

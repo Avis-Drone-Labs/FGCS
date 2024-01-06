@@ -1,4 +1,3 @@
-import fi_circle from './img/fi_circle.svg'
 import horizon_back from './img/horizon_back.svg'
 import horizon_ball from './img/horizon_ball.svg'
 import horizon_circle from './img/horizon_circle.svg'
@@ -26,6 +25,7 @@ const Instrument = ({ children, size }) => {
         position: 'relative',
         display: 'inline-block',
         overflow: 'hidden',
+        clipPath: `circle(36.66% at center)`,
       }}
     >
       {children}
@@ -48,7 +48,7 @@ export const AttitudeIndicator = (params) => {
         style={{
           ...box,
           top: '0%',
-          transform: `rotate(${params.roll ?? 0}deg)`,
+          transform: `rotate(${-params.roll ?? 0}deg)`,
         }}
       >
         <img src={horizon_back} className="box" alt="" style={{ ...box }} />
@@ -59,7 +59,6 @@ export const AttitudeIndicator = (params) => {
       </div>
       <div className="mechanics box" style={box}>
         <img src={horizon_mechanics} className="box" style={box} alt="" />
-        <img src={fi_circle} className="box" style={box} alt="" />
       </div>
     </Instrument>
   )

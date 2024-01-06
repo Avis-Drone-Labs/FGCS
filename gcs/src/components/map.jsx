@@ -1,14 +1,14 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-import Map, { Marker } from 'react-map-gl'
 import { useEffect, useState } from 'react'
+import Map, { Marker } from 'react-map-gl'
 
 import maplibregl from 'maplibre-gl'
 
 function MapInformationPanel({ data }) {
   // TODO: Change to display satellites visible, GPS fix
   return (
-    <div className="z-10 relative bg-falcongrey/70 w-1/3 p-4 rounded-bl-lg float-right">
+    <div className="z-10 relative bg-falcongrey/70 w-1/3 p-4 float-right">
       <div className="flex flex-col">
         {Object.keys(data).map((name, i) => {
           let value = data[name]
@@ -28,8 +28,8 @@ function MapInformationPanel({ data }) {
 
 export default function MapSection({ data }) {
   const [position, setPosition] = useState({})
-  const [defaultLat, setDefaultLat] = useState(null)
-  const [defaultLon, setDefaultLon] = useState(null)
+  const [defaultLat, setDefaultLat] = useState(53.381655)
+  const [defaultLon, setDefaultLon] = useState(-1.481434)
 
   useEffect(() => {
     if (isNaN(data.lat) || isNaN(data.lon)) return
@@ -50,12 +50,11 @@ export default function MapSection({ data }) {
         initialViewState={{
           latitude: defaultLat,
           longitude: defaultLon,
-          zoom: 1,
+          zoom: 16,
         }}
         mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
           import.meta.env.VITE_MAPTILER_API_KEY
         }`}
-        style={{ borderRadius: '0.5rem' }}
       >
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
           <Marker

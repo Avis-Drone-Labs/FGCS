@@ -55,9 +55,9 @@ export default function App() {
 
   return (
     <Layout currentPage="dashboard">
-      <div className="flex w-full flex-auto">
+      <div className="flex w-full h-full flex-auto">
         {/* grid wrapper for flight telemetry */}
-        <div className="flex-auto">
+        <div className="h-full w-5/12">
           <InfoCard text="Altitude" metric={telemetryData['alt']} unit="m" />
           <InfoCard
             text="Airspeed"

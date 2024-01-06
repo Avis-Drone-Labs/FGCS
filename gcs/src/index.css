@@ -13,12 +13,12 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  @apply bg-falcongrey-100 text-neutral-50;
+  @apply bg-falcongrey-100 text-neutral-50 h-full max-h-full min-h-screen;
 }
 
 html,
 body {
-  height: 100%;
+  height: auto;
   margin: 0;
 }
 

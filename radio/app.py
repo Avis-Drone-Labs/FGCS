@@ -74,7 +74,7 @@ def setComPort(data):
 
     port = data.get("port").split(":")[0]
     baud = data.get("baud")
-    drone = Drone(port, wireless=True, baud=baud)
+    drone = Drone(port, wireless=False, baud=baud)
     time.sleep(1)
     socketio.emit("connected_to_drone")
 

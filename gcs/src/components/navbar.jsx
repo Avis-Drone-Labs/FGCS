@@ -1,7 +1,8 @@
-import { Button, Group, Modal, Select } from '@mantine/core'
+import { Button, Group, LoadingOverlay, Modal, Select } from '@mantine/core'
 import { useDisclosure, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
+import { IconRefresh } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -19,6 +20,12 @@ export default function Navbar({ currentPage }) {
   const [comPorts, setComPorts] = useState([])
   const [selectedComPort, setSelectedComPort] = useState(null)
   const [selectedBaudRate, setSelectedBaudRate] = useState('9600')
+  const [fetchingComPorts, setFetchingComPorts] = useState(false)
+
+  function getComPorts() {
+    socket.emit('get_com_ports')
+    setFetchingComPorts(true)
+  }
 
   useEffect(() => {
     if (selectedComPort === null) {
@@ -31,11 +38,12 @@ export default function Navbar({ currentPage }) {
         setConnected(true)
       } else {
         setConnected(false)
-        socket.emit('get_com_ports')
+        getComPorts()
       }
     })
 
     socket.on('list_com_ports', (msg) => {
+      setFetchingComPorts(false)
       setComPorts(msg)
       const possibleComPort = msg.find((port) =>
         port.toLowerCase().includes('mavlink'),
@@ -66,10 +74,6 @@ export default function Navbar({ currentPage }) {
     }
   }, [])
 
-  useEffect(() => {
-    socket.emit('get_com_ports')
-  }, [opened])
-
   function saveCOMData() {
     socket.emit('set_com_port', {
       port: selectedComPort,
@@ -90,7 +94,7 @@ export default function Navbar({ currentPage }) {
       <Modal
         opened={opened}
         onClose={close}
-        title="Set COM Port"
+        title="Select COM Port"
         centered
         overlayProps={{
           backgroundOpacity: 0.55,
@@ -98,12 +102,17 @@ export default function Navbar({ currentPage }) {
         }}
         withCloseButton={false}
       >
+        <LoadingOverlay visible={fetchingComPorts} />
         <Select
           label="COM Port"
           description="Select a COM Port from the ones available"
+          placeholder={comPorts.length ? ('Select a COM port') : ('No COM ports found')}
           data={comPorts}
           value={selectedComPort}
           onChange={setSelectedComPort}
+          rightSectionPointerEvents='all'
+          rightSection={<IconRefresh />}
+          rightSectionProps={{onClick: getComPorts, className: 'hover:cursor-pointer hover:bg-transparent/50'}}
         />
         <Select
           label="Baud Rate"
@@ -127,6 +136,7 @@ export default function Navbar({ currentPage }) {
             variant="filled"
             color={tailwindColors.green[600]}
             onClick={saveCOMData}
+            data-autofocus
           >
             Save
           </Button>
@@ -171,7 +181,7 @@ export default function Navbar({ currentPage }) {
       </Link>
       <div className="!ml-auto flex flex-row space-x-4 items-center">
         <p>{connected && selectedComPort}</p>
-        <Button onClick={connected ? disconnect : open}>
+        <Button onClick={connected ? disconnect : open} color={connected ? tailwindColors.red[600] : tailwindColors.green[600]}>
           {connected ? 'Disconnect' : 'Connect'}
         </Button>
       </div>

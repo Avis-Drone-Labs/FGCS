@@ -1,5 +1,5 @@
 import { useListState, useLocalStorage } from '@mantine/hooks'
-import { IconAntenna, IconBattery2, IconSatellite } from '@tabler/icons-react'
+import { IconAntenna, IconBattery2, IconGps, IconSatellite } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import StatusBar, { StatusSection } from './components/statusBar'
@@ -222,7 +222,7 @@ export default function App() {
 
         <StatusBar className="absolute top-0 right-0">
           <StatusSection
-            icon={<IconSatellite />}
+            icon={<IconGps />}
             value={`(${
               gpsData.lat !== undefined ? gpsData.lat.toFixed(6) : 0
             }, ${gpsData.lon !== undefined ? gpsData.lon.toFixed(6) : 0})`}

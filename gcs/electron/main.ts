@@ -28,7 +28,7 @@ function createWindow() {
     show: false,
   })
 
-  win.setMenu(null)
+  win.setMenuBarVisibility(false)
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

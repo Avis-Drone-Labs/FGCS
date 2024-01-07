@@ -10,6 +10,17 @@ export const MAV_STATE = [
   'FLIGHT TERMINATION',
 ]
 
+export const MAV_SEVERITY = [
+  'EMERGENCY',
+  'ALERT',
+  'CRITICAL',
+  'ERROR',
+  'WARNING',
+  'NOTICE',
+  'INFO',
+  'DEBUG',
+]
+
 export const PLANE_MODES = [
   'MANUAL',
   'CIRCLE',

@@ -1,11 +1,12 @@
+import { useListState, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import { COPTER_MODES, MAV_STATE, PLANE_MODES } from './mavlinkConstants'
 
-import { useLocalStorage } from '@mantine/hooks'
 import moment from 'moment'
 import Layout from './components/layout'
 import MapSection from './components/map'
+import StatusMessages from './components/statusMessages'
 import { socket } from './socket'
 
 export default function App() {
@@ -19,7 +20,7 @@ export default function App() {
   const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [batteryData, setBatteryData] = useState({})
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-  const [statustextData, setStatustextData] = useState({})
+  const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({})
   const [time, setTime] = useState(null)
 
@@ -32,6 +33,7 @@ export default function App() {
       return
     } else {
       socket.emit('set_state', { state: 'dashboard' })
+      statustextMessagesHandler.setState([])
     }
 
     socket.on('incoming_msg', (msg) => {
@@ -58,7 +60,7 @@ export default function App() {
           break
         case 'STATUSTEXT':
           console.log(msg) // TODO: Accomodate for multiple status text messages and display all, incoming every 30s approx
-          setStatustextData(msg)
+          statustextMessagesHandler.prepend(msg)
           break
         case 'SYS_STATUS':
           setSysStatusData(msg)
@@ -103,17 +105,24 @@ export default function App() {
           <MapSection data={gpsData} />
         </div>
         <div className="absolute top-0 left-0 bg-falcongrey/75 p-4">
-          <p className="text-center">
-            {MAV_STATE[heartbeatData.system_status]}
-          </p>
-          <p className="text-center">{getFlightMode()}</p>
-          <p className="text-center">{getIsArmed() ? 'ARMED' : 'DISARMED'}</p>
-          <p className="text-center">
-            {getIsArmable() && !getIsArmed()
-              ? 'Ready to Arm'
-              : 'Not Ready to Arm'}
-          </p>
-          <p className="text-center">{statustextData.text}</p>
+          <div className="flex flex-col space-y-2 items-center">
+            {getIsArmed() ? (
+              <p className="text-falconred font-bold">ARMED</p>
+            ) : (
+              <>
+                <p className="font-bold">DISARMED</p>
+                {getIsArmable() ? (
+                  <p className="text-falconred">Not Ready to Arm</p>
+                ) : (
+                  <p className="text-green-500 font-bold">Ready to Arm</p>
+                )}
+              </>
+            )}
+            <div className="flex flex-row space-x-6">
+              <p>{MAV_STATE[heartbeatData.system_status]}</p>
+              <p>{getFlightMode()}</p>
+            </div>
+          </div>
           <div className="flex flex-row items-center justify-center">
             <div className="flex flex-col items-center justify-center w-10 space-y-4 text-center">
               <p className="text-sm">ms&#8315;&#185;</p>
@@ -205,7 +214,12 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div className="w-1/3 absolute bottom-0 left-0"></div>
+        {statustextMessages.length !== 0 && (
+          <StatusMessages
+            messages={statustextMessages}
+            className="bg-falcongrey/75 absolute bottom-0 left-0 max-w-1/2"
+          />
+        )}
       </div>
     </Layout>
   )

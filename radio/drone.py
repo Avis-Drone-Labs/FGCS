@@ -67,7 +67,9 @@ class Drone:
             self.sendDataStreamRequestMessage(
                 mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 2
             )
-            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2)
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
+            )
             self.sendDataStreamRequestMessage(
                 mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3
             )

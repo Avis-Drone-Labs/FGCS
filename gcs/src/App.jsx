@@ -1,9 +1,10 @@
 import { useListState, useLocalStorage } from '@mantine/hooks'
+import { IconAntenna, IconBattery2, IconSatellite } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
+import StatusBar, { StatusSection } from './components/statusBar'
 import { COPTER_MODES, MAV_STATE, PLANE_MODES } from './mavlinkConstants'
 
-import moment from 'moment'
 import Layout from './components/layout'
 import MapSection from './components/map'
 import StatusMessages from './components/statusMessages'
@@ -22,14 +23,11 @@ export default function App() {
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({})
-  const [time, setTime] = useState(null)
+  const [gpsRawIntData, setGpsRawIntData] = useState({ satellites_visible: 0 })
+  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
   useEffect(() => {
     if (!connected) {
-      setTelemetryData({})
-      setGpsData({})
-      setBatteryData({})
-      setTime(null)
       return
     } else {
       socket.emit('set_state', { state: 'dashboard' })
@@ -59,16 +57,20 @@ export default function App() {
           }
           break
         case 'STATUSTEXT':
-          console.log(msg) // TODO: Accomodate for multiple status text messages and display all, incoming every 30s approx
           statustextMessagesHandler.prepend(msg)
           break
         case 'SYS_STATUS':
           setSysStatusData(msg)
           break
+        case 'GPS_RAW_INT':
+          setGpsRawIntData(msg)
+          break
+        case 'RC_CHANNELS':
+          setRCChannelsData(msg)
+          break
         default:
           break
       }
-      setTime(moment.unix(msg.timestamp))
     })
 
     return () => {
@@ -214,6 +216,36 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        <StatusBar className="absolute top-0 right-0">
+          <StatusSection
+            icon={<IconSatellite />}
+            value={`(${
+              gpsData.lat !== undefined ? gpsData.lat.toFixed(6) : 0
+            }, ${gpsData.lon !== undefined ? gpsData.lon.toFixed(6) : 0})`}
+            tooltip="GPS (lat, lon)"
+          />
+          <StatusSection
+            icon={<IconSatellite />}
+            value={gpsRawIntData.satellites_visible}
+            tooltip="Satellites visible"
+          />
+          <StatusSection
+            icon={<IconAntenna />}
+            value={rcChannelsData.rssi}
+            tooltip="RC RSSI"
+          />
+          <StatusSection
+            icon={<IconBattery2 />}
+            value={
+              batteryData.battery_remaining
+                ? `${batteryData.battery_remaining}%`
+                : '0%'
+            }
+            tooltip="Battery remaining"
+          />
+        </StatusBar>
+
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}

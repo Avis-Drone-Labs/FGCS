@@ -5,34 +5,17 @@ import Map, { Marker } from 'react-map-gl'
 
 import maplibregl from 'maplibre-gl'
 
-function MapInformationPanel({ data }) {
-  // TODO: Change to display satellites visible, GPS fix
-  return (
-    <div className="z-10 relative bg-falcongrey/70 w-1/3 p-4 float-right">
-      <div className="flex flex-col">
-        {Object.keys(data).map((name, i) => {
-          let value = data[name]
-          return (
-            <div key={i} className="">
-              <span className="w-40 inline-block uppercase text-neutral-200">
-                {name}
-              </span>
-              <span className="text-neutral-50">{value}</span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-export default function MapSection({ data }) {
-  const [position, setPosition] = useState({})
+export default function MapSection({ data, heading }) {
+  const [position, setPosition] = useState({
+    latitude: 53.381655,
+    longitude: -1.481434,
+  })
   const [defaultLat, setDefaultLat] = useState(53.381655)
   const [defaultLon, setDefaultLon] = useState(-1.481434)
 
   useEffect(() => {
-    if (isNaN(data.lat) || isNaN(data.lon)) return
+    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
+      return
     let lat = data.lat * 1e-7
     let lon = data.lon * 1e-7
     setPosition({ latitude: lat, longitude: lon })
@@ -62,10 +45,13 @@ export default function MapSection({ data }) {
             longitude={position.longitude}
             scale={0.1}
           >
-            <img src="/drone_1.png" className="w-10 h-10" />
+            <img
+              src="/drone_1.png"
+              className="w-10 h-10"
+              style={{ transform: `rotate(${heading ?? 0}deg)` }}
+            />
           </Marker>
         )}
-        {Object.keys(data).length && <MapInformationPanel data={data} />}
       </Map>
     </div>
   )

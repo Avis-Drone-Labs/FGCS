@@ -1,3 +1,5 @@
+import heading_mechanics from './img/heading_mechanics.svg'
+import heading_yaw from './img/heading_yaw.svg'
 import horizon_back from './img/horizon_back.svg'
 import horizon_ball from './img/horizon_ball.svg'
 import horizon_circle from './img/horizon_circle.svg'
@@ -18,13 +20,10 @@ const box = {
 const Instrument = ({ children, size }) => {
   return (
     <div
-      className="instrument heading"
+      className="relative inline-block overflow-hidden"
       style={{
         height: size ?? '250px',
         width: size ?? '250px',
-        position: 'relative',
-        display: 'inline-block',
-        overflow: 'hidden',
         clipPath: `circle(36.66% at center)`,
       }}
     >
@@ -59,6 +58,22 @@ export const AttitudeIndicator = (params) => {
       </div>
       <div className="mechanics box" style={box}>
         <img src={horizon_mechanics} className="box" style={box} alt="" />
+      </div>
+    </Instrument>
+  )
+}
+
+export const HeadingIndicator = (params) => {
+  return (
+    <Instrument {...params}>
+      <div
+        className="heading box"
+        style={{ ...box, transform: `rotate(${-params.heading ?? 0}deg)` }}
+      >
+        <img src={heading_yaw} className="box" style={box} alt="" />
+      </div>
+      <div className="mechanics box" style={box}>
+        <img src={heading_mechanics} className="box" style={box} alt="" />
       </div>
     </Instrument>
   )

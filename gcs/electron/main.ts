@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from 'electron'
+import { BrowserWindow, app } from 'electron'
+
 import path from 'node:path'
 
 // The built directory structure
@@ -26,6 +27,8 @@ function createWindow() {
     },
     show: false,
   })
+
+  win.setMenuBarVisibility(false)
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

@@ -101,6 +101,15 @@ def set_state(data):
         drone.addMessageListener("BATTERY_STATUS", sendMessage)
         drone.addMessageListener("ATTITUDE", sendMessage)
         drone.addMessageListener("GLOBAL_POSITION_INT", sendMessage)
+        drone.addMessageListener("ALTITUDE", sendMessage)
+        drone.addMessageListener("NAV_CONTROLLER_OUTPUT", sendMessage)
+        drone.addMessageListener("HEARTBEAT", sendMessage)
+        drone.addMessageListener(
+            "STATUSTEXT", sendMessage
+        )  # TODO: Request message directly
+        drone.addMessageListener("SYS_STATUS", sendMessage)
+        drone.addMessageListener("GPS_RAW_INT", sendMessage)
+        drone.addMessageListener("RC_CHANNELS", sendMessage)
     elif state == "params":
         drone.stopAllDataStreams()
 

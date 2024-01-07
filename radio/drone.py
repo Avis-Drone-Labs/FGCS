@@ -8,7 +8,6 @@ from threading import Thread
 
 from pymavlink import mavutil
 
-
 os.environ["MAVLINK20"] = "1"
 
 
@@ -68,7 +67,9 @@ class Drone:
             self.sendDataStreamRequestMessage(
                 mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 2
             )
-            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2)
+            self.sendDataStreamRequestMessage(
+                mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
+            )
             self.sendDataStreamRequestMessage(
                 mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3
             )
@@ -127,9 +128,6 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                if msg.msgname == "HEARTBEAT":
-                    continue
-
                 if msg.msgname == "TIMESYNC":
                     component_timestamp = msg.ts1
                     local_timestamp = time.time_ns()

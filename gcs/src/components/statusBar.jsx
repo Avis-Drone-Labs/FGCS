@@ -28,7 +28,7 @@ export default function StatusBar(props) {
 
   return (
     <div
-      className={`${props.className} bg-falcongrey/75 p-1 flex flex-row space-x-3`}
+      className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}
     >
       {props.children}
       <StatusSection

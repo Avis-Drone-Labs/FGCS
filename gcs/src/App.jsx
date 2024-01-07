@@ -104,9 +104,12 @@ export default function App() {
     <Layout currentPage="dashboard">
       <div className="flex w-full h-full flex-auto relative">
         <div className="w-full">
-          <MapSection data={gpsData} />
+          <MapSection
+            data={gpsData}
+            heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+          />
         </div>
-        <div className="absolute top-0 left-0 bg-falcongrey/75 p-4">
+        <div className="absolute top-0 left-0 bg-falcongrey/80 p-4">
           <div className="flex flex-col space-y-2 items-center">
             {getIsArmed() ? (
               <p className="text-falconred font-bold">ARMED</p>
@@ -249,7 +252,7 @@ export default function App() {
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}
-            className="bg-falcongrey/75 absolute bottom-0 left-0 max-w-1/2"
+            className="bg-falcongrey/80 absolute bottom-0 left-0 max-w-1/2"
           />
         )}
       </div>

@@ -8,7 +8,6 @@ from threading import Thread
 
 from pymavlink import mavutil
 
-
 os.environ["MAVLINK20"] = "1"
 
 
@@ -127,9 +126,6 @@ class Drone:
                 print(traceback.format_exc())
                 msg = None
             if msg:
-                if msg.msgname == "HEARTBEAT":
-                    continue
-
                 if msg.msgname == "TIMESYNC":
                     component_timestamp = msg.ts1
                     local_timestamp = time.time_ns()

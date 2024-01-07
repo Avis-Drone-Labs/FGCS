@@ -106,13 +106,18 @@ export default function Navbar({ currentPage }) {
         <Select
           label="COM Port"
           description="Select a COM Port from the ones available"
-          placeholder={comPorts.length ? ('Select a COM port') : ('No COM ports found')}
+          placeholder={
+            comPorts.length ? 'Select a COM port' : 'No COM ports found'
+          }
           data={comPorts}
           value={selectedComPort}
           onChange={setSelectedComPort}
-          rightSectionPointerEvents='all'
+          rightSectionPointerEvents="all"
           rightSection={<IconRefresh />}
-          rightSectionProps={{onClick: getComPorts, className: 'hover:cursor-pointer hover:bg-transparent/50'}}
+          rightSectionProps={{
+            onClick: getComPorts,
+            className: 'hover:cursor-pointer hover:bg-transparent/50',
+          }}
         />
         <Select
           label="Baud Rate"
@@ -181,7 +186,12 @@ export default function Navbar({ currentPage }) {
       </Link>
       <div className="!ml-auto flex flex-row space-x-4 items-center">
         <p>{connected && selectedComPort}</p>
-        <Button onClick={connected ? disconnect : open} color={connected ? tailwindColors.red[600] : tailwindColors.green[600]}>
+        <Button
+          onClick={connected ? disconnect : open}
+          color={
+            connected ? tailwindColors.red[600] : tailwindColors.green[600]
+          }
+        >
           {connected ? 'Disconnect' : 'Connect'}
         </Button>
       </div>

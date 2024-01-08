@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 
 import { IconRefresh } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
-import resolveConfig from 'tailwindcss/resolveConfig'
-import { socket } from '../socket'
-import tailwindConfig from '../../tailwind.config.js'
 import { twMerge } from 'tailwind-merge'
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../tailwind.config.js'
+import { socket } from '../socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -147,8 +147,9 @@ export default function Navbar({ currentPage }) {
             color={tailwindColors.green[600]}
             onClick={saveCOMData}
             data-autofocus
+            disabled={selectedComPort === null}
           >
-            Save
+            Connect
           </Button>
         </Group>
       </Modal>

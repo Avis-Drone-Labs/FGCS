@@ -74,7 +74,16 @@ def setComPort(data):
         drone.close()
         drone = None
 
-    port = data.get("port").split(":")[0]
+    port = data.get("port")
+    if not port:
+        return
+
+    port = port.split(":")[0]
+
+    if port not in getComPortNames():
+        # TODO: Add error message
+        return
+
     baud = data.get("baud")
     drone = Drone(port, wireless=False, baud=baud)
     time.sleep(1)

@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 
 import { IconRefresh } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
-import { twMerge } from 'tailwind-merge'
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config.js'
 import { socket } from '../socket'
+import tailwindConfig from '../../tailwind.config.js'
+import { twMerge } from 'tailwind-merge'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -65,11 +65,16 @@ export default function Navbar({ currentPage }) {
       setConnected(false)
     })
 
+    socket.on('disconnect', () => {
+      setConnected(false)
+    })
+
     return () => {
       socket.off('is_connected_to_drone')
       socket.off('list_com_ports')
       socket.off('connected_to_drone')
       socket.off('disconnected_from_drone')
+      socket.off('disconnect')
       setConnected(false)
     }
   }, [])

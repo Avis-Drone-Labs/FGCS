@@ -1,5 +1,7 @@
 import {
   Button,
+  Loader,
+  Modal,
   NumberInput,
   Progress,
   ScrollArea,
@@ -8,6 +10,7 @@ import {
 } from '@mantine/core'
 import {
   useDebouncedValue,
+  useDisclosure,
   useListState,
   useLocalStorage,
 } from '@mantine/hooks'
@@ -33,8 +36,17 @@ export default function Params() {
   const [modifiedParams, modifiedParamsHandler] = useListState([])
   const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 350)
+  const [opened, { open, close }] = useDisclosure(false)
+  const [rebootData, setRebootData] = useState({})
 
   useEffect(() => {
+    socket.on('reboot_autopilot', (msg) => {
+      setRebootData(msg)
+      if (msg.success) {
+        close()
+      }
+    })
+
     if (!connected) {
       setFetchingVars(false)
       setFetchingVarsProgress(0)
@@ -42,6 +54,7 @@ export default function Params() {
       setShownParams([])
       modifiedParamsHandler.setState([])
       setSearchValue('')
+      setRebootData({})
       return
     }
 
@@ -88,6 +101,7 @@ export default function Params() {
       socket.off('param_request_update')
       socket.off('param_set_success')
       socket.off('error')
+      socket.off('reboot_autopilot')
     }
   }, [connected])
 
@@ -107,6 +121,10 @@ export default function Params() {
 
     setShownParams(filteredParams)
   }, [debouncedSearchValue])
+
+  useEffect(() => {
+    console.log(rebootData.message)
+  }, [rebootData])
 
   function addToModifiedParams(value, param) {
     // TODO: Can this logic be tidied up?
@@ -136,8 +154,57 @@ export default function Params() {
     setFetchingVars(true)
   }
 
+  function rebootAutopilot() {
+    socket.emit('reboot_autopilot')
+    open()
+    setFetchingVars(false)
+    setFetchingVarsProgress(0)
+    setParams(null)
+    setShownParams([])
+    modifiedParamsHandler.setState([])
+    setSearchValue('')
+    setRebootData({})
+  }
+
   return (
     <Layout currentPage="params">
+      <Modal
+        opened={opened}
+        onClose={close}
+        title="Rebooting autopilot"
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        withCloseButton={false}
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <div className="flex flex-col items-center justify-center">
+          {rebootData.message === undefined ? (
+            <Loader />
+          ) : (
+            <>
+              {!rebootData.success && (
+                <>
+                  <p className="my-2">
+                    {rebootData.message} You will need to reconnect.
+                  </p>
+                  <Button
+                    onClick={close}
+                    color={tailwindColors.red[600]}
+                    className="mt-4"
+                  >
+                    Close
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </Modal>
+
       {fetchingVars && (
         <Progress
           radius="xs"
@@ -174,6 +241,7 @@ export default function Params() {
             <Button
               size="sm"
               rightSection={<IconPower size={14} />}
+              onClick={rebootAutopilot}
               color={tailwindColors.red[600]}
             >
               Reboot FC

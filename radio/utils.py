@@ -34,5 +34,26 @@ def getComPort() -> str:
     return port_name
 
 
+def getComPortNames():
+    ports = list(list_ports.comports())
+    correct_ports = []
+    for i in range(len(ports)):
+        port = ports[i]
+        if sys.platform == "darwin":
+            port_name = port.name
+            if port_name[:3] == "cu.":
+                port_name = port_name[3:]
+
+            port_name = f"/dev/tty.{port_name}"
+        elif sys.platform in ["linux", "linux2"]:
+            port_name = f"/dev/{port.name}"
+        else:
+            port_name = port.name
+
+        correct_ports.append(port_name)
+
+    return correct_ports
+
+
 def secondsToMicroseconds(secs):
     return secs * 1e6

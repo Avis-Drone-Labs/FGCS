@@ -6,6 +6,7 @@ import traceback
 from queue import Queue
 from threading import Thread
 
+import serial
 from pymavlink import mavutil
 
 os.environ["MAVLINK20"] = "1"
@@ -13,6 +14,8 @@ os.environ["MAVLINK20"] = "1"
 
 class Drone:
     def __init__(self, port, baud=57600, wireless=False):
+        self.port = port
+        self.baud = baud
         self.wireless = wireless
 
         self.master = mavutil.mavlink_connection(port, baud=baud)
@@ -136,6 +139,9 @@ class Drone:
 
                 print(msg.msgname)
 
+                if msg.msgname == "STATUSTEXT":
+                    print(msg.text)
+
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 
                 if self.is_requesting_params and msg.msgname != "PARAM_VALUE":
@@ -255,12 +261,48 @@ class Drone:
                 "param_type": param_type,
             }
 
+    def rebootAutopilot(self):
+        self.is_listening = False
+        message = self.master.mav.command_long_encode(
+            self.target_system,  # Target system ID
+            self.target_component,  # Target component ID
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,  # ID of command to send
+            0,  # Confirmation
+            1,  # param1: Autpilot
+            0,  # param2: Companion
+            0,  # param3 Component action
+            0,  # param4 Component ID
+            0,  # param5 (unused)
+            0,  # param5 (unused)
+            0,  # param6 (unused)
+        )
+
+        self.master.mav.send(message)
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            if (
+                response
+                and response.command
+                == mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
+                and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
+            ):
+                print("Rebooting")
+                self.close()
+            else:
+                print("Reboot failed")
+                self.is_listening = True
+        except serial.serialutil.SerialException:
+            print("Rebooting")
+            self.close()
+
     def close(self):
-        self.is_active = False
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 
         self.stopAllDataStreams()
+
+        self.is_active = False
 
         self.master.close()
 

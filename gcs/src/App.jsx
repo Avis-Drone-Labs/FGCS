@@ -1,5 +1,10 @@
 import { useListState, useLocalStorage } from '@mantine/hooks'
-import { IconAntenna, IconBattery2, IconGps, IconSatellite } from '@tabler/icons-react'
+import {
+  IconAntenna,
+  IconBattery2,
+  IconGps,
+  IconSatellite,
+} from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import StatusBar, { StatusSection } from './components/statusBar'

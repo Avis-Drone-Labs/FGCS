@@ -1,8 +1,8 @@
 import time
 
-
+import serial
 from drone import Drone
-from utils import getComPort
+from utils import getComPort, getComPortNames
 
 # from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS
@@ -26,8 +26,39 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port)
 
-    # drone.setupDataStreams()
-    # drone.getAllParams()
+    drone.setupDataStreams()
+
+    time.sleep(1)
+    drone.rebootAutopilot()
+
+    while drone.is_active:
+        time.sleep(0.0)
+
+    counter = 0
+    port_open = False
+    while counter < 10:
+        if port in getComPortNames():
+            port_open = True
+            break
+        counter += 1
+        time.sleep(0.5)
+    else:
+        print("Port not open after 5 seconds.")
+        exit()
+
+    tries = 0
+    while tries < 3:
+        try:
+            drone = Drone(port)
+            break
+        except serial.serialutil.SerialException:
+            tries += 1
+            time.sleep(1)
+    else:
+        print("Could not reconnect to drone after 3 attempts.")
+        exit()
+
+    drone.setupDataStreams()
 
     # params_to_set = [
     #     {

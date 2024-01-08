@@ -122,10 +122,6 @@ export default function Params() {
     setShownParams(filteredParams)
   }, [debouncedSearchValue])
 
-  useEffect(() => {
-    console.log(rebootData.message)
-  }, [rebootData])
-
   function addToModifiedParams(value, param) {
     // TODO: Can this logic be tidied up?
     if (

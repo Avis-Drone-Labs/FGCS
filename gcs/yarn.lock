@@ -592,6 +592,19 @@
   resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-7.3.2.tgz#664651fce6207640a5f1dba3e55806b489ec7b12"
   integrity sha512-xgumuuI3PBWXff5N02HCI7PEy25mDEdyXDQklUYK93J6FKwpcosyZnGVitoUrV1gLtYYa9ZudeAWdhHuh/CpOg==
 
+"@mantine/notifications@^7.4.0":
+  version "7.4.0"
+  resolved "https://registry.yarnpkg.com/@mantine/notifications/-/notifications-7.4.0.tgz#0ce605ade39aaaed626dc62850751fa672e0009e"
+  integrity sha512-nRXYIcJpqqKxwYs2r17IBZ8uQZK57x6K2hkzOQ+ZFviO5rejxl4ip+fC+LUhIi3P7D1YSxyoZwumT73gSPz9Xw==
+  dependencies:
+    "@mantine/store" "7.4.0"
+    react-transition-group "4.4.5"
+
+"@mantine/store@7.4.0":
+  version "7.4.0"
+  resolved "https://registry.yarnpkg.com/@mantine/store/-/store-7.4.0.tgz#70e28c53fd3474d787c3613d7f9322991b182a71"
+  integrity sha512-sSaBj6qVU0e5ml70/8e3A9pwAMBL5yKWNdnhw20b+74j85+FUDhDy8bEGZfyS0BtYPGVoxj5yF8/uZhxnDXpbg==
+
 "@mapbox/geojson-rewind@^0.5.2":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@mapbox/geojson-rewind/-/geojson-rewind-0.5.2.tgz#591a5d71a9cd1da1a0bf3420b3bea31b0fc7946a"
@@ -3444,7 +3457,7 @@ react-transition-group@2.9.0:
     prop-types "^15.6.2"
     react-lifecycles-compat "^3.0.4"
 
-react-transition-group@^4.4.5:
+react-transition-group@4.4.5, react-transition-group@^4.4.5:
   version "4.4.5"
   resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-4.4.5.tgz#e53d4e3f3344da8521489fbef8f2581d42becdd1"
   integrity sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==

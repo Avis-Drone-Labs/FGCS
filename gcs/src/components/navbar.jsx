@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config.js'
+import { showErrorNotification } from '../notification.js'
 import { socket } from '../socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -21,6 +22,7 @@ export default function Navbar({ currentPage }) {
   const [selectedComPort, setSelectedComPort] = useState(null)
   const [selectedBaudRate, setSelectedBaudRate] = useState('9600')
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
+  const [connecting, setConnecting] = useState(false)
 
   function getComPorts() {
     socket.emit('get_com_ports')
@@ -38,6 +40,7 @@ export default function Navbar({ currentPage }) {
         setConnected(true)
       } else {
         setConnected(false)
+        setConnecting(false)
         getComPorts()
       }
     })
@@ -58,6 +61,8 @@ export default function Navbar({ currentPage }) {
     socket.on('connected_to_drone', () => {
       console.log('connected to drone')
       setConnected(true)
+      setConnecting(false)
+      close()
     })
 
     socket.on('disconnected_from_drone', () => {
@@ -69,12 +74,19 @@ export default function Navbar({ currentPage }) {
       setConnected(false)
     })
 
+    socket.on('com_port_error', (msg) => {
+      console.log(msg.message)
+      showErrorNotification(msg.message)
+      setConnecting(false)
+    })
+
     return () => {
       socket.off('is_connected_to_drone')
       socket.off('list_com_ports')
       socket.off('connected_to_drone')
       socket.off('disconnected_from_drone')
       socket.off('disconnect')
+      socket.off('com_port_error')
       setConnected(false)
     }
   }, [])
@@ -84,7 +96,7 @@ export default function Navbar({ currentPage }) {
       port: selectedComPort,
       baud: selectedBaudRate,
     })
-    close()
+    setConnecting(true)
   }
 
   function disconnect() {
@@ -148,6 +160,7 @@ export default function Navbar({ currentPage }) {
             onClick={saveCOMData}
             data-autofocus
             disabled={selectedComPort === null}
+            loading={connecting}
           >
             Connect
           </Button>

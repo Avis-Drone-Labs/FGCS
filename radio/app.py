@@ -76,12 +76,13 @@ def setComPort(data):
 
     port = data.get("port")
     if not port:
+        socketio.emit("com_port_error", {"message": "COM port not specified."})
         return
 
     port = port.split(":")[0]
 
     if port not in getComPortNames():
-        # TODO: Add error message
+        socketio.emit("com_port_error", {"message": "COM port not found."})
         return
 
     baud = data.get("baud")

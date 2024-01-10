@@ -3,12 +3,18 @@ import {
   IconAntenna,
   IconBattery2,
   IconGps,
+  IconRadar,
   IconSatellite,
 } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import StatusBar, { StatusSection } from './components/statusBar'
-import { COPTER_MODES, MAV_STATE, PLANE_MODES } from './mavlinkConstants'
+import {
+  COPTER_MODES,
+  GPS_FIX_TYPES,
+  MAV_STATE,
+  PLANE_MODES,
+} from './mavlinkConstants'
 
 import Layout from './components/layout'
 import MapSection from './components/map'
@@ -28,7 +34,10 @@ export default function App() {
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({})
-  const [gpsRawIntData, setGpsRawIntData] = useState({ satellites_visible: 0 })
+  const [gpsRawIntData, setGpsRawIntData] = useState({
+    fix_type: 0,
+    satellites_visible: 0,
+  })
   const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
   useEffect(() => {
@@ -226,6 +235,11 @@ export default function App() {
         </div>
 
         <StatusBar className='absolute top-0 right-0'>
+          <StatusSection
+            icon={<IconRadar />}
+            value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
+            tooltip='GPS fix type'
+          />
           <StatusSection
             icon={<IconGps />}
             value={`(${

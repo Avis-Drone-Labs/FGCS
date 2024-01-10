@@ -75,3 +75,15 @@ export const COPTER_MODES = [
   'AUTOROTATE',
   'AUTO_RTL',
 ]
+
+export const GPS_FIX_TYPES = [
+  'NO GPS',
+  'NO FIX',
+  '2D FIX',
+  '3D FIX',
+  'DGPS',
+  'RTK FLOAT',
+  'RTK FIXED',
+  'STATIC',
+  'PPP',
+]

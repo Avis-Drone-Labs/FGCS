@@ -27,7 +27,10 @@ export default function Navbar({ currentPage }) {
   const [opened, { open, close }] = useDisclosure(false)
   const [comPorts, setComPorts] = useState([])
   const [selectedComPort, setSelectedComPort] = useState(null)
-  const [selectedBaudRate, setSelectedBaudRate] = useState('9600')
+  const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
+    key: 'baudrate',
+    defaultValue: '9600',
+  })
   const [wireless, setWireless] = useLocalStorage({
     key: 'wirelessConnection',
     defaultValue: true,

@@ -8,6 +8,6 @@ export function showErrorNotification(message) {
   notifications.show({
     title: 'Error',
     message: message,
-    color: tailwindColors.red[600]
+    color: tailwindColors.red[600],
   })
 }

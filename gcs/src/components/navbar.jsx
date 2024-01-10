@@ -107,11 +107,11 @@ export default function Navbar({ currentPage }) {
   const linkClassName =
     'text-md hover:text-falconred-60 transition-colors delay-50'
   return (
-    <div className="flex flex-row space-x-6 items-center justify-center py-2 px-10">
+    <div className='flex flex-row space-x-6 items-center justify-center py-2 px-10'>
       <Modal
         opened={opened}
         onClose={close}
-        title="Select COM Port"
+        title='Select COM Port'
         centered
         overlayProps={{
           backgroundOpacity: 0.55,
@@ -121,15 +121,15 @@ export default function Navbar({ currentPage }) {
       >
         <LoadingOverlay visible={fetchingComPorts} />
         <Select
-          label="COM Port"
-          description="Select a COM Port from the ones available"
+          label='COM Port'
+          description='Select a COM Port from the ones available'
           placeholder={
             comPorts.length ? 'Select a COM port' : 'No COM ports found'
           }
           data={comPorts}
           value={selectedComPort}
           onChange={setSelectedComPort}
-          rightSectionPointerEvents="all"
+          rightSectionPointerEvents='all'
           rightSection={<IconRefresh />}
           rightSectionProps={{
             onClick: getComPorts,
@@ -137,8 +137,8 @@ export default function Navbar({ currentPage }) {
           }}
         />
         <Select
-          label="Baud Rate"
-          description="Select a baud rate for the specified COM Port"
+          label='Baud Rate'
+          description='Select a baud rate for the specified COM Port'
           data={[
             300, 1200, 4800, 9600, 19200, 13400, 38400, 57600, 74880, 115200,
             230400, 250000,
@@ -146,16 +146,16 @@ export default function Navbar({ currentPage }) {
           value={selectedBaudRate}
           onChange={setSelectedBaudRate}
         />
-        <Group justify="space-between" className="pt-4">
+        <Group justify='space-between' className='pt-4'>
           <Button
-            variant="filled"
+            variant='filled'
             color={tailwindColors.red[600]}
             onClick={close}
           >
             Close
           </Button>
           <Button
-            variant="filled"
+            variant='filled'
             color={tailwindColors.green[600]}
             onClick={saveCOMData}
             data-autofocus
@@ -168,7 +168,7 @@ export default function Navbar({ currentPage }) {
       </Modal>
 
       <Link
-        to="/"
+        to='/'
         className={twMerge(
           linkClassName,
           currentPage === 'dashboard' && 'text-falconred font-bold',
@@ -177,7 +177,7 @@ export default function Navbar({ currentPage }) {
         Dashboard
       </Link>
       <Link
-        to="/graphs"
+        to='/graphs'
         className={twMerge(
           linkClassName,
           currentPage === 'graphs' && 'text-falconred font-bold',
@@ -186,7 +186,7 @@ export default function Navbar({ currentPage }) {
         Graphs
       </Link>
       <Link
-        to="/params"
+        to='/params'
         className={twMerge(
           linkClassName,
           currentPage === 'params' && 'text-falconred font-bold',
@@ -195,7 +195,7 @@ export default function Navbar({ currentPage }) {
         Params
       </Link>
       <Link
-        to="/all-data"
+        to='/all-data'
         className={twMerge(
           linkClassName,
           currentPage === 'all-data' && 'text-falconred font-bold',
@@ -203,7 +203,7 @@ export default function Navbar({ currentPage }) {
       >
         All data
       </Link>
-      <div className="!ml-auto flex flex-row space-x-4 items-center">
+      <div className='!ml-auto flex flex-row space-x-4 items-center'>
         <p>{connected && selectedComPort}</p>
         <Button
           onClick={connected ? disconnect : open}

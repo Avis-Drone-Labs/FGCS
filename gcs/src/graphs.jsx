@@ -7,8 +7,9 @@ export default function Graphs() {
     defaultValue: false,
   })
   return (
-    <Layout currentPage="graphs">
+    <Layout currentPage='graphs'>
       <p>graphs page</p>
+      <p>{connected}</p>
     </Layout>
   )
 }

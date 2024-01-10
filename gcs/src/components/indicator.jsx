@@ -20,7 +20,7 @@ const box = {
 const Instrument = ({ children, size }) => {
   return (
     <div
-      className="relative inline-block overflow-hidden"
+      className='relative inline-block overflow-hidden'
       style={{
         height: size ?? '250px',
         width: size ?? '250px',
@@ -43,21 +43,21 @@ export const AttitudeIndicator = (params) => {
   return (
     <Instrument {...params}>
       <div
-        className="roll box"
+        className='roll box'
         style={{
           ...box,
           top: '0%',
           transform: `rotate(${-params.roll ?? 0}deg)`,
         }}
       >
-        <img src={horizon_back} className="box" alt="" style={{ ...box }} />
-        <div className="pitch box" style={{ ...box, top: `${pitch * 0.7}%` }}>
-          <img src={horizon_ball} className="box" style={box} alt="" />
+        <img src={horizon_back} className='box' alt='' style={{ ...box }} />
+        <div className='pitch box' style={{ ...box, top: `${pitch * 0.7}%` }}>
+          <img src={horizon_ball} className='box' style={box} alt='' />
         </div>
-        <img src={horizon_circle} className="box" style={box} alt="" />
+        <img src={horizon_circle} className='box' style={box} alt='' />
       </div>
-      <div className="mechanics box" style={box}>
-        <img src={horizon_mechanics} className="box" style={box} alt="" />
+      <div className='mechanics box' style={box}>
+        <img src={horizon_mechanics} className='box' style={box} alt='' />
       </div>
     </Instrument>
   )
@@ -67,13 +67,13 @@ export const HeadingIndicator = (params) => {
   return (
     <Instrument {...params}>
       <div
-        className="heading box"
+        className='heading box'
         style={{ ...box, transform: `rotate(${-params.heading ?? 0}deg)` }}
       >
-        <img src={heading_yaw} className="box" style={box} alt="" />
+        <img src={heading_yaw} className='box' style={box} alt='' />
       </div>
-      <div className="mechanics box" style={box}>
-        <img src={heading_mechanics} className="box" style={box} alt="" />
+      <div className='mechanics box' style={box}>
+        <img src={heading_mechanics} className='box' style={box} alt='' />
       </div>
     </Instrument>
   )

@@ -9,7 +9,7 @@ import { socket } from '../socket'
 export function StatusSection({ icon, value, tooltip }) {
   return (
     <Tooltip label={tooltip}>
-      <div className="flex flex-row items-center justify-center space-x-1">
+      <div className='flex flex-row items-center justify-center space-x-1'>
         {cloneElement(icon, { size: 20 })}
         {value !== null && <p>{value}</p>}
       </div>
@@ -33,7 +33,7 @@ export default function StatusBar(props) {
       {props.children}
       <StatusSection
         icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
-        value=""
+        value=''
         tooltip={
           socket.connected ? 'Connected to socket' : 'Disconnected from socket'
         }
@@ -41,7 +41,7 @@ export default function StatusBar(props) {
       <StatusSection
         icon={<IconClock />}
         value={time?.format('HH:mm:ss')}
-        tooltip="Local time"
+        tooltip='Local time'
       />
     </div>
   )

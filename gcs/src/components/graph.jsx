@@ -12,8 +12,8 @@ import {
 } from 'chart.js'
 import { useEffect, useRef, useState } from 'react'
 
-import { Scatter } from 'react-chartjs-2'
 import moment from 'moment'
+import { Scatter } from 'react-chartjs-2'
 
 ChartJS.register(
   Title,
@@ -82,7 +82,7 @@ export default function Graph({
   className = 'px-8 basis-1/3 rounded-lg ',
   ...props
 }) {
-  const [chartData, setChartData] = useState({
+  const [chartData] = useState({
     datasets: [
       {
         label: 'Unknown dataset',
@@ -116,7 +116,7 @@ export default function Graph({
 
   return (
     <div className={`${className}`} {...props}>
-      <div className="bg-falcongrey-80 rounded-lg">
+      <div className='bg-falcongrey-80 rounded-lg'>
         <Scatter ref={chartRef} options={options} data={chartData} />
       </div>
     </div>

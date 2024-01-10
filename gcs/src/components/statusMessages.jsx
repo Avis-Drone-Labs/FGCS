@@ -37,14 +37,14 @@ export default function StatusMessages(props) {
   return (
     <div className={props.className}>
       <ScrollArea
-        className="h-44 w-full p-4"
+        className='h-44 w-full p-4'
         viewportRef={viewport}
         onScrollPositionChange={onScrollPositionChange}
       >
         {props.messages.map((message, index) => {
           return (
-            <div key={index} className="flex flex-row space-x-2">
-              <p className="text-gray-400">
+            <div key={index} className='flex flex-row space-x-2'>
+              <p className='text-gray-400'>
                 {moment.unix(message.timestamp).format('HH:mm:ss')}
               </p>
               <p className={getSeverityClassNames(message.severity)}>

@@ -15,14 +15,14 @@ import ReactDOM from 'react-dom/client'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>
-  <MantineProvider defaultColorScheme="dark">
+  <MantineProvider defaultColorScheme='dark'>
     <Notifications />
     <HashRouter>
       <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/graphs" element={<Graphs />} />
-        <Route path="/params" element={<Params />} />
-        <Route path="/all-data" element={<AllData />} />
+        <Route path='/' element={<App />} />
+        <Route path='/graphs' element={<Graphs />} />
+        <Route path='/params' element={<Params />} />
+        <Route path='/all-data' element={<AllData />} />
       </Routes>
     </HashRouter>
   </MantineProvider>,

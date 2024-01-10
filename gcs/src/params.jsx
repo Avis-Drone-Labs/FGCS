@@ -164,11 +164,11 @@ export default function Params() {
   }
 
   return (
-    <Layout currentPage="params">
+    <Layout currentPage='params'>
       <Modal
         opened={opened}
         onClose={close}
-        title="Rebooting autopilot"
+        title='Rebooting autopilot'
         closeOnClickOutside={false}
         closeOnEscape={false}
         withCloseButton={false}
@@ -178,20 +178,20 @@ export default function Params() {
           blur: 3,
         }}
       >
-        <div className="flex flex-col items-center justify-center">
+        <div className='flex flex-col items-center justify-center'>
           {rebootData.message === undefined ? (
             <Loader />
           ) : (
             <>
               {!rebootData.success && (
                 <>
-                  <p className="my-2">
+                  <p className='my-2'>
                     {rebootData.message} You will need to reconnect.
                   </p>
                   <Button
                     onClick={close}
                     color={tailwindColors.red[600]}
-                    className="mt-4"
+                    className='mt-4'
                   >
                     Close
                   </Button>
@@ -204,22 +204,22 @@ export default function Params() {
 
       {fetchingVars && (
         <Progress
-          radius="xs"
+          radius='xs'
           value={fetchingVarsProgress}
-          className="w-1/3 mx-auto my-auto"
+          className='w-1/3 mx-auto my-auto'
         />
       )}
       {params !== null && (
-        <div className="w-full h-full contents">
-          <div className="flex space-x-4 justify-center">
+        <div className='w-full h-full contents'>
+          <div className='flex space-x-4 justify-center'>
             <TextInput
-              className="w-1/3"
-              placeholder="Search by parameter name"
+              className='w-1/3'
+              placeholder='Search by parameter name'
               value={searchValue}
               onChange={(event) => setSearchValue(event.currentTarget.value)}
             />
             <Button
-              size="sm"
+              size='sm'
               rightSection={<IconPencil size={14} />}
               disabled={!modifiedParams.length}
               onClick={saveModifiedParams}
@@ -228,7 +228,7 @@ export default function Params() {
               Save params
             </Button>
             <Button
-              size="sm"
+              size='sm'
               rightSection={<IconRefresh size={14} />}
               onClick={refreshParams}
               color={tailwindColors.blue[600]}
@@ -236,7 +236,7 @@ export default function Params() {
               Refresh params
             </Button>
             <Button
-              size="sm"
+              size='sm'
               rightSection={<IconPower size={14} />}
               onClick={rebootAutopilot}
               color={tailwindColors.red[600]}
@@ -244,7 +244,7 @@ export default function Params() {
               Reboot FC
             </Button>
           </div>
-          <ScrollArea className="flex-auto w-1/2 mx-auto" offsetScrollbars>
+          <ScrollArea className='flex-auto w-1/2 mx-auto' offsetScrollbars>
             <Table stickyHeader highlightOnHover>
               <Table.Thead>
                 <Table.Tr>

@@ -8,8 +8,9 @@ export default function AllData() {
   })
 
   return (
-    <Layout currentPage="all-data">
+    <Layout currentPage='all-data'>
       <p>all data page</p>
+      <p>{connected}</p>
     </Layout>
   )
 }

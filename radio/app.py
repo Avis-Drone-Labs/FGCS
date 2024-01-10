@@ -140,7 +140,7 @@ def set_state(data):
         timeout = time.time() + 60 * 3  # 3 minutes from now
         last_index_sent = -1
 
-        while drone.is_requesting_params:
+        while drone and drone.is_requesting_params:
             if time.time() > timeout:
                 socketio.emit(
                     "params_error",
@@ -163,7 +163,8 @@ def set_state(data):
 
             time.sleep(0.2)
 
-        socketio.emit("params", drone.params)
+        if drone:
+            socketio.emit("params", drone.params)
 
 
 @socketio.on("set_multiple_params")
@@ -202,7 +203,7 @@ def refresh_params():
     timeout = time.time() + 60 * 3  # 3 minutes from now
     last_index_sent = -1
 
-    while drone.is_requesting_params:
+    while drone and drone.is_requesting_params:
         if time.time() > timeout:
             socketio.emit(
                 "params_error",
@@ -225,7 +226,8 @@ def refresh_params():
 
         time.sleep(0.2)
 
-    socketio.emit("params", drone.params)
+    if drone:
+        socketio.emit("params", drone.params)
 
 
 @socketio.on("reboot_autopilot")

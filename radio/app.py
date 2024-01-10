@@ -76,16 +76,23 @@ def setComPort(data):
 
     port = data.get("port")
     if not port:
+        socketio.emit("com_port_error", {"message": "COM port not specified."})
         return
 
     port = port.split(":")[0]
 
     if port not in getComPortNames():
-        # TODO: Add error message
+        socketio.emit("com_port_error", {"message": "COM port not found."})
         return
 
     baud = data.get("baud")
-    drone = Drone(port, wireless=False, baud=baud)
+    drone = Drone(
+        port,
+        wireless=False,
+        baud=baud,
+        droneErrorCb=droneErrorCb,
+        droneDisconnectCb=disconnectFromDrone,
+    )
     time.sleep(1)
     socketio.emit("connected_to_drone")
 
@@ -133,10 +140,11 @@ def set_state(data):
         timeout = time.time() + 60 * 3  # 3 minutes from now
         last_index_sent = -1
 
-        while drone.is_requesting_params:
+        while drone and drone.is_requesting_params:
             if time.time() > timeout:
                 socketio.emit(
-                    "error", {"message": "Parameter request timed out after 3 minutes."}
+                    "params_error",
+                    {"message": "Parameter request timed out after 3 minutes."},
                 )
                 return
 
@@ -155,7 +163,8 @@ def set_state(data):
 
             time.sleep(0.2)
 
-        socketio.emit("params", drone.params)
+        if drone:
+            socketio.emit("params", drone.params)
 
 
 @socketio.on("set_multiple_params")
@@ -163,7 +172,8 @@ def set_multiple_params(params_list):
     global state
     if state != "params":
         socketio.emit(
-            "error", {"message": "You must be on the params screen to save parameters."}
+            "params_error",
+            {"message": "You must be on the params screen to save parameters."},
         )
         print(f"Current state: {state}")
         return
@@ -174,7 +184,7 @@ def set_multiple_params(params_list):
             "param_set_success", {"message": "Parameters saved successfully."}
         )
     else:
-        socketio.emit("error", {"message": "Failed to save parameters."})
+        socketio.emit("params_error", {"message": "Failed to save parameters."})
 
 
 @socketio.on("refresh_params")
@@ -182,7 +192,7 @@ def refresh_params():
     global state
     if state != "params":
         socketio.emit(
-            "error",
+            "params_error",
             {"message": "You must be on the params screen to refresh the parameters."},
         )
         print(f"Current state: {state}")
@@ -193,10 +203,11 @@ def refresh_params():
     timeout = time.time() + 60 * 3  # 3 minutes from now
     last_index_sent = -1
 
-    while drone.is_requesting_params:
+    while drone and drone.is_requesting_params:
         if time.time() > timeout:
             socketio.emit(
-                "error", {"message": "Parameter request timed out after 3 minutes."}
+                "params_error",
+                {"message": "Parameter request timed out after 3 minutes."},
             )
             return
 
@@ -215,7 +226,8 @@ def refresh_params():
 
         time.sleep(0.2)
 
-    socketio.emit("params", drone.params)
+    if drone:
+        socketio.emit("params", drone.params)
 
 
 @socketio.on("reboot_autopilot")
@@ -225,6 +237,10 @@ def rebootAutopilot():
         return
 
     port = drone.port
+    baud = drone.baud
+    wireless = drone.wireless
+    droneErrorCb = drone.droneErrorCb
+    droneDisconnectCb = drone.droneDisconnectCb
     socketio.emit("disconnected_from_drone")
     drone.rebootAutopilot()
 
@@ -248,7 +264,13 @@ def rebootAutopilot():
     tries = 0
     while tries < 3:
         try:
-            drone = Drone(port)
+            drone = Drone(
+                port,
+                baud=baud,
+                wireless=wireless,
+                droneErrorCb=droneErrorCb,
+                droneDisconnectCb=droneDisconnectCb,
+            )
             break
         except serial.serialutil.SerialException:
             tries += 1
@@ -277,6 +299,10 @@ def sendMessage(msg):
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
     socketio.emit("incoming_msg", data)
+
+
+def droneErrorCb(msg):
+    socketio.emit("drone_error", {"message": msg})
 
 
 if __name__ == "__main__":

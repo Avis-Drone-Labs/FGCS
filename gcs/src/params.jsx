@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 import Layout from './components/layout.jsx'
+import { showErrorNotification } from './notification.js'
 import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -91,8 +92,8 @@ export default function Params() {
       modifiedParamsHandler.setState([])
     })
 
-    socket.on('error', (err) => {
-      console.error(err.message)
+    socket.on('params_error', (err) => {
+      showErrorNotification(err.message)
       setFetchingVars(false)
     })
 
@@ -100,7 +101,7 @@ export default function Params() {
       socket.off('params')
       socket.off('param_request_update')
       socket.off('param_set_success')
-      socket.off('error')
+      socket.off('params_error')
       socket.off('reboot_autopilot')
     }
   }, [connected])

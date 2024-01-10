@@ -88,7 +88,7 @@ def setComPort(data):
     baud = data.get("baud")
     drone = Drone(
         port,
-        wireless=False,
+        wireless=data.get("wireless", True),
         baud=baud,
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,

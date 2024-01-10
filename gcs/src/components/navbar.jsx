@@ -1,4 +1,11 @@
-import { Button, Group, LoadingOverlay, Modal, Select } from '@mantine/core'
+import {
+  Button,
+  Checkbox,
+  Group,
+  LoadingOverlay,
+  Modal,
+  Select,
+} from '@mantine/core'
 import { useDisclosure, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
@@ -21,6 +28,10 @@ export default function Navbar({ currentPage }) {
   const [comPorts, setComPorts] = useState([])
   const [selectedComPort, setSelectedComPort] = useState(null)
   const [selectedBaudRate, setSelectedBaudRate] = useState('9600')
+  const [wireless, setWireless] = useLocalStorage({
+    key: 'wirelessConnection',
+    defaultValue: true,
+  })
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
   const [connecting, setConnecting] = useState(false)
 
@@ -95,6 +106,7 @@ export default function Navbar({ currentPage }) {
     socket.emit('set_com_port', {
       port: selectedComPort,
       baud: selectedBaudRate,
+      wireless: wireless,
     })
     setConnecting(true)
   }
@@ -120,32 +132,40 @@ export default function Navbar({ currentPage }) {
         withCloseButton={false}
       >
         <LoadingOverlay visible={fetchingComPorts} />
-        <Select
-          label='COM Port'
-          description='Select a COM Port from the ones available'
-          placeholder={
-            comPorts.length ? 'Select a COM port' : 'No COM ports found'
-          }
-          data={comPorts}
-          value={selectedComPort}
-          onChange={setSelectedComPort}
-          rightSectionPointerEvents='all'
-          rightSection={<IconRefresh />}
-          rightSectionProps={{
-            onClick: getComPorts,
-            className: 'hover:cursor-pointer hover:bg-transparent/50',
-          }}
-        />
-        <Select
-          label='Baud Rate'
-          description='Select a baud rate for the specified COM Port'
-          data={[
-            300, 1200, 4800, 9600, 19200, 13400, 38400, 57600, 74880, 115200,
-            230400, 250000,
-          ]}
-          value={selectedBaudRate}
-          onChange={setSelectedBaudRate}
-        />
+        <div className='flex flex-col space-y-4'>
+          <Select
+            label='COM Port'
+            description='Select a COM Port from the ones available'
+            placeholder={
+              comPorts.length ? 'Select a COM port' : 'No COM ports found'
+            }
+            data={comPorts}
+            value={selectedComPort}
+            onChange={setSelectedComPort}
+            rightSectionPointerEvents='all'
+            rightSection={<IconRefresh />}
+            rightSectionProps={{
+              onClick: getComPorts,
+              className: 'hover:cursor-pointer hover:bg-transparent/50',
+            }}
+          />
+          <Select
+            label='Baud Rate'
+            description='Select a baud rate for the specified COM Port'
+            data={[
+              300, 1200, 4800, 9600, 19200, 13400, 38400, 57600, 74880, 115200,
+              230400, 250000,
+            ]}
+            value={selectedBaudRate}
+            onChange={setSelectedBaudRate}
+          />
+          <Checkbox
+            label='Wireless Connection'
+            description='Check this if you are using a wireless connection'
+            checked={wireless}
+            onChange={(event) => setWireless(event.currentTarget.checked)}
+          />
+        </div>
         <Group justify='space-between' className='pt-4'>
           <Button
             variant='filled'

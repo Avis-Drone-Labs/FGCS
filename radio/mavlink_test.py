@@ -17,46 +17,14 @@ from utils import getComPort, getComPortNames
 # write_api = db_client.write_api(write_options=SYNCHRONOUS)
 
 
-def test_cb(msg):
-    print(msg.msgname)
+def test_cb(msg=None):
+    print(msg)
     # print(datetime.datetime.now().time(), datetime.datetime.fromtimestamp(msg._timestamp).time(), msg.rpm)
 
 
 if __name__ == "__main__":
     port = getComPort()
-    drone = Drone(port)
-
-    drone.setupDataStreams()
-
-    time.sleep(1)
-    drone.rebootAutopilot()
-
-    while drone.is_active:
-        time.sleep(0.0)
-
-    counter = 0
-    port_open = False
-    while counter < 10:
-        if port in getComPortNames():
-            port_open = True
-            break
-        counter += 1
-        time.sleep(0.5)
-    else:
-        print("Port not open after 5 seconds.")
-        exit()
-
-    tries = 0
-    while tries < 3:
-        try:
-            drone = Drone(port)
-            break
-        except serial.serialutil.SerialException:
-            tries += 1
-            time.sleep(1)
-    else:
-        print("Could not reconnect to drone after 3 attempts.")
-        exit()
+    drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
     drone.setupDataStreams()
 

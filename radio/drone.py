@@ -13,10 +13,19 @@ os.environ["MAVLINK20"] = "1"
 
 
 class Drone:
-    def __init__(self, port, baud=57600, wireless=False):
+    def __init__(
+        self,
+        port,
+        baud=57600,
+        wireless=False,
+        droneErrorCb=None,
+        droneDisconnectCb=None,
+    ):
         self.port = port
         self.baud = baud
         self.wireless = wireless
+        self.droneErrorCb = droneErrorCb
+        self.droneDisconnectCb = droneDisconnectCb
 
         self.master = mavutil.mavlink_connection(port, baud=baud)
         self.master.wait_heartbeat()
@@ -123,13 +132,26 @@ class Drone:
                 msg = self.master.recv_msg()
             except mavutil.mavlink.MAVError as e:
                 print("mav recv error: %s" % str(e))
-                msg = None
+                if self.droneErrorCb:
+                    self.droneErrorCb(str(e))
+                continue
             except KeyboardInterrupt:
                 break
-            except Exception:
+            except serial.serialutil.SerialException as e:
+                print("Autopilot disconnected")
+                print(str(e))
+                if self.droneDisconnectCb:
+                    self.droneDisconnectCb()
+                self.is_listening = False
+                self.is_active = False
+                break
+            except Exception as e:
                 # Log any other unexpected exception
                 print(traceback.format_exc())
-                msg = None
+                if self.droneErrorCb:
+                    self.droneErrorCb(str(e))
+                continue
+
             if msg:
                 if msg.msgname == "TIMESYNC":
                     component_timestamp = msg.ts1
@@ -137,10 +159,12 @@ class Drone:
                     self.master.mav.timesync_send(local_timestamp, component_timestamp)
                     continue
 
-                print(msg.msgname)
-
                 if msg.msgname == "STATUSTEXT":
                     print(msg.text)
+                elif msg.msgname == "HEARTBEAT":
+                    pass
+                else:
+                    print(msg.msgname)
 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 

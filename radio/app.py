@@ -295,6 +295,26 @@ def rebootAutopilot():
     )
 
 
+@socketio.on("arm_disarm")
+def arm(data):
+    global drone
+    if not drone:
+        return
+
+    arm = data.get("arm", None)
+    if arm is None:
+        return
+
+    force = data.get("force", False)
+
+    if arm:
+        result = drone.arm(force)
+    else:
+        result = drone.disarm(force)
+
+    socketio.emit("arm_disarm", result)
+
+
 def sendMessage(msg):
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp

@@ -27,7 +27,13 @@ class Drone:
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
 
-        self.master = mavutil.mavlink_connection(port, baud=baud)
+        try:
+            self.master = mavutil.mavlink_connection(port, baud=baud)
+        except PermissionError as e:
+            if self.droneErrorCb:
+                self.droneErrorCb(str(e))
+            return
+
         self.master.wait_heartbeat()
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component
@@ -45,6 +51,8 @@ class Drone:
         self.current_param_index = 0
         self.total_number_of_params = 0
         self.params = {}
+
+        self.armed = False
 
         self.stopAllDataStreams()
 
@@ -162,7 +170,16 @@ class Drone:
                 if msg.msgname == "STATUSTEXT":
                     print(msg.text)
                 elif msg.msgname == "HEARTBEAT":
-                    pass
+                    if (
+                        msg.autopilot == 8
+                    ):  # No valid autopilot, e.g. a GCS or other MAVLink component
+                        continue
+
+                    self.armed = bool(
+                        msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+                    )
+                elif msg.msgname == "PARAM_VALUE":
+                    print(msg.param_id)
                 else:
                     print(msg.msgname)
 
@@ -305,11 +322,9 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-            if (
-                response
-                and response.command
-                == mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
-                and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
+
+            if self.commandAccepted(
+                response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
             ):
                 print("Rebooting")
                 self.close()
@@ -319,6 +334,98 @@ class Drone:
         except serial.serialutil.SerialException:
             print("Rebooting")
             self.close()
+
+    def arm(self, force=False):
+        if self.armed:
+            return {"success": False, "message": "Already armed"}
+
+        self.is_listening = False
+
+        self.master.mav.command_long_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            0,
+            1,
+            2989 if force else 0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.is_listening = True
+
+            if self.commandAccepted(
+                response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+            ):
+                print("Waiting for arm")
+                while not self.armed:
+                    time.sleep(0.05)
+                print("ARMED")
+                return {"success": True, "message": "Armed successfully"}
+            else:
+                print("Arming failed")
+        except Exception as e:
+            print(traceback.format_exc())
+            self.droneErrorCb(str(e))
+        # finally:
+        # self.is_listening = True
+
+        return {"success": False, "message": "Could not arm"}
+
+    def disarm(self, force=False):
+        if not self.armed:
+            return {"success": False, "message": "Already disarmed"}
+
+        self.is_listening = False
+
+        self.master.mav.command_long_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            0,
+            1,
+            2989 if force else 0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.is_listening = True
+
+            if self.commandAccepted(
+                response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+            ):
+                print("Waiting for disarm")
+                while self.armed:
+                    time.sleep(0.05)
+                # self.master.motors_disarmed_wait()
+                print("DISARMED")
+                return {"success": True, "message": "Disarmed successfully"}
+            else:
+                print("Disarming failed")
+        except Exception as e:
+            print(traceback.format_exc())
+            self.droneErrorCb(str(e))
+        # finally:
+        #     self.is_listening = True
+
+        return {"success": False, "message": "Could not disarm"}
+
+    def commandAccepted(self, response, command):
+        return (
+            response
+            and response.command == command
+            and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
+        )
 
     def close(self):
         for message_id in copy.deepcopy(self.message_listeners):

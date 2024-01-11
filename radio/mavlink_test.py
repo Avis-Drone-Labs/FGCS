@@ -26,7 +26,14 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
-    drone.setupDataStreams()
+    drone.arm(force=True)
+
+    time.sleep(3)
+
+    drone.disarm()
+    # drone.setupDataStreams()
+
+    # time.sleep()
 
     # params_to_set = [
     #     {

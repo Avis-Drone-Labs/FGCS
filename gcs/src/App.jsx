@@ -16,9 +16,11 @@ import {
   PLANE_MODES,
 } from './mavlinkConstants'
 
+import { Button } from '@mantine/core'
 import Layout from './components/layout'
 import MapSection from './components/map'
 import StatusMessages from './components/statusMessages'
+import { showErrorNotification } from './notification'
 import { socket } from './socket'
 
 export default function App() {
@@ -33,7 +35,9 @@ export default function App() {
   const [batteryData, setBatteryData] = useState({})
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
   const [statustextMessages, statustextMessagesHandler] = useListState([])
-  const [sysStatusData, setSysStatusData] = useState({})
+  const [sysStatusData, setSysStatusData] = useState({
+    onboard_control_sensors_enabled: 0,
+  })
   const [gpsRawIntData, setGpsRawIntData] = useState({
     fix_type: 0,
     satellites_visible: 0,
@@ -87,8 +91,16 @@ export default function App() {
       }
     })
 
+    socket.on('arm_disarm', (msg) => {
+      console.log(msg)
+      if (!msg.success) {
+        showErrorNotification(msg.message)
+      }
+    })
+
     return () => {
       socket.off('incoming_msg')
+      socket.off('arm_disarm')
     }
   }, [connected])
 
@@ -108,10 +120,15 @@ export default function App() {
     return heartbeatData.base_mode & 128
   }
 
-  function getIsArmable() {
+  function prearmEnabled() {
     // Checks if prearm check is enabled, if yes then not armable
     // TOOD: test if this returns true if all checks pass
-    return !(sysStatusData.onboard_control_sensors_enabled & 268435456)
+    return Boolean(sysStatusData.onboard_control_sensors_enabled & 268435456)
+  }
+
+  function armDisarm(arm, force = false) {
+    // TODO: Add force arm ability
+    socket.emit('arm_disarm', { arm: arm, force: force })
   }
 
   return (
@@ -130,10 +147,10 @@ export default function App() {
             ) : (
               <>
                 <p className='font-bold'>DISARMED</p>
-                {getIsArmable() ? (
-                  <p className='text-falconred'>Not Ready to Arm</p>
+                {prearmEnabled() ? (
+                  <p className='text-green-500'>Prearm: Enabled</p>
                 ) : (
-                  <p className='text-green-500 font-bold'>Ready to Arm</p>
+                  <p className='text-falconred font-bold'>Prearm: Disabled</p>
                 )}
               </>
             )}
@@ -231,6 +248,15 @@ export default function App() {
                 %
               </p>
             </div>
+          </div>
+          <div>
+            <Button
+              onClick={() => {
+                armDisarm(!getIsArmed())
+              }}
+            >
+              {getIsArmed() ? 'Disarm' : 'Arm'}
+            </Button>
           </div>
         </div>
 

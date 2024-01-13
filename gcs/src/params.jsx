@@ -23,7 +23,7 @@ import {
   IconRefresh,
   IconTool,
 } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -36,6 +36,73 @@ import Layout from './components/layout.jsx'
 import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+const RowItem = memo(({ param, value, onChange }) => {
+  const paramDef = apmParamDefs[param.param_id]
+  return (
+    <Table.Tr key={param.param_id}>
+      <Tooltip label={paramDef?.DisplayName}>
+        <Table.Td>{param.param_id}</Table.Td>
+      </Tooltip>
+      <Table.Td>
+        {/* {paramDef?.Range ? (
+              <>
+                {paramDef?.Values ? (
+                  <>
+                    {paramDef?.Bitmask ? (
+                      <NumberInput // Bitmask input
+                        value={param.param_value}
+                        onChange={(value) => addToModifiedParams(value, param)}
+                        decimalScale={5}
+                      />
+                    ) : (
+                      <NumberInput // Values input
+                        value={param.param_value}
+                        onChange={(value) => addToModifiedParams(value, param)}
+                        decimalScale={5}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <NumberInput // Range input
+                    value={param.param_value}
+                    onChange={(value) => addToModifiedParams(value, param)}
+                    decimalScale={5}
+                    min={parseFloat(paramDef?.Range.low)}
+                    max={parseFloat(paramDef?.Range.high)}
+                  />
+                )}
+              </>
+            ) : (
+              <NumberInput // Normal number input
+                value={param.param_value}
+                onChange={(value) => addToModifiedParams(value, param)}
+                decimalScale={5}
+              />
+            )} */}
+        <NumberInput
+          label={<p>{param.param_id}</p>}
+          value={value}
+          onChange={(value) => onChange(value, param)}
+          decimalScale={5}
+        />
+      </Table.Td>
+      <Table.Td className='w-1/12'>{paramDef?.Units}</Table.Td>
+      <Table.Td className='w-1/2'>
+        <ScrollArea.Autosize className='max-h-24'>
+          {paramDef?.Description}
+        </ScrollArea.Autosize>
+      </Table.Td>
+    </Table.Tr>
+  )
+}, arePropsEqual)
+
+function arePropsEqual(oldProps, newProps) {
+  if (oldProps.param.param_value !== newProps.param.param_value) {
+    console.log('false')
+  }
+  return oldProps.param.param_value === newProps.param.param_value
+}
 
 export default function Params() {
   const [connected] = useLocalStorage({
@@ -71,7 +138,6 @@ export default function Params() {
     }
 
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      console.log('setting state')
       socket.emit('set_state', { state: 'params' })
       setFetchingVars(true)
     }
@@ -128,6 +194,11 @@ export default function Params() {
       param.param_value = value
       modifiedParamsHandler.append(param)
     }
+
+    paramsHandler.applyWhere(
+      (item) => item.param_id === param.param_id,
+      (item) => ({ ...item, param_value: value }),
+    )
   }
 
   function saveModifiedParams() {
@@ -151,6 +222,10 @@ export default function Params() {
     setRebootData({})
   }
 
+  const onChange = useCallback((param, value) => {
+    addToModifiedParams(param, value)
+  }, [])
+
   // TODO: Improve usability by only rendering what's viewed in window, e.g. using react-visualizer or react-window
   const rows = (showModifiedParams ? modifiedParams : params)
     .filter(
@@ -161,28 +236,12 @@ export default function Params() {
     )
     .map((param) => {
       return (
-        <Table.Tr key={param.param_id}>
-          <Tooltip label={apmParamDefs[param.param_id]?.DisplayName}>
-            <Table.Td>{param.param_id}</Table.Td>
-          </Tooltip>
-          <Table.Td>
-            <NumberInput
-              value={param.param_value}
-              onChange={(value) => {
-                addToModifiedParams(value, param)
-              }}
-              decimalScale={5}
-            />
-          </Table.Td>
-          <Table.Td className='w-1/12'>
-            {apmParamDefs[param.param_id]?.Units}
-          </Table.Td>
-          <Table.Td className='w-1/2'>
-            <ScrollArea.Autosize className='max-h-24'>
-              {apmParamDefs[param.param_id]?.Description}
-            </ScrollArea.Autosize>
-          </Table.Td>
-        </Table.Tr>
+        <RowItem
+          key={param.param_id}
+          param={param}
+          value={param.param_value}
+          onChange={onChange}
+        />
       )
     })
 

@@ -7,20 +7,31 @@ import {
   ScrollArea,
   Table,
   TextInput,
+  Tooltip,
 } from '@mantine/core'
 import {
   useDebouncedValue,
   useDisclosure,
   useListState,
   useLocalStorage,
+  useToggle,
 } from '@mantine/hooks'
-import { IconPencil, IconPower, IconRefresh } from '@tabler/icons-react'
+import {
+  IconEye,
+  IconPencil,
+  IconPower,
+  IconRefresh,
+  IconTool,
+} from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from './notification.js'
 
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 import Layout from './components/layout.jsx'
-import { showErrorNotification } from './notification.js'
 import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -32,9 +43,9 @@ export default function Params() {
   })
   const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
-  const [params, setParams] = useState(null)
-  const [shownParams, setShownParams] = useState(null)
+  const [params, paramsHandler] = useListState([])
   const [modifiedParams, modifiedParamsHandler] = useListState([])
+  const [showModifiedParams, showModifiedParamsToggle] = useToggle()
   const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 350)
   const [opened, { open, close }] = useDisclosure(false)
@@ -51,25 +62,24 @@ export default function Params() {
     if (!connected) {
       setFetchingVars(false)
       setFetchingVarsProgress(0)
-      setParams(null)
-      setShownParams([])
+      paramsHandler.setState([])
       modifiedParamsHandler.setState([])
       setSearchValue('')
       setRebootData({})
       return
     }
 
-    if (connected && params === null && !fetchingVars) {
+    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
       console.log('setting state')
       socket.emit('set_state', { state: 'params' })
       setFetchingVars(true)
     }
 
     socket.on('params', (params) => {
-      setParams(params)
-      setShownParams(params)
+      paramsHandler.setState(params)
       setFetchingVars(false)
       setFetchingVarsProgress(0)
+      console.log(params)
     })
 
     socket.on('param_request_update', (msg) => {
@@ -79,14 +89,10 @@ export default function Params() {
     })
 
     socket.on('param_set_success', (msg) => {
-      console.log(msg.message)
+      showSuccessNotification(msg.message)
       const clonedParams = structuredClone(params)
-      const clonedShownParams = structuredClone(shownParams)
       modifiedParams.forEach((param) => {
         clonedParams[param.param_id].param_value = param.param_value
-        if (clonedShownParams[param.param_id]) {
-          clonedShownParams[param.param_id].param_value = param.param_value
-        }
       })
 
       modifiedParamsHandler.setState([])
@@ -106,25 +112,9 @@ export default function Params() {
     }
   }, [connected])
 
-  useEffect(() => {
-    if (!params) return
-
-    const filteredParams = Object.keys(params)
-      .filter(
-        (key) =>
-          key.toLowerCase().indexOf(debouncedSearchValue.toLowerCase()) == 0,
-      )
-      .reduce((obj, key) => {
-        return Object.assign(obj, {
-          [key]: params[key],
-        })
-      }, {})
-
-    setShownParams(filteredParams)
-  }, [debouncedSearchValue])
-
   function addToModifiedParams(value, param) {
     // TODO: Can this logic be tidied up?
+    if (value === '') return
     if (
       modifiedParams.find((obj) => {
         return obj.param_id === param.param_id
@@ -145,8 +135,7 @@ export default function Params() {
   }
 
   function refreshParams() {
-    setParams(null)
-    setShownParams(null)
+    paramsHandler.setState([])
     socket.emit('refresh_params')
     setFetchingVars(true)
   }
@@ -156,12 +145,52 @@ export default function Params() {
     open()
     setFetchingVars(false)
     setFetchingVarsProgress(0)
-    setParams(null)
-    setShownParams([])
+    paramsHandler.setState([])
     modifiedParamsHandler.setState([])
     setSearchValue('')
     setRebootData({})
   }
+
+  const paramsRows = params
+    .filter(
+      (param) =>
+        param.param_id
+          .toLowerCase()
+          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+    )
+    .map((param) => {
+      return (
+        <Table.Tr key={param.param_id}>
+          <Table.Td>{param.param_id}</Table.Td>
+          <Table.Td>
+            <NumberInput
+              value={param.param_value}
+              onChange={(value) => {
+                addToModifiedParams(value, param)
+              }}
+              decimalScale={5}
+            />
+          </Table.Td>
+        </Table.Tr>
+      )
+    })
+
+  const modifiedParamsRows = modifiedParams.map((param) => {
+    return (
+      <Table.Tr key={param.param_id}>
+        <Table.Td>{param.param_id}</Table.Td>
+        <Table.Td>
+          <NumberInput
+            value={param.param_value}
+            onChange={(value) => {
+              addToModifiedParams(value, param)
+            }}
+            decimalScale={5}
+          />
+        </Table.Td>
+      </Table.Tr>
+    )
+  })
 
   return (
     <Layout currentPage='params'>
@@ -209,9 +238,27 @@ export default function Params() {
           className='w-1/3 mx-auto my-auto'
         />
       )}
-      {params !== null && (
+      {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
           <div className='flex space-x-4 justify-center'>
+            <Tooltip
+              label={
+                showModifiedParams ? 'Show all params' : 'Show modified params'
+              }
+              position='bottom'
+            >
+              <Button
+                size='sm'
+                onClick={showModifiedParamsToggle}
+                color={tailwindColors.orange[600]}
+              >
+                {showModifiedParams ? (
+                  <IconEye size={14} />
+                ) : (
+                  <IconTool size={14} />
+                )}
+              </Button>
+            </Tooltip>
             <TextInput
               className='w-1/3'
               placeholder='Search by parameter name'
@@ -253,22 +300,7 @@ export default function Params() {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {Object.keys(shownParams).map((param) => {
-                  return (
-                    <Table.Tr key={param}>
-                      <Table.Td>{param}</Table.Td>
-                      <Table.Td>
-                        <NumberInput
-                          value={params[param].param_value}
-                          onChange={(value) => {
-                            addToModifiedParams(value, params[param])
-                          }}
-                          decimalScale={5}
-                        />
-                      </Table.Td>
-                    </Table.Tr>
-                  )
-                })}
+                {showModifiedParams ? modifiedParamsRows : paramsRows}
               </Table.Tbody>
             </Table>
           </ScrollArea>

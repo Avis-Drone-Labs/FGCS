@@ -30,6 +30,7 @@ import {
 } from './notification.js'
 
 import resolveConfig from 'tailwindcss/resolveConfig'
+import apmParamDefs from '../data/gen_apm_params_def.json'
 import tailwindConfig from '../tailwind.config.js'
 import Layout from './components/layout.jsx'
 import { socket } from './socket.js'
@@ -79,7 +80,6 @@ export default function Params() {
       paramsHandler.setState(params)
       setFetchingVars(false)
       setFetchingVarsProgress(0)
-      console.log(params)
     })
 
     socket.on('param_request_update', (msg) => {
@@ -151,7 +151,8 @@ export default function Params() {
     setRebootData({})
   }
 
-  const paramsRows = params
+  // TODO: Improve usability by only rendering what's viewed in window, e.g. using react-visualizer or react-window
+  const rows = (showModifiedParams ? modifiedParams : params)
     .filter(
       (param) =>
         param.param_id
@@ -161,7 +162,9 @@ export default function Params() {
     .map((param) => {
       return (
         <Table.Tr key={param.param_id}>
-          <Table.Td>{param.param_id}</Table.Td>
+          <Tooltip label={apmParamDefs[param.param_id]?.DisplayName}>
+            <Table.Td>{param.param_id}</Table.Td>
+          </Tooltip>
           <Table.Td>
             <NumberInput
               value={param.param_value}
@@ -171,26 +174,17 @@ export default function Params() {
               decimalScale={5}
             />
           </Table.Td>
+          <Table.Td className='w-1/12'>
+            {apmParamDefs[param.param_id]?.Units}
+          </Table.Td>
+          <Table.Td className='w-1/2'>
+            <ScrollArea.Autosize className='max-h-24'>
+              {apmParamDefs[param.param_id]?.Description}
+            </ScrollArea.Autosize>
+          </Table.Td>
         </Table.Tr>
       )
     })
-
-  const modifiedParamsRows = modifiedParams.map((param) => {
-    return (
-      <Table.Tr key={param.param_id}>
-        <Table.Td>{param.param_id}</Table.Td>
-        <Table.Td>
-          <NumberInput
-            value={param.param_value}
-            onChange={(value) => {
-              addToModifiedParams(value, param)
-            }}
-            decimalScale={5}
-          />
-        </Table.Td>
-      </Table.Tr>
-    )
-  })
 
   return (
     <Layout currentPage='params'>
@@ -291,17 +285,17 @@ export default function Params() {
               Reboot FC
             </Button>
           </div>
-          <ScrollArea className='flex-auto w-1/2 mx-auto' offsetScrollbars>
+          <ScrollArea className='flex-auto mx-auto w-2/3' offsetScrollbars>
             <Table stickyHeader highlightOnHover>
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Name</Table.Th>
                   <Table.Th>Value</Table.Th>
+                  <Table.Th>Units</Table.Th>
+                  <Table.Th>Description</Table.Th>
                 </Table.Tr>
               </Table.Thead>
-              <Table.Tbody>
-                {showModifiedParams ? modifiedParamsRows : paramsRows}
-              </Table.Tbody>
+              <Table.Tbody>{rows}</Table.Tbody>
             </Table>
           </ScrollArea>
         </div>

@@ -2,9 +2,11 @@ import {
   Button,
   Loader,
   Modal,
+  MultiSelect,
   NumberInput,
   Progress,
   ScrollArea,
+  Select,
   TextInput,
   Tooltip,
 } from '@mantine/core'
@@ -38,6 +40,58 @@ import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+function BitmaskSelect({ className, value, onChange, param, options }) {
+  const [selected, selectedHandler] = useListState([])
+
+  useEffect(() => {
+    parseBitmask(value)
+  }, [value])
+
+  function parseBitmask(bitmaskToParse) {
+    const binaryString = dec2bin(bitmaskToParse)
+    const selectedArray = []
+
+    binaryString
+      .split('')
+      .reverse()
+      .map((bit, index) => {
+        if (bit === '1') {
+          selectedArray.push(`${index}`)
+        }
+      })
+
+    selectedHandler.setState(selectedArray)
+  }
+
+  function createBitmask(value) {
+    const initialValue = 0
+    const bitmask = value.reduce(
+      (accumulator, currentValue) => accumulator + 2 ** parseInt(currentValue),
+      initialValue,
+    )
+    selectedHandler.setState(value)
+    console.log(bitmask)
+    onChange(bitmask, param)
+  }
+
+  function dec2bin(dec) {
+    return (dec >>> 0).toString(2)
+  }
+
+  return (
+    <ScrollArea.Autosize className={`${className} max-h-24`}>
+      <MultiSelect
+        value={selected}
+        onChange={createBitmask}
+        data={Object.keys(options).map((key) => ({
+          value: `${key}`,
+          label: `${options[key]}`,
+        }))}
+      />
+    </ScrollArea.Autosize>
+  )
+}
+
 function ValueInput({ param, paramDef, onChange, className }) {
   if (paramDef?.Range) {
     return (
@@ -55,9 +109,28 @@ function ValueInput({ param, paramDef, onChange, className }) {
       />
     )
   } else if (paramDef?.Values) {
-    return <div>Select</div>
+    return (
+      <Select // Values input
+        className={className}
+        value={`${param.param_value}`}
+        onChange={(value) => onChange(value, param)}
+        data={Object.keys(paramDef?.Values).map((key) => ({
+          value: `${key}`,
+          label: `${key}: ${paramDef?.Values[key]}`,
+        }))}
+        allowDeselect={false}
+      />
+    )
   } else if (paramDef?.Bitmask) {
-    return <div>Bitmask</div>
+    return (
+      <BitmaskSelect // Bitmask input
+        className={className}
+        value={param.param_value}
+        onChange={onChange}
+        param={param}
+        options={paramDef?.Bitmask}
+      />
+    )
   } else {
     return (
       <NumberInput
@@ -83,7 +156,7 @@ const RowItem = memo(({ param, style, onChange }) => {
         param={param}
         paramDef={paramDef}
         onChange={onChange}
-        className='w-2/12'
+        className='w-3/12'
       />
       <div className='w-1/2'>
         <ScrollArea.Autosize className='max-h-24'>
@@ -145,6 +218,7 @@ export default function Params() {
       shownParamsHandler.setState(params)
       setFetchingVars(false)
       setFetchingVarsProgress(0)
+      setSearchValue('')
     })
 
     socket.on('param_request_update', (msg) => {

@@ -2,28 +2,176 @@ import {
   Button,
   Loader,
   Modal,
+  MultiSelect,
   NumberInput,
   Progress,
   ScrollArea,
-  Table,
+  Select,
   TextInput,
+  Tooltip,
 } from '@mantine/core'
 import {
   useDebouncedValue,
   useDisclosure,
   useListState,
   useLocalStorage,
+  useToggle,
 } from '@mantine/hooks'
-import { IconPencil, IconPower, IconRefresh } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import {
+  IconEye,
+  IconPencil,
+  IconPower,
+  IconRefresh,
+  IconTool,
+} from '@tabler/icons-react'
+import { memo, useEffect, useState } from 'react'
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from './notification.js'
 
+import AutoSizer from 'react-virtualized-auto-sizer'
+import { FixedSizeList } from 'react-window'
 import resolveConfig from 'tailwindcss/resolveConfig'
+import apmParamDefs from '../data/gen_apm_params_def.json'
 import tailwindConfig from '../tailwind.config.js'
 import Layout from './components/layout.jsx'
-import { showErrorNotification } from './notification.js'
 import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+function BitmaskSelect({ className, value, onChange, param, options }) {
+  const [selected, selectedHandler] = useListState([])
+
+  useEffect(() => {
+    parseBitmask(value)
+  }, [value])
+
+  function parseBitmask(bitmaskToParse) {
+    const binaryString = dec2bin(bitmaskToParse)
+    const selectedArray = []
+
+    binaryString
+      .split('')
+      .reverse()
+      .map((bit, index) => {
+        if (bit === '1') {
+          selectedArray.push(`${index}`)
+        }
+      })
+
+    selectedHandler.setState(selectedArray)
+  }
+
+  function createBitmask(value) {
+    const initialValue = 0
+    const bitmask = value.reduce(
+      (accumulator, currentValue) => accumulator + 2 ** parseInt(currentValue),
+      initialValue,
+    )
+    selectedHandler.setState(value)
+    console.log(bitmask)
+    onChange(bitmask, param)
+  }
+
+  function dec2bin(dec) {
+    return (dec >>> 0).toString(2)
+  }
+
+  return (
+    <ScrollArea.Autosize className={`${className} max-h-24`}>
+      <MultiSelect
+        value={selected}
+        onChange={createBitmask}
+        data={Object.keys(options).map((key) => ({
+          value: `${key}`,
+          label: `${options[key]}`,
+        }))}
+      />
+    </ScrollArea.Autosize>
+  )
+}
+
+function ValueInput({ param, paramDef, onChange, className }) {
+  if (paramDef?.Range) {
+    return (
+      <NumberInput // Range input
+        className={className}
+        label={`${paramDef?.Range.low} - ${paramDef?.Range.high}`}
+        value={param.param_value}
+        onChange={(value) => onChange(value, param)}
+        decimalScale={5}
+        min={parseFloat(paramDef?.Range.low)}
+        max={parseFloat(paramDef?.Range.high)}
+        clampBehavior='strict'
+        hideControls
+        suffix={paramDef?.Units}
+      />
+    )
+  } else if (paramDef?.Values) {
+    return (
+      <Select // Values input
+        className={className}
+        value={`${param.param_value}`}
+        onChange={(value) => onChange(value, param)}
+        data={Object.keys(paramDef?.Values).map((key) => ({
+          value: `${key}`,
+          label: `${key}: ${paramDef?.Values[key]}`,
+        }))}
+        allowDeselect={false}
+      />
+    )
+  } else if (paramDef?.Bitmask) {
+    return (
+      <BitmaskSelect // Bitmask input
+        className={className}
+        value={param.param_value}
+        onChange={onChange}
+        param={param}
+        options={paramDef?.Bitmask}
+      />
+    )
+  } else {
+    return (
+      <NumberInput
+        className={className}
+        value={param.param_value}
+        onChange={(value) => onChange(value, param)}
+        decimalScale={5}
+        hideControls
+        suffix={paramDef?.Units}
+      />
+    )
+  }
+}
+
+const RowItem = memo(({ param, style, onChange }) => {
+  const paramDef = apmParamDefs[param.param_id]
+  return (
+    <div style={style} className='flex flex-row items-center space-x-4'>
+      <Tooltip label={paramDef?.DisplayName}>
+        <p className='w-56'>{param.param_id}</p>
+      </Tooltip>
+      <ValueInput
+        param={param}
+        paramDef={paramDef}
+        onChange={onChange}
+        className='w-3/12'
+      />
+      <div className='w-1/2'>
+        <ScrollArea.Autosize className='max-h-24'>
+          {paramDef?.Description}
+        </ScrollArea.Autosize>
+      </div>
+    </div>
+  )
+})
+
+const Row = ({ data, index, style }) => {
+  const param = data.params[index]
+
+  return <RowItem param={param} style={style} onChange={data.onChange} />
+}
 
 export default function Params() {
   const [connected] = useLocalStorage({
@@ -32,11 +180,12 @@ export default function Params() {
   })
   const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
-  const [params, setParams] = useState(null)
-  const [shownParams, setShownParams] = useState(null)
+  const [params, paramsHandler] = useListState([])
+  const [shownParams, shownParamsHandler] = useListState([])
   const [modifiedParams, modifiedParamsHandler] = useListState([])
+  const [showModifiedParams, showModifiedParamsToggle] = useToggle()
   const [searchValue, setSearchValue] = useState('')
-  const [debouncedSearchValue] = useDebouncedValue(searchValue, 350)
+  const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
   const [opened, { open, close }] = useDisclosure(false)
   const [rebootData, setRebootData] = useState({})
 
@@ -51,25 +200,25 @@ export default function Params() {
     if (!connected) {
       setFetchingVars(false)
       setFetchingVarsProgress(0)
-      setParams(null)
-      setShownParams([])
+      paramsHandler.setState([])
+      shownParamsHandler.setState([])
       modifiedParamsHandler.setState([])
       setSearchValue('')
       setRebootData({})
       return
     }
 
-    if (connected && params === null && !fetchingVars) {
-      console.log('setting state')
+    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
       socket.emit('set_state', { state: 'params' })
       setFetchingVars(true)
     }
 
     socket.on('params', (params) => {
-      setParams(params)
-      setShownParams(params)
+      paramsHandler.setState(params)
+      shownParamsHandler.setState(params)
       setFetchingVars(false)
       setFetchingVarsProgress(0)
+      setSearchValue('')
     })
 
     socket.on('param_request_update', (msg) => {
@@ -79,16 +228,7 @@ export default function Params() {
     })
 
     socket.on('param_set_success', (msg) => {
-      console.log(msg.message)
-      const clonedParams = structuredClone(params)
-      const clonedShownParams = structuredClone(shownParams)
-      modifiedParams.forEach((param) => {
-        clonedParams[param.param_id].param_value = param.param_value
-        if (clonedShownParams[param.param_id]) {
-          clonedShownParams[param.param_id].param_value = param.param_value
-        }
-      })
-
+      showSuccessNotification(msg.message)
       modifiedParamsHandler.setState([])
     })
 
@@ -109,22 +249,21 @@ export default function Params() {
   useEffect(() => {
     if (!params) return
 
-    const filteredParams = Object.keys(params)
-      .filter(
-        (key) =>
-          key.toLowerCase().indexOf(debouncedSearchValue.toLowerCase()) == 0,
-      )
-      .reduce((obj, key) => {
-        return Object.assign(obj, {
-          [key]: params[key],
-        })
-      }, {})
+    const filteredParams = (
+      showModifiedParams ? modifiedParams : params
+    ).filter(
+      (param) =>
+        param.param_id
+          .toLowerCase()
+          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+    )
 
-    setShownParams(filteredParams)
-  }, [debouncedSearchValue])
+    shownParamsHandler.setState(filteredParams)
+  }, [debouncedSearchValue, showModifiedParams])
 
   function addToModifiedParams(value, param) {
     // TODO: Can this logic be tidied up?
+    if (value === '') return
     if (
       modifiedParams.find((obj) => {
         return obj.param_id === param.param_id
@@ -138,6 +277,11 @@ export default function Params() {
       param.param_value = value
       modifiedParamsHandler.append(param)
     }
+
+    paramsHandler.applyWhere(
+      (item) => item.param_id === param.param_id,
+      (item) => ({ ...item, param_value: value }),
+    )
   }
 
   function saveModifiedParams() {
@@ -145,8 +289,8 @@ export default function Params() {
   }
 
   function refreshParams() {
-    setParams(null)
-    setShownParams(null)
+    paramsHandler.setState([])
+    shownParamsHandler.setState([])
     socket.emit('refresh_params')
     setFetchingVars(true)
   }
@@ -156,8 +300,8 @@ export default function Params() {
     open()
     setFetchingVars(false)
     setFetchingVarsProgress(0)
-    setParams(null)
-    setShownParams([])
+    paramsHandler.setState([])
+    shownParamsHandler.setState([])
     modifiedParamsHandler.setState([])
     setSearchValue('')
     setRebootData({})
@@ -209,9 +353,27 @@ export default function Params() {
           className='w-1/3 mx-auto my-auto'
         />
       )}
-      {params !== null && (
+      {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
           <div className='flex space-x-4 justify-center'>
+            <Tooltip
+              label={
+                showModifiedParams ? 'Show all params' : 'Show modified params'
+              }
+              position='bottom'
+            >
+              <Button
+                size='sm'
+                onClick={showModifiedParamsToggle}
+                color={tailwindColors.orange[600]}
+              >
+                {showModifiedParams ? (
+                  <IconEye size={14} />
+                ) : (
+                  <IconTool size={14} />
+                )}
+              </Button>
+            </Tooltip>
             <TextInput
               className='w-1/3'
               placeholder='Search by parameter name'
@@ -244,34 +406,24 @@ export default function Params() {
               Reboot FC
             </Button>
           </div>
-          <ScrollArea className='flex-auto w-1/2 mx-auto' offsetScrollbars>
-            <Table stickyHeader highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Value</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {Object.keys(shownParams).map((param) => {
-                  return (
-                    <Table.Tr key={param}>
-                      <Table.Td>{param}</Table.Td>
-                      <Table.Td>
-                        <NumberInput
-                          value={params[param].param_value}
-                          onChange={(value) => {
-                            addToModifiedParams(value, params[param])
-                          }}
-                          decimalScale={5}
-                        />
-                      </Table.Td>
-                    </Table.Tr>
-                  )
-                })}
-              </Table.Tbody>
-            </Table>
-          </ScrollArea>
+          <div className='h-full w-2/3 mx-auto'>
+            <AutoSizer>
+              {({ height, width }) => (
+                <FixedSizeList
+                  height={height}
+                  width={width}
+                  itemSize={120}
+                  itemCount={shownParams.length}
+                  itemData={{
+                    params: shownParams,
+                    onChange: addToModifiedParams,
+                  }}
+                >
+                  {Row}
+                </FixedSizeList>
+              )}
+            </AutoSizer>
+          </div>
         </div>
       )}
     </Layout>

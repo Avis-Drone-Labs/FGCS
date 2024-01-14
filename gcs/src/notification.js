@@ -11,3 +11,11 @@ export function showErrorNotification(message) {
     color: tailwindColors.red[600],
   })
 }
+
+export function showSuccessNotification(message) {
+  notifications.show({
+    title: 'Success',
+    message: message,
+    color: tailwindColors.green[600],
+  })
+}

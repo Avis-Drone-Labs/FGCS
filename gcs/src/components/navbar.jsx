@@ -92,6 +92,7 @@ export default function Navbar({ currentPage }) {
       console.log(msg.message)
       showErrorNotification(msg.message)
       setConnecting(false)
+      setConnected(false)
     })
 
     return () => {

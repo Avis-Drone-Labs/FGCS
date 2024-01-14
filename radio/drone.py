@@ -30,9 +30,11 @@ class Drone:
         try:
             self.master = mavutil.mavlink_connection(port, baud=baud)
         except PermissionError as e:
-            if self.droneErrorCb:
-                self.droneErrorCb(str(e))
+            self.master = None
+            self.connectionError = str(e)
             return
+
+        self.connectionError = None
 
         self.master.wait_heartbeat()
         self.target_system = self.master.target_system
@@ -50,7 +52,7 @@ class Drone:
         self.is_requesting_params = False
         self.current_param_index = 0
         self.total_number_of_params = 0
-        self.params = {}
+        self.params = []
 
         self.armed = False
 
@@ -200,7 +202,7 @@ class Drone:
                         self.is_requesting_params = False
                         self.current_param_index = 0
                         self.total_number_of_params = 0
-                        self.params = dict(sorted(self.params.items()))
+                        self.params = sorted(self.params, key=lambda k: k["param_id"])
 
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])
@@ -293,14 +295,20 @@ class Drone:
         return True
 
     def saveParam(self, param_name, param_value, param_type):
-        if param_name in self.params:
-            self.params[param_name]["param_value"] = param_value
+        existing_param_idx = next(
+            (i for i, x in enumerate(self.params) if x["param_id"] == param_name), None
+        )
+
+        if existing_param_idx is not None:
+            self.params[existing_param_idx]["param_value"] = param_value
         else:
-            self.params[param_name] = {
-                "param_id": param_name,
-                "param_value": param_value,
-                "param_type": param_type,
-            }
+            self.params.append(
+                {
+                    "param_id": param_name,
+                    "param_value": param_value,
+                    "param_type": param_type,
+                }
+            )
 
     def rebootAutopilot(self):
         self.is_listening = False

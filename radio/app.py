@@ -93,6 +93,12 @@ def setComPort(data):
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
     )
+
+    if drone.connectionError is not None:
+        socketio.emit("com_port_error", {"message": drone.connectionError})
+        drone = None
+        return
+
     time.sleep(1)
     socketio.emit("connected_to_drone")
 

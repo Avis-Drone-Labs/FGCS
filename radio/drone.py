@@ -30,9 +30,11 @@ class Drone:
         try:
             self.master = mavutil.mavlink_connection(port, baud=baud)
         except PermissionError as e:
-            if self.droneErrorCb:
-                self.droneErrorCb(str(e))
+            self.master = None
+            self.connectionError = str(e)
             return
+
+        self.connectionError = None
 
         self.master.wait_heartbeat()
         self.target_system = self.master.target_system

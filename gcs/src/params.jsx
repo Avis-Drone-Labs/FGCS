@@ -5,7 +5,6 @@ import {
   NumberInput,
   Progress,
   ScrollArea,
-  Table,
   TextInput,
   Tooltip,
 } from '@mantine/core'
@@ -23,12 +22,14 @@ import {
   IconRefresh,
   IconTool,
 } from '@tabler/icons-react'
-import { memo, useCallback, useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import {
   showErrorNotification,
   showSuccessNotification,
 } from './notification.js'
 
+import AutoSizer from 'react-virtualized-auto-sizer'
+import { FixedSizeList } from 'react-window'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import apmParamDefs from '../data/gen_apm_params_def.json'
 import tailwindConfig from '../tailwind.config.js'
@@ -37,71 +38,66 @@ import { socket } from './socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-const RowItem = memo(({ param, value, onChange }) => {
+function ValueInput({ param, paramDef, onChange, className }) {
+  if (paramDef?.Range) {
+    return (
+      <NumberInput // Range input
+        className={className}
+        label={`${paramDef?.Range.low} - ${paramDef?.Range.high}`}
+        value={param.param_value}
+        onChange={(value) => onChange(value, param)}
+        decimalScale={5}
+        min={parseFloat(paramDef?.Range.low)}
+        max={parseFloat(paramDef?.Range.high)}
+        clampBehavior='strict'
+        hideControls
+        suffix={paramDef?.Units}
+      />
+    )
+  } else if (paramDef?.Values) {
+    return <div>Select</div>
+  } else if (paramDef?.Bitmask) {
+    return <div>Bitmask</div>
+  } else {
+    return (
+      <NumberInput
+        className={className}
+        value={param.param_value}
+        onChange={(value) => onChange(value, param)}
+        decimalScale={5}
+        hideControls
+        suffix={paramDef?.Units}
+      />
+    )
+  }
+}
+
+const RowItem = memo(({ param, style, onChange }) => {
   const paramDef = apmParamDefs[param.param_id]
   return (
-    <Table.Tr key={param.param_id}>
+    <div style={style} className='flex flex-row items-center space-x-4'>
       <Tooltip label={paramDef?.DisplayName}>
-        <Table.Td>{param.param_id}</Table.Td>
+        <p className='w-56'>{param.param_id}</p>
       </Tooltip>
-      <Table.Td>
-        {/* {paramDef?.Range ? (
-              <>
-                {paramDef?.Values ? (
-                  <>
-                    {paramDef?.Bitmask ? (
-                      <NumberInput // Bitmask input
-                        value={param.param_value}
-                        onChange={(value) => addToModifiedParams(value, param)}
-                        decimalScale={5}
-                      />
-                    ) : (
-                      <NumberInput // Values input
-                        value={param.param_value}
-                        onChange={(value) => addToModifiedParams(value, param)}
-                        decimalScale={5}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <NumberInput // Range input
-                    value={param.param_value}
-                    onChange={(value) => addToModifiedParams(value, param)}
-                    decimalScale={5}
-                    min={parseFloat(paramDef?.Range.low)}
-                    max={parseFloat(paramDef?.Range.high)}
-                  />
-                )}
-              </>
-            ) : (
-              <NumberInput // Normal number input
-                value={param.param_value}
-                onChange={(value) => addToModifiedParams(value, param)}
-                decimalScale={5}
-              />
-            )} */}
-        <NumberInput
-          label={<p>{param.param_id}</p>}
-          value={value}
-          onChange={(value) => onChange(value, param)}
-          decimalScale={5}
-        />
-      </Table.Td>
-      <Table.Td className='w-1/12'>{paramDef?.Units}</Table.Td>
-      <Table.Td className='w-1/2'>
+      <ValueInput
+        param={param}
+        paramDef={paramDef}
+        onChange={onChange}
+        className='w-2/12'
+      />
+      <div className='w-1/2'>
         <ScrollArea.Autosize className='max-h-24'>
           {paramDef?.Description}
         </ScrollArea.Autosize>
-      </Table.Td>
-    </Table.Tr>
+      </div>
+    </div>
   )
-}, arePropsEqual)
+})
 
-function arePropsEqual(oldProps, newProps) {
-  if (oldProps.param.param_value !== newProps.param.param_value) {
-    console.log('false')
-  }
-  return oldProps.param.param_value === newProps.param.param_value
+const Row = ({ data, index, style }) => {
+  const param = data.params[index]
+
+  return <RowItem param={param} style={style} onChange={data.onChange} />
 }
 
 export default function Params() {
@@ -112,10 +108,11 @@ export default function Params() {
   const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
   const [params, paramsHandler] = useListState([])
+  const [shownParams, shownParamsHandler] = useListState([])
   const [modifiedParams, modifiedParamsHandler] = useListState([])
   const [showModifiedParams, showModifiedParamsToggle] = useToggle()
   const [searchValue, setSearchValue] = useState('')
-  const [debouncedSearchValue] = useDebouncedValue(searchValue, 350)
+  const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
   const [opened, { open, close }] = useDisclosure(false)
   const [rebootData, setRebootData] = useState({})
 
@@ -131,6 +128,7 @@ export default function Params() {
       setFetchingVars(false)
       setFetchingVarsProgress(0)
       paramsHandler.setState([])
+      shownParamsHandler.setState([])
       modifiedParamsHandler.setState([])
       setSearchValue('')
       setRebootData({})
@@ -144,6 +142,7 @@ export default function Params() {
 
     socket.on('params', (params) => {
       paramsHandler.setState(params)
+      shownParamsHandler.setState(params)
       setFetchingVars(false)
       setFetchingVarsProgress(0)
     })
@@ -156,11 +155,6 @@ export default function Params() {
 
     socket.on('param_set_success', (msg) => {
       showSuccessNotification(msg.message)
-      const clonedParams = structuredClone(params)
-      modifiedParams.forEach((param) => {
-        clonedParams[param.param_id].param_value = param.param_value
-      })
-
       modifiedParamsHandler.setState([])
     })
 
@@ -177,6 +171,21 @@ export default function Params() {
       socket.off('reboot_autopilot')
     }
   }, [connected])
+
+  useEffect(() => {
+    if (!params) return
+
+    const filteredParams = (
+      showModifiedParams ? modifiedParams : params
+    ).filter(
+      (param) =>
+        param.param_id
+          .toLowerCase()
+          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+    )
+
+    shownParamsHandler.setState(filteredParams)
+  }, [debouncedSearchValue, showModifiedParams])
 
   function addToModifiedParams(value, param) {
     // TODO: Can this logic be tidied up?
@@ -207,6 +216,7 @@ export default function Params() {
 
   function refreshParams() {
     paramsHandler.setState([])
+    shownParamsHandler.setState([])
     socket.emit('refresh_params')
     setFetchingVars(true)
   }
@@ -217,33 +227,11 @@ export default function Params() {
     setFetchingVars(false)
     setFetchingVarsProgress(0)
     paramsHandler.setState([])
+    shownParamsHandler.setState([])
     modifiedParamsHandler.setState([])
     setSearchValue('')
     setRebootData({})
   }
-
-  const onChange = useCallback((param, value) => {
-    addToModifiedParams(param, value)
-  }, [])
-
-  // TODO: Improve usability by only rendering what's viewed in window, e.g. using react-visualizer or react-window
-  const rows = (showModifiedParams ? modifiedParams : params)
-    .filter(
-      (param) =>
-        param.param_id
-          .toLowerCase()
-          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
-    )
-    .map((param) => {
-      return (
-        <RowItem
-          key={param.param_id}
-          param={param}
-          value={param.param_value}
-          onChange={onChange}
-        />
-      )
-    })
 
   return (
     <Layout currentPage='params'>
@@ -344,19 +332,24 @@ export default function Params() {
               Reboot FC
             </Button>
           </div>
-          <ScrollArea className='flex-auto mx-auto w-2/3' offsetScrollbars>
-            <Table stickyHeader highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Value</Table.Th>
-                  <Table.Th>Units</Table.Th>
-                  <Table.Th>Description</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>{rows}</Table.Tbody>
-            </Table>
-          </ScrollArea>
+          <div className='h-full w-2/3 mx-auto'>
+            <AutoSizer>
+              {({ height, width }) => (
+                <FixedSizeList
+                  height={height}
+                  width={width}
+                  itemSize={120}
+                  itemCount={shownParams.length}
+                  itemData={{
+                    params: shownParams,
+                    onChange: addToModifiedParams,
+                  }}
+                >
+                  {Row}
+                </FixedSizeList>
+              )}
+            </AutoSizer>
+          </div>
         </div>
       )}
     </Layout>

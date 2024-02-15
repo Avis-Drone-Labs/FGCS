@@ -22,9 +22,12 @@ import MapSection from './components/map'
 import StatusMessages from './components/statusMessages'
 import { showErrorNotification } from './notification'
 import { socket } from './socket'
+<<<<<<< HEAD
+=======
 import tailwindConfig from '../tailwind.config.js'
 import Layout from './components/layout'
 import { dialog } from 'electron'
+>>>>>>> 50c67c2 (cringe)
 
 export default function App() {
   const [connected] = useLocalStorage({
@@ -137,7 +140,7 @@ export default function App() {
   return (
 <<<<<<< HEAD
     <Layout currentPage='dashboard'>
-      <div className='relative flex flex-auto w-full h-full'>
+      <div className='flex w-full h-full flex-auto relative'>
         <div className='w-full'>
           <MapSection
             data={gpsData}
@@ -162,17 +165,17 @@ export default function App() {
 >>>>>>> 50c67c2 (cringe)
           />
         </div>
-        <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
-          <div className='flex flex-col items-center space-y-2'>
+        <div className='absolute top-0 left-0 bg-falcongrey/80 p-4'>
+          <div className='flex flex-col space-y-2 items-center'>
             {getIsArmed() ? (
-              <p className='font-bold text-falconred'>ARMED</p>
+              <p className='text-falconred font-bold'>ARMED</p>
             ) : (
               <>
                 <p className='font-bold'>DISARMED</p>
                 {prearmEnabled() ? (
                   <p className='text-green-500'>Prearm: Enabled</p>
                 ) : (
-                  <p className='font-bold text-falconred'>Prearm: Disabled</p>
+                  <p className='text-falconred font-bold'>Prearm: Disabled</p>
                 )}
               </>
             )}
@@ -319,7 +322,7 @@ export default function App() {
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}
-            className='absolute bottom-0 left-0 bg-falcongrey/80 max-w-1/2'
+            className='bg-falcongrey/80 absolute bottom-0 left-0 max-w-1/2'
           />
         )}
       </div>

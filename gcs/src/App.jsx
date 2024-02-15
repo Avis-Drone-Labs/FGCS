@@ -22,6 +22,12 @@ import MapSection from './components/map'
 import StatusMessages from './components/statusMessages'
 import { showErrorNotification } from './notification'
 import { socket } from './socket'
+<<<<<<< HEAD
+=======
+import tailwindConfig from '../tailwind.config.js'
+import Layout from './components/layout'
+import { dialog } from 'electron'
+>>>>>>> 50c67c2 (cringe)
 
 export default function App() {
   const [connected] = useLocalStorage({
@@ -132,12 +138,31 @@ export default function App() {
   }
 
   return (
+<<<<<<< HEAD
     <Layout currentPage='dashboard'>
       <div className='flex w-full h-full flex-auto relative'>
         <div className='w-full'>
           <MapSection
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+=======
+    <Layout currentPage="dashboard">
+      <div className="flex flex-auto w-full">
+        {/* grid wrapper for flight telemetry */}
+        <div className="flex-auto">
+          <InfoCard text="Altitude" metric={telemetryData['alt']} unit="m" />
+          <InfoCard
+            text="Airspeed"
+            metric={telemetryData['airspeed']}
+            unit="m/s"
+          />
+          <InfoCard text="System Status" metric={telemetryData['status']} />
+          <InfoCard text="FTS Active" metric={'FALSE'} />
+          <InfoCard
+            text="Ground Speed"
+            metric={telemetryData['groundspeed']}
+            unit="m/s"
+>>>>>>> 50c67c2 (cringe)
           />
         </div>
         <div className='absolute top-0 left-0 bg-falcongrey/80 p-4'>

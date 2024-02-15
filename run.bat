@@ -1,1 +1,1 @@
-concurrently "python radio/app.py" "cd dashboard && yarn dev" -n "backend,frontend" -c "red,blue"
+concurrently "python radio/app.py" "cd gcs && yarn dev" -n "backend,frontend" -c "red,blue"

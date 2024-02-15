@@ -103,14 +103,7 @@ export default function Graph({
   useEffect(() => {
     if (!data || !chartRef.current) return
 
-    if (
-      chartRef.current.data.datasets[0].data.length === maxNumberOfDataPoints
-    ) {
-      chartRef.current.data.datasets[0].data.shift()
-    }
-
-    chartRef.current.data.datasets[0].data.push(data)
-
+    chartRef.current.data.datasets[0].data = data
     chartRef.current.update()
   }, [data, chartRef])
 

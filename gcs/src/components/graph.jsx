@@ -79,7 +79,7 @@ export default function Graph({
   lineColor = '#e5e5e5',
   pointColor = '#fafafa',
   maxNumberOfDataPoints = 200,
-  className = 'px-8 basis-1/3 rounded-lg ',
+  className = 'p-8 rounded-lg',
   ...props
 }) {
   const [chartData] = useState({
@@ -103,14 +103,14 @@ export default function Graph({
   useEffect(() => {
     if (!data || !chartRef.current) return
 
-    chartRef.current.data.datasets[0].data = data
+    chartRef.current.data.datasets[0].data = data.slice(-250)
     chartRef.current.update()
   }, [data, chartRef])
 
   return (
     <div className={`${className}`} {...props}>
-      <div className='bg-falcongrey-80 rounded-lg'>
-        <Scatter ref={chartRef} options={options} data={chartData} />
+      <div className='bg-falcongrey-80 rounded-lg h-auto'>
+        <Scatter className='h' ref={chartRef} options={options} data={chartData} />
       </div>
     </div>
   )

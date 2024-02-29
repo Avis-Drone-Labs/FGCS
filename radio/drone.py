@@ -56,11 +56,11 @@ class Drone:
 
         self.armed = False
 
+        self.number_of_motors = 4 # Is there a way to get this from the drone?
+
         self.stopAllDataStreams()
 
         self.startThread()
-        # self.setupDataStreams()
-        # self.getAllParams()
 
     def setupDataStreams(self):
         """
@@ -173,7 +173,7 @@ class Drone:
                     print(msg.text)
                 elif msg.msgname == "HEARTBEAT":
                     if (
-                        msg.autopilot == 8
+                        msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
                     ):  # No valid autopilot, e.g. a GCS or other MAVLink component
                         continue
 
@@ -427,6 +427,15 @@ class Drone:
         #     self.is_listening = True
 
         return {"success": False, "message": "Could not disarm"}
+
+    def testMotors(self, testOrder, throttle, duration, motorInstance=0):
+        pass
+
+    def testOneMotor(self, motorInstance, throttle, duration):
+        pass
+
+    def testMotorSequence(self, throttle, delay):
+        pass
 
     def commandAccepted(self, response, command):
         return (

@@ -69,7 +69,7 @@ export default function App() {
 
     socket.on('incoming_msg', (msg) => {
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler[msg.mavpackettype]()
+        incomingMessageHandler[msg.mavpackettype](msg)
       }
     })
 

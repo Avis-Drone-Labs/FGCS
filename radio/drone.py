@@ -428,14 +428,71 @@ class Drone:
 
         return {"success": False, "message": "Could not disarm"}
 
-    def testMotors(self, testOrder, throttle, duration, motorInstance=0):
-        pass
-
     def testOneMotor(self, motorInstance, throttle, duration):
-        pass
+        self.is_listening = False
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            0, # Confirmation
+            motorInstance, # ID of the motor to be tested
+            0, # throttle type (PWM,% etc)
+            throttle, # value of the throttle - 0 to 100%
+            duration, # duration of the test in seconds
+            0, # number of motors to test in a sequence
+            0, # test order
+            0 # empty
+        )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK",blocking=True)
+
+            if self.commandAccepted(response,mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                print("Motor Test Started")
+            else:
+                print("Motor test not started")
+                success = False
+        except serial.serialutil.SerialException:
+            print("Motor test not started")
+            success = False
+
+        return success
 
     def testMotorSequence(self, throttle, delay):
-        pass
+        self.is_listening = False
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            0,  # Confirmation
+            0,  # ID of the motor to be tested
+            0,  # throttle type (PWM,% etc)
+            throttle,  # value of the throttle - 0 to 100%
+            delay,  # duration of the test in seconds
+            self.number_of_motors + 1,  # number of motors to test in a sequence
+            0,  # test order
+            0  # empty
+        )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                print("Motor Test Started")
+            else:
+                print("Motor test not started")
+                success = False
+        except serial.serialutil.SerialException:
+            print("Motor test not started")
+            success = False
+
+        return success
 
     def commandAccepted(self, response, command):
         return (

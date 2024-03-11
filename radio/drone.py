@@ -56,7 +56,7 @@ class Drone:
 
         self.armed = False
 
-        self.number_of_motors = 4 # Is there a way to get this from the drone?
+        self.number_of_motors = 4  # Is there a way to get this from the drone?
 
         self.stopAllDataStreams()
 
@@ -435,22 +435,22 @@ class Drone:
             self.target_system,
             self.target_component,
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-            0, # Confirmation
-            motorInstance, # ID of the motor to be tested
-            0, # throttle type (PWM,% etc)
-            throttle, # value of the throttle - 0 to 100%
-            duration, # duration of the test in seconds
-            0, # number of motors to test in a sequence
-            0, # test order
-            0 # empty
+            0,  # Confirmation
+            motorInstance,  # ID of the motor to be tested
+            0,  # throttle type (PWM,% etc)
+            throttle,  # value of the throttle - 0 to 100%
+            duration,  # duration of the test in seconds
+            0,  # number of motors to test in a sequence
+            0,  # test order
+            0,  # empty
         )
         self.master.mav.send(message)
         success = True
 
         try:
-            response = self.master.recv_match(type="COMMAND_ACK",blocking=True)
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(response,mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 print("Motor Test Started")
             else:
                 print("Motor test not started")
@@ -475,7 +475,7 @@ class Drone:
             delay,  # duration of the test in seconds
             self.number_of_motors + 1,  # number of motors to test in a sequence
             0,  # test order
-            0  # empty
+            0,  # empty
         )
         self.master.mav.send(message)
         success = True
@@ -490,6 +490,41 @@ class Drone:
                 success = False
         except serial.serialutil.SerialException:
             print("Motor test not started")
+            success = False
+
+        return success
+
+    def doActuatorTest(
+        self, act1=None, act2=None, act3=None, act4=None, act5=None, act6=None, index=0
+    ):
+        self.is_listening = False
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_SET_ACTUATOR,
+            0,  # Confirmation
+            act1,  # Actuator 1 value, scaled from [-1 to 1]. NaN to ignore
+            act2,  # Actuator 2 value, scaled from [-1 to 1]. NaN to ignore
+            act3,  # Actuator 3 value, scaled from [-1 to 1]. NaN to ignore
+            act4,  # Actuator 4 value, scaled from [-1 to 1]. NaN to ignore
+            act5,  # Actuator 5 value, scaled from [-1 to 1]. NaN to ignore
+            act6,  # Actuator 6 value, scaled from [-1 to 1]. NaN to ignore
+            index,  # Index of actuator set (i.e if set to 1, Actuator 1 becomes Actuator 7)
+        )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_ACTUATOR):
+                print("Setting actuators")
+            else:
+                print("Setting actuators failed")
+                success = False
+        except serial.serialutil.SerialException:
+            print("Setting actuators failed, serial exception")
             success = False
 
         return success

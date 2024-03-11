@@ -57,3 +57,10 @@ def getComPortNames():
 
 def secondsToMicroseconds(secs):
     return secs * 1e6
+
+
+def normalisePwmValue(val, min_val=1000, max_val=2000):
+    """
+    Normalise a PWM value to the range -1 to 1
+    """
+    return 2 * ((val - min_val) / (max_val - min_val)) - 1

@@ -171,6 +171,8 @@ def set_state(data):
 
         if drone:
             socketio.emit("params", drone.params)
+    elif state == "config":
+        drone.stopAllDataStreams()
 
 
 @socketio.on("set_multiple_params")
@@ -319,6 +321,28 @@ def arm(data):
         result = drone.disarm(force)
 
     socketio.emit("arm_disarm", result)
+
+
+@socketio.on("set_gripper")
+def set_multiple_params(action):
+    global state
+    if state != "config":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to set the gripper."},
+        )
+        print(f"Current state: {state}")
+        return
+
+    global drone
+    if not drone:
+        return
+
+    if (action not in ['release', 'grab']):
+            droneErrorCb('Gripper action must be either "release" or "grab"')
+            return 
+            
+    drone.setGripper(action)
 
 
 def sendMessage(msg):

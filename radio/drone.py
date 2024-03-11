@@ -494,23 +494,23 @@ class Drone:
 
         return success
 
-    def doActuatorTest(
-        self, act1=None, act2=None, act3=None, act4=None, act5=None, act6=None, index=0
+    def setServo(
+        self, servo_instance, pwm_value
     ):
         self.is_listening = False
 
         message = self.master.mav.command_long_encode(
             self.target_system,
             self.target_component,
-            mavutil.mavlink.MAV_CMD_DO_SET_ACTUATOR,
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
             0,  # Confirmation
-            act1,  # Actuator 1 value, scaled from [-1 to 1]. NaN to ignore
-            act2,  # Actuator 2 value, scaled from [-1 to 1]. NaN to ignore
-            act3,  # Actuator 3 value, scaled from [-1 to 1]. NaN to ignore
-            act4,  # Actuator 4 value, scaled from [-1 to 1]. NaN to ignore
-            act5,  # Actuator 5 value, scaled from [-1 to 1]. NaN to ignore
-            act6,  # Actuator 6 value, scaled from [-1 to 1]. NaN to ignore
-            index,  # Index of actuator set (i.e if set to 1, Actuator 1 becomes Actuator 7)
+            servo_instance,  # Servo instance number
+            pwm_value,  # PWM value
+            0, 
+            0, 
+            0,
+            0,
+            0,
         )
         self.master.mav.send(message)
         success = True
@@ -518,13 +518,52 @@ class Drone:
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_ACTUATOR):
-                print("Setting actuators")
+            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
+                print("Setting servo")
             else:
-                print("Setting actuators failed")
+                print("Setting servo failed")
                 success = False
         except serial.serialutil.SerialException:
-            print("Setting actuators failed, serial exception")
+            print("Setting servo failed, serial exception")
+            success = False
+
+        return success
+
+    def setGripper(
+        self, action
+    ):
+        self.is_listening = False
+
+        if (action not in ['release', 'grab']):
+            print('Gripper action must be either "release" or "grab"')
+            return False
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_GRIPPER,
+            0,  # Confirmation
+            0,  # Gripper number (from 1 to maximum number of grippers on the vehicle).
+            0 if action == 'release' else 1,  # Gripper action: 0:Release 1:Grab
+            0, 
+            0, 
+            0,
+            0,
+            0,
+        )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
+                print("Setting gripper")
+            else:
+                print("Setting gripper failed")
+                success = False
+        except serial.serialutil.SerialException:
+            print("Setting gripper failed, serial exception")
             success = False
 
         return success

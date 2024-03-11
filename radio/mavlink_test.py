@@ -26,11 +26,11 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
+    # print(drone.gripper.doGripper("release"))
 
-
-    drone.doGripper('release')
+    drone.setGripper("release")
     time.sleep(1)
-    drone.doGripper('grab')
+    drone.setGripper("grab")
 
     # drone.setupDataStreams()
 

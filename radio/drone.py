@@ -7,7 +7,9 @@ from queue import Queue
 from threading import Thread
 
 import serial
+from gripper import Gripper
 from pymavlink import mavutil
+from utils import commandAccepted
 
 os.environ["MAVLINK20"] = "1"
 
@@ -57,6 +59,8 @@ class Drone:
         self.armed = False
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
+
+        self.gripper = Gripper(self.master, self.target_system, self.target_component)
 
         self.stopAllDataStreams()
 
@@ -331,7 +335,7 @@ class Drone:
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(
+            if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
             ):
                 print("Rebooting")
@@ -367,9 +371,7 @@ class Drone:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
             self.is_listening = True
 
-            if self.commandAccepted(
-                response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
-            ):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
                 print("Waiting for arm")
                 while not self.armed:
                     time.sleep(0.05)
@@ -409,9 +411,7 @@ class Drone:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
             self.is_listening = True
 
-            if self.commandAccepted(
-                response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
-            ):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
                 print("Waiting for disarm")
                 while self.armed:
                     time.sleep(0.05)
@@ -450,7 +450,7 @@ class Drone:
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 print("Motor Test Started")
             else:
                 print("Motor test not started")
@@ -483,7 +483,7 @@ class Drone:
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 print("Motor Test Started")
             else:
                 print("Motor test not started")
@@ -494,9 +494,7 @@ class Drone:
 
         return success
 
-    def setServo(
-        self, servo_instance, pwm_value
-    ):
+    def setServo(self, servo_instance, pwm_value):
         self.is_listening = False
 
         message = self.master.mav.command_long_encode(
@@ -506,8 +504,8 @@ class Drone:
             0,  # Confirmation
             servo_instance,  # Servo instance number
             pwm_value,  # PWM value
-            0, 
-            0, 
+            0,
+            0,
             0,
             0,
             0,
@@ -518,7 +516,7 @@ class Drone:
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
                 print("Setting servo")
             else:
                 print("Setting servo failed")
@@ -529,51 +527,10 @@ class Drone:
 
         return success
 
-    def setGripper(
-        self, action
-    ):
+    def setGripper(self, action):
         self.is_listening = False
 
-        if (action not in ['release', 'grab']):
-            print('Gripper action must be either "release" or "grab"')
-            return False
-
-        message = self.master.mav.command_long_encode(
-            self.target_system,
-            self.target_component,
-            mavutil.mavlink.MAV_CMD_DO_GRIPPER,
-            0,  # Confirmation
-            0,  # Gripper number (from 1 to maximum number of grippers on the vehicle).
-            0 if action == 'release' else 1,  # Gripper action: 0:Release 1:Grab
-            0, 
-            0, 
-            0,
-            0,
-            0,
-        )
-        self.master.mav.send(message)
-        success = True
-
-        try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-
-            if self.commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
-                print("Setting gripper")
-            else:
-                print("Setting gripper failed")
-                success = False
-        except serial.serialutil.SerialException:
-            print("Setting gripper failed, serial exception")
-            success = False
-
-        return success
-
-    def commandAccepted(self, response, command):
-        return (
-            response
-            and response.command == command
-            and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
-        )
+        return self.gripper.setGripper(action)
 
     def close(self):
         for message_id in copy.deepcopy(self.message_listeners):

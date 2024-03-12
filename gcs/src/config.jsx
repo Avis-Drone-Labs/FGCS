@@ -5,6 +5,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
 import Layout from './components/layout'
 import { socket } from './socket'
+import { showSuccessNotification, showErrorNotification } from './notification'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -95,6 +96,17 @@ export default function Config() {
       socket.emit('set_state', { state: 'config' })
     }
 
+    socket.on('motor_test_result',(data)=>{
+      console.log(data.message)
+      if (data.result){
+        showSuccessNotification(data.message)
+      }
+      else{
+        showErrorNotification(data.message)
+      }
+    })
+    
+    
     // socket.on('params', (params) => {
     //   paramsHandler.setState(params)
     //   shownParamsHandler.setState(params)

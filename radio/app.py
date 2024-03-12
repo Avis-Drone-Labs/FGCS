@@ -350,23 +350,24 @@ def testOneMotor(data):
     if not drone:
         return
     
-    drone.testOneMotor(data)
-    
+    result,instance,message = drone.testOneMotor(data)
+    socketio.emit("motor_test_result",{'result':result,'message':str(message + f'for motor f{instance}')})
 @socketio.on("test_motor_sequence")
 def testMotorSequence(data):
     global drone
     if not drone:
         return
     
-    drone.testMotorSequence(data)
-
+    result,message = drone.testMotorSequence(data)
+    socketio.emit("motor_test_result",{'result':result,'message':message})
 @socketio.on("test_all_motors")
 def testAllMotors(data):
     global drone
     if not drone:
         return
     
-    drone.testAllMotors(data)
+    result,message = drone.testAllMotors(data)
+    socketio.emit("motor_test_result",{'result':result,'message':message})
     
 def sendMessage(msg):
     data = msg.to_dict()

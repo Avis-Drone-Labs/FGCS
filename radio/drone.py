@@ -433,9 +433,7 @@ class Drone:
         if (data.get('throttle') < 0 | data.get('throttle') > 100):
             print("Invalid value for throttle")
             return
-        if (data.get('motorInstance') < 0 | data.get('motorInstance') < drone.number_of_motors):
-            print("Invalid motor instance")
-            return
+
 
         message = self.master.mav.command_long_encode(
             self.target_system,
@@ -457,15 +455,15 @@ class Drone:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                print("Motor Test Started")
+                message = "Motor Test Started"
             else:
-                print("Motor test not started")
+                message = "Motor test not started"
                 success = False
         except serial.serialutil.SerialException:
-            print("Motor test not started")
+            message = "Motor test not started"
             success = False
 
-        return success
+        return success,data.get('motorInstance'),message
 
     def testMotorSequence(self, data):
         self.is_listening = False
@@ -492,26 +490,26 @@ class Drone:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                print("Motor Test Started")
+                message = "Motor Test Started"
             else:
-                print("Motor test not started")
+                message = "Motor test not started"
                 success = False
         except serial.serialutil.SerialException:
-            print("Motor test not started")
+            message = "Motor test not started"
             success = False
 
-        return success
+        return success,message
 
     def testAllMotors(self, data):
-        RESPONSE_TIMEOUT = 1
+        RESPONSE_TIMEOUT = 3
         
         self.is_listening = False
         if (data.get('throttle') < 0 | data.get('throttle') > 100):
             print("Invalid value for throttle")
             return
         
-        responses = []
-        for idx in range(1, 4):
+        responses = 0
+        for idx in range(1, 5):
             message = self.master.mav.command_long_encode(
                 self.target_system,
                 self.target_component,
@@ -526,23 +524,44 @@ class Drone:
                 0,  # empty
             )
             self.master.mav.send(message)
-            success = True
 
-            responses.append(self.master.recv_match(type="COMMAND_ACK", blocking=False))
+        success = True
 
-        time.sleep(RESPONSE_TIMEOUT)
-        for response in responses:
+        now = time.gmtime()
+        while True:
             try:
+                response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
                 if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                    print("Motor Test Started")
+                    responses += 1
+                    if responses == 4:
+                        message = "Motor Tests Started"
+                        break
                 else:
-                    print("Motor test not started")
+                    message = "Motor test not started"
+                    success = False
+                
+                if time.gmtime().tm_sec - now.tm_sec > RESPONSE_TIMEOUT:
+                    break
                     success = False
             except serial.serialutil.SerialException:
-                print("Motor test not started")
+                message = "Motor test not started"
                 success = False
+            # responses.append(self.master.recv_match(type="COMMAND_ACK", blocking=False, timeout=3000))
 
-        return success
+        # time.sleep(RESPONSE_TIMEOUT)
+        # for response in responses:
+        #     try:
+        #         if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+        #             print("Motor Test Started")
+        #         else:
+        #             print("Motor test not started")
+        #             success = False
+        #     except serial.serialutil.SerialException:
+        #         print("Motor test not started")
+        #         success = False
+
+        return success,message
 
     def setServo(self, servo_instance, pwm_value):
         self.is_listening = False

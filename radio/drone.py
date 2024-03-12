@@ -502,6 +502,42 @@ class Drone:
 
         return success
 
+    def testAllMotors(self, data):
+        self.is_listening = False
+        if (data.get('throttle') < 0 | data.get('throttle') > 100):
+            print("Invalid value for throttle")
+            return
+        for idx in range(4):
+            message = self.master.mav.command_long_encode(
+                self.target_system,
+                self.target_component,
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                0,  # Confirmation
+                idx,  # ID of the motor to be tested
+                0,  # throttle type (PWM,% etc)
+                data.get('throttle'),  # value of the throttle - 0 to 100%
+                data.get('duration'),  # duration of the test in seconds
+                0,  # number of motors to test in a sequence
+                0,  # test order
+                0,  # empty
+            )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                print("Motor Test Started")
+            else:
+                print("Motor test not started")
+                success = False
+        except serial.serialutil.SerialException:
+            print("Motor test not started")
+            success = False
+
+        return success
+
     def setServo(self, servo_instance, pwm_value):
         self.is_listening = False
 

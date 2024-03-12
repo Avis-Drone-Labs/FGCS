@@ -359,6 +359,14 @@ def testMotorSequence(data):
         return
     
     drone.testMotorSequence(data)
+
+@socketio.on("test_all_motors")
+def testAllMotors(data):
+    global drone
+    if not drone:
+        return
+    
+    drone.testAllMotors(data)
     
 def sendMessage(msg):
     data = msg.to_dict()

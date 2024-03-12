@@ -45,6 +45,9 @@ function Motortest(){
   function testMotorSequence(){
     socket.emit('test_motor_sequence',{'throttle':selectedThrottle,'delay':selectedDuration})
   }
+  function testAllMotors(){
+    socket.emit('test_all_motors',{'throttle':selectedThrottle,'duration':selectedDuration})
+  }
 
   return(
       <div className='m-6'>
@@ -66,6 +69,9 @@ function Motortest(){
             </Button>
             <Button onClick={()=>{testMotorSequence()}} color={tailwindColors.falconred[100]}>
               Test Motor Sequence
+            </Button>
+            <Button onClick={()=>{testAllMotors()}} color={tailwindColors.falconred[100]}>
+              Test All Motors
             </Button>
 
           </div>

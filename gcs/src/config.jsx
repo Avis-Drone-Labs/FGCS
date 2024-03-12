@@ -1,6 +1,6 @@
-import { Button, Tabs } from '@mantine/core'
+import { Button, Tabs, NumberInput } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
 import Layout from './components/layout'
@@ -35,11 +35,50 @@ function Gripper() {
   )
 }
 
+function Motortest(){
+  const [selectedThrottle,setSelectedThrottle] = useState(10)
+  const [selectedDuration, setSelectedDuration] = useState(2)
+  function testOnemotor(motorInstance){
+    socket.emit('test_one_motor',{'motorInstance':motorInstance,'throttle':selectedThrottle,'duration':selectedDuration})
+
+  }
+  function testMotorSequence(){
+    socket.emit('test_motor_sequence',{'throttle':selectedThrottle,'delay':selectedDuration})
+  }
+
+  return(
+      <div className='m-6'>
+
+          <div className='flex flex-row gap-2'>
+            <NumberInput value={selectedThrottle} onChange={setSelectedThrottle} suffix='%' min={0} max={100}/>
+            <NumberInput value={selectedDuration} onChange={setSelectedDuration} suffix='s' min={0}/>
+            <Button onClick={()=>{testOnemotor(1)}}>
+              Motor A
+            </Button>
+            <Button onClick={()=>{testOnemotor(2)}}>
+              Motor B
+            </Button>
+            <Button onClick={()=>{testOnemotor(3)}}>
+              Motor C
+            </Button>
+            <Button onClick={()=>{testOnemotor(4)}}>
+              Motor D
+            </Button>
+            <Button onClick={()=>{testMotorSequence()}} color={tailwindColors.falconred[100]}>
+              Test Motor Sequence
+            </Button>
+
+          </div>
+      </div>
+  )
+}
+
 export default function Config() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
   })
+
 
   useEffect(() => {
     if (!connected) {
@@ -75,7 +114,7 @@ export default function Config() {
           >
             <Tabs.List>
               <Tabs.Tab value='gripper'>Gripper</Tabs.Tab>
-              <Tabs.Tab value='motor_test' disabled>
+              <Tabs.Tab value='motor_test' >
                 Motor Test
               </Tabs.Tab>
               <Tabs.Tab value='rc_calibration' disabled>
@@ -86,7 +125,7 @@ export default function Config() {
               <Gripper />
             </Tabs.Panel>
             <Tabs.Panel value='motor_test'>
-              <h1>Motor Test Page</h1>
+              <Motortest />
             </Tabs.Panel>
             <Tabs.Panel value='rc_calibration'>
               <h1>RC Calibration Page</h1>

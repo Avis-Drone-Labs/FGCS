@@ -344,7 +344,22 @@ def set_multiple_params(action):
             
     drone.setGripper(action)
 
-
+@socketio.on("test_one_motor")
+def testOneMotor(data):
+    global drone
+    if not drone:
+        return
+    
+    drone.testOneMotor(data)
+    
+@socketio.on("test_motor_sequence")
+def testMotorSequence(data):
+    global drone
+    if not drone:
+        return
+    
+    drone.testMotorSequence(data)
+    
 def sendMessage(msg):
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp

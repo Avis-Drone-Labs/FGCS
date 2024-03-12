@@ -60,7 +60,7 @@ class Drone:
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
 
-        self.gripper = Gripper(self.master, self.target_system, self.target_component)
+        # self.gripper = Gripper(self.master, self.target_system, self.target_component)
 
         self.stopAllDataStreams()
 
@@ -428,18 +428,24 @@ class Drone:
 
         return {"success": False, "message": "Could not disarm"}
 
-    def testOneMotor(self, motorInstance, throttle, duration):
+    def testOneMotor(self, data):
         self.is_listening = False
+        if (data.get('throttle') < 0 | data.get('throttle') > 100):
+            print("Invalid value for throttle")
+            return
+        if (data.get('motorInstance') < 0 | data.get('motorInstance') < drone.number_of_motors):
+            print("Invalid motor instance")
+            return
 
         message = self.master.mav.command_long_encode(
             self.target_system,
             self.target_component,
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
             0,  # Confirmation
-            motorInstance,  # ID of the motor to be tested
+            data.get('motorInstance'),  # ID of the motor to be tested
             0,  # throttle type (PWM,% etc)
-            throttle,  # value of the throttle - 0 to 100%
-            duration,  # duration of the test in seconds
+            data.get('throttle'),  # value of the throttle - 0 to 100%
+            data.get('duration'),  # duration of the test in seconds
             0,  # number of motors to test in a sequence
             0,  # test order
             0,  # empty
@@ -461,9 +467,11 @@ class Drone:
 
         return success
 
-    def testMotorSequence(self, throttle, delay):
+    def testMotorSequence(self, data):
         self.is_listening = False
-
+        if (data.get('throttle') < 0 | data.get('throttle') > 100):
+            print("Invalid value for throttle")
+            return
         message = self.master.mav.command_long_encode(
             self.target_system,
             self.target_component,
@@ -471,8 +479,8 @@ class Drone:
             0,  # Confirmation
             0,  # ID of the motor to be tested
             0,  # throttle type (PWM,% etc)
-            throttle,  # value of the throttle - 0 to 100%
-            delay,  # duration of the test in seconds
+            data.get('throttle'),  # value of the throttle - 0 to 100%
+            data.get('delay'),  # duration of the test in seconds
             self.number_of_motors + 1,  # number of motors to test in a sequence
             0,  # test order
             0,  # empty

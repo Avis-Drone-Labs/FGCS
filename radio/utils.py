@@ -64,6 +64,7 @@ def commandAccepted(response, command):
     """Check if a command has been accepted"""
     return (
         response
+        and command
         and response.command == command
         and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
     )

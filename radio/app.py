@@ -86,6 +86,9 @@ def setComPort(data):
         return
 
     baud = data.get("baud")
+
+    print("Trying to connect to drone")
+
     drone = Drone(
         port,
         wireless=data.get("wireless", True),
@@ -323,13 +326,31 @@ def arm(data):
     socketio.emit("arm_disarm", result)
 
 
+@socketio.on("gripper_enabled")
+def gripperEnabled():
+    global state
+    if state != "config":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access the gripper."},
+        )
+        print(f"Current state: {state}")
+        return
+
+    global drone
+    if not drone:
+        return
+
+    socketio.emit("gripper_enabled", drone.gripper.enabled)
+
+
 @socketio.on("set_gripper")
 def setGripper(action):
     global state
     if state != "config":
         socketio.emit(
             "params_error",
-            {"message": "You must be on the config screen to set the gripper."},
+            {"message": "You must be on the config screen to access the gripper."},
         )
         print(f"Current state: {state}")
         return
@@ -342,7 +363,13 @@ def setGripper(action):
         droneErrorCb('Gripper action must be either "release" or "grab"')
         return
 
-    drone.setGripper(action)
+    result = drone.setGripper(action)
+    if not result:
+        message = "Failed to set gripper"
+    else:
+        message = f"Gripper set to {action}"
+
+    socketio.emit("set_gripper_result", {"success": result, "message": message})
 
 
 @socketio.on("test_one_motor")
@@ -354,7 +381,7 @@ def testOneMotor(data):
     result, instance, message = drone.testOneMotor(data)
     socketio.emit(
         "motor_test_result",
-        {"result": result, "message": str(message + f"for motor f{instance}")},
+        {"success": result, "message": message},
     )
 
 
@@ -365,7 +392,7 @@ def testMotorSequence(data):
         return
 
     result, message = drone.testMotorSequence(data)
-    socketio.emit("motor_test_result", {"result": result, "message": message})
+    socketio.emit("motor_test_result", {"success": result, "message": message})
 
 
 @socketio.on("test_all_motors")
@@ -375,7 +402,7 @@ def testAllMotors(data):
         return
 
     result, message = drone.testAllMotors(data)
-    socketio.emit("motor_test_result", {"result": result, "message": message})
+    socketio.emit("motor_test_result", {"success": result, "message": message})
 
 
 def sendMessage(msg):

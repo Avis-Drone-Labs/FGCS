@@ -2,7 +2,7 @@ import time
 
 import serial
 from drone import Drone
-from utils import getComPort, getComPortNames
+from utils import getComPort, getComPortNames, normalisePwmValue
 
 # from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS
@@ -26,11 +26,12 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
-    drone.arm(force=True)
+    # print(drone.gripper.doGripper("release"))
 
-    time.sleep(3)
+    drone.setGripper("release")
+    time.sleep(1)
+    drone.setGripper("grab")
 
-    drone.disarm()
     # drone.setupDataStreams()
 
     # time.sleep()

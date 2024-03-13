@@ -219,13 +219,13 @@ export default function Navbar({ currentPage }) {
         Params
       </Link>
       <Link
-        to='/all-data'
+        to='/config'
         className={twMerge(
           linkClassName,
           currentPage === 'all-data' && 'text-falconred font-bold',
         )}
       >
-        All data
+        Config
       </Link>
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
         <p>{connected && selectedComPort}</p>

@@ -280,13 +280,16 @@ class Drone:
             retries -= 1
             self.master.param_set_send(param_name.upper(), vfloat, parm_type=param_type)
             tstart = time.time()
-            while time.time() - tstart < 1:
+            while time.time() - tstart < 2:
                 ack = self.master.recv_match(type="PARAM_VALUE", blocking=False)
                 if ack is None:
                     time.sleep(0.1)
                     continue
                 if str(param_name).upper() == str(ack.param_id).upper():
                     got_ack = True
+                    print(
+                        f"Got parameter saving ack for {param_name} for value {param_value}"
+                    )
                     self.saveParam(ack.param_id, ack.param_value, ack.param_type)
                     break
 

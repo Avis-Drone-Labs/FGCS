@@ -324,7 +324,7 @@ def arm(data):
 
 
 @socketio.on("set_gripper")
-def set_multiple_params(action):
+def setGripper(action):
     global state
     if state != "config":
         socketio.emit(
@@ -338,37 +338,46 @@ def set_multiple_params(action):
     if not drone:
         return
 
-    if (action not in ['release', 'grab']):
-            droneErrorCb('Gripper action must be either "release" or "grab"')
-            return 
-            
+    if action not in ["release", "grab"]:
+        droneErrorCb('Gripper action must be either "release" or "grab"')
+        return
+
     drone.setGripper(action)
+
 
 @socketio.on("test_one_motor")
 def testOneMotor(data):
     global drone
     if not drone:
         return
-    
-    result,instance,message = drone.testOneMotor(data)
-    socketio.emit("motor_test_result",{'result':result,'message':str(message + f'for motor f{instance}')})
+
+    result, instance, message = drone.testOneMotor(data)
+    socketio.emit(
+        "motor_test_result",
+        {"result": result, "message": str(message + f"for motor f{instance}")},
+    )
+
+
 @socketio.on("test_motor_sequence")
 def testMotorSequence(data):
     global drone
     if not drone:
         return
-    
-    result,message = drone.testMotorSequence(data)
-    socketio.emit("motor_test_result",{'result':result,'message':message})
+
+    result, message = drone.testMotorSequence(data)
+    socketio.emit("motor_test_result", {"result": result, "message": message})
+
+
 @socketio.on("test_all_motors")
 def testAllMotors(data):
     global drone
     if not drone:
         return
-    
-    result,message = drone.testAllMotors(data)
-    socketio.emit("motor_test_result",{'result':result,'message':message})
-    
+
+    result, message = drone.testAllMotors(data)
+    socketio.emit("motor_test_result", {"result": result, "message": message})
+
+
 def sendMessage(msg):
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp

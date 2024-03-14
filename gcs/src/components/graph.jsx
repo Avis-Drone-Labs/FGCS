@@ -78,7 +78,6 @@ export default function Graph({
   datasetLabel = '#ffffff',
   lineColor = '#e5e5e5',
   pointColor = '#fafafa',
-  maxNumberOfDataPoints = 200,
   className = 'p-8 rounded-lg w-full',
   ...props
 }) {

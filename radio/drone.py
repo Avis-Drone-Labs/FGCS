@@ -7,7 +7,9 @@ from queue import Queue
 from threading import Thread
 
 import serial
+from gripper import Gripper
 from pymavlink import mavutil
+from utils import commandAccepted
 
 os.environ["MAVLINK20"] = "1"
 
@@ -56,11 +58,13 @@ class Drone:
 
         self.armed = False
 
+        self.number_of_motors = 4  # Is there a way to get this from the drone?
+
+        self.gripper = Gripper(self.master, self.target_system, self.target_component)
+
         self.stopAllDataStreams()
 
         self.startThread()
-        # self.setupDataStreams()
-        # self.getAllParams()
 
     def setupDataStreams(self):
         """
@@ -173,7 +177,7 @@ class Drone:
                     print(msg.text)
                 elif msg.msgname == "HEARTBEAT":
                     if (
-                        msg.autopilot == 8
+                        msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
                     ):  # No valid autopilot, e.g. a GCS or other MAVLink component
                         continue
 
@@ -276,13 +280,16 @@ class Drone:
             retries -= 1
             self.master.param_set_send(param_name.upper(), vfloat, parm_type=param_type)
             tstart = time.time()
-            while time.time() - tstart < 1:
+            while time.time() - tstart < 2:
                 ack = self.master.recv_match(type="PARAM_VALUE", blocking=False)
                 if ack is None:
                     time.sleep(0.1)
                     continue
                 if str(param_name).upper() == str(ack.param_id).upper():
                     got_ack = True
+                    print(
+                        f"Got parameter saving ack for {param_name} for value {param_value}"
+                    )
                     self.saveParam(ack.param_id, ack.param_value, ack.param_type)
                     break
 
@@ -331,7 +338,7 @@ class Drone:
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            if self.commandAccepted(
+            if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
             ):
                 print("Rebooting")
@@ -367,9 +374,7 @@ class Drone:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
             self.is_listening = True
 
-            if self.commandAccepted(
-                response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
-            ):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
                 print("Waiting for arm")
                 while not self.armed:
                     time.sleep(0.05)
@@ -409,9 +414,7 @@ class Drone:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
             self.is_listening = True
 
-            if self.commandAccepted(
-                response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
-            ):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
                 print("Waiting for disarm")
                 while self.armed:
                     time.sleep(0.05)
@@ -423,17 +426,188 @@ class Drone:
         except Exception as e:
             print(traceback.format_exc())
             self.droneErrorCb(str(e))
-        # finally:
-        #     self.is_listening = True
 
         return {"success": False, "message": "Could not disarm"}
 
-    def commandAccepted(self, response, command):
-        return (
-            response
-            and response.command == command
-            and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
+    def checkMotorTestValues(self, data):
+        throttle = data.get("throttle")
+        if 0 > throttle > 100:
+            print("Invalid value for throttle")
+            return 0, 0, True
+
+        duration = data.get("duration")
+        if duration < 0:
+            print("Invalid value for duration")
+            return 0, 0, True
+
+        return throttle, duration, False
+
+    def testOneMotor(self, data):
+        self.is_listening = False
+
+        throttle, duration, err = self.checkMotorTestValues(data)
+        if err:
+            return
+
+        motor_instance = data.get("motorInstance")
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            0,  # Confirmation
+            motor_instance,  # ID of the motor to be tested
+            0,  # throttle type (PWM,% etc)
+            throttle,  # value of the throttle - 0 to 100%
+            duration,  # duration of the test in seconds
+            0,  # number of motors to test in a sequence
+            0,  # test order
+            0,  # empty
         )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                message = f"Motor test started for motor {motor_instance}"
+            else:
+                message = f"Motor test for motor {motor_instance} not started"
+                success = False
+        except serial.serialutil.SerialException:
+            message = f"Motor test for motor {motor_instance} not started"
+            success = False
+
+        return success, data.get("motorInstance"), message
+
+    def testMotorSequence(self, data):
+        self.is_listening = False
+
+        throttle, duration, err = self.checkMotorTestValues(data)
+        if err:
+            return
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            0,  # Confirmation
+            0,  # ID of the motor to be tested
+            0,  # throttle type (PWM,% etc)
+            throttle,  # value of the throttle - 0 to 100%
+            duration,  # delay between tests in seconds
+            self.number_of_motors + 1,  # number of motors to test in a sequence
+            0,  # test order
+            0,  # empty
+        )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                message = "Motor sequence test started"
+            else:
+                message = "Motor sequence test not started"
+                success = False
+        except serial.serialutil.SerialException:
+            message = "Motor sequence test not started"
+            success = False
+
+        return success, message
+
+    def testAllMotors(self, data):
+        # Timeout after 3 seconds waiting for the motor test confirmation
+        RESPONSE_TIMEOUT = 3
+
+        self.is_listening = False
+
+        throttle, duration, err = self.checkMotorTestValues(data)
+        if err:
+            return
+
+        responses = 0
+        for idx in range(1, 5):
+            message = self.master.mav.command_long_encode(
+                self.target_system,
+                self.target_component,
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                0,  # Confirmation
+                idx,  # ID of the motor to be tested
+                0,  # throttle type (PWM,% etc)
+                throttle,  # value of the throttle - 0 to 100%
+                duration,  # duration of the test in seconds
+                0,  # number of motors to test in a sequence
+                0,  # test order
+                0,  # empty
+            )
+            self.master.mav.send(message)
+
+        success = True
+
+        now = time.gmtime()
+
+        while True:
+            try:
+                response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+                if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                    responses += 1
+                    if responses == 4:
+                        message = "All motor test Started"
+                        break
+                else:
+                    message = "All motor test not started"
+                    success = False
+
+                if time.gmtime().tm_sec - now.tm_sec > RESPONSE_TIMEOUT:
+                    success = False
+                    break
+            except serial.serialutil.SerialException:
+                message = "All motor test not started"
+                success = False
+
+        return success, message
+
+    def setServo(self, servo_instance, pwm_value):
+        self.is_listening = False
+
+        message = self.master.mav.command_long_encode(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
+            0,  # Confirmation
+            servo_instance,  # Servo instance number
+            pwm_value,  # PWM value
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        self.master.mav.send(message)
+        success = True
+
+        try:
+            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
+                print("Setting servo")
+            else:
+                print("Setting servo failed")
+                success = False
+        except serial.serialutil.SerialException:
+            print("Setting servo failed, serial exception")
+            success = False
+
+        return success
+
+    def setGripper(self, action):
+        self.is_listening = False
+
+        return self.gripper.setGripper(action)
 
     def close(self):
         for message_id in copy.deepcopy(self.message_listeners):

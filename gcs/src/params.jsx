@@ -101,9 +101,8 @@ function ValueInput({ param, paramDef, onChange, className }) {
         value={param.param_value}
         onChange={(value) => onChange(value, param)}
         decimalScale={5}
-        min={parseFloat(paramDef?.Range.low)}
-        max={parseFloat(paramDef?.Range.high)}
-        clampBehavior='strict'
+        // min={parseFloat(paramDef?.Range.low)}
+        // max={parseFloat(paramDef?.Range.high)}
         hideControls
         suffix={paramDef?.Units}
       />
@@ -262,6 +261,7 @@ export default function Params() {
   }, [debouncedSearchValue, showModifiedParams])
 
   function addToModifiedParams(value, param) {
+    console.log(param.param_id, value)
     // TODO: Can this logic be tidied up?
     if (value === '') return
     if (

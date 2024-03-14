@@ -1,17 +1,18 @@
-import './index.css'
+import './index.css' // Needs to be at the top of the file
+
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'
 
 import { HashRouter, Route, Routes } from 'react-router-dom'
 
-import AllData from './allData.jsx'
-import App from './App.jsx'
-import Graphs from './graphs.jsx'
 import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
-import Params from './params.jsx'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import Config from './config.jsx'
+import Graphs from './graphs.jsx'
+import Params from './params.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>
@@ -22,7 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path='/' element={<App />} />
         <Route path='/graphs' element={<Graphs />} />
         <Route path='/params' element={<Params />} />
-        <Route path='/all-data' element={<AllData />} />
+        <Route path='/config' element={<Config />} />
       </Routes>
     </HashRouter>
   </MantineProvider>,

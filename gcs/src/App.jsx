@@ -23,6 +23,8 @@ import StatusMessages from './components/statusMessages'
 import { showErrorNotification } from './notification'
 import { socket } from './socket'
 
+const MAV_AUTOPILOT_INVALID = 8
+
 export default function App() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
@@ -44,6 +46,19 @@ export default function App() {
   })
   const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
+  const incomingMessageHandler = {
+    VFR_HUD: (msg) => setTelemetryData(msg),
+    BATTERY_STATUS: (msg) => setBatteryData(msg),
+    ATTITUDE: (msg) => setAttitudeData(msg),
+    GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
+    NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
+    HEARTBEAT: (msg) => { if (msg.autopilot !== MAV_AUTOPILOT_INVALID) { setHeartbeatData(msg) } },
+    STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
+    SYS_STATUS: (msg) => setSysStatusData(msg),
+    GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
+    RC_CHANNELS: (msg) => setRCChannelsData(msg),
+  }
+
   useEffect(() => {
     if (!connected) {
       return
@@ -53,41 +68,8 @@ export default function App() {
     }
 
     socket.on('incoming_msg', (msg) => {
-      switch (msg.mavpackettype) {
-        case 'VFR_HUD':
-          setTelemetryData(msg)
-          break
-        case 'BATTERY_STATUS':
-          setBatteryData(msg)
-          break
-        case 'ATTITUDE':
-          setAttitudeData(msg)
-          break
-        case 'GLOBAL_POSITION_INT':
-          setGpsData(msg)
-          break
-        case 'NAV_CONTROLLER_OUTPUT':
-          setNavControllerOutputData(msg)
-          break
-        case 'HEARTBEAT':
-          if (msg.autopilot !== 8) {
-            setHeartbeatData(msg)
-          }
-          break
-        case 'STATUSTEXT':
-          statustextMessagesHandler.prepend(msg)
-          break
-        case 'SYS_STATUS':
-          setSysStatusData(msg)
-          break
-        case 'GPS_RAW_INT':
-          setGpsRawIntData(msg)
-          break
-        case 'RC_CHANNELS':
-          setRCChannelsData(msg)
-          break
-        default:
-          break
+      if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
+        incomingMessageHandler[msg.mavpackettype](msg)
       }
     })
 
@@ -133,24 +115,24 @@ export default function App() {
 
   return (
     <Layout currentPage='dashboard'>
-      <div className='flex w-full h-full flex-auto relative'>
+      <div className='relative flex flex-auto w-full h-full'>
         <div className='w-full'>
           <MapSection
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
           />
         </div>
-        <div className='absolute top-0 left-0 bg-falcongrey/80 p-4'>
-          <div className='flex flex-col space-y-2 items-center'>
+        <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
+          <div className='flex flex-col items-center space-y-2'>
             {getIsArmed() ? (
-              <p className='text-falconred font-bold'>ARMED</p>
+              <p className='font-bold text-falconred'>ARMED</p>
             ) : (
               <>
                 <p className='font-bold'>DISARMED</p>
                 {prearmEnabled() ? (
                   <p className='text-green-500'>Prearm: Enabled</p>
                 ) : (
-                  <p className='text-falconred font-bold'>Prearm: Disabled</p>
+                  <p className='font-bold text-falconred'>Prearm: Disabled</p>
                 )}
               </>
             )}
@@ -297,7 +279,7 @@ export default function App() {
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}
-            className='bg-falcongrey/80 absolute bottom-0 left-0 max-w-1/2'
+            className='absolute bottom-0 left-0 bg-falcongrey/80 max-w-1/2'
           />
         )}
       </div>

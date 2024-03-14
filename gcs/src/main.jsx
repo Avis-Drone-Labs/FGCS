@@ -13,6 +13,7 @@ import App from './App.jsx'
 import Config from './config.jsx'
 import Graphs from './graphs.jsx'
 import Params from './params.jsx'
+import FLA from './fla.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>
@@ -24,6 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path='/graphs' element={<Graphs />} />
         <Route path='/params' element={<Params />} />
         <Route path='/config' element={<Config />} />
+        <Route path='/fla' element={<FLA />} />
       </Routes>
     </HashRouter>
   </MantineProvider>,

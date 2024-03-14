@@ -2,7 +2,7 @@ import Graph from './graph'
 
 export default function GraphArray({ graphs }) {
   return (
-    <div className='flex flex-row flex-nowrap justify-between align-center w-full h-full'>
+    <div className='flex flex-row flex-nowrap justify-between align-center w-full'>
       {graphs.map((graph) => {
         return (
           <Graph

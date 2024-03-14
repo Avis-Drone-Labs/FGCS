@@ -79,7 +79,7 @@ export default function Graph({
   lineColor = '#e5e5e5',
   pointColor = '#fafafa',
   maxNumberOfDataPoints = 200,
-  className = 'p-8 rounded-lg',
+  className = 'p-8 rounded-lg w-full',
   ...props
 }) {
   const [chartData] = useState({
@@ -110,7 +110,12 @@ export default function Graph({
   return (
     <div className={`${className}`} {...props}>
       <div className='bg-falcongrey-80 rounded-lg h-auto'>
-        <Scatter className='h' ref={chartRef} options={options} data={chartData} />
+        <Scatter
+          className='h'
+          ref={chartRef}
+          options={options}
+          data={chartData}
+        />
       </div>
     </div>
   )

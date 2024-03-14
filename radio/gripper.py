@@ -1,22 +1,35 @@
 import functools
 import time
+from typing import Callable, Optional
 
 import serial
+from customTypes import Response
 from pymavlink import mavutil
+from pymavlink.mavutil import mavserial
 from utils import commandAccepted
 
 
 class Gripper:
-    def __init__(self, master, target_system, target_component):
+    def __init__(
+        self, master: mavserial, target_system: int, target_component: int
+    ) -> None:
+        """The gripper controls all gripper-related actions.
+
+        Args:
+            master (_type_): The master mavlink connection object
+            target_system (_type_): The target system
+            target_component (_type_): The target component
+        """
         self.master = master
         self.target_system = target_system
         self.target_component = target_component
 
+        self.enabled = False
+
         gripper_enabled_response = self.getParamValue("GRIP_ENABLE")
         if gripper_enabled_response is None:
             print("Gripper is not enabled")
-            self.enabled = False
-            return
+            return None
 
         self.enabled = bool(gripper_enabled_response.param_value)
         self.params = {}
@@ -34,10 +47,9 @@ class Gripper:
                 "gripType": self.getParamValue("GRIP_TYPE"),
             }
 
-            print(self.params)
-
-    def gripperEnabled(func):
-        """Runs the decorated function only if the gripper is enabled"""
+    @staticmethod
+    def gripperEnabled(func: Callable) -> Callable:
+        """Runs the decorated function only if the gripper is enabled."""
 
         @functools.wraps(func)
         def wrap(self, *args, **kwargs):
@@ -49,10 +61,20 @@ class Gripper:
         return wrap
 
     @gripperEnabled
-    def setGripper(self, action):
+    def setGripper(self, action: str) -> Response:
+        """Sets the gripper to either release or grab.
+
+        Args:
+            action (_type_): The action to perform on the gripper, either "release" or "grab"
+
+        Returns:
+            Response: _description_
+        """
         if action not in ["release", "grab"]:
-            print('Gripper action must be either "release" or "grab"')
-            return False
+            return {
+                "success": False,
+                "message": 'Gripper action must be either "release" or "grab"',
+            }
 
         message = self.master.mav.command_long_encode(
             self.target_system,
@@ -68,23 +90,36 @@ class Gripper:
             0,
         )
         self.master.mav.send(message)
-        success = True
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
-                print(f"Setting gripper to {action}")
+                return {
+                    "success": True,
+                    "message": f"Setting gripper to {action}",
+                }
             else:
-                print("Setting gripper failed")
-                success = False
+                return {
+                    "success": False,
+                    "message": "Setting gripper failed",
+                }
         except serial.serialutil.SerialException:
-            print("Setting gripper failed, serial exception")
-            success = False
+            return {
+                "success": False,
+                "message": "Setting gripper failed, serial exception",
+            }
 
-        return success
+    def getParamValue(self, param_name: str, timeout: Optional[int] = None):
+        """Gets a specific parameter value.
 
-    def getParamValue(self, param_name, timeout=None):
+        Args:
+            param_name (str): The name of the parameter to get
+            timeout (int, optional): The time to wait before failing to return the parameter. Defaults to None.
+
+        Returns:
+            Union[Dict, bool]: The parameter value TODO: Add type
+        """
         self.master.mav.param_request_read_send(
             self.target_system, self.target_component, param_name.encode(), -1
         )
@@ -95,7 +130,7 @@ class Gripper:
             try:
                 response = self.master.recv_match(type="PARAM_VALUE", blocking=True)
                 if time.gmtime().tm_sec - now.tm_sec > 3:
-                    return
+                    return None
 
                 if response.param_id == "STAT_RUNTIME":
                     continue
@@ -105,4 +140,4 @@ class Gripper:
             except serial.serialutil.SerialException:
                 print("Failed to get gripper parameter value, serial exception")
                 self.enabled = False
-                return
+                return None

@@ -364,12 +364,7 @@ def setGripper(action):
         return
 
     result = drone.setGripper(action)
-    if not result:
-        message = "Failed to set gripper"
-    else:
-        message = f"Gripper set to {action}"
-
-    socketio.emit("set_gripper_result", {"success": result, "message": message})
+    socketio.emit("set_gripper_result", result)
 
 
 @socketio.on("test_one_motor")
@@ -378,10 +373,10 @@ def testOneMotor(data):
     if not drone:
         return
 
-    result, instance, message = drone.testOneMotor(data)
+    result = drone.testOneMotor(data)
     socketio.emit(
         "motor_test_result",
-        {"success": result, "message": message},
+        result,
     )
 
 
@@ -391,8 +386,8 @@ def testMotorSequence(data):
     if not drone:
         return
 
-    result, message = drone.testMotorSequence(data)
-    socketio.emit("motor_test_result", {"success": result, "message": message})
+    result = drone.testMotorSequence(data)
+    socketio.emit("motor_test_result", result)
 
 
 @socketio.on("test_all_motors")
@@ -401,8 +396,8 @@ def testAllMotors(data):
     if not drone:
         return
 
-    result, message = drone.testAllMotors(data)
-    socketio.emit("motor_test_result", {"success": result, "message": message})
+    result = drone.testAllMotors(data)
+    socketio.emit("motor_test_result", result)
 
 
 def sendMessage(msg):

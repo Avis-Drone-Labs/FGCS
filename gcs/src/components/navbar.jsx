@@ -123,7 +123,7 @@ export default function Navbar({ currentPage }) {
   const linkClassName =
     'text-md hover:text-falconred-60 transition-colors delay-50'
   return (
-    <div className='flex flex-row space-x-6 items-center justify-center py-2 px-10'>
+    <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
       <Modal
         opened={opened}
         onClose={close}
@@ -222,11 +222,21 @@ export default function Navbar({ currentPage }) {
         to='/config'
         className={twMerge(
           linkClassName,
-          currentPage === 'all-data' && 'text-falconred font-bold',
+          currentPage === 'config' && 'text-falconred font-bold',
         )}
       >
         Config
       </Link>
+      <Link
+        to='/fla'
+        className={twMerge(
+          linkClassName,
+          currentPage === 'fla' && 'text-falconred font-bold',
+        )}
+      >
+        FLA
+      </Link>
+
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
         <p>{connected && selectedComPort}</p>
         <Button

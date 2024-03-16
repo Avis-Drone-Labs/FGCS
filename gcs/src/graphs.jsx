@@ -110,8 +110,6 @@ export default function Graphs() {
 
   return (
     <Layout currentPage='graphs'>
-      <p>graphs page</p>
-      <p>{connected}</p>
       <GraphArray graphs={[yawGraph, pitchGraph, rollGraph]}></GraphArray>
       <GraphArray
         graphs={[groundSpeedGraph, headingGraph, altitudeGraph]}

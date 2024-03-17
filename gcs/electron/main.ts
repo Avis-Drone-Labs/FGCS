@@ -1,7 +1,7 @@
-import { BrowserWindow, app } from 'electron'
+import { BrowserWindow, app, ipcMain } from 'electron'
 
 import path from 'node:path'
-
+import openFile from './fla'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -63,4 +63,7 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  ipcMain.handle('fla:open-file', openFile)
+  createWindow()
+})

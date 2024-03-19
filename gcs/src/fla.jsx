@@ -93,8 +93,9 @@ export default function FLA() {
           </Button>
         </>
       ) : (
-        <div>
-          <Graph logMessages={logMessages['ATT']} />
+        <div class="grid gap-4 grid-cols-2">
+          <Button class="">Option 1</Button>
+          <Graph class="grow" logMessages={logMessages['ATT']} />
         </div>
       )}
     </Layout>

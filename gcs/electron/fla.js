@@ -29,6 +29,10 @@ function parseLogFile(fileData) {
         format: definedMessageFormat,
         fields,
       }
+
+      if (definedMessageName === 'ATT') {
+        console.log(formatMessages[definedMessageName])
+      }
     } else if (messageName === 'UNIT') {
       // Message mapping from single character to SI unit
     } else if (messageName === 'FMTU') {
@@ -68,6 +72,10 @@ function parseLogFile(fileData) {
           } else {
             messageObj[field] = parseFloat(value)
           }
+        }
+
+        if (messageName === 'ATT' && messages[messageName].length === 0) {
+          console.log(messageObj)
         }
 
         messages[messageName].push(messageObj)

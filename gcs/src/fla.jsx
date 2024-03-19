@@ -93,9 +93,16 @@ export default function FLA() {
           </Button>
         </>
       ) : (
-        <div class="grid gap-4 grid-cols-2">
-          <Button class="">Option 1</Button>
-          <Graph class="grow" logMessages={logMessages['ATT']} />
+        <div className="flex gap-4 flex-cols">
+          {/* Message selection column */}
+          <div className="flex-none w-48">
+            <Button className="w-full" variant="filled" color={tailwindColors.green[600]}>Option 1</Button>
+          </div>
+
+          {/* Graph column */}
+          <div className="grow">
+            <Graph logMessages={logMessages['ATT']} />
+          </div>
         </div>
       )}
     </Layout>

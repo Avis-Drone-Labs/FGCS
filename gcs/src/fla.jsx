@@ -1,4 +1,4 @@
-import { Button, FileInput, Group, Modal } from '@mantine/core'
+import { Button, FileInput, Group, Modal, Accordion } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import Layout from './components/layout'
 
@@ -96,7 +96,17 @@ export default function FLA() {
         <div className="flex gap-4 flex-cols">
           {/* Message selection column */}
           <div className="flex-none w-48">
-            <Button className="w-full" variant="filled" color={tailwindColors.green[600]}>Option 1</Button>
+            <Accordion>
+              <Accordion.Item key="presets" value="presets">
+                <Accordion.Control>Presets</Accordion.Control>
+                <Accordion.Panel>TO ADD STUFF HERE</Accordion.Panel>
+              </Accordion.Item>
+
+              <Accordion.Item key="messages" value="messages">
+                <Accordion.Control>Messages</Accordion.Control>
+                <Accordion.Panel>TO ADD STUFF HERE</Accordion.Panel>
+              </Accordion.Item>
+            </Accordion>
           </div>
 
           {/* Graph column */}

@@ -14,13 +14,35 @@ import {
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function FLA() {
+  // States and disclosures used in react frontend
   const [isModalOpen, { open: openModal, close: closeModal }] =
     useDisclosure(false)
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [logMessages, setLogMessages] = useState(null)
 
+  // Preset categories for filtering
+  // const presetCategories = {
+  //   "Speed": {
+  //     "Ground Speed vs Air Speed": ["ground", "air"],
+  //     "Ground Speed": ["ground"]
+  //   },
+  //   "Attitude": {
+  //     "Roll and Pitch": ["roll", "pitch"]
+  //   }
+  // }
+  const presetCategories = [
+    {name: "Speed", filters: [
+      {name: "Ground speed vs Air Speed", filters: ["ground", "air"]}
+    ]},
+    {name: "Attitude", filters: [
+      {name: "Roll and Pitch", filters: ["roll", "pitch"]}
+    ]}
+  ]
+
+  // Load file, if set, and show the graph
   async function loadFile() {
+    console.log(file)
     if (file != null) {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
@@ -95,11 +117,30 @@ export default function FLA() {
       ) : (
         <div className="flex gap-4 flex-cols">
           {/* Message selection column */}
-          <div className="flex-none w-48">
+          <div className="flex-none w-128">
             <Accordion>
               <Accordion.Item key="presets" value="presets">
                 <Accordion.Control>Presets</Accordion.Control>
-                <Accordion.Panel>TO ADD STUFF HERE</Accordion.Panel>
+                <Accordion.Panel>
+                  {/* {presetCategories.map((category, catIdx) => {
+                    console.log(Object.keys(category)[catIdx])
+                    let categoryName = Object.keys(category)[catIdx]
+                    return <h1>{categoryName}</h1>
+                  })} */}
+                  <Accordion>
+                    {presetCategories.map((category, catIdx) => {
+                      console.log(category)
+                      return (
+                        <Accordion.Item key={category.name} value={category.name}>
+                          <Accordion.Control>{category.name}</Accordion.Control>
+                          {category.filters.map((filter, filterIdx) => {
+                            return <Accordion.Panel><Button>{filter.name}</Button></Accordion.Panel>
+                          })}
+                        </Accordion.Item>
+                      )
+                    })}
+                  </Accordion>
+                </Accordion.Panel>
               </Accordion.Item>
 
               <Accordion.Item key="messages" value="messages">

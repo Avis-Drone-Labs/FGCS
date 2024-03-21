@@ -117,14 +117,14 @@ export default function FLA() {
       ) : (
         <div className="flex gap-4 flex-cols">
           {/* Message selection column */}
-          <div className="flex-none w-128">
+          <div className="flex-none basis-1/4">
             <Accordion>
               <Accordion.Item key="presets" value="presets">
                 <Accordion.Control>Presets</Accordion.Control>
                 <Accordion.Panel>
                   {/* {presetCategories.map((category, catIdx) => {
                     console.log(Object.keys(category)[catIdx])
-                    let categoryName = Object.keys(category)[catIdx]
+                    let categoryName = O  bject.keys(category)[catIdx]
                     return <h1>{categoryName}</h1>
                   })} */}
                   <Accordion>
@@ -151,7 +151,7 @@ export default function FLA() {
           </div>
 
           {/* Graph column */}
-          <div className="grow">
+          <div className="basis-3/4">
             <Graph logMessages={logMessages['ATT']} />
           </div>
         </div>

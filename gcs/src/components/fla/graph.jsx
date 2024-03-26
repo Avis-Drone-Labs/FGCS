@@ -93,12 +93,10 @@ export default function Graph({ logMessages, filters }) {
     datasets: []
   }
 
-  console.log(logMessages)
   for (let i = 0; i < filters.length; i++) {
     let filter = filters[i]
     let filterCategory = filters[i].split("/")[0]
     let filterName = filters[i].split("/")[1]
-    console.log(filter, filterCategory)
 
     data.datasets.push({
       label: filter,

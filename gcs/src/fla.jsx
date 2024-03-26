@@ -40,7 +40,12 @@ export default function FLA() {
   }
 
   async function updateGraphFilter(category, filter, enabled) {
-    
+    let filterCategoryCombo = `${category}/${filter}`
+    if (enabled && !filters.includes(filterCategoryCombo)) {
+      filterHandler.append(filterCategoryCombo)
+    } else if (!enabled && filters.includes(filterCategoryCombo)) {
+      filterHandler.remove(filters.indexOf(filterCategoryCombo))
+    }
   }
 
   // Load file, if set, and show the graph

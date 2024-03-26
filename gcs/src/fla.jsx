@@ -1,5 +1,13 @@
-import { Button, FileInput, Group, Modal, Accordion, Checkbox, ScrollArea } from '@mantine/core'
-import { useDisclosure, useListState } from '@mantine/hooks'
+import {
+  Accordion,
+  Button,
+  Checkbox,
+  FileInput,
+  Group,
+  Modal,
+  ScrollArea,
+} from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import Layout from './components/layout'
 
 import { useEffect, useState } from 'react'
@@ -8,72 +16,37 @@ import tailwindConfig from '../tailwind.config.js'
 import Graph from './components/fla/graph'
 import {
   showErrorNotification,
-  showNotification,
   showSuccessNotification,
 } from './notification.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+// Preset categories for filtering
+const presetCategories = [
+  {
+    name: 'Speed',
+    filters: [
+      {
+        name: 'Ground speed vs Air Speed',
+        filters: ['GPS/Spd', 'ARSP/Airspeed'],
+      },
+    ],
+  },
+  {
+    name: 'Attitude',
+    filters: [{ name: 'Roll and Pitch', filters: ['ATT/Roll', 'ATT/Pitch'] }],
+  },
+]
+
 export default function FLA() {
   // States and disclosures used in react frontend
-  const [isModalOpen, { open: openModal, close: closeModal }] = useDisclosure(false)
+  const [isModalOpen, { open: openModal, close: closeModal }] =
+    useDisclosure(false)
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [logMessages, setLogMessages] = useState(null)
-  const [chartData, setChartData] = useState({datasets: []})
-  const [logMessageList, setLogMessageList] = useState([])
-  const [filters, filterHandler] = useListState([])
-
-  // Preset categories for filtering
-  const presetCategories = [
-    {name: "Speed", filters: [
-      {name: "Ground speed vs Air Speed", filters: ["GPS/Spd", "ARSP/Airspeed"]}
-    ]},
-    {name: "Attitude", filters: [
-      {name: "Roll and Pitch", filters: ["ATT/Roll", "ATT/Pitch"]}
-    ]}
-  ]
-
-  // Update data on graph
-  function setGraphFilters(filters) {
-    showNotification("Updating filters", "Filters are being changed")
-    filterHandler.setState(filters)
-  }
-
-  function updateGraphFilter(category, filter, enabled) {
-    let filterCategoryCombo = `${category}/${filter}`
-    let filterCopy = filters.slice()
-    if (enabled && !filters.includes(filterCategoryCombo)) {
-      filterCopy.push(filterCategoryCombo)
-    } else if (!enabled && filters.includes(filterCategoryCombo)) {
-      filterCopy.splice(filters.indexOf(filterCategoryCombo), 1)
-    }
-
-    filterHandler.setState(filterCopy)
-    let start = Date.now()
-    setChartData(getGraphData(filterCopy))
-    console.log(Date.now() - start)
-  }
-
-  // Get graph data so the chart doesn't have to take in all messages to refresh
-  function getGraphData(localFilters) {
-    const data = {
-      datasets: []
-    }
-  
-    for (let i = 0; i < localFilters.length; i++) {
-      let filter = localFilters[i]
-      let filterCategory = localFilters[i].split("/")[0]
-      let filterName = localFilters[i].split("/")[1]
-  
-      data.datasets.push({
-        label: filter,
-        data: logMessages[filterCategory].map((d) => ({ x: d.TimeUS, y: d[filterName] })),
-      })
-    }
-
-    return data
-  }
+  const [chartData, setChartData] = useState({ datasets: [] })
+  const [messageFilters, setMessageFilters] = useState(null)
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -85,34 +58,24 @@ export default function FLA() {
         // Load messages into states
         const loadedLogMessages = result.messages
         console.log(loadedLogMessages)
-        console.log(loadedLogMessages["format"])
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
 
-        // Sort format so message categories are in alphabetical order
-        let format = {}
-        Object.keys(loadedLogMessages["format"]).sort().forEach(key => {
-          format[key] = loadedLogMessages["format"][key]
-        })
-        
-        // Loop over each category in format and add it to logMessageList
-        let logMessageList = []
-        for (let categoryIdx = 0; categoryIdx < Object.keys(format).length; categoryIdx++) {
-          let categoryName = Object.keys(format)[categoryIdx]
-          let category = format[categoryName]
-          let categoryFields = []
+        // Set the default state to false for all message filters
+        const logMessageFilterDefaultState = {}
+        Object.keys(loadedLogMessages['format'])
+          .sort()
+          .forEach((key) => {
+            if (Object.keys(loadedLogMessages).includes(key)) {
+              const fieldsState = {}
+              loadedLogMessages['format'][key].fields.map(
+                (field) => (fieldsState[field] = false),
+              )
+              logMessageFilterDefaultState[key] = fieldsState
+            }
+          })
 
-          // Ignore formate message
-          if (categoryName == "FMT")
-            continue
-
-          // Add all category fields to log messages
-          for (let fieldIdx = 0; fieldIdx < category.fields.length; fieldIdx++) {
-            categoryFields.push({"name": category.fields[fieldIdx]})
-          }
-          logMessageList.push({"name": categoryName, "fields": categoryFields})
-        }
-        setLogMessageList(logMessageList)
+        setMessageFilters(logMessageFilterDefaultState)
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -125,7 +88,29 @@ export default function FLA() {
     }
   }
 
-  useEffect(() => {}, [])
+  useEffect(() => {
+    if (!messageFilters) return
+
+    const datasets = []
+
+    // Update the datasets based on the message filters
+    Object.keys(messageFilters).map((categoryName) => {
+      const category = messageFilters[categoryName]
+      Object.keys(category).map((fieldName) => {
+        if (category[fieldName]) {
+          datasets.push({
+            label: `${categoryName}/${fieldName}`,
+            data: logMessages[categoryName].map((d) => ({
+              x: d.TimeUS,
+              y: d[fieldName],
+            })),
+          })
+        }
+      })
+    })
+
+    setChartData({ datasets: datasets })
+  }, [messageFilters])
 
   return (
     <Layout currentPage='fla'>
@@ -165,13 +150,14 @@ export default function FLA() {
                 variant='filled'
                 color={tailwindColors.green[600]}
                 onClick={loadFile}
+                disabled={!file}
                 loading={loadingFile}
               >
                 Analyse
               </Button>
             </Group>
           </Modal>
-          <div className="flex flex-col w-max pl-10">
+          <div className='flex flex-col w-max pl-10'>
             No file loaded
             <Button
               variant='filled'
@@ -184,24 +170,38 @@ export default function FLA() {
           </div>
         </>
       ) : (
-        
         // Graphs section
-        <div className="flex gap-4 flex-cols h-3/4">
+        <div className='flex gap-4 flex-cols h-3/4'>
           {/* Message selection column */}
-          <div className="flex-none basis-1/4">
-            <ScrollArea className="h-full max-h-max">
+          <div className='flex-none basis-1/4'>
+            <ScrollArea className='h-full max-h-max'>
               <Accordion multiple={true}>
                 {/* Presets */}
-                <Accordion.Item key="presets" value="presets">
+                <Accordion.Item key='presets' value='presets'>
                   <Accordion.Control>Presets</Accordion.Control>
                   <Accordion.Panel>
                     <Accordion multiple={true}>
-                      {presetCategories.map((category, _) => {
+                      {presetCategories.map((category) => {
                         return (
-                          <Accordion.Item key={category.name} value={category.name}>
-                            <Accordion.Control>{category.name}</Accordion.Control>
-                            {category.filters.map((filter, _) => {
-                              return <Accordion.Panel><Button onClick={() => {setGraphFilters(filter.filters)}}>{filter.name}</Button></Accordion.Panel>
+                          <Accordion.Item
+                            key={category.name}
+                            value={category.name}
+                          >
+                            <Accordion.Control>
+                              {category.name}
+                            </Accordion.Control>
+                            {category.filters.map((filter, idx) => {
+                              return (
+                                <Accordion.Panel key={idx}>
+                                  <Button
+                                    onClick={() => {
+                                      console.log(filter.filters)
+                                    }}
+                                  >
+                                    {filter.name}
+                                  </Button>
+                                </Accordion.Panel>
+                              )
                             })}
                           </Accordion.Item>
                         )
@@ -211,18 +211,34 @@ export default function FLA() {
                 </Accordion.Item>
 
                 {/* All messages */}
-                <Accordion.Item key="messages" value="messages">
+                <Accordion.Item key='messages' value='messages'>
                   <Accordion.Control>Messages</Accordion.Control>
                   <Accordion.Panel>
                     <Accordion multiple={false}>
-                      {logMessageList.map((category, _) => {
+                      {Object.keys(messageFilters).map((messageName, idx) => {
                         return (
-                          <Accordion.Item key={category.name} value={category.name}>
-                            <Accordion.Control><Checkbox label={category.name} /></Accordion.Control>
+                          <Accordion.Item key={idx} value={messageName}>
+                            <Accordion.Control>{messageName}</Accordion.Control>
                             <Accordion.Panel>
-                              {category.fields.map((field, _) => {
-                                return <Checkbox label={field.name} className="pb-1" onClick={(event) => {updateGraphFilter(category.name, field.name, event.currentTarget.checked)}} />
-                              })}
+                              {Object.keys(messageFilters[messageName]).map(
+                                (fieldName, idx) => {
+                                  return (
+                                    <Checkbox
+                                      key={idx}
+                                      label={fieldName}
+                                      checked={
+                                        messageFilters[messageName][fieldName]
+                                      }
+                                      onChange={(event) => {
+                                        let newFilters = { ...messageFilters }
+                                        newFilters[messageName][fieldName] =
+                                          event.currentTarget.checked
+                                        setMessageFilters(newFilters)
+                                      }}
+                                    />
+                                  )
+                                },
+                              )}
                             </Accordion.Panel>
                           </Accordion.Item>
                         )
@@ -235,7 +251,7 @@ export default function FLA() {
           </div>
 
           {/* Graph column */}
-          <div className="basis-3/4 pr-4">
+          <div className='basis-3/4 pr-4'>
             <Graph data={chartData} />
           </div>
         </div>

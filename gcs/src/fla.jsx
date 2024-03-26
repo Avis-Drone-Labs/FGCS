@@ -26,13 +26,15 @@ const presetCategories = [
   {
     name: 'Speed',
     filters: [
-      {name: 'Ground speed vs Air Speed', filters: ['GPS/Spd', 'ARSP/Airspeed']}
+      {name: 'Ground speed vs Air Speed', filters: {"GPS": ["Spd"], "ARSP": ["Airspeed"]}}
     ],
   },
   {
     name: 'Attitude',
     filters: [
-      { name: 'Roll and Pitch', filters: ['ATT/Roll', 'ATT/Pitch'] }
+      { name: 'Achieved Roll and Pitch', filters: {"ATT": ["Roll", "Pitch"]} },
+      { name: 'Desired Roll vs Achieved Roll', filters: {"ATT": ["DesRoll", "Roll"]} },
+      { name: 'Desired Pitch vs Achieved Pitch', filters: {"ATT": ["DesPitch", "Pitch"]} },
     ],
   },
 ]
@@ -86,6 +88,18 @@ export default function FLA() {
         setLoadingFile(false)
       }
     }
+  }
+
+  // Turn on/off all filters
+  function clearFilters() {
+    let newFilters = { ...messageFilters }
+    Object.keys(newFilters).map((categoryName) => {
+      const category = newFilters[categoryName]
+      Object.keys(category).map((fieldName) => {
+        newFilters[categoryName][fieldName] = false
+      })
+    })
+    setMessageFilters(newFilters)
   }
 
   useEffect(() => {
@@ -190,19 +204,33 @@ export default function FLA() {
                             <Accordion.Control>
                               {category.name}
                             </Accordion.Control>
+                            <Accordion.Panel>
                             {category.filters.map((filter, idx) => {
                               return (
-                                <Accordion.Panel key={idx}>
+                                <div className="pb-2">
                                   <Button
+                                    key={idx}
                                     onClick={() => {
-                                      console.log(filter.filters)
+                                      clearFilters()
+                                      let newFilters = { ...messageFilters }
+                                      Object.keys(filter.filters).map((categoryName) => {
+                                        if (Object.keys(messageFilters).includes(categoryName)) {
+                                          filter.filters[categoryName].map((field) => {
+                                            newFilters[categoryName][field] = true
+                                          })
+                                        } else {
+                                          showErrorNotification(`Your log file does not include ${categoryName}`)
+                                        }
+                                      })
+                                      setMessageFilters(newFilters)
                                     }}
                                   >
                                     {filter.name}
                                   </Button>
-                                </Accordion.Panel>
+                                </div>
                               )
                             })}
+                            </Accordion.Panel>
                           </Accordion.Item>
                         )
                       })}

@@ -26,17 +26,17 @@ const presetCategories = [
   {
     name: 'Speed',
     filters: [
-      {
-        name: 'Ground speed vs Air Speed',
-        filters: ['GPS/Spd', 'ARSP/Airspeed'],
-      },
+      {name: 'Ground speed vs Air Speed', filters: ['GPS/Spd', 'ARSP/Airspeed']}
     ],
   },
   {
     name: 'Attitude',
-    filters: [{ name: 'Roll and Pitch', filters: ['ATT/Roll', 'ATT/Pitch'] }],
+    filters: [
+      { name: 'Roll and Pitch', filters: ['ATT/Roll', 'ATT/Pitch'] }
+    ],
   },
 ]
+const ignoredKeys = ["TimeUS", "function", "source", "result"]
 
 export default function FLA() {
   // States and disclosures used in react frontend
@@ -69,7 +69,7 @@ export default function FLA() {
             if (Object.keys(loadedLogMessages).includes(key)) {
               const fieldsState = {}
               loadedLogMessages['format'][key].fields.map(
-                (field) => (fieldsState[field] = false),
+                (field) => {if (!ignoredKeys.includes(field)) {(fieldsState[field] = false)}},
               )
               logMessageFilterDefaultState[key] = fieldsState
             }

@@ -21,7 +21,7 @@ export default function FLA() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [logMessages, setLogMessages] = useState(null)
   const [logMessageList, setLogMessageList] = useState([])
-  const [filters, filterHandler] = useListState([])
+  const [filters, filterHandler] = useListState(["ATT/Roll"])
 
   // Preset categories for filtering
   const presetCategories = [
@@ -34,18 +34,31 @@ export default function FLA() {
   ]
 
   // Update data on graph
-  async function setGraphFilters(filters) {
+  function setGraphFilters(filters) {
     showNotification("Updating filters", "Filters are being changed")
     filterHandler.setState(filters)
   }
 
-  async function updateGraphFilter(category, filter, enabled) {
+  function updateGraphFilter(category, filter, enabled) {
     let filterCategoryCombo = `${category}/${filter}`
     if (enabled && !filters.includes(filterCategoryCombo)) {
       filterHandler.append(filterCategoryCombo)
     } else if (!enabled && filters.includes(filterCategoryCombo)) {
       filterHandler.remove(filters.indexOf(filterCategoryCombo))
     }
+  }
+
+  // Get filtered list of all messages
+  function getFilteredList() {
+    let filteredMessages = {}
+    for (let filterIdx = 0; filterIdx < filters.length; filterIdx++) {
+      let catName = filters[filterIdx].split("/")[0]
+      if (Object.keys(logMessages).includes(catName)) {
+        filteredMessages[catName] = logMessages[catName]
+      }
+    }
+    console.log(filters, filteredMessages)
+    return filteredMessages
   }
 
   // Load file, if set, and show the graph

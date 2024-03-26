@@ -26,17 +26,21 @@ export default function FLA() {
   // Preset categories for filtering
   const presetCategories = [
     {name: "Speed", filters: [
-      {name: "Ground speed vs Air Speed", filters: ["ground", "air"]}
+      {name: "Ground speed vs Air Speed", filters: ["GPS/Spd", "ARSP/Airspeed"]}
     ]},
     {name: "Attitude", filters: [
-      {name: "Roll and Pitch", filters: ["Roll", "Pitch"]}
+      {name: "Roll and Pitch", filters: ["ATT/Roll", "ATT/Pitch"]}
     ]}
   ]
 
   // Update data on graph
-  async function updateGraph(filters) {
+  async function setGraphFilters(filters) {
     showNotification("Updating filters", "Filters are being changed")
     filterHandler.setState(filters)
+  }
+
+  async function updateGraphFilter(category, filter, enabled) {
+    
   }
 
   // Load file, if set, and show the graph
@@ -53,11 +57,15 @@ export default function FLA() {
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
 
-        // Set log message list to be used in accordion
+        // Sort format so message categories are in alphabetical order
+        let format = {}
+        Object.keys(loadedLogMessages["format"]).sort().forEach(key => {
+          format[key] = loadedLogMessages["format"][key]
+        })
+        
+        // Loop over each category in format and add it to logMessageList
         let logMessageList = []
-        let format = loadedLogMessages["format"]
         for (let categoryIdx = 0; categoryIdx < Object.keys(format).length; categoryIdx++) {
-          // Get information about category
           let categoryName = Object.keys(format)[categoryIdx]
           let category = format[categoryName]
           let categoryFields = []
@@ -146,7 +154,7 @@ export default function FLA() {
       ) : (
         
         // Graphs section
-        <div className="flex gap-4 flex-cols h-1/2">
+        <div className="flex gap-4 flex-cols h-3/4">
           {/* Message selection column */}
           <div className="flex-none basis-1/4">
             <ScrollArea className="h-full max-h-max">
@@ -161,7 +169,7 @@ export default function FLA() {
                           <Accordion.Item key={category.name} value={category.name}>
                             <Accordion.Control>{category.name}</Accordion.Control>
                             {category.filters.map((filter, _) => {
-                              return <Accordion.Panel><Button onClick={() => {updateGraph(filter.filters)}}>{filter.name}</Button></Accordion.Panel>
+                              return <Accordion.Panel><Button onClick={() => {setGraphFilters(filter.filters)}}>{filter.name}</Button></Accordion.Panel>
                             })}
                           </Accordion.Item>
                         )
@@ -181,7 +189,7 @@ export default function FLA() {
                             <Accordion.Control><Checkbox label={category.name} /></Accordion.Control>
                             <Accordion.Panel>
                               {category.fields.map((field, _) => {
-                                return <Checkbox label={field.name} className="pb-1" />
+                                return <Checkbox label={field.name} className="pb-1" onClick={(event) => {updateGraphFilter(category.name, field.name, event.currentTarget.checked)}} />
                               })}
                             </Accordion.Panel>
                           </Accordion.Item>
@@ -196,7 +204,7 @@ export default function FLA() {
 
           {/* Graph column */}
           <div className="basis-3/4 pr-4">
-            <Graph logMessages={logMessages['ATT']} filters={filters} />
+            <Graph logMessages={logMessages} filters={filters} />
           </div>
         </div>
       )}

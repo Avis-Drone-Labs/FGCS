@@ -86,16 +86,19 @@ const options = {
   },
 }
 
-export default function Graph({ logMessages }) {
+export default function Graph({ logMessages, filters }) {
   const chartRef = useRef(null)
 
   const data = {
-    datasets: [
-      {
-        label: 'Roll',
-        data: logMessages.map((d) => ({ x: d.TimeUS, y: d.Roll })),
-      },
-    ],
+    datasets: []
+  }
+
+  for (let i = 0; i < filters.length; i++) {
+    let filter = filters[i]
+    data.datasets.push({
+      label: filter,
+      data: logMessages.map((d) => ({ x: d.TimeUS, y: d[filter] })),
+    })
   }
 
   return (

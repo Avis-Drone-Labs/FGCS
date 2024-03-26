@@ -19,3 +19,11 @@ export function showSuccessNotification(message) {
     color: tailwindColors.green[600],
   })
 }
+
+export function showNotification(title, message) {
+  notifications.show({
+    title: title,
+    message: message,
+    color: tailwindColors.blue[600]
+  })
+}

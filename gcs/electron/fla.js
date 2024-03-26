@@ -30,9 +30,9 @@ function parseLogFile(fileData) {
         fields,
       }
 
-      if (definedMessageName === 'ATT') {
-        console.log(formatMessages[definedMessageName])
-      }
+      // if (definedMessageName === 'ATT') {
+      //   console.log(formatMessages[definedMessageName])
+      // }
     } else if (messageName === 'UNIT') {
       // Message mapping from single character to SI unit
     } else if (messageName === 'FMTU') {
@@ -74,15 +74,17 @@ function parseLogFile(fileData) {
           }
         }
 
-        if (messageName === 'ATT' && messages[messageName].length === 0) {
-          console.log(messageObj)
-        }
+        // if (messageName === 'ATT' && messages[messageName].length === 0) {
+        //   console.log(messageObj)
+        // }
 
         messages[messageName].push(messageObj)
       }
     }
   }
 
+  // Add format messages to messages for later digesting and return
+  messages["format"] = formatMessages
   return messages
 }
 

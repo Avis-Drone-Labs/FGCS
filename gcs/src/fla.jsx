@@ -1,5 +1,5 @@
-import { Button, FileInput, Group, Modal, Accordion } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { Button, FileInput, Group, Modal, Accordion, Checkbox } from '@mantine/core'
+import { useDisclosure, useListState } from '@mantine/hooks'
 import Layout from './components/layout'
 
 import { useEffect, useState } from 'react'
@@ -8,6 +8,7 @@ import tailwindConfig from '../tailwind.config.js'
 import Graph from './components/fla/graph'
 import {
   showErrorNotification,
+  showNotification,
   showSuccessNotification,
 } from './notification.js'
 
@@ -15,47 +16,71 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function FLA() {
   // States and disclosures used in react frontend
-  const [isModalOpen, { open: openModal, close: closeModal }] =
-    useDisclosure(false)
+  const [isModalOpen, { open: openModal, close: closeModal }] = useDisclosure(false)
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [logMessages, setLogMessages] = useState(null)
+  const [logMessageList, setLogMessageList] = useState([])
+  const [filters, filterHandler] = useListState([])
 
   // Preset categories for filtering
-  // const presetCategories = {
-  //   "Speed": {
-  //     "Ground Speed vs Air Speed": ["ground", "air"],
-  //     "Ground Speed": ["ground"]
-  //   },
-  //   "Attitude": {
-  //     "Roll and Pitch": ["roll", "pitch"]
-  //   }
-  // }
   const presetCategories = [
     {name: "Speed", filters: [
       {name: "Ground speed vs Air Speed", filters: ["ground", "air"]}
     ]},
     {name: "Attitude", filters: [
-      {name: "Roll and Pitch", filters: ["roll", "pitch"]}
+      {name: "Roll and Pitch", filters: ["Roll", "Pitch"]}
     ]}
   ]
 
+  // Update data on graph
+  async function updateGraph(filters) {
+    showNotification("Updating filters", "Filters are being changed")
+    filterHandler.setState(filters)
+  }
+
   // Load file, if set, and show the graph
   async function loadFile() {
-    console.log(file)
     if (file != null) {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
-      if (!result.success) {
-        showErrorNotification(result.error)
-        setLoadingFile(false)
-      } else {
+
+      if (result.success) {
+        // Load messages into states
         const loadedLogMessages = result.messages
         console.log(loadedLogMessages)
+        console.log(loadedLogMessages["format"])
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
+
+        // Set log message list to be used in accordion
+        let logMessageList = []
+        let format = loadedLogMessages["format"]
+        for (let categoryIdx = 0; categoryIdx < Object.keys(format).length; categoryIdx++) {
+          // Get information about category
+          let categoryName = Object.keys(format)[categoryIdx]
+          let category = format[categoryName]
+          let categoryFields = []
+
+          // Ignore formate message
+          if (categoryName == "FMT")
+            continue
+
+          // Add all category fields to log messages
+          for (let fieldIdx = 0; fieldIdx < category.fields.length; fieldIdx++) {
+            categoryFields.push({"name": category.fields[fieldIdx]})
+          }
+          logMessageList.push({"name": categoryName, "fields": categoryFields})
+        }
+        setLogMessageList(logMessageList)
+
+        // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
         closeModal()
+      } else {
+        // Error
+        showErrorNotification(result.error)
+        setLoadingFile(false)
       }
     }
   }
@@ -65,6 +90,7 @@ export default function FLA() {
   return (
     <Layout currentPage='fla'>
       {logMessages === null ? (
+        // Open flight logs section
         <>
           <Modal
             opened={isModalOpen}
@@ -105,36 +131,36 @@ export default function FLA() {
               </Button>
             </Group>
           </Modal>
-          <Button
-            variant='filled'
-            color={tailwindColors.green[600]}
-            onClick={openModal}
-            data-autofocus
-          >
-            Open File
-          </Button>
+          <div className="flex flex-col w-max pl-10">
+            No file loaded
+            <Button
+              variant='filled'
+              color={tailwindColors.green[600]}
+              onClick={openModal}
+              data-autofocus
+            >
+              Open File
+            </Button>
+          </div>
         </>
       ) : (
+        
+        // Graphs section
         <div className="flex gap-4 flex-cols">
           {/* Message selection column */}
           <div className="flex-none basis-1/4">
-            <Accordion>
+            <Accordion multiple={true}>
+              {/* Presets */}
               <Accordion.Item key="presets" value="presets">
                 <Accordion.Control>Presets</Accordion.Control>
                 <Accordion.Panel>
-                  {/* {presetCategories.map((category, catIdx) => {
-                    console.log(Object.keys(category)[catIdx])
-                    let categoryName = O  bject.keys(category)[catIdx]
-                    return <h1>{categoryName}</h1>
-                  })} */}
-                  <Accordion>
-                    {presetCategories.map((category, catIdx) => {
-                      console.log(category)
+                  <Accordion multiple={true}>
+                    {presetCategories.map((category, _) => {
                       return (
                         <Accordion.Item key={category.name} value={category.name}>
                           <Accordion.Control>{category.name}</Accordion.Control>
-                          {category.filters.map((filter, filterIdx) => {
-                            return <Accordion.Panel><Button>{filter.name}</Button></Accordion.Panel>
+                          {category.filters.map((filter, _) => {
+                            return <Accordion.Panel><Button onClick={() => {updateGraph(filter.filters)}}>{filter.name}</Button></Accordion.Panel>
                           })}
                         </Accordion.Item>
                       )
@@ -143,16 +169,32 @@ export default function FLA() {
                 </Accordion.Panel>
               </Accordion.Item>
 
+              {/* All messages */}
               <Accordion.Item key="messages" value="messages">
                 <Accordion.Control>Messages</Accordion.Control>
-                <Accordion.Panel>TO ADD STUFF HERE</Accordion.Panel>
+                <Accordion.Panel>
+                  <Accordion multiple={false}>
+                    {logMessageList.map((category, _) => {
+                      return (
+                        <Accordion.Item key={category.name} value={category.name}>
+                          <Accordion.Control><Checkbox label={category.name} /></Accordion.Control>
+                          <Accordion.Panel>
+                            {category.fields.map((field, _) => {
+                              return <Checkbox label={field.name} />
+                            })}
+                          </Accordion.Panel>
+                        </Accordion.Item>
+                      )
+                    })}
+                  </Accordion>
+                </Accordion.Panel>
               </Accordion.Item>
             </Accordion>
           </div>
 
           {/* Graph column */}
-          <div className="basis-3/4">
-            <Graph logMessages={logMessages['ATT']} />
+          <div className="basis-3/4 pr-4">
+            <Graph logMessages={logMessages['ATT']} filters={filters} />
           </div>
         </div>
       )}

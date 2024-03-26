@@ -30,7 +30,8 @@ export default function FLA() {
       {name: "Ground speed vs Air Speed", filters: ["GPS/Spd", "ARSP/Airspeed"]}
     ]},
     {name: "Attitude", filters: [
-      {name: "Roll and Pitch", filters: ["ATT/Roll", "ATT/Pitch"]}
+      {name: "Achieved Roll and Pitch", filters: ["ATT/Roll", "ATT/Pitch"]},
+      {name: "Estimated Yaw and Pitch", filters: ["AHR2/Yaw", "AHR2/Pitch"]}
     ]}
   ]
 
@@ -38,9 +39,11 @@ export default function FLA() {
   function setGraphFilters(filters) {
     showNotification("Updating filters", "Filters are being changed")
     filterHandler.setState(filters)
+    setChartData(getGraphData(filters))
   }
 
   function updateGraphFilter(category, filter, enabled) {
+    showNotification("Updating filters", "Filters are being changed")
     let filterCategoryCombo = `${category}/${filter}`
     let filterCopy = filters.slice()
     if (enabled && !filters.includes(filterCategoryCombo)) {
@@ -50,9 +53,7 @@ export default function FLA() {
     }
 
     filterHandler.setState(filterCopy)
-    let start = Date.now()
     setChartData(getGraphData(filterCopy))
-    console.log(Date.now() - start)
   }
 
   // Get graph data so the chart doesn't have to take in all messages to refresh
@@ -72,6 +73,7 @@ export default function FLA() {
       })
     }
 
+    console.log(data)
     return data
   }
 
@@ -124,8 +126,6 @@ export default function FLA() {
       }
     }
   }
-
-  useEffect(() => {}, [])
 
   return (
     <Layout currentPage='fla'>
@@ -220,9 +220,9 @@ export default function FLA() {
                           <Accordion.Item key={category.name} value={category.name}>
                             <Accordion.Control><Checkbox label={category.name} /></Accordion.Control>
                             <Accordion.Panel>
-                              {category.fields.map((field, _) => {
+                              {/* {category.fields.map((field, _) => {
                                 return <Checkbox label={field.name} className="pb-1" onClick={(event) => {updateGraphFilter(category.name, field.name, event.currentTarget.checked)}} />
-                              })}
+                              })} */}
                             </Accordion.Panel>
                           </Accordion.Item>
                         )

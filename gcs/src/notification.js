@@ -24,6 +24,6 @@ export function showNotification(title, message) {
   notifications.show({
     title: title,
     message: message,
-    color: tailwindColors.blue[600]
+    color: tailwindColors.blue[600],
   })
 }

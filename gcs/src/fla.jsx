@@ -26,19 +26,28 @@ const presetCategories = [
   {
     name: 'Speed',
     filters: [
-      {name: 'Ground speed vs Air Speed', filters: {"GPS": ["Spd"], "ARSP": ["Airspeed"]}}
+      {
+        name: 'Ground speed vs Air Speed',
+        filters: { GPS: ['Spd'], ARSP: ['Airspeed'] },
+      },
     ],
   },
   {
     name: 'Attitude',
     filters: [
-      { name: 'Achieved Roll and Pitch', filters: {"ATT": ["Roll", "Pitch"]} },
-      { name: 'Desired Roll vs Achieved Roll', filters: {"ATT": ["DesRoll", "Roll"]} },
-      { name: 'Desired Pitch vs Achieved Pitch', filters: {"ATT": ["DesPitch", "Pitch"]} },
+      { name: 'Achieved Roll and Pitch', filters: { ATT: ['Roll', 'Pitch'] } },
+      {
+        name: 'Desired Roll vs Achieved Roll',
+        filters: { ATT: ['DesRoll', 'Roll'] },
+      },
+      {
+        name: 'Desired Pitch vs Achieved Pitch',
+        filters: { ATT: ['DesPitch', 'Pitch'] },
+      },
     ],
   },
 ]
-const ignoredKeys = ["TimeUS", "function", "source", "result"]
+const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
 
 export default function FLA() {
   // States and disclosures used in react frontend
@@ -70,9 +79,11 @@ export default function FLA() {
           .forEach((key) => {
             if (Object.keys(loadedLogMessages).includes(key)) {
               const fieldsState = {}
-              loadedLogMessages['format'][key].fields.map(
-                (field) => {if (!ignoredKeys.includes(field)) {(fieldsState[field] = false)}},
-              )
+              loadedLogMessages['format'][key].fields.map((field) => {
+                if (!ignoredKeys.includes(field)) {
+                  fieldsState[field] = false
+                }
+              })
               logMessageFilterDefaultState[key] = fieldsState
             }
           })
@@ -205,31 +216,43 @@ export default function FLA() {
                               {category.name}
                             </Accordion.Control>
                             <Accordion.Panel>
-                            {category.filters.map((filter, idx) => {
-                              return (
-                                <div className="pb-2">
-                                  <Button
-                                    key={idx}
-                                    onClick={() => {
-                                      clearFilters()
-                                      let newFilters = { ...messageFilters }
-                                      Object.keys(filter.filters).map((categoryName) => {
-                                        if (Object.keys(messageFilters).includes(categoryName)) {
-                                          filter.filters[categoryName].map((field) => {
-                                            newFilters[categoryName][field] = true
-                                          })
-                                        } else {
-                                          showErrorNotification(`Your log file does not include ${categoryName}`)
-                                        }
-                                      })
-                                      setMessageFilters(newFilters)
-                                    }}
-                                  >
-                                    {filter.name}
-                                  </Button>
-                                </div>
-                              )
-                            })}
+                              {category.filters.map((filter, idx) => {
+                                return (
+                                  <div className='pb-2'>
+                                    <Button
+                                      key={idx}
+                                      onClick={() => {
+                                        clearFilters()
+                                        let newFilters = { ...messageFilters }
+                                        Object.keys(filter.filters).map(
+                                          (categoryName) => {
+                                            if (
+                                              Object.keys(
+                                                messageFilters,
+                                              ).includes(categoryName)
+                                            ) {
+                                              filter.filters[categoryName].map(
+                                                (field) => {
+                                                  newFilters[categoryName][
+                                                    field
+                                                  ] = true
+                                                },
+                                              )
+                                            } else {
+                                              showErrorNotification(
+                                                `Your log file does not include ${categoryName}`,
+                                              )
+                                            }
+                                          },
+                                        )
+                                        setMessageFilters(newFilters)
+                                      }}
+                                    >
+                                      {filter.name}
+                                    </Button>
+                                  </div>
+                                )
+                              })}
                             </Accordion.Panel>
                           </Accordion.Item>
                         )

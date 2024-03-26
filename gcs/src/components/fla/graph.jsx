@@ -86,23 +86,35 @@ const options = {
   },
 }
 
-export default function Graph({ logMessages, filters }) {
+// export default function Graph({ logMessages, filters }) {
+//   const chartRef = useRef(null)
+
+//   const data = {
+//     datasets: []
+//   }
+
+//   for (let i = 0; i < filters.length; i++) {
+//     let filter = filters[i]
+//     let filterCategory = filters[i].split("/")[0]
+//     let filterName = filters[i].split("/")[1]
+
+//     data.datasets.push({
+//       label: filter,
+//       data: logMessages[filterCategory].map((d) => ({ x: d.TimeUS, y: d[filterName] })),
+//     })
+//   }
+
+//   return (
+//     <div>
+//       <Line ref={chartRef} options={options} data={data} />
+//       <Button onClick={chartRef?.current?.resetZoom}>Reset zoom</Button>
+//     </div>
+//   )
+// }
+
+export default function Graph({ data }) {
   const chartRef = useRef(null)
-
-  const data = {
-    datasets: []
-  }
-
-  for (let i = 0; i < filters.length; i++) {
-    let filter = filters[i]
-    let filterCategory = filters[i].split("/")[0]
-    let filterName = filters[i].split("/")[1]
-
-    data.datasets.push({
-      label: filter,
-      data: logMessages[filterCategory].map((d) => ({ x: d.TimeUS, y: d[filterName] })),
-    })
-  }
+  console.log("Loading graph...")
 
   return (
     <div>

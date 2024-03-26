@@ -20,8 +20,9 @@ export default function FLA() {
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [logMessages, setLogMessages] = useState(null)
+  const [chartData, setChartData] = useState({datasets: []})
   const [logMessageList, setLogMessageList] = useState([])
-  const [filters, filterHandler] = useListState(["ATT/Roll"])
+  const [filters, filterHandler] = useListState([])
 
   // Preset categories for filtering
   const presetCategories = [
@@ -41,24 +42,37 @@ export default function FLA() {
 
   function updateGraphFilter(category, filter, enabled) {
     let filterCategoryCombo = `${category}/${filter}`
+    let filterCopy = filters.slice()
     if (enabled && !filters.includes(filterCategoryCombo)) {
-      filterHandler.append(filterCategoryCombo)
+      filterCopy.push(filterCategoryCombo)
     } else if (!enabled && filters.includes(filterCategoryCombo)) {
-      filterHandler.remove(filters.indexOf(filterCategoryCombo))
+      filterCopy.splice(filters.indexOf(filterCategoryCombo), 1)
     }
+
+    filterHandler.setState(filterCopy)
+    let start = Date.now()
+    setChartData(getGraphData(filterCopy))
+    console.log(Date.now() - start)
   }
 
-  // Get filtered list of all messages
-  function getFilteredList() {
-    let filteredMessages = {}
-    for (let filterIdx = 0; filterIdx < filters.length; filterIdx++) {
-      let catName = filters[filterIdx].split("/")[0]
-      if (Object.keys(logMessages).includes(catName)) {
-        filteredMessages[catName] = logMessages[catName]
-      }
+  // Get graph data so the chart doesn't have to take in all messages to refresh
+  function getGraphData(localFilters) {
+    const data = {
+      datasets: []
     }
-    console.log(filters, filteredMessages)
-    return filteredMessages
+  
+    for (let i = 0; i < localFilters.length; i++) {
+      let filter = localFilters[i]
+      let filterCategory = localFilters[i].split("/")[0]
+      let filterName = localFilters[i].split("/")[1]
+  
+      data.datasets.push({
+        label: filter,
+        data: logMessages[filterCategory].map((d) => ({ x: d.TimeUS, y: d[filterName] })),
+      })
+    }
+
+    return data
   }
 
   // Load file, if set, and show the graph
@@ -222,7 +236,7 @@ export default function FLA() {
 
           {/* Graph column */}
           <div className="basis-3/4 pr-4">
-            <Graph logMessages={logMessages} filters={filters} />
+            <Graph data={chartData} />
           </div>
         </div>
       )}

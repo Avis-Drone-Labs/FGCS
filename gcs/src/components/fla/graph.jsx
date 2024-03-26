@@ -47,6 +47,9 @@ const options = {
         },
       },
     },
+    colors: {
+      forceOverride: true,
+    },
     zoom: {
       pan: {
         enabled: true,
@@ -87,17 +90,8 @@ const options = {
 }
 
 export default function Graph({ data }) {
-  let start = Date.now()
-  const chartRef = useRef()
-  
-  useEffect(() => {
-    if (!data || !chartRef.current) return
-    
-    console.log("Loading graph...")
-    chartRef.current.data.datasets = data.datasets
-    chartRef.current.update()
-  }, [data, chartRef])
-  
+  const chartRef = useRef(null)
+
   return (
     <div>
       <Line ref={chartRef} options={options} data={data} />

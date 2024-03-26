@@ -13,6 +13,7 @@ export default function Layout({ children, currentPage }) {
       socket.off('drone_error')
     }
   }, [])
+
   return (
     <>
       <Navbar currentPage={currentPage} />

@@ -52,7 +52,11 @@ export default function App() {
     ATTITUDE: (msg) => setAttitudeData(msg),
     GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
     NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-    HEARTBEAT: (msg) => { if (msg.autopilot !== MAV_AUTOPILOT_INVALID) { setHeartbeatData(msg) } },
+    HEARTBEAT: (msg) => {
+      if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
+        setHeartbeatData(msg)
+      }
+    },
     STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
     SYS_STATUS: (msg) => setSysStatusData(msg),
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),

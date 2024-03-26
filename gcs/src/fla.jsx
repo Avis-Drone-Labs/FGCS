@@ -1,4 +1,4 @@
-import { Button, FileInput, Group, Modal, Accordion, Checkbox } from '@mantine/core'
+import { Button, FileInput, Group, Modal, Accordion, Checkbox, ScrollArea } from '@mantine/core'
 import { useDisclosure, useListState } from '@mantine/hooks'
 import Layout from './components/layout'
 
@@ -146,50 +146,52 @@ export default function FLA() {
       ) : (
         
         // Graphs section
-        <div className="flex gap-4 flex-cols">
+        <div className="flex gap-4 flex-cols h-1/2">
           {/* Message selection column */}
           <div className="flex-none basis-1/4">
-            <Accordion multiple={true}>
-              {/* Presets */}
-              <Accordion.Item key="presets" value="presets">
-                <Accordion.Control>Presets</Accordion.Control>
-                <Accordion.Panel>
-                  <Accordion multiple={true}>
-                    {presetCategories.map((category, _) => {
-                      return (
-                        <Accordion.Item key={category.name} value={category.name}>
-                          <Accordion.Control>{category.name}</Accordion.Control>
-                          {category.filters.map((filter, _) => {
-                            return <Accordion.Panel><Button onClick={() => {updateGraph(filter.filters)}}>{filter.name}</Button></Accordion.Panel>
-                          })}
-                        </Accordion.Item>
-                      )
-                    })}
-                  </Accordion>
-                </Accordion.Panel>
-              </Accordion.Item>
-
-              {/* All messages */}
-              <Accordion.Item key="messages" value="messages">
-                <Accordion.Control>Messages</Accordion.Control>
-                <Accordion.Panel>
-                  <Accordion multiple={false}>
-                    {logMessageList.map((category, _) => {
-                      return (
-                        <Accordion.Item key={category.name} value={category.name}>
-                          <Accordion.Control><Checkbox label={category.name} /></Accordion.Control>
-                          <Accordion.Panel>
-                            {category.fields.map((field, _) => {
-                              return <Checkbox label={field.name} />
+            <ScrollArea className="h-full max-h-max">
+              <Accordion multiple={true}>
+                {/* Presets */}
+                <Accordion.Item key="presets" value="presets">
+                  <Accordion.Control>Presets</Accordion.Control>
+                  <Accordion.Panel>
+                    <Accordion multiple={true}>
+                      {presetCategories.map((category, _) => {
+                        return (
+                          <Accordion.Item key={category.name} value={category.name}>
+                            <Accordion.Control>{category.name}</Accordion.Control>
+                            {category.filters.map((filter, _) => {
+                              return <Accordion.Panel><Button onClick={() => {updateGraph(filter.filters)}}>{filter.name}</Button></Accordion.Panel>
                             })}
-                          </Accordion.Panel>
-                        </Accordion.Item>
-                      )
-                    })}
-                  </Accordion>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion>
+                          </Accordion.Item>
+                        )
+                      })}
+                    </Accordion>
+                  </Accordion.Panel>
+                </Accordion.Item>
+
+                {/* All messages */}
+                <Accordion.Item key="messages" value="messages">
+                  <Accordion.Control>Messages</Accordion.Control>
+                  <Accordion.Panel>
+                    <Accordion multiple={false}>
+                      {logMessageList.map((category, _) => {
+                        return (
+                          <Accordion.Item key={category.name} value={category.name}>
+                            <Accordion.Control><Checkbox label={category.name} /></Accordion.Control>
+                            <Accordion.Panel>
+                              {category.fields.map((field, _) => {
+                                return <Checkbox label={field.name} className="pb-1" />
+                              })}
+                            </Accordion.Panel>
+                          </Accordion.Item>
+                        )
+                      })}
+                    </Accordion>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            </ScrollArea>
           </div>
 
           {/* Graph column */}

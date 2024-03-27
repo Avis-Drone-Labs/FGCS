@@ -102,6 +102,16 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  // Turn off only one filter at a time
+  function removeDataset(label) {
+    let [categoryName, fieldName] = label.split('/');
+    let newFilters = { ...messageFilters }
+    if(newFilters[categoryName] && newFilters[categoryName][fieldName] !== undefined) {
+      newFilters[categoryName][fieldName] = false
+    }
+    setMessageFilters(newFilters)
+  }
+
   useEffect(() => {
     if (!messageFilters) return
 
@@ -185,6 +195,7 @@ export default function FLA() {
         </>
       ) : (
         // Graphs section
+        <>
         <div className='flex gap-4 flex-cols h-3/4'>
           {/* Message selection column */}
           <div className='flex-none basis-1/4'>
@@ -283,6 +294,42 @@ export default function FLA() {
             <Graph data={chartData} />
           </div>
         </div>
+
+        {/* Plots Setup */}
+        <div className='flex gap-4 flex-cols h-1/4'>
+          <div className='ml-4'>
+            <h3 className='mt-2 mb-2'>Plots Setup</h3>
+              {chartData.datasets.map((item, index) => (
+                <div key={index} className="bg-white border-2 border-black text-black rounded-lg px-2 py-2 text-xs font-bold inline-flex items-center mr-3">
+                  {/* Name */}
+                  <span>{item.label}</span>
+                  {/* Some Selector */}
+                  <select className="mx-2 border-black border-2 rounded-md bg-white">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                  </select>
+                  {/* Color Selector */}
+                  <select className="mx-2 border-black border-2 rounded-md bg-white">
+                    <option></option>
+                    <option></option>
+                    <option></option>
+                    <option></option>
+                    <option></option>
+                  </select>
+                  {/* Delete button */}
+                  <button className="ml-1 focus:outline-none" onClick={() => removeDataset(item.label)}>
+                    <svg className="h-4 w-4" fill="none" stroke="red" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      </>
       )}
     </Layout>
   )

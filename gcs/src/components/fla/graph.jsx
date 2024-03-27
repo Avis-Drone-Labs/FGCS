@@ -1,4 +1,5 @@
-import { Button } from '@mantine/core'
+import { ActionIcon, Tooltip as MantineTooltip } from '@mantine/core'
+import { IconZoomIn, IconZoomOut, IconZoomReset } from '@tabler/icons-react'
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -11,8 +12,10 @@ import {
   Tooltip,
 } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { Line } from 'react-chartjs-2'
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../../tailwind.config.js'
 
 ChartJS.register(
   CategoryScale,
@@ -25,6 +28,8 @@ ChartJS.register(
   Colors,
   zoomPlugin,
 )
+
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 function microsecondsToDisplayTime(microseconds, roundTo) {
   var seconds = microseconds / 1_000_000
@@ -75,13 +80,17 @@ const options = {
       },
       title: {
         display: true,
-        text: 'Time since boot (min:sec)',
+        text: 'Time since boot (mm:ss)',
       },
+      grid: { color: tailwindColors.gray[600] },
+    },
+    y: {
+      grid: { color: tailwindColors.gray[600] },
     },
   },
   elements: {
     point: {
-      radius: 0.75,
+      radius: 0,
     },
     line: {
       borderWidth: 1,
@@ -95,7 +104,29 @@ export default function Graph({ data }) {
   return (
     <div>
       <Line ref={chartRef} options={options} data={data} />
-      <Button onClick={chartRef?.current?.resetZoom}>Reset zoom</Button>
+      <div className='flex flex-row gap-2'>
+        <MantineTooltip label='Zoom in'>
+          <ActionIcon
+            variant='filled'
+            onClick={() => chartRef?.current?.zoom(1.5)}
+          >
+            <IconZoomIn size={18} />
+          </ActionIcon>
+        </MantineTooltip>
+        <MantineTooltip label='Zoom out'>
+          <ActionIcon
+            variant='filled'
+            onClick={() => chartRef?.current?.zoom(0)}
+          >
+            <IconZoomOut size={18} />
+          </ActionIcon>
+        </MantineTooltip>
+        <MantineTooltip label='Zoom reset'>
+          <ActionIcon variant='filled' onClick={chartRef?.current?.resetZoom}>
+            <IconZoomReset size={18} />
+          </ActionIcon>
+        </MantineTooltip>
+      </div>
     </div>
   )
 }

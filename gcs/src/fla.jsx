@@ -171,7 +171,7 @@ export default function FLA() {
         <>
           <div className='flex gap-4 flex-cols h-3/4'>
             {/* Message selection column */}
-            <div className='w-1/4'>
+            <div className='w-1/4 pb-6'>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
                   {/* Presets */}
@@ -274,6 +274,16 @@ export default function FLA() {
                   </Accordion.Item>
                 </Accordion>
               </ScrollArea>
+
+              {/* Clear Filters */}
+              <div className="flex pt-3 pl-4">
+                <Button 
+                  color={tailwindColors.red[500]}
+                  onClick={() => {clearFilters()}}
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </div>
 
             {/* Graph column */}
@@ -283,9 +293,9 @@ export default function FLA() {
           </div>
 
           {/* Plots Setup */}
-          <div className='flex gap-4 pt-4 flex-cols h-1/4'>
+          <div className='flex gap-4 pt-6 flex-cols h-1/4'>
             <div className='ml-4'>
-              <h3 className='mt-2 mb-2'>Plots Setup</h3>
+              <h3 className='mt-2 mb-2'>Plots Setup</h3>              
               {chartData.datasets.map((item, index) => (
                 <Fragment key={index}>
                   <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border-2 border-blue-400 rounded-lg bg-grey-200'>

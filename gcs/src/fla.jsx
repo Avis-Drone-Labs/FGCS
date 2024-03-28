@@ -8,7 +8,7 @@ import {
 } from '@mantine/core'
 import Layout from './components/layout'
 
-import { IconTrash } from '@tabler/icons-react'
+import { IconTrash, IconPaint } from '@tabler/icons-react'
 import { Fragment, useEffect, useState } from 'react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
@@ -156,7 +156,7 @@ export default function FLA() {
     <Layout currentPage='fla'>
       {logMessages === null ? (
         // Open flight logs section
-        <div className='flex flex-col h-full justify-center items-center'>
+        <div className='flex flex-col items-center justify-center h-full'>
           <FileButton
             variant='filled'
             onChange={setFile}
@@ -283,30 +283,25 @@ export default function FLA() {
           </div>
 
           {/* Plots Setup */}
-          <div className='flex gap-4 flex-cols h-1/4'>
+          <div className='flex gap-4 pt-4 flex-cols h-1/4'>
             <div className='ml-4'>
               <h3 className='mt-2 mb-2'>Plots Setup</h3>
               {chartData.datasets.map((item, index) => (
                 <Fragment key={index}>
-                  <div className='bg-white border-2 border-black text-black rounded-lg px-2 py-2 text-xs font-bold inline-flex items-center mr-3'>
+                  <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border-2 border-blue-400 rounded-lg bg-grey-200'>
                     {/* Name */}
                     <span>{item.label}</span>
-                    {/* Some Selector */}
-                    <select className='mx-2 border-black border-2 rounded-md bg-white'>
-                      <option>1</option>
-                      <option>2</option>
-                      <option>3</option>
-                      <option>4</option>
-                      <option>5</option>
-                    </select>
+
                     {/* Color Selector */}
-                    <select className='mx-2 border-black border-2 rounded-md bg-white'>
-                      <option></option>
-                      <option></option>
-                      <option></option>
-                      <option></option>
-                      <option></option>
-                    </select>
+                    <input className='w-20 px-2 mx-2 border-2 border-blue-400 rounded-md outline-none' placeholder="#FFFFFF"/>
+                    <ActionIcon
+                      variant="subtle"
+                      color={tailwindColors.green[500]}
+                      onclick={() => console.log("updating colors TODO...")}  // TODO: Add updating colors
+                    >
+                      <IconPaint size={18} />
+                    </ActionIcon>
+
                     {/* Delete button */}
                     <ActionIcon
                       variant='subtle'

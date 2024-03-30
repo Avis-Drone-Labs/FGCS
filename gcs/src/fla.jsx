@@ -3,12 +3,13 @@ import {
   ActionIcon,
   Button,
   Checkbox,
+  ColorInput,
   FileButton,
   ScrollArea,
 } from '@mantine/core'
 import Layout from './components/layout'
 
-import { IconTrash, IconPaint } from '@tabler/icons-react'
+import { IconPaint, IconTrash } from '@tabler/icons-react'
 import { Fragment, useEffect, useState } from 'react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
@@ -274,16 +275,6 @@ export default function FLA() {
                   </Accordion.Item>
                 </Accordion>
               </ScrollArea>
-
-              {/* Clear Filters */}
-              <div className="flex pt-3 pl-4">
-                <Button 
-                  color={tailwindColors.red[500]}
-                  onClick={() => {clearFilters()}}
-                >
-                  Clear Filters
-                </Button>
-              </div>
             </div>
 
             {/* Graph column */}
@@ -295,23 +286,49 @@ export default function FLA() {
           {/* Plots Setup */}
           <div className='flex gap-4 pt-6 flex-cols h-1/4'>
             <div className='ml-4'>
-              <h3 className='mt-2 mb-2'>Plots Setup</h3>              
+              <div className='flex flex-row items-center'>
+                <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
+                {/* Clear Filters */}
+                <Button
+                  className='ml-6'
+                  size='xs'
+                  color={tailwindColors.red[500]}
+                  onClick={clearFilters}
+                >
+                  Clear graph
+                </Button>
+              </div>
               {chartData.datasets.map((item, index) => (
                 <Fragment key={index}>
-                  <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border-2 border-blue-400 rounded-lg bg-grey-200'>
+                  <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
                     {/* Name */}
                     <span>{item.label}</span>
 
                     {/* Color Selector */}
-                    <input className='w-20 px-2 mx-2 border-2 border-blue-400 rounded-md outline-none' placeholder="#FFFFFF"/>
-                    <ActionIcon
-                      variant="subtle"
-                      color={tailwindColors.green[500]}
-                      onclick={() => console.log("updating colors TODO...")}  // TODO: Add updating colors
-                    >
-                      <IconPaint size={18} />
-                    </ActionIcon>
-
+                    <ColorInput
+                      className='w-32'
+                      format='hex'
+                      swatches={[
+                        '#f5f5f5',
+                        '#868e96',
+                        '#fa5252',
+                        '#e64980',
+                        '#be4bdb',
+                        '#7950f2',
+                        '#4c6ef5',
+                        '#228be6',
+                        '#15aabf',
+                        '#12b886',
+                        '#40c057',
+                        '#82c91e',
+                        '#fab005',
+                        '#fd7e14',
+                      ]}
+                      closeOnColorSwatchClick
+                      withEyeDropper={false}
+                      rightSection={<IconPaint size={18} />}
+                      onChangeEnd={(color) => console.log(color)} // TODO: Add updating colors
+                    />
                     {/* Delete button */}
                     <ActionIcon
                       variant='subtle'

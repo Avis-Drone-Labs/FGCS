@@ -1,6 +1,9 @@
 import { ActionIcon, Tooltip as MantineTooltip } from '@mantine/core'
+import { useToggle } from '@mantine/hooks'
 import {
   IconCapture,
+  IconTimelineEvent,
+  IconTimelineEventX,
   IconZoomIn,
   IconZoomOut,
   IconZoomReset,
@@ -16,8 +19,9 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import zoomPlugin from 'chartjs-plugin-zoom'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config.js'
@@ -47,6 +51,7 @@ ChartJS.register(
   Colors,
   zoomPlugin,
   customCanvasBackgroundColor,
+  annotationPlugin,
 )
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -118,7 +123,9 @@ const options = {
   },
 }
 
-export default function Graph({ data }) {
+export default function Graph({ data, events }) {
+  const [config, setConfig] = useState({ ...options })
+  const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
 
   function downloadUpscaledImage(originalDataURI, wantedWidth, wantedHeight) {
@@ -163,9 +170,43 @@ export default function Graph({ data }) {
     )
   }
 
+  useEffect(() => {
+    if (events !== null) {
+      const annotations = events.map((event) => {
+        return {
+          type: 'line',
+          mode: 'vertical',
+          scaleID: 'x',
+          value: event.time,
+          borderColor: tailwindColors.red[500],
+          borderWidth: 1,
+          borderDash: [6, 6],
+          borderDashOffset: 0,
+          display: showEvents,
+          label: {
+            backgroundColor: tailwindColors.gray[800],
+            content: event.message,
+            display: showEvents,
+            position: 'start',
+          },
+        }
+      })
+
+      setConfig({
+        ...config,
+        plugins: {
+          ...config.plugins,
+          annotation: {
+            annotations: annotations,
+          },
+        },
+      })
+    }
+  }, [events, showEvents])
+
   return (
     <div>
-      <Line ref={chartRef} options={options} data={data} />
+      <Line ref={chartRef} options={config} data={data} />
       <div className='flex flex-row gap-2'>
         <MantineTooltip label='Zoom in'>
           <ActionIcon
@@ -191,6 +232,15 @@ export default function Graph({ data }) {
         <MantineTooltip label='Save graph as image'>
           <ActionIcon variant='filled' onClick={downloadGraphAsImage}>
             <IconCapture size={18} />
+          </ActionIcon>
+        </MantineTooltip>
+        <MantineTooltip label={showEvents ? 'Hide events' : 'Show events'}>
+          <ActionIcon variant='filled' onClick={toggleShowEvents}>
+            {showEvents ? (
+              <IconTimelineEventX size={18} />
+            ) : (
+              <IconTimelineEvent size={18} />
+            )}
           </ActionIcon>
         </MantineTooltip>
       </div>

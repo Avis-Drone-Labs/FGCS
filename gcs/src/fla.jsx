@@ -16,6 +16,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 import Graph from './components/fla/graph'
 import { logEventIds } from './components/fla/logEventIds.js'
+import { logMessageDescriptions } from './logMessageDescriptions.js'
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -294,28 +295,37 @@ export default function FLA() {
                           return (
                             <Accordion.Item key={idx} value={messageName}>
                               <Accordion.Control>
-                                {messageName}
+                                <p>{messageName}</p>
+                                <p className='text-gray-500 italic text-sm'>
+                                  {logMessageDescriptions[messageName]}
+                                </p>
                               </Accordion.Control>
                               <Accordion.Panel>
-                                {Object.keys(messageFilters[messageName]).map(
-                                  (fieldName, idx) => {
-                                    return (
-                                      <Checkbox
-                                        key={idx}
-                                        label={fieldName}
-                                        checked={
-                                          messageFilters[messageName][fieldName]
-                                        }
-                                        onChange={(event) => {
-                                          let newFilters = { ...messageFilters }
-                                          newFilters[messageName][fieldName] =
-                                            event.currentTarget.checked
-                                          setMessageFilters(newFilters)
-                                        }}
-                                      />
-                                    )
-                                  },
-                                )}
+                                <div className='flex flex-col gap-1'>
+                                  {Object.keys(messageFilters[messageName]).map(
+                                    (fieldName, idx) => {
+                                      return (
+                                        <Checkbox
+                                          key={idx}
+                                          label={fieldName}
+                                          checked={
+                                            messageFilters[messageName][
+                                              fieldName
+                                            ]
+                                          }
+                                          onChange={(event) => {
+                                            let newFilters = {
+                                              ...messageFilters,
+                                            }
+                                            newFilters[messageName][fieldName] =
+                                              event.currentTarget.checked
+                                            setMessageFilters(newFilters)
+                                          }}
+                                        />
+                                      )
+                                    },
+                                  )}
+                                </div>
                               </Accordion.Panel>
                             </Accordion.Item>
                           )

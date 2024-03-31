@@ -123,6 +123,13 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  function closeLogFile() {
+    setFile(null)
+    setLogMessages(null)
+    setChartData({ datasets: [] })
+    setMessageFilters(null)
+  }
+
   useEffect(() => {
     if (file !== null) {
       loadFile()
@@ -170,9 +177,17 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className='flex gap-4 flex-cols h-3/4'>
+          <div className='flex gap-4 h-3/4'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
+              <Button
+                className='mx-4 my-2'
+                size='xs'
+                color={tailwindColors.red[500]}
+                onClick={closeLogFile}
+              >
+                Close file
+              </Button>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
                   {/* Presets */}

@@ -15,6 +15,7 @@ import { Fragment, useEffect, useState } from 'react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 import Graph from './components/fla/graph'
+import { logEventIds } from './components/fla/logEventIds.js'
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -48,6 +49,8 @@ const presetCategories = [
     ],
   },
 ]
+
+const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER']
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
 
 export default function FLA() {
@@ -56,6 +59,7 @@ export default function FLA() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [logMessages, setLogMessages] = useState(null)
+  const [logEvents, setLogEvents] = useState(null)
   const [chartData, setChartData] = useState({ datasets: [] })
   const [messageFilters, setMessageFilters] = useState(null)
 
@@ -77,7 +81,10 @@ export default function FLA() {
         Object.keys(loadedLogMessages['format'])
           .sort()
           .forEach((key) => {
-            if (Object.keys(loadedLogMessages).includes(key)) {
+            if (
+              Object.keys(loadedLogMessages).includes(key) &&
+              !ignoredMessages.includes(key)
+            ) {
               const fieldsState = {}
               loadedLogMessages['format'][key].fields.map((field) => {
                 if (!ignoredKeys.includes(field)) {
@@ -89,6 +96,13 @@ export default function FLA() {
           })
 
         setMessageFilters(logMessageFilterDefaultState)
+
+        setLogEvents(
+          loadedLogMessages['EV'].map((event) => ({
+            time: event.TimeUS,
+            message: logEventIds[event.Id],
+          })),
+        )
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -315,7 +329,7 @@ export default function FLA() {
 
             {/* Graph column */}
             <div className='w-full h-full pr-4'>
-              <Graph data={chartData} />
+              <Graph data={chartData} events={logEvents} />
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import {
   Checkbox,
   ColorInput,
   FileButton,
+  Progress,
   ScrollArea,
 } from '@mantine/core'
 import Layout from './components/layout'
@@ -53,6 +54,7 @@ export default function FLA() {
   // States in react frontend
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
+  const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [logMessages, setLogMessages] = useState(null)
   const [chartData, setChartData] = useState({ datasets: [] })
   const [messageFilters, setMessageFilters] = useState(null)
@@ -125,10 +127,21 @@ export default function FLA() {
 
   function closeLogFile() {
     setFile(null)
+    setLoadingFileProgress(0)
     setLogMessages(null)
     setChartData({ datasets: [] })
     setMessageFilters(null)
   }
+
+  useEffect(() => {
+    window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
+      setLoadingFileProgress(message.percent)
+    })
+
+    return () => {
+      window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
+    }
+  }, [])
 
   useEffect(() => {
     if (file !== null) {
@@ -164,8 +177,9 @@ export default function FLA() {
     <Layout currentPage='fla'>
       {logMessages === null ? (
         // Open flight logs section
-        <div className='flex flex-col items-center justify-center h-full'>
+        <div className='flex flex-col items-center justify-center h-full w-min mx-auto'>
           <FileButton
+            color={tailwindColors.blue[600]}
             variant='filled'
             onChange={setFile}
             accept='.log'
@@ -173,6 +187,13 @@ export default function FLA() {
           >
             {(props) => <Button {...props}>Analyse a log</Button>}
           </FileButton>
+          {loadingFile && (
+            <Progress
+              value={loadingFileProgress}
+              className='w-full my-4'
+              color={tailwindColors.green[500]}
+            />
+          )}
         </div>
       ) : (
         // Graphs section

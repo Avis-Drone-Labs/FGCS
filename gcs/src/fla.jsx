@@ -53,6 +53,7 @@ const presetCategories = [
 
 const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER']
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
+const colorPalette = ['#36a2eb', '#ff6383', '#fe9e40', '#ffcd57', '#4cbfc0', '#9966ff', '#c8cbce']
 
 export default function FLA() {
   // States in react frontend
@@ -63,6 +64,7 @@ export default function FLA() {
   const [logEvents, setLogEvents] = useState(null)
   const [chartData, setChartData] = useState({ datasets: [] })
   const [messageFilters, setMessageFilters] = useState(null)
+  const [customColors, setCustomColors] = useState({})
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -125,6 +127,7 @@ export default function FLA() {
       })
     })
     setMessageFilters(newFilters)
+    setCustomColors({})
   }
 
   // Turn off only one filter at a time
@@ -138,6 +141,7 @@ export default function FLA() {
       newFilters[categoryName][fieldName] = false
     }
     setMessageFilters(newFilters)
+    setCustomColors({})
   }
 
   function closeLogFile() {
@@ -146,6 +150,7 @@ export default function FLA() {
     setLogMessages(null)
     setChartData({ datasets: [] })
     setMessageFilters(null)
+    setCustomColors({})
   }
 
   useEffect(() => {
@@ -157,6 +162,17 @@ export default function FLA() {
       window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
     }
   }, [])
+
+  // Color changer
+  function changeColor(label, color) {
+    setCustomColors(prevColors => ({ ...prevColors, [label]: color }))
+  }
+
+  // Helper function to convert hex color to rgba
+  function hexToRgba(hex, alpha) {
+    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16));
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
 
   useEffect(() => {
     if (file !== null) {
@@ -174,19 +190,23 @@ export default function FLA() {
       const category = messageFilters[categoryName]
       Object.keys(category).map((fieldName) => {
         if (category[fieldName]) {
+          const label = `${categoryName}/${fieldName}`
+          const color = customColors[label] || colorPalette[datasets.length % colorPalette.length]
           datasets.push({
-            label: `${categoryName}/${fieldName}`,
+            label: label,
             data: logMessages[categoryName].map((d) => ({
               x: d.TimeUS,
               y: d[fieldName],
             })),
+            borderColor: color,
+            backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
           })
         }
       })
     })
 
     setChartData({ datasets: datasets })
-  }, [messageFilters])
+  }, [messageFilters, customColors])
 
   return (
     <Layout currentPage='fla'>
@@ -358,8 +378,8 @@ export default function FLA() {
                   Clear graph
                 </Button>
               </div>
-              {chartData.datasets.map((item, index) => (
-                <Fragment key={index}>
+              {chartData.datasets.map((item) => (
+                <Fragment key={item.label}>  {/* I did this to let color change affect a specific label, not an index */}
                   <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
                     {/* Name */}
                     <span>{item.label}</span>
@@ -386,8 +406,9 @@ export default function FLA() {
                       ]}
                       closeOnColorSwatchClick
                       withEyeDropper={false}
+                      defaultValue={item.borderColor}
                       rightSection={<IconPaint size={18} />}
-                      onChangeEnd={(color) => console.log(color)} // TODO: Add updating colors
+                      onChangeEnd={(color) => changeColor(item.label, color)}
                     />
                     {/* Delete button */}
                     <ActionIcon

@@ -127,6 +127,7 @@ export default function FLA() {
       })
     })
     setMessageFilters(newFilters)
+    setCustomColors({})
   }
 
   // Turn off only one filter at a time
@@ -140,6 +141,7 @@ export default function FLA() {
       newFilters[categoryName][fieldName] = false
     }
     setMessageFilters(newFilters)
+    setCustomColors({})
   }
 
   function closeLogFile() {
@@ -405,7 +407,7 @@ export default function FLA() {
                       withEyeDropper={false}
                       defaultValue={item.borderColor}
                       rightSection={<IconPaint size={18} />}
-                      onChangeEnd={(color) => changeColor(item.label, color)} // TODO: Add updating colors
+                      onChangeEnd={(color) => changeColor(item.label, color)}
                     />
                     {/* Delete button */}
                     <ActionIcon

@@ -77,9 +77,6 @@ const options = {
         },
       },
     },
-    // colors: {
-    //   forceOverride: true,
-    // },
     zoom: {
       pan: {
         enabled: true,

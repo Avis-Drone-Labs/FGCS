@@ -378,7 +378,7 @@ export default function FLA() {
                   Clear graph
                 </Button>
               </div>
-              {chartData.datasets.map((item, index) => (
+              {chartData.datasets.map((item) => (
                 <Fragment key={item.label}>  {/* I did this to let color change affect a specific label, not an index */}
                   <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
                     {/* Name */}

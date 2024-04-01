@@ -150,6 +150,7 @@ export default function FLA() {
     setLogMessages(null)
     setChartData({ datasets: [] })
     setMessageFilters(null)
+    setCustomColors({})
   }
 
   useEffect(() => {

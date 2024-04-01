@@ -5,11 +5,12 @@ import {
   LoadingOverlay,
   Modal,
   Select,
+  Tooltip,
 } from '@mantine/core'
 import { useDisclosure, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
-import { IconRefresh } from '@tabler/icons-react'
+import { IconInfoCircle, IconRefresh } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -163,12 +164,16 @@ export default function Navbar({ currentPage }) {
             value={selectedBaudRate}
             onChange={setSelectedBaudRate}
           />
-          <Checkbox
-            label='Wireless Connection'
-            description='Check this if you are using a wireless connection'
-            checked={wireless}
-            onChange={(event) => setWireless(event.currentTarget.checked)}
-          />
+          <div className='flex flex-row gap-2'>
+            <Checkbox
+              label='Wireless Connection'
+              checked={wireless}
+              onChange={(event) => setWireless(event.currentTarget.checked)}
+            />
+            <Tooltip label='Wireless connection mode reduces the telemetry data rates to save bandwidth'>
+              <IconInfoCircle size={20} />
+            </Tooltip>
+          </div>
         </div>
         <Group justify='space-between' className='pt-4'>
           <Button
@@ -239,14 +244,22 @@ export default function Navbar({ currentPage }) {
 
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
         <p>{connected && selectedComPort}</p>
-        <Button
-          onClick={connected ? disconnect : open}
-          color={
-            connected ? tailwindColors.red[600] : tailwindColors.green[600]
-          }
-        >
-          {connected ? 'Disconnect' : 'Connect'}
-        </Button>
+        {socket.connected ? (
+          <Button
+            onClick={connected ? disconnect : open}
+            color={
+              connected ? tailwindColors.red[600] : tailwindColors.green[600]
+            }
+          >
+            {connected ? 'Disconnect' : 'Connect'}
+          </Button>
+        ) : (
+          <Tooltip label='Not connected to socket'>
+            <Button data-disabled onClick={(event) => event.preventDefault()}>
+              Connect
+            </Button>
+          </Tooltip>
+        )}
       </div>
     </div>
   )

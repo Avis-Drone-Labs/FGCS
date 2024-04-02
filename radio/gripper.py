@@ -26,7 +26,7 @@ class Gripper:
 
         self.enabled = False
 
-        gripper_enabled_response = self.getParamValue("GRIP_ENABLE")
+        gripper_enabled_response = self.getParamValue("GRIP_ENABLE", timeout=3)
         if gripper_enabled_response is None:
             print("Gripper is not enabled")
             return None
@@ -128,7 +128,14 @@ class Gripper:
 
         while True:
             try:
-                response = self.master.recv_match(type="PARAM_VALUE", blocking=True)
+                response = self.master.recv_match(
+                    type="PARAM_VALUE", blocking=True, timeout=timeout
+                )
+
+                if response is None:
+                    self.enabled = False
+                    return None
+
                 if time.gmtime().tm_sec - now.tm_sec > 3:
                     return None
 

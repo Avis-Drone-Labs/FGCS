@@ -53,7 +53,16 @@ const presetCategories = [
 
 const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER']
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
-const colorPalette = ['#36a2eb', '#ff6383', '#fe9e40', '#ffcd57', '#4cbfc0', '#9966ff', '#c8cbce']
+const colorPalette = [
+  '#36a2eb',
+  '#ff6383',
+  '#fe9e40',
+  '#4ade80',
+  '#ffcd57',
+  '#4cbfc0',
+  '#9966ff',
+  '#c8cbce',
+]
 
 export default function FLA() {
   // States in react frontend
@@ -165,13 +174,13 @@ export default function FLA() {
 
   // Color changer
   function changeColor(label, color) {
-    setCustomColors(prevColors => ({ ...prevColors, [label]: color }))
+    setCustomColors((prevColors) => ({ ...prevColors, [label]: color }))
   }
 
   // Helper function to convert hex color to rgba
   function hexToRgba(hex, alpha) {
-    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16));
-    return `rgba(${r},${g},${b},${alpha})`;
+    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
+    return `rgba(${r},${g},${b},${alpha})`
   }
 
   useEffect(() => {
@@ -191,7 +200,9 @@ export default function FLA() {
       Object.keys(category).map((fieldName) => {
         if (category[fieldName]) {
           const label = `${categoryName}/${fieldName}`
-          const color = customColors[label] || colorPalette[datasets.length % colorPalette.length]
+          const color =
+            customColors[label] ||
+            colorPalette[datasets.length % colorPalette.length]
           datasets.push({
             label: label,
             data: logMessages[categoryName].map((d) => ({
@@ -379,7 +390,9 @@ export default function FLA() {
                 </Button>
               </div>
               {chartData.datasets.map((item) => (
-                <Fragment key={item.label}>  {/* I did this to let color change affect a specific label, not an index */}
+                <Fragment key={item.label}>
+                  {' '}
+                  {/* I did this to let color change affect a specific label, not an index */}
                   <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
                     {/* Name */}
                     <span>{item.label}</span>

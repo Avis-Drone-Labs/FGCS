@@ -5,6 +5,7 @@ import serial
 from drone import Drone
 from flask import Flask
 from flask_socketio import SocketIO
+from pymavlink import mavutil
 from serial.tools import list_ports
 from utils import getComPortNames
 
@@ -137,6 +138,16 @@ def set_state(data):
         drone.addMessageListener("SYS_STATUS", sendMessage)
         drone.addMessageListener("GPS_RAW_INT", sendMessage)
         drone.addMessageListener("RC_CHANNELS", sendMessage)
+    elif state == "graphs":
+        drone.stopAllDataStreams()
+
+        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS)
+        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
+        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
+
+        drone.addMessageListener("VFR_HUD", sendMessage)
+        drone.addMessageListener("ATTITUDE", sendMessage)
+        drone.addMessageListener("SYS_STATUS", sendMessage)
     elif state == "params":
         drone.stopAllDataStreams()
 

@@ -56,7 +56,7 @@
     "postcss-preset-mantine": "^1.12.0",
     "postcss-simple-vars": "^7.0.1",
     "typescript": "^5.2.2",
-    "vite": "^4.5.2",
+    "vite": "^4.5.3",
     "vite-plugin-electron": "^0.14.0",
     "vite-plugin-electron-renderer": "^0.14.5"
   },

@@ -13,12 +13,17 @@ When adding a new folder please write up about it in the correct README.md and a
 ### Running Frontend Manually
 
 1. `cd gcs`
-2. `yarn dev`
+2. `yarn` (to install dependencies)
+3. `yarn dev`
 
 ### Running Backend Manually
 
-1. Make sure you're in a virtual environment with `requirements.txt` installed
-2. python app.py
+1. Make sure you're in a virtual environment and all dependencies are installed using `pip install -r requirements.txt`
+2. `python app.py`
+
+#### Creating a virtual environment
+
+Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
 
 ### Running both simultaneously
 

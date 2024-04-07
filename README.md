@@ -18,8 +18,9 @@ When adding a new folder please write up about it in the correct README.md and a
 
 ### Running Backend Manually
 
-1. Make sure you're in a virtual environment and all dependencies are installed using `pip install -r requirements.txt`
-2. `python app.py`
+1. `cd radio`
+2. Make sure you're in a virtual environment and all dependencies are installed using `pip install -r requirements.txt`
+3. `python app.py`
 
 #### Creating a virtual environment
 

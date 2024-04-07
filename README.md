@@ -27,9 +27,8 @@ When adding a new folder please write up about it in the correct README.md and a
 
 - GUI
   - Electron + Vite + React (JavaScript)
-- Radio
-  - Python
-  - C++
+- Backend
+  - Flask (Python)
 
 ## Python Version
 

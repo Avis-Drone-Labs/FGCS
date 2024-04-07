@@ -10,9 +10,6 @@ When adding a new folder please write up about it in the correct README.md and a
 
 ## How to run
 
-1. Install concurrently with `npm i concurrently -g`
-2. Make sure that you are in your virtual environment and then run `./run.bat` and both the frontend and backend will load. If you want to do run them individually then:
-
 ### Running Frontend Manually
 
 1. `cd gcs`
@@ -22,6 +19,10 @@ When adding a new folder please write up about it in the correct README.md and a
 
 1. Make sure you're in a virtual environment with `requirements.txt` installed
 2. python app.py
+
+### Running both simultaneously
+
+To run both the frontend and backend at the same time, you need to make sure all the requirements are installed for both yarn and Python. Then you can install a script globally using `npm install -g concurrently`. After activating your Python virtual environment, you can run `./run.bat` and this should start up both the frontend and backend in one terminal.
 
 ## Stack
 

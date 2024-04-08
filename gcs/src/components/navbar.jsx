@@ -7,7 +7,7 @@ import {
   Select,
   Tooltip,
 } from '@mantine/core'
-import { useDisclosure, useLocalStorage } from '@mantine/hooks'
+import { useDisclosure, useInterval, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
 import { IconInfoCircle, IconRefresh } from '@tabler/icons-react'
@@ -38,13 +38,21 @@ export default function Navbar({ currentPage }) {
   })
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
   const [connecting, setConnecting] = useState(false)
+  const [connectedToSocket, setConnectedToSocket] = useState(false)
+  const checkIfConnectedToSocket = useInterval(
+    () => setConnectedToSocket(socket.connected),
+    3000,
+  )
 
   function getComPorts() {
+    if (!connectedToSocket) return
     socket.emit('get_com_ports')
     setFetchingComPorts(true)
   }
 
   useEffect(() => {
+    checkIfConnectedToSocket.start()
+
     if (selectedComPort === null) {
       console.log('check connection to drone')
       socket.emit('is_connected_to_drone')
@@ -87,6 +95,7 @@ export default function Navbar({ currentPage }) {
 
     socket.on('disconnect', () => {
       setConnected(false)
+      setConnecting(false)
     })
 
     socket.on('com_port_error', (msg) => {
@@ -97,6 +106,7 @@ export default function Navbar({ currentPage }) {
     })
 
     return () => {
+      checkIfConnectedToSocket.stop()
       socket.off('is_connected_to_drone')
       socket.off('list_com_ports')
       socket.off('connected_to_drone')
@@ -188,7 +198,7 @@ export default function Navbar({ currentPage }) {
             color={tailwindColors.green[600]}
             onClick={saveCOMData}
             data-autofocus
-            disabled={selectedComPort === null}
+            disabled={!connectedToSocket || selectedComPort === null}
             loading={connecting}
           >
             Connect
@@ -244,7 +254,7 @@ export default function Navbar({ currentPage }) {
 
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
         <p>{connected && selectedComPort}</p>
-        {socket.connected ? (
+        {connectedToSocket ? (
           <Button
             onClick={connected ? disconnect : open}
             color={

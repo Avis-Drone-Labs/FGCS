@@ -150,7 +150,11 @@ export default function FLA() {
       newFilters[categoryName][fieldName] = false
     }
     setMessageFilters(newFilters)
-    setCustomColors({})
+    setCustomColors(prevColors => {
+      let newColors = { ...prevColors }
+      delete newColors[label]
+      return newColors
+    })
   }
 
   function closeLogFile() {
@@ -419,7 +423,7 @@ export default function FLA() {
                       ]}
                       closeOnColorSwatchClick
                       withEyeDropper={false}
-                      defaultValue={item.borderColor}
+                      value={item.borderColor}
                       rightSection={<IconPaint size={18} />}
                       onChangeEnd={(color) => changeColor(item.label, color)}
                     />

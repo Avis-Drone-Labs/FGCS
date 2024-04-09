@@ -74,6 +74,7 @@ export default function FLA() {
   const [chartData, setChartData] = useState({ datasets: [] })
   const [messageFilters, setMessageFilters] = useState(null)
   const [customColors, setCustomColors] = useState({})
+  const [colorIndex, setColorIndex] = useState(0);
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -84,7 +85,7 @@ export default function FLA() {
       if (result.success) {
         // Load messages into states
         const loadedLogMessages = result.messages
-        console.log(loadedLogMessages)
+        // console.log(loadedLogMessages)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
 
@@ -137,6 +138,7 @@ export default function FLA() {
     })
     setMessageFilters(newFilters)
     setCustomColors({})
+    setColorIndex(0)
   }
 
   // Turn off only one filter at a time
@@ -149,12 +151,12 @@ export default function FLA() {
     ) {
       newFilters[categoryName][fieldName] = false
     }
-    setMessageFilters(newFilters)
     setCustomColors(prevColors => {
       let newColors = { ...prevColors }
       delete newColors[label]
       return newColors
     })
+    setMessageFilters(newFilters)
   }
 
   function closeLogFile() {
@@ -164,6 +166,7 @@ export default function FLA() {
     setChartData({ datasets: [] })
     setMessageFilters(null)
     setCustomColors({})
+    setColorIndex(0)
   }
 
   useEffect(() => {
@@ -204,9 +207,7 @@ export default function FLA() {
       Object.keys(category).map((fieldName) => {
         if (category[fieldName]) {
           const label = `${categoryName}/${fieldName}`
-          const color =
-            customColors[label] ||
-            colorPalette[datasets.length % colorPalette.length]
+          const color = customColors[label]
           datasets.push({
             label: label,
             data: logMessages[categoryName].map((d) => ({
@@ -283,6 +284,8 @@ export default function FLA() {
                                         key={idx}
                                         onClick={() => {
                                           clearFilters()
+                                          setCustomColors({})
+                                          setColorIndex(0)
                                           let newFilters = { ...messageFilters }
                                           Object.keys(filter.filters).map(
                                             (categoryName) => {
@@ -297,6 +300,16 @@ export default function FLA() {
                                                   newFilters[categoryName][
                                                     field
                                                   ] = true
+                                                  // assign a color
+                                                  setCustomColors(prevColors => {
+                                                    let newColors = { ...prevColors }
+                                                    if(!newColors[`${categoryName}/${field}`]){
+                                                      newColors[`${categoryName}/${field}`] = colorPalette[Object.keys(newColors).length % colorPalette.length]
+                                                    }
+                                                    console.log(newColors)
+                                                    return newColors
+                                                  })
+                                                  setColorIndex(2) // this is risky.
                                                 })
                                               } else {
                                                 showErrorNotification(
@@ -305,6 +318,7 @@ export default function FLA() {
                                               }
                                             },
                                           )
+
                                           setMessageFilters(newFilters)
                                         }}
                                       >
@@ -354,6 +368,24 @@ export default function FLA() {
                                             }
                                             newFilters[messageName][fieldName] =
                                               event.currentTarget.checked
+                                            // if unchecked remove custom color
+                                            if(!newFilters[messageName][fieldName]){
+                                              setCustomColors(prevColors => {
+                                                let newColors = { ...prevColors }
+                                                delete newColors[`${messageName}/${fieldName}`]
+                                                return newColors
+                                              })
+                                            } // else, assign a color
+                                            else{
+                                              setCustomColors(prevColors => {
+                                                let newColors = { ...prevColors }
+                                                if(!newColors[`${messageName}/${fieldName}`]){
+                                                  newColors[`${messageName}/${fieldName}`] = colorPalette[colorIndex % colorPalette.length]
+                                                  setColorIndex((colorIndex + 1) % colorPalette.length);
+                                                }
+                                                return newColors
+                                              })
+                                            }
                                             setMessageFilters(newFilters)
                                           }}
                                         />

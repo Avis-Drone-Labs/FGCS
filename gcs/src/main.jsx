@@ -1,4 +1,4 @@
-import './index.css' // Needs to be at the top of the file
+import './css/index.css' // Needs to be at the top of the file
 
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'

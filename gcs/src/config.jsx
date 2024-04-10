@@ -19,16 +19,10 @@ function Gripper() {
   return (
     <div className='m-6 w-1/2'>
       <div className='flex flex-row gap-2'>
-        <Button
-          onClick={() => setGripper('release')}
-          color={tailwindColors.falconred[100]}
-        >
+        <Button onClick={() => setGripper('release')} color={tailwindColors.falconred[100]}>
           Release Gripper
         </Button>
-        <Button
-          onClick={() => setGripper('grab')}
-          color={tailwindColors.falconred[100]}
-        >
+        <Button onClick={() => setGripper('grab')} color={tailwindColors.falconred[100]}>
           Grab Gripper
         </Button>
       </div>
@@ -193,11 +187,7 @@ export default function Config() {
     <Layout currentPage='config'>
       {connected && (
         <div className='w-full h-full'>
-          <Tabs
-            orientation='vertical'
-            color={tailwindColors.falconred[100]}
-            className='h-full'
-          >
+          <Tabs orientation='vertical' color={tailwindColors.falconred[100]} className='h-full'>
             <Tabs.List>
               <Tabs.Tab value='gripper' disabled={!gripperEnabled}>
                 Gripper

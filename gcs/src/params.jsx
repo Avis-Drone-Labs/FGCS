@@ -17,18 +17,9 @@ import {
   useLocalStorage,
   useToggle,
 } from '@mantine/hooks'
-import {
-  IconEye,
-  IconPencil,
-  IconPower,
-  IconRefresh,
-  IconTool,
-} from '@tabler/icons-react'
+import { IconEye, IconPencil, IconPower, IconRefresh, IconTool } from '@tabler/icons-react'
 import { memo, useEffect, useState } from 'react'
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from './notification.js'
+import { showErrorNotification, showSuccessNotification } from './notification.js'
 
 import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList } from 'react-window'
@@ -151,16 +142,9 @@ const RowItem = memo(({ param, style, onChange }) => {
       <Tooltip label={paramDef?.DisplayName}>
         <p className='w-56'>{param.param_id}</p>
       </Tooltip>
-      <ValueInput
-        param={param}
-        paramDef={paramDef}
-        onChange={onChange}
-        className='w-3/12'
-      />
+      <ValueInput param={param} paramDef={paramDef} onChange={onChange} className='w-3/12' />
       <div className='w-1/2'>
-        <ScrollArea.Autosize className='max-h-24'>
-          {paramDef?.Description}
-        </ScrollArea.Autosize>
+        <ScrollArea.Autosize className='max-h-24'>{paramDef?.Description}</ScrollArea.Autosize>
       </div>
     </div>
   )
@@ -221,9 +205,7 @@ export default function Params() {
     })
 
     socket.on('param_request_update', (msg) => {
-      setFetchingVarsProgress(
-        (msg.current_param_index / msg.total_number_of_params) * 100,
-      )
+      setFetchingVarsProgress((msg.current_param_index / msg.total_number_of_params) * 100)
     })
 
     socket.on('param_set_success', (msg) => {
@@ -248,13 +230,8 @@ export default function Params() {
   useEffect(() => {
     if (!params) return
 
-    const filteredParams = (
-      showModifiedParams ? modifiedParams : params
-    ).filter(
-      (param) =>
-        param.param_id
-          .toLowerCase()
-          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+    const filteredParams = (showModifiedParams ? modifiedParams : params).filter(
+      (param) => param.param_id.toLowerCase().indexOf(debouncedSearchValue.toLowerCase()) == 0,
     )
 
     shownParamsHandler.setState(filteredParams)
@@ -329,14 +306,8 @@ export default function Params() {
             <>
               {!rebootData.success && (
                 <>
-                  <p className='my-2'>
-                    {rebootData.message} You will need to reconnect.
-                  </p>
-                  <Button
-                    onClick={close}
-                    color={tailwindColors.red[600]}
-                    className='mt-4'
-                  >
+                  <p className='my-2'>{rebootData.message} You will need to reconnect.</p>
+                  <Button onClick={close} color={tailwindColors.red[600]} className='mt-4'>
                     Close
                   </Button>
                 </>
@@ -347,19 +318,13 @@ export default function Params() {
       </Modal>
 
       {fetchingVars && (
-        <Progress
-          radius='xs'
-          value={fetchingVarsProgress}
-          className='w-1/3 mx-auto my-auto'
-        />
+        <Progress radius='xs' value={fetchingVarsProgress} className='w-1/3 mx-auto my-auto' />
       )}
       {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
           <div className='flex space-x-4 justify-center'>
             <Tooltip
-              label={
-                showModifiedParams ? 'Show all params' : 'Show modified params'
-              }
+              label={showModifiedParams ? 'Show all params' : 'Show modified params'}
               position='bottom'
             >
               <Button
@@ -367,11 +332,7 @@ export default function Params() {
                 onClick={showModifiedParamsToggle}
                 color={tailwindColors.orange[600]}
               >
-                {showModifiedParams ? (
-                  <IconEye size={14} />
-                ) : (
-                  <IconTool size={14} />
-                )}
+                {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
               </Button>
             </Tooltip>
             <TextInput

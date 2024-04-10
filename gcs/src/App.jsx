@@ -93,6 +93,7 @@ export default function App() {
     }
   }, [connected])
 
+  // Following drone logic
   useEffect(() => {
     if (mapRef.current != undefined && followDrone)
       mapRef.current.setCenter(0, 0)
@@ -244,7 +245,7 @@ export default function App() {
               </p>
             </div>
           </div>
-          <div className="flex flex-row gap-2 justify-between mt-2">
+          <div>
             <Button
               onClick={() => {
                 armDisarm(!getIsArmed())
@@ -252,9 +253,6 @@ export default function App() {
             >
               {getIsArmed() ? 'Disarm' : 'Arm'}
             </Button>
-
-            {/* Follow Drone Button */}
-            <Button onClick={() => { setFollowDrone(!followDrone) }}>{followDrone ? 'Stop Following' : 'Follow Drone'}</Button>
           </div>
         </div>
 
@@ -291,6 +289,11 @@ export default function App() {
             tooltip='Battery remaining'
           />
         </StatusBar>
+
+        {/* Follow Drone Button */}
+        <div className="absolute right-2 top-10">
+          <Button onClick={() => { setFollowDrone(!followDrone) }}>{followDrone ? 'Stop Following' : 'Follow Drone'}</Button>
+        </div>
 
         {statustextMessages.length !== 0 && (
           <StatusMessages

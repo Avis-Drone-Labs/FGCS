@@ -1,3 +1,13 @@
+/*
+  Falcon Log Analyser. This is a custom log analyser written to handle MavLink log files.
+
+  This allows users to toggle all messages on/off, look at preset message groups, save message groups, and follow the drone in 3D.
+*/
+
+// Base imports
+import { Fragment, useEffect, useState } from 'react'
+
+// 3rd Party Imports
 import {
   Accordion,
   ActionIcon,
@@ -8,16 +18,18 @@ import {
   Progress,
   ScrollArea,
 } from '@mantine/core'
-import Layout from './components/layout'
-
 import { IconPaint, IconTrash } from '@tabler/icons-react'
-import { Fragment, useEffect, useState } from 'react'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
-import Graph from './components/fla/graph'
-import { logEventIds } from './components/fla/logEventIds.js'
-import { logMessageDescriptions } from './helpers/logMessageDescriptions.js'
+
+// Custom components and helpers
 import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
+import { logMessageDescriptions } from './helpers/logMessageDescriptions.js'
+import { logEventIds } from './components/fla/logEventIds.js'
+import Graph from './components/fla/graph'
+import Layout from './components/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

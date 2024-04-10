@@ -9,7 +9,7 @@ import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+import Dashboard from './dashboard.jsx'
 import Config from './config.jsx'
 import Graphs from './graphs.jsx'
 import Params from './params.jsx'
@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Notifications />
     <HashRouter>
       <Routes>
-        <Route path='/' element={<App />} />
+        <Route path='/' element={<Dashboard />} />
         <Route path='/graphs' element={<Graphs />} />
         <Route path='/params' element={<Params />} />
         <Route path='/config' element={<Config />} />

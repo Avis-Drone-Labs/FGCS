@@ -1,14 +1,25 @@
+/*
+  Live graph data screen.
+
+  This shows 4 different graphs following the live data chosen from the user. These graphs can change size will update in real time as new messages are sent to the GCS.
+*/
+
+// Base imports
 import { useEffect, useRef } from 'react'
 
-import { useLocalStorage, usePrevious } from '@mantine/hooks'
-import Layout from './components/layout'
-
-import { Select } from '@mantine/core'
+// 3rd Party Imports
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { useLocalStorage, usePrevious } from '@mantine/hooks'
+import { Select } from '@mantine/core'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
-import RealtimeGraph from './components/realtimeGraph.jsx'
+
+// Custom components and helpers
 import { socket } from './helpers/socket'
+import RealtimeGraph from './components/realtimeGraph.jsx'
+import Layout from './components/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

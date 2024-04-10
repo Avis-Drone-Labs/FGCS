@@ -1,3 +1,13 @@
+/*
+  Drone parameter screen.
+
+  Allows the user to change drone parameters via MavLink messages. TODO: Rephrase this!
+*/
+
+// Base imports
+import { memo, useEffect, useState } from 'react'
+
+// 3rd Party Imports
 import {
   Button,
   Loader,
@@ -18,16 +28,18 @@ import {
   useToggle,
 } from '@mantine/hooks'
 import { IconEye, IconPencil, IconPower, IconRefresh, IconTool } from '@tabler/icons-react'
-import { memo, useEffect, useState } from 'react'
-import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
-
-import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList } from 'react-window'
+import AutoSizer from 'react-virtualized-auto-sizer'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
-import apmParamDefs from '../data/gen_apm_params_def.json'
 import tailwindConfig from '../tailwind.config.js'
-import Layout from './components/layout.jsx'
+
+// Custom components, helpers, and data
+import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
 import { socket } from './helpers/socket.js'
+import apmParamDefs from '../data/gen_apm_params_def.json'
+import Layout from './components/layout.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

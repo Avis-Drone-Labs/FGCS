@@ -1,20 +1,33 @@
-import { useListState, useLocalStorage } from '@mantine/hooks'
-import { IconAntenna, IconBattery2, IconGps, IconRadar, IconSatellite } from '@tabler/icons-react'
-import React, { useEffect, useRef, useState } from 'react'
-import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
-import StatusBar, { StatusSection } from './components/statusBar'
-import { COPTER_MODES, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES } from './helpers/mavlinkConstants'
+/*
+  The dashboard screen. This is the first screen to be loaded in and is where the user will spend most of their time.
 
+  This contains the map, live indicator, and GPS data. All of these are imported as components and are integrated in this file with logic linking them together.
+*/
+
+// Base imports
+import { useEffect, useRef, useState } from 'react'
+
+// 3rd Party Imports
+import { IconAntenna, IconBattery2, IconGps, IconRadar, IconSatellite } from '@tabler/icons-react'
+import { useListState, useLocalStorage } from '@mantine/hooks'
 import { Button } from '@mantine/core'
-import Layout from './components/layout'
-import MapSection from './components/map'
-import StatusMessages from './components/statusMessages'
+
+// Helper javascript files
+import { COPTER_MODES, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES } from './helpers/mavlinkConstants'
 import { showErrorNotification } from './helpers/notification'
 import { socket } from './helpers/socket'
 
+// Custom component
+import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
+import { StatusSection } from './components/statusBar'
+import StatusMessages from './components/statusMessages'
+import StatusBar from './components/statusBar'
+import MapSection from './components/map'
+import Layout from './components/layout'
+
 const MAV_AUTOPILOT_INVALID = 8
 
-export default function App() {
+export default function Dashboard() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,

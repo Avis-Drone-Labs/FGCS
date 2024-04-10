@@ -1,11 +1,22 @@
+/*
+  The config screen. TODO: Someone please write about this
+*/
+
+// Base imports
+import { useEffect, useState } from 'react'
+
+// 3rd Party Imports
 import { Button, NumberInput, Tabs } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
-import { useEffect, useState } from 'react'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
-import Layout from './components/layout'
+
+// Custom component and helpers
 import { showErrorNotification, showSuccessNotification } from './helpers/notification'
 import { socket } from './helpers/socket'
+import Layout from './components/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

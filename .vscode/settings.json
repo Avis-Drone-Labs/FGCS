@@ -6,6 +6,8 @@
         "falconred",
         "mavutil",
         "pymavlink",
-        "PYQT"
+        "PYQT",
+        "RSSI",
+        "statustext"
     ]
 }

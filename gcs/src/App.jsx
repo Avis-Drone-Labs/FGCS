@@ -6,7 +6,7 @@ import {
   IconRadar,
   IconSatellite,
 } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import StatusBar, { StatusSection } from './components/statusBar'
 import {
@@ -45,6 +45,9 @@ export default function App() {
     satellites_visible: 0,
   })
   const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
+
+  const [followDrone, setFollowDrone] = useState(false)
+  const mapRef = useRef();
 
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
@@ -90,6 +93,11 @@ export default function App() {
     }
   }, [connected])
 
+  useEffect(() => {
+    if (mapRef.current != undefined && followDrone)
+      mapRef.current.setCenter(0, 0)
+  }, [gpsData])
+
   function getFlightMode() {
     if (!heartbeatData.type) {
       return 'UNKNOWN'
@@ -124,6 +132,7 @@ export default function App() {
           <MapSection
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+            passedRef={mapRef}
           />
         </div>
         <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
@@ -235,7 +244,7 @@ export default function App() {
               </p>
             </div>
           </div>
-          <div>
+          <div className="flex flex-row gap-2 justify-between mt-2">
             <Button
               onClick={() => {
                 armDisarm(!getIsArmed())
@@ -243,6 +252,9 @@ export default function App() {
             >
               {getIsArmed() ? 'Disarm' : 'Arm'}
             </Button>
+
+            {/* Follow Drone Button */}
+            <Button onClick={() => { setFollowDrone(!followDrone) }}>{followDrone ? 'Stop Following' : 'Follow Drone'}</Button>
           </div>
         </div>
 

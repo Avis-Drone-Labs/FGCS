@@ -46,8 +46,8 @@ export default function MapSection({ data, heading }) {
             scale={0.1}
           >
             <img
-              src='/drone_1.png'
-              className='w-10 h-10'
+              src='/arrow.svg'
+              className='w-6 h-6'
               style={{ transform: `rotate(${heading ?? 0}deg)` }}
             />
           </Marker>

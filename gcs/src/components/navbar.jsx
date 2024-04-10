@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config.js'
-import { showErrorNotification } from '../notification.js'
-import { socket } from '../socket'
+import { showErrorNotification } from '../helpers/notification.js'
+import { socket } from '../helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

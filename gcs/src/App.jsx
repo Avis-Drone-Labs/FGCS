@@ -3,14 +3,14 @@ import { IconAntenna, IconBattery2, IconGps, IconRadar, IconSatellite } from '@t
 import React, { useEffect, useRef, useState } from 'react'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import StatusBar, { StatusSection } from './components/statusBar'
-import { COPTER_MODES, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES } from './mavlinkConstants'
+import { COPTER_MODES, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES } from './helpers/mavlinkConstants'
 
 import { Button } from '@mantine/core'
 import Layout from './components/layout'
 import MapSection from './components/map'
 import StatusMessages from './components/statusMessages'
-import { showErrorNotification } from './notification'
-import { socket } from './socket'
+import { showErrorNotification } from './helpers/notification'
+import { socket } from './helpers/socket'
 
 const MAV_AUTOPILOT_INVALID = 8
 

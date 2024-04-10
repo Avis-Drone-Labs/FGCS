@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
 import Layout from './components/layout'
-import { showErrorNotification, showSuccessNotification } from './notification'
-import { socket } from './socket'
+import { showErrorNotification, showSuccessNotification } from './helpers/notification'
+import { socket } from './helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

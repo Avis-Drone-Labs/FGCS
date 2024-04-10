@@ -1,6 +1,6 @@
 import { notifications } from '@mantine/notifications'
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../tailwind.config.js'
+import tailwindConfig from '../../tailwind.config.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

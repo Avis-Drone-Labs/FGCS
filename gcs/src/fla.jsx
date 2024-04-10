@@ -16,8 +16,8 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 import Graph from './components/fla/graph'
 import { logEventIds } from './components/fla/logEventIds.js'
-import { logMessageDescriptions } from './logMessageDescriptions.js'
-import { showErrorNotification, showSuccessNotification } from './notification.js'
+import { logMessageDescriptions } from './helpers/logMessageDescriptions.js'
+import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

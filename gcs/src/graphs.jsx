@@ -8,7 +8,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 import RealtimeGraph from './components/realtimeGraph.jsx'
-import { socket } from './socket'
+import { socket } from './helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

@@ -19,7 +19,7 @@ import {
 } from '@mantine/hooks'
 import { IconEye, IconPencil, IconPower, IconRefresh, IconTool } from '@tabler/icons-react'
 import { memo, useEffect, useState } from 'react'
-import { showErrorNotification, showSuccessNotification } from './notification.js'
+import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
 
 import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList } from 'react-window'
@@ -27,7 +27,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import apmParamDefs from '../data/gen_apm_params_def.json'
 import tailwindConfig from '../tailwind.config.js'
 import Layout from './components/layout.jsx'
-import { socket } from './socket.js'
+import { socket } from './helpers/socket.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

@@ -5,7 +5,7 @@ import Map, { Marker } from 'react-map-gl'
 
 import maplibregl from 'maplibre-gl'
 
-export default function MapSection({ data, heading }) {
+export default function MapSection({ data, heading, passedRef }) {
   const [position, setPosition] = useState({
     latitude: 53.381655,
     longitude: -1.481434,
@@ -28,6 +28,7 @@ export default function MapSection({ data, heading }) {
 
   return (
     <div className='w-initial h-full' id='map'>
+      {/* Map */}
       <Map
         mapLib={maplibregl}
         initialViewState={{
@@ -38,6 +39,7 @@ export default function MapSection({ data, heading }) {
         mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
           import.meta.env.VITE_MAPTILER_API_KEY
         }`}
+        ref={passedRef}
       >
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
           <Marker

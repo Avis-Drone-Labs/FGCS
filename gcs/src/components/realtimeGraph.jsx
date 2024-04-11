@@ -63,10 +63,7 @@ const options = {
   },
 }
 
-const RealtimeGraph = forwardRef(function RealtimeGraph(
-  { datasetLabel, lineColor },
-  ref,
-) {
+const RealtimeGraph = forwardRef(function RealtimeGraph({ datasetLabel, lineColor }, ref) {
   const [chartData] = useState({
     datasets: [
       {

@@ -4,7 +4,7 @@ import { cloneElement, useEffect, useState } from 'react'
 import { Tooltip } from '@mantine/core'
 import { useInterval } from '@mantine/hooks'
 import moment from 'moment'
-import { socket } from '../socket'
+import { socket } from '../helpers/socket'
 
 export function StatusSection({ icon, value, tooltip }) {
   return (
@@ -27,22 +27,14 @@ export default function StatusBar(props) {
   }, [])
 
   return (
-    <div
-      className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}
-    >
+    <div className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}>
       {props.children}
       <StatusSection
         icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
         value=''
-        tooltip={
-          socket.connected ? 'Connected to socket' : 'Disconnected from socket'
-        }
+        tooltip={socket.connected ? 'Connected to socket' : 'Disconnected from socket'}
       />
-      <StatusSection
-        icon={<IconClock />}
-        value={time?.format('HH:mm:ss')}
-        tooltip='Local time'
-      />
+      <StatusSection icon={<IconClock />} value={time?.format('HH:mm:ss')} tooltip='Local time' />
     </div>
   )
 }

@@ -1,11 +1,22 @@
+/*
+  The config screen. TODO: Someone please write about this
+*/
+
+// Base imports
+import { useEffect, useState } from 'react'
+
+// 3rd Party Imports
 import { Button, NumberInput, Tabs } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
-import { useEffect, useState } from 'react'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
+
+// Custom component and helpers
+import { showErrorNotification, showSuccessNotification } from './helpers/notification'
+import { socket } from './helpers/socket'
 import Layout from './components/layout'
-import { showErrorNotification, showSuccessNotification } from './notification'
-import { socket } from './socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -19,16 +30,10 @@ function Gripper() {
   return (
     <div className='m-6 w-1/2'>
       <div className='flex flex-row gap-2'>
-        <Button
-          onClick={() => setGripper('release')}
-          color={tailwindColors.falconred[100]}
-        >
+        <Button onClick={() => setGripper('release')} color={tailwindColors.falconred[100]}>
           Release Gripper
         </Button>
-        <Button
-          onClick={() => setGripper('grab')}
-          color={tailwindColors.falconred[100]}
-        >
+        <Button onClick={() => setGripper('grab')} color={tailwindColors.falconred[100]}>
           Grab Gripper
         </Button>
       </div>
@@ -193,11 +198,7 @@ export default function Config() {
     <Layout currentPage='config'>
       {connected && (
         <div className='w-full h-full'>
-          <Tabs
-            orientation='vertical'
-            color={tailwindColors.falconred[100]}
-            className='h-full'
-          >
+          <Tabs orientation='vertical' color={tailwindColors.falconred[100]} className='h-full'>
             <Tabs.List>
               <Tabs.Tab value='gripper' disabled={!gripperEnabled}>
                 Gripper

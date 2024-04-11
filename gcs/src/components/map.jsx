@@ -14,8 +14,7 @@ export default function MapSection({ data, heading, passedRef }) {
   const [defaultLon, setDefaultLon] = useState(-1.481434)
 
   useEffect(() => {
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
-      return
+    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0) return
     let lat = data.lat * 1e-7
     let lon = data.lon * 1e-7
     setPosition({ latitude: lat, longitude: lon })
@@ -42,11 +41,7 @@ export default function MapSection({ data, heading, passedRef }) {
         ref={passedRef}
       >
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
-          <Marker
-            latitude={position.latitude}
-            longitude={position.longitude}
-            scale={0.1}
-          >
+          <Marker latitude={position.latitude} longitude={position.longitude} scale={0.1}>
             <img
               src='/arrow.svg'
               className='w-6 h-6'

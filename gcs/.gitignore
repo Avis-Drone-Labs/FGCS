@@ -26,3 +26,5 @@ release
 *.sw?
 
 *.pdef.json
+
+package-lock.json

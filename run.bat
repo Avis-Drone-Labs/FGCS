@@ -17,14 +17,13 @@ IF NOT "%venv%"=="" (
         yarn
 
         ECHO Ensuring that concurrently is downloaded and npm is up to date
-        npm i
         npm i -g concurrently
 
         cd ../
     )
 
     ECHO Yarn is up to date, running concurrently
-    concurrently "python radio/app.py" "cd gcs && yarn dev" -n "backend,frontend" -c "red,blue" 
+    concurrently "python radio/app.py" "cd gcs && yarn dev" -n "backend,frontend" -c "red,blue"
 ) ELSE (
     ECHO You forgot to provide a path to your venv, for example "./run.bat radio/venv"
     ECHO If this is the first time running the script it will auto update all packages, this is done by adding "update" to the end of the command. For examplee "./run.bat api/venv update"

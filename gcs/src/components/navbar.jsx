@@ -152,7 +152,18 @@ export default function Navbar({ currentPage }) {
             label='Baud Rate'
             description='Select a baud rate for the specified COM Port'
             data={[
-              300, 1200, 4800, 9600, 19200, 13400, 38400, 57600, 74880, 115200, 230400, 250000,
+              '300',
+              '1200',
+              '4800',
+              '9600',
+              '19200',
+              '13400',
+              '38400',
+              '57600',
+              '74880',
+              '115200',
+              '230400',
+              '250000',
             ]}
             value={selectedBaudRate}
             onChange={setSelectedBaudRate}

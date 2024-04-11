@@ -126,7 +126,6 @@ export default function App() {
     socket.emit('arm_disarm', { arm: arm, force: force })
   }
 
-  console.log(gpsData)
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full'>

@@ -17,7 +17,6 @@ IF NOT "%venv%"=="" (
         yarn
 
         ECHO Ensuring that concurrently is downloaded and npm is up to date
-        npm i
         npm i -g concurrently
 
         cd ../

@@ -8,9 +8,17 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { IconAntenna, IconBattery2, IconGps, IconRadar, IconSatellite } from '@tabler/icons-react'
+import { ActionIcon, Button, Tooltip } from '@mantine/core'
 import { useListState, useLocalStorage } from '@mantine/hooks'
-import { Button } from '@mantine/core'
+import {
+  IconAnchor,
+  IconAnchorOff,
+  IconAntenna,
+  IconBattery2,
+  IconGps,
+  IconRadar,
+  IconSatellite,
+} from '@tabler/icons-react'
 
 // Helper javascript files
 import { COPTER_MODES, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES } from './helpers/mavlinkConstants'
@@ -19,11 +27,10 @@ import { socket } from './helpers/socket'
 
 // Custom component
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
-import { StatusSection } from './components/statusBar'
-import StatusMessages from './components/statusMessages'
-import StatusBar from './components/statusBar'
-import MapSection from './components/map'
 import Layout from './components/layout'
+import MapSection from './components/map'
+import StatusBar, { StatusSection } from './components/statusBar'
+import StatusMessages from './components/statusMessages'
 
 const MAV_AUTOPILOT_INVALID = 8
 
@@ -97,7 +104,11 @@ export default function Dashboard() {
 
   // Following drone logic
   useEffect(() => {
-    if (mapRef.current != undefined && followDrone) mapRef.current.setCenter(0, 0)
+    if (mapRef.current && !gpsData.lon && !gpsData.lat && followDrone) {
+      let lat = gpsData.lat * 1e-7
+      let lon = gpsData.lon * 1e-7
+      mapRef.current.setCenter({ lng: lon, lat: lat })
+    }
   }, [gpsData])
 
   function getFlightMode() {
@@ -232,9 +243,9 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${
-              gpsData.lat !== undefined ? gpsData.lat.toFixed(6) : 0
-            }, ${gpsData.lon !== undefined ? gpsData.lon.toFixed(6) : 0})`}
+            value={`(${gpsData.lat !== undefined ? gpsData.lat.toFixed(6) : 0}, ${
+              gpsData.lon !== undefined ? gpsData.lon.toFixed(6) : 0
+            })`}
             tooltip='GPS (lat, lon)'
           />
           <StatusSection
@@ -250,15 +261,26 @@ export default function Dashboard() {
           />
         </StatusBar>
 
-        {/* Follow Drone Button */}
-        <div className='absolute right-2 top-10'>
-          <Button
-            onClick={() => {
-              setFollowDrone(!followDrone)
-            }}
+        {/* Right side floating toolbar */}
+        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md'>
+          <Tooltip
+            label={
+              !gpsData.lon && !gpsData.lat
+                ? 'No GPS data'
+                : followDrone
+                  ? 'Stop Following'
+                  : 'Follow Drone'
+            }
           >
-            {followDrone ? 'Stop Following' : 'Follow Drone'}
-          </Button>
+            <ActionIcon
+              disabled={!gpsData.lon && !gpsData.lat}
+              onClick={() => {
+                setFollowDrone(!followDrone)
+              }}
+            >
+              {followDrone ? <IconAnchorOff /> : <IconAnchor />}
+            </ActionIcon>
+          </Tooltip>
         </div>
 
         {statustextMessages.length !== 0 && (

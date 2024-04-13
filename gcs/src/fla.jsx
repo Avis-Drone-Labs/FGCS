@@ -19,7 +19,7 @@ import {
   Progress,
   ScrollArea,
 } from '@mantine/core'
-import { IconPaint, IconTrash } from '@tabler/icons-react'
+import { IconPaint, IconRectangleRoundedTop, IconTrash } from '@tabler/icons-react'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -85,6 +85,7 @@ export default function FLA() {
   const [messageFilters, setMessageFilters] = useState(null)
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
+  const [messageMeans, setMessageMeans] = useState({})
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -105,6 +106,8 @@ export default function FLA() {
           .forEach((key) => {
             if (Object.keys(loadedLogMessages).includes(key) && !ignoredMessages.includes(key)) {
               const fieldsState = {}
+
+              // Set all field states to false if they're not ignored 
               loadedLogMessages['format'][key].fields.map((field) => {
                 if (!ignoredKeys.includes(field)) {
                   fieldsState[field] = false
@@ -114,6 +117,7 @@ export default function FLA() {
             }
           })
         setMessageFilters(logMessageFilterDefaultState)
+        setMeanValues(loadedLogMessages)
 
         // Set event logs for the event lines on graph
         setLogEvents(
@@ -123,8 +127,6 @@ export default function FLA() {
           })),
         )
 
-        // Create min, max, mean values for each message 
-        // TODO: Finish this :flushed:
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -134,6 +136,50 @@ export default function FLA() {
         setLoadingFile(false)
       }
     }
+  }
+
+  // Loop over all fields and precalculate min, max, mean
+  function setMeanValues(loadedLogMessages) {
+    let rawValues = {}
+
+    // Putting all raw data into a list
+    Object.keys(loadedLogMessages).forEach((key) => {
+      if (key != 'format') {
+        let messageData = loadedLogMessages[key]
+        let messageDataMeans = {}
+  
+        messageData.map((message) => {
+          Object.keys(message).forEach((dataPointKey) => {
+            let dataPoint = message[dataPointKey]
+            if (dataPointKey != dataPoint && dataPointKey != "name") {
+              if (messageDataMeans[dataPointKey] == undefined) {
+                messageDataMeans[dataPointKey] = [dataPoint]
+              } else {
+                messageDataMeans[dataPointKey].push(dataPoint)
+              }
+            }
+          })
+        })
+
+        rawValues[key] = messageDataMeans
+      }
+    })
+
+    // Looping over each list and finding min, max, mean
+    let means = {}
+    Object.keys(rawValues).forEach((key) => {
+      means[key] = {}
+      let messageData = rawValues[key]
+      Object.keys(messageData).forEach((messageKey) => {
+        let messageValues = messageData[messageKey]
+        let min = Math.min(...messageValues)
+        let max = Math.max(...messageValues)
+        let mean = messageValues.reduce((acc, curr) => acc + curr, 0) / messageValues.length
+        means[`${key}/${messageKey}`] = {"mean": mean.toFixed(2), "max": max.toFixed(2), "min": min.toFixed(2)}
+      })
+    })
+    setMessageMeans(means)
+    console.log(means)
   }
 
   // Turn on/off all filters
@@ -165,6 +211,7 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  // Close file
   function closeLogFile() {
     setFile(null)
     setLoadingFileProgress(0)
@@ -175,6 +222,7 @@ export default function FLA() {
     setColorIndex(0)
   }
 
+  // Set IPC renderer for log messages
   useEffect(() => {
     window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
       setLoadingFileProgress(message.percent)
@@ -469,7 +517,7 @@ export default function FLA() {
                     />
 
                     {/* Min, max, min */}
-                    <Box className="w-full text-gray-400">Min: 12, Max: 12, Mean: 12</Box>
+                    <Box className="w-full text-gray-400">Min: {messageMeans[item.label]["min"]}, Max: {messageMeans[item.label]["max"]}, Mean: {messageMeans[item.label]["mean"]}</Box>
                   </div>
                 </Fragment>
               ))}

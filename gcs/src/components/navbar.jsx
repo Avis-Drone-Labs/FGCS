@@ -1,4 +1,12 @@
-import { Button, Checkbox, Group, LoadingOverlay, Modal, Select, Tooltip } from '@mantine/core'
+import {
+  Button,
+  Checkbox,
+  Group,
+  LoadingOverlay,
+  Modal,
+  Select,
+  Tooltip,
+} from '@mantine/core'
 import { useDisclosure, useInterval, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
@@ -31,7 +39,10 @@ export default function Navbar({ currentPage }) {
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [connectedToSocket, setConnectedToSocket] = useState(false)
-  const checkIfConnectedToSocket = useInterval(() => setConnectedToSocket(socket.connected), 3000)
+  const checkIfConnectedToSocket = useInterval(
+    () => setConnectedToSocket(socket.connected),
+    3000,
+  )
 
   function getComPorts() {
     if (!connectedToSocket) return
@@ -60,7 +71,9 @@ export default function Navbar({ currentPage }) {
     socket.on('list_com_ports', (msg) => {
       setFetchingComPorts(false)
       setComPorts(msg)
-      const possibleComPort = msg.find((port) => port.toLowerCase().includes('mavlink'))
+      const possibleComPort = msg.find((port) =>
+        port.toLowerCase().includes('mavlink'),
+      )
       if (possibleComPort !== undefined) {
         setSelectedComPort(possibleComPort)
       } else if (msg.length > 0) {
@@ -118,7 +131,8 @@ export default function Navbar({ currentPage }) {
     socket.emit('disconnect_from_drone')
   }
 
-  const linkClassName = 'text-md hover:text-falconred-60 transition-colors delay-50'
+  const linkClassName =
+    'text-md hover:text-falconred-60 transition-colors delay-50'
   return (
     <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
       <Modal
@@ -137,7 +151,9 @@ export default function Navbar({ currentPage }) {
           <Select
             label='COM Port'
             description='Select a COM Port from the ones available'
-            placeholder={comPorts.length ? 'Select a COM port' : 'No COM ports found'}
+            placeholder={
+              comPorts.length ? 'Select a COM port' : 'No COM ports found'
+            }
             data={comPorts}
             value={selectedComPort}
             onChange={setSelectedComPort}
@@ -180,7 +196,11 @@ export default function Navbar({ currentPage }) {
           </div>
         </div>
         <Group justify='space-between' className='pt-4'>
-          <Button variant='filled' color={tailwindColors.red[600]} onClick={close}>
+          <Button
+            variant='filled'
+            color={tailwindColors.red[600]}
+            onClick={close}
+          >
             Close
           </Button>
           <Button
@@ -207,25 +227,37 @@ export default function Navbar({ currentPage }) {
       </Link>
       <Link
         to='/graphs'
-        className={twMerge(linkClassName, currentPage === 'graphs' && 'text-falconred font-bold')}
+        className={twMerge(
+          linkClassName,
+          currentPage === 'graphs' && 'text-falconred font-bold',
+        )}
       >
         Graphs
       </Link>
       <Link
         to='/params'
-        className={twMerge(linkClassName, currentPage === 'params' && 'text-falconred font-bold')}
+        className={twMerge(
+          linkClassName,
+          currentPage === 'params' && 'text-falconred font-bold',
+        )}
       >
         Params
       </Link>
       <Link
         to='/config'
-        className={twMerge(linkClassName, currentPage === 'config' && 'text-falconred font-bold')}
+        className={twMerge(
+          linkClassName,
+          currentPage === 'config' && 'text-falconred font-bold',
+        )}
       >
         Config
       </Link>
       <Link
         to='/fla'
-        className={twMerge(linkClassName, currentPage === 'fla' && 'text-falconred font-bold')}
+        className={twMerge(
+          linkClassName,
+          currentPage === 'fla' && 'text-falconred font-bold',
+        )}
       >
         FLA
       </Link>
@@ -235,7 +267,9 @@ export default function Navbar({ currentPage }) {
         {connectedToSocket ? (
           <Button
             onClick={connected ? disconnect : open}
-            color={connected ? tailwindColors.red[600] : tailwindColors.green[600]}
+            color={
+              connected ? tailwindColors.red[600] : tailwindColors.green[600]
+            }
           >
             {connected ? 'Disconnect' : 'Connect'}
           </Button>

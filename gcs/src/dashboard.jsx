@@ -21,7 +21,12 @@ import {
 } from '@tabler/icons-react'
 
 // Helper javascript files
-import { COPTER_MODES, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES } from './helpers/mavlinkConstants'
+import {
+  COPTER_MODES,
+  GPS_FIX_TYPES,
+  MAV_STATE,
+  PLANE_MODES,
+} from './helpers/mavlinkConstants'
 import { showErrorNotification } from './helpers/notification'
 import { socket } from './helpers/socket'
 
@@ -171,10 +176,17 @@ export default function Dashboard() {
             <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
               <p className='text-sm'>ms&#8315;&#185;</p>
               <p>
-                AS <br /> {(telemetryData.airspeed ? telemetryData.airspeed : 0).toFixed(2)}
+                AS <br />{' '}
+                {(telemetryData.airspeed ? telemetryData.airspeed : 0).toFixed(
+                  2,
+                )}
               </p>
               <p>
-                GS <br /> {(telemetryData.groundspeed ? telemetryData.groundspeed : 0).toFixed(2)}
+                GS <br />{' '}
+                {(telemetryData.groundspeed
+                  ? telemetryData.groundspeed
+                  : 0
+                ).toFixed(2)}
               </p>
             </div>
             <AttitudeIndicator
@@ -187,7 +199,11 @@ export default function Dashboard() {
                 AMSL <br /> {(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
               </p>
               <p>
-                AREL <br /> {(gpsData.relative_alt ? gpsData.relative_alt / 1000 : 0).toFixed(2)}
+                AREL <br />{' '}
+                {(gpsData.relative_alt
+                  ? gpsData.relative_alt / 1000
+                  : 0
+                ).toFixed(2)}
               </p>
             </div>
           </div>
@@ -198,7 +214,11 @@ export default function Dashboard() {
                 HDG <br /> {(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
               </p>
               <p>
-                YAW <br /> {(attitudeData.yaw ? attitudeData.yaw * (180 / Math.PI) : 0).toFixed(2)}
+                YAW <br />{' '}
+                {(attitudeData.yaw
+                  ? attitudeData.yaw * (180 / Math.PI)
+                  : 0
+                ).toFixed(2)}
               </p>
             </div>
             <HeadingIndicator heading={gpsData.hdg ? gpsData.hdg / 100 : 0} />
@@ -206,7 +226,10 @@ export default function Dashboard() {
               <p className='text-sm'>m</p>
               <p>
                 WP <br />{' '}
-                {(navControllerOutputData.wp_dist ? navControllerOutputData.wp_dist : 0).toFixed(2)}
+                {(navControllerOutputData.wp_dist
+                  ? navControllerOutputData.wp_dist
+                  : 0
+                ).toFixed(2)}
               </p>
               <p>
                 HOME <br /> {(0).toFixed(2)}
@@ -217,11 +240,26 @@ export default function Dashboard() {
           <div className='flex flex-col items-center'>
             <p>BATTERY</p>
             <div className='flex flex-row space-x-4'>
-              <p>{(batteryData.voltages ? batteryData.voltages[0] / 1000 : 0).toFixed(2)}V</p>
               <p>
-                {(batteryData.current_battery ? batteryData.current_battery / 100 : 0).toFixed(2)}A
+                {(batteryData.voltages
+                  ? batteryData.voltages[0] / 1000
+                  : 0
+                ).toFixed(2)}
+                V
               </p>
-              <p>{batteryData.battery_remaining ? batteryData.battery_remaining : 0}%</p>
+              <p>
+                {(batteryData.current_battery
+                  ? batteryData.current_battery / 100
+                  : 0
+                ).toFixed(2)}
+                A
+              </p>
+              <p>
+                {batteryData.battery_remaining
+                  ? batteryData.battery_remaining
+                  : 0}
+                %
+              </p>
             </div>
           </div>
           <div>
@@ -253,10 +291,18 @@ export default function Dashboard() {
             value={gpsRawIntData.satellites_visible}
             tooltip='Satellites visible'
           />
-          <StatusSection icon={<IconAntenna />} value={rcChannelsData.rssi} tooltip='RC RSSI' />
+          <StatusSection
+            icon={<IconAntenna />}
+            value={rcChannelsData.rssi}
+            tooltip='RC RSSI'
+          />
           <StatusSection
             icon={<IconBattery2 />}
-            value={batteryData.battery_remaining ? `${batteryData.battery_remaining}%` : '0%'}
+            value={
+              batteryData.battery_remaining
+                ? `${batteryData.battery_remaining}%`
+                : '0%'
+            }
             tooltip='Battery remaining'
           />
         </StatusBar>

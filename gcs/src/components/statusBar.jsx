@@ -27,14 +27,22 @@ export default function StatusBar(props) {
   }, [])
 
   return (
-    <div className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}>
+    <div
+      className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}
+    >
       {props.children}
       <StatusSection
         icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
         value=''
-        tooltip={socket.connected ? 'Connected to socket' : 'Disconnected from socket'}
+        tooltip={
+          socket.connected ? 'Connected to socket' : 'Disconnected from socket'
+        }
       />
-      <StatusSection icon={<IconClock />} value={time?.format('HH:mm:ss')} tooltip='Local time' />
+      <StatusSection
+        icon={<IconClock />}
+        value={time?.format('HH:mm:ss')}
+        tooltip='Local time'
+      />
     </div>
   )
 }

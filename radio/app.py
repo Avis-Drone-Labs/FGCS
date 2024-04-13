@@ -411,6 +411,35 @@ def testAllMotors(data):
     socketio.emit("motor_test_result", result)
 
 
+@socketio.on("get_current_mission")
+def getCurrentMission():
+    global state
+    if state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the dashboard screen to access the gripper."},
+        )
+        print(f"Current state: {state}")
+        return
+
+    global drone
+    if not drone:
+        return
+
+    mission_items = [item.to_dict() for item in drone.mission.mission_items]
+    fence_items = [item.to_dict() for item in drone.mission.fence_items]
+    rally_items = [item.to_dict() for item in drone.mission.rally_items]
+
+    socketio.emit(
+        "current_mission",
+        {
+            "mission_items": mission_items,
+            "fence_items": fence_items,
+            "rally_items": rally_items,
+        },
+    )
+
+
 def sendMessage(msg):
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp

@@ -1,6 +1,6 @@
 import time
+from pprint import pprint
 
-import serial
 from drone import Drone
 from utils import getComPort, getComPortNames, normalisePwmValue
 
@@ -26,11 +26,17 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
-    # print(drone.gripper.doGripper("release"))
+    pprint([item.to_dict() for item in drone.mission.mission_items])
 
-    drone.setGripper("release")
-    time.sleep(1)
-    drone.setGripper("grab")
+    # print(drone.gripper.doGripper("release"))
+    # drone.master.waypoint_request_list_send()
+    # drone.master.mav.mission_request_list_send(
+    #     drone.target_system, drone.target_component, mission_type=2
+    # )
+
+    # drone.setGripper("release")
+    # time.sleep(1)
+    # drone.setGripper("grab")
 
     # drone.setupDataStreams()
 
@@ -53,7 +59,7 @@ if __name__ == "__main__":
     # print(drone.setMultipleParams(params_to_set))
     # print(drone.params)
 
-    # drone.addMessageListener("PARAM_VALUE", test_cb)
+    # drone.addMessageListener("MISSION_COUNT", test_cb)
 
     try:
         while True:

@@ -16,6 +16,11 @@ class Response(TypedDict):
     message: str
 
 
+class ResponseWithData(TypedDict):
+    success: bool
+    data: any
+
+
 class MotorTestThrottleAndDuration(TypedDict):
     throttle: int
     duration: int

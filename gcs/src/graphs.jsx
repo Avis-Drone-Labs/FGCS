@@ -8,18 +8,18 @@
 import { useEffect, useRef } from 'react'
 
 // 3rd Party Imports
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { useLocalStorage, usePrevious } from '@mantine/hooks'
 import { Select } from '@mantine/core'
+import { useLocalStorage, usePrevious } from '@mantine/hooks'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
-import { socket } from './helpers/socket'
-import RealtimeGraph from './components/realtimeGraph.jsx'
 import Layout from './components/layout'
+import RealtimeGraph from './components/realtimeGraph.jsx'
+import { socket } from './helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -43,7 +43,14 @@ const graphColors = {
   graph_d: tailwindColors.green[400],
 }
 
-function MessageSelector({ graphOptions, label, labelColor, valueKey, currentValues, setValue }) {
+function MessageSelector({
+  graphOptions,
+  label,
+  labelColor,
+  valueKey,
+  currentValues,
+  setValue,
+}) {
   return (
     <Select
       label={label}
@@ -103,7 +110,9 @@ export default function Graphs() {
       const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
       if (graphResults !== false) {
         graphResults.forEach((graphResult) => {
-          graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(graphResult.data)
+          graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
+            graphResult.data,
+          )
           graphRefs[graphResult.graphKey]?.current.update('quiet')
         })
       }
@@ -119,6 +128,7 @@ export default function Graphs() {
 
     for (let graphKey in selectValues) {
       if (
+        graphRefs[graphKey].current !== null &&
         selectValues[graphKey] !== previousSelectValues[graphKey] &&
         selectValues[graphKey] !== null
       ) {
@@ -190,7 +200,11 @@ export default function Graphs() {
               setValue={updateSelectValues}
             />
           </div>
-          <PanelGroup autoSaveId='verticalGraphs' direction='vertical' className='h-full'>
+          <PanelGroup
+            autoSaveId='verticalGraphs'
+            direction='vertical'
+            className='h-full'
+          >
             <Panel minSize={20}>
               <PanelGroup autoSaveId='horizontalGraphs1' direction='horizontal'>
                 <Panel minSize={10}>
@@ -258,7 +272,9 @@ export default function Graphs() {
         </div>
       ) : (
         <div className='flex items-center justify-center h-full'>
-          <p className='text-red-400'>Not connected to drone. Please connect to view graphs</p>
+          <p className='text-red-400'>
+            Not connected to drone. Please connect to view graphs
+          </p>
         </div>
       )}
     </Layout>

@@ -19,11 +19,7 @@ import {
   Progress,
   ScrollArea,
 } from '@mantine/core'
-import {
-  IconPaint,
-  IconRectangleRoundedTop,
-  IconTrash,
-} from '@tabler/icons-react'
+import { IconPaint, IconTrash } from '@tabler/icons-react'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'

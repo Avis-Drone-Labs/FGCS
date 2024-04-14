@@ -60,10 +60,9 @@ function microsecondsToDisplayTime(microseconds, roundTo) {
   var seconds = microseconds / 1_000_000
   var mins = Math.floor(seconds / 60)
 
-  return `${String(mins).padStart(2, '0')}:${String((seconds % 60).toFixed(roundTo)).padStart(
-    2,
-    '0',
-  )}`
+  return `${String(mins).padStart(2, '0')}:${String(
+    (seconds % 60).toFixed(roundTo),
+  ).padStart(2, '0')}`
 }
 
 const options = {
@@ -161,7 +160,11 @@ export default function Graph({ data, events }) {
   function downloadGraphAsImage() {
     const height = chartRef?.current?.height
     const width = chartRef?.current?.width
-    downloadUpscaledImage(chartRef?.current?.toBase64Image(), width * 2, height * 2)
+    downloadUpscaledImage(
+      chartRef?.current?.toBase64Image(),
+      width * 2,
+      height * 2,
+    )
   }
 
   useEffect(() => {
@@ -203,12 +206,18 @@ export default function Graph({ data, events }) {
       <Line ref={chartRef} options={config} data={data} />
       <div className='flex flex-row gap-2'>
         <MantineTooltip label='Zoom in'>
-          <ActionIcon variant='filled' onClick={() => chartRef?.current?.zoom(1.5)}>
+          <ActionIcon
+            variant='filled'
+            onClick={() => chartRef?.current?.zoom(1.5)}
+          >
             <IconZoomIn size={18} />
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label='Zoom out'>
-          <ActionIcon variant='filled' onClick={() => chartRef?.current?.zoom(0)}>
+          <ActionIcon
+            variant='filled'
+            onClick={() => chartRef?.current?.zoom(0)}
+          >
             <IconZoomOut size={18} />
           </ActionIcon>
         </MantineTooltip>
@@ -224,7 +233,11 @@ export default function Graph({ data, events }) {
         </MantineTooltip>
         <MantineTooltip label={showEvents ? 'Hide events' : 'Show events'}>
           <ActionIcon variant='filled' onClick={toggleShowEvents}>
-            {showEvents ? <IconTimelineEventX size={18} /> : <IconTimelineEvent size={18} />}
+            {showEvents ? (
+              <IconTimelineEventX size={18} />
+            ) : (
+              <IconTimelineEvent size={18} />
+            )}
           </ActionIcon>
         </MantineTooltip>
       </div>

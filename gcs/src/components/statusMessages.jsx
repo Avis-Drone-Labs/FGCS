@@ -44,8 +44,12 @@ export default function StatusMessages(props) {
         {props.messages.map((message, index) => {
           return (
             <div key={index} className='flex flex-row space-x-2'>
-              <p className='text-gray-400'>{moment.unix(message.timestamp).format('HH:mm:ss')}</p>
-              <p className={getSeverityClassNames(message.severity)}>{message.text}</p>
+              <p className='text-gray-400'>
+                {moment.unix(message.timestamp).format('HH:mm:ss')}
+              </p>
+              <p className={getSeverityClassNames(message.severity)}>
+                {message.text}
+              </p>
             </div>
           )
         })}

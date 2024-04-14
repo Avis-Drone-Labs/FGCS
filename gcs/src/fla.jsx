@@ -11,6 +11,7 @@ import { Fragment, useEffect, useState } from 'react'
 import {
   Accordion,
   ActionIcon,
+  Box,
   Button,
   Checkbox,
   ColorInput,
@@ -25,7 +26,10 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
-import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from './helpers/notification.js'
 import { logMessageDescriptions } from './helpers/logMessageDescriptions.js'
 import { logEventIds } from './components/fla/logEventIds.js'
 import Graph from './components/fla/graph'
@@ -84,6 +88,7 @@ export default function FLA() {
   const [messageFilters, setMessageFilters] = useState(null)
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
+  const [messageMeans, setMessageMeans] = useState({})
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -94,7 +99,6 @@ export default function FLA() {
       if (result.success) {
         // Load messages into states
         const loadedLogMessages = result.messages
-        // console.log(loadedLogMessages)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
 
@@ -103,8 +107,13 @@ export default function FLA() {
         Object.keys(loadedLogMessages['format'])
           .sort()
           .forEach((key) => {
-            if (Object.keys(loadedLogMessages).includes(key) && !ignoredMessages.includes(key)) {
+            if (
+              Object.keys(loadedLogMessages).includes(key) &&
+              !ignoredMessages.includes(key)
+            ) {
               const fieldsState = {}
+
+              // Set all field states to false if they're not ignored
               loadedLogMessages['format'][key].fields.map((field) => {
                 if (!ignoredKeys.includes(field)) {
                   fieldsState[field] = false
@@ -113,9 +122,10 @@ export default function FLA() {
               logMessageFilterDefaultState[key] = fieldsState
             }
           })
-
         setMessageFilters(logMessageFilterDefaultState)
+        setMeanValues(loadedLogMessages)
 
+        // Set event logs for the event lines on graph
         setLogEvents(
           loadedLogMessages['EV'].map((event) => ({
             time: event.TimeUS,
@@ -131,6 +141,56 @@ export default function FLA() {
         setLoadingFile(false)
       }
     }
+  }
+
+  // Loop over all fields and precalculate min, max, mean
+  function setMeanValues(loadedLogMessages) {
+    let rawValues = {}
+
+    // Putting all raw data into a list
+    Object.keys(loadedLogMessages).forEach((key) => {
+      if (key != 'format') {
+        let messageData = loadedLogMessages[key]
+        let messageDataMeans = {}
+
+        messageData.map((message) => {
+          Object.keys(message).forEach((dataPointKey) => {
+            let dataPoint = message[dataPointKey]
+            if (dataPointKey != dataPoint && dataPointKey != 'name') {
+              if (messageDataMeans[dataPointKey] == undefined) {
+                messageDataMeans[dataPointKey] = [dataPoint]
+              } else {
+                messageDataMeans[dataPointKey].push(dataPoint)
+              }
+            }
+          })
+        })
+
+        rawValues[key] = messageDataMeans
+      }
+    })
+
+    // Looping over each list and finding min, max, mean
+    let means = {}
+    Object.keys(rawValues).forEach((key) => {
+      means[key] = {}
+      let messageData = rawValues[key]
+      Object.keys(messageData).forEach((messageKey) => {
+        let messageValues = messageData[messageKey]
+        let min = Math.min(...messageValues)
+        let max = Math.max(...messageValues)
+        let mean =
+          messageValues.reduce((acc, curr) => acc + curr, 0) /
+          messageValues.length
+        means[`${key}/${messageKey}`] = {
+          mean: mean.toFixed(2),
+          max: max.toFixed(2),
+          min: min.toFixed(2),
+        }
+      })
+    })
+    setMessageMeans(means)
+    console.log(means)
   }
 
   // Turn on/off all filters
@@ -151,7 +211,10 @@ export default function FLA() {
   function removeDataset(label) {
     let [categoryName, fieldName] = label.split('/')
     let newFilters = { ...messageFilters }
-    if (newFilters[categoryName] && newFilters[categoryName][fieldName] !== undefined) {
+    if (
+      newFilters[categoryName] &&
+      newFilters[categoryName][fieldName] !== undefined
+    ) {
       newFilters[categoryName][fieldName] = false
     }
     setCustomColors((prevColors) => {
@@ -162,6 +225,7 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  // Close file
   function closeLogFile() {
     setFile(null)
     setLoadingFileProgress(0)
@@ -172,6 +236,7 @@ export default function FLA() {
     setColorIndex(0)
   }
 
+  // Set IPC renderer for log messages
   useEffect(() => {
     window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
       setLoadingFileProgress(message.percent)
@@ -193,20 +258,21 @@ export default function FLA() {
     return `rgba(${r},${g},${b},${alpha})`
   }
 
+  // Ensure file is loaded when selected
   useEffect(() => {
     if (file !== null) {
       loadFile()
     }
   }, [file])
 
+  // Update datasets based on the message filters constantly
   useEffect(() => {
     if (!messageFilters) return
 
     const datasets = []
-
-    // Update the datasets based on the message filters
     Object.keys(messageFilters).map((categoryName) => {
       const category = messageFilters[categoryName]
+
       Object.keys(category).map((fieldName) => {
         if (category[fieldName]) {
           const label = `${categoryName}/${fieldName}`
@@ -272,8 +338,13 @@ export default function FLA() {
                       <Accordion multiple={true}>
                         {presetCategories.map((category) => {
                           return (
-                            <Accordion.Item key={category.name} value={category.name}>
-                              <Accordion.Control>{category.name}</Accordion.Control>
+                            <Accordion.Item
+                              key={category.name}
+                              value={category.name}
+                            >
+                              <Accordion.Control>
+                                {category.name}
+                              </Accordion.Control>
                               <Accordion.Panel>
                                 <div className='flex flex-col gap-2'>
                                   {category.filters.map((filter, idx) => {
@@ -285,33 +356,53 @@ export default function FLA() {
                                           setCustomColors({})
                                           setColorIndex(0)
                                           let newFilters = { ...messageFilters }
-                                          Object.keys(filter.filters).map((categoryName) => {
-                                            if (
-                                              Object.keys(messageFilters).includes(categoryName)
-                                            ) {
-                                              filter.filters[categoryName].map((field) => {
-                                                newFilters[categoryName][field] = true
-                                                // assign a color
-                                                setCustomColors((prevColors) => {
-                                                  let newColors = { ...prevColors }
-                                                  if (!newColors[`${categoryName}/${field}`]) {
-                                                    newColors[`${categoryName}/${field}`] =
-                                                      colorPalette[
-                                                        Object.keys(newColors).length %
-                                                          colorPalette.length
-                                                      ]
-                                                  }
-                                                  console.log(newColors)
-                                                  return newColors
+                                          Object.keys(filter.filters).map(
+                                            (categoryName) => {
+                                              if (
+                                                Object.keys(
+                                                  messageFilters,
+                                                ).includes(categoryName)
+                                              ) {
+                                                filter.filters[
+                                                  categoryName
+                                                ].map((field) => {
+                                                  newFilters[categoryName][
+                                                    field
+                                                  ] = true
+                                                  // assign a color
+                                                  setCustomColors(
+                                                    (prevColors) => {
+                                                      let newColors = {
+                                                        ...prevColors,
+                                                      }
+                                                      if (
+                                                        !newColors[
+                                                          `${categoryName}/${field}`
+                                                        ]
+                                                      ) {
+                                                        newColors[
+                                                          `${categoryName}/${field}`
+                                                        ] =
+                                                          colorPalette[
+                                                            Object.keys(
+                                                              newColors,
+                                                            ).length %
+                                                              colorPalette.length
+                                                          ]
+                                                      }
+                                                      console.log(newColors)
+                                                      return newColors
+                                                    },
+                                                  )
+                                                  setColorIndex(2) // this is risky.
                                                 })
-                                                setColorIndex(2) // this is risky.
-                                              })
-                                            } else {
-                                              showErrorNotification(
-                                                `Your log file does not include ${categoryName}`,
-                                              )
-                                            }
-                                          })
+                                              } else {
+                                                showErrorNotification(
+                                                  `Your log file does not include ${categoryName}`,
+                                                )
+                                              }
+                                            },
+                                          )
 
                                           setMessageFilters(newFilters)
                                         }}
@@ -351,7 +442,11 @@ export default function FLA() {
                                         <Checkbox
                                           key={idx}
                                           label={fieldName}
-                                          checked={messageFilters[messageName][fieldName]}
+                                          checked={
+                                            messageFilters[messageName][
+                                              fieldName
+                                            ]
+                                          }
                                           onChange={(event) => {
                                             let newFilters = {
                                               ...messageFilters,
@@ -359,21 +454,41 @@ export default function FLA() {
                                             newFilters[messageName][fieldName] =
                                               event.currentTarget.checked
                                             // if unchecked remove custom color
-                                            if (!newFilters[messageName][fieldName]) {
+                                            if (
+                                              !newFilters[messageName][
+                                                fieldName
+                                              ]
+                                            ) {
                                               setCustomColors((prevColors) => {
-                                                let newColors = { ...prevColors }
-                                                delete newColors[`${messageName}/${fieldName}`]
+                                                let newColors = {
+                                                  ...prevColors,
+                                                }
+                                                delete newColors[
+                                                  `${messageName}/${fieldName}`
+                                                ]
                                                 return newColors
                                               })
                                             } // else, assign a color
                                             else {
                                               setCustomColors((prevColors) => {
-                                                let newColors = { ...prevColors }
-                                                if (!newColors[`${messageName}/${fieldName}`]) {
-                                                  newColors[`${messageName}/${fieldName}`] =
-                                                    colorPalette[colorIndex % colorPalette.length]
+                                                let newColors = {
+                                                  ...prevColors,
+                                                }
+                                                if (
+                                                  !newColors[
+                                                    `${messageName}/${fieldName}`
+                                                  ]
+                                                ) {
+                                                  newColors[
+                                                    `${messageName}/${fieldName}`
+                                                  ] =
+                                                    colorPalette[
+                                                      colorIndex %
+                                                        colorPalette.length
+                                                    ]
                                                   setColorIndex(
-                                                    (colorIndex + 1) % colorPalette.length,
+                                                    (colorIndex + 1) %
+                                                      colorPalette.length,
                                                   )
                                                 }
                                                 return newColors
@@ -422,13 +537,23 @@ export default function FLA() {
                 <Fragment key={item.label}>
                   {' '}
                   {/* I did this to let color change affect a specific label, not an index */}
-                  <div className='inline-flex items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
-                    {/* Name */}
-                    <span>{item.label}</span>
+                  <div className='inline-flex flex-col items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
+                    {/* Title and Delete Button */}
+                    <div className='inline-flex justify-between w-full content-center items-center'>
+                      <span className='text-md'>{item.label}</span>
+                      <ActionIcon
+                        variant='subtle'
+                        color={tailwindColors.red[500]}
+                        onClick={() => removeDataset(item.label)}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </div>
 
                     {/* Color Selector */}
                     <ColorInput
-                      className='w-32'
+                      className='w-full text-xs'
+                      size='xs'
                       format='hex'
                       swatches={[
                         '#f5f5f5',
@@ -449,17 +574,16 @@ export default function FLA() {
                       closeOnColorSwatchClick
                       withEyeDropper={false}
                       value={item.borderColor}
-                      rightSection={<IconPaint size={18} />}
+                      rightSection={<IconPaint size={16} />}
                       onChangeEnd={(color) => changeColor(item.label, color)}
                     />
-                    {/* Delete button */}
-                    <ActionIcon
-                      variant='subtle'
-                      color={tailwindColors.red[500]}
-                      onClick={() => removeDataset(item.label)}
-                    >
-                      <IconTrash size={18} />
-                    </ActionIcon>
+
+                    {/* Min, max, min */}
+                    <Box className='w-full text-gray-400'>
+                      Min: {messageMeans[item.label]['min']}, Max:{' '}
+                      {messageMeans[item.label]['max']}, Mean:{' '}
+                      {messageMeans[item.label]['mean']}
+                    </Box>
                   </div>
                 </Fragment>
               ))}

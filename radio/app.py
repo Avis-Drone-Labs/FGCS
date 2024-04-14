@@ -181,7 +181,8 @@ def set_state(data):
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list):
     global state
-    if state != "params":
+    validStates = ["params","config"]
+    if state not in validStates:
         socketio.emit(
             "params_error",
             {"message": "You must be on the params screen to save parameters."},
@@ -398,6 +399,18 @@ def testAllMotors(data):
 
     result = drone.testAllMotors(data)
     socketio.emit("motor_test_result", result)
+
+socketio.on("get_flightmodes")
+def getCurrentflightmodes():
+    global drone, state
+
+    params = drone.params
+    flightmodes = ['FLTMODE1','FLTMODE2','FLTMODE3','FLTMODE4','FLTMODE5','FLTMODE6']
+    values = []
+    for param in params:
+        if param['param_id'] in flightmodes:
+            values.append(param)
+    socketio.emit("current_flightmodes",values)
 
 
 def sendMessage(msg):

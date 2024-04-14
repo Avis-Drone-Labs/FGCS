@@ -5,6 +5,7 @@ import serial
 from drone import Drone
 from flask import Flask
 from flask_socketio import SocketIO
+from pymavlink import mavutil
 from serial.tools import list_ports
 from utils import getComPortNames
 
@@ -137,6 +138,16 @@ def set_state(data):
         drone.addMessageListener("SYS_STATUS", sendMessage)
         drone.addMessageListener("GPS_RAW_INT", sendMessage)
         drone.addMessageListener("RC_CHANNELS", sendMessage)
+    elif state == "graphs":
+        drone.stopAllDataStreams()
+
+        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS)
+        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
+        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
+
+        drone.addMessageListener("VFR_HUD", sendMessage)
+        drone.addMessageListener("ATTITUDE", sendMessage)
+        drone.addMessageListener("SYS_STATUS", sendMessage)
     elif state == "params":
         drone.stopAllDataStreams()
 
@@ -181,7 +192,7 @@ def set_state(data):
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list):
     global state
-    validStates = ["params","config"]
+    validStates = ["params", "config"]
     if state not in validStates:
         socketio.emit(
             "params_error",
@@ -400,17 +411,56 @@ def testAllMotors(data):
     result = drone.testAllMotors(data)
     socketio.emit("motor_test_result", result)
 
+
 socketio.on("get_flightmodes")
+
+
 def getCurrentflightmodes():
     global drone, state
 
     params = drone.params
-    flightmodes = ['FLTMODE1','FLTMODE2','FLTMODE3','FLTMODE4','FLTMODE5','FLTMODE6']
+    flightmodes = [
+        "FLTMODE1",
+        "FLTMODE2",
+        "FLTMODE3",
+        "FLTMODE4",
+        "FLTMODE5",
+        "FLTMODE6",
+    ]
     values = []
     for param in params:
-        if param['param_id'] in flightmodes:
+        if param["param_id"] in flightmodes:
             values.append(param)
-    socketio.emit("current_flightmodes",values)
+    socketio.emit("current_flightmodes", values)
+
+
+@socketio.on("get_current_mission")
+def getCurrentMission():
+    global state
+    if state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the dashboard screen to access the gripper."},
+        )
+        print(f"Current state: {state}")
+        return
+
+    global drone
+    if not drone:
+        return
+
+    mission_items = [item.to_dict() for item in drone.mission.mission_items]
+    fence_items = [item.to_dict() for item in drone.mission.fence_items]
+    rally_items = [item.to_dict() for item in drone.mission.rally_items]
+
+    socketio.emit(
+        "current_mission",
+        {
+            "mission_items": mission_items,
+            "fence_items": fence_items,
+            "rally_items": rally_items,
+        },
+    )
 
 
 def sendMessage(msg):

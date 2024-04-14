@@ -1,23 +1,39 @@
+/*
+  Falcon Log Analyser. This is a custom log analyser written to handle MavLink log files.
+
+  This allows users to toggle all messages on/off, look at preset message groups, save message groups, and follow the drone in 3D.
+*/
+
+// Base imports
+import { Fragment, useEffect, useState } from 'react'
+
+// 3rd Party Imports
 import {
   Accordion,
+  ActionIcon,
+  Box,
   Button,
   Checkbox,
-  FileInput,
-  Group,
-  Modal,
+  ColorInput,
+  FileButton,
+  Progress,
   ScrollArea,
 } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import Layout from './components/layout'
+import { IconPaint, IconTrash } from '@tabler/icons-react'
 
-import { useEffect, useState } from 'react'
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
-import Graph from './components/fla/graph'
+
+// Custom components and helpers
 import {
   showErrorNotification,
   showSuccessNotification,
-} from './notification.js'
+} from './helpers/notification.js'
+import { logMessageDescriptions } from './helpers/logMessageDescriptions.js'
+import { logEventIds } from './components/fla/logEventIds.js'
+import Graph from './components/fla/graph'
+import Layout from './components/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -26,29 +42,53 @@ const presetCategories = [
   {
     name: 'Speed',
     filters: [
-      {name: 'Ground speed vs Air Speed', filters: {"GPS": ["Spd"], "ARSP": ["Airspeed"]}}
+      {
+        name: 'Ground speed vs Air Speed',
+        filters: { GPS: ['Spd'], ARSP: ['Airspeed'] },
+      },
     ],
   },
   {
     name: 'Attitude',
     filters: [
-      { name: 'Achieved Roll and Pitch', filters: {"ATT": ["Roll", "Pitch"]} },
-      { name: 'Desired Roll vs Achieved Roll', filters: {"ATT": ["DesRoll", "Roll"]} },
-      { name: 'Desired Pitch vs Achieved Pitch', filters: {"ATT": ["DesPitch", "Pitch"]} },
+      { name: 'Achieved Roll and Pitch', filters: { ATT: ['Roll', 'Pitch'] } },
+      {
+        name: 'Desired Roll vs Achieved Roll',
+        filters: { ATT: ['DesRoll', 'Roll'] },
+      },
+      {
+        name: 'Desired Pitch vs Achieved Pitch',
+        filters: { ATT: ['DesPitch', 'Pitch'] },
+      },
     ],
   },
 ]
-const ignoredKeys = ["TimeUS", "function", "source", "result"]
+
+const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER']
+const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
+const colorPalette = [
+  '#36a2eb',
+  '#ff6383',
+  '#fe9e40',
+  '#4ade80',
+  '#ffcd57',
+  '#4cbfc0',
+  '#9966ff',
+  '#c8cbce',
+]
 
 export default function FLA() {
-  // States and disclosures used in react frontend
-  const [isModalOpen, { open: openModal, close: closeModal }] =
-    useDisclosure(false)
+  // States in react frontend
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
+  const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [logMessages, setLogMessages] = useState(null)
+  const [logEvents, setLogEvents] = useState(null)
   const [chartData, setChartData] = useState({ datasets: [] })
   const [messageFilters, setMessageFilters] = useState(null)
+  const [customColors, setCustomColors] = useState({})
+  const [colorIndex, setColorIndex] = useState(0)
+  const [messageMeans, setMessageMeans] = useState({})
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -59,7 +99,6 @@ export default function FLA() {
       if (result.success) {
         // Load messages into states
         const loadedLogMessages = result.messages
-        console.log(loadedLogMessages)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
 
@@ -68,26 +107,90 @@ export default function FLA() {
         Object.keys(loadedLogMessages['format'])
           .sort()
           .forEach((key) => {
-            if (Object.keys(loadedLogMessages).includes(key)) {
+            if (
+              Object.keys(loadedLogMessages).includes(key) &&
+              !ignoredMessages.includes(key)
+            ) {
               const fieldsState = {}
-              loadedLogMessages['format'][key].fields.map(
-                (field) => {if (!ignoredKeys.includes(field)) {(fieldsState[field] = false)}},
-              )
+
+              // Set all field states to false if they're not ignored
+              loadedLogMessages['format'][key].fields.map((field) => {
+                if (!ignoredKeys.includes(field)) {
+                  fieldsState[field] = false
+                }
+              })
               logMessageFilterDefaultState[key] = fieldsState
             }
           })
-
         setMessageFilters(logMessageFilterDefaultState)
+        setMeanValues(loadedLogMessages)
+
+        // Set event logs for the event lines on graph
+        setLogEvents(
+          loadedLogMessages['EV'].map((event) => ({
+            time: event.TimeUS,
+            message: logEventIds[event.Id],
+          })),
+        )
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-        closeModal()
       } else {
         // Error
         showErrorNotification(result.error)
         setLoadingFile(false)
       }
     }
+  }
+
+  // Loop over all fields and precalculate min, max, mean
+  function setMeanValues(loadedLogMessages) {
+    let rawValues = {}
+
+    // Putting all raw data into a list
+    Object.keys(loadedLogMessages).forEach((key) => {
+      if (key != 'format') {
+        let messageData = loadedLogMessages[key]
+        let messageDataMeans = {}
+
+        messageData.map((message) => {
+          Object.keys(message).forEach((dataPointKey) => {
+            let dataPoint = message[dataPointKey]
+            if (dataPointKey != dataPoint && dataPointKey != 'name') {
+              if (messageDataMeans[dataPointKey] == undefined) {
+                messageDataMeans[dataPointKey] = [dataPoint]
+              } else {
+                messageDataMeans[dataPointKey].push(dataPoint)
+              }
+            }
+          })
+        })
+
+        rawValues[key] = messageDataMeans
+      }
+    })
+
+    // Looping over each list and finding min, max, mean
+    let means = {}
+    Object.keys(rawValues).forEach((key) => {
+      means[key] = {}
+      let messageData = rawValues[key]
+      Object.keys(messageData).forEach((messageKey) => {
+        let messageValues = messageData[messageKey]
+        let min = Math.min(...messageValues)
+        let max = Math.max(...messageValues)
+        let mean =
+          messageValues.reduce((acc, curr) => acc + curr, 0) /
+          messageValues.length
+        means[`${key}/${messageKey}`] = {
+          mean: mean.toFixed(2),
+          max: max.toFixed(2),
+          min: min.toFixed(2),
+        }
+      })
+    })
+    setMessageMeans(means)
+    console.log(means)
   }
 
   // Turn on/off all filters
@@ -100,189 +203,393 @@ export default function FLA() {
       })
     })
     setMessageFilters(newFilters)
+    setCustomColors({})
+    setColorIndex(0)
   }
 
+  // Turn off only one filter at a time
+  function removeDataset(label) {
+    let [categoryName, fieldName] = label.split('/')
+    let newFilters = { ...messageFilters }
+    if (
+      newFilters[categoryName] &&
+      newFilters[categoryName][fieldName] !== undefined
+    ) {
+      newFilters[categoryName][fieldName] = false
+    }
+    setCustomColors((prevColors) => {
+      let newColors = { ...prevColors }
+      delete newColors[label]
+      return newColors
+    })
+    setMessageFilters(newFilters)
+  }
+
+  // Close file
+  function closeLogFile() {
+    setFile(null)
+    setLoadingFileProgress(0)
+    setLogMessages(null)
+    setChartData({ datasets: [] })
+    setMessageFilters(null)
+    setCustomColors({})
+    setColorIndex(0)
+  }
+
+  // Set IPC renderer for log messages
+  useEffect(() => {
+    window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
+      setLoadingFileProgress(message.percent)
+    })
+
+    return () => {
+      window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
+    }
+  }, [])
+
+  // Color changer
+  function changeColor(label, color) {
+    setCustomColors((prevColors) => ({ ...prevColors, [label]: color }))
+  }
+
+  // Helper function to convert hex color to rgba
+  function hexToRgba(hex, alpha) {
+    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
+    return `rgba(${r},${g},${b},${alpha})`
+  }
+
+  // Ensure file is loaded when selected
+  useEffect(() => {
+    if (file !== null) {
+      loadFile()
+    }
+  }, [file])
+
+  // Update datasets based on the message filters constantly
   useEffect(() => {
     if (!messageFilters) return
 
     const datasets = []
-
-    // Update the datasets based on the message filters
     Object.keys(messageFilters).map((categoryName) => {
       const category = messageFilters[categoryName]
+
       Object.keys(category).map((fieldName) => {
         if (category[fieldName]) {
+          const label = `${categoryName}/${fieldName}`
+          const color = customColors[label]
           datasets.push({
-            label: `${categoryName}/${fieldName}`,
+            label: label,
             data: logMessages[categoryName].map((d) => ({
               x: d.TimeUS,
               y: d[fieldName],
             })),
+            borderColor: color,
+            backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
           })
         }
       })
     })
 
     setChartData({ datasets: datasets })
-  }, [messageFilters])
+  }, [messageFilters, customColors])
 
   return (
     <Layout currentPage='fla'>
       {logMessages === null ? (
         // Open flight logs section
-        <>
-          <Modal
-            opened={isModalOpen}
-            onClose={closeModal}
-            title='Open Log File'
-            centered
-            overlayProps={{
-              backgroundOpacity: 0.55,
-              blur: 3,
-            }}
-            withCloseButton={false}
+        <div className='flex flex-col items-center justify-center h-full w-min mx-auto'>
+          <FileButton
+            color={tailwindColors.blue[600]}
+            variant='filled'
+            onChange={setFile}
+            accept='.log'
+            loading={loadingFile}
           >
-            <FileInput
-              variant='filled'
-              label='File Location'
-              description='Select a file to analyse'
-              placeholder='file.log'
-              onChange={setFile}
-              clearable
-              accept='.log'
+            {(props) => <Button {...props}>Analyse a log</Button>}
+          </FileButton>
+          {loadingFile && (
+            <Progress
+              value={loadingFileProgress}
+              className='w-full my-4'
+              color={tailwindColors.green[500]}
             />
-
-            <Group justify='space-between' className='pt-4'>
-              <Button
-                variant='filled'
-                color={tailwindColors.red[600]}
-                onClick={closeModal}
-              >
-                Close
-              </Button>
-              <Button
-                variant='filled'
-                color={tailwindColors.green[600]}
-                onClick={loadFile}
-                disabled={!file}
-                loading={loadingFile}
-              >
-                Analyse
-              </Button>
-            </Group>
-          </Modal>
-          <div className='flex flex-col w-max pl-10'>
-            No file loaded
-            <Button
-              variant='filled'
-              color={tailwindColors.green[600]}
-              onClick={openModal}
-              data-autofocus
-            >
-              Open File
-            </Button>
-          </div>
-        </>
+          )}
+        </div>
       ) : (
         // Graphs section
-        <div className='flex gap-4 flex-cols h-3/4'>
-          {/* Message selection column */}
-          <div className='flex-none basis-1/4'>
-            <ScrollArea className='h-full max-h-max'>
-              <Accordion multiple={true}>
-                {/* Presets */}
-                <Accordion.Item key='presets' value='presets'>
-                  <Accordion.Control>Presets</Accordion.Control>
-                  <Accordion.Panel>
-                    <Accordion multiple={true}>
-                      {presetCategories.map((category) => {
-                        return (
-                          <Accordion.Item
-                            key={category.name}
-                            value={category.name}
-                          >
-                            <Accordion.Control>
-                              {category.name}
-                            </Accordion.Control>
-                            <Accordion.Panel>
-                            {category.filters.map((filter, idx) => {
-                              return (
-                                <div className="pb-2">
-                                  <Button
-                                    key={idx}
-                                    onClick={() => {
-                                      clearFilters()
-                                      let newFilters = { ...messageFilters }
-                                      Object.keys(filter.filters).map((categoryName) => {
-                                        if (Object.keys(messageFilters).includes(categoryName)) {
-                                          filter.filters[categoryName].map((field) => {
-                                            newFilters[categoryName][field] = true
-                                          })
-                                        } else {
-                                          showErrorNotification(`Your log file does not include ${categoryName}`)
-                                        }
-                                      })
-                                      setMessageFilters(newFilters)
-                                    }}
-                                  >
-                                    {filter.name}
-                                  </Button>
+        <>
+          <div className='flex gap-4 h-3/4'>
+            {/* Message selection column */}
+            <div className='w-1/4 pb-6'>
+              <Button
+                className='mx-4 my-2'
+                size='xs'
+                color={tailwindColors.red[500]}
+                onClick={closeLogFile}
+              >
+                Close file
+              </Button>
+              <ScrollArea className='h-full max-h-max'>
+                <Accordion multiple={true}>
+                  {/* Presets */}
+                  <Accordion.Item key='presets' value='presets'>
+                    <Accordion.Control>Presets</Accordion.Control>
+                    <Accordion.Panel>
+                      <Accordion multiple={true}>
+                        {presetCategories.map((category) => {
+                          return (
+                            <Accordion.Item
+                              key={category.name}
+                              value={category.name}
+                            >
+                              <Accordion.Control>
+                                {category.name}
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <div className='flex flex-col gap-2'>
+                                  {category.filters.map((filter, idx) => {
+                                    return (
+                                      <Button
+                                        key={idx}
+                                        onClick={() => {
+                                          clearFilters()
+                                          setCustomColors({})
+                                          setColorIndex(0)
+                                          let newFilters = { ...messageFilters }
+                                          Object.keys(filter.filters).map(
+                                            (categoryName) => {
+                                              if (
+                                                Object.keys(
+                                                  messageFilters,
+                                                ).includes(categoryName)
+                                              ) {
+                                                filter.filters[
+                                                  categoryName
+                                                ].map((field) => {
+                                                  newFilters[categoryName][
+                                                    field
+                                                  ] = true
+                                                  // assign a color
+                                                  setCustomColors(
+                                                    (prevColors) => {
+                                                      let newColors = {
+                                                        ...prevColors,
+                                                      }
+                                                      if (
+                                                        !newColors[
+                                                          `${categoryName}/${field}`
+                                                        ]
+                                                      ) {
+                                                        newColors[
+                                                          `${categoryName}/${field}`
+                                                        ] =
+                                                          colorPalette[
+                                                            Object.keys(
+                                                              newColors,
+                                                            ).length %
+                                                              colorPalette.length
+                                                          ]
+                                                      }
+                                                      console.log(newColors)
+                                                      return newColors
+                                                    },
+                                                  )
+                                                  setColorIndex(2) // this is risky.
+                                                })
+                                              } else {
+                                                showErrorNotification(
+                                                  `Your log file does not include ${categoryName}`,
+                                                )
+                                              }
+                                            },
+                                          )
+
+                                          setMessageFilters(newFilters)
+                                        }}
+                                      >
+                                        {filter.name}
+                                      </Button>
+                                    )
+                                  })}
                                 </div>
-                              )
-                            })}
-                            </Accordion.Panel>
-                          </Accordion.Item>
-                        )
-                      })}
-                    </Accordion>
-                  </Accordion.Panel>
-                </Accordion.Item>
+                              </Accordion.Panel>
+                            </Accordion.Item>
+                          )
+                        })}
+                      </Accordion>
+                    </Accordion.Panel>
+                  </Accordion.Item>
 
-                {/* All messages */}
-                <Accordion.Item key='messages' value='messages'>
-                  <Accordion.Control>Messages</Accordion.Control>
-                  <Accordion.Panel>
-                    <Accordion multiple={false}>
-                      {Object.keys(messageFilters).map((messageName, idx) => {
-                        return (
-                          <Accordion.Item key={idx} value={messageName}>
-                            <Accordion.Control>{messageName}</Accordion.Control>
-                            <Accordion.Panel>
-                              {Object.keys(messageFilters[messageName]).map(
-                                (fieldName, idx) => {
-                                  return (
-                                    <Checkbox
-                                      key={idx}
-                                      label={fieldName}
-                                      checked={
-                                        messageFilters[messageName][fieldName]
-                                      }
-                                      onChange={(event) => {
-                                        let newFilters = { ...messageFilters }
-                                        newFilters[messageName][fieldName] =
-                                          event.currentTarget.checked
-                                        setMessageFilters(newFilters)
-                                      }}
-                                    />
-                                  )
-                                },
-                              )}
-                            </Accordion.Panel>
-                          </Accordion.Item>
-                        )
-                      })}
-                    </Accordion>
-                  </Accordion.Panel>
-                </Accordion.Item>
-              </Accordion>
-            </ScrollArea>
+                  {/* All messages */}
+                  <Accordion.Item key='messages' value='messages'>
+                    <Accordion.Control>Messages</Accordion.Control>
+                    <Accordion.Panel>
+                      <Accordion multiple={false}>
+                        {Object.keys(messageFilters).map((messageName, idx) => {
+                          return (
+                            <Accordion.Item key={idx} value={messageName}>
+                              <Accordion.Control>
+                                <p>{messageName}</p>
+                                <p className='text-gray-500 italic text-sm'>
+                                  {logMessageDescriptions[messageName]}
+                                </p>
+                              </Accordion.Control>
+                              <Accordion.Panel>
+                                <div className='flex flex-col gap-1'>
+                                  {Object.keys(messageFilters[messageName]).map(
+                                    (fieldName, idx) => {
+                                      return (
+                                        <Checkbox
+                                          key={idx}
+                                          label={fieldName}
+                                          checked={
+                                            messageFilters[messageName][
+                                              fieldName
+                                            ]
+                                          }
+                                          onChange={(event) => {
+                                            let newFilters = {
+                                              ...messageFilters,
+                                            }
+                                            newFilters[messageName][fieldName] =
+                                              event.currentTarget.checked
+                                            // if unchecked remove custom color
+                                            if (
+                                              !newFilters[messageName][
+                                                fieldName
+                                              ]
+                                            ) {
+                                              setCustomColors((prevColors) => {
+                                                let newColors = {
+                                                  ...prevColors,
+                                                }
+                                                delete newColors[
+                                                  `${messageName}/${fieldName}`
+                                                ]
+                                                return newColors
+                                              })
+                                            } // else, assign a color
+                                            else {
+                                              setCustomColors((prevColors) => {
+                                                let newColors = {
+                                                  ...prevColors,
+                                                }
+                                                if (
+                                                  !newColors[
+                                                    `${messageName}/${fieldName}`
+                                                  ]
+                                                ) {
+                                                  newColors[
+                                                    `${messageName}/${fieldName}`
+                                                  ] =
+                                                    colorPalette[
+                                                      colorIndex %
+                                                        colorPalette.length
+                                                    ]
+                                                  setColorIndex(
+                                                    (colorIndex + 1) %
+                                                      colorPalette.length,
+                                                  )
+                                                }
+                                                return newColors
+                                              })
+                                            }
+                                            setMessageFilters(newFilters)
+                                          }}
+                                        />
+                                      )
+                                    },
+                                  )}
+                                </div>
+                              </Accordion.Panel>
+                            </Accordion.Item>
+                          )
+                        })}
+                      </Accordion>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                </Accordion>
+              </ScrollArea>
+            </div>
+
+            {/* Graph column */}
+            <div className='w-full h-full pr-4'>
+              <Graph data={chartData} events={logEvents} />
+            </div>
           </div>
 
-          {/* Graph column */}
-          <div className='basis-3/4 pr-4'>
-            <Graph data={chartData} />
+          {/* Plots Setup */}
+          <div className='flex gap-4 pt-6 flex-cols h-1/4'>
+            <div className='ml-4'>
+              <div className='flex flex-row items-center'>
+                <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
+                {/* Clear Filters */}
+                <Button
+                  className='ml-6'
+                  size='xs'
+                  color={tailwindColors.red[500]}
+                  onClick={clearFilters}
+                >
+                  Clear graph
+                </Button>
+              </div>
+              {chartData.datasets.map((item) => (
+                <Fragment key={item.label}>
+                  {' '}
+                  {/* I did this to let color change affect a specific label, not an index */}
+                  <div className='inline-flex flex-col items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
+                    {/* Title and Delete Button */}
+                    <div className='inline-flex justify-between w-full content-center items-center'>
+                      <span className='text-md'>{item.label}</span>
+                      <ActionIcon
+                        variant='subtle'
+                        color={tailwindColors.red[500]}
+                        onClick={() => removeDataset(item.label)}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </div>
+
+                    {/* Color Selector */}
+                    <ColorInput
+                      className='w-full text-xs'
+                      size='xs'
+                      format='hex'
+                      swatches={[
+                        '#f5f5f5',
+                        '#868e96',
+                        '#fa5252',
+                        '#e64980',
+                        '#be4bdb',
+                        '#7950f2',
+                        '#4c6ef5',
+                        '#228be6',
+                        '#15aabf',
+                        '#12b886',
+                        '#40c057',
+                        '#82c91e',
+                        '#fab005',
+                        '#fd7e14',
+                      ]}
+                      closeOnColorSwatchClick
+                      withEyeDropper={false}
+                      value={item.borderColor}
+                      rightSection={<IconPaint size={16} />}
+                      onChangeEnd={(color) => changeColor(item.label, color)}
+                    />
+
+                    {/* Min, max, min */}
+                    <Box className='w-full text-gray-400'>
+                      Min: {messageMeans[item.label]['min']}, Max:{' '}
+                      {messageMeans[item.label]['max']}, Mean:{' '}
+                      {messageMeans[item.label]['mean']}
+                    </Box>
+                  </div>
+                </Fragment>
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </Layout>
   )

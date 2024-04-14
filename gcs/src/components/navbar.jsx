@@ -5,17 +5,18 @@ import {
   LoadingOverlay,
   Modal,
   Select,
+  Tooltip,
 } from '@mantine/core'
-import { useDisclosure, useLocalStorage } from '@mantine/hooks'
+import { useDisclosure, useInterval, useLocalStorage } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 
-import { IconRefresh } from '@tabler/icons-react'
+import { IconInfoCircle, IconRefresh } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { twMerge } from 'tailwind-merge'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config.js'
-import { showErrorNotification } from '../notification.js'
-import { socket } from '../socket'
+import { showErrorNotification } from '../helpers/notification.js'
+import { socket } from '../helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -37,13 +38,21 @@ export default function Navbar({ currentPage }) {
   })
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
   const [connecting, setConnecting] = useState(false)
+  const [connectedToSocket, setConnectedToSocket] = useState(false)
+  const checkIfConnectedToSocket = useInterval(
+    () => setConnectedToSocket(socket.connected),
+    3000,
+  )
 
   function getComPorts() {
+    if (!connectedToSocket) return
     socket.emit('get_com_ports')
     setFetchingComPorts(true)
   }
 
   useEffect(() => {
+    checkIfConnectedToSocket.start()
+
     if (selectedComPort === null) {
       console.log('check connection to drone')
       socket.emit('is_connected_to_drone')
@@ -62,8 +71,10 @@ export default function Navbar({ currentPage }) {
     socket.on('list_com_ports', (msg) => {
       setFetchingComPorts(false)
       setComPorts(msg)
-      const possibleComPort = msg.find((port) =>
-        port.toLowerCase().includes('mavlink'),
+      const possibleComPort = msg.find(
+        (port) =>
+          port.toLowerCase().includes('mavlink') ||
+          port.toLowerCase().includes('ardupilot'),
       )
       if (possibleComPort !== undefined) {
         setSelectedComPort(possibleComPort)
@@ -86,6 +97,7 @@ export default function Navbar({ currentPage }) {
 
     socket.on('disconnect', () => {
       setConnected(false)
+      setConnecting(false)
     })
 
     socket.on('com_port_error', (msg) => {
@@ -96,6 +108,7 @@ export default function Navbar({ currentPage }) {
     })
 
     return () => {
+      checkIfConnectedToSocket.stop()
       socket.off('is_connected_to_drone')
       socket.off('list_com_ports')
       socket.off('connected_to_drone')
@@ -126,7 +139,10 @@ export default function Navbar({ currentPage }) {
     <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
       <Modal
         opened={opened}
-        onClose={close}
+        onClose={() => {
+          close()
+          setConnecting(false)
+        }}
         title='Select COM Port'
         centered
         overlayProps={{
@@ -157,24 +173,41 @@ export default function Navbar({ currentPage }) {
             label='Baud Rate'
             description='Select a baud rate for the specified COM Port'
             data={[
-              300, 1200, 4800, 9600, 19200, 13400, 38400, 57600, 74880, 115200,
-              230400, 250000,
+              '300',
+              '1200',
+              '4800',
+              '9600',
+              '19200',
+              '13400',
+              '38400',
+              '57600',
+              '74880',
+              '115200',
+              '230400',
+              '250000',
             ]}
             value={selectedBaudRate}
             onChange={setSelectedBaudRate}
           />
-          <Checkbox
-            label='Wireless Connection'
-            description='Check this if you are using a wireless connection'
-            checked={wireless}
-            onChange={(event) => setWireless(event.currentTarget.checked)}
-          />
+          <div className='flex flex-row gap-2'>
+            <Checkbox
+              label='Wireless Connection'
+              checked={wireless}
+              onChange={(event) => setWireless(event.currentTarget.checked)}
+            />
+            <Tooltip label='Wireless connection mode reduces the telemetry data rates to save bandwidth'>
+              <IconInfoCircle size={20} />
+            </Tooltip>
+          </div>
         </div>
         <Group justify='space-between' className='pt-4'>
           <Button
             variant='filled'
             color={tailwindColors.red[600]}
-            onClick={close}
+            onClick={() => {
+              close()
+              setConnecting(false)
+            }}
           >
             Close
           </Button>
@@ -183,7 +216,7 @@ export default function Navbar({ currentPage }) {
             color={tailwindColors.green[600]}
             onClick={saveCOMData}
             data-autofocus
-            disabled={selectedComPort === null}
+            disabled={!connectedToSocket || selectedComPort === null}
             loading={connecting}
           >
             Connect
@@ -239,14 +272,22 @@ export default function Navbar({ currentPage }) {
 
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
         <p>{connected && selectedComPort}</p>
-        <Button
-          onClick={connected ? disconnect : open}
-          color={
-            connected ? tailwindColors.red[600] : tailwindColors.green[600]
-          }
-        >
-          {connected ? 'Disconnect' : 'Connect'}
-        </Button>
+        {connectedToSocket ? (
+          <Button
+            onClick={connected ? disconnect : open}
+            color={
+              connected ? tailwindColors.red[600] : tailwindColors.green[600]
+            }
+          >
+            {connected ? 'Disconnect' : 'Connect'}
+          </Button>
+        ) : (
+          <Tooltip label='Not connected to socket'>
+            <Button data-disabled onClick={(event) => event.preventDefault()}>
+              Connect
+            </Button>
+          </Tooltip>
+        )}
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ import { cloneElement, useEffect, useState } from 'react'
 import { Tooltip } from '@mantine/core'
 import { useInterval } from '@mantine/hooks'
 import moment from 'moment'
-import { socket } from '../socket'
+import { socket } from '../helpers/socket'
 
 export function StatusSection({ icon, value, tooltip }) {
   return (

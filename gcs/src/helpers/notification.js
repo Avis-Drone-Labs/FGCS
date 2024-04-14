@@ -1,6 +1,6 @@
 import { notifications } from '@mantine/notifications'
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../tailwind.config.js'
+import tailwindConfig from '../../tailwind.config.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -24,6 +24,6 @@ export function showNotification(title, message) {
   notifications.show({
     title: title,
     message: message,
-    color: tailwindColors.blue[600]
+    color: tailwindColors.blue[600],
   })
 }

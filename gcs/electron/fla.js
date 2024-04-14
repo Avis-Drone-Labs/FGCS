@@ -6,10 +6,11 @@ import fs from 'fs'
 const stringTypes = ['n', 'N', 'Z']
 const floatTypes = ['f', 'd']
 
-function parseLogFile(fileData) {
+function parseLogFile(fileData, webContents) {
   const formatMessages = {}
   const messages = {}
-  for (const line of fileData) {
+  const numberOfLines = fileData.length
+  for (const [idx, line] of fileData.entries()) {
     const splitLineData = line.split(',').map(function (item) {
       return item.trim()
     })
@@ -81,21 +82,33 @@ function parseLogFile(fileData) {
         messages[messageName].push(messageObj)
       }
     }
+    if (idx % 5000 === 0) {
+      webContents.send('fla:log-parse-progress', {
+        percent: Math.round((idx / numberOfLines) * 100),
+      })
+    }
   }
 
+  webContents.send('fla:log-parse-progress', {
+    percent: 100,
+  })
+
   // Add format messages to messages for later digesting and return
-  messages["format"] = formatMessages
+  messages['format'] = formatMessages
   return messages
 }
 
-export default function openFile(_event, filePath) {
+export default function openFile(event, filePath) {
   if (filePath == null) {
     return null
   }
 
   try {
     const data = fs.readFileSync(filePath, 'utf8')
-    return { success: true, messages: parseLogFile(data.split('\n')) }
+    return {
+      success: true,
+      messages: parseLogFile(data.split('\n'), event.sender),
+    }
   } catch (err) {
     console.error(err)
     return { success: false, error: err }

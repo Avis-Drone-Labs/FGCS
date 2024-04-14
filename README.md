@@ -10,26 +10,32 @@ When adding a new folder please write up about it in the correct README.md and a
 
 ## How to run
 
-1. Install concurrently with `npm i concurrently -g`
-2. Make sure that you are in your virtual environment and then run `./run.bat` and both the frontend and backend will load. If you want to do run them individually then:
-
 ### Running Frontend Manually
 
 1. `cd gcs`
-2. `yarn dev`
+2. `yarn` (to install dependencies)
+3. `yarn dev`
 
 ### Running Backend Manually
 
-1. Make sure you're in a virtual environment with `requirements.txt` installed
-2. python app.py
+1. `cd radio`
+2. Make sure you're in a virtual environment and all dependencies are installed using `pip install -r requirements.txt`
+3. `python app.py`
+
+#### Creating a virtual environment
+
+Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
+
+### Running both simultaneously
+
+To run both the frontend and backend at the same time, you need to make sure all the requirements are installed for both yarn and Python. Then you can install a script globally using `npm install -g concurrently`. After activating your Python virtual environment, you can run `./run.bat` and this should start up both the frontend and backend in one terminal.
 
 ## Stack
 
 - GUI
   - Electron + Vite + React (JavaScript)
-- Radio
-  - Python
-  - C++
+- Backend
+  - Flask (Python)
 
 ## Python Version
 

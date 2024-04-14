@@ -1,31 +1,45 @@
+/*
+  The dashboard screen. This is the first screen to be loaded in and is where the user will spend most of their time.
+
+  This contains the map, live indicator, and GPS data. All of these are imported as components and are integrated in this file with logic linking them together.
+*/
+
+// Base imports
+import { useEffect, useRef, useState } from 'react'
+
+// 3rd Party Imports
+import { ActionIcon, Button, Tooltip } from '@mantine/core'
 import { useListState, useLocalStorage } from '@mantine/hooks'
 import {
+  IconAnchor,
+  IconAnchorOff,
   IconAntenna,
   IconBattery2,
   IconGps,
   IconRadar,
   IconSatellite,
 } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
-import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
-import StatusBar, { StatusSection } from './components/statusBar'
+
+// Helper javascript files
 import {
   COPTER_MODES,
   GPS_FIX_TYPES,
   MAV_STATE,
   PLANE_MODES,
-} from './mavlinkConstants'
+} from './helpers/mavlinkConstants'
+import { showErrorNotification } from './helpers/notification'
+import { socket } from './helpers/socket'
 
-import { Button } from '@mantine/core'
+// Custom component
+import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import Layout from './components/layout'
 import MapSection from './components/map'
+import StatusBar, { StatusSection } from './components/statusBar'
 import StatusMessages from './components/statusMessages'
-import { showErrorNotification } from './notification'
-import { socket } from './socket'
 
 const MAV_AUTOPILOT_INVALID = 8
 
-export default function App() {
+export default function Dashboard() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
@@ -46,13 +60,26 @@ export default function App() {
   })
   const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
+  const [missionItems, setMissionItems] = useState({
+    mission_items: [],
+    fence_items: [],
+    rally_items: [],
+  })
+
+  const [followDrone, setFollowDrone] = useState(false)
+  const mapRef = useRef()
+
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
     BATTERY_STATUS: (msg) => setBatteryData(msg),
     ATTITUDE: (msg) => setAttitudeData(msg),
     GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
     NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-    HEARTBEAT: (msg) => { if (msg.autopilot !== MAV_AUTOPILOT_INVALID) { setHeartbeatData(msg) } },
+    HEARTBEAT: (msg) => {
+      if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
+        setHeartbeatData(msg)
+      }
+    },
     STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
     SYS_STATUS: (msg) => setSysStatusData(msg),
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
@@ -65,6 +92,7 @@ export default function App() {
     } else {
       socket.emit('set_state', { state: 'dashboard' })
       statustextMessagesHandler.setState([])
+      socket.emit('get_current_mission')
     }
 
     socket.on('incoming_msg', (msg) => {
@@ -80,11 +108,26 @@ export default function App() {
       }
     })
 
+    socket.on('current_mission', (msg) => {
+      console.log(msg)
+      setMissionItems(msg)
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
+      socket.off('current_mission')
     }
   }, [connected])
+
+  // Following drone logic
+  useEffect(() => {
+    if (mapRef.current && !gpsData.lon && !gpsData.lat && followDrone) {
+      let lat = gpsData.lat * 1e-7
+      let lon = gpsData.lon * 1e-7
+      mapRef.current.setCenter({ lng: lon, lat: lat })
+    }
+  }, [gpsData])
 
   function getFlightMode() {
     if (!heartbeatData.type) {
@@ -118,8 +161,10 @@ export default function App() {
       <div className='relative flex flex-auto w-full h-full'>
         <div className='w-full'>
           <MapSection
+            passedRef={mapRef}
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+            missionItems={missionItems}
           />
         </div>
         <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
@@ -250,9 +295,9 @@ export default function App() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${
-              gpsData.lat !== undefined ? gpsData.lat.toFixed(6) : 0
-            }, ${gpsData.lon !== undefined ? gpsData.lon.toFixed(6) : 0})`}
+            value={`(${gpsData.lat !== undefined ? gpsData.lat * 1e-7 : 0}, ${
+              gpsData.lon !== undefined ? gpsData.lon * 1e-7 : 0
+            })`}
             tooltip='GPS (lat, lon)'
           />
           <StatusSection
@@ -275,6 +320,28 @@ export default function App() {
             tooltip='Battery remaining'
           />
         </StatusBar>
+
+        {/* Right side floating toolbar */}
+        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md'>
+          <Tooltip
+            label={
+              !gpsData.lon && !gpsData.lat
+                ? 'No GPS data'
+                : followDrone
+                  ? 'Stop Following'
+                  : 'Follow Drone'
+            }
+          >
+            <ActionIcon
+              disabled={!gpsData.lon && !gpsData.lat}
+              onClick={() => {
+                setFollowDrone(!followDrone)
+              }}
+            >
+              {followDrone ? <IconAnchorOff /> : <IconAnchor />}
+            </ActionIcon>
+          </Tooltip>
+        </div>
 
         {statustextMessages.length !== 0 && (
           <StatusMessages

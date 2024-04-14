@@ -1,5 +1,4 @@
 import copy
-import os
 import struct
 import time
 import traceback
@@ -16,11 +15,29 @@ from customTypes import (
     Response,
 )
 from gripper import Gripper
+from mission import Mission
 from pymavlink import mavutil
 from utils import commandAccepted
 
-# Set MAVLink version to 2.0
-os.environ["MAVLINK20"] = "1"
+DATASTREAM_RATES_WIRED = {
+    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 2,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 2,
+    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 2,
+    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 3,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 20,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 10,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 3,
+}
+
+DATASTREAM_RATES_WIRELESS = {
+    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 4,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 3,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 1,
+}
 
 
 class Drone:
@@ -57,7 +74,8 @@ class Drone:
             self.connectionError = str(e)
             return
 
-        self.master.wait_heartbeat()
+        initial_heartbeat = self.master.wait_heartbeat()
+        self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component
 
@@ -81,6 +99,8 @@ class Drone:
 
         self.gripper = Gripper(self.master, self.target_system, self.target_component)
 
+        self.mission = Mission(self)
+
         self.stopAllDataStreams()
 
         self.startThread()
@@ -98,36 +118,25 @@ class Drone:
         - EXTRA2: VFR_HUD
         - EXTRA3: BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
         """
+
+        # self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS)
+        self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS)
+        # self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS)
+        self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_POSITION)
+        self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
+        self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
+        self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3)
+
+    def setupSingleDataStream(self, stream: int) -> None:
+        """Set up a single data stream.
+
+        Args:
+            stream (int): The data stream to set up
+        """
         if self.wireless:
-            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 1)
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 1
-            )
-            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 1)
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_POSITION, 1
-            )
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 4)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 3)
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 1)
+            self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRELESS[stream])
         else:
-            # self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS, 2)
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS, 2
-            )
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
-            )
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_POSITION, 3
-            )
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 20
-            )
-            self.sendDataStreamRequestMessage(
-                mavutil.mavlink.MAV_DATA_STREAM_EXTRA2, 10
-            )
-            self.sendDataStreamRequestMessage(mavutil.mavlink.MAV_DATA_STREAM_EXTRA3, 3)
+            self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRED[stream])
 
     def sendDataStreamRequestMessage(self, stream: int, rate: int) -> None:
         """Send a request for a specific data stream.

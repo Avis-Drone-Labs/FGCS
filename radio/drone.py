@@ -4,7 +4,7 @@ import time
 import traceback
 from queue import Queue
 from threading import Thread
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import serial
 from customTypes import (
@@ -13,7 +13,9 @@ from customTypes import (
     MotorTestThrottleAndDuration,
     Number,
     Response,
+    ResponseWithData,
 )
+from flightModes import FlightModes
 from gripper import Gripper
 from mission import Mission
 from pymavlink import mavutil
@@ -96,6 +98,8 @@ class Drone:
         self.armed = False
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
+
+        self.flight_modes = FlightModes(self)
 
         self.gripper = Gripper(self.master, self.target_system, self.target_component)
 
@@ -281,6 +285,46 @@ class Drone:
         self.sender_thread = Thread(target=self.executeMessages, daemon=True)
         self.listener_thread.start()
         self.sender_thread.start()
+
+    def getSingleParam(
+        self, param_name: str, timeout: Optional[int] = 1.5
+    ) -> Union[Response, ResponseWithData]:
+        """Gets a specific parameter value.
+
+        Args:
+            param_name (str): The name of the parameter to get
+            timeout (int, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
+
+        Returns:
+            Response: The response from the retrieval of the specific parameter
+        """
+        failure_message = f"Failed to get parameter {param_name}"
+
+        self.master.mav.param_request_read_send(
+            self.target_system, self.target_component, param_name.encode(), -1
+        )
+
+        while True:
+            try:
+                response = self.master.recv_match(
+                    type="PARAM_VALUE", blocking=True, timeout=timeout
+                )
+                if response and response.param_id == param_name:
+                    return {
+                        "success": True,
+                        "data": response,
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": failure_message,
+                    }
+
+            except serial.serialutil.SerialException:
+                return {
+                    "success": False,
+                    "message": f"{failure_message}, serial exception",
+                }
 
     def getAllParams(self) -> None:
         """Request all parameters from the drone."""
@@ -777,4 +821,5 @@ class Drone:
 
         self.master.close()
 
+        print("Closed connection to drone")
         print("Closed connection to drone")

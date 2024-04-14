@@ -412,26 +412,29 @@ def testAllMotors(data):
     socketio.emit("motor_test_result", result)
 
 
-socketio.on("get_flightmodes")
+@socketio.on("get_flight_mode_config")
+def getFlightModeConfig():
+    global state
+    if state != "config":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access the gripper."},
+        )
+        print(f"Current state: {state}")
+        return
 
+    global drone
+    if not drone:
+        return
 
-def getCurrentflightmodes():
-    global drone, state
+    flight_modes = drone.flight_modes.flight_modes
+    flight_mode_channel = drone.flight_modes.flight_mode_channel
+    print(flight_modes)
 
-    params = drone.params
-    flightmodes = [
-        "FLTMODE1",
-        "FLTMODE2",
-        "FLTMODE3",
-        "FLTMODE4",
-        "FLTMODE5",
-        "FLTMODE6",
-    ]
-    values = []
-    for param in params:
-        if param["param_id"] in flightmodes:
-            values.append(param)
-    socketio.emit("current_flightmodes", values)
+    socketio.emit(
+        "flight_mode_config",
+        {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
+    )
 
 
 @socketio.on("get_current_mission")

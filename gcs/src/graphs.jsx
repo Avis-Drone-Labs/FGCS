@@ -8,18 +8,18 @@
 import { useEffect, useRef } from 'react'
 
 // 3rd Party Imports
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { useLocalStorage, usePrevious } from '@mantine/hooks'
 import { Select } from '@mantine/core'
+import { useLocalStorage, usePrevious } from '@mantine/hooks'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
-import { socket } from './helpers/socket'
-import RealtimeGraph from './components/realtimeGraph.jsx'
 import Layout from './components/layout'
+import RealtimeGraph from './components/realtimeGraph.jsx'
+import { socket } from './helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -128,6 +128,7 @@ export default function Graphs() {
 
     for (let graphKey in selectValues) {
       if (
+        graphRefs[graphKey].current !== null &&
         selectValues[graphKey] !== previousSelectValues[graphKey] &&
         selectValues[graphKey] !== null
       ) {

@@ -71,8 +71,10 @@ export default function Navbar({ currentPage }) {
     socket.on('list_com_ports', (msg) => {
       setFetchingComPorts(false)
       setComPorts(msg)
-      const possibleComPort = msg.find((port) =>
-        port.toLowerCase().includes('mavlink'),
+      const possibleComPort = msg.find(
+        (port) =>
+          port.toLowerCase().includes('mavlink') ||
+          port.toLowerCase().includes('ardupilot'),
       )
       if (possibleComPort !== undefined) {
         setSelectedComPort(possibleComPort)
@@ -137,7 +139,10 @@ export default function Navbar({ currentPage }) {
     <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
       <Modal
         opened={opened}
-        onClose={close}
+        onClose={() => {
+          close()
+          setConnecting(false)
+        }}
         title='Select COM Port'
         centered
         overlayProps={{
@@ -199,7 +204,10 @@ export default function Navbar({ currentPage }) {
           <Button
             variant='filled'
             color={tailwindColors.red[600]}
-            onClick={close}
+            onClick={() => {
+              close()
+              setConnecting(false)
+            }}
           >
             Close
           </Button>

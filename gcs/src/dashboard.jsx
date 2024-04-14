@@ -60,6 +60,12 @@ export default function Dashboard() {
   })
   const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
+  const [missionItems, setMissionItems] = useState({
+    mission_items: [],
+    fence_items: [],
+    rally_items: [],
+  })
+
   const [followDrone, setFollowDrone] = useState(false)
   const mapRef = useRef()
 
@@ -86,6 +92,7 @@ export default function Dashboard() {
     } else {
       socket.emit('set_state', { state: 'dashboard' })
       statustextMessagesHandler.setState([])
+      socket.emit('get_current_mission')
     }
 
     socket.on('incoming_msg', (msg) => {
@@ -101,9 +108,15 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('current_mission', (msg) => {
+      console.log(msg)
+      setMissionItems(msg)
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
+      socket.off('current_mission')
     }
   }, [connected])
 
@@ -148,9 +161,10 @@ export default function Dashboard() {
       <div className='relative flex flex-auto w-full h-full'>
         <div className='w-full'>
           <MapSection
+            passedRef={mapRef}
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            passedRef={mapRef}
+            missionItems={missionItems}
           />
         </div>
         <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
@@ -281,8 +295,8 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? gpsData.lat.toFixed(6) : 0}, ${
-              gpsData.lon !== undefined ? gpsData.lon.toFixed(6) : 0
+            value={`(${gpsData.lat !== undefined ? gpsData.lat * 1e-7 : 0}, ${
+              gpsData.lon !== undefined ? gpsData.lon * 1e-7 : 0
             })`}
             tooltip='GPS (lat, lon)'
           />

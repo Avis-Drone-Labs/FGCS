@@ -1,5 +1,4 @@
 import copy
-import os
 import struct
 import time
 import traceback
@@ -16,11 +15,9 @@ from customTypes import (
     Response,
 )
 from gripper import Gripper
+from mission import Mission
 from pymavlink import mavutil
 from utils import commandAccepted
-
-# Set MAVLink version to 2.0
-os.environ["MAVLINK20"] = "1"
 
 DATASTREAM_RATES_WIRED = {
     mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 2,
@@ -77,7 +74,8 @@ class Drone:
             self.connectionError = str(e)
             return
 
-        self.master.wait_heartbeat()
+        initial_heartbeat = self.master.wait_heartbeat()
+        self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component
 
@@ -100,6 +98,8 @@ class Drone:
         self.number_of_motors = 4  # Is there a way to get this from the drone?
 
         self.gripper = Gripper(self.master, self.target_system, self.target_component)
+
+        self.mission = Mission(self)
 
         self.stopAllDataStreams()
 

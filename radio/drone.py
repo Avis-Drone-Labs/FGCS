@@ -20,6 +20,8 @@ from mission import Mission
 from pymavlink import mavutil
 from utils import commandAccepted
 
+LOG_LINE_LIMIT = 50000
+
 DATASTREAM_RATES_WIRED = {
     mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 2,
     mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 2,
@@ -290,13 +292,11 @@ class Drone:
     def logMessages(self) -> None:
         """A thread to log messages into a FTLog file from the log queue."""
         current_lines = 0
-        line_limit = 5000
-
         while self.is_active:
             if not self.log_message_queue.empty():
                 file_dir = f"{self.log_directory}/tmp{self.current_log_file}.ftlog"
                 with open(file_dir, "a") as f:
-                    if current_lines < line_limit:
+                    if current_lines < LOG_LINE_LIMIT:
                         f.write(self.log_message_queue.get() + "\n")
                         current_lines += 1
                     else:

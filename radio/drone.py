@@ -228,10 +228,11 @@ class Drone:
                     self.droneErrorCb(str(e))
                 continue
 
-
             if msg:
                 try:
-                    self.log_message_queue.put(f"{msg._timestamp},{msg.msgname},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}")
+                    self.log_message_queue.put(
+                        f"{msg._timestamp},{msg.msgname},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
+                    )
                 except Exception as e:
                     self.log_message_queue.put(f"Writing message failed! {e}")
                     continue

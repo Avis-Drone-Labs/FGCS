@@ -41,8 +41,6 @@ if __name__ == "__main__":
     drone.setupDataStreams()
     drone.addMessageListener("ATTITUDE", test_cb)
 
-
-
     # time.sleep()
 
     # params_to_set = [

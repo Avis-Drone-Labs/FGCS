@@ -47,7 +47,7 @@ class Gripper:
                 "gripType": self.getParamValue("GRIP_TYPE"),
             }
 
-    @staticmethod
+    # @staticmethod
     def gripperEnabled(func: Callable) -> Callable:
         """Runs the decorated function only if the gripper is enabled."""
 

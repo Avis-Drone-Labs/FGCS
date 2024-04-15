@@ -1,3 +1,4 @@
+import os
 import copy
 import struct
 import time
@@ -85,6 +86,9 @@ class Drone:
 
         self.message_listeners = {}
         self.message_queue: Queue = Queue()
+        self.log_message_queue: Queue = Queue()
+        self.log_directory = "logs"
+        self.current_log_file = 1
 
         self.is_active = True
         self.is_listening = True
@@ -224,7 +228,14 @@ class Drone:
                     self.droneErrorCb(str(e))
                 continue
 
+
             if msg:
+                try:
+                    self.log_message_queue.put(f"{msg._timestamp},{msg.msgname},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}")
+                except Exception as e:
+                    self.log_message_queue.put(f"Writing message failed! {e}")
+                    continue
+
                 if msg.msgname == "TIMESYNC":
                     component_timestamp = msg.ts1
                     local_timestamp = time.time_ns()
@@ -275,12 +286,30 @@ class Drone:
             q = self.message_queue.get()
             self.message_listeners[q[0]](q[1])
 
+    def logMessages(self) -> None:
+        """A thread to log messages into a FTLog file from the log queue."""
+        current_lines = 0
+        line_limit = 5000
+
+        while self.is_active:
+            if not self.log_message_queue.empty():
+                file_dir = f"{self.log_directory}/tmp{self.current_log_file}.ftlog"
+                with open(file_dir, "a") as f:
+                    if current_lines < line_limit:
+                        f.write(self.log_message_queue.get() + "\n")
+                        current_lines += 1
+                    else:
+                        self.current_log_file += 1
+                        current_lines = 0
+
     def startThread(self) -> None:
         """Starts the listener and sender threads."""
         self.listener_thread = Thread(target=self.checkForMessages, daemon=True)
         self.sender_thread = Thread(target=self.executeMessages, daemon=True)
+        self.log_thread = Thread(target=self.logMessages, daemon=True)
         self.listener_thread.start()
         self.sender_thread.start()
+        self.log_thread.start()
 
     def getAllParams(self) -> None:
         """Request all parameters from the drone."""
@@ -776,5 +805,17 @@ class Drone:
         self.is_active = False
 
         self.master.close()
+
+        # Wait for queue to be empty
+        while not self.message_queue.empty():
+            time.sleep(0.1)
+
+        final_log_file = f"{self.log_directory}/{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
+        with open(final_log_file, "a") as f:
+            for file_num in range(1, self.current_log_file + 1):
+                temp_filename = f"{self.log_directory}/tmp{file_num}.ftlog"
+                with open(temp_filename) as temp_f:
+                    f.writelines(temp_f.readlines())
+                os.remove(temp_filename)
 
         print("Closed connection to drone")

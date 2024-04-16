@@ -1,8 +1,9 @@
-import os
 import copy
+import os
 import struct
 import time
 import traceback
+from pathlib import Path
 from queue import Queue
 from threading import Thread
 from typing import Callable, Optional
@@ -89,7 +90,7 @@ class Drone:
         self.message_listeners = {}
         self.message_queue: Queue = Queue()
         self.log_message_queue: Queue = Queue()
-        self.log_directory = "logs"
+        self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.current_log_file = 1
 
         self.is_active = True
@@ -294,7 +295,9 @@ class Drone:
         current_lines = 0
         while self.is_active:
             if not self.log_message_queue.empty():
-                file_dir = f"{self.log_directory}/tmp{self.current_log_file}.ftlog"
+                file_dir = str(
+                    self.log_directory.joinpath(f"tmp{self.current_log_file}.ftlog")
+                )
                 with open(file_dir, "a") as f:
                     if current_lines < LOG_LINE_LIMIT:
                         f.write(self.log_message_queue.get() + "\n")
@@ -811,10 +814,14 @@ class Drone:
         while not self.message_queue.empty():
             time.sleep(0.1)
 
-        final_log_file = f"{self.log_directory}/{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
+        final_log_file = str(
+            self.log_directory.joinpath(
+                f"{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
+            )
+        )
         with open(final_log_file, "a") as f:
             for file_num in range(1, self.current_log_file + 1):
-                temp_filename = f"{self.log_directory}/tmp{file_num}.ftlog"
+                temp_filename = str(self.log_directory.joinpath(f"tmp{file_num}.ftlog"))
                 with open(temp_filename) as temp_f:
                     f.writelines(temp_f.readlines())
                 os.remove(temp_filename)

@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { useListState, useLocalStorage } from '@mantine/hooks'
+import { useListState, useLocalStorage, usePrevious } from '@mantine/hooks'
 import {
   IconAnchor,
   IconAnchorOff,
@@ -31,6 +31,7 @@ import { showErrorNotification } from './helpers/notification'
 import { socket } from './helpers/socket'
 
 // Custom component
+import useSound from 'use-sound'
 import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
 import Layout from './components/layout'
 import MapSection from './components/map'
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [batteryData, setBatteryData] = useState({})
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
+  const previousHeartbeatData = usePrevious(heartbeatData)
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({
     onboard_control_sensors_enabled: 0,
@@ -68,6 +70,10 @@ export default function Dashboard() {
 
   const [followDrone, setFollowDrone] = useState(false)
   const mapRef = useRef()
+
+  const [playArmed] = useSound('/sounds/armed.mp3', { volume: 0.1 })
+
+  const [playDisarmed] = useSound('/sounds/disarmed.mp3', { volume: 0.1 })
 
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
@@ -128,6 +134,22 @@ export default function Dashboard() {
       mapRef.current.setCenter({ lng: lon, lat: lat })
     }
   }, [gpsData])
+
+  useEffect(() => {
+    if (!previousHeartbeatData?.base_mode || !heartbeatData?.base_mode) return
+
+    if (
+      heartbeatData.base_mode & 128 &&
+      !(previousHeartbeatData.base_mode & 128)
+    ) {
+      playArmed()
+    } else if (
+      !(heartbeatData.base_mode & 128) &&
+      previousHeartbeatData.base_mode & 128
+    ) {
+      playDisarmed()
+    }
+  }, [heartbeatData])
 
   function getFlightMode() {
     if (!heartbeatData.type) {

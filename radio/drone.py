@@ -232,13 +232,14 @@ class Drone:
                 continue
 
             if msg:
-                try:
-                    self.log_message_queue.put(
-                        f"{msg._timestamp},{msg.msgname},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
-                    )
-                except Exception as e:
-                    self.log_message_queue.put(f"Writing message failed! {e}")
-                    continue
+                if self.armed:
+                    try:
+                        self.log_message_queue.put(
+                            f"{msg._timestamp},{msg.msgname},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
+                        )
+                    except Exception as e:
+                        self.log_message_queue.put(f"Writing message failed! {e}")
+                        continue
 
                 if msg.msgname == "TIMESYNC":
                     component_timestamp = msg.ts1
@@ -819,11 +820,22 @@ class Drone:
                 f"{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
             )
         )
-        with open(final_log_file, "a") as f:
-            for file_num in range(1, self.current_log_file + 1):
-                temp_filename = str(self.log_directory.joinpath(f"tmp{file_num}.ftlog"))
-                with open(temp_filename) as temp_f:
-                    f.writelines(temp_f.readlines())
-                os.remove(temp_filename)
+
+        # Ensure log file is a real file/directory
+        if not os.path.exists(final_log_file):
+            print("Log file directory wasn't made, making it now...")
+            os.makedirs(os.path.dirname(final_log_file), exist_ok=True)
+
+        # Combine Logs 
+        try:
+            with open(final_log_file, "a") as f:
+                for file_num in range(1, self.current_log_file + 1):
+                    temp_filename = str(self.log_directory.joinpath(f"tmp{file_num}.ftlog"))
+                    with open(temp_filename) as temp_f:
+                        f.writelines(temp_f.readlines())
+                    os.remove(temp_filename)
+            print(f"Saved drone logs to: {final_log_file}")
+        except Exception as e:
+            print(f"Failed to save drone logs: {e}")
 
         print("Closed connection to drone")

@@ -11,6 +11,8 @@ import { IconTrash, IconPaint } from '@tabler/icons-react'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 export default function ChartDataCard({
   item,
   messageMeans,
@@ -18,7 +20,6 @@ export default function ChartDataCard({
   changeColorFunc,
   removeDatasetFunc,
 }) {
-  const tailwindColors = resolveConfig(tailwindConfig).theme.colors
   return (
     <div className='inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200'>
       {/* Title and Delete Button */}

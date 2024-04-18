@@ -1,3 +1,8 @@
+/*
+  The card for each log message, this includes all the checkboxes that control whether or
+  not they show on the graph. This also contains the descriptions of all log messages from helpers.
+*/
+
 import { Accordion, Checkbox } from '@mantine/core'
 import { logMessageDescriptions } from '../../helpers/logMessageDescriptions.js'
 

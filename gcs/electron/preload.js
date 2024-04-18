@@ -1,10 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
+contextBridge.exposeInMainWorld('ipcRenderer', {
+  ...withPrototype(ipcRenderer),
+  loadFile: (data) => ipcRenderer.invoke('fla:open-file', data),
+})
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.
-function withPrototype(obj: Record<string, any>) {
+function withPrototype(obj) {
   const protos = Object.getPrototypeOf(obj)
 
   for (const [key, value] of Object.entries(protos)) {
@@ -12,7 +15,7 @@ function withPrototype(obj: Record<string, any>) {
 
     if (typeof value === 'function') {
       // Some native APIs, like `NodeJS.EventEmitter['on']`, don't work in the Renderer process. Wrapping them into a function.
-      obj[key] = function (...args: any) {
+      obj[key] = function (...args) {
         return value.call(obj, ...args)
       }
     } else {
@@ -23,8 +26,8 @@ function withPrototype(obj: Record<string, any>) {
 }
 
 // --------- Preload scripts loading ---------
-function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
-  return new Promise(resolve => {
+function domReady(condition = ['complete', 'interactive']) {
+  return new Promise((resolve) => {
     if (condition.includes(document.readyState)) {
       resolve(true)
     } else {
@@ -38,13 +41,13 @@ function domReady(condition: DocumentReadyState[] = ['complete', 'interactive'])
 }
 
 const safeDOM = {
-  append(parent: HTMLElement, child: HTMLElement) {
-    if (!Array.from(parent.children).find(e => e === child)) {
+  append(parent, child) {
+    if (!Array.from(parent.children).find((e) => e === child)) {
       parent.appendChild(child)
     }
   },
-  remove(parent: HTMLElement, child: HTMLElement) {
-    if (Array.from(parent.children).find(e => e === child)) {
+  remove(parent, child) {
+    if (Array.from(parent.children).find((e) => e === child)) {
       parent.removeChild(child)
     }
   },
@@ -107,10 +110,11 @@ function useLoading() {
 
 // ----------------------------------------------------------------------
 
+// eslint-disable-next-line react-hooks/rules-of-hooks
 const { appendLoading, removeLoading } = useLoading()
 domReady().then(appendLoading)
 
-window.onmessage = ev => {
+window.onmessage = (ev) => {
   ev.data.payload === 'removeLoading' && removeLoading()
 }
 

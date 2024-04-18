@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { showErrorNotification } from '../notification'
-import { socket } from '../socket'
-import Navbar from './navbar'
+import { showErrorNotification } from '../helpers/notification'
+import { socket } from '../helpers/socket'
+import Navbar from '../components/navbar'
 
 export default function Layout({ children, currentPage }) {
   useEffect(() => {
@@ -13,6 +13,7 @@ export default function Layout({ children, currentPage }) {
       socket.off('drone_error')
     }
   }, [])
+
   return (
     <>
       <Navbar currentPage={currentPage} />

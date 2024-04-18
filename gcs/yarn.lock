@@ -695,6 +695,11 @@
   resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.14.0.tgz#9bc39a5a3a71b81bdb310eba6def5bc3966695b7"
   integrity sha512-WOHih+ClN7N8oHk9N4JUiMxQJmRVaOxcg8w7F/oHUXzJt920ekASLI/7cYX8XkntDWRhLZtsk6LbGrkgOAvi5A==
 
+"@robloche/chartjs-plugin-streaming@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@robloche/chartjs-plugin-streaming/-/chartjs-plugin-streaming-3.1.0.tgz#a765325b48acadb80a7bda0a8a33a19bb9bf3ecf"
+  integrity sha512-6tTRo0eyw7klsk2ayjrZmJga+NqawDxwXlMOsQGAqJ8kZj9szNwlfD9EmTP2MDA8Sh8qFezxE6LYU6UUoothkg==
+
 "@sindresorhus/is@^4.0.0":
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-4.6.0.tgz#3c7c9c46e678feefe7a2e5bb609d3dbd665ffb3f"
@@ -1449,10 +1454,10 @@ chalk@^4.0.0, chalk@^4.0.2, chalk@^4.1.2:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chart.js@^4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/chart.js/-/chart.js-4.4.1.tgz#ac5dc0e69a7758909158a96fe80ce43b3bb96a9f"
-  integrity sha512-C74QN1bxwV1v2PEujhmKjOZ7iUM4w6BWs23Md/6aOZZSlwMzeCIDGuZay++rBgChYru7/+QFeoQW0fQoP534Dg==
+chart.js@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/chart.js/-/chart.js-4.4.2.tgz#95962fa6430828ed325a480cc2d5f2b4e385ac31"
+  integrity sha512-6GD7iKwFpP5kbSD4MeRRRlTnQvxfQREy36uEtm1hzHzcOqwWx0YEHuspuoNlslu+nciLIB7fjjsHkUv/FzFcOg==
   dependencies:
     "@kurkle/color" "^0.3.0"
 
@@ -1460,6 +1465,18 @@ chartjs-adapter-moment@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/chartjs-adapter-moment/-/chartjs-adapter-moment-1.0.1.tgz#0f04c30d330b207c14bfb57dfaae9ce332f09102"
   integrity sha512-Uz+nTX/GxocuqXpGylxK19YG4R3OSVf8326D+HwSTsNw1LgzyIGRo+Qujwro1wy6X+soNSnfj5t2vZ+r6EaDmA==
+
+chartjs-plugin-annotation@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/chartjs-plugin-annotation/-/chartjs-plugin-annotation-3.0.1.tgz#4cf51d9797bf3202788ca0beae8694404621ad19"
+  integrity sha512-hlIrXXKqSDgb+ZjVYHefmlZUXK8KbkCPiynSVrTb/HjTMkT62cOInaT1NTQCKtxKKOm9oHp958DY3RTAFKtkHg==
+
+chartjs-plugin-zoom@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/chartjs-plugin-zoom/-/chartjs-plugin-zoom-2.0.1.tgz#3db76f92a4741e46cb148cb966181c1b1a974abc"
+  integrity sha512-ogOmLu6e+Q7E1XWOCOz9YwybMslz9qNfGV2a+qjfmqJYpsw5ZMoRHZBUyW+NGhkpQ5PwwPA/+rikHpBZb7PZuA==
+  dependencies:
+    hammerjs "^2.0.8"
 
 cheap-ruler@^3.0.1:
   version "3.0.2"
@@ -2471,6 +2488,11 @@ grid-index@^1.1.0:
   resolved "https://registry.yarnpkg.com/grid-index/-/grid-index-1.1.0.tgz#97f8221edec1026c8377b86446a7c71e79522ea7"
   integrity sha512-HZRwumpOGUrHyxO5bqKZL0B0GlUpwtCAzZ42sgxUPniu33R1LSFH5yrIcBCHjkctCAh3mtWKcKd9J4vDDdeVHA==
 
+hammerjs@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/hammerjs/-/hammerjs-2.0.8.tgz#04ef77862cff2bb79d30f7692095930222bf60f1"
+  integrity sha512-tSQXBXS/MWQOn/RKckawJ61vvsDpCom87JgxiYdGwHdOa0ht0vzUWDlfioofFCRU0L+6NGDt6XzbgoJvZkMeRQ==
+
 has-flag@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-3.0.0.tgz#b5d454dc2199ae225699f3467e5a07f3b955bafd"
@@ -2511,6 +2533,11 @@ hosted-git-info@^4.1.0:
   integrity sha512-kyCuEOWjJqZuDbRHzL8V93NzQhwIB71oFWSyzVo+KPZI+pnQPPxucdkrOZvkLRnrf5URsQM+IJ09Dw29cRALIA==
   dependencies:
     lru-cache "^6.0.0"
+
+howler@^2.1.3:
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/howler/-/howler-2.2.4.tgz#bd3df4a4f68a0118a51e4bd84a2bfc2e93e6e5a1"
+  integrity sha512-iARIBPgcQrwtEr+tALF+rapJ8qSc+Set2GJQl7xT1MQzWaVkFebdJhR3alVlSiUf5U7nAANKuj3aWpwerocD5w==
 
 http-cache-semantics@^4.0.0:
   version "4.1.1"
@@ -3291,10 +3318,10 @@ prelude-ls@^1.2.1:
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
-prettier@^3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.1.1.tgz#6ba9f23165d690b6cbdaa88cb0807278f7019848"
-  integrity sha512-22UbSzg8luF4UuZtzgiUOfcGM8s4tjBv6dJRT7j275NXsy2jb4aJa4NNveul5x4eqlF1wuhuR2RElK71RvmVaw==
+prettier@3.2.5:
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.2.5.tgz#e52bc3090586e824964a8813b09aba6233b28368"
+  integrity sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==
 
 progress@^2.0.3:
   version "2.0.3"
@@ -3417,6 +3444,11 @@ react-remove-scroll@^2.5.7:
     tslib "^2.1.0"
     use-callback-ref "^1.3.0"
     use-sidecar "^1.1.2"
+
+react-resizable-panels@^2.0.16:
+  version "2.0.16"
+  resolved "https://registry.yarnpkg.com/react-resizable-panels/-/react-resizable-panels-2.0.16.tgz#bb7c6ca56c6320a0a0b821a67c6aac5c88981517"
+  integrity sha512-UrnxmTZaTnbCl/xIOX38ig35RicqGfLuqt2x5fytpNlQvCRuxyXZwIBEhmF+pmrEGxfajyXFBoCplNxLvhF0CQ==
 
 react-router-dom@^6.21.0:
   version "6.21.0"
@@ -4138,6 +4170,13 @@ use-sidecar@^1.1.2:
     detect-node-es "^1.1.0"
     tslib "^2.0.0"
 
+use-sound@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/use-sound/-/use-sound-4.0.1.tgz#8c8de4badd16902db7762fd9418a4283b9bf7b3e"
+  integrity sha512-hykJ86kNcu6y/FzlSHcQxhjSGMslZx2WlfLpZNoPbvueakv4OF3xPxEtGV2YmculrIaH0tPp9LtG4jgy17xMWg==
+  dependencies:
+    howler "^2.1.3"
+
 utf8-byte-length@^1.0.1:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/utf8-byte-length/-/utf8-byte-length-1.0.4.tgz#f45f150c4c66eee968186505ab93fcbb8ad6bf61"
@@ -4187,10 +4226,10 @@ vite-plugin-electron@^0.14.0:
   resolved "https://registry.yarnpkg.com/vite-plugin-electron/-/vite-plugin-electron-0.14.1.tgz#faad1e26d853ea7960b812272c19521c7f180482"
   integrity sha512-QGQ2nJ4wjMf1FaDSkdoC/UskQGiYGcAToATJqJXvqrL4Jmt0CFaZqoDjh1xLicUWEo/X7urHYjhKTqwEeP7F7g==
 
-vite@^4.5.2:
-  version "4.5.2"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-4.5.2.tgz#d6ea8610e099851dad8c7371599969e0f8b97e82"
-  integrity sha512-tBCZBNSBbHQkaGyhGCDUGqeo2ph8Fstyp6FMSvTtsXeZSPpSMGlviAOav2hxVTqFcx8Hj/twtWKsMJXNY0xI8w==
+vite@^4.5.3:
+  version "4.5.3"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-4.5.3.tgz#d88a4529ea58bae97294c7e2e6f0eab39a50fb1a"
+  integrity sha512-kQL23kMeX92v3ph7IauVkXkikdDRsYMGTVl5KY2E9OY4ONLvkHf04MDTbnfo6NKxZiDLWzVpP5oTa8hQD8U3dg==
   dependencies:
     esbuild "^0.18.10"
     postcss "^8.4.27"

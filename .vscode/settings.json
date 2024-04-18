@@ -1,8 +1,13 @@
 {
     "cSpell.words": [
+        "ARSP",
         "centered",
+        "falcongrey",
+        "falconred",
         "mavutil",
         "pymavlink",
-        "PYQT"
+        "PYQT",
+        "RSSI",
+        "statustext"
     ]
 }

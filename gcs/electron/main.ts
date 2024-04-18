@@ -1,7 +1,7 @@
-import { BrowserWindow, app } from 'electron'
+import { BrowserWindow, app, ipcMain } from 'electron'
 
 import path from 'node:path'
-
+import openFile from './fla'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -12,8 +12,9 @@ import path from 'node:path'
 // │ │ └── preload.js
 // │
 process.env.DIST = path.join(__dirname, '../dist')
-process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.env.DIST, '../public')
-
+process.env.VITE_PUBLIC = app.isPackaged
+  ? process.env.DIST
+  : path.join(process.env.DIST, '../public')
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
@@ -22,7 +23,7 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'logo_dark_icon.svg'),
+    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -33,7 +34,7 @@ function createWindow() {
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString())
+    win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
   if (VITE_DEV_SERVER_URL) {
@@ -84,5 +85,6 @@ app.on('activate', () => {
 
 app.whenReady().then(() => {
   createLoadingWindow()
+  ipcMain.handle('fla:open-file', openFile)
   createWindow()
 })

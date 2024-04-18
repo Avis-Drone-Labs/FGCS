@@ -59,7 +59,7 @@ function createLoadingWindow(){
   });
 
   // Resize and center window
-  loadingWin.loadFile(path.join(process.env.VITE_PUBLIC, 'logo_dark_nobg_white_with_text.svg'))
+  loadingWin.loadFile(path.join(process.env.VITE_PUBLIC, 'window_loading_icon.svg'))
   loadingWin.setSize(300, 300, true);
   loadingWin.center();
 }

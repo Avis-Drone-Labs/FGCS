@@ -9,7 +9,7 @@ import { IconTrash, IconPaint } from '@tabler/icons-react'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../tailwind.config.js'
+import tailwindConfig from '../../../tailwind.config.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

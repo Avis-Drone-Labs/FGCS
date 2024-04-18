@@ -10,15 +10,11 @@ import { Fragment, useEffect, useState } from 'react'
 // 3rd Party Imports
 import {
   Accordion,
-  ActionIcon,
-  Box,
   Button,
-  ColorInput,
   FileButton,
   Progress,
   ScrollArea,
 } from '@mantine/core'
-import { IconPaint, IconTrash } from '@tabler/icons-react'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -34,6 +30,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification.js'
+import ChartDataCard from './components/fla/chartDataCard.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -385,7 +382,7 @@ export default function FLA() {
     <Layout currentPage='fla'>
       {logMessages === null ? (
         // Open flight logs section
-        <div className='flex flex-col items-center justify-center h-full w-min mx-auto'>
+        <div className='flex flex-col items-center justify-center h-full mx-auto w-min'>
           <FileButton
             color={tailwindColors.blue[600]}
             variant='filled'
@@ -486,40 +483,12 @@ export default function FLA() {
               </div>
               {chartData.datasets.map((item) => (
                 <Fragment key={item.label}>
-                  {/* I did this to let color change affect a specific label, not an index */}
-                  <div className='inline-flex flex-col items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
-                    {/* Title and Delete Button */}
-                    <div className='inline-flex justify-between w-full content-center items-center'>
-                      <span className='text-md'>{item.label}</span>
-                      <ActionIcon
-                        variant='subtle'
-                        color={tailwindColors.red[500]}
-                        onClick={() => removeDataset(item.label)}
-                      >
-                        <IconTrash size={18} />
-                      </ActionIcon>
-                    </div>
-
-                    {/* Color Selector */}
-                    <ColorInput
-                      className='w-full text-xs'
-                      size='xs'
-                      format='hex'
-                      swatches={colorInputSwatch}
-                      closeOnColorSwatchClick
-                      withEyeDropper={false}
-                      value={item.borderColor}
-                      rightSection={<IconPaint size={16} />}
-                      onChangeEnd={(color) => changeColor(item.label, color)}
-                    />
-
-                    {/* Min, max, min */}
-                    <Box className='w-full text-gray-400'>
-                      Min: {messageMeans[item.label]['min']}, Max:{' '}
-                      {messageMeans[item.label]['max']}, Mean:{' '}
-                      {messageMeans[item.label]['mean']}
-                    </Box>
-                  </div>
+                  <ChartDataCard
+                    item={item}
+                    messageMeans={messageMeans}
+                    colorInputSwatch={colorInputSwatch}
+                    tailwindColors={tailwindColors}
+                  />
                 </Fragment>
               ))}
             </div>

@@ -5,6 +5,7 @@ import time
 import traceback
 from pathlib import Path
 from queue import Queue
+from secrets import token_hex
 from threading import Thread
 from typing import Callable, Optional
 
@@ -92,7 +93,8 @@ class Drone:
         self.log_message_queue: Queue = Queue()
         self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.log_directory.mkdir(parents=True, exist_ok=True)
-        self.current_log_file = 1
+        self.current_log_file = None
+        self.log_file_names = []
         self.cleanTempLogs()
 
         self.is_active = True
@@ -110,40 +112,127 @@ class Drone:
         self.stopAllDataStreams()
         self.startThread()
 
+    def __getNextLogFilePath(self, line: str) -> str:
+        return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
+
+    def __getCurrentDateTimeStr(self) -> str:
+        return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
     def cleanTempLogs(self) -> None:
         """
-        Cleans and attempts to recover old log files by using the ==EXIF==...==END== at the top of the firs temp log file.
-        If there are others then add them to the recovered file. Once everything has been read, delete all old temp logs.
+        Clean up and try to recover any temporary log files that were not properly closed.
         """
         log_files = [
-            file for file in os.listdir(self.log_directory) if file.startswith("tmp")
+            file
+            for file in self.log_directory.iterdir()
+            if file.is_file() and file.name.startswith("tmp_")
         ]
-        final_log_file = f"RECOVERED_TMP_{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
+        first_recovered_log_files = [
+            file for file in log_files if file.name.startswith("tmp_first_")
+        ]
 
-        # Attempt to get first temp log file's date
-        try:
-            with open(self.log_directory.joinpath("tmp1.ftlog")) as f:
-                first_line = f.readline()
-                if first_line.startswith("==EXIF=="):
-                    final_log_file = (
-                        f'{first_line.split("==EXIF==")[-1].split("==END==")[0]}.ftlog'
-                    )
-        except Exception as _:
-            print(f"Exif data not found, moving temp files into '{final_log_file}'")
+        number_of_first_recovered_log_files = 0
 
-        # Combine Logs
-        try:
-            if len(log_files) > 0:
-                final_log_file = self.log_directory.joinpath(final_log_file)
-                with open(final_log_file, "a") as f:
-                    for temp_file_number in log_files:
-                        temp_filename = self.log_directory.joinpath(temp_file_number)
-                        with open(temp_filename) as temp_f:
-                            f.writelines(temp_f.readlines())
-                        os.remove(temp_filename)
-                print(f"Saved drone logs to: {final_log_file}")
-        except Exception as e:
-            print(f"Failed to save drone logs: {e}")
+        # Go through each first ("starting") log file
+        for first_recovered_log_file in first_recovered_log_files:
+            exif_date = None
+            final_recovered_log_file = self.log_directory.joinpath(
+                f"RECOVERED_TMP_{self.__getCurrentDateTimeStr()}.ftlog"
+            )
+            no_next_log_file_flag = False
+            next_log_file = None
+
+            with open(final_recovered_log_file, "a") as final_recovered_log_file_handle:
+                with open(first_recovered_log_file) as first_recovered_log_file_handle:
+                    lines = first_recovered_log_file_handle.readlines()
+                    first_line = lines[0]
+                    last_line = lines[-1]
+
+                    if first_line.startswith("==START_TIME=="):
+                        exif_date = first_line.split("==START_TIME==")[-1].split(
+                            "==END=="
+                        )[0]
+
+                    final_recovered_log_file_handle.writelines(lines)
+                    number_of_first_recovered_log_files += 1
+
+                    # Try and get the file name of the next log file
+                    # If the next file is not found, then the first log file is the only log file for this set of logs
+                    if last_line.startswith("==NEXT_FILE=="):
+                        next_log_file_name = self.__getNextLogFilePath(last_line)
+                        next_log_file = self.log_directory.joinpath(next_log_file_name)
+
+                        # If the next file is not found or doesn't exist in the list of log files, or if the file isn't a file, then stop the recovery
+                        if (
+                            not next_log_file
+                            or next_log_file not in log_files
+                            or not next_log_file.is_file()
+                        ):
+                            print(
+                                f"Could not find the next log file {next_log_file_name}, stopping recovery"
+                            )
+                            no_next_log_file_flag = True
+                    else:
+                        no_next_log_file_flag = True
+
+            os.remove(first_recovered_log_file)
+
+            if no_next_log_file_flag:
+                continue
+
+            # Go through each log file listed in the end of the previous log file whilst appending the messages to the final log file
+            while next_log_file is not None:
+                with open(
+                    final_recovered_log_file, "a"
+                ) as final_recovered_log_file_handle:
+                    with open(next_log_file) as next_log_file_handle:
+                        lines = next_log_file_handle.readlines()
+                        final_recovered_log_file_handle.writelines(lines)
+                        number_of_first_recovered_log_files += 1
+                        last_line = lines[-1]
+
+                        current_log_file = next_log_file
+
+                        # Try and get the file name of the next log file
+                        if last_line.startswith("==NEXT_FILE=="):
+                            next_log_file_name = self.__getNextLogFilePath(last_line)
+                            next_log_file = self.log_directory.joinpath(
+                                next_log_file_name
+                            )
+
+                            # If the next file is not found or doesn't exist in the list of log files, or if the file isn't a file, then stop the recovery
+                            if (
+                                not next_log_file
+                                or next_log_file not in log_files
+                                or not next_log_file.is_file()
+                            ):
+                                print(
+                                    f"Could not find the next log file {next_log_file_name}, stopping recovery"
+                                )
+                                next_log_file = None
+                        else:
+                            next_log_file = None
+
+                    # Remove the current log file as we're done reading from it
+                    os.remove(current_log_file)
+
+            if exif_date is not None:
+                print(
+                    f"Recovered logs {number_of_first_recovered_log_files} from {exif_date}"
+                )
+                new_final_recovered_log_file_name = self.log_directory.joinpath(
+                    f"{exif_date}_RECOVERED.ftlog"
+                )
+                os.rename(
+                    final_recovered_log_file,
+                    new_final_recovered_log_file_name,
+                )
+            else:
+                new_final_recovered_log_file_name = final_recovered_log_file
+
+            print(
+                f"Saved {number_of_first_recovered_log_files} recovered drone logs to: {str(new_final_recovered_log_file_name)}"
+            )
 
     def setupDataStreams(self) -> None:
         """
@@ -267,6 +356,16 @@ class Drone:
                 continue
 
             if msg:
+                if msg.msgname == "HEARTBEAT":
+                    if (
+                        msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
+                    ):  # No valid autopilot, e.g. a GCS or other MAVLink component
+                        continue
+
+                    self.armed = bool(
+                        msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+                    )
+
                 if self.armed:
                     try:
                         self.log_message_queue.put(
@@ -281,22 +380,13 @@ class Drone:
                     local_timestamp = time.time_ns()
                     self.master.mav.timesync_send(local_timestamp, component_timestamp)
                     continue
-
-                if msg.msgname == "STATUSTEXT":
+                elif msg.msgname == "STATUSTEXT":
                     print(msg.text)
-                elif msg.msgname == "HEARTBEAT":
-                    if (
-                        msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
-                    ):  # No valid autopilot, e.g. a GCS or other MAVLink component
-                        continue
-
-                    self.armed = bool(
-                        msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
-                    )
                 elif msg.msgname == "PARAM_VALUE":
                     print(msg.param_id)
                 else:
-                    print(msg.msgname)
+                    # print(msg.msgname)
+                    ...
 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 
@@ -332,29 +422,48 @@ class Drone:
                 )
 
     def logMessages(self) -> None:
-        """A thread to log messages into a FTLog file from the log queue."""
-        current_lines = 0
-        while self.is_active:
-            if not self.log_message_queue.empty():
-                file_dir = self.log_directory.joinpath(
-                    f"tmp{self.current_log_file}.ftlog"
-                )
+        """A thread to log messages into a temp FTLog file from the log queue."""
+        current_line_number = 0
 
-                # Write the date at time on the first log message for recovery
-                if not os.path.exists(file_dir):
-                    with open(file_dir, "w") as f:
+        while self.is_active:
+            log_msg = self.log_message_queue.get()
+            if log_msg:
+                # Check if a temp log file has been created yet, if not create one
+                if self.current_log_file is None:
+                    self.current_log_file = self.log_directory.joinpath(
+                        f"tmp_first_{token_hex(8)}.ftlog"
+                    )
+                    self.log_file_names.append(self.current_log_file)
+                    with open(self.current_log_file, "w") as f:
                         f.write(
-                            f"==EXIF=={time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}==END==\n"
+                            f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
                         )
 
-                # Attempt to log the messages into the current file
-                with open(file_dir, "a") as f:
-                    if current_lines < LOG_LINE_LIMIT:
-                        f.write(self.log_message_queue.get() + "\n")
-                        current_lines += 1
-                    else:
-                        self.current_log_file += 1
-                        current_lines = 0
+                # Write the incoming telemetry message to the temp log file
+                if current_line_number < LOG_LINE_LIMIT:
+                    with open(self.current_log_file, "a") as current_log_file_handler:
+                        current_log_file_handler.write(log_msg + "\n")
+                        current_line_number += 1
+                else:
+                    # If the current log file has reached the line limit, create a new temp log file
+                    next_log_file_name = self.log_directory.joinpath(
+                        f"tmp_{token_hex(8)}.ftlog"
+                    )
+                    with open(self.current_log_file, "a") as current_log_file_handler:
+                        # Write the next file name to the current log file
+                        current_log_file_handler.write(
+                            f"==NEXT_FILE=={str(next_log_file_name)}==END==\n"
+                        )
+
+                    self.current_log_file = next_log_file_name
+                    self.log_file_names.append(self.current_log_file)
+
+                    with open(self.current_log_file, "w") as f:
+                        f.write(
+                            f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
+                        )
+                        f.write(log_msg + "\n")
+                        current_line_number = 1
 
     def startThread(self) -> None:
         """Starts the listener and sender threads."""
@@ -858,29 +967,24 @@ class Drone:
         self.is_active = False
         self.master.close()
 
-        # Wait for queue to be empty
-        while not self.message_queue.empty():
-            time.sleep(0.1)
-
         final_log_file = self.log_directory.joinpath(
-            f"{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
+            f"{self.__getCurrentDateTimeStr()}.ftlog"
         )
 
-        # Ensure log file is a real file/directory
-        if not os.path.exists(final_log_file):
-            print("Log file directory wasn't made, making it now...")
-            os.makedirs(os.path.dirname(final_log_file), exist_ok=True)
-
-        # Combine Logs
         try:
-            with open(final_log_file, "a") as f:
-                for file_num in range(1, self.current_log_file + 1):
-                    temp_filename = self.log_directory.joinpath(f"tmp{file_num}.ftlog")
-                    with open(temp_filename) as temp_f:
-                        f.writelines(temp_f.readlines())
-                    os.remove(temp_filename)
-            print(f"Saved drone logs to: {final_log_file}")
+            with open(final_log_file, "a") as final_log_file_handle:
+                # Open all the log files that were written to in the current session and write their data to the final log file
+                for log_file in self.log_file_names:
+                    if not log_file.is_file():
+                        print(f"Log file {log_file} is not a file.")
+                        continue
+
+                    with open(log_file) as log_file_handle:
+                        final_log_file_handle.writelines(log_file_handle.readlines())
+                    os.remove(log_file)
         except Exception as e:
             print(f"Failed to save drone logs: {e}")
+
+        print(f"Saved drone logs to: {final_log_file}")
 
         print("Closed connection to drone")

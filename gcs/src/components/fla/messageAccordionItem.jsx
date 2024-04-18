@@ -3,7 +3,10 @@
   not they show on the graph. This also contains the descriptions of all log messages from helpers.
 */
 
+// 3rd Party Imports
 import { Accordion, Checkbox } from '@mantine/core'
+
+// Helper imports
 import { logMessageDescriptions } from '../../helpers/logMessageDescriptions.js'
 
 export default function MessageAccordionItem({

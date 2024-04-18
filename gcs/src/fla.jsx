@@ -25,12 +25,12 @@ import Graph from './components/fla/graph'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
+import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Layout from './components/layout'
 import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification.js'
-import ChartDataCard from './components/fla/chartDataCard.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -487,7 +487,6 @@ export default function FLA() {
                     item={item}
                     messageMeans={messageMeans}
                     colorInputSwatch={colorInputSwatch}
-                    tailwindColors={tailwindColors}
                     changeColorFunc={changeColor}
                     removeDatasetFunc={removeDataset}
                   />

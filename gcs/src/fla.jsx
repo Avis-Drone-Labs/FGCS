@@ -13,7 +13,6 @@ import {
   ActionIcon,
   Box,
   Button,
-  Checkbox,
   ColorInput,
   FileButton,
   Progress,
@@ -26,16 +25,23 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
+import Graph from './components/fla/graph'
+import { logEventIds } from './components/fla/logEventIds.js'
+import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
+import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
+import Layout from './components/layout'
 import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification.js'
-import { logMessageDescriptions } from './helpers/logMessageDescriptions.js'
-import { logEventIds } from './components/fla/logEventIds.js'
-import Graph from './components/fla/graph'
-import Layout from './components/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+// Helper function to convert hex color to rgba
+function hexToRgba(hex, alpha) {
+  const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
+  return `rgba(${r},${g},${b},${alpha})`
+}
 
 // Preset categories for filtering
 const presetCategories = [
@@ -75,6 +81,22 @@ const colorPalette = [
   '#4cbfc0',
   '#9966ff',
   '#c8cbce',
+]
+const colorInputSwatch = [
+  '#f5f5f5',
+  '#868e96',
+  '#fa5252',
+  '#e64980',
+  '#be4bdb',
+  '#7950f2',
+  '#4c6ef5',
+  '#228be6',
+  '#15aabf',
+  '#12b886',
+  '#40c057',
+  '#82c91e',
+  '#fab005',
+  '#fd7e14',
 ]
 
 export default function FLA() {
@@ -182,6 +204,7 @@ export default function FLA() {
         let mean =
           messageValues.reduce((acc, curr) => acc + curr, 0) /
           messageValues.length
+
         means[`${key}/${messageKey}`] = {
           mean: mean.toFixed(2),
           max: max.toFixed(2),
@@ -252,10 +275,75 @@ export default function FLA() {
     setCustomColors((prevColors) => ({ ...prevColors, [label]: color }))
   }
 
-  // Helper function to convert hex color to rgba
-  function hexToRgba(hex, alpha) {
-    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
-    return `rgba(${r},${g},${b},${alpha})`
+  // Preset selection
+  function selectPreset(filter) {
+    {
+      clearFilters()
+      setCustomColors({})
+      setColorIndex(0)
+      let newFilters = { ...messageFilters }
+      Object.keys(filter.filters).map((categoryName) => {
+        if (Object.keys(messageFilters).includes(categoryName)) {
+          filter.filters[categoryName].map((field) => {
+            newFilters[categoryName][field] = true
+
+            // Assign a color
+            setCustomColors((prevColors) => {
+              let newColors = {
+                ...prevColors,
+              }
+              if (!newColors[`${categoryName}/${field}`]) {
+                newColors[`${categoryName}/${field}`] =
+                  colorPalette[
+                    Object.keys(newColors).length % colorPalette.length
+                  ]
+              }
+              return newColors
+            })
+            setColorIndex(2) // this is risky.
+          })
+        } else {
+          showErrorNotification(
+            `Your log file does not include ${categoryName}`,
+          )
+        }
+      })
+
+      setMessageFilters(newFilters)
+    }
+  }
+
+  function selectMessageFilter(event, messageName, fieldName) {
+    let newFilters = {
+      ...messageFilters,
+    }
+    newFilters[messageName][fieldName] = event.currentTarget.checked
+    // if unchecked remove custom color
+    if (!newFilters[messageName][fieldName]) {
+      setCustomColors((prevColors) => {
+        let newColors = {
+          ...prevColors,
+        }
+        delete newColors[`${messageName}/${fieldName}`]
+        return newColors
+      })
+    }
+    // Else assign a color
+    else {
+      setCustomColors((prevColors) => {
+        let newColors = {
+          ...prevColors,
+        }
+        if (!newColors[`${messageName}/${fieldName}`]) {
+          newColors[`${messageName}/${fieldName}`] =
+            colorPalette[colorIndex % colorPalette.length]
+          setColorIndex((colorIndex + 1) % colorPalette.length)
+        }
+        return newColors
+      })
+    }
+
+    setMessageFilters(newFilters)
   }
 
   // Ensure file is loaded when selected
@@ -338,82 +426,13 @@ export default function FLA() {
                       <Accordion multiple={true}>
                         {presetCategories.map((category) => {
                           return (
-                            <Accordion.Item
-                              key={category.name}
-                              value={category.name}
-                            >
-                              <Accordion.Control>
-                                {category.name}
-                              </Accordion.Control>
-                              <Accordion.Panel>
-                                <div className='flex flex-col gap-2'>
-                                  {category.filters.map((filter, idx) => {
-                                    return (
-                                      <Button
-                                        key={idx}
-                                        onClick={() => {
-                                          clearFilters()
-                                          setCustomColors({})
-                                          setColorIndex(0)
-                                          let newFilters = { ...messageFilters }
-                                          Object.keys(filter.filters).map(
-                                            (categoryName) => {
-                                              if (
-                                                Object.keys(
-                                                  messageFilters,
-                                                ).includes(categoryName)
-                                              ) {
-                                                filter.filters[
-                                                  categoryName
-                                                ].map((field) => {
-                                                  newFilters[categoryName][
-                                                    field
-                                                  ] = true
-                                                  // assign a color
-                                                  setCustomColors(
-                                                    (prevColors) => {
-                                                      let newColors = {
-                                                        ...prevColors,
-                                                      }
-                                                      if (
-                                                        !newColors[
-                                                          `${categoryName}/${field}`
-                                                        ]
-                                                      ) {
-                                                        newColors[
-                                                          `${categoryName}/${field}`
-                                                        ] =
-                                                          colorPalette[
-                                                            Object.keys(
-                                                              newColors,
-                                                            ).length %
-                                                              colorPalette.length
-                                                          ]
-                                                      }
-                                                      console.log(newColors)
-                                                      return newColors
-                                                    },
-                                                  )
-                                                  setColorIndex(2) // this is risky.
-                                                })
-                                              } else {
-                                                showErrorNotification(
-                                                  `Your log file does not include ${categoryName}`,
-                                                )
-                                              }
-                                            },
-                                          )
-
-                                          setMessageFilters(newFilters)
-                                        }}
-                                      >
-                                        {filter.name}
-                                      </Button>
-                                    )
-                                  })}
-                                </div>
-                              </Accordion.Panel>
-                            </Accordion.Item>
+                            <Fragment key={category.name}>
+                              <PresetAccordionItem
+                                key={category.name}
+                                category={category}
+                                selectPresetFunc={selectPreset}
+                              />
+                            </Fragment>
                           )
                         })}
                       </Accordion>
@@ -427,82 +446,14 @@ export default function FLA() {
                       <Accordion multiple={false}>
                         {Object.keys(messageFilters).map((messageName, idx) => {
                           return (
-                            <Accordion.Item key={idx} value={messageName}>
-                              <Accordion.Control>
-                                <p>{messageName}</p>
-                                <p className='text-gray-500 italic text-sm'>
-                                  {logMessageDescriptions[messageName]}
-                                </p>
-                              </Accordion.Control>
-                              <Accordion.Panel>
-                                <div className='flex flex-col gap-1'>
-                                  {Object.keys(messageFilters[messageName]).map(
-                                    (fieldName, idx) => {
-                                      return (
-                                        <Checkbox
-                                          key={idx}
-                                          label={fieldName}
-                                          checked={
-                                            messageFilters[messageName][
-                                              fieldName
-                                            ]
-                                          }
-                                          onChange={(event) => {
-                                            let newFilters = {
-                                              ...messageFilters,
-                                            }
-                                            newFilters[messageName][fieldName] =
-                                              event.currentTarget.checked
-                                            // if unchecked remove custom color
-                                            if (
-                                              !newFilters[messageName][
-                                                fieldName
-                                              ]
-                                            ) {
-                                              setCustomColors((prevColors) => {
-                                                let newColors = {
-                                                  ...prevColors,
-                                                }
-                                                delete newColors[
-                                                  `${messageName}/${fieldName}`
-                                                ]
-                                                return newColors
-                                              })
-                                            } // else, assign a color
-                                            else {
-                                              setCustomColors((prevColors) => {
-                                                let newColors = {
-                                                  ...prevColors,
-                                                }
-                                                if (
-                                                  !newColors[
-                                                    `${messageName}/${fieldName}`
-                                                  ]
-                                                ) {
-                                                  newColors[
-                                                    `${messageName}/${fieldName}`
-                                                  ] =
-                                                    colorPalette[
-                                                      colorIndex %
-                                                        colorPalette.length
-                                                    ]
-                                                  setColorIndex(
-                                                    (colorIndex + 1) %
-                                                      colorPalette.length,
-                                                  )
-                                                }
-                                                return newColors
-                                              })
-                                            }
-                                            setMessageFilters(newFilters)
-                                          }}
-                                        />
-                                      )
-                                    },
-                                  )}
-                                </div>
-                              </Accordion.Panel>
-                            </Accordion.Item>
+                            <Fragment key={idx}>
+                              <MessageAccordionItem
+                                messageName={messageName}
+                                logMessageDescriptions={logMessages['format']}
+                                messageFilters={messageFilters}
+                                selectMessageFilterFunc={selectMessageFilter}
+                              />
+                            </Fragment>
                           )
                         })}
                       </Accordion>
@@ -535,7 +486,6 @@ export default function FLA() {
               </div>
               {chartData.datasets.map((item) => (
                 <Fragment key={item.label}>
-                  {' '}
                   {/* I did this to let color change affect a specific label, not an index */}
                   <div className='inline-flex flex-col items-center px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200 gap-2'>
                     {/* Title and Delete Button */}
@@ -555,22 +505,7 @@ export default function FLA() {
                       className='w-full text-xs'
                       size='xs'
                       format='hex'
-                      swatches={[
-                        '#f5f5f5',
-                        '#868e96',
-                        '#fa5252',
-                        '#e64980',
-                        '#be4bdb',
-                        '#7950f2',
-                        '#4c6ef5',
-                        '#228be6',
-                        '#15aabf',
-                        '#12b886',
-                        '#40c057',
-                        '#82c91e',
-                        '#fab005',
-                        '#fd7e14',
-                      ]}
+                      swatches={colorInputSwatch}
                       closeOnColorSwatchClick
                       withEyeDropper={false}
                       value={item.borderColor}

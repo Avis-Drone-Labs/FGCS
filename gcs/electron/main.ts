@@ -16,6 +16,7 @@ process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.
 
 
 let win: BrowserWindow | null
+let loadingWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -41,8 +42,26 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(process.env.DIST, 'index.html'))
   }
-  win.maximize()
-  win.show()
+
+  // Swap to main window when ready
+  win.once('ready-to-show', () => {
+    loadingWin?.destroy()
+    win?.maximize()
+  })
+}
+
+function createLoadingWindow(){
+  loadingWin= new BrowserWindow({
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    center: true,
+  });
+
+  // Resize and center window
+  loadingWin.loadFile(path.join(process.env.VITE_PUBLIC, 'logo_dark_nobg_white_with_text.svg'))
+  loadingWin.setSize(300, 300, true);
+  loadingWin.center();
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -63,4 +82,7 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  createLoadingWindow()
+  createWindow()
+})

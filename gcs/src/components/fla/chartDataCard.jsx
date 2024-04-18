@@ -11,7 +11,7 @@ export default function ChartDataCard({
   colorInputSwatch,
   tailwindColors,
   changeColorFunc,
-  removeDatasetFunc
+  removeDatasetFunc,
 }) {
   return (
     <div className='inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200'>

@@ -91,6 +91,7 @@ class Drone:
         self.message_queue: Queue = Queue()
         self.log_message_queue: Queue = Queue()
         self.log_directory = Path.home().joinpath("FGCS", "logs")
+        self.log_directory.mkdir(parents=True, exist_ok=True)
         self.current_log_file = 1
         self.cleanTempLogs()
 
@@ -114,35 +115,35 @@ class Drone:
         Cleans and attempts to recover old log files by using the ==EXIF==...==END== at the top of the firs temp log file.
         If there are others then add them to the recovered file. Once everything has been read, delete all old temp logs.
         """
-        log_files = [file for file in os.listdir(self.log_directory) if file.startswith("tmp")]
+        log_files = [
+            file for file in os.listdir(self.log_directory) if file.startswith("tmp")
+        ]
         final_log_file = f"RECOVERED_TMP_{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
 
         # Attempt to get first temp log file's date
         try:
-            with open(f"{self.log_directory}/tmp1.ftlog") as f:
+            with open(self.log_directory.joinpath("tmp1.ftlog")) as f:
                 first_line = f.readline()
                 if first_line.startswith("==EXIF=="):
-                    final_log_file = f'{first_line.split("==EXIF==")[-1].split("==END==")[0]}.ftlog'
+                    final_log_file = (
+                        f'{first_line.split("==EXIF==")[-1].split("==END==")[0]}.ftlog'
+                    )
         except Exception as _:
             print(f"Exif data not found, moving temp files into '{final_log_file}'")
 
-        # Combine Logs 
+        # Combine Logs
         try:
             if len(log_files) > 0:
                 final_log_file = self.log_directory.joinpath(final_log_file)
                 with open(final_log_file, "a") as f:
                     for temp_file_number in log_files:
-                        temp_filename = str(self.log_directory.joinpath(temp_file_number))
+                        temp_filename = self.log_directory.joinpath(temp_file_number)
                         with open(temp_filename) as temp_f:
                             f.writelines(temp_f.readlines())
                         os.remove(temp_filename)
                 print(f"Saved drone logs to: {final_log_file}")
         except Exception as e:
             print(f"Failed to save drone logs: {e}")
-
-                
-                
-
 
     def setupDataStreams(self) -> None:
         """
@@ -326,21 +327,25 @@ class Drone:
                 q = self.message_queue.get()
                 self.message_listeners[q[0]](q[1])
             except KeyError as e:
-                print(f"Could not execute message (likely due to backend abruptly stopping): {e}")
+                print(
+                    f"Could not execute message (likely due to backend abruptly stopping): {e}"
+                )
 
     def logMessages(self) -> None:
         """A thread to log messages into a FTLog file from the log queue."""
         current_lines = 0
         while self.is_active:
             if not self.log_message_queue.empty():
-                file_dir = str(
-                    self.log_directory.joinpath(f"tmp{self.current_log_file}.ftlog")
+                file_dir = self.log_directory.joinpath(
+                    f"tmp{self.current_log_file}.ftlog"
                 )
 
                 # Write the date at time on the first log message for recovery
                 if not os.path.exists(file_dir):
                     with open(file_dir, "w") as f:
-                        f.write(f"==EXIF=={time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}==END==\n")
+                        f.write(
+                            f"==EXIF=={time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}==END==\n"
+                        )
 
                 # Attempt to log the messages into the current file
                 with open(file_dir, "a") as f:
@@ -857,10 +862,8 @@ class Drone:
         while not self.message_queue.empty():
             time.sleep(0.1)
 
-        final_log_file = str(
-            self.log_directory.joinpath(
-                f"{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
-            )
+        final_log_file = self.log_directory.joinpath(
+            f"{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
         )
 
         # Ensure log file is a real file/directory
@@ -868,11 +871,11 @@ class Drone:
             print("Log file directory wasn't made, making it now...")
             os.makedirs(os.path.dirname(final_log_file), exist_ok=True)
 
-        # Combine Logs 
+        # Combine Logs
         try:
             with open(final_log_file, "a") as f:
                 for file_num in range(1, self.current_log_file + 1):
-                    temp_filename = str(self.log_directory.joinpath(f"tmp{file_num}.ftlog"))
+                    temp_filename = self.log_directory.joinpath(f"tmp{file_num}.ftlog")
                     with open(temp_filename) as temp_f:
                         f.writelines(temp_f.readlines())
                     os.remove(temp_filename)

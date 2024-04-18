@@ -445,8 +445,8 @@ export default function FLA() {
                           return (
                             <Fragment key={idx}>
                               <MessageAccordionItem
+                                key={idx}
                                 messageName={messageName}
-                                logMessageDescriptions={logMessages['format']}
                                 messageFilters={messageFilters}
                                 selectMessageFilterFunc={selectMessageFilter}
                               />
@@ -488,6 +488,8 @@ export default function FLA() {
                     messageMeans={messageMeans}
                     colorInputSwatch={colorInputSwatch}
                     tailwindColors={tailwindColors}
+                    changeColorFunc={changeColor}
+                    removeDatasetFunc={removeDataset}
                   />
                 </Fragment>
               ))}

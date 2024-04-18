@@ -10,6 +10,8 @@ export default function ChartDataCard({
   messageMeans,
   colorInputSwatch,
   tailwindColors,
+  changeColorFunc,
+  removeDatasetFunc
 }) {
   return (
     <div className='inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200'>
@@ -19,7 +21,7 @@ export default function ChartDataCard({
         <ActionIcon
           variant='subtle'
           color={tailwindColors.red[500]}
-          onClick={() => removeDataset(item.label)}
+          onClick={() => removeDatasetFunc(item.label)}
         >
           <IconTrash size={18} />
         </ActionIcon>
@@ -35,7 +37,7 @@ export default function ChartDataCard({
         withEyeDropper={false}
         value={item.borderColor}
         rightSection={<IconPaint size={16} />}
-        onChangeEnd={(color) => changeColor(item.label, color)}
+        onChangeEnd={(color) => changeColorFunc(item.label, color)}
       />
 
       {/* Min, max, min */}

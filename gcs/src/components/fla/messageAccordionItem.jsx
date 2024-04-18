@@ -1,8 +1,8 @@
 import { Accordion, Checkbox } from '@mantine/core'
+import { logMessageDescriptions } from '../../helpers/logMessageDescriptions.js'
 
 export default function MessageAccordionItem({
   messageName,
-  logMessageDescriptions,
   messageFilters,
   selectMessageFilterFunc,
 }) {
@@ -10,7 +10,7 @@ export default function MessageAccordionItem({
     <Accordion.Item value={messageName}>
       <Accordion.Control>
         <p>{messageName}</p>
-        <p className='text-gray-500 italic text-sm'>
+        <p className='text-sm italic text-gray-500'>
           {logMessageDescriptions[messageName]}
         </p>
       </Accordion.Control>

@@ -92,25 +92,57 @@ class Drone:
         self.log_message_queue: Queue = Queue()
         self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.current_log_file = 1
+        self.cleanTempLogs()
 
         self.is_active = True
         self.is_listening = True
         self.is_requesting_params = False
         self.current_param_index = 0
         self.total_number_of_params = 0
+        self.number_of_motors = 4  # Is there a way to get this from the drone?
         self.params = []
 
         self.armed = False
 
-        self.number_of_motors = 4  # Is there a way to get this from the drone?
-
         self.gripper = Gripper(self.master, self.target_system, self.target_component)
-
         self.mission = Mission(self)
-
         self.stopAllDataStreams()
-
         self.startThread()
+
+    def cleanTempLogs(self) -> None:
+        """
+        Cleans and attempts to recover old log files by using the ==EXIF==...==END== at the top of the firs temp log file.
+        If there are others then add them to the recovered file. Once everything has been read, delete all old temp logs.
+        """
+        log_files = [file for file in os.listdir(self.log_directory) if file.startswith("tmp")]
+        final_log_file = f"RECOVERED_TMP_{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}.ftlog"
+
+        # Attempt to get first temp log file's date
+        try:
+            with open(f"{self.log_directory}/tmp1.ftlog") as f:
+                first_line = f.readline()
+                if first_line.startswith("==EXIF=="):
+                    final_log_file = f'{first_line.split("==EXIF==")[-1].split("==END==")[0]}.ftlog'
+        except Exception as _:
+            print(f"Exif data not found, moving temp files into '{final_log_file}'")
+
+        # Combine Logs 
+        try:
+            if len(log_files) > 0:
+                final_log_file = self.log_directory.joinpath(final_log_file)
+                with open(final_log_file, "a") as f:
+                    for temp_file_number in log_files:
+                        temp_filename = str(self.log_directory.joinpath(temp_file_number))
+                        with open(temp_filename) as temp_f:
+                            f.writelines(temp_f.readlines())
+                        os.remove(temp_filename)
+                print(f"Saved drone logs to: {final_log_file}")
+        except Exception as e:
+            print(f"Failed to save drone logs: {e}")
+
+                
+                
+
 
     def setupDataStreams(self) -> None:
         """
@@ -214,6 +246,8 @@ class Drone:
                 if self.droneErrorCb:
                     self.droneErrorCb(str(e))
                 continue
+            except AttributeError as e:
+                print(f"mav recv error: {e}")
             except KeyboardInterrupt:
                 break
             except serial.serialutil.SerialException as e:
@@ -288,8 +322,11 @@ class Drone:
     def executeMessages(self) -> None:
         """Executes message listeners based on messages from the message queue."""
         while self.is_active:
-            q = self.message_queue.get()
-            self.message_listeners[q[0]](q[1])
+            try:
+                q = self.message_queue.get()
+                self.message_listeners[q[0]](q[1])
+            except KeyError as e:
+                print(f"Could not execute message (likely due to backend abruptly stopping): {e}")
 
     def logMessages(self) -> None:
         """A thread to log messages into a FTLog file from the log queue."""
@@ -299,6 +336,13 @@ class Drone:
                 file_dir = str(
                     self.log_directory.joinpath(f"tmp{self.current_log_file}.ftlog")
                 )
+
+                # Write the date at time on the first log message for recovery
+                if not os.path.exists(file_dir):
+                    with open(file_dir, "w") as f:
+                        f.write(f"==EXIF=={time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}==END==\n")
+
+                # Attempt to log the messages into the current file
                 with open(file_dir, "a") as f:
                     if current_lines < LOG_LINE_LIMIT:
                         f.write(self.log_message_queue.get() + "\n")
@@ -806,9 +850,7 @@ class Drone:
             self.removeMessageListener(message_id)
 
         self.stopAllDataStreams()
-
         self.is_active = False
-
         self.master.close()
 
         # Wait for queue to be empty

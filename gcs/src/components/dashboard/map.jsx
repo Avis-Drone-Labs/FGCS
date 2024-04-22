@@ -14,7 +14,7 @@ import { Tooltip } from '@mantine/core'
 
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config'
+import tailwindConfig from '../../../tailwind.config'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Convert coordinates from mavlink into gps coordinates

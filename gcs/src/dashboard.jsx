@@ -33,7 +33,7 @@ import { socket } from './helpers/socket'
 // Custom component
 import useSound from 'use-sound'
 import { AttitudeIndicator, HeadingIndicator } from './components/dashboard/indicator'
-import Layout from './components/layout'
+import Layout from './components/dashboard/layout'
 import MapSection from './components/map'
 import StatusBar, { StatusSection } from './components/statusBar'
 import StatusMessages from './components/statusMessages'

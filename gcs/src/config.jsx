@@ -19,7 +19,7 @@ import {
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
-import Layout from './components/layout'
+import Layout from './components/dashboard/layout'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

@@ -4,6 +4,7 @@
         "centered",
         "falcongrey",
         "falconred",
+        "maplibre",
         "mavutil",
         "pymavlink",
         "PYQT",

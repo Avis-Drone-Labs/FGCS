@@ -1,13 +1,23 @@
-import 'maplibre-gl/dist/maplibre-gl.css'
+/*
+  The dashboard map. 
 
-import { Tooltip } from '@mantine/core'
+  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet connection to load but this will be addressed in later versions of FGCS. Please check docs/changelogs if this description has not been updated.
+*/
+
+// Base imports
 import { useEffect, useState } from 'react'
+
+// Maplibre and mantine imports
+import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
+import { Tooltip } from '@mantine/core'
+
+// Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config'
-
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+// Convert coordinates from mavlink into gps coordinates
 function intToCoord(val) {
   return val * 1e-7
 }
@@ -21,21 +31,24 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
   const [defaultLon, setDefaultLon] = useState(-1.481434)
 
   useEffect(() => {
+    // Check latest data point is valid
     if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
       return
+    
+    // Move drone icon on map
     let lat = intToCoord(data.lat)
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
+    
+    // Update default lat and lon if they're ready to be updated
     if (!isNaN(defaultLat) || !isNaN(defaultLon)) {
       setDefaultLat(lat)
       setDefaultLon(lon)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
   return (
     <div className='w-initial h-full' id='map'>
-      {/* Map */}
       <Map
         initialViewState={{
           latitude: defaultLat,
@@ -47,6 +60,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
         }`}
         ref={passedRef}
       >
+        {/* Show marker on map if the position is set */}
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
           <Marker
             latitude={position.latitude}
@@ -60,6 +74,8 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             />
           </Marker>
         )}
+
+        {/* Show mission item LABELS */}
         {missionItems.mission_items.map((item, index) => {
           return (
             <Marker
@@ -94,56 +110,8 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             </Marker>
           )
         })}
-        {missionItems.fence_items.map((item, index) => {
-          return (
-            <Marker
-              key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 48'
-                fill={tailwindColors.blue[400]}
-                stroke='currentColor'
-                strokeWidth='1'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
-              >
-                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-              </svg>
-            </Marker>
-          )
-        })}
-        {missionItems.rally_items.map((item, index) => {
-          return (
-            <Marker
-              key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <Tooltip label={`Alt: ${item.z}`}>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 48'
-                  fill={tailwindColors.purple[400]}
-                  stroke='currentColor'
-                  strokeWidth='1'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
-                >
-                  <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-                </svg>
-              </Tooltip>
-            </Marker>
-          )
-        })}
+
+        {/* Show mission item outlines */}
         {missionItems.mission_items.length > 0 && (
           <Source
             type='geojson'
@@ -180,6 +148,34 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             />
           </Source>
         )}
+
+        {/* Show mission geo-fence MARKERS */}
+        {missionItems.fence_items.map((item, index) => {
+          return (
+            <Marker
+              key={index}
+              longitude={intToCoord(item.y)}
+              latitude={intToCoord(item.x)}
+            >
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 48'
+                fill={tailwindColors.blue[400]}
+                stroke='currentColor'
+                strokeWidth='1'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+              >
+                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+              </svg>
+            </Marker>
+          )
+        })}
+
+        {/* Show geo-fence outlines */}
         {missionItems.fence_items.length > 0 && (
           <Source
             type='geojson'
@@ -217,6 +213,34 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             />
           </Source>
         )}
+
+        {/* Show mission rally point */}
+        {missionItems.rally_items.map((item, index) => {
+          return (
+            <Marker
+              key={index}
+              longitude={intToCoord(item.y)}
+              latitude={intToCoord(item.x)}
+            >
+              <Tooltip label={`Alt: ${item.z}`}>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  width='24'
+                  height='24'
+                  viewBox='0 0 24 48'
+                  fill={tailwindColors.purple[400]}
+                  stroke='currentColor'
+                  strokeWidth='1'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+                >
+                  <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+                </svg>
+              </Tooltip>
+            </Marker>
+          )
+        })}
       </Map>
     </div>
   )

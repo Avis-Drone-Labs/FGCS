@@ -34,12 +34,12 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
     // Check latest data point is valid
     if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
       return
-    
+
     // Move drone icon on map
     let lat = intToCoord(data.lat)
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
-    
+
     // Update default lat and lon if they're ready to be updated
     if (!isNaN(defaultLat) || !isNaN(defaultLon)) {
       setDefaultLat(lat)

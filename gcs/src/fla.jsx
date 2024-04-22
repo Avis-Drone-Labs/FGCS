@@ -26,7 +26,7 @@ import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
 import ChartDataCard from './components/fla/chartDataCard.jsx'
-import Layout from './components/layout.jsx'
+import Layout from './components/layout'
 import {
   showErrorNotification,
   showSuccessNotification,

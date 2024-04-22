@@ -1,7 +1,9 @@
 /*
-  The dashboard screen. This is the first screen to be loaded in and is where the user will spend most of their time.
+  The dashboard screen. This is the first screen to be loaded in and is where the user will 
+  spend most of their time.
 
-  This contains the map, live indicator, and GPS data. All of these are imported as components and are integrated in this file with logic linking them together.
+  This contains the map, live indicator, and GPS data. All of these are imported as components 
+  and are integrated in this file with logic linking them together.
 */
 
 // Base imports

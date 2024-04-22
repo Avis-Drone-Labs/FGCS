@@ -1,7 +1,9 @@
 /*
   The dashboard map. 
 
-  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet connection to load but this will be addressed in later versions of FGCS. Please check docs/changelogs if this description has not been updated.
+  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet 
+  connection to load but this will be addressed in later versions of FGCS. Please check 
+  docs/changelogs if this description has not been updated.
 */
 
 // Base imports

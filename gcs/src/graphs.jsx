@@ -10,7 +10,6 @@ import { useEffect, useRef } from 'react'
 // 3rd Party Imports
 import { Select } from '@mantine/core'
 import { useLocalStorage, usePrevious } from '@mantine/hooks'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -18,8 +17,9 @@ import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
 import Layout from './components/layout'
-import RealtimeGraph from './components/realtimeGraph.jsx'
 import { socket } from './helpers/socket'
+import GraphPanel from './components/graphs/graphPanel.jsx'
+import MessageSelector from './components/graphs/messageSelector.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -41,34 +41,6 @@ const graphColors = {
   graph_b: tailwindColors.pink[400],
   graph_c: tailwindColors.orange[400],
   graph_d: tailwindColors.green[400],
-}
-
-function MessageSelector({
-  graphOptions,
-  label,
-  labelColor,
-  valueKey,
-  currentValues,
-  setValue,
-}) {
-  return (
-    <Select
-      label={label}
-      classNames={{ option: 'capitalize', label: labelColor }}
-      data={Object.keys(graphOptions).map((messageName) => ({
-        group: messageName,
-        items: graphOptions[messageName].map((v) => ({
-          value: `${messageName}/${v}`,
-          label: v,
-        })),
-      }))}
-      searchable
-      value={currentValues[valueKey]}
-      onChange={(value) => {
-        setValue({ [valueKey]: value })
-      }}
-    />
-  )
 }
 
 export default function Graphs() {
@@ -200,75 +172,11 @@ export default function Graphs() {
               setValue={updateSelectValues}
             />
           </div>
-          <PanelGroup
-            autoSaveId='verticalGraphs'
-            direction='vertical'
-            className='h-full'
-          >
-            <Panel minSize={20}>
-              <PanelGroup autoSaveId='horizontalGraphs1' direction='horizontal'>
-                <Panel minSize={10}>
-                  {selectValues.graph_a ? (
-                    <RealtimeGraph
-                      ref={graphRefs.graph_a}
-                      datasetLabel={selectValues.graph_a.split('/')[1]}
-                      lineColor={graphColors.graph_a}
-                    />
-                  ) : (
-                    <p className='flex items-center justify-center h-full'>
-                      Select a value to plot on graph A
-                    </p>
-                  )}
-                </Panel>
-                <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-                <Panel minSize={10}>
-                  {selectValues.graph_b ? (
-                    <RealtimeGraph
-                      ref={graphRefs.graph_b}
-                      datasetLabel={selectValues.graph_b.split('/')[1]}
-                      lineColor={graphColors.graph_b}
-                    />
-                  ) : (
-                    <p className='flex items-center justify-center h-full'>
-                      Select a value to plot on graph B
-                    </p>
-                  )}
-                </Panel>
-              </PanelGroup>
-            </Panel>
-            <PanelResizeHandle className='h-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-            <Panel minSize={20}>
-              <PanelGroup autoSaveId='horizontalGraphs2' direction='horizontal'>
-                <Panel minSize={10}>
-                  {selectValues.graph_c ? (
-                    <RealtimeGraph
-                      ref={graphRefs.graph_c}
-                      datasetLabel={selectValues.graph_c.split('/')[1]}
-                      lineColor={graphColors.graph_c}
-                    />
-                  ) : (
-                    <p className='flex items-center justify-center h-full'>
-                      Select a value to plot on graph C
-                    </p>
-                  )}
-                </Panel>
-                <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-                <Panel minSize={10}>
-                  {selectValues.graph_d ? (
-                    <RealtimeGraph
-                      ref={graphRefs.graph_d}
-                      datasetLabel={selectValues.graph_d.split('/')[1]}
-                      lineColor={graphColors.graph_d}
-                    />
-                  ) : (
-                    <p className='flex items-center justify-center h-full'>
-                      Select a value to plot on graph D
-                    </p>
-                  )}
-                </Panel>
-              </PanelGroup>
-            </Panel>
-          </PanelGroup>
+          <GraphPanel 
+            selectValues={selectValues} 
+            graphRefs={graphRefs} 
+            graphColors={graphColors} 
+          />
         </div>
       ) : (
         <div className='flex items-center justify-center h-full'>

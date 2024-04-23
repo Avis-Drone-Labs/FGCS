@@ -8,14 +8,7 @@
 import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import {
-  Button,
-  Loader,
-  Modal,
-  Progress,
-  TextInput,
-  Tooltip,
-} from '@mantine/core'
+import { Button, Loader, Modal, Progress, TextInput, Tooltip } from '@mantine/core'
 import {
   useDebouncedValue,
   useDisclosure,
@@ -40,16 +33,10 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 // Custom components, helpers, and data
 import Layout from './components/layout.jsx'
 import { socket } from './helpers/socket.js'
-import RowItem from './components/params/rowItem.jsx'
 import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
+import { Row } from './components/params/row.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-const Row = ({ data, index, style }) => {
-  const param = data.params[index]
-
-  return <RowItem param={param} style={style} onChange={data.onChange} />
-}
 
 export default function Params() {
   const [connected] = useLocalStorage({

@@ -5,18 +5,14 @@
 */
 
 // Base imports
-import { memo, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
 import {
   Button,
   Loader,
   Modal,
-  MultiSelect,
-  NumberInput,
   Progress,
-  ScrollArea,
-  Select,
   TextInput,
   Tooltip,
 } from '@mantine/core'
@@ -38,145 +34,16 @@ import { FixedSizeList } from 'react-window'
 import AutoSizer from 'react-virtualized-auto-sizer'
 
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
+import resolveConfig from 'tailwindcss/resolveConfig'
 
 // Custom components, helpers, and data
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from './helpers/notification.js'
-import { socket } from './helpers/socket.js'
-import apmParamDefs from '../data/gen_apm_params_def.json'
 import Layout from './components/layout.jsx'
+import { socket } from './helpers/socket.js'
+import RowItem from './components/params/rowItem.jsx'
+import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-function BitmaskSelect({ className, value, onChange, param, options }) {
-  const [selected, selectedHandler] = useListState([])
-
-  useEffect(() => {
-    parseBitmask(value)
-  }, [value])
-
-  function parseBitmask(bitmaskToParse) {
-    const binaryString = dec2bin(bitmaskToParse)
-    const selectedArray = []
-
-    binaryString
-      .split('')
-      .reverse()
-      .map((bit, index) => {
-        if (bit === '1') {
-          selectedArray.push(`${index}`)
-        }
-      })
-
-    selectedHandler.setState(selectedArray)
-  }
-
-  function createBitmask(value) {
-    const initialValue = 0
-    const bitmask = value.reduce(
-      (accumulator, currentValue) => accumulator + 2 ** parseInt(currentValue),
-      initialValue,
-    )
-    selectedHandler.setState(value)
-    console.log(bitmask)
-    onChange(bitmask, param)
-  }
-
-  function dec2bin(dec) {
-    return (dec >>> 0).toString(2)
-  }
-
-  return (
-    <ScrollArea.Autosize className={`${className} max-h-24`}>
-      <MultiSelect
-        value={selected}
-        onChange={createBitmask}
-        data={Object.keys(options).map((key) => ({
-          value: `${key}`,
-          label: `${options[key]}`,
-        }))}
-      />
-    </ScrollArea.Autosize>
-  )
-}
-
-function ValueInput({ param, paramDef, onChange, className }) {
-  if (paramDef?.Range) {
-    return (
-      <NumberInput // Range input
-        className={className}
-        label={`${paramDef?.Range.low} - ${paramDef?.Range.high}`}
-        value={param.param_value}
-        onChange={(value) => onChange(value, param)}
-        decimalScale={5}
-        // min={parseFloat(paramDef?.Range.low)}
-        // max={parseFloat(paramDef?.Range.high)}
-        hideControls
-        suffix={paramDef?.Units}
-      />
-    )
-  } else if (paramDef?.Values) {
-    return (
-      <Select // Values input
-        className={className}
-        value={`${param.param_value}`}
-        onChange={(value) => onChange(value, param)}
-        data={Object.keys(paramDef?.Values).map((key) => ({
-          value: `${key}`,
-          label: `${key}: ${paramDef?.Values[key]}`,
-        }))}
-        allowDeselect={false}
-      />
-    )
-  } else if (paramDef?.Bitmask) {
-    return (
-      <BitmaskSelect // Bitmask input
-        className={className}
-        value={param.param_value}
-        onChange={onChange}
-        param={param}
-        options={paramDef?.Bitmask}
-      />
-    )
-  } else {
-    return (
-      <NumberInput
-        className={className}
-        value={param.param_value}
-        onChange={(value) => onChange(value, param)}
-        decimalScale={5}
-        hideControls
-        suffix={paramDef?.Units}
-      />
-    )
-  }
-}
-
-const RowItem = memo(({ param, style, onChange }) => {
-  const paramDef = apmParamDefs[param.param_id]
-  return (
-    <div style={style} className='flex flex-row items-center space-x-4'>
-      <Tooltip label={paramDef?.DisplayName}>
-        <p className='w-56'>{param.param_id}</p>
-      </Tooltip>
-      <ValueInput
-        param={param}
-        paramDef={paramDef}
-        onChange={onChange}
-        className='w-3/12'
-      />
-      <div className='w-1/2'>
-        <ScrollArea.Autosize className='max-h-24'>
-          {paramDef?.Description}
-        </ScrollArea.Autosize>
-      </div>
-    </div>
-  )
-})
 
 const Row = ({ data, index, style }) => {
   const param = data.params[index]
@@ -187,7 +54,7 @@ const Row = ({ data, index, style }) => {
 export default function Params() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
-    defaultValue: false,
+    defaultValue: true,
   })
   const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
@@ -255,7 +122,7 @@ export default function Params() {
       socket.off('params_error')
       socket.off('reboot_autopilot')
     }
-  }, [connected])
+  }, [connected]) // useEffect
 
   useEffect(() => {
     if (!params) return

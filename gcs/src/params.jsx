@@ -8,23 +8,11 @@
 import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import { Button, Loader, Modal, Progress, TextInput, Tooltip } from '@mantine/core'
-import {
-  useDebouncedValue,
-  useDisclosure,
-  useListState,
-  useLocalStorage,
-  useToggle,
-} from '@mantine/hooks'
-import {
-  IconEye,
-  IconPencil,
-  IconPower,
-  IconRefresh,
-  IconTool,
-} from '@tabler/icons-react'
 import { FixedSizeList } from 'react-window'
 import AutoSizer from 'react-virtualized-auto-sizer'
+import { Button, Progress, TextInput, Tooltip } from '@mantine/core'
+import { IconEye, IconPencil, IconPower, IconRefresh, IconTool } from '@tabler/icons-react'
+import { useDebouncedValue, useDisclosure, useListState, useLocalStorage, useToggle } from '@mantine/hooks'
 
 // Styling imports
 import tailwindConfig from '../tailwind.config.js'
@@ -33,26 +21,28 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 // Custom components, helpers, and data
 import Layout from './components/layout.jsx'
 import { socket } from './helpers/socket.js'
-import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
 import { Row } from './components/params/row.jsx'
+import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
+import AutopilotRebootModal from './components/params/autopilotRebootModal.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Params() {
+
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: true,
   })
-  const [fetchingVars, setFetchingVars] = useState(false)
-  const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
   const [params, paramsHandler] = useListState([])
+  const [rebootData, setRebootData] = useState({})
+  const [searchValue, setSearchValue] = useState('')
+  const [opened, { open, close }] = useDisclosure(false)
+  const [fetchingVars, setFetchingVars] = useState(false)
   const [shownParams, shownParamsHandler] = useListState([])
   const [modifiedParams, modifiedParamsHandler] = useListState([])
   const [showModifiedParams, showModifiedParamsToggle] = useToggle()
-  const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
-  const [opened, { open, close }] = useDisclosure(false)
-  const [rebootData, setRebootData] = useState({})
+  const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
 
   useEffect(() => {
     socket.on('reboot_autopilot', (msg) => {
@@ -62,6 +52,7 @@ export default function Params() {
       }
     })
 
+    // Drone has lost connection
     if (!connected) {
       setFetchingVars(false)
       setFetchingVarsProgress(0)
@@ -73,6 +64,7 @@ export default function Params() {
       return
     }
 
+    // Fetch params
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
       socket.emit('set_state', { state: 'params' })
       setFetchingVars(true)
@@ -175,42 +167,12 @@ export default function Params() {
 
   return (
     <Layout currentPage='params'>
-      <Modal
+
+      <AutopilotRebootModal
+        rebootData={rebootData}
         opened={opened}
         onClose={close}
-        title='Rebooting autopilot'
-        closeOnClickOutside={false}
-        closeOnEscape={false}
-        withCloseButton={false}
-        centered
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 3,
-        }}
-      >
-        <div className='flex flex-col items-center justify-center'>
-          {rebootData.message === undefined ? (
-            <Loader />
-          ) : (
-            <>
-              {!rebootData.success && (
-                <>
-                  <p className='my-2'>
-                    {rebootData.message} You will need to reconnect.
-                  </p>
-                  <Button
-                    onClick={close}
-                    color={tailwindColors.red[600]}
-                    className='mt-4'
-                  >
-                    Close
-                  </Button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </Modal>
+      />
 
       {fetchingVars && (
         <Progress

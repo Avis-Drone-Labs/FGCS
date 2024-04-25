@@ -40,8 +40,8 @@ import {
 } from './components/dashboard/indicator'
 import Layout from './components/layout'
 import MapSection from './components/dashboard/map'
-import StatusBar, { StatusSection } from './components/statusBar'
-import StatusMessages from './components/statusMessages'
+import StatusBar, { StatusSection } from './components/dashboard/statusBar'
+import StatusMessages from './components/dashboard/statusMessages'
 
 const MAV_AUTOPILOT_INVALID = 8
 

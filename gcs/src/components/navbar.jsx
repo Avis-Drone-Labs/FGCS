@@ -73,6 +73,7 @@ export default function Navbar({ currentPage }) {
       socket.emit('is_connected_to_drone')
     }
 
+    // Flag connected/not connected, if not fetch ports
     socket.on('is_connected_to_drone', (msg) => {
       if (msg) {
         setConnected(true)
@@ -83,6 +84,7 @@ export default function Navbar({ currentPage }) {
       }
     })
 
+    // Fetch com ports and list them
     socket.on('list_com_ports', (msg) => {
       setFetchingComPorts(false)
       setComPorts(msg)
@@ -98,6 +100,7 @@ export default function Navbar({ currentPage }) {
       }
     })
 
+    // Flags that the drone is connected
     socket.on('connected_to_drone', () => {
       console.log('connected to drone')
       setConnected(true)
@@ -105,16 +108,19 @@ export default function Navbar({ currentPage }) {
       close()
     })
 
+    // Flags that the drone is disconnected
     socket.on('disconnected_from_drone', () => {
       console.log('disconnected_from_drone')
       setConnected(false)
     })
 
+    // Handles disconnect trigger
     socket.on('disconnect', () => {
       setConnected(false)
       setConnecting(false)
     })
 
+    // Flags an error with the com port
     socket.on('com_port_error', (msg) => {
       console.log(msg.message)
       showErrorNotification(msg.message)

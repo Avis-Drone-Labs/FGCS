@@ -71,7 +71,7 @@ export default function Params() {
   }
 
   /**
-   * Re-loads the parameters
+   * Refreshes the params on the drone then fetches them
    */
   function refreshParams() {
     paramsHandler.setState([])
@@ -113,6 +113,8 @@ export default function Params() {
   }
 
   useEffect(() => {
+
+    // Updates the autopilot modal depending on the success of the reboot
     socket.on('reboot_autopilot', (msg) => {
       setRebootData(msg)
       if (msg.success) {
@@ -132,7 +134,7 @@ export default function Params() {
       setFetchingVars(true)
     }
 
-    // Update parameters when receieved from drone
+    // Update parameter states when params are receieved from drone
     socket.on('params', (params) => {
       paramsHandler.setState(params)
       shownParamsHandler.setState(params)
@@ -141,7 +143,7 @@ export default function Params() {
       setSearchValue('')
     })
 
-    // Set progress on update from drone
+    // Set fetch progress on update from drone
     socket.on('param_request_update', (msg) => {
       setFetchingVarsProgress(
         (msg.current_param_index / msg.total_number_of_params) * 100,
@@ -154,7 +156,7 @@ export default function Params() {
       modifiedParamsHandler.setState([])
     })
 
-    // Show error message
+    // Show error message on drone error
     socket.on('params_error', (err) => {
       showErrorNotification(err.message)
       setFetchingVars(false)
@@ -173,15 +175,15 @@ export default function Params() {
   useEffect(() => {
     if (!params) return
 
-    const filteredParams = (
-      showModifiedParams ? modifiedParams : params
-    ).filter(
+    // Filter parameters based on search value
+    const filteredParams = (showModifiedParams ? modifiedParams : params).filter(
       (param) =>
         param.param_id
           .toLowerCase()
-          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+          .includes(debouncedSearchValue.toLowerCase()),
     )
 
+    // Show the filtered parameters
     shownParamsHandler.setState(filteredParams)
   }, [debouncedSearchValue, showModifiedParams])
 
@@ -205,7 +207,7 @@ export default function Params() {
 
       {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
-
+          
           <ParamsToolbar
             searchValue={searchValue}
             modifiedParams={modifiedParams}
@@ -215,7 +217,7 @@ export default function Params() {
             modifiedCallback={showModifiedParamsToggle}
             searchCallback={setSearchValue}
           />
-          
+
           <div className='h-full w-2/3 mx-auto'>
             <AutoSizer>
               {({ height, width }) => (

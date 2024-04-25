@@ -8,7 +8,6 @@ import { Button, Loader, Modal } from "@mantine/core";
 // Styling imports
 import tailwindConfig from '../../../tailwind.config.js'
 import resolveConfig from 'tailwindcss/resolveConfig'
-
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function AutopilotRebootModal({rebootData, opened, onClose}){

@@ -9,17 +9,15 @@ rebooting the autopilot
 import { Button, TextInput, Tooltip } from '@mantine/core'
 import { IconEye, IconPencil, IconPower, IconRefresh, IconTool } from '@tabler/icons-react'
 
-// Styling imports
-import tailwindConfig from '../../../tailwind.config.js'
-import resolveConfig from 'tailwindcss/resolveConfig'
-
 // Custom helper, component and data imports
 import { socket } from '../../helpers/socket.js'
 
+// Styling imports
+import tailwindConfig from '../../../tailwind.config.js'
+import resolveConfig from 'tailwindcss/resolveConfig'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function ParamsToolbar({searchValue, modifiedParams, showModifiedParams, refreshCallback, rebootCallback, modifiedCallback, searchCallback}){
-  
+export default function ParamsToolbar({searchValue, modifiedParams, showModifiedParams, refreshCallback, rebootCallback, modifiedCallback, searchCallback}){  
   /**
   * Sets all the modified parameters to their new values on the drone
   */
@@ -28,7 +26,7 @@ export default function ParamsToolbar({searchValue, modifiedParams, showModified
   }
   
   return (
-    <div className='flex space-x-4 justify-center'>
+    <div className='flex justify-center space-x-4'>
       <Tooltip
         label={showModifiedParams ? 'Show all params' : 'Show modified params'}
         position='bottom'

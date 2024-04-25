@@ -11,13 +11,13 @@ import { MultiSelect, ScrollArea } from "@mantine/core"
 
 
 export default function BitmaskSelect({ className, value, onChange, param, options }) {
-
   const [selected, selectedHandler] = useListState([])
 
   useEffect(() => {
     parseBitmask(value)
   }, [value])
 
+  // Parse bit mask for parameter options
   function parseBitmask(bitmaskToParse) {
     const binaryString = dec2bin(bitmaskToParse)
     const selectedArray = []
@@ -34,6 +34,7 @@ export default function BitmaskSelect({ className, value, onChange, param, optio
     selectedHandler.setState(selectedArray)
   }
 
+  // Create bitmask for each option
   function createBitmask(value) {
     const initialValue = 0
     const bitmask = value.reduce(

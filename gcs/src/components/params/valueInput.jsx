@@ -1,7 +1,7 @@
 /*
   Input which allows for modification of a given parameter
 
-  Uses different input styles (NunberInput, Select and BitmaskSelect) depending on the type
+  Uses different input styles (NumberInput, Select and BitmaskSelect) depending on the type
   of parameter that is being modified
 */
 
@@ -26,6 +26,7 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
       />
     )
   }
+
   if (paramDef?.Bitmask) {
     return (
       <BitmaskSelect // Bitmask input
@@ -37,6 +38,7 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
       />
     )
   }
+
   // Default return NumberInput, with range if the param supports it
   return (
     <NumberInput

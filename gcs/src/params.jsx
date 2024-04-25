@@ -89,6 +89,13 @@ export default function Params() {
     return modifiedParams.find((obj) => { return obj.param_id === param.param_id})
   }
 
+  /**
+   * Updates the parameter value in the given useListState handler
+   * 
+   * @param {*} handler 
+   * @param {*} param 
+   * @param {*} value 
+   */
   function updateParamValue(handler, param, value){
     handler.applyWhere(
       (item) => item.param_id === param.param_id,
@@ -187,7 +194,7 @@ export default function Params() {
       (param) =>
         param.param_id
           .toLowerCase()
-          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+          .includes(debouncedSearchValue.toLowerCase()),
     )
 
     // Show the filtered parameters

@@ -12,19 +12,6 @@ import { NumberInput, Select } from "@mantine/core"
 import BitmaskSelect from "./bitmaskSelect"
 
 export default function ValueInput({ param, paramDef, onChange, className }) {
-  if (paramDef?.Range) {
-    return (
-      <NumberInput // Range input
-        className={className}
-        label={`${paramDef?.Range.low} - ${paramDef?.Range.high}`}
-        value={param.param_value}
-        onChange={(value) => onChange(value, param)}
-        decimalScale={5}
-        hideControls
-        suffix={paramDef?.Units}
-      />
-    )
-  }
   if (paramDef?.Values) {
     return (
       <Select // Values input
@@ -50,9 +37,11 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
       />
     )
   }
+  // Default return NumberInput, with range if the param supports it
   return (
     <NumberInput
       className={className}
+      label={paramDef?.Range ? `${paramDef?.Range.low} - ${paramDef?.Range.high}` : ``}
       value={param.param_value}
       onChange={(value) => onChange(value, param)}
       decimalScale={5}

@@ -115,7 +115,7 @@ export default function Params() {
       param.param_value = value
       modifiedParamsHandler.append(param)
     }
-    
+
     updateParamValue(paramsHandler, param, value)
   }
 
@@ -235,7 +235,10 @@ export default function Params() {
                   itemData={{
                     params: shownParams,
                     onChange: addToModifiedParams,
-                  }}> {Row} </FixedSizeList>
+                  }}
+                > 
+                  {Row}
+                </FixedSizeList>
               )}
             </AutoSizer>
           </div>

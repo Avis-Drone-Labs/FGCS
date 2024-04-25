@@ -1,12 +1,14 @@
 /*
-  The config screen. TODO: Someone please write about this
+  The config screen. Allows the testing and configuration of the settings and parameters of the drone
+
+  This includes gripper testing, motor testing, RC configuration and Flight mode configuration
 */
 
 // Base imports
 import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import { Button, NumberInput, Tabs } from '@mantine/core'
+import { Tabs } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
 
 // Styling imports
@@ -20,153 +22,23 @@ import {
 } from './helpers/notification'
 import { socket } from './helpers/socket'
 import Layout from './components/layout'
+import Motortestpanel from './components/config/motorTest'
+import Gripper from './components/config/gripper'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-function Gripper() {
-  function setGripper(action) {
-    socket.emit('set_gripper', action)
-  }
-
-  // Set gripper config values
-
-  return (
-    <div className='m-6 w-1/2'>
-      <div className='flex flex-row gap-2'>
-        <Button
-          onClick={() => setGripper('release')}
-          color={tailwindColors.falconred[100]}
-        >
-          Release Gripper
-        </Button>
-        <Button
-          onClick={() => setGripper('grab')}
-          color={tailwindColors.falconred[100]}
-        >
-          Grab Gripper
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-function MotorTest() {
-  const [selectedThrottle, setSelectedThrottle] = useState(10)
-  const [selectedDuration, setSelectedDuration] = useState(2)
-
-  function testOneMotor(motorInstance) {
-    socket.emit('test_one_motor', {
-      motorInstance: motorInstance,
-      throttle: selectedThrottle,
-      duration: selectedDuration,
-    })
-  }
-
-  function testMotorSequence() {
-    socket.emit('test_motor_sequence', {
-      throttle: selectedThrottle,
-      duration: selectedDuration, // This is actually the delay between tests since it's a sequence test
-    })
-  }
-
-  function testAllMotors() {
-    socket.emit('test_all_motors', {
-      throttle: selectedThrottle,
-      duration: selectedDuration,
-    })
-  }
-
-  return (
-    <div className='m-6 w-min'>
-      <div className='flex flex-col gap-2'>
-        <div className='flex gap-2'>
-          <NumberInput
-            label='Throttle'
-            value={selectedThrottle}
-            onChange={setSelectedThrottle}
-            suffix='%'
-            min={0}
-            max={100}
-            className='w-36'
-          />
-          <NumberInput
-            label='Duration'
-            value={selectedDuration}
-            onChange={setSelectedDuration}
-            suffix='s'
-            min={0}
-            className='w-36'
-          />
-        </div>
-        <div className='flex flex-col mt-6 gap-2'>
-          <Button
-            onClick={() => {
-              testOneMotor(1)
-            }}
-            color={tailwindColors.blue[600]}
-          >
-            Test motor A
-          </Button>
-          <Button
-            onClick={() => {
-              testOneMotor(2)
-            }}
-            color={tailwindColors.blue[600]}
-          >
-            Test motor B
-          </Button>
-          <Button
-            onClick={() => {
-              testOneMotor(3)
-            }}
-            color={tailwindColors.blue[600]}
-          >
-            Test motor C
-          </Button>
-          <Button
-            onClick={() => {
-              testOneMotor(4)
-            }}
-            color={tailwindColors.blue[600]}
-          >
-            Test motor D
-          </Button>
-          <Button
-            onClick={() => {
-              testMotorSequence()
-            }}
-            color={tailwindColors.lime[600]}
-          >
-            Test motor sequence
-          </Button>
-          <Button
-            onClick={() => {
-              testAllMotors()
-            }}
-            color={tailwindColors.pink[600]}
-          >
-            Test all motors
-          </Button>
-        </div>
-        <a
-          className='text-teal-300 hover:underline text-sm'
-          href='https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams'
-          target='_blank'
-        >
-          Click here to see your motor numbers and directions
-        </a>
-      </div>
-    </div>
-  )
-}
 
 export default function Config() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
   })
-  const [gripperEnabled, setGripperEnabled] = useState(false)
 
+  // States in the frontend
+  const [gripperEnabled, setGripperEnabled] = useState(false)
+  const [selectedThrottle, setSelectedThrottle] = useState(10)
+  const [selectedDuration, setSelectedDuration] = useState(2)
+
+  // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
     if (!connected) {
       return
@@ -228,7 +100,12 @@ export default function Config() {
               <Gripper />
             </Tabs.Panel>
             <Tabs.Panel value='motor_test'>
-              <MotorTest />
+              <Motortestpanel
+                selectedThrottle={selectedThrottle}
+                selectedDuration={selectedDuration}
+                setSelectedThrottle={setSelectedThrottle}
+                setselectedDuration={setSelectedDuration}
+              />
             </Tabs.Panel>
             <Tabs.Panel value='rc_calibration'>
               <h1>RC Calibration Page</h1>

@@ -1,12 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+/*
+  Custom component for dashboard
+  Displays messages with different severity
+*/
 
-import { ScrollArea } from '@mantine/core'
+// Base imports
+import { useEffect, useRef, useState } from 'react'
 import moment from 'moment'
+
+// Third party imports
+import { ScrollArea } from '@mantine/core'
 
 export default function StatusMessages(props) {
   const viewport = useRef(null)
   const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
 
+  // Pushes new messages to bottom
   useEffect(() => {
     if (scrollPosition.y < 100) {
       viewport.current?.scrollTo({ top: 0, behavior: 'smooth' })

@@ -1,10 +1,16 @@
-import heading_mechanics from './img/heading_mechanics.svg'
-import heading_yaw from './img/heading_yaw.svg'
-import horizon_back from './img/horizon_back.svg'
-import horizon_ball from './img/horizon_ball.svg'
-import horizon_circle from './img/horizon_circle.svg'
-import horizon_mechanics from './img/horizon_mechanics.svg'
+/*
+  Indicator Component for dashboard. This is the component that shows orientation of the drone.
+*/
 
+// Image imports
+import heading_mechanics from '../img/heading_mechanics.svg'
+import heading_yaw from '../img/heading_yaw.svg'
+import horizon_back from '../img/horizon_back.svg'
+import horizon_ball from '../img/horizon_ball.svg'
+import horizon_circle from '../img/horizon_circle.svg'
+import horizon_mechanics from '../img/horizon_mechanics.svg'
+
+// File constants
 const constants = {
   pitch_bound: 30,
 }
@@ -17,6 +23,7 @@ const box = {
   left: 0,
 }
 
+// Custom instrument styling for each indicator below
 const Instrument = ({ children, size }) => {
   return (
     <div
@@ -32,6 +39,7 @@ const Instrument = ({ children, size }) => {
   )
 }
 
+// Attitude component to show stats below the heading indicator
 export const AttitudeIndicator = (params) => {
   let pitch = params.pitch ?? 0
   if (pitch > constants.pitch_bound) {
@@ -63,6 +71,7 @@ export const AttitudeIndicator = (params) => {
   )
 }
 
+// Heading indicator for the drones yaw
 export const HeadingIndicator = (params) => {
   return (
     <Instrument {...params}>

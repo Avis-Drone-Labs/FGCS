@@ -1,7 +1,9 @@
 /*
-  The dashboard screen. This is the first screen to be loaded in and is where the user will spend most of their time.
+  The dashboard screen. This is the first screen to be loaded in and is where the user will 
+  spend most of their time.
 
-  This contains the map, live indicator, and GPS data. All of these are imported as components and are integrated in this file with logic linking them together.
+  This contains the map, live indicator, and GPS data. All of these are imported as components 
+  and are integrated in this file with logic linking them together.
 */
 
 // Base imports
@@ -32,11 +34,14 @@ import { socket } from './helpers/socket'
 
 // Custom component
 import useSound from 'use-sound'
-import { AttitudeIndicator, HeadingIndicator } from './components/indicator'
+import {
+  AttitudeIndicator,
+  HeadingIndicator,
+} from './components/dashboard/indicator'
 import Layout from './components/layout'
-import MapSection from './components/map'
-import StatusBar, { StatusSection } from './components/statusBar'
-import StatusMessages from './components/statusMessages'
+import MapSection from './components/dashboard/map'
+import StatusBar, { StatusSection } from './components/dashboard/statusBar'
+import StatusMessages from './components/dashboard/statusMessages'
 
 const MAV_AUTOPILOT_INVALID = 8
 

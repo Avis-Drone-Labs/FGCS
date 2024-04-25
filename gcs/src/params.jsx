@@ -17,9 +17,11 @@ import { useDebouncedValue, useDisclosure, useListState, useLocalStorage, useTog
 import Layout from './components/layout.jsx'
 import { socket } from './helpers/socket.js'
 import { Row } from './components/params/row.jsx'
-import ParamsHeader from './components/params/paramsSearchBar.jsx'
+import ParamsToolbar from './components/params/paramsToolbar.jsx'
 import AutopilotRebootModal from './components/params/autopilotRebootModal.jsx'
 import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
+
+
 
 export default function Params() {
 
@@ -27,91 +29,65 @@ export default function Params() {
     key: 'connectedToDrone',
     defaultValue: true,
   })
+
+  // Parameter states
   const [params, paramsHandler] = useListState([])
-  const [rebootData, setRebootData] = useState({})
-  const [searchValue, setSearchValue] = useState('')
-  const [opened, { open, close }] = useDisclosure(false)
-  const [fetchingVars, setFetchingVars] = useState(false)
   const [shownParams, shownParamsHandler] = useListState([])
   const [modifiedParams, modifiedParamsHandler] = useListState([])
   const [showModifiedParams, showModifiedParamsToggle] = useToggle()
+
+  // Autopilot reboot states
+  const [rebootData, setRebootData] = useState({})
+  const [opened, { open, close }] = useDisclosure(false)
+
+  // Searchbar states
+  const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
+
+  // Fetch progress states
+  const [fetchingVars, setFetchingVars] = useState(false)
   const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
 
-  useEffect(() => {
-    socket.on('reboot_autopilot', (msg) => {
-      setRebootData(msg)
-      if (msg.success) {
-        close()
-      }
-    })
+  /**
+   * Resets the state of the parameters page to the initial states
+   */
+  function resetState() {
+    setFetchingVars(false)
+    setFetchingVarsProgress(0)
+    paramsHandler.setState([])
+    shownParamsHandler.setState([])
+    modifiedParamsHandler.setState([])
+    setSearchValue('')
+    setRebootData({})
+  }
 
-    // Drone has lost connection
-    if (!connected) {
-      setFetchingVars(false)
-      setFetchingVarsProgress(0)
-      paramsHandler.setState([])
-      shownParamsHandler.setState([])
-      modifiedParamsHandler.setState([])
-      setSearchValue('')
-      setRebootData({})
-      return
-    }
+  /**
+   * Sends a request to the drone to reboot the autopilot
+   */
+  function rebootAutopilot() {
+    socket.emit('reboot_autopilot')
+    open()
+    resetState()
+  }
 
-    // Fetch params
-    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      socket.emit('set_state', { state: 'params' })
-      setFetchingVars(true)
-    }
+  /**
+   * Re-loads the parameters
+   */
+  function refreshParams() {
+    paramsHandler.setState([])
+    shownParamsHandler.setState([])
+    socket.emit('refresh_params')
+    setFetchingVars(true)
+  }
 
-    socket.on('params', (params) => {
-      paramsHandler.setState(params)
-      shownParamsHandler.setState(params)
-      setFetchingVars(false)
-      setFetchingVarsProgress(0)
-      setSearchValue('')
-    })
-
-    socket.on('param_request_update', (msg) => {
-      setFetchingVarsProgress(
-        (msg.current_param_index / msg.total_number_of_params) * 100,
-      )
-    })
-
-    socket.on('param_set_success', (msg) => {
-      showSuccessNotification(msg.message)
-      modifiedParamsHandler.setState([])
-    })
-
-    socket.on('params_error', (err) => {
-      showErrorNotification(err.message)
-      setFetchingVars(false)
-    })
-
-    return () => {
-      socket.off('params')
-      socket.off('param_request_update')
-      socket.off('param_set_success')
-      socket.off('params_error')
-      socket.off('reboot_autopilot')
-    }
-  }, [connected]) // useEffect
-
-  useEffect(() => {
-    if (!params) return
-
-    const filteredParams = (
-      showModifiedParams ? modifiedParams : params
-    ).filter(
-      (param) =>
-        param.param_id
-          .toLowerCase()
-          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
-    )
-
-    shownParamsHandler.setState(filteredParams)
-  }, [debouncedSearchValue, showModifiedParams])
-
+  /**
+   * Adds a parameter to the list of parameters that have been modified since the
+   * last save
+   * 
+   * @param {*} value 
+   * @param {*} param 
+   * @returns 
+   */
   function addToModifiedParams(value, param) {
     console.log(param.param_id, value)
     // TODO: Can this logic be tidied up?
@@ -136,24 +112,79 @@ export default function Params() {
     )
   }
 
-  function rebootAutopilot() {
-    socket.emit('reboot_autopilot')
-    open()
-    setFetchingVars(false)
-    setFetchingVarsProgress(0)
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
-    modifiedParamsHandler.setState([])
-    setSearchValue('')
-    setRebootData({})
-  }
+  useEffect(() => {
+    socket.on('reboot_autopilot', (msg) => {
+      setRebootData(msg)
+      if (msg.success) {
+        close()
+      }
+    })
 
-  function refreshParams() {
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
-    socket.emit('refresh_params')
-    setFetchingVars(true)
-  }
+    // Drone has lost connection
+    if (!connected) {
+      resetState()
+      return
+    }
+
+    // Fetch params on connection to drone
+    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
+      socket.emit('set_state', { state: 'params' })
+      setFetchingVars(true)
+    }
+
+    // Update parameters when receieved from drone
+    socket.on('params', (params) => {
+      paramsHandler.setState(params)
+      shownParamsHandler.setState(params)
+      setFetchingVars(false)
+      setFetchingVarsProgress(0)
+      setSearchValue('')
+    })
+
+    // Set progress on update from drone
+    socket.on('param_request_update', (msg) => {
+      setFetchingVarsProgress(
+        (msg.current_param_index / msg.total_number_of_params) * 100,
+      )
+    })
+
+    // Show success on saving modified params
+    socket.on('param_set_success', (msg) => {
+      showSuccessNotification(msg.message)
+      modifiedParamsHandler.setState([])
+    })
+
+    // Show error message
+    socket.on('params_error', (err) => {
+      showErrorNotification(err.message)
+      setFetchingVars(false)
+    })
+
+    // 
+    return () => {
+      socket.off('params')
+      socket.off('param_request_update')
+      socket.off('param_set_success')
+      socket.off('params_error')
+      socket.off('reboot_autopilot')
+    }
+  }, [connected]) // useEffect
+
+  useEffect(() => {
+    if (!params) return
+
+    const filteredParams = (
+      showModifiedParams ? modifiedParams : params
+    ).filter(
+      (param) =>
+        param.param_id
+          .toLowerCase()
+          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
+    )
+
+    shownParamsHandler.setState(filteredParams)
+  }, [debouncedSearchValue, showModifiedParams])
+
 
   return (
     <Layout currentPage='params'>
@@ -175,13 +206,13 @@ export default function Params() {
       {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
 
-          <ParamsHeader
+          <ParamsToolbar
             searchValue={searchValue}
             modifiedParams={modifiedParams}
             showModifiedParams={showModifiedParams}
-            paramRefreshCallback={refreshParams}
-            autopilotRebootCallback={rebootAutopilot}
-            modifiedParamsCallback={showModifiedParamsToggle}
+            refreshCallback={refreshParams}
+            rebootCallback={rebootAutopilot}
+            modifiedCallback={showModifiedParamsToggle}
             searchCallback={setSearchValue}
           />
           
@@ -196,10 +227,7 @@ export default function Params() {
                   itemData={{
                     params: shownParams,
                     onChange: addToModifiedParams,
-                  }}
-                >
-                  {Row}
-                </FixedSizeList>
+                  }}> {Row} </FixedSizeList>
               )}
             </AutoSizer>
           </div>

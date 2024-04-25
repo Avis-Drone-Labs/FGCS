@@ -46,7 +46,7 @@ export default function Motortestpanel({
       duration: selectedDuration,
     })
   }
-  
+
   return (
     <div className='m-6 w-min'>
       <div className='flex flex-col gap-2'>
@@ -70,6 +70,7 @@ export default function Motortestpanel({
             className='w-full'
           />
         </div>
+
         <div className='flex flex-col gap-2 mt-6'>
           {/* Individual motor testing buttons*/}
           {['A', 'B', 'C', 'D'].map((motor, index) => (

@@ -30,28 +30,33 @@ import { socket } from '../helpers/socket'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
+  // Panel is open/closed
+  const [opened, { open, close }] = useDisclosure(false)
+
+  // Connection to drone
+  const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
-  })
-  const [opened, { open, close }] = useDisclosure(false)
-  const [comPorts, setComPorts] = useState([])
-  const [selectedComPort, setSelectedComPort] = useState(null)
-  const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
-    key: 'baudrate',
-    defaultValue: '9600',
   })
   const [wireless, setWireless] = useLocalStorage({
     key: 'wirelessConnection',
     defaultValue: true,
   })
-  const [fetchingComPorts, setFetchingComPorts] = useState(false)
-  const [connecting, setConnecting] = useState(false)
   const [connectedToSocket, setConnectedToSocket] = useState(false)
   const checkIfConnectedToSocket = useInterval(
     () => setConnectedToSocket(socket.connected),
     3000,
   )
+  const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
+    key: 'baudrate',
+    defaultValue: '9600',
+  })
+
+  // Com Ports
+  const [comPorts, setComPorts] = useState([])
+  const [selectedComPort, setSelectedComPort] = useState(null)
+  const [fetchingComPorts, setFetchingComPorts] = useState(false)
 
   function getComPorts() {
     if (!connectedToSocket) return

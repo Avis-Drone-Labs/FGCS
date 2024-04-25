@@ -1,3 +1,9 @@
+/*
+    The Modal component for connecting to the Com Port
+    Accessed through the connect button on the navbar
+*/
+
+// Third party imports
 import {
     Button,
     Checkbox,
@@ -7,9 +13,9 @@ import {
     Select,
     Tooltip,
 } from '@mantine/core'
-
 import { IconInfoCircle, IconRefresh } from '@tabler/icons-react'
 
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config.js'
 
@@ -35,7 +41,7 @@ export default function ComPortModal({
 ) {
 
     return (
-        <Modal
+      <Modal
         opened={opened}
         onClose={() => {
           close()

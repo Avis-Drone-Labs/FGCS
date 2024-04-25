@@ -1,8 +1,22 @@
-import React from 'react';
+/*
+  GraphPanel Component
+
+  This component is responsible for rendering a group of resizable panels, each containing a RealtimeGraph component.
+  The graphs are displayed based on the selected values passed as props. If no value is selected for a graph, 
+  a message prompts the user to select a value for that graph.
+
+  Props:
+    - selectValues: An object containing the selected values for each graph.
+    - graphRefs: An object containing the refs for each graph.
+    - graphColors: An object containing the colors for each graph.
+
+  3rd Party Imports:
+    - Panel, PanelGroup, PanelResizeHandle from 'react-resizable-panels': Components used to create resizable panels.
+    - RealtimeGraph from '../realtimeGraph.jsx': The graph component that is displayed in each panel.
+*/
 
 // 3rd Party Imports
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-
 import RealtimeGraph from '../realtimeGraph.jsx'
 
 export default function GraphPanel({ 

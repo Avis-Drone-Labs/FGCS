@@ -1,4 +1,17 @@
-import React from 'react';
+/*
+  MessageSelector Component
+
+  This component is a custom Select component that allows users to select a message from a list of options.
+  The options are grouped by message name and are searchable. The selected value is stored in the currentValues object.
+
+  Props:
+    - graphOptions: An object containing the available options for each message.
+    - label: The label for the Select component.
+    - labelColor: The color for the label.
+    - valueKey: The key used to store the selected value in the currentValues object.
+    - currentValues: An object containing the currently selected values.
+    - setValue: A function used to set the selected value.
+*/
 
 // 3rd Party Imports
 import { Select } from '@mantine/core'

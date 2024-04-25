@@ -8,7 +8,6 @@
 import { useEffect, useRef } from 'react'
 
 // 3rd Party Imports
-import { Select } from '@mantine/core'
 import { useLocalStorage, usePrevious } from '@mantine/hooks'
 
 // Styling imports

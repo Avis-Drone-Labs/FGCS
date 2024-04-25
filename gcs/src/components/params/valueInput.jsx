@@ -20,8 +20,6 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
         value={param.param_value}
         onChange={(value) => onChange(value, param)}
         decimalScale={5}
-        // min={parseFloat(paramDef?.Range.low)}
-        // max={parseFloat(paramDef?.Range.high)}
         hideControls
         suffix={paramDef?.Units}
       />

@@ -1,5 +1,5 @@
 /*
-  Parameter selection component used for parameters which are stored using a bitmask
+  Parameter selection component used for parameters which are stored using bitwise flags
 */
 
 // Base imports
@@ -11,6 +11,7 @@ import { MultiSelect, ScrollArea } from "@mantine/core"
 
 
 export default function BitmaskSelect({ className, value, onChange, param, options }) {
+
   const [selected, selectedHandler] = useListState([])
 
   useEffect(() => {

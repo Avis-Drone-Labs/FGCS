@@ -1,10 +1,15 @@
 /*
-  File description
+  Component that holds a single parameter, its value and the description in a row
 */
 
+// Base imports
 import { memo } from "react"
-import ValueInput from "./valueInput"
+
+// 3rd party imports
 import { ScrollArea, Tooltip } from "@mantine/core"
+
+// Custom components, helpers and data
+import ValueInput from "./valueInput"
 import apmParamDefs from '../../../data/gen_apm_params_def.json'
 
 const RowItem = memo(({ param, style, onChange }) => {

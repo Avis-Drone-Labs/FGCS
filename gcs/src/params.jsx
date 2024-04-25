@@ -81,6 +81,22 @@ export default function Params() {
   }
 
   /**
+   * Checks if a paramter has been modified since the last save
+   * @param {*} param the parameter to check
+   * @returns true if the given parameter is in modifiedParams, otherwise false
+   */
+  function isModified(param) {
+    return modifiedParams.find((obj) => { return obj.param_id === param.param_id})
+  }
+
+  function updateParamValue(handler, param, value){
+    handler.applyWhere(
+      (item) => item.param_id === param.param_id,
+      (item) => ({ ...item, param_value: value }),
+    )
+  }
+
+  /**
    * Adds a parameter to the list of parameters that have been modified since the
    * last save
    * 
@@ -89,27 +105,18 @@ export default function Params() {
    * @returns 
    */
   function addToModifiedParams(value, param) {
-    console.log(param.param_id, value)
-    // TODO: Can this logic be tidied up?
     if (value === '') return
-    if (
-      modifiedParams.find((obj) => {
-        return obj.param_id === param.param_id
-      })
-    ) {
-      modifiedParamsHandler.applyWhere(
-        (item) => item.param_id === param.param_id,
-        (item) => ({ ...item, param_value: value }),
-      )
-    } else {
+
+    // If param has already been modified since last save then update it 
+    if (isModified(param)) 
+      updateParamValue(modifiedParamsHandler, param, value)
+    else {
+      // Otherwise add it to modified params
       param.param_value = value
       modifiedParamsHandler.append(param)
     }
-
-    paramsHandler.applyWhere(
-      (item) => item.param_id === param.param_id,
-      (item) => ({ ...item, param_value: value }),
-    )
+    
+    updateParamValue(paramsHandler, param, value)
   }
 
   useEffect(() => {
@@ -180,7 +187,7 @@ export default function Params() {
       (param) =>
         param.param_id
           .toLowerCase()
-          .includes(debouncedSearchValue.toLowerCase()),
+          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
     )
 
     // Show the filtered parameters
@@ -207,7 +214,6 @@ export default function Params() {
 
       {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
-          
           <ParamsToolbar
             searchValue={searchValue}
             modifiedParams={modifiedParams}

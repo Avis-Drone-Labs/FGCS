@@ -2,8 +2,8 @@
   File description?
 */
 
-import { MultiSelect, ScrollArea } from "@mantine/core"
 import { useEffect, useListState } from "react"
+import { MultiSelect, ScrollArea } from "@mantine/core"
 
 
 export default function BitmaskSelect({ className, value, onChange, param, options }) {

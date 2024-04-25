@@ -1,4 +1,8 @@
+/*
+    Modal that pops up when rebooting the autopilot using the "Reboot FC" button
+*/
 
+// 3rd party imports
 import { Button, Loader, Modal } from "@mantine/core";
 
 // Styling imports

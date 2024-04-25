@@ -1,8 +1,12 @@
 /*
-  File description?
+  Parameter selection component used for parameters which are stored using a bitmask
 */
 
-import { useEffect, useListState } from "react"
+// Base imports
+import { useEffect } from "react"
+
+// 3rd party imports
+import { useListState } from "@mantine/hooks"
 import { MultiSelect, ScrollArea } from "@mantine/core"
 
 

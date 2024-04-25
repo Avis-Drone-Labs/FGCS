@@ -1,8 +1,15 @@
 /*
+  Input which allows for modification of a given parameter
 
+  Uses different input styles (NunberInput, Select and BitmaskSelect) depending on the type
+  of parameter that is being modified
 */
-import BitmaskSelect from "./bitmaskSelect"
+
+// 3rd party imports
 import { NumberInput, Select } from "@mantine/core"
+
+// custom components, helpers and data
+import BitmaskSelect from "./bitmaskSelect"
 
 export default function ValueInput({ param, paramDef, onChange, className }) {
   if (paramDef?.Range) {
@@ -19,7 +26,8 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
         suffix={paramDef?.Units}
       />
     )
-  } else if (paramDef?.Values) {
+  }
+  if (paramDef?.Values) {
     return (
       <Select // Values input
         className={className}
@@ -32,7 +40,8 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
         allowDeselect={false}
       />
     )
-  } else if (paramDef?.Bitmask) {
+  }
+  if (paramDef?.Bitmask) {
     return (
       <BitmaskSelect // Bitmask input
         className={className}
@@ -42,16 +51,15 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
         options={paramDef?.Bitmask}
       />
     )
-  } else {
-    return (
-      <NumberInput
-        className={className}
-        value={param.param_value}
-        onChange={(value) => onChange(value, param)}
-        decimalScale={5}
-        hideControls
-        suffix={paramDef?.Units}
-      />
-    )
   }
+  return (
+    <NumberInput
+      className={className}
+      value={param.param_value}
+      onChange={(value) => onChange(value, param)}
+      decimalScale={5}
+      hideControls
+      suffix={paramDef?.Units}
+    />
+  )
 }

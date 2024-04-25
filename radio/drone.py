@@ -242,10 +242,6 @@ class Drone:
                     self.armed = bool(
                         msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
                     )
-                elif msg.msgname == "PARAM_VALUE":
-                    print(msg.param_id)
-                else:
-                    print(msg.msgname)
 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 

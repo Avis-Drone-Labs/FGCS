@@ -29,6 +29,7 @@ export default function Motortestpanel({
       duration: selectedDuration,
     })
   }
+
   // Test the motors individually in sequence with the specified throttle and time delay
   function testMotorSequence() {
     socket.emit('test_motor_sequence', {
@@ -45,6 +46,7 @@ export default function Motortestpanel({
       duration: selectedDuration,
     })
   }
+  
   return (
     <div className='m-6 w-min'>
       <div className='flex flex-col gap-2'>
@@ -68,7 +70,7 @@ export default function Motortestpanel({
             className='w-full'
           />
         </div>
-        <div className='flex flex-col mt-6 gap-2'>
+        <div className='flex flex-col gap-2 mt-6'>
           {/* Individual motor testing buttons*/}
           {['A', 'B', 'C', 'D'].map((motor, index) => (
             <Button
@@ -100,7 +102,7 @@ export default function Motortestpanel({
         </div>
         {/* Link for user to check their motor order diagram*/}
         <a
-          className='text-teal-300 hover:underline text-sm'
+          className='text-sm text-teal-300 hover:underline'
           href='https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams'
           target='_blank'
         >

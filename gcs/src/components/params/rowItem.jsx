@@ -5,10 +5,9 @@
 import { memo } from "react"
 import ValueInput from "./valueInput"
 import { ScrollArea, Tooltip } from "@mantine/core"
-import apmParamDefs from '../data/gen_apm_params_def.json'
+import apmParamDefs from '../../../data/gen_apm_params_def.json'
 
-
-export const RowItem = memo(({ param, style, onChange }) => {
+const RowItem = memo(({ param, style, onChange }) => {
   const paramDef = apmParamDefs[param.param_id]
   return (
     <div style={style} className='flex flex-row items-center space-x-4'>
@@ -29,3 +28,5 @@ export const RowItem = memo(({ param, style, onChange }) => {
     </div>
   )
 })
+
+export default RowItem

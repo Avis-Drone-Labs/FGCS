@@ -4,7 +4,7 @@ import { Button, TextInput, Tooltip } from '@mantine/core'
 import { IconEye, IconPencil, IconPower, IconRefresh, IconTool } from '@tabler/icons-react'
 
 // Styling imports
-import tailwindConfig from '../tailwind.config.js'
+import tailwindConfig from '../../../tailwind.config.js'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import { socket } from '../../helpers/socket.js'
 

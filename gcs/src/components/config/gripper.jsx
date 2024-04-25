@@ -1,3 +1,9 @@
+/*
+  This is the gripper component for the config page.
+
+  It sends the gripper commands to release and grab for testing it functions as specified
+*/
+
 // 3rd Party Imports
 import { Button } from '@mantine/core'
 

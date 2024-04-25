@@ -1,3 +1,9 @@
+/*
+  This is the motor test panel for the config page.
+
+  Allows testing the motors individually,in-sequence and simultaneously with throttle and duration parameters for the test
+*/
+
 // 3rd Party Imports
 import { Button, NumberInput } from '@mantine/core'
 

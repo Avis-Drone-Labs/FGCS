@@ -9,10 +9,6 @@
     - selectValues: An object containing the selected values for each graph.
     - graphRefs: An object containing the refs for each graph.
     - graphColors: An object containing the colors for each graph.
-
-  3rd Party Imports:
-    - Panel, PanelGroup, PanelResizeHandle from 'react-resizable-panels': Components used to create resizable panels.
-    - RealtimeGraph from '../realtimeGraph.jsx': The graph component that is displayed in each panel.
 */
 
 // 3rd Party Imports
@@ -46,6 +42,7 @@ export default function GraphPanel({
             )}
           </Panel>
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+          
           <Panel minSize={10}>
             {selectValues.graph_b ? (
               <RealtimeGraph
@@ -60,6 +57,7 @@ export default function GraphPanel({
             )}
           </Panel>
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+          
           <Panel minSize={10}>
             {selectValues.graph_c ? (
               <RealtimeGraph
@@ -74,6 +72,7 @@ export default function GraphPanel({
             )}
           </Panel>
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+          
           <Panel minSize={10}>
             {selectValues.graph_d ? (
               <RealtimeGraph

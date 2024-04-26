@@ -1,10 +1,19 @@
-import { IconClock, IconNetwork, IconNetworkOff } from '@tabler/icons-react'
-import { cloneElement, useEffect, useState } from 'react'
+/*
+  Custom component for map
+  In the top right of the map
+*/
 
+// Base imports
+import { cloneElement, useEffect, useState } from 'react'
+import moment from 'moment'
+
+// Third party imports
+import { IconClock, IconNetwork, IconNetworkOff } from '@tabler/icons-react'
 import { Tooltip } from '@mantine/core'
 import { useInterval } from '@mantine/hooks'
-import moment from 'moment'
-import { socket } from '../helpers/socket'
+
+// Helper imports
+import { socket } from '../../helpers/socket'
 
 export function StatusSection({ icon, value, tooltip }) {
   return (
@@ -21,6 +30,7 @@ export default function StatusBar(props) {
   const [time, setTime] = useState(moment())
   const updateClock = useInterval(() => setTime(moment()), 1000)
 
+  // Start clock
   useEffect(() => {
     updateClock.start()
     return updateClock.stop
@@ -31,6 +41,7 @@ export default function StatusBar(props) {
       className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}
     >
       {props.children}
+
       <StatusSection
         icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
         value=''

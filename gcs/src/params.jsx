@@ -5,311 +5,53 @@
 */
 
 // Base imports
-import { memo, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import {
-  Button,
-  Loader,
-  Modal,
-  MultiSelect,
-  NumberInput,
-  Progress,
-  ScrollArea,
-  Select,
-  TextInput,
-  Tooltip,
-} from '@mantine/core'
-import {
-  useDebouncedValue,
-  useDisclosure,
-  useListState,
-  useLocalStorage,
-  useToggle,
-} from '@mantine/hooks'
-import {
-  IconEye,
-  IconPencil,
-  IconPower,
-  IconRefresh,
-  IconTool,
-} from '@tabler/icons-react'
+import { Progress} from '@mantine/core'
 import { FixedSizeList } from 'react-window'
 import AutoSizer from 'react-virtualized-auto-sizer'
-
-// Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../tailwind.config.js'
+import { useDebouncedValue, useDisclosure, useListState, useLocalStorage, useToggle } from '@mantine/hooks'
 
 // Custom components, helpers, and data
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from './helpers/notification.js'
-import { socket } from './helpers/socket.js'
-import apmParamDefs from '../data/gen_apm_params_def.json'
 import Layout from './components/layout.jsx'
+import { socket } from './helpers/socket.js'
+import { Row } from './components/params/row.jsx'
+import ParamsToolbar from './components/params/paramsToolbar.jsx'
+import AutopilotRebootModal from './components/params/autopilotRebootModal.jsx'
+import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
 
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-function BitmaskSelect({ className, value, onChange, param, options }) {
-  const [selected, selectedHandler] = useListState([])
-
-  useEffect(() => {
-    parseBitmask(value)
-  }, [value])
-
-  function parseBitmask(bitmaskToParse) {
-    const binaryString = dec2bin(bitmaskToParse)
-    const selectedArray = []
-
-    binaryString
-      .split('')
-      .reverse()
-      .map((bit, index) => {
-        if (bit === '1') {
-          selectedArray.push(`${index}`)
-        }
-      })
-
-    selectedHandler.setState(selectedArray)
-  }
-
-  function createBitmask(value) {
-    const initialValue = 0
-    const bitmask = value.reduce(
-      (accumulator, currentValue) => accumulator + 2 ** parseInt(currentValue),
-      initialValue,
-    )
-    selectedHandler.setState(value)
-    console.log(bitmask)
-    onChange(bitmask, param)
-  }
-
-  function dec2bin(dec) {
-    return (dec >>> 0).toString(2)
-  }
-
-  return (
-    <ScrollArea.Autosize className={`${className} max-h-24`}>
-      <MultiSelect
-        value={selected}
-        onChange={createBitmask}
-        data={Object.keys(options).map((key) => ({
-          value: `${key}`,
-          label: `${options[key]}`,
-        }))}
-      />
-    </ScrollArea.Autosize>
-  )
-}
-
-function ValueInput({ param, paramDef, onChange, className }) {
-  if (paramDef?.Range) {
-    return (
-      <NumberInput // Range input
-        className={className}
-        label={`${paramDef?.Range.low} - ${paramDef?.Range.high}`}
-        value={param.param_value}
-        onChange={(value) => onChange(value, param)}
-        decimalScale={5}
-        // min={parseFloat(paramDef?.Range.low)}
-        // max={parseFloat(paramDef?.Range.high)}
-        hideControls
-        suffix={paramDef?.Units}
-      />
-    )
-  } else if (paramDef?.Values) {
-    return (
-      <Select // Values input
-        className={className}
-        value={`${param.param_value}`}
-        onChange={(value) => onChange(value, param)}
-        data={Object.keys(paramDef?.Values).map((key) => ({
-          value: `${key}`,
-          label: `${key}: ${paramDef?.Values[key]}`,
-        }))}
-        allowDeselect={false}
-      />
-    )
-  } else if (paramDef?.Bitmask) {
-    return (
-      <BitmaskSelect // Bitmask input
-        className={className}
-        value={param.param_value}
-        onChange={onChange}
-        param={param}
-        options={paramDef?.Bitmask}
-      />
-    )
-  } else {
-    return (
-      <NumberInput
-        className={className}
-        value={param.param_value}
-        onChange={(value) => onChange(value, param)}
-        decimalScale={5}
-        hideControls
-        suffix={paramDef?.Units}
-      />
-    )
-  }
-}
-
-const RowItem = memo(({ param, style, onChange }) => {
-  const paramDef = apmParamDefs[param.param_id]
-  return (
-    <div style={style} className='flex flex-row items-center space-x-4'>
-      <Tooltip label={paramDef?.DisplayName}>
-        <p className='w-56'>{param.param_id}</p>
-      </Tooltip>
-      <ValueInput
-        param={param}
-        paramDef={paramDef}
-        onChange={onChange}
-        className='w-3/12'
-      />
-      <div className='w-1/2'>
-        <ScrollArea.Autosize className='max-h-24'>
-          {paramDef?.Description}
-        </ScrollArea.Autosize>
-      </div>
-    </div>
-  )
-})
-
-const Row = ({ data, index, style }) => {
-  const param = data.params[index]
-
-  return <RowItem param={param} style={style} onChange={data.onChange} />
-}
 
 export default function Params() {
+
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
-    defaultValue: false,
+    defaultValue: true,
   })
-  const [fetchingVars, setFetchingVars] = useState(false)
-  const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
+
+  // Parameter states
   const [params, paramsHandler] = useListState([])
   const [shownParams, shownParamsHandler] = useListState([])
   const [modifiedParams, modifiedParamsHandler] = useListState([])
   const [showModifiedParams, showModifiedParamsToggle] = useToggle()
+
+  // Autopilot reboot states
+  const [rebootData, setRebootData] = useState({})
+  const [opened, { open, close }] = useDisclosure(false)
+
+  // Searchbar states
   const [searchValue, setSearchValue] = useState('')
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
-  const [opened, { open, close }] = useDisclosure(false)
-  const [rebootData, setRebootData] = useState({})
 
-  useEffect(() => {
-    socket.on('reboot_autopilot', (msg) => {
-      setRebootData(msg)
-      if (msg.success) {
-        close()
-      }
-    })
+  // Fetch progress states
+  const [fetchingVars, setFetchingVars] = useState(false)
+  const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
 
-    if (!connected) {
-      setFetchingVars(false)
-      setFetchingVarsProgress(0)
-      paramsHandler.setState([])
-      shownParamsHandler.setState([])
-      modifiedParamsHandler.setState([])
-      setSearchValue('')
-      setRebootData({})
-      return
-    }
-
-    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      socket.emit('set_state', { state: 'params' })
-      setFetchingVars(true)
-    }
-
-    socket.on('params', (params) => {
-      paramsHandler.setState(params)
-      shownParamsHandler.setState(params)
-      setFetchingVars(false)
-      setFetchingVarsProgress(0)
-      setSearchValue('')
-    })
-
-    socket.on('param_request_update', (msg) => {
-      setFetchingVarsProgress(
-        (msg.current_param_index / msg.total_number_of_params) * 100,
-      )
-    })
-
-    socket.on('param_set_success', (msg) => {
-      showSuccessNotification(msg.message)
-      modifiedParamsHandler.setState([])
-    })
-
-    socket.on('params_error', (err) => {
-      showErrorNotification(err.message)
-      setFetchingVars(false)
-    })
-
-    return () => {
-      socket.off('params')
-      socket.off('param_request_update')
-      socket.off('param_set_success')
-      socket.off('params_error')
-      socket.off('reboot_autopilot')
-    }
-  }, [connected])
-
-  useEffect(() => {
-    if (!params) return
-
-    const filteredParams = (
-      showModifiedParams ? modifiedParams : params
-    ).filter(
-      (param) =>
-        param.param_id
-          .toLowerCase()
-          .indexOf(debouncedSearchValue.toLowerCase()) == 0,
-    )
-
-    shownParamsHandler.setState(filteredParams)
-  }, [debouncedSearchValue, showModifiedParams])
-
-  function addToModifiedParams(value, param) {
-    console.log(param.param_id, value)
-    // TODO: Can this logic be tidied up?
-    if (value === '') return
-    if (
-      modifiedParams.find((obj) => {
-        return obj.param_id === param.param_id
-      })
-    ) {
-      modifiedParamsHandler.applyWhere(
-        (item) => item.param_id === param.param_id,
-        (item) => ({ ...item, param_value: value }),
-      )
-    } else {
-      param.param_value = value
-      modifiedParamsHandler.append(param)
-    }
-
-    paramsHandler.applyWhere(
-      (item) => item.param_id === param.param_id,
-      (item) => ({ ...item, param_value: value }),
-    )
-  }
-
-  function saveModifiedParams() {
-    socket.emit('set_multiple_params', modifiedParams)
-  }
-
-  function refreshParams() {
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
-    socket.emit('refresh_params')
-    setFetchingVars(true)
-  }
-
-  function rebootAutopilot() {
-    socket.emit('reboot_autopilot')
-    open()
+  /**
+   * Resets the state of the parameters page to the initial states
+   */
+  function resetState() {
     setFetchingVars(false)
     setFetchingVarsProgress(0)
     paramsHandler.setState([])
@@ -319,44 +61,155 @@ export default function Params() {
     setRebootData({})
   }
 
+  /**
+   * Sends a request to the drone to reboot the autopilot
+   */
+  function rebootAutopilot() {
+    socket.emit('reboot_autopilot')
+    open()
+    resetState()
+  }
+
+  /**
+   * Refreshes the params on the drone then fetches them
+   */
+  function refreshParams() {
+    paramsHandler.setState([])
+    shownParamsHandler.setState([])
+    socket.emit('refresh_params')
+    setFetchingVars(true)
+  }
+
+  /**
+   * Checks if a paramter has been modified since the last save
+   * @param {*} param the parameter to check
+   * @returns true if the given parameter is in modifiedParams, otherwise false
+   */
+  function isModified(param) {
+    return modifiedParams.find((obj) => { return obj.param_id === param.param_id})
+  }
+
+  /**
+   * Updates the parameter value in the given useListState handler
+   * 
+   * @param {*} handler 
+   * @param {*} param 
+   * @param {*} value 
+   */
+  function updateParamValue(handler, param, value){
+    handler.applyWhere(
+      (item) => item.param_id === param.param_id,
+      (item) => ({ ...item, param_value: value }),
+    )
+  }
+
+  /**
+   * Adds a parameter to the list of parameters that have been modified since the
+   * last save
+   * 
+   * @param {*} value 
+   * @param {*} param 
+   * @returns 
+   */
+  function addToModifiedParams(value, param) {
+    if (value === '') return
+
+    // If param has already been modified since last save then update it 
+    if (isModified(param)) 
+      updateParamValue(modifiedParamsHandler, param, value)
+    else {
+      // Otherwise add it to modified params
+      param.param_value = value
+      modifiedParamsHandler.append(param)
+    }
+
+    updateParamValue(paramsHandler, param, value)
+  }
+
+  useEffect(() => {
+
+    // Updates the autopilot modal depending on the success of the reboot
+    socket.on('reboot_autopilot', (msg) => {
+      setRebootData(msg)
+      if (msg.success) {
+        close()
+      }
+    })
+
+    // Drone has lost connection
+    if (!connected) {
+      resetState()
+      return
+    }
+
+    // Fetch params on connection to drone
+    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
+      socket.emit('set_state', { state: 'params' })
+      setFetchingVars(true)
+    }
+
+    // Update parameter states when params are receieved from drone
+    socket.on('params', (params) => {
+      paramsHandler.setState(params)
+      shownParamsHandler.setState(params)
+      setFetchingVars(false)
+      setFetchingVarsProgress(0)
+      setSearchValue('')
+    })
+
+    // Set fetch progress on update from drone
+    socket.on('param_request_update', (msg) => {
+      setFetchingVarsProgress(
+        (msg.current_param_index / msg.total_number_of_params) * 100,
+      )
+    })
+
+    // Show success on saving modified params
+    socket.on('param_set_success', (msg) => {
+      showSuccessNotification(msg.message)
+      modifiedParamsHandler.setState([])
+    })
+
+    // Show error message on drone error
+    socket.on('params_error', (err) => {
+      showErrorNotification(err.message)
+      setFetchingVars(false)
+    })
+
+    // 
+    return () => {
+      socket.off('params')
+      socket.off('param_request_update')
+      socket.off('param_set_success')
+      socket.off('params_error')
+      socket.off('reboot_autopilot')
+    }
+  }, [connected]) // useEffect
+
+  useEffect(() => {
+    if (!params) return
+
+    // Filter parameters based on search value
+    const filteredParams = (showModifiedParams ? modifiedParams : params).filter(
+      (param) =>
+        param.param_id
+          .toLowerCase()
+          .includes(debouncedSearchValue.toLowerCase()),
+    )
+
+    // Show the filtered parameters
+    shownParamsHandler.setState(filteredParams)
+  }, [debouncedSearchValue, showModifiedParams])
+
+
   return (
     <Layout currentPage='params'>
-      <Modal
+
+      <AutopilotRebootModal
+        rebootData={rebootData}
         opened={opened}
         onClose={close}
-        title='Rebooting autopilot'
-        closeOnClickOutside={false}
-        closeOnEscape={false}
-        withCloseButton={false}
-        centered
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 3,
-        }}
-      >
-        <div className='flex flex-col items-center justify-center'>
-          {rebootData.message === undefined ? (
-            <Loader />
-          ) : (
-            <>
-              {!rebootData.success && (
-                <>
-                  <p className='my-2'>
-                    {rebootData.message} You will need to reconnect.
-                  </p>
-                  <Button
-                    onClick={close}
-                    color={tailwindColors.red[600]}
-                    className='mt-4'
-                  >
-                    Close
-                  </Button>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </Modal>
+      />
 
       {fetchingVars && (
         <Progress
@@ -365,59 +218,19 @@ export default function Params() {
           className='w-1/3 mx-auto my-auto'
         />
       )}
+
       {Object.keys(params).length !== 0 && (
         <div className='w-full h-full contents'>
-          <div className='flex space-x-4 justify-center'>
-            <Tooltip
-              label={
-                showModifiedParams ? 'Show all params' : 'Show modified params'
-              }
-              position='bottom'
-            >
-              <Button
-                size='sm'
-                onClick={showModifiedParamsToggle}
-                color={tailwindColors.orange[600]}
-              >
-                {showModifiedParams ? (
-                  <IconEye size={14} />
-                ) : (
-                  <IconTool size={14} />
-                )}
-              </Button>
-            </Tooltip>
-            <TextInput
-              className='w-1/3'
-              placeholder='Search by parameter name'
-              value={searchValue}
-              onChange={(event) => setSearchValue(event.currentTarget.value)}
-            />
-            <Button
-              size='sm'
-              rightSection={<IconPencil size={14} />}
-              disabled={!modifiedParams.length}
-              onClick={saveModifiedParams}
-              color={tailwindColors.green[600]}
-            >
-              Save params
-            </Button>
-            <Button
-              size='sm'
-              rightSection={<IconRefresh size={14} />}
-              onClick={refreshParams}
-              color={tailwindColors.blue[600]}
-            >
-              Refresh params
-            </Button>
-            <Button
-              size='sm'
-              rightSection={<IconPower size={14} />}
-              onClick={rebootAutopilot}
-              color={tailwindColors.red[600]}
-            >
-              Reboot FC
-            </Button>
-          </div>
+          <ParamsToolbar
+            searchValue={searchValue}
+            modifiedParams={modifiedParams}
+            showModifiedParams={showModifiedParams}
+            refreshCallback={refreshParams}
+            rebootCallback={rebootAutopilot}
+            modifiedCallback={showModifiedParamsToggle}
+            searchCallback={setSearchValue}
+          />
+
           <div className='h-full w-2/3 mx-auto'>
             <AutoSizer>
               {({ height, width }) => (
@@ -430,7 +243,7 @@ export default function Params() {
                     params: shownParams,
                     onChange: addToModifiedParams,
                   }}
-                >
+                > 
                   {Row}
                 </FixedSizeList>
               )}

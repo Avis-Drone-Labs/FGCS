@@ -382,11 +382,6 @@ class Drone:
                     continue
                 elif msg.msgname == "STATUSTEXT":
                     print(msg.text)
-                elif msg.msgname == "PARAM_VALUE":
-                    print(msg.param_id)
-                else:
-                    # print(msg.msgname)
-                    ...
 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 

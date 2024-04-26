@@ -203,3 +203,4 @@ cython_debug/
 .ruff_cache
 
 influxdb/data/*
+logs/*.ftlog

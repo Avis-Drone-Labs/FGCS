@@ -2,7 +2,7 @@
   GraphPanel Component
 
   This component is responsible for rendering a group of resizable panels, each containing a RealtimeGraph component.
-  The graphs are displayed based on the selected values passed as props. If no value is selected for a graph, 
+  The graphs are displayed based on the selected values passed as props. If no value is selected for a graph,
   a message prompts the user to select a value for that graph.
 
   Props:
@@ -15,12 +15,8 @@
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import RealtimeGraph from '../realtimeGraph.jsx'
 
-export default function GraphPanel({ 
-  selectValues, 
-  graphRefs, 
-  graphColors 
-}){
-  return(
+export default function GraphPanel({ selectValues, graphRefs, graphColors }) {
+  return (
     <PanelGroup
       autoSaveId='verticalGraphs'
       direction='vertical'
@@ -41,8 +37,9 @@ export default function GraphPanel({
               </p>
             )}
           </Panel>
+
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-          
+
           <Panel minSize={10}>
             {selectValues.graph_b ? (
               <RealtimeGraph
@@ -56,8 +53,11 @@ export default function GraphPanel({
               </p>
             )}
           </Panel>
-          <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-          
+        </PanelGroup>
+      </Panel>
+      <PanelResizeHandle className='h-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+      <Panel minSize={20}>
+        <PanelGroup autoSaveId='horizontalGraphs2' direction='horizontal'>
           <Panel minSize={10}>
             {selectValues.graph_c ? (
               <RealtimeGraph
@@ -71,8 +71,9 @@ export default function GraphPanel({
               </p>
             )}
           </Panel>
+
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-          
+
           <Panel minSize={10}>
             {selectValues.graph_d ? (
               <RealtimeGraph

@@ -16,14 +16,15 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
 
 // Custom component and helpers
+import FlightModes from './components/config/flightModes'
+import Gripper from './components/config/gripper'
+import Motortestpanel from './components/config/motorTest'
+import Layout from './components/layout'
 import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
-import Layout from './components/layout'
-import Motortestpanel from './components/config/motorTest'
-import Gripper from './components/config/gripper'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -34,6 +35,7 @@ export default function Config() {
   })
 
   // States in the frontend
+  const [activeTab, setActiveTab] = useState(null)
   const [gripperEnabled, setGripperEnabled] = useState(false)
   const [selectedThrottle, setSelectedThrottle] = useState(10)
   const [selectedDuration, setSelectedDuration] = useState(2)
@@ -41,10 +43,9 @@ export default function Config() {
   // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
     if (!connected) {
+      setActiveTab(null)
       return
-    }
-
-    if (connected) {
+    } else {
       socket.emit('set_state', { state: 'config' })
       socket.emit('gripper_enabled')
     }
@@ -68,21 +69,34 @@ export default function Config() {
       }
     })
 
+    socket.on('param_set_success', (data) => {
+      showSuccessNotification(data.message)
+    })
+
+    socket.on('params_error', (data) => {
+      showErrorNotification(data.message)
+    })
+
     return () => {
       socket.off('gripper_enabled')
       socket.off('set_gripper_result')
       socket.off('motor_test_result')
+      socket.off('param_set_success')
+      socket.off('params_error')
     }
   }, [connected])
 
   return (
     <Layout currentPage='config'>
-      {connected && (
+      {
         <div className='w-full h-full'>
           <Tabs
             orientation='vertical'
             color={tailwindColors.falconred[100]}
             className='h-full'
+            keepMounted={false}
+            value={activeTab}
+            onChange={setActiveTab}
           >
             <Tabs.List>
               <Tabs.Tab value='gripper' disabled={!gripperEnabled}>
@@ -92,9 +106,7 @@ export default function Config() {
               <Tabs.Tab value='rc_calibration' disabled>
                 RC Calibration
               </Tabs.Tab>
-              <Tabs.Tab value='flightmodes' disabled>
-                Flight Modes
-              </Tabs.Tab>
+              <Tabs.Tab value='flightmodes'>Flight modes</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value='gripper'>
               <Gripper />
@@ -110,9 +122,12 @@ export default function Config() {
             <Tabs.Panel value='rc_calibration'>
               <h1>RC Calibration Page</h1>
             </Tabs.Panel>
+            <Tabs.Panel value='flightmodes'>
+              <FlightModes />
+            </Tabs.Panel>
           </Tabs>
         </div>
-      )}
+      }
     </Layout>
   )
 }

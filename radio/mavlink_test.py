@@ -2,7 +2,7 @@ import time
 from pprint import pprint
 
 from drone import Drone
-from utils import getComPort, getComPortNames, normalisePwmValue
+from utils import getComPort
 
 # from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
-    # pprint([item.to_dict() for item in drone.mission.mission_items])
+    pprint([item.to_dict() for item in drone.flight_modes.flight_modes])
 
     # print(drone.gripper.doGripper("release"))
     # drone.master.waypoint_request_list_send()

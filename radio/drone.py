@@ -7,7 +7,7 @@ from pathlib import Path
 from queue import Queue
 from secrets import token_hex
 from threading import Thread
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import serial
 from customTypes import (
@@ -16,7 +16,9 @@ from customTypes import (
     MotorTestThrottleAndDuration,
     Number,
     Response,
+    ResponseWithData,
 )
+from flightModes import FlightModes
 from gripper import Gripper
 from mission import Mission
 from pymavlink import mavutil
@@ -98,7 +100,6 @@ class Drone:
         self.cleanTempLogs()
 
         self.is_active = True
-        self.is_listening = True
         self.is_requesting_params = False
         self.current_param_index = 0
         self.total_number_of_params = 0
@@ -107,9 +108,15 @@ class Drone:
 
         self.armed = False
 
+        self.flight_modes = FlightModes(self)
+
         self.gripper = Gripper(self.master, self.target_system, self.target_component)
         self.mission = Mission(self)
+
         self.stopAllDataStreams()
+
+        self.is_listening = True
+
         self.startThread()
 
     def __getNextLogFilePath(self, line: str) -> str:
@@ -383,6 +390,8 @@ class Drone:
                 elif msg.msgname == "STATUSTEXT":
                     print(msg.text)
 
+                # print(msg.msgname)
+
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 
                 if self.is_requesting_params and msg.msgname != "PARAM_VALUE":
@@ -468,6 +477,51 @@ class Drone:
         self.listener_thread.start()
         self.sender_thread.start()
         self.log_thread.start()
+
+    def getSingleParam(
+        self, param_name: str, timeout: Optional[int] = 1.5
+    ) -> Union[Response, ResponseWithData]:
+        """Gets a specific parameter value.
+
+        Args:
+            param_name (str): The name of the parameter to get
+            timeout (int, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
+
+        Returns:
+            Response: The response from the retrieval of the specific parameter
+        """
+        self.is_listening = False
+        failure_message = f"Failed to get parameter {param_name}"
+
+        self.master.mav.param_request_read_send(
+            self.target_system, self.target_component, param_name.encode(), -1
+        )
+
+        while True:
+            try:
+                response = self.master.recv_match(
+                    type="PARAM_VALUE", blocking=True, timeout=timeout
+                )
+                if response and response.param_id == param_name:
+                    self.is_listening = True
+                    return {
+                        "success": True,
+                        "data": response,
+                    }
+                else:
+                    print(response)
+                    self.is_listening = True
+                    return {
+                        "success": False,
+                        "message": failure_message,
+                    }
+
+            except serial.serialutil.SerialException:
+                self.is_listening = True
+                return {
+                    "success": False,
+                    "message": f"{failure_message}, serial exception",
+                }
 
     def getAllParams(self) -> None:
         """Request all parameters from the drone."""

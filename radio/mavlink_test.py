@@ -38,7 +38,8 @@ if __name__ == "__main__":
     # time.sleep(1)
     # drone.setGripper("grab")
 
-    # drone.setupDataStreams()
+    drone.setupDataStreams()
+    drone.addMessageListener("ATTITUDE", test_cb)
 
     # time.sleep()
 

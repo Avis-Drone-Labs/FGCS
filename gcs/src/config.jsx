@@ -19,6 +19,7 @@ import tailwindConfig from '../tailwind.config'
 import FlightModes from './components/config/flightModes'
 import Gripper from './components/config/gripper'
 import Motortestpanel from './components/config/motorTest'
+import RadioCalibration from './components/config/radioCalibration'
 import Layout from './components/layout'
 import {
   showErrorNotification,
@@ -103,9 +104,7 @@ export default function Config() {
                 Gripper
               </Tabs.Tab>
               <Tabs.Tab value='motor_test'>Motor Test</Tabs.Tab>
-              <Tabs.Tab value='rc_calibration' disabled>
-                RC Calibration
-              </Tabs.Tab>
+              <Tabs.Tab value='rc_calibration'>RC Calibration</Tabs.Tab>
               <Tabs.Tab value='flightmodes'>Flight modes</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value='gripper'>
@@ -120,7 +119,7 @@ export default function Config() {
               />
             </Tabs.Panel>
             <Tabs.Panel value='rc_calibration'>
-              <h1>RC Calibration Page</h1>
+              <RadioCalibration />
             </Tabs.Panel>
             <Tabs.Panel value='flightmodes'>
               <FlightModes />

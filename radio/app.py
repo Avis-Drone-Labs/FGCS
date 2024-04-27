@@ -196,6 +196,12 @@ def set_state(data):
 
         drone.addMessageListener("RC_CHANNELS", sendMessage)
         drone.addMessageListener("HEARTBEAT", sendMessage)
+    elif state == "config.rc_calibration":
+        drone.stopAllDataStreams()
+
+        drone.sendDataStreamRequestMessage(
+            mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
+        )
 
 
 @socketio.on("set_multiple_params")

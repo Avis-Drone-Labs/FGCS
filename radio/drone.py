@@ -100,7 +100,6 @@ class Drone:
         self.cleanTempLogs()
 
         self.is_active = True
-        self.is_listening = True
         self.is_requesting_params = False
         self.current_param_index = 0
         self.total_number_of_params = 0
@@ -113,7 +112,11 @@ class Drone:
 
         self.gripper = Gripper(self.master, self.target_system, self.target_component)
         self.mission = Mission(self)
+
         self.stopAllDataStreams()
+
+        self.is_listening = True
+
         self.startThread()
 
     def __getNextLogFilePath(self, line: str) -> str:
@@ -487,6 +490,7 @@ class Drone:
         Returns:
             Response: The response from the retrieval of the specific parameter
         """
+        self.is_listening = False
         failure_message = f"Failed to get parameter {param_name}"
 
         self.master.mav.param_request_read_send(
@@ -499,17 +503,21 @@ class Drone:
                     type="PARAM_VALUE", blocking=True, timeout=timeout
                 )
                 if response and response.param_id == param_name:
+                    self.is_listening = True
                     return {
                         "success": True,
                         "data": response,
                     }
                 else:
+                    print(response)
+                    self.is_listening = True
                     return {
                         "success": False,
                         "message": failure_message,
                     }
 
             except serial.serialutil.SerialException:
+                self.is_listening = True
                 return {
                     "success": False,
                     "message": f"{failure_message}, serial exception",

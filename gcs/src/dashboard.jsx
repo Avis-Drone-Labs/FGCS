@@ -1,8 +1,8 @@
 /*
-  The dashboard screen. This is the first screen to be loaded in and is where the user will 
+  The dashboard screen. This is the first screen to be loaded in and is where the user will
   spend most of their time.
 
-  This contains the map, live indicator, and GPS data. All of these are imported as components 
+  This contains the map, live indicator, and GPS data. All of these are imported as components
   and are integrated in this file with logic linking them together.
 */
 
@@ -24,10 +24,11 @@ import {
 
 // Helper javascript files
 import {
-  COPTER_MODES,
+  COPTER_MODES_FLIGHT_MODE_MAP,
   GPS_FIX_TYPES,
+  MAV_AUTOPILOT_INVALID,
   MAV_STATE,
-  PLANE_MODES,
+  PLANE_MODES_FLIGHT_MODE_MAP,
 } from './helpers/mavlinkConstants'
 import { showErrorNotification } from './helpers/notification'
 import { socket } from './helpers/socket'
@@ -38,12 +39,10 @@ import {
   AttitudeIndicator,
   HeadingIndicator,
 } from './components/dashboard/indicator'
-import Layout from './components/layout'
 import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
-
-const MAV_AUTOPILOT_INVALID = 8
+import Layout from './components/layout'
 
 export default function Dashboard() {
   const [connected] = useLocalStorage({
@@ -113,14 +112,12 @@ export default function Dashboard() {
     })
 
     socket.on('arm_disarm', (msg) => {
-      console.log(msg)
       if (!msg.success) {
         showErrorNotification(msg.message)
       }
     })
 
     socket.on('current_mission', (msg) => {
-      console.log(msg)
       setMissionItems(msg)
     })
 
@@ -160,9 +157,9 @@ export default function Dashboard() {
     if (!heartbeatData.type) {
       return 'UNKNOWN'
     } else if (heartbeatData.type === 1) {
-      return PLANE_MODES[heartbeatData.custom_mode]
+      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
     } else if (heartbeatData.type === 2) {
-      return COPTER_MODES[heartbeatData.custom_mode]
+      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
     }
 
     return 'UNKNOWN'

@@ -35,6 +35,7 @@ export default function Config() {
   })
 
   // States in the frontend
+  const [activeTab, setActiveTab] = useState(null)
   const [gripperEnabled, setGripperEnabled] = useState(false)
   const [selectedThrottle, setSelectedThrottle] = useState(10)
   const [selectedDuration, setSelectedDuration] = useState(2)
@@ -42,6 +43,7 @@ export default function Config() {
   // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
     if (!connected) {
+      setActiveTab(null)
       return
     } else {
       socket.emit('set_state', { state: 'config' })
@@ -93,6 +95,8 @@ export default function Config() {
             color={tailwindColors.falconred[100]}
             className='h-full'
             keepMounted={false}
+            value={activeTab}
+            onChange={setActiveTab}
           >
             <Tabs.List>
               <Tabs.Tab value='gripper' disabled={!gripperEnabled}>

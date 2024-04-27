@@ -195,6 +195,7 @@ def set_state(data):
         )
 
         drone.addMessageListener("RC_CHANNELS", sendMessage)
+        drone.addMessageListener("HEARTBEAT", sendMessage)
 
 
 @socketio.on("set_multiple_params")
@@ -437,7 +438,58 @@ def getFlightModeConfig():
 
     flight_modes = drone.flight_modes.flight_modes
     flight_mode_channel = drone.flight_modes.flight_mode_channel
-    print(flight_modes)
+
+    socketio.emit(
+        "flight_mode_config",
+        {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
+    )
+
+
+@socketio.on("set_flight_mode")
+def setFlightMode(data):
+    global state
+    if state != "config.flight_modes":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access the flight modes."},
+        )
+        print(f"Current state: {state}")
+        return
+
+    global drone
+    if not drone:
+        return
+
+    mode_number = data.get("mode_number", None)
+    flight_mode = data.get("flight_mode", None)
+
+    if mode_number is None or flight_mode is None:
+        droneErrorCb("Mode number and flight mode must be specified.")
+        return
+
+    result = drone.flight_modes.setFlightMode(mode_number, flight_mode)
+    socketio.emit("set_flight_mode_result", result)
+
+
+@socketio.on("refresh_flight_mode_data")
+def refreshFlightModeData():
+    global state
+    if state != "config.flight_modes":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access the flight modes."},
+        )
+        print(f"Current state: {state}")
+        return
+
+    global drone
+    if not drone:
+        return
+
+    drone.flight_modes.refreshData()
+
+    flight_modes = drone.flight_modes.flight_modes
+    flight_mode_channel = drone.flight_modes.flight_mode_channel
 
     socketio.emit(
         "flight_mode_config",

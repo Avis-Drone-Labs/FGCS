@@ -187,6 +187,14 @@ def set_state(data):
             socketio.emit("params", drone.params)
     elif state == "config":
         drone.stopAllDataStreams()
+    elif state == "config.flight_modes":
+        drone.stopAllDataStreams()
+
+        drone.sendDataStreamRequestMessage(
+            mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
+        )
+
+        drone.addMessageListener("RC_CHANNELS", sendMessage)
 
 
 @socketio.on("set_multiple_params")
@@ -415,10 +423,10 @@ def testAllMotors(data):
 @socketio.on("get_flight_mode_config")
 def getFlightModeConfig():
     global state
-    if state != "config":
+    if state != "config.flight_modes":
         socketio.emit(
             "params_error",
-            {"message": "You must be on the config screen to access the gripper."},
+            {"message": "You must be on the config screen to access the flight modes."},
         )
         print(f"Current state: {state}")
         return
@@ -443,7 +451,9 @@ def getCurrentMission():
     if state != "dashboard":
         socketio.emit(
             "params_error",
-            {"message": "You must be on the dashboard screen to access the gripper."},
+            {
+                "message": "You must be on the dashboard screen to get the current mission."
+            },
         )
         print(f"Current state: {state}")
         return

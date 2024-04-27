@@ -16,6 +16,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config'
 
 // Custom component and helpers
+import FlightModes from './components/config/flightModes'
 import Gripper from './components/config/gripper'
 import Motortestpanel from './components/config/motorTest'
 import Layout from './components/layout'
@@ -45,7 +46,6 @@ export default function Config() {
     } else {
       socket.emit('set_state', { state: 'config' })
       socket.emit('gripper_enabled')
-      socket.emit('get_flight_mode_config')
     }
 
     socket.on('gripper_enabled', setGripperEnabled)
@@ -89,10 +89,10 @@ export default function Config() {
       {
         <div className='w-full h-full'>
           <Tabs
-            defaultValue='flightmodes'
             orientation='vertical'
             color={tailwindColors.falconred[100]}
             className='h-full'
+            keepMounted={false}
           >
             <Tabs.List>
               <Tabs.Tab value='gripper' disabled={!gripperEnabled}>

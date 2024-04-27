@@ -387,6 +387,8 @@ class Drone:
                 elif msg.msgname == "STATUSTEXT":
                     print(msg.text)
 
+                # print(msg.msgname)
+
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 
                 if self.is_requesting_params and msg.msgname != "PARAM_VALUE":
@@ -1005,26 +1007,6 @@ class Drone:
         self.stopAllDataStreams()
         self.is_active = False
         self.master.close()
-
-        final_log_file = self.log_directory.joinpath(
-            f"{self.__getCurrentDateTimeStr()}.ftlog"
-        )
-
-        try:
-            with open(final_log_file, "a") as final_log_file_handle:
-                # Open all the log files that were written to in the current session and write their data to the final log file
-                for log_file in self.log_file_names:
-                    if not log_file.is_file():
-                        print(f"Log file {log_file} is not a file.")
-                        continue
-
-                    with open(log_file) as log_file_handle:
-                        final_log_file_handle.writelines(log_file_handle.readlines())
-                    os.remove(log_file)
-        except Exception as e:
-            print(f"Failed to save drone logs: {e}")
-
-        print(f"Saved drone logs to: {final_log_file}")
 
         final_log_file = self.log_directory.joinpath(
             f"{self.__getCurrentDateTimeStr()}.ftlog"

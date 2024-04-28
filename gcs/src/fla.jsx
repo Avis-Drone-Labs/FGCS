@@ -109,6 +109,7 @@ export default function FLA() {
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
   const [messageMeans, setMessageMeans] = useState({})
+  const [gpsData, setGpsData] = useState({})
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -152,6 +153,16 @@ export default function FLA() {
             message: logEventIds[event.Id],
           })),
         )
+
+        // Set gps data
+        setGpsData(
+          loadedLogMessages['GPS'].map((point) => ({
+            longitude: point.Lng,
+            latitude: point.Lat,
+            height: point.Alt
+          })),
+        )
+        
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -468,7 +479,7 @@ export default function FLA() {
 
             {/* 3D Map column */}
             <div className='w-full h-full pr-4'>
-              <DroneFlightPath />
+              <DroneFlightPath gpsData={gpsData}/>
             </div>
           </div>
 

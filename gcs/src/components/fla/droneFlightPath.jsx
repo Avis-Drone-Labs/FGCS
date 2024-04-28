@@ -1,23 +1,26 @@
 // DroneFlightPath.jsx
 import { useState, useEffect } from 'react';
-import { Ion, 
-         Cartesian3, 
-         Color, 
-         EasingFunction, 
-         IonResource, 
-         createWorldTerrainAsync, 
-         createOsmBuildingsAsync,
-         JulianDate,
-         SampledPositionProperty,
-         TimeInterval,
-         TimeIntervalCollection,
-         PathGraphics,
-         VelocityOrientationProperty
+import { 
+  Ion, 
+  Cartesian3, 
+  Color, 
+  EasingFunction, 
+  IonResource, 
+  createWorldTerrainAsync, 
+  createOsmBuildingsAsync,
+  JulianDate,
+  SampledPositionProperty,
+  TimeInterval,
+  TimeIntervalCollection,
+  PathGraphics,
+  VelocityOrientationProperty
 } from "cesium";
-import { Viewer,
-         CameraFlyTo,
-         Entity, 
-         Clock } from "resium";
+import { 
+  Viewer,
+  CameraFlyTo,
+  Entity, 
+  Clock 
+} from "resium";
 import data from './flightdata.json'
 
 Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkODdjNjMyYy00OGQ4LTQzNmUtYTQ1MC0xYmVmN2VmYWY2YzkiLCJpZCI6MjA1ODQ4LCJpYXQiOjE3MTE5ODMzMDR9.QumArMVhHylPYjVV1hqI38aMPG1vVd6RXBsX4wNDzKg'
@@ -48,12 +51,12 @@ const flightData = data.map((item, index)=> {
     <Entity
     key={index}
     position = {position}
-    point={{pixelSize:'10', color:Color.RED}}
+    point={{pixelSize:'4', color:Color.RED}}
   />
   );
 });
 
-const DroneFlightPath = () => {
+const DroneFlightPath = ({gpsData}) => {
   const [terrainProvider, setTerrainProvider] = useState(null);
   const [osmBuildings, setOsmBuildings] = useState(null); // idk how to use this yet
 
@@ -76,8 +79,8 @@ const DroneFlightPath = () => {
     position={positionProperty}
     model={{
       uri:'./droneModel/drone.gltf',
-      minimumPixelSize:128, // adjust drone size here
-      maximumScale:256
+      minimumPixelSize:28, // adjust drone size here
+      maximumScale:50
     }}
     orientation={new VelocityOrientationProperty(positionProperty)}
     path={new PathGraphics({width:3})}
@@ -96,15 +99,6 @@ const DroneFlightPath = () => {
         {flightData}
         {droneLine}
       </Clock>
-      <CameraFlyTo  
-        duration={3} 
-        destination={Cartesian3.fromDegrees(100.605469, 13.860089, 2000)} 
-        orientation={{
-                    heading: -5.99,
-                    pitch: -0.42003481981370063,
-                  }}  
-        easingFunction={EasingFunction.QUADRATIC_IN_OUT} 
-      />
     </Viewer>
   );
 };

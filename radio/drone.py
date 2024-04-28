@@ -389,8 +389,10 @@ class Drone:
                     continue
                 elif msg.msgname == "STATUSTEXT":
                     print(msg.text)
-
-                # print(msg.msgname)
+                else:
+                    print(msg.msgname)
+                    if msg.msgname == "COMMAND_LONG" or msg.msgname == "PARAM_VALUE":
+                        print(msg.to_dict())
 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 
@@ -968,6 +970,63 @@ class Drone:
         self.is_listening = False
 
         return self.gripper.setGripper(action)
+
+    def calibrateAccelerometer(self):
+        self.is_listening = False
+
+        consts = {
+            1: "ACCELCAL_VEHICLE_POS_LEVEL	",
+            2: "ACCELCAL_VEHICLE_POS_LEFT	",
+            3: "ACCELCAL_VEHICLE_POS_RIGHT	",
+            4: "ACCELCAL_VEHICLE_POS_NOSEDOWN	",
+            5: "ACCELCAL_VEHICLE_POS_NOSEUP	",
+            6: "ACCELCAL_VEHICLE_POS_BACK	",
+            16777215: "ACCELCAL_VEHICLE_POS_SUCCESS	",
+            16777216: "ACCELCAL_VEHICLE_POS_FAILED",
+        }
+
+        self.sendCommand(mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, param5=1)
+
+        command_accepted = False
+        params = {}
+
+        try:
+            while True:
+                response = self.master.recv_match(
+                    type=["COMMAND_ACK", "PARAM_VALUE", "COMMAND_LONG"], blocking=True
+                )
+
+                if response.msgname == "COMMAND_ACK" and commandAccepted(
+                    response, mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+                ):
+                    command_accepted = True
+                    print("accepted")
+                elif response.msgname == "PARAM_VALUE":
+                    params[response.param_id] = response.param_value
+                    print(response.param_id, response.param_value)
+                elif (
+                    response.msgname == "COMMAND_LONG"
+                    and response.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+                ):
+                    print(f"Current position: {consts[response.param1]}")
+                    if command_accepted:
+                        if response.param1 == 16777215:
+                            print("Calibration successful")
+                            break
+                        elif response.param1 == 16777216:
+                            print("Calibration failed")
+                            break
+                        elif response.param1 == 1:
+                            self.sendCommand(
+                                mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS,
+                                param1=1,
+                            )
+
+        except serial.serialutil.SerialException:
+            return {
+                "success": False,
+                "message": "Setting servo failed, serial exception",
+            }
 
     def sendCommand(
         self,

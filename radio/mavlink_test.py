@@ -1,10 +1,8 @@
 import time
-from pprint import pprint
 
 from drone import Drone
 from utils import getComPort
 
-# from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS
 
 # token = "EKU_pTBZbvTIAF7mRPiNerKdS69vBXVY0zfXtWmvkdFLcD6DGGhel89J9IuzAjg9jljbuB06fQOJZIkI1rJ35g=="
@@ -26,7 +24,10 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
-    pprint([item.to_dict() for item in drone.flight_modes.flight_modes])
+    # pprint([item.to_dict() for item in drone.flight_modes.flight_modes])
+
+    # drone.sendCommand(mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, param5=1)
+    drone.calibrateAccelerometer()
 
     # print(drone.gripper.doGripper("release"))
     # drone.master.waypoint_request_list_send()
@@ -38,8 +39,8 @@ if __name__ == "__main__":
     # time.sleep(1)
     # drone.setGripper("grab")
 
-    drone.setupDataStreams()
-    drone.addMessageListener("ATTITUDE", test_cb)
+    # drone.setupDataStreams()
+    # drone.addMessageListener("ATTITUDE", test_cb)
 
     # time.sleep()
 

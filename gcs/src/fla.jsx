@@ -31,6 +31,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification.js'
+import DroneFlightPath from './components/fla/droneFlightPath.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -461,8 +462,13 @@ export default function FLA() {
             </div>
 
             {/* Graph column */}
-            <div className='w-full h-full pr-4'>
+            {/* <div className='w-full h-full pr-4'>
               <Graph data={chartData} events={logEvents} />
+            </div> */}
+
+            {/* 3D Map column */}
+            <div className='w-full h-full pr-4'>
+              <DroneFlightPath />
             </div>
           </div>
 

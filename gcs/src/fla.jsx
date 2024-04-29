@@ -21,17 +21,16 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
-import Graph from './components/fla/graph'
+import ChartDataCard from './components/fla/chartDataCard.jsx'
+import DroneFlightPath from './components/fla/droneFlightPath.jsx'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
-import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification.js'
-import DroneFlightPath from './components/fla/droneFlightPath.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -146,25 +145,37 @@ export default function FLA() {
 
         // Load each ESC data into its own array
         loadedLogMessages['ESC'].map((escData) => {
-          const newEscData = { ...escData, 'name': `ESC${escData['Instance']+1}`}
-          loadedLogMessages[newEscData.name] = (loadedLogMessages[newEscData.name] || []).concat([newEscData])
+          const newEscData = {
+            ...escData,
+            name: `ESC${escData['Instance'] + 1}`,
+          }
+          loadedLogMessages[newEscData.name] = (
+            loadedLogMessages[newEscData.name] || []
+          ).concat([newEscData])
           // Add filter state for new ESC
-          if(!logMessageFilterDefaultState[newEscData.name])
-             logMessageFilterDefaultState[newEscData.name] = { ...logMessageFilterDefaultState['ESC'] }
+          if (!logMessageFilterDefaultState[newEscData.name])
+            logMessageFilterDefaultState[newEscData.name] = {
+              ...logMessageFilterDefaultState['ESC'],
+            }
         })
-        
+
         // Remove old ESC motor data
         delete loadedLogMessages['ESC']
         delete logMessageFilterDefaultState['ESC']
 
         // Sort new filters
-        const sortedLogMessageFilterState = Object.keys(logMessageFilterDefaultState)
+        const sortedLogMessageFilterState = Object.keys(
+          logMessageFilterDefaultState,
+        )
           .sort()
-          .reduce((acc, c) => { acc[c] = logMessageFilterDefaultState[c]; return acc }, {})
+          .reduce((acc, c) => {
+            acc[c] = logMessageFilterDefaultState[c]
+            return acc
+          }, {})
 
         setMessageFilters(sortedLogMessageFilterState)
         setMeanValues(loadedLogMessages)
-        
+
         // Set event logs for the event lines on graph
         setLogEvents(
           loadedLogMessages['EV'].map((event) => ({
@@ -175,14 +186,12 @@ export default function FLA() {
 
         // Set gps data
         setGpsData(
-          loadedLogMessages['GPS'].map((point) => ({
+          loadedLogMessages['POS'].map((point) => ({
             longitude: point.Lng,
             latitude: point.Lat,
-            height: point.Alt
+            height: point.Alt,
           })),
         )
-        console.log(gpsData)
-        
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -242,7 +251,6 @@ export default function FLA() {
       })
     })
     setMessageMeans(means)
-    console.log(means)
   }
 
   // Turn on/off all filters
@@ -499,7 +507,7 @@ export default function FLA() {
 
             {/* 3D Map column */}
             <div className='w-full h-full pr-4'>
-              <DroneFlightPath gpsData={gpsData}/>
+              <DroneFlightPath gpsData={gpsData} />
             </div>
           </div>
 

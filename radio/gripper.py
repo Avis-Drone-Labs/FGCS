@@ -26,7 +26,7 @@ class Gripper:
 
         self.enabled = False
 
-        gripper_enabled_response = self.getParamValue("GRIP_ENABLE", timeout=3)
+        gripper_enabled_response = self.getParamValue("GRIP_ENABLE", timeout=1.5)
         if gripper_enabled_response is None:
             print("Gripper is not enabled")
             return None
@@ -38,13 +38,13 @@ class Gripper:
             print("Gripper is not enabled")
         else:
             self.params = {
-                "gripAutoclose": self.getParamValue("GRIP_AUTOCLOSE"),
-                "gripCanId": self.getParamValue("GRIP_CAN_ID"),
-                "gripGrab": self.getParamValue("GRIP_GRAB"),
-                "gripNeutral": self.getParamValue("GRIP_NEUTRAL"),
-                "gripRegrab": self.getParamValue("GRIP_REGRAB"),
-                "gripRelease": self.getParamValue("GRIP_RELEASE"),
-                "gripType": self.getParamValue("GRIP_TYPE"),
+                "gripAutoclose": self.getParamValue("GRIP_AUTOCLOSE", timeout=1.5),
+                "gripCanId": self.getParamValue("GRIP_CAN_ID", timeout=1.5),
+                "gripGrab": self.getParamValue("GRIP_GRAB", timeout=1.5),
+                "gripNeutral": self.getParamValue("GRIP_NEUTRAL", timeout=1.5),
+                "gripRegrab": self.getParamValue("GRIP_REGRAB", timeout=1.5),
+                "gripRelease": self.getParamValue("GRIP_RELEASE", timeout=1.5),
+                "gripType": self.getParamValue("GRIP_TYPE", timeout=1.5),
             }
 
     # @staticmethod

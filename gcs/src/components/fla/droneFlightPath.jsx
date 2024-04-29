@@ -4,7 +4,6 @@ import {
   Ion, 
   Cartesian3, 
   Color, 
-  EasingFunction, 
   IonResource, 
   createWorldTerrainAsync, 
   createOsmBuildingsAsync,
@@ -13,11 +12,11 @@ import {
   TimeInterval,
   TimeIntervalCollection,
   PathGraphics,
-  VelocityOrientationProperty
+  VelocityOrientationProperty,
+  HeightReference
 } from "cesium";
 import { 
   Viewer,
-  CameraFlyTo,
   Entity, 
   Clock 
 } from "resium";
@@ -33,33 +32,59 @@ Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkODdjNjM
   Initialize the viewer's clock by setting its start and stop to the flight start and stop times we just calculated. 
   Also, set the viewer's current time to the start time and take the user to that time. 
 */
-const timeStepInSeconds = 30;
-const totalSeconds = timeStepInSeconds * (data.length - 1);
-const start = JulianDate.fromIso8601("2020-03-09T23:10:00Z");
-const stop = JulianDate.addSeconds(start, totalSeconds, new JulianDate());
+// const timeStepInSeconds = 30;
+// const totalSeconds = timeStepInSeconds * (data.length - 1);
+// const start = JulianDate.fromIso8601("2020-03-09T23:10:00Z");
+// const stop = JulianDate.addSeconds(start, totalSeconds, new JulianDate());
 
-const positionProperty = new SampledPositionProperty();
+// const positionProperty = new SampledPositionProperty();
 
-const flightData = data.map((item, index)=> {
-  // Declare the time for this individual sample and store it in a new JulianDate instance.
-  const time = JulianDate.addSeconds(start, index * timeStepInSeconds, new JulianDate());
-  const position = Cartesian3.fromDegrees(item.longitude, item.latitude, item.height);
-  // Store the position along with its timestamp.
-  // Here we add the positions all upfront, but these can be added at run-time as samples are received from a server.
-  positionProperty.addSample(time, position);
-  return(
-    <Entity
-    key={index}
-    position = {position}
-    point={{pixelSize:'4', color:Color.RED}}
-  />
-  );
-});
+// const flightData = data.map((item, index)=> {
+//   // Declare the time for this individual sample and store it in a new JulianDate instance.
+//   const time = JulianDate.addSeconds(start, index * timeStepInSeconds, new JulianDate());
+//   const position = Cartesian3.fromDegrees(item.longitude, item.latitude, item.height);
+//   // Store the position along with its timestamp.
+//   // Here we add the positions all upfront, but these can be added at run-time as samples are received from a server.
+//   positionProperty.addSample(time, position);
+//   return(
+//     <Entity
+//     key={index}
+//     position = {position}
+//     point={{pixelSize:'4', color:Color.RED}}
+//   />
+//   );
+// });
 
 const DroneFlightPath = ({gpsData}) => {
   const [terrainProvider, setTerrainProvider] = useState(null);
   const [osmBuildings, setOsmBuildings] = useState(null); // idk how to use this yet
 
+  const timeStepInSeconds = 30;
+  const totalSeconds = timeStepInSeconds * (data.length - 1);
+  const start = JulianDate.fromIso8601("2020-03-09T23:10:00Z");
+  const stop = JulianDate.addSeconds(start, totalSeconds, new JulianDate());
+
+  const positionProperty = new SampledPositionProperty();
+  //console.log(gpsData);
+  const altOffset = gpsData[0].height;
+
+  const flightData = gpsData.map((item, index)=> {
+    // Declare the time for this individual sample and store it in a new JulianDate instance.
+    const time = JulianDate.addSeconds(start, index * timeStepInSeconds, new JulianDate());
+    const position = Cartesian3.fromDegrees(item.longitude, item.latitude, item.height);
+    //console.log(position.toString())
+    // Store the position along with its timestamp.
+    // Here we add the positions all upfront, but these can be added at run-time as samples are received from a server.
+    positionProperty.addSample(time, position);
+    return(
+      <Entity
+      key={index}
+      position = {position}
+      heightReference= {HeightReference.RELATIVE_TO_GROUND}
+      point={{pixelSize:'4', color:Color.RED}}
+    />
+    );
+  });
   useEffect(() => {
     createWorldTerrainAsync({
       url: IonResource.fromAssetId(1),
@@ -77,11 +102,12 @@ const DroneFlightPath = ({gpsData}) => {
   const droneLine = <Entity 
     availability={new TimeIntervalCollection([new TimeInterval({start:start,stop:stop})])}
     position={positionProperty}
-    model={{
-      uri:'./droneModel/drone.gltf',
-      minimumPixelSize:28, // adjust drone size here
-      maximumScale:50
-    }}
+    // model={{
+    //   uri:'./droneModel/drone.gltf',
+    //   minimumPixelSize:28, // adjust drone size here
+    //   maximumScale:50
+    // }}
+    point= { {pixelSize: 25, color: Color.GREEN} } // for testing
     orientation={new VelocityOrientationProperty(positionProperty)}
     path={new PathGraphics({width:3})}
     tracked

@@ -162,6 +162,7 @@ export default function FLA() {
             height: point.Alt
           })),
         )
+        console.log(gpsData)
         
 
         // Close modal and show success message

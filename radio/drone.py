@@ -1020,6 +1020,7 @@ class Drone:
             f"{self.__getCurrentDateTimeStr()}.ftlog"
         )
 
+        empty = True
         try:
             with open(final_log_file, "a") as final_log_file_handle:
                 # Open all the log files that were written to in the current session and write their data to the final log file
@@ -1030,10 +1031,15 @@ class Drone:
 
                     with open(log_file) as log_file_handle:
                         final_log_file_handle.writelines(log_file_handle.readlines())
+                        empty = False if os.stat(log_file).st_size > 0 else True
                     os.remove(log_file)
+
+            # Delete file if empty
+            if empty:
+                print(f"Log file is empty, deleting '{final_log_file}'")
+                os.remove(final_log_file)
         except Exception as e:
             print(f"Failed to save drone logs: {e}")
 
         print(f"Saved drone logs to: {final_log_file}")
-
         print("Closed connection to drone")

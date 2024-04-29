@@ -81,6 +81,8 @@ export default function RadioCalibration() {
 
     socket.on('incoming_msg', (msg) => {
       if (msg.mavpackettype === 'RC_CHANNELS') {
+        // Check to see if a RC_CHANNELS message has been received, if so get
+        // all of the channel PWM values and set them in the state
         const chans = {}
         for (let i = 1; i < msg.chancount + 1; i++) {
           chans[i] = msg[`chan${i}_raw`]

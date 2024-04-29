@@ -16,7 +16,7 @@ import {
   Button,
   Tooltip,
 } from '@mantine/core'
-import { useDisclosure, useInterval, useLocalStorage } from '@mantine/hooks'
+import { useDisclosure, useInterval, useLocalStorage, useSessionStorage } from '@mantine/hooks'
 
 // Styling imports
 import { twMerge } from 'tailwind-merge'
@@ -43,7 +43,10 @@ export default function Navbar({ currentPage }) {
     key: 'wirelessConnection',
     defaultValue: true,
   })
-  const [connectedToSocket, setConnectedToSocket] = useState(false)
+  const [connectedToSocket, setConnectedToSocket] = useSessionStorage({
+    key: 'socketConnection',
+    defaultValue: false,
+  });
   const checkIfConnectedToSocket = useInterval(
     () => setConnectedToSocket(socket.connected),
     3000,

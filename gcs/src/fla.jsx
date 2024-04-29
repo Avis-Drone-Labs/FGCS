@@ -14,6 +14,7 @@ import {
   FileButton,
   Progress,
   ScrollArea,
+  Tabs,
 } from '@mantine/core'
 
 // Styling imports
@@ -23,6 +24,7 @@ import tailwindConfig from '../tailwind.config.js'
 // Custom components and helpers
 import ChartDataCard from './components/fla/chartDataCard.jsx'
 import DroneFlightPath from './components/fla/droneFlightPath.jsx'
+import Graph from './components/fla/graph.jsx'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
@@ -500,15 +502,31 @@ export default function FLA() {
               </ScrollArea>
             </div>
 
-            {/* Graph column */}
-            {/* <div className='w-full h-full pr-4'>
-              <Graph data={chartData} events={logEvents} />
-            </div> */}
-
-            {/* 3D Map column */}
-            <div className='w-full h-full pr-4'>
-              <DroneFlightPath gpsData={gpsData} />
-            </div>
+            <Tabs
+              color={tailwindColors.falconred[100]}
+              className='h-full w-full'
+              keepMounted={false}
+              defaultValue='chart'
+            >
+              <Tabs.List>
+                <Tabs.Tab value='chart'>Chart</Tabs.Tab>
+                <Tabs.Tab value='map' disabled={!gpsData}>
+                  Map
+                </Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Panel value='chart'>
+                {/* Graph column */}
+                <div className='w-full h-full pr-4'>
+                  <Graph data={chartData} events={logEvents} />
+                </div>
+              </Tabs.Panel>
+              <Tabs.Panel value='map'>
+                {/* 3D Map column */}
+                <div className='w-full h-full pr-4'>
+                  <DroneFlightPath gpsData={gpsData} />
+                </div>
+              </Tabs.Panel>
+            </Tabs>
           </div>
 
           {/* Plots Setup */}

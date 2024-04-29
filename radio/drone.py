@@ -110,7 +110,7 @@ class Drone:
 
         self.flight_modes = FlightModes(self)
 
-        self.gripper = Gripper(self.master, self.target_system, self.target_component)
+        self.gripper = Gripper(self)
         self.mission = Mission(self)
 
         self.stopAllDataStreams()

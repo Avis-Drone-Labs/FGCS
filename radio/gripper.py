@@ -1,50 +1,49 @@
 import functools
-import time
-from typing import Callable, Optional
+from __future__ import annotations
+
+from typing import Callable, TYPE_CHECKING
 
 import serial
 from customTypes import Response
 from pymavlink import mavutil
-from pymavlink.mavutil import mavserial
 from utils import commandAccepted
+
+if TYPE_CHECKING:
+    from drone import Drone
 
 
 class Gripper:
-    def __init__(
-        self, master: mavserial, target_system: int, target_component: int
-    ) -> None:
+    def __init__(self, drone: Drone) -> None:
         """The gripper controls all gripper-related actions.
 
         Args:
-            master (_type_): The master mavlink connection object
-            target_system (_type_): The target system
-            target_component (_type_): The target component
+            drone (Drone): The main drone object
         """
-        self.master = master
-        self.target_system = target_system
-        self.target_component = target_component
+        self.drone = drone
 
         self.enabled = False
 
-        gripper_enabled_response = self.getParamValue("GRIP_ENABLE", timeout=1.5)
-        if gripper_enabled_response is None:
+        gripper_enabled_response = self.drone.getSingleParam(param_name="GRIP_ENABLE")
+        if not (gripper_enabled_response.get("success")):
             print("Gripper is not enabled")
             return None
 
-        self.enabled = bool(gripper_enabled_response.param_value)
+        self.enabled = bool(gripper_enabled_response.get("data").param_value)
         self.params = {}
 
         if not self.enabled:
             print("Gripper is not enabled")
         else:
             self.params = {
-                "gripAutoclose": self.getParamValue("GRIP_AUTOCLOSE", timeout=1.5),
-                "gripCanId": self.getParamValue("GRIP_CAN_ID", timeout=1.5),
-                "gripGrab": self.getParamValue("GRIP_GRAB", timeout=1.5),
-                "gripNeutral": self.getParamValue("GRIP_NEUTRAL", timeout=1.5),
-                "gripRegrab": self.getParamValue("GRIP_REGRAB", timeout=1.5),
-                "gripRelease": self.getParamValue("GRIP_RELEASE", timeout=1.5),
-                "gripType": self.getParamValue("GRIP_TYPE", timeout=1.5),
+                "gripAutoclose": self.drone.getSingleParam("GRIP_AUTOCLOSE").get(
+                    "data"
+                ),
+                "gripCanId": self.drone.getSingleParam("GRIP_CAN_ID").get("data"),
+                "gripGrab": self.drone.getSingleParam("GRIP_GRAB").get("data"),
+                "gripNeutral": self.drone.getSingleParam("GRIP_NEUTRAL").get("data"),
+                "gripRegrab": self.drone.getSingleParam("GRIP_REGRAB").get("data"),
+                "gripRelease": self.drone.getSingleParam("GRIP_RELEASE").get("data"),
+                "gripType": self.drone.getSingleParam("GRIP_TYPE").get("data"),
             }
 
     # @staticmethod
@@ -75,24 +74,19 @@ class Gripper:
                 "success": False,
                 "message": 'Gripper action must be either "release" or "grab"',
             }
-
-        message = self.master.mav.command_long_encode(
-            self.target_system,
-            self.target_component,
+        self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_GRIPPER,
-            0,  # Confirmation
-            0,  # Gripper number (from 1 to maximum number of grippers on the vehicle).
-            0 if action == "release" else 1,  # Gripper action: 0:Release 1:Grab
+            0,
+            0 if action == "release" else 1,
             0,
             0,
             0,
             0,
             0,
         )
-        self.master.mav.send(message)
 
         try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
                 return {
@@ -109,42 +103,3 @@ class Gripper:
                 "success": False,
                 "message": "Setting gripper failed, serial exception",
             }
-
-    def getParamValue(self, param_name: str, timeout: Optional[int] = None):
-        """Gets a specific parameter value.
-
-        Args:
-            param_name (str): The name of the parameter to get
-            timeout (int, optional): The time to wait before failing to return the parameter. Defaults to None.
-
-        Returns:
-            Union[Dict, bool]: The parameter value TODO: Add type
-        """
-        self.master.mav.param_request_read_send(
-            self.target_system, self.target_component, param_name.encode(), -1
-        )
-
-        now = time.gmtime()
-
-        while True:
-            try:
-                response = self.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=timeout
-                )
-
-                if response is None:
-                    self.enabled = False
-                    return None
-
-                if time.gmtime().tm_sec - now.tm_sec > 3:
-                    return None
-
-                if response.param_id == "STAT_RUNTIME":
-                    continue
-
-                if response.param_id == param_name:
-                    return response
-            except serial.serialutil.SerialException:
-                print("Failed to get gripper parameter value, serial exception")
-                self.enabled = False
-                return None

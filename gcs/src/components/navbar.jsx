@@ -227,7 +227,7 @@ export default function Navbar({ currentPage }) {
         <p>{connected && selectedComPort}</p>
         {connectedToSocket ? (
           <Button
-            onClick={connected ? disconnect : open}
+            onClick={connected ? disconnect : () => {getComPorts(); open()}}
             color={
               connected ? tailwindColors.red[600] : tailwindColors.green[600]
             }

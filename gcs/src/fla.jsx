@@ -142,18 +142,20 @@ export default function FLA() {
             }
           })
 
-        // Load each ESC data into its own array
-        loadedLogMessages['ESC'].map((escData) => {
-          const newEscData = { ...escData, 'name': `ESC${escData['Instance']+1}`}
-          loadedLogMessages[newEscData.name] = (loadedLogMessages[newEscData.name] || []).concat([newEscData])
-          // Add filter state for new ESC
-          if(!logMessageFilterDefaultState[newEscData.name])
-             logMessageFilterDefaultState[newEscData.name] = { ...logMessageFilterDefaultState['ESC'] }
-        })
-        
-        // Remove old ESC motor data
-        delete loadedLogMessages['ESC']
-        delete logMessageFilterDefaultState['ESC']
+          if (loadedLogMessages['ESC']) {
+            // Load each ESC data into its own array
+            loadedLogMessages['ESC'].map((escData) => {
+              const newEscData = { ...escData, 'name': `ESC${escData['Instance']+1}`}
+            loadedLogMessages[newEscData.name] = (loadedLogMessages[newEscData.name] || []).concat([newEscData])
+            // Add filter state for new ESC
+            if(!logMessageFilterDefaultState[newEscData.name])
+               logMessageFilterDefaultState[newEscData.name] = { ...logMessageFilterDefaultState['ESC'] }
+          })
+          
+          // Remove old ESC motor data
+          delete loadedLogMessages['ESC']
+          delete logMessageFilterDefaultState['ESC']
+        }
 
         // Sort new filters
         const sortedLogMessageFilterState = Object.keys(logMessageFilterDefaultState)

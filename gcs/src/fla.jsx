@@ -163,7 +163,6 @@ export default function FLA() {
           .reduce((acc, c) => { acc[c] = logMessageFilterDefaultState[c]; return acc }, {})
 
         setMessageFilters(sortedLogMessageFilterState)
-        console.log(`Messages: ${messageFilters}`)
         setMeanValues(loadedLogMessages)
         
         // Set event logs for the event lines on graph

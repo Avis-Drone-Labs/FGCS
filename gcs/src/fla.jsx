@@ -188,15 +188,17 @@ export default function FLA() {
 
         // Set gps data
         setGpsData(
-          loadedLogMessages['POS'].map((point) => ({
-            longitude: point.Lng,
-            latitude: point.Lat,
-            height: point.Alt,
-          })),
-        )
-
+          loadedLogMessages['POS'] && loadedLogMessages['POS'] !== undefined
+            ? loadedLogMessages['POS'].map((point) => ({
+                longitude: point.Lng,
+                latitude: point.Lat,
+                height: point.Alt,
+              }))
+            : []
+        );
+        console.log(loadedLogMessages['POS'])
         // Close modal and show success message
-        showSuccessNotification(`${file.name} loaded successfully`)
+        showSuccessNotification(`${file.name} loaded successfully`);
       } else {
         // Error
         showErrorNotification(result.error)

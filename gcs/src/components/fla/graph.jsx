@@ -2,6 +2,7 @@ import { ActionIcon, Tooltip as MantineTooltip } from '@mantine/core'
 import { useToggle } from '@mantine/hooks'
 import {
   IconCapture,
+  IconCopy,
   IconTimelineEvent,
   IconTimelineEventX,
   IconZoomIn,
@@ -25,6 +26,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config.js'
+import { showSuccessNotification } from '../../helpers/notification.js'
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
 // Note: changes to the plugin code is not reflected to the chart, because the plugin is loaded at chart construction time and editor changes only trigger an chart.update().
@@ -167,6 +169,47 @@ export default function Graph({ data, events }) {
     )
   }
 
+  function copyGraphToClipboard() {
+    try {
+      const height = chartRef?.current?.height
+      const width = chartRef?.current?.width
+      const wantedWidth = width * 2
+      const wantedHeight = height * 2
+
+      // https://stackoverflow.com/questions/20958078/resize-a-base-64-image-in-javascript-without-using-canvas
+      // We create an image to receive the Data URI
+      var img = document.createElement('img')
+
+      // When the event "onload" is triggered we can resize the image.
+      img.onload = function () {
+        // We create a canvas and get its context.
+        var canvas = document.createElement('canvas')
+        var ctx = canvas.getContext('2d')
+
+        // We set the dimensions at the wanted size.
+        canvas.width = wantedWidth
+        canvas.height = wantedHeight
+
+        // We resize the image with the canvas method drawImage();
+        ctx.drawImage(this, 0, 0, wantedWidth, wantedHeight)
+
+        canvas.toBlob((blob) => {
+          navigator.clipboard.write([
+            new ClipboardItem({
+              'image/png': blob,
+            }),
+          ])
+
+          showSuccessNotification('Graph copied to clipboard')
+        })
+      }
+
+      img.src = chartRef?.current?.toBase64Image()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   useEffect(() => {
     if (events !== null) {
       const annotations = events.map((event) => {
@@ -229,6 +272,11 @@ export default function Graph({ data, events }) {
         <MantineTooltip label='Save graph as image'>
           <ActionIcon variant='filled' onClick={downloadGraphAsImage}>
             <IconCapture size={18} />
+          </ActionIcon>
+        </MantineTooltip>
+        <MantineTooltip label='Copy graph'>
+          <ActionIcon variant='filled' onClick={copyGraphToClipboard}>
+            <IconCopy size={18} />
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label={showEvents ? 'Hide events' : 'Show events'}>

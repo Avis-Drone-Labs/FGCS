@@ -3,7 +3,7 @@ import time
 from serial.tools import list_ports
 
 from .. import socketio
-from app.utils import getComPortNames
+from app.utils import getComPortNames, droneErrorCb
 from app.drone import Drone
 import app.droneStatus as droneStatus
 
@@ -84,13 +84,3 @@ def disconnectFromDrone() -> None:
     droneStatus.drone = None
     droneStatus.state = None
     socketio.emit("disconnected_from_drone")
-
-
-def droneErrorCb(msg) -> None:
-    """
-    Send drone error to the socket
-
-    Args:
-        msg: The error message to send to the client
-    """
-    socketio.emit("drone_error", {"message": msg})

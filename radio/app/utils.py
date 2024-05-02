@@ -1,5 +1,6 @@
 import sys
 
+from . import socketio
 from typing import List
 from pymavlink import mavutil
 from serial.tools import list_ports
@@ -114,3 +115,12 @@ def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) 
         The normalised PWM value
     """
     return 2 * ((val - min_val) / (max_val - min_val)) - 1
+
+def droneErrorCb(msg) -> None:
+    """
+    Send drone error to the socket
+
+    Args:
+        msg: The error message to send to the client
+    """
+    socketio.emit("drone_error", {"message": msg})

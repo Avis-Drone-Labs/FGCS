@@ -226,47 +226,47 @@ def index():
 #         socketio.emit("params_error", {"message": "Failed to save parameters."})
 
 
-@socketio.on("refresh_params")
-def refresh_params():
-    global state
-    if state != "params":
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the params screen to refresh the parameters."},
-        )
-        print(f"Current state: {state}")
-        return
+# @socketio.on("refresh_params")
+# def refresh_params():
+#     global state
+#     if state != "params":
+#         socketio.emit(
+#             "params_error",
+#             {"message": "You must be on the params screen to refresh the parameters."},
+#         )
+#         print(f"Current state: {state}")
+#         return
 
-    drone.getAllParams()
+#     drone.getAllParams()
 
-    timeout = time.time() + 60 * 3  # 3 minutes from now
-    last_index_sent = -1
+#     timeout = time.time() + 60 * 3  # 3 minutes from now
+#     last_index_sent = -1
 
-    while drone and drone.is_requesting_params:
-        if time.time() > timeout:
-            socketio.emit(
-                "params_error",
-                {"message": "Parameter request timed out after 3 minutes."},
-            )
-            return
+#     while drone and drone.is_requesting_params:
+#         if time.time() > timeout:
+#             socketio.emit(
+#                 "params_error",
+#                 {"message": "Parameter request timed out after 3 minutes."},
+#             )
+#             return
 
-        if (
-            last_index_sent != drone.current_param_index
-            and drone.current_param_index > last_index_sent
-        ):
-            socketio.emit(
-                "param_request_update",
-                {
-                    "current_param_index": drone.current_param_index,
-                    "total_number_of_params": drone.total_number_of_params,
-                },
-            )
-            last_index_sent = drone.current_param_index
+#         if (
+#             last_index_sent != drone.current_param_index
+#             and drone.current_param_index > last_index_sent
+#         ):
+#             socketio.emit(
+#                 "param_request_update",
+#                 {
+#                     "current_param_index": drone.current_param_index,
+#                     "total_number_of_params": drone.total_number_of_params,
+#                 },
+#             )
+#             last_index_sent = drone.current_param_index
 
-        time.sleep(0.2)
+#         time.sleep(0.2)
 
-    if drone:
-        socketio.emit("params", drone.params)
+#     if drone:
+#         socketio.emit("params", drone.params)
 
 
 @socketio.on("reboot_autopilot")

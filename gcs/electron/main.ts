@@ -28,6 +28,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
     },
     show: false,
+    alwaysOnTop: true
   })
 
   win.setMenuBarVisibility(false)
@@ -48,6 +49,8 @@ function createWindow() {
   win.once('ready-to-show', () => {
     loadingWin?.destroy()
     win?.maximize()
+    // Window starts always on top so it opens even if loading window is hid
+    win?.setAlwaysOnTop(false)
   })
 }
 
@@ -55,7 +58,6 @@ function createLoadingWindow(){
   loadingWin= new BrowserWindow({
     frame: false,
     transparent: true,
-    alwaysOnTop: true,
     center: true,
   });
 

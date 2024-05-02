@@ -1,12 +1,13 @@
-import sys
+# import sys
 import time
 
 import serial
 from app.drone import Drone
 from flask import Flask
 from flask_socketio import SocketIO
-from pymavlink import mavutil
-from serial.tools import list_ports
+
+# from pymavlink import mavutil
+# from serial.tools import list_ports
 from app.utils import getComPortNames
 
 app = Flask(__name__)
@@ -116,113 +117,113 @@ def index():
 #     socketio.emit("disconnected_from_drone")
 
 
-@socketio.on("set_state")
-def set_state(data):
-    global drone, state
-    if not drone:
-        return
-    state = data.get("state")
+# @socketio.on("set_state")
+# def set_state(data):
+#     global drone, state
+#     if not drone:
+#         return
+#     state = data.get("state")
 
-    if state == "dashboard":
-        drone.setupDataStreams()
-        drone.addMessageListener("VFR_HUD", sendMessage)
-        drone.addMessageListener("BATTERY_STATUS", sendMessage)
-        drone.addMessageListener("ATTITUDE", sendMessage)
-        drone.addMessageListener("GLOBAL_POSITION_INT", sendMessage)
-        drone.addMessageListener("ALTITUDE", sendMessage)
-        drone.addMessageListener("NAV_CONTROLLER_OUTPUT", sendMessage)
-        drone.addMessageListener("HEARTBEAT", sendMessage)
-        drone.addMessageListener(
-            "STATUSTEXT", sendMessage
-        )  # TODO: Request message directly
-        drone.addMessageListener("SYS_STATUS", sendMessage)
-        drone.addMessageListener("GPS_RAW_INT", sendMessage)
-        drone.addMessageListener("RC_CHANNELS", sendMessage)
-    elif state == "graphs":
-        drone.stopAllDataStreams()
+#     if state == "dashboard":
+#         drone.setupDataStreams()
+#         drone.addMessageListener("VFR_HUD", sendMessage)
+#         drone.addMessageListener("BATTERY_STATUS", sendMessage)
+#         drone.addMessageListener("ATTITUDE", sendMessage)
+#         drone.addMessageListener("GLOBAL_POSITION_INT", sendMessage)
+#         drone.addMessageListener("ALTITUDE", sendMessage)
+#         drone.addMessageListener("NAV_CONTROLLER_OUTPUT", sendMessage)
+#         drone.addMessageListener("HEARTBEAT", sendMessage)
+#         drone.addMessageListener(
+#             "STATUSTEXT", sendMessage
+#         )  # TODO: Request message directly
+#         drone.addMessageListener("SYS_STATUS", sendMessage)
+#         drone.addMessageListener("GPS_RAW_INT", sendMessage)
+#         drone.addMessageListener("RC_CHANNELS", sendMessage)
+#     elif state == "graphs":
+#         drone.stopAllDataStreams()
 
-        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS)
-        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
-        drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
+#         drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS)
+#         drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
+#         drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
 
-        drone.addMessageListener("VFR_HUD", sendMessage)
-        drone.addMessageListener("ATTITUDE", sendMessage)
-        drone.addMessageListener("SYS_STATUS", sendMessage)
-    elif state == "params":
-        drone.stopAllDataStreams()
+#         drone.addMessageListener("VFR_HUD", sendMessage)
+#         drone.addMessageListener("ATTITUDE", sendMessage)
+#         drone.addMessageListener("SYS_STATUS", sendMessage)
+#     elif state == "params":
+#         drone.stopAllDataStreams()
 
-        if len(drone.params):
-            socketio.emit("params", drone.params)
-            return
+#         if len(drone.params):
+#             socketio.emit("params", drone.params)
+#             return
 
-        drone.getAllParams()
+#         drone.getAllParams()
 
-        timeout = time.time() + 60 * 3  # 3 minutes from now
-        last_index_sent = -1
+#         timeout = time.time() + 60 * 3  # 3 minutes from now
+#         last_index_sent = -1
 
-        while drone and drone.is_requesting_params:
-            if time.time() > timeout:
-                socketio.emit(
-                    "params_error",
-                    {"message": "Parameter request timed out after 3 minutes."},
-                )
-                return
+#         while drone and drone.is_requesting_params:
+#             if time.time() > timeout:
+#                 socketio.emit(
+#                     "params_error",
+#                     {"message": "Parameter request timed out after 3 minutes."},
+#                 )
+#                 return
 
-            if (
-                last_index_sent != drone.current_param_index
-                and drone.current_param_index > last_index_sent
-            ):
-                socketio.emit(
-                    "param_request_update",
-                    {
-                        "current_param_index": drone.current_param_index,
-                        "total_number_of_params": drone.total_number_of_params,
-                    },
-                )
-                last_index_sent = drone.current_param_index
+#             if (
+#                 last_index_sent != drone.current_param_index
+#                 and drone.current_param_index > last_index_sent
+#             ):
+#                 socketio.emit(
+#                     "param_request_update",
+#                     {
+#                         "current_param_index": drone.current_param_index,
+#                         "total_number_of_params": drone.total_number_of_params,
+#                     },
+#                 )
+#                 last_index_sent = drone.current_param_index
 
-            time.sleep(0.2)
+#             time.sleep(0.2)
 
-        if drone:
-            socketio.emit("params", drone.params)
-    elif state == "config":
-        drone.stopAllDataStreams()
-    elif state == "config.flight_modes":
-        drone.stopAllDataStreams()
+#         if drone:
+#             socketio.emit("params", drone.params)
+#     elif state == "config":
+#         drone.stopAllDataStreams()
+#     elif state == "config.flight_modes":
+#         drone.stopAllDataStreams()
 
-        drone.sendDataStreamRequestMessage(
-            mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
-        )
+#         drone.sendDataStreamRequestMessage(
+#             mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
+#         )
 
-        drone.addMessageListener("RC_CHANNELS", sendMessage)
-        drone.addMessageListener("HEARTBEAT", sendMessage)
-    elif state == "config.rc_calibration":
-        drone.stopAllDataStreams()
+#         drone.addMessageListener("RC_CHANNELS", sendMessage)
+#         drone.addMessageListener("HEARTBEAT", sendMessage)
+#     elif state == "config.rc_calibration":
+#         drone.stopAllDataStreams()
 
-        drone.sendDataStreamRequestMessage(
-            mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
-        )
+#         drone.sendDataStreamRequestMessage(
+#             mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
+#         )
 
 
-@socketio.on("set_multiple_params")
-def set_multiple_params(params_list):
-    global state
-    validStates = ["params", "config"]
-    if state not in validStates:
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the params screen to save parameters."},
-        )
-        print(f"Current state: {state}")
-        return
+# @socketio.on("set_multiple_params")
+# def set_multiple_params(params_list):
+#     global state
+#     validStates = ["params", "config"]
+#     if state not in validStates:
+#         socketio.emit(
+#             "params_error",
+#             {"message": "You must be on the params screen to save parameters."},
+#         )
+#         print(f"Current state: {state}")
+#         return
 
-    success = drone.setMultipleParams(params_list)
-    if success:
-        socketio.emit(
-            "param_set_success", {"message": "Parameters saved successfully."}
-        )
-    else:
-        socketio.emit("params_error", {"message": "Failed to save parameters."})
+#     success = drone.setMultipleParams(params_list)
+#     if success:
+#         socketio.emit(
+#             "param_set_success", {"message": "Parameters saved successfully."}
+#         )
+#     else:
+#         socketio.emit("params_error", {"message": "Failed to save parameters."})
 
 
 @socketio.on("refresh_params")

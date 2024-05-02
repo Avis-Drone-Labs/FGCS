@@ -1,14 +1,14 @@
 # import sys
-import time
+# import time
 
-import serial
+# import serial
 from app.drone import Drone
 from flask import Flask
 from flask_socketio import SocketIO
 
 # from pymavlink import mavutil
 # from serial.tools import list_ports
-from app.utils import getComPortNames
+# from app.utils import getComPortNames
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret-key"
@@ -269,69 +269,69 @@ def index():
 #         socketio.emit("params", drone.params)
 
 
-@socketio.on("reboot_autopilot")
-def rebootAutopilot():
-    global drone
-    if not drone:
-        return
+# @socketio.on("reboot_autopilot")
+# def rebootAutopilot():
+#     global drone
+#     if not drone:
+#         return
 
-    port = drone.port
-    baud = drone.baud
-    wireless = drone.wireless
-    droneErrorCb = drone.droneErrorCb
-    droneDisconnectCb = drone.droneDisconnectCb
-    socketio.emit("disconnected_from_drone")
-    drone.rebootAutopilot()
+#     port = drone.port
+#     baud = drone.baud
+#     wireless = drone.wireless
+#     droneErrorCb = drone.droneErrorCb
+#     droneDisconnectCb = drone.droneDisconnectCb
+#     socketio.emit("disconnected_from_drone")
+#     drone.rebootAutopilot()
 
-    while drone.is_active:
-        time.sleep(0.05)
+#     while drone.is_active:
+#         time.sleep(0.05)
 
-    counter = 0
-    while counter < 10:
-        if port in getComPortNames():
-            break
-        counter += 1
-        time.sleep(0.5)
-    else:
-        print("Port not open after 5 seconds.")
-        socketio.emit(
-            "reboot_autopilot",
-            {"success": False, "message": "Port not open after 5 seconds."},
-        )
-        return
+#     counter = 0
+#     while counter < 10:
+#         if port in getComPortNames():
+#             break
+#         counter += 1
+#         time.sleep(0.5)
+#     else:
+#         print("Port not open after 5 seconds.")
+#         socketio.emit(
+#             "reboot_autopilot",
+#             {"success": False, "message": "Port not open after 5 seconds."},
+#         )
+#         return
 
-    tries = 0
-    while tries < 3:
-        try:
-            drone = Drone(
-                port,
-                baud=baud,
-                wireless=wireless,
-                droneErrorCb=droneErrorCb,
-                droneDisconnectCb=droneDisconnectCb,
-            )
-            break
-        except serial.serialutil.SerialException:
-            tries += 1
-            time.sleep(1)
-    else:
-        print("Could not reconnect to drone after 3 attempts.")
-        socketio.emit(
-            "reboot_autopilot",
-            {
-                "success": False,
-                "message": "Could not reconnect to drone after 3 attempts.",
-            },
-        )
-        return
+#     tries = 0
+#     while tries < 3:
+#         try:
+#             drone = Drone(
+#                 port,
+#                 baud=baud,
+#                 wireless=wireless,
+#                 droneErrorCb=droneErrorCb,
+#                 droneDisconnectCb=droneDisconnectCb,
+#             )
+#             break
+#         except serial.serialutil.SerialException:
+#             tries += 1
+#             time.sleep(1)
+#     else:
+#         print("Could not reconnect to drone after 3 attempts.")
+#         socketio.emit(
+#             "reboot_autopilot",
+#             {
+#                 "success": False,
+#                 "message": "Could not reconnect to drone after 3 attempts.",
+#             },
+#         )
+#         return
 
-    time.sleep(1)
-    socketio.emit("connected_to_drone")
-    print("Rebooted autopilot successfully.")
-    socketio.emit(
-        "reboot_autopilot",
-        {"success": True, "message": "Rebooted autopilot successfully."},
-    )
+#     time.sleep(1)
+#     socketio.emit("connected_to_drone")
+#     print("Rebooted autopilot successfully.")
+#     socketio.emit(
+#         "reboot_autopilot",
+#         {"success": True, "message": "Rebooted autopilot successfully."},
+#     )
 
 
 @socketio.on("arm_disarm")

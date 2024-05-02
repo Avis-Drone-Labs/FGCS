@@ -62,7 +62,7 @@ def refreshFlightModeData() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        print(f"Current state: {state}")
+        print(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

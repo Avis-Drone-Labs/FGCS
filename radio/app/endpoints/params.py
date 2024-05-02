@@ -1,14 +1,16 @@
 import time
 from .. import socketio
+from typing import List
 import app.drone as droneStatus
 
 
 @socketio.on("set_multiple_params")
-def set_multiple_params(params_list):
+def set_multiple_params(params_list: List[any]) -> None:
     """
     Set multiple parameters at the same time.
 
-    @param params_list: The list of parameters to be setting from the client.
+    Args:
+        params_list: The list of parameters to be setting from the client.
     """
     validStates = ["params", "config"]
     if droneStatus.state not in validStates:
@@ -29,7 +31,7 @@ def set_multiple_params(params_list):
 
 
 @socketio.on("refresh_params")
-def refresh_params():
+def refresh_params() -> None:
     """
     Refresh all parameters
     """

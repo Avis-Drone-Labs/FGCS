@@ -9,7 +9,7 @@ import app.droneStatus as droneStatus
 
 
 @socketio.on("get_com_ports")
-def getComPort():
+def getComPort() -> None:
     """
     Gets a list of all COM port available and sends it to the client, also updates the global list of all ports
     """
@@ -34,11 +34,12 @@ def getComPort():
 
 
 @socketio.on("set_com_port")
-def setComPort(data):
+def setComPort(data) -> None:
     """
     Set the com port of the drone and let the client know
 
-    @param data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
+    Args:
+        data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
     """
     if droneStatus.drone:
         droneStatus.drone.close()
@@ -75,7 +76,7 @@ def setComPort(data):
 
 
 @socketio.on("disconnect_from_drone")
-def disconnectFromDrone():
+def disconnectFromDrone() -> None:
     """
     Disconnect from drone and reset all global variables, send a message to client disconnecting as well
     """
@@ -85,10 +86,11 @@ def disconnectFromDrone():
     socketio.emit("disconnected_from_drone")
 
 
-def droneErrorCb(msg):
+def droneErrorCb(msg) -> None:
     """
     Send drone error to the socket
 
-    @param msg: The error message to send to the client
+    Args:
+        msg: The error message to send to the client
     """
     socketio.emit("drone_error", {"message": msg})

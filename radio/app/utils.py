@@ -69,7 +69,7 @@ def getComPortNames() -> List[str]:
     return correct_ports
 
 
-def secondsToMicroseconds(secs) -> int:
+def secondsToMicroseconds(secs: float) -> int:
     """
     Converts seconds to microseconds
 
@@ -101,7 +101,7 @@ def commandAccepted(response, command) -> bool:
     )
 
 
-def normalisePwmValue(val, min_val=1000, max_val=2000) -> int:
+def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) -> int:
     """
     Normalise a PWM value to the range -1 to 1
     

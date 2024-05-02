@@ -9,6 +9,7 @@
         "pymavlink",
         "PYQT",
         "RSSI",
+        "serialutil",
         "statustext"
     ]
 }

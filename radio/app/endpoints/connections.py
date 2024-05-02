@@ -3,7 +3,7 @@ import app.droneStatus as droneStatus
 
 
 @socketio.on("connect")
-def connection():
+def connection() -> None:
     """
     Simply handle a client connections
     """
@@ -11,7 +11,7 @@ def connection():
 
 
 @socketio.on("disconnect")
-def disconnect():
+def disconnect() -> None:
     """
     Handle client disconnection by reseting all global variables
     """
@@ -23,7 +23,7 @@ def disconnect():
 
 
 @socketio.on("is_connected_to_drone")
-def isConnectedToDrone():
+def isConnectedToDrone() -> None:
     """
     Handle client asking if we're connected to the drone or not
     """

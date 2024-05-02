@@ -2,12 +2,12 @@ import sys
 import time
 
 import serial
-from drone import Drone
+from app.drone import Drone
 from flask import Flask
 from flask_socketio import SocketIO
 from pymavlink import mavutil
 from serial.tools import list_ports
-from utils import getComPortNames
+from app.utils import getComPortNames
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret-key"
@@ -39,81 +39,81 @@ def index():
 #     print("Client disconnected!")
 
 
-@socketio.on("is_connected_to_drone")
-def isConnectedToDrone():
-    global drone
-    socketio.emit("is_connected_to_drone", bool(drone))
+# @socketio.on("is_connected_to_drone")
+# def isConnectedToDrone():
+#     global drone
+#     socketio.emit("is_connected_to_drone", bool(drone))
 
 
-@socketio.on("get_com_ports")
-def getComPort():
-    global drone, correct_ports
-    ports = list(list_ports.comports())
-    correct_ports = []
-    for i in range(len(ports)):
-        port = ports[i]
-        if sys.platform == "darwin":
-            port_name = port.name
-            if port_name[:3] == "cu.":
-                port_name = port_name[3:]
+# @socketio.on("get_com_ports")
+# def getComPort():
+#     global drone, correct_ports
+#     ports = list(list_ports.comports())
+#     correct_ports = []
+#     for i in range(len(ports)):
+#         port = ports[i]
+#         if sys.platform == "darwin":
+#             port_name = port.name
+#             if port_name[:3] == "cu.":
+#                 port_name = port_name[3:]
 
-            port_name = f"/dev/tty.{port_name}"
-        elif sys.platform in ["linux", "linux2"]:
-            port_name = f"/dev/{port.name}"
-        else:
-            port_name = port.name
+#             port_name = f"/dev/tty.{port_name}"
+#         elif sys.platform in ["linux", "linux2"]:
+#             port_name = f"/dev/{port.name}"
+#         else:
+#             port_name = port.name
 
-        port_name = f"{port_name}: {port.description}"
-        correct_ports.append(port_name)
-    socketio.emit("list_com_ports", correct_ports)
-
-
-@socketio.on("set_com_port")
-def setComPort(data):
-    global drone
-    if drone:
-        drone.close()
-        drone = None
-
-    port = data.get("port")
-    if not port:
-        socketio.emit("com_port_error", {"message": "COM port not specified."})
-        return
-
-    port = port.split(":")[0]
-
-    if port not in getComPortNames():
-        socketio.emit("com_port_error", {"message": "COM port not found."})
-        return
-
-    baud = data.get("baud")
-
-    print("Trying to connect to drone")
-
-    drone = Drone(
-        port,
-        wireless=data.get("wireless", True),
-        baud=baud,
-        droneErrorCb=droneErrorCb,
-        droneDisconnectCb=disconnectFromDrone,
-    )
-
-    if drone.connectionError is not None:
-        socketio.emit("com_port_error", {"message": drone.connectionError})
-        drone = None
-        return
-
-    time.sleep(1)
-    socketio.emit("connected_to_drone")
+#         port_name = f"{port_name}: {port.description}"
+#         correct_ports.append(port_name)
+#     socketio.emit("list_com_ports", correct_ports)
 
 
-@socketio.on("disconnect_from_drone")
-def disconnectFromDrone():
-    global drone, state
-    drone.close()
-    drone = None
-    state = None
-    socketio.emit("disconnected_from_drone")
+# @socketio.on("set_com_port")
+# def setComPort(data):
+#     global drone
+#     if drone:
+#         drone.close()
+#         drone = None
+
+#     port = data.get("port")
+#     if not port:
+#         socketio.emit("com_port_error", {"message": "COM port not specified."})
+#         return
+
+#     port = port.split(":")[0]
+
+#     if port not in getComPortNames():
+#         socketio.emit("com_port_error", {"message": "COM port not found."})
+#         return
+
+#     baud = data.get("baud")
+
+#     print("Trying to connect to drone")
+
+#     drone = Drone(
+#         port,
+#         wireless=data.get("wireless", True),
+#         baud=baud,
+#         droneErrorCb=droneErrorCb,
+#         droneDisconnectCb=disconnectFromDrone,
+#     )
+
+#     if drone.connectionError is not None:
+#         socketio.emit("com_port_error", {"message": drone.connectionError})
+#         drone = None
+#         return
+
+#     time.sleep(1)
+#     socketio.emit("connected_to_drone")
+
+
+# @socketio.on("disconnect_from_drone")
+# def disconnectFromDrone():
+#     global drone, state
+#     drone.close()
+#     drone = None
+#     state = None
+#     socketio.emit("disconnected_from_drone")
 
 
 @socketio.on("set_state")

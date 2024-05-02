@@ -6,7 +6,7 @@ from customTypes import Response
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from drone import Drone
+    from radio.app.drone import Drone
 
 
 FLIGHT_MODES = [

@@ -1,8 +1,8 @@
 import time
 from pprint import pprint
 
-from drone import Drone
-from utils import getComPort
+from app.drone import Drone
+from app.utils import getComPort
 
 # from influxdb_client import InfluxDBClient, Point
 # from influxdb_client.client.write_api import SYNCHRONOUS

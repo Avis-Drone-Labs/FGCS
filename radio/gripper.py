@@ -6,10 +6,10 @@ from typing import Callable, TYPE_CHECKING
 import serial
 from customTypes import Response
 from pymavlink import mavutil
-from utils import commandAccepted
+from app.utils import commandAccepted
 
 if TYPE_CHECKING:
-    from drone import Drone
+    from radio.app.drone import Drone
 
 
 class Gripper:

@@ -22,7 +22,7 @@ from flightModes import FlightModes
 from gripper import Gripper
 from mission import Mission
 from pymavlink import mavutil
-from utils import commandAccepted
+from app.utils import commandAccepted
 
 LOG_LINE_LIMIT = 50000
 

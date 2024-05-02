@@ -124,3 +124,14 @@ def droneErrorCb(msg) -> None:
         msg: The error message to send to the client
     """
     socketio.emit("drone_error", {"message": msg})
+
+def sendMessage(msg) -> None:
+    """
+    Sends a message to the frontend with a timestamp
+
+    Args:
+        msg: The message to send
+    """
+    data = msg.to_dict()
+    data["timestamp"] = msg._timestamp
+    socketio.emit("incoming_msg", data)

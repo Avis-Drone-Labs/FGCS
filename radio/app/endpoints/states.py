@@ -1,5 +1,6 @@
 import time
 from .. import socketio
+from utils import sendMessage
 import app.droneStatus as droneStatus
 from pymavlink import mavutil
 
@@ -18,23 +19,23 @@ def set_state(data) -> None:
 
     if droneStatus.state == "dashboard":
         droneStatus.drone.setupDataStreams()
-        droneStatus.drone.addMessageListener("VFR_HUD", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("BATTERY_STATUS", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("ATTITUDE", droneStatus.sendMessage)
+        droneStatus.drone.addMessageListener("VFR_HUD", sendMessage)
+        droneStatus.drone.addMessageListener("BATTERY_STATUS", sendMessage)
+        droneStatus.drone.addMessageListener("ATTITUDE", sendMessage)
         droneStatus.drone.addMessageListener(
-            "GLOBAL_POSITION_INT", droneStatus.sendMessage
+            "GLOBAL_POSITION_INT", sendMessage
         )
-        droneStatus.drone.addMessageListener("ALTITUDE", droneStatus.sendMessage)
+        droneStatus.drone.addMessageListener("ALTITUDE", sendMessage)
         droneStatus.drone.addMessageListener(
-            "NAV_CONTROLLER_OUTPUT", droneStatus.sendMessage
+            "NAV_CONTROLLER_OUTPUT", sendMessage
         )
-        droneStatus.drone.addMessageListener("HEARTBEAT", droneStatus.sendMessage)
+        droneStatus.drone.addMessageListener("HEARTBEAT", sendMessage)
         droneStatus.drone.addMessageListener(
-            "STATUSTEXT", droneStatus.sendMessage
+            "STATUSTEXT", sendMessage
         )  # TODO: Request message directly
-        droneStatus.drone.addMessageListener("SYS_STATUS", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("GPS_RAW_INT", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("RC_CHANNELS", droneStatus.sendMessage)
+        droneStatus.drone.addMessageListener("SYS_STATUS", sendMessage)
+        droneStatus.drone.addMessageListener("GPS_RAW_INT", sendMessage)
+        droneStatus.drone.addMessageListener("RC_CHANNELS", sendMessage)
     elif droneStatus.state == "graphs":
         droneStatus.drone.stopAllDataStreams()
 
@@ -44,9 +45,9 @@ def set_state(data) -> None:
         droneStatus.drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
         droneStatus.drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
 
-        droneStatus.drone.addMessageListener("VFR_HUD", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("ATTITUDE", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("SYS_STATUS", droneStatus.sendMessage)
+        droneStatus.drone.addMessageListener("VFR_HUD", sendMessage)
+        droneStatus.drone.addMessageListener("ATTITUDE", sendMessage)
+        droneStatus.drone.addMessageListener("SYS_STATUS", sendMessage)
     elif droneStatus.state == "params":
         droneStatus.drone.stopAllDataStreams()
 
@@ -93,8 +94,8 @@ def set_state(data) -> None:
             mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
         )
 
-        droneStatus.drone.addMessageListener("RC_CHANNELS", droneStatus.sendMessage)
-        droneStatus.drone.addMessageListener("HEARTBEAT", droneStatus.sendMessage)
+        droneStatus.drone.addMessageListener("RC_CHANNELS", sendMessage)
+        droneStatus.drone.addMessageListener("HEARTBEAT", sendMessage)
     elif droneStatus.state == "config.rc_calibration":
         droneStatus.drone.stopAllDataStreams()
 

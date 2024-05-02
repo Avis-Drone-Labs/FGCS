@@ -334,24 +334,24 @@ def index():
 #     )
 
 
-@socketio.on("arm_disarm")
-def arm(data):
-    global drone
-    if not drone:
-        return
+# @socketio.on("arm_disarm")
+# def arm(data):
+#     global drone
+#     if not drone:
+#         return
 
-    arm = data.get("arm", None)
-    if arm is None:
-        return
+#     arm = data.get("arm", None)
+#     if arm is None:
+#         return
 
-    force = data.get("force", False)
+#     force = data.get("force", False)
 
-    if arm:
-        result = drone.arm(force)
-    else:
-        result = drone.disarm(force)
+#     if arm:
+#         result = drone.arm(force)
+#     else:
+#         result = drone.disarm(force)
 
-    socketio.emit("arm_disarm", result)
+#     socketio.emit("arm_disarm", result)
 
 
 @socketio.on("gripper_enabled")

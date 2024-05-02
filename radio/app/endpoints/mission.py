@@ -13,7 +13,7 @@ def getCurrentMission() -> None:
                 "message": "You must be on the dashboard screen to get the current mission."
             },
         )
-        print(f"Current state: {state}")
+        print(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

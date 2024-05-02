@@ -6,6 +6,11 @@ from pymavlink import mavutil
 
 @socketio.on("set_state")
 def set_state(data):
+    """
+    Set the state of the drone based on the file current page we are on
+
+    @param data: The form data passed in from the frontend, this contains the state we wish to change to
+    """
     if not droneStatus.drone:
         return
     droneStatus.state = data.get("state")

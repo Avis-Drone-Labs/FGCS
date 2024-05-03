@@ -1,3 +1,8 @@
+/*
+  This file contains the different graph configs for the different types of log files opened with FLA.
+  For example, a different log file can have a different x axis (time or linear), etc.
+*/
+
 // 3rd party imports
 import moment from 'moment'
 

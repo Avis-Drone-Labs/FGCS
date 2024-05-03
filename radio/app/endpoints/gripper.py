@@ -1,4 +1,4 @@
-from .. import socketio
+from app import socketio
 from app.utils import droneErrorCb
 import app.droneStatus as droneStatus
 

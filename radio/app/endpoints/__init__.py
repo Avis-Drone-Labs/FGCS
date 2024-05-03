@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-main = Blueprint("main", __name__)
+endpoints = Blueprint("endpoints", __name__)
 
 # Ignore warnings, importing everything from this file for the blueprint
 from . import arm

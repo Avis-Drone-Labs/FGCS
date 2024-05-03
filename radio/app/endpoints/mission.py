@@ -1,4 +1,4 @@
-from .. import socketio
+from app import socketio
 import app.droneStatus as droneStatus
 
 @socketio.on("get_current_mission")

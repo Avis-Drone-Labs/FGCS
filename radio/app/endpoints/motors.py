@@ -1,4 +1,4 @@
-from .. import socketio
+from app import socketio
 from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration
 import app.droneStatus as droneStatus
 

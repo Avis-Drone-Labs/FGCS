@@ -523,35 +523,35 @@ export default function FLA() {
                 events={logEvents}
                 graphConfig={graphConfig}
               />
-            </div>
-          </div>
 
-          {/* Plots Setup */}
-          <div className='flex gap-4 pt-6 flex-cols h-1/4'>
-            <div className='ml-4'>
-              <div className='flex flex-row items-center'>
-                <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
-                {/* Clear Filters */}
-                <Button
-                  className='ml-6'
-                  size='xs'
-                  color={tailwindColors.red[500]}
-                  onClick={clearFilters}
-                >
-                  Clear graph
-                </Button>
+              {/* Plots Setup */}
+              <div className='flex gap-4 pt-6 flex-cols'>
+                <div>
+                  <div className='flex flex-row items-center mb-2'>
+                    <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
+                    {/* Clear Filters */}
+                    <Button
+                      className='ml-6'
+                      size='xs'
+                      color={tailwindColors.red[500]}
+                      onClick={clearFilters}
+                    >
+                      Clear graph
+                    </Button>
+                  </div>
+                  {chartData.datasets.map((item) => (
+                    <Fragment key={item.label}>
+                      <ChartDataCard
+                        item={item}
+                        messageMeans={messageMeans}
+                        colorInputSwatch={colorInputSwatch}
+                        changeColorFunc={changeColor}
+                        removeDatasetFunc={removeDataset}
+                      />
+                    </Fragment>
+                  ))}
+                </div>
               </div>
-              {chartData.datasets.map((item) => (
-                <Fragment key={item.label}>
-                  <ChartDataCard
-                    item={item}
-                    messageMeans={messageMeans}
-                    colorInputSwatch={colorInputSwatch}
-                    changeColorFunc={changeColor}
-                    removeDatasetFunc={removeDataset}
-                  />
-                </Fragment>
-              ))}
             </div>
           </div>
         </>

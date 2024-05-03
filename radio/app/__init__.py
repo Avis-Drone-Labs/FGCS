@@ -9,7 +9,7 @@ socketio = SocketIO(cors_allowed_origins="*")
 def decorator(func):
     printer = func
     def wrapped(*args):
-        printer(*args, flush=True)
+        printer("DEBUG >", *args, flush=True)
     return wrapped
 
 print = decorator(print)

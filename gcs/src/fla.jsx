@@ -14,6 +14,7 @@ import {
   FileButton,
   Progress,
   ScrollArea,
+  Tooltip,
 } from '@mantine/core'
 
 // Styling imports
@@ -69,7 +70,7 @@ const presetCategories = [
 ]
 
 const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER', 'TIMESYNC', 'PARAM_VALUE']
-const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
+const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
 const colorPalette = [
   '#36a2eb',
   '#ff6383',
@@ -124,8 +125,6 @@ export default function FLA() {
         setLogType(result.logType)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
-
-        console.log(loadedLogMessages)
 
         // Set the default state to false for all message filters
         const logMessageFilterDefaultState = {}
@@ -458,14 +457,19 @@ export default function FLA() {
           <div className='flex gap-4 h-3/4'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
-              <Button
-                className='mx-4 my-2'
-                size='xs'
-                color={tailwindColors.red[500]}
-                onClick={closeLogFile}
-              >
-                Close file
-              </Button>
+              <div className=''>
+                <Button
+                  className='mx-4 my-2'
+                  size='xs'
+                  color={tailwindColors.red[500]}
+                  onClick={closeLogFile}
+                >
+                  Close file
+                </Button>
+                <Tooltip label={file.path}>
+                  <p className='mx-4 my-2'>{file.name}</p>
+                </Tooltip>
+              </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
                   {/* Presets */}

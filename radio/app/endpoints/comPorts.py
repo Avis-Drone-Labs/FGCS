@@ -57,7 +57,7 @@ def setComPort(data) -> None:
 
     print("Trying to connect to drone")
     baud = data.get("baud")
-    drone = Drone(
+    drone: Drone = Drone(
         port,
         wireless=data.get("wireless", True),
         baud=baud,
@@ -72,6 +72,7 @@ def setComPort(data) -> None:
 
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
+    print("Created drone instance")
     socketio.emit("connected_to_drone")
 
 

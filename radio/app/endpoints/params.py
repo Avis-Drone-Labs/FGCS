@@ -1,5 +1,5 @@
 import time
-from app import socketio
+from app import socketio, print
 from typing import List
 import app.drone as droneStatus
 

@@ -2,7 +2,7 @@ import sys
 import time
 from serial.tools import list_ports
 
-from app import socketio
+from app import socketio, print
 from app.utils import getComPortNames, droneErrorCb
 from app.drone import Drone
 import app.droneStatus as droneStatus

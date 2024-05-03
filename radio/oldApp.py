@@ -428,117 +428,117 @@ def index():
 #     socketio.emit("motor_test_result", result)
 
 
-@socketio.on("get_flight_mode_config")
-def getFlightModeConfig():
-    global state
-    if state != "config.flight_modes":
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the config screen to access the flight modes."},
-        )
-        print(f"Current state: {state}")
-        return
+# @socketio.on("get_flight_mode_config")
+# def getFlightModeConfig():
+#     global state
+#     if state != "config.flight_modes":
+#         socketio.emit(
+#             "params_error",
+#             {"message": "You must be on the config screen to access the flight modes."},
+#         )
+#         print(f"Current state: {state}")
+#         return
 
-    global drone
-    if not drone:
-        return
+#     global drone
+#     if not drone:
+#         return
 
-    flight_modes = drone.flight_modes.flight_modes
-    flight_mode_channel = drone.flight_modes.flight_mode_channel
+#     flight_modes = drone.flight_modes.flight_modes
+#     flight_mode_channel = drone.flight_modes.flight_mode_channel
 
-    socketio.emit(
-        "flight_mode_config",
-        {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
-    )
-
-
-@socketio.on("set_flight_mode")
-def setFlightMode(data):
-    global state
-    if state != "config.flight_modes":
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the config screen to access the flight modes."},
-        )
-        print(f"Current state: {state}")
-        return
-
-    global drone
-    if not drone:
-        return
-
-    mode_number = data.get("mode_number", None)
-    flight_mode = data.get("flight_mode", None)
-
-    if mode_number is None or flight_mode is None:
-        droneErrorCb("Mode number and flight mode must be specified.")
-        return
-
-    result = drone.flight_modes.setFlightMode(mode_number, flight_mode)
-    socketio.emit("set_flight_mode_result", result)
+#     socketio.emit(
+#         "flight_mode_config",
+#         {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
+#     )
 
 
-@socketio.on("refresh_flight_mode_data")
-def refreshFlightModeData():
-    global state
-    if state != "config.flight_modes":
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the config screen to access the flight modes."},
-        )
-        print(f"Current state: {state}")
-        return
+# @socketio.on("set_flight_mode")
+# def setFlightMode(data):
+#     global state
+#     if state != "config.flight_modes":
+#         socketio.emit(
+#             "params_error",
+#             {"message": "You must be on the config screen to access the flight modes."},
+#         )
+#         print(f"Current state: {state}")
+#         return
 
-    global drone
-    if not drone:
-        return
+#     global drone
+#     if not drone:
+#         return
 
-    drone.flight_modes.refreshData()
+#     mode_number = data.get("mode_number", None)
+#     flight_mode = data.get("flight_mode", None)
 
-    flight_modes = drone.flight_modes.flight_modes
-    flight_mode_channel = drone.flight_modes.flight_mode_channel
+#     if mode_number is None or flight_mode is None:
+#         droneErrorCb("Mode number and flight mode must be specified.")
+#         return
 
-    socketio.emit(
-        "flight_mode_config",
-        {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
-    )
-
-
-@socketio.on("get_current_mission")
-def getCurrentMission():
-    global state
-    if state != "dashboard":
-        socketio.emit(
-            "params_error",
-            {
-                "message": "You must be on the dashboard screen to get the current mission."
-            },
-        )
-        print(f"Current state: {state}")
-        return
-
-    global drone
-    if not drone:
-        return
-
-    mission_items = [item.to_dict() for item in drone.mission.mission_items]
-    fence_items = [item.to_dict() for item in drone.mission.fence_items]
-    rally_items = [item.to_dict() for item in drone.mission.rally_items]
-
-    socketio.emit(
-        "current_mission",
-        {
-            "mission_items": mission_items,
-            "fence_items": fence_items,
-            "rally_items": rally_items,
-        },
-    )
+#     result = drone.flight_modes.setFlightMode(mode_number, flight_mode)
+#     socketio.emit("set_flight_mode_result", result)
 
 
-def sendMessage(msg):
-    data = msg.to_dict()
-    data["timestamp"] = msg._timestamp
-    socketio.emit("incoming_msg", data)
+# @socketio.on("refresh_flight_mode_data")
+# def refreshFlightModeData():
+#     global state
+#     if state != "config.flight_modes":
+#         socketio.emit(
+#             "params_error",
+#             {"message": "You must be on the config screen to access the flight modes."},
+#         )
+#         print(f"Current state: {state}")
+#         return
+
+#     global drone
+#     if not drone:
+#         return
+
+#     drone.flight_modes.refreshData()
+
+#     flight_modes = drone.flight_modes.flight_modes
+#     flight_mode_channel = drone.flight_modes.flight_mode_channel
+
+#     socketio.emit(
+#         "flight_mode_config",
+#         {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
+#     )
+
+
+# @socketio.on("get_current_mission")
+# def getCurrentMission():
+#     global state
+#     if state != "dashboard":
+#         socketio.emit(
+#             "params_error",
+#             {
+#                 "message": "You must be on the dashboard screen to get the current mission."
+#             },
+#         )
+#         print(f"Current state: {state}")
+#         return
+
+#     global drone
+#     if not drone:
+#         return
+
+#     mission_items = [item.to_dict() for item in drone.mission.mission_items]
+#     fence_items = [item.to_dict() for item in drone.mission.fence_items]
+#     rally_items = [item.to_dict() for item in drone.mission.rally_items]
+
+#     socketio.emit(
+#         "current_mission",
+#         {
+#             "mission_items": mission_items,
+#             "fence_items": fence_items,
+#             "rally_items": rally_items,
+#         },
+#     )
+
+
+# def sendMessage(msg):
+#     data = msg.to_dict()
+#     data["timestamp"] = msg._timestamp
+#     socketio.emit("incoming_msg", data)
 
 
 # def droneErrorCb(msg):

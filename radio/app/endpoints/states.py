@@ -1,6 +1,6 @@
 import time
 from .. import socketio
-from utils import sendMessage
+from app.utils import sendMessage
 import app.droneStatus as droneStatus
 from pymavlink import mavutil
 

@@ -10,7 +10,7 @@ from threading import Thread
 from typing import Callable, Optional, Union
 
 import serial
-from customTypes import (
+from app.customTypes import (
     IncomingParam,
     MotorTestAllValues,
     MotorTestThrottleAndDuration,

@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 
 import serial
-from customTypes import Response, ResponseWithData
+from app.customTypes import Response, ResponseWithData
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from drone import Drone
+    from app.drone import Drone
 
 
 class Mission:

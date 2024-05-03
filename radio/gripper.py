@@ -4,7 +4,7 @@ import functools
 from typing import Callable, TYPE_CHECKING
 
 import serial
-from customTypes import Response
+from app.customTypes import Response
 from pymavlink import mavutil
 from app.utils import commandAccepted
 

@@ -21,11 +21,11 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
+import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Graph from './components/fla/graph'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
-import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
@@ -108,6 +108,7 @@ export default function FLA() {
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
   const [messageMeans, setMessageMeans] = useState({})
+  const [logType, setLogType] = useState(null)
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -118,8 +119,11 @@ export default function FLA() {
       if (result.success) {
         // Load messages into states
         const loadedLogMessages = result.messages
+        setLogType(result.logType)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
+
+        console.log(loadedLogMessages)
 
         // Set the default state to false for all message filters
         const logMessageFilterDefaultState = {}
@@ -142,36 +146,50 @@ export default function FLA() {
             }
           })
 
-          if (loadedLogMessages['ESC']) {
-            // Load each ESC data into its own array
-            loadedLogMessages['ESC'].map((escData) => {
-              const newEscData = { ...escData, 'name': `ESC${escData['Instance']+1}`}
-            loadedLogMessages[newEscData.name] = (loadedLogMessages[newEscData.name] || []).concat([newEscData])
+        if (loadedLogMessages['ESC']) {
+          // Load each ESC data into its own array
+          loadedLogMessages['ESC'].map((escData) => {
+            const newEscData = {
+              ...escData,
+              name: `ESC${escData['Instance'] + 1}`,
+            }
+            loadedLogMessages[newEscData.name] = (
+              loadedLogMessages[newEscData.name] || []
+            ).concat([newEscData])
             // Add filter state for new ESC
-            if(!logMessageFilterDefaultState[newEscData.name])
-               logMessageFilterDefaultState[newEscData.name] = { ...logMessageFilterDefaultState['ESC'] }
+            if (!logMessageFilterDefaultState[newEscData.name])
+              logMessageFilterDefaultState[newEscData.name] = {
+                ...logMessageFilterDefaultState['ESC'],
+              }
           })
-          
+
           // Remove old ESC motor data
           delete loadedLogMessages['ESC']
           delete logMessageFilterDefaultState['ESC']
         }
 
         // Sort new filters
-        const sortedLogMessageFilterState = Object.keys(logMessageFilterDefaultState)
+        const sortedLogMessageFilterState = Object.keys(
+          logMessageFilterDefaultState,
+        )
           .sort()
-          .reduce((acc, c) => { acc[c] = logMessageFilterDefaultState[c]; return acc }, {})
+          .reduce((acc, c) => {
+            acc[c] = logMessageFilterDefaultState[c]
+            return acc
+          }, {})
 
         setMessageFilters(sortedLogMessageFilterState)
         setMeanValues(loadedLogMessages)
-        
+
         // Set event logs for the event lines on graph
-        setLogEvents(
-          loadedLogMessages['EV'].map((event) => ({
-            time: event.TimeUS,
-            message: logEventIds[event.Id],
-          })),
-        )
+        if ('EV' in loadedLogMessages) {
+          setLogEvents(
+            loadedLogMessages['EV'].map((event) => ({
+              time: event.TimeUS,
+              message: logEventIds[event.Id],
+            })),
+          )
+        }
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -231,7 +249,6 @@ export default function FLA() {
       })
     })
     setMessageMeans(means)
-    console.log(means)
   }
 
   // Turn on/off all filters
@@ -275,6 +292,9 @@ export default function FLA() {
     setMessageFilters(null)
     setCustomColors({})
     setColorIndex(0)
+    setMeanValues(null)
+    setLogEvents(null)
+    setLogType(null)
   }
 
   // Set IPC renderer for log messages
@@ -408,7 +428,7 @@ export default function FLA() {
             color={tailwindColors.blue[600]}
             variant='filled'
             onChange={setFile}
-            accept='.log'
+            accept={['.log', '.ftlog']}
             loading={loadingFile}
           >
             {(props) => <Button {...props}>Analyse a log</Button>}
@@ -483,7 +503,7 @@ export default function FLA() {
 
             {/* Graph column */}
             <div className='w-full h-full pr-4'>
-              <Graph data={chartData} events={logEvents} />
+              <Graph data={chartData} events={logEvents} logType={logType} />
             </div>
           </div>
 

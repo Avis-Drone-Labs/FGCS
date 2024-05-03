@@ -23,6 +23,7 @@ import tailwindConfig from '../tailwind.config.js'
 // Custom components and helpers
 import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Graph from './components/fla/graph'
+import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
@@ -67,7 +68,7 @@ const presetCategories = [
   },
 ]
 
-const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER']
+const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER', 'TIMESYNC', 'PARAM_VALUE']
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
 const colorPalette = [
   '#36a2eb',
@@ -109,6 +110,7 @@ export default function FLA() {
   const [colorIndex, setColorIndex] = useState(0)
   const [messageMeans, setMessageMeans] = useState({})
   const [logType, setLogType] = useState(null)
+  const [graphConfig, setGraphConfig] = useState(dataflashOptions)
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -419,6 +421,15 @@ export default function FLA() {
     setChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
+  useEffect(() => {
+    // set the graph config options depending on the type of log file opened
+    if (logType === 'dataflash') {
+      setGraphConfig(dataflashOptions)
+    } else if (logType === 'fgcs_telemetry') {
+      setGraphConfig(fgcsOptions)
+    }
+  }, [logType])
+
   return (
     <Layout currentPage='fla'>
       {logMessages === null ? (
@@ -503,7 +514,11 @@ export default function FLA() {
 
             {/* Graph column */}
             <div className='w-full h-full pr-4'>
-              <Graph data={chartData} events={logEvents} logType={logType} />
+              <Graph
+                data={chartData}
+                events={logEvents}
+                graphConfig={graphConfig}
+              />
             </div>
           </div>
 

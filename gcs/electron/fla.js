@@ -118,6 +118,8 @@ function parseFgcsTelemetryLogFile(fileData, webContents) {
       continue
     }
 
+    // get the field names from the message data and add it to the format object
+    // if it doesn't exist for that message name already
     if (!(messageName in formatMessages)) {
       const fields = messageData.map((keyVal) => keyVal.split(':')[0])
 
@@ -134,22 +136,21 @@ function parseFgcsTelemetryLogFile(fileData, webContents) {
       name: messageName,
     }
 
+    // ignore certain messages as the data contains an array which is hard to parse
+    // TOOD: fix
+    if (messageName === 'BATTERY_STATUS') {
+      continue
+    } else if (messageName === 'ESC_TELEMETRY_1_TO_4') {
+      continue
+    }
+
     messageData.forEach((keyVal) => {
       const [key, value] = keyVal.split(':')
 
-      if (
-        messageName === 'BATTERY_STATUS' &&
-        ['voltages', 'voltages_ext'].includes(key)
-      ) {
-        // the data we gather stores these values in an array, for the time being we just ignore it
-        // TODO: fix
-        messageObj[key] = null
-      } else {
-        try {
-          messageObj[key] = parseFloat(value)
-        } catch (e) {
-          // messageObj[key] = null
-        }
+      try {
+        messageObj[key] = parseFloat(value)
+      } catch (e) {
+        // messageObj[key] = null
       }
     })
 
@@ -211,7 +212,7 @@ export default function openFile(event, filePath) {
 
   try {
     const fileData = fs.readFileSync(filePath, 'utf8')
-    const fileLines = fileData.split('\n')
+    const fileLines = fileData.trim().split('\n')
 
     const logType = determineLogFileType(filePath, fileLines[0])
 

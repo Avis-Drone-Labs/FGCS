@@ -19,7 +19,7 @@ def decorator(func):
 print = decorator(print)
 
 
-def create_app(debug=False) -> None:
+def create_app(debug: bool = False) -> None:
     """
     Creates the flask/socketio application.
 

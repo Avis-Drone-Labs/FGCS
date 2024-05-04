@@ -78,7 +78,7 @@ class Drone:
         try:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except PermissionError as e:
-            print(e)
+            print(traceback.format_exc())
             self.master = None
             self.connectionError = str(e)
             return
@@ -88,7 +88,7 @@ class Drone:
             print("Heartbeat timed out after 5 seconds")
             self.mater = None
             self.connectionError = (
-                "Heartbeat timed out after 5 seconds, please try a different COM port."
+                "Could not connect to the drone. Perhaps try a different COM port."
             )
             return
 

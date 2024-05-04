@@ -3,6 +3,7 @@ from flask import Blueprint
 endpoints = Blueprint("endpoints", __name__)
 
 # Ignore warnings from VSCode, these are used in /app/__init__.py for registering the blueprint
+# Ignore F401.
 from . import arm
 from . import autopilot
 from . import comPorts

@@ -1,7 +1,7 @@
 import time
 from app import socketio, print
 from typing import List
-import app.drone as droneStatus
+import app.droneStatus as droneStatus
 
 
 @socketio.on("set_multiple_params")
@@ -57,7 +57,7 @@ def refresh_params() -> None:
             return
 
         if (
-            last_index_sent != droneStatus.current_param_index
+            last_index_sent != droneStatus.drone.current_param_index
             and droneStatus.drone.current_param_index > last_index_sent
         ):
             socketio.emit(

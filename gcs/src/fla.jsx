@@ -1,5 +1,5 @@
 /*
-  Falcon Log Analyser. This is a custom log analyser written to handle MavLink log files.
+  Falcon Log Analyser. This is a custom log analyser written to handle MavLink log files (.log) as well as FGCS telemetry log files (.ftlog).
 
   This allows users to toggle all messages on/off, look at preset message groups, save message groups, and follow the drone in 3D.
 */
@@ -14,6 +14,7 @@ import {
   FileButton,
   Progress,
   ScrollArea,
+  Tooltip,
 } from '@mantine/core'
 
 // Styling imports
@@ -21,11 +22,12 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
+import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Graph from './components/fla/graph'
+import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
-import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
@@ -67,8 +69,8 @@ const presetCategories = [
   },
 ]
 
-const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER']
-const ignoredKeys = ['TimeUS', 'function', 'source', 'result']
+const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER', 'TIMESYNC', 'PARAM_VALUE']
+const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
 const colorPalette = [
   '#36a2eb',
   '#ff6383',
@@ -108,6 +110,8 @@ export default function FLA() {
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
   const [messageMeans, setMessageMeans] = useState({})
+  const [logType, setLogType] = useState(null)
+  const [graphConfig, setGraphConfig] = useState(dataflashOptions)
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -118,6 +122,7 @@ export default function FLA() {
       if (result.success) {
         // Load messages into states
         const loadedLogMessages = result.messages
+        setLogType(result.logType)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
 
@@ -142,36 +147,50 @@ export default function FLA() {
             }
           })
 
-          if (loadedLogMessages['ESC']) {
-            // Load each ESC data into its own array
-            loadedLogMessages['ESC'].map((escData) => {
-              const newEscData = { ...escData, 'name': `ESC${escData['Instance']+1}`}
-            loadedLogMessages[newEscData.name] = (loadedLogMessages[newEscData.name] || []).concat([newEscData])
+        if (loadedLogMessages['ESC']) {
+          // Load each ESC data into its own array
+          loadedLogMessages['ESC'].map((escData) => {
+            const newEscData = {
+              ...escData,
+              name: `ESC${escData['Instance'] + 1}`,
+            }
+            loadedLogMessages[newEscData.name] = (
+              loadedLogMessages[newEscData.name] || []
+            ).concat([newEscData])
             // Add filter state for new ESC
-            if(!logMessageFilterDefaultState[newEscData.name])
-               logMessageFilterDefaultState[newEscData.name] = { ...logMessageFilterDefaultState['ESC'] }
+            if (!logMessageFilterDefaultState[newEscData.name])
+              logMessageFilterDefaultState[newEscData.name] = {
+                ...logMessageFilterDefaultState['ESC'],
+              }
           })
-          
+
           // Remove old ESC motor data
           delete loadedLogMessages['ESC']
           delete logMessageFilterDefaultState['ESC']
         }
 
         // Sort new filters
-        const sortedLogMessageFilterState = Object.keys(logMessageFilterDefaultState)
+        const sortedLogMessageFilterState = Object.keys(
+          logMessageFilterDefaultState,
+        )
           .sort()
-          .reduce((acc, c) => { acc[c] = logMessageFilterDefaultState[c]; return acc }, {})
+          .reduce((acc, c) => {
+            acc[c] = logMessageFilterDefaultState[c]
+            return acc
+          }, {})
 
         setMessageFilters(sortedLogMessageFilterState)
         setMeanValues(loadedLogMessages)
-        
+
         // Set event logs for the event lines on graph
-        setLogEvents(
-          loadedLogMessages['EV'].map((event) => ({
-            time: event.TimeUS,
-            message: logEventIds[event.Id],
-          })),
-        )
+        if ('EV' in loadedLogMessages) {
+          setLogEvents(
+            loadedLogMessages['EV'].map((event) => ({
+              time: event.TimeUS,
+              message: logEventIds[event.Id],
+            })),
+          )
+        }
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
@@ -231,7 +250,6 @@ export default function FLA() {
       })
     })
     setMessageMeans(means)
-    console.log(means)
   }
 
   // Turn on/off all filters
@@ -275,6 +293,9 @@ export default function FLA() {
     setMessageFilters(null)
     setCustomColors({})
     setColorIndex(0)
+    setMeanValues(null)
+    setLogEvents(null)
+    setLogType(null)
   }
 
   // Set IPC renderer for log messages
@@ -399,6 +420,15 @@ export default function FLA() {
     setChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
+  useEffect(() => {
+    // set the graph config options depending on the type of log file opened
+    if (logType === 'dataflash') {
+      setGraphConfig(dataflashOptions)
+    } else if (logType === 'fgcs_telemetry') {
+      setGraphConfig(fgcsOptions)
+    }
+  }, [logType])
+
   return (
     <Layout currentPage='fla'>
       {logMessages === null ? (
@@ -408,7 +438,7 @@ export default function FLA() {
             color={tailwindColors.blue[600]}
             variant='filled'
             onChange={setFile}
-            accept='.log'
+            accept={['.log', '.ftlog']}
             loading={loadingFile}
           >
             {(props) => <Button {...props}>Analyse a log</Button>}
@@ -427,14 +457,19 @@ export default function FLA() {
           <div className='flex gap-4 h-3/4'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
-              <Button
-                className='mx-4 my-2'
-                size='xs'
-                color={tailwindColors.red[500]}
-                onClick={closeLogFile}
-              >
-                Close file
-              </Button>
+              <div className=''>
+                <Button
+                  className='mx-4 my-2'
+                  size='xs'
+                  color={tailwindColors.red[500]}
+                  onClick={closeLogFile}
+                >
+                  Close file
+                </Button>
+                <Tooltip label={file.path}>
+                  <p className='mx-4 my-2'>{file.name}</p>
+                </Tooltip>
+              </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
                   {/* Presets */}
@@ -483,36 +518,40 @@ export default function FLA() {
 
             {/* Graph column */}
             <div className='w-full h-full pr-4'>
-              <Graph data={chartData} events={logEvents} />
-            </div>
-          </div>
+              <Graph
+                data={chartData}
+                events={logEvents}
+                graphConfig={graphConfig}
+              />
 
-          {/* Plots Setup */}
-          <div className='flex gap-4 pt-6 flex-cols h-1/4'>
-            <div className='ml-4'>
-              <div className='flex flex-row items-center'>
-                <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
-                {/* Clear Filters */}
-                <Button
-                  className='ml-6'
-                  size='xs'
-                  color={tailwindColors.red[500]}
-                  onClick={clearFilters}
-                >
-                  Clear graph
-                </Button>
+              {/* Plots Setup */}
+              <div className='flex gap-4 pt-6 flex-cols'>
+                <div>
+                  <div className='flex flex-row items-center mb-2'>
+                    <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
+                    {/* Clear Filters */}
+                    <Button
+                      className='ml-6'
+                      size='xs'
+                      color={tailwindColors.red[500]}
+                      onClick={clearFilters}
+                    >
+                      Clear graph
+                    </Button>
+                  </div>
+                  {chartData.datasets.map((item) => (
+                    <Fragment key={item.label}>
+                      <ChartDataCard
+                        item={item}
+                        messageMeans={messageMeans}
+                        colorInputSwatch={colorInputSwatch}
+                        changeColorFunc={changeColor}
+                        removeDatasetFunc={removeDataset}
+                      />
+                    </Fragment>
+                  ))}
+                </div>
               </div>
-              {chartData.datasets.map((item) => (
-                <Fragment key={item.label}>
-                  <ChartDataCard
-                    item={item}
-                    messageMeans={messageMeans}
-                    colorInputSwatch={colorInputSwatch}
-                    changeColorFunc={changeColor}
-                    removeDatasetFunc={removeDataset}
-                  />
-                </Fragment>
-              ))}
             </div>
           </div>
         </>

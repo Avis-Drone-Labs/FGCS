@@ -58,72 +58,8 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-function microsecondsToDisplayTime(microseconds, roundTo) {
-  var seconds = microseconds / 1_000_000
-  var mins = Math.floor(seconds / 60)
-
-  return `${String(mins).padStart(2, '0')}:${String(
-    (seconds % 60).toFixed(roundTo),
-  ).padStart(2, '0')}`
-}
-
-const options = {
-  responsive: true,
-  parsing: false,
-  animation: false,
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: function (context) {
-          return microsecondsToDisplayTime(context[0].parsed.x, 5)
-        },
-      },
-    },
-    zoom: {
-      pan: {
-        enabled: true,
-        mode: 'xy',
-      },
-      zoom: {
-        wheel: {
-          enabled: true,
-        },
-        pinch: {
-          enabled: true,
-        },
-        mode: 'xy',
-      },
-    },
-  },
-  scales: {
-    x: {
-      type: 'linear',
-      ticks: {
-        callback: (label) => microsecondsToDisplayTime(label, 0),
-        stepSize: 10_000_000,
-      },
-      title: {
-        display: true,
-        text: 'Time since boot (mm:ss)',
-      },
-      grid: { color: tailwindColors.gray[600] },
-    },
-    y: {
-      grid: { color: tailwindColors.gray[600] },
-    },
-  },
-  elements: {
-    point: {
-      radius: 0,
-    },
-    line: {
-      borderWidth: 1,
-    },
-  },
-}
-
-export default function Graph({ data, events }) {
-  const [config, setConfig] = useState({ ...options })
+export default function Graph({ data, events, graphConfig }) {
+  const [config, setConfig] = useState({ ...graphConfig })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
 
@@ -209,6 +145,10 @@ export default function Graph({ data, events }) {
       console.error(error)
     }
   }
+
+  useEffect(() => {
+    setConfig({ ...graphConfig })
+  }, [graphConfig])
 
   useEffect(() => {
     if (events !== null) {

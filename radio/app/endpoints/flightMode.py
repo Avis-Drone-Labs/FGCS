@@ -2,6 +2,7 @@ from app import socketio, print
 from app.utils import droneErrorCb
 import app.droneStatus as droneStatus
 
+
 @socketio.on("get_flight_mode_config")
 def getFlightModeConfig() -> None:
     """
@@ -25,6 +26,7 @@ def getFlightModeConfig() -> None:
         "flight_mode_config",
         {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
     )
+
 
 @socketio.on("set_flight_mode")
 def setFlightMode(data) -> None:
@@ -51,6 +53,7 @@ def setFlightMode(data) -> None:
 
     result = droneStatus.drone.flight_modes.setFlightMode(mode_number, flight_mode)
     socketio.emit("set_flight_mode_result", result)
+
 
 @socketio.on("refresh_flight_mode_data")
 def refreshFlightModeData() -> None:

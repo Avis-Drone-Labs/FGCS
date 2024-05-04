@@ -22,13 +22,9 @@ def set_state(data) -> None:
         droneStatus.drone.addMessageListener("VFR_HUD", sendMessage)
         droneStatus.drone.addMessageListener("BATTERY_STATUS", sendMessage)
         droneStatus.drone.addMessageListener("ATTITUDE", sendMessage)
-        droneStatus.drone.addMessageListener(
-            "GLOBAL_POSITION_INT", sendMessage
-        )
+        droneStatus.drone.addMessageListener("GLOBAL_POSITION_INT", sendMessage)
         droneStatus.drone.addMessageListener("ALTITUDE", sendMessage)
-        droneStatus.drone.addMessageListener(
-            "NAV_CONTROLLER_OUTPUT", sendMessage
-        )
+        droneStatus.drone.addMessageListener("NAV_CONTROLLER_OUTPUT", sendMessage)
         droneStatus.drone.addMessageListener("HEARTBEAT", sendMessage)
         droneStatus.drone.addMessageListener(
             "STATUSTEXT", sendMessage

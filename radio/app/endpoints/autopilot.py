@@ -6,6 +6,7 @@ from app.drone import Drone
 from app.utils import getComPortNames
 import app.droneStatus as droneStatus
 
+
 @socketio.on("reboot_autopilot")
 def rebootAutopilot() -> None:
     """

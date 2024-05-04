@@ -70,6 +70,9 @@ def setComPort(data) -> None:
         drone = None
         return
 
+    # Set droneStatus drone to local drone
+    droneStatus.drone = drone
+
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
     print("Created drone instance")

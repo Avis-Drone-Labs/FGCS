@@ -1,5 +1,5 @@
 /*
-  Falcon Log Analyser. This is a custom log analyser written to handle MavLink log files.
+  Falcon Log Analyser. This is a custom log analyser written to handle MavLink log files (.log) as well as FGCS telemetry log files (.ftlog).
 
   This allows users to toggle all messages on/off, look at preset message groups, save message groups, and follow the drone in 3D.
 */

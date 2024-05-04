@@ -1,3 +1,7 @@
+/*
+This file contains all of the descriptions used by FLA when showing the different types of messages which can be displayed.
+*/
+
 // https://ardupilot.org/copter/docs/logmessages.html#logmessages
 
 const dataflashLogMessageDescriptions = {

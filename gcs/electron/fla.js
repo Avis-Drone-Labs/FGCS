@@ -1,3 +1,7 @@
+/*
+This file contains the logic for parsing different types of log files on the main electron process.
+*/
+
 import fs from 'fs'
 
 function parseDataflashLogFile(fileData, webContents) {
@@ -128,6 +132,7 @@ function parseFgcsTelemetryLogFile(fileData, webContents) {
       }
     }
 
+    // This object contains the message data in a more structured format so FLA can read and interpret it
     const messageObj = {
       // moment (the datatime adapter for chartjs) uses milliseconds from epoch
       // as default, so this is a small hack to convert the seconds into milliseconds
@@ -227,6 +232,7 @@ export default function openFile(event, filePath) {
     } else if (logType === 'fgcs_telemetry') {
       messages = parseFgcsTelemetryLogFile(fileLines, event.sender)
     } else if (logType === 'mp_telemetry') {
+      // TODO: implement
       // messages = parseMpTelemetryLogFile(fileLines, event.sender)
     } else {
       return { success: false, error: 'Unknown log file type' }

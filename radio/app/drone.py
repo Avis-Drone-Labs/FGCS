@@ -87,9 +87,11 @@ class Drone:
         if initial_heartbeat is None:
             print("Heartbeat timed out after 5 seconds")
             self.mater = None
-            self.connectionError = "Heartbeat timed out after 5 seconds, please try a different COM port."
-            return 
-        
+            self.connectionError = (
+                "Heartbeat timed out after 5 seconds, please try a different COM port."
+            )
+            return
+
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component

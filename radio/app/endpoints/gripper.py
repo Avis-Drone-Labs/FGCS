@@ -2,6 +2,7 @@ from app import socketio, print
 from app.utils import droneErrorCb
 import app.droneStatus as droneStatus
 
+
 @socketio.on("gripper_enabled")
 def gripperEnabled() -> None:
     """
@@ -19,6 +20,7 @@ def gripperEnabled() -> None:
         return
 
     socketio.emit("gripper_enabled", droneStatus.drone.gripper.enabled)
+
 
 @socketio.on("set_gripper")
 def setGripper(action) -> None:

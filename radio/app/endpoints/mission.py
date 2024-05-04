@@ -1,6 +1,7 @@
 from app import socketio, print
 import app.droneStatus as droneStatus
 
+
 @socketio.on("get_current_mission")
 def getCurrentMission() -> None:
     """

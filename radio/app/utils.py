@@ -86,7 +86,7 @@ def secondsToMicroseconds(secs: float) -> int:
 def commandAccepted(response, command) -> bool:
     """
     Check if a command has been accepted
-    
+
     Args:
         response: The response from the command
         command: The command inputted
@@ -105,7 +105,7 @@ def commandAccepted(response, command) -> bool:
 def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) -> int:
     """
     Normalise a PWM value to the range -1 to 1
-    
+
     Args:
         val: The value to normalise
         min_val: Minimum pwm value accepted by the servo
@@ -116,6 +116,7 @@ def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) 
     """
     return 2 * ((val - min_val) / (max_val - min_val)) - 1
 
+
 def droneErrorCb(msg) -> None:
     """
     Send drone error to the socket
@@ -124,6 +125,7 @@ def droneErrorCb(msg) -> None:
         msg: The error message to send to the client
     """
     socketio.emit("drone_error", {"message": msg})
+
 
 def sendMessage(msg) -> None:
     """

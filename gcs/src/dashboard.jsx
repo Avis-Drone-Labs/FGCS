@@ -47,6 +47,13 @@ import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import Layout from './components/layout'
 
+const flightModesSelectValuesMap = Object.keys(
+  COPTER_MODES_FLIGHT_MODE_MAP,
+).map((mappedFlightModeNumber) => ({
+  value: mappedFlightModeNumber.toString(),
+  label: COPTER_MODES_FLIGHT_MODE_MAP[mappedFlightModeNumber],
+}))
+
 export default function Dashboard() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
@@ -76,15 +83,7 @@ export default function Dashboard() {
   })
 
   const [followDrone, setFollowDrone] = useState(false)
-  const [currentFlightMode, setCurrentFlightMode] = useState('')
-  const [configuredFlightModes, configuredFlightModeHandler] = useListState([
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-  ])
+  const [currentFlightMode, setCurrentFlightMode] = useState('UNKNOWN')
   const mapRef = useRef()
 
   const [playArmed] = useSound('/sounds/armed.mp3', { volume: 0.1 })
@@ -115,11 +114,7 @@ export default function Dashboard() {
       socket.emit('set_state', { state: 'dashboard' })
       statustextMessagesHandler.setState([])
       socket.emit('get_current_mission')
-      socket.emit('get_flight_mode_config')
     }
-    socket.on('flight_mode_config', (data) => {
-      configuredFlightModeHandler.setState(data.flight_modes)
-    })
 
     socket.on('incoming_msg', (msg) => {
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
@@ -206,22 +201,8 @@ export default function Dashboard() {
     socket.emit('arm_disarm', { arm: arm, force: force })
   }
 
-  function setNewFlightMode(modenumber) {
-    socket.emit('set_current_flight_mode', { modenumber })
-  }
-  function availableFlightModes() {
-    if (
-      configuredFlightModes.every((value) => {
-        value === 'UNKNOWN'
-      })
-    ) {
-      return configuredFlightModes.map((mappedFlightModeNumber) => ({
-        value: mappedFlightModeNumber.toString(),
-        label: COPTER_MODES_FLIGHT_MODE_MAP[mappedFlightModeNumber],
-      }))
-    } else {
-      return Array.of({ value: 'UNKNOWN', label: 'UNKNOWN' })
-    }
+  function setNewFlightMode(modeNumber) {
+    socket.emit('set_current_flight_mode', { modeNumber })
   }
 
   return (
@@ -356,8 +337,10 @@ export default function Dashboard() {
             <Select
               value={currentFlightMode.toString()}
               label={'Current Flight mode'}
-              onChange={(value) => setNewFlightMode(value)}
-              data={availableFlightModes()}
+              onChange={(value) => {
+                setNewFlightMode(value)
+              }}
+              data={flightModesSelectValuesMap}
             />
           </div>
         </div>

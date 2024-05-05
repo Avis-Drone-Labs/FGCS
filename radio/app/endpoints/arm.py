@@ -1,9 +1,4 @@
-import time
-import serial
-
-from app import socketio, print
-from app.drone import Drone
-from app.utils import getComPortNames
+from app import socketio
 import app.droneStatus as droneStatus
 
 

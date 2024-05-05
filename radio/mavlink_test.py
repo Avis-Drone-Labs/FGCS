@@ -4,6 +4,7 @@ from pprint import pprint
 from app.drone import Drone
 from app.utils import getComPort
 
+
 def test_cb(msg=None):
     print(msg)
     # print(datetime.datetime.now().time(), datetime.datetime.fromtimestamp(msg._timestamp).time(), msg.rpm)

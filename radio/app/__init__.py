@@ -26,13 +26,13 @@ def create_app(debug: bool = False) -> None:
     Args:
         debug: Boolean value for if the debugging should be True or False
     """
-    from .endpoints import endpoints as endpoints_blueprint
+    from app.endpoints import endpoints
 
     app = Flask(__name__)
     app.debug = debug
     app.config["SECRET_KEY"] = "secret-key"
 
-    app.register_blueprint(endpoints_blueprint)
+    app.register_blueprint(endpoints)
 
     print("Initialising app")
     socketio.init_app(app)

@@ -1,10 +1,18 @@
 import sys
 
+from . import socketio
+from typing import List
 from pymavlink import mavutil
 from serial.tools import list_ports
 
 
 def getComPort() -> str:
+    """
+    Get a com port name from a selected list. This is only used in testing as its CLI interface and is NOT used in the GUI.
+
+    Returns:
+        The port name that was selected
+    """
     while True:
         ports = list(list_ports.comports())
 
@@ -35,7 +43,13 @@ def getComPort() -> str:
     return port_name
 
 
-def getComPortNames():
+def getComPortNames() -> List[str]:
+    """
+    Gets a list of all available COM port names
+
+    Returns:
+        The names of COM ports available
+    """
     ports = list(list_ports.comports())
     correct_ports = []
     for i in range(len(ports)):
@@ -56,12 +70,30 @@ def getComPortNames():
     return correct_ports
 
 
-def secondsToMicroseconds(secs):
+def secondsToMicroseconds(secs: float) -> int:
+    """
+    Converts seconds to microseconds
+
+    Args:
+        secs: The number in seconds
+
+    Returns:
+        The input "secs" in microseconds
+    """
     return secs * 1e6
 
 
-def commandAccepted(response, command):
-    """Check if a command has been accepted"""
+def commandAccepted(response, command) -> bool:
+    """
+    Check if a command has been accepted
+
+    Args:
+        response: The response from the command
+        command: The command inputted
+
+    Returns:
+        True if the command has been accepted, False otherwise.
+    """
     return (
         response
         and command
@@ -70,7 +102,38 @@ def commandAccepted(response, command):
     )
 
 
-def normalisePwmValue(val, min_val=1000, max_val=2000):
-    """Normalise a PWM value to the range -1 to 1"""
+def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) -> int:
+    """
+    Normalise a PWM value to the range -1 to 1
+
+    Args:
+        val: The value to normalise
+        min_val: Minimum pwm value accepted by the servo
+        max_val: Maximum pwm value accepted by the servo
+
+    Returns:
+        The normalised PWM value
+    """
     return 2 * ((val - min_val) / (max_val - min_val)) - 1
-    return 2 * ((val - min_val) / (max_val - min_val)) - 1
+
+
+def droneErrorCb(msg) -> None:
+    """
+    Send drone error to the socket
+
+    Args:
+        msg: The error message to send to the client
+    """
+    socketio.emit("drone_error", {"message": msg})
+
+
+def sendMessage(msg) -> None:
+    """
+    Sends a message to the frontend with a timestamp
+
+    Args:
+        msg: The message to send
+    """
+    data = msg.to_dict()
+    data["timestamp"] = msg._timestamp
+    socketio.emit("incoming_msg", data)

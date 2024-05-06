@@ -1,20 +1,8 @@
 import time
 from pprint import pprint
 
-from drone import Drone
-from utils import getComPort
-
-# from influxdb_client import InfluxDBClient, Point
-# from influxdb_client.client.write_api import SYNCHRONOUS
-
-# token = "EKU_pTBZbvTIAF7mRPiNerKdS69vBXVY0zfXtWmvkdFLcD6DGGhel89J9IuzAjg9jljbuB06fQOJZIkI1rJ35g=="
-
-# org = "Project Falcon"
-# url = "http://localhost:8086"
-# bucket = "telemetry"
-
-# db_client = InfluxDBClient(url=url, token=token, org=org)
-# write_api = db_client.write_api(write_options=SYNCHRONOUS)
+from app.drone import Drone
+from app.utils import getComPort
 
 
 def test_cb(msg=None):

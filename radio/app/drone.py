@@ -10,7 +10,7 @@ from threading import Thread
 from typing import Callable, Optional, Union
 
 import serial
-from customTypes import (
+from app.customTypes import (
     IncomingParam,
     MotorTestAllValues,
     MotorTestThrottleAndDuration,
@@ -22,7 +22,7 @@ from flightModes import FlightModes
 from gripper import Gripper
 from mission import Mission
 from pymavlink import mavutil
-from utils import commandAccepted
+from app.utils import commandAccepted
 
 LOG_LINE_LIMIT = 50000
 
@@ -74,14 +74,24 @@ class Drone:
 
         self.connectionError: Optional[str] = None
 
+        print("Trying to setup master")
         try:
-            self.master = mavutil.mavlink_connection(port, baud=baud)
+            self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except PermissionError as e:
+            print(traceback.format_exc())
             self.master = None
             self.connectionError = str(e)
             return
 
-        initial_heartbeat = self.master.wait_heartbeat()
+        initial_heartbeat = self.master.wait_heartbeat(timeout=5)
+        if initial_heartbeat is None:
+            print("Heartbeat timed out after 5 seconds")
+            self.mater = None
+            self.connectionError = (
+                "Could not connect to the drone. Perhaps try a different COM port."
+            )
+            return
+
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component

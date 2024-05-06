@@ -10,6 +10,11 @@ from threading import Thread
 from typing import Callable, Optional, Union
 
 import serial
+from flightModes import FlightModes
+from gripper import Gripper
+from mission import Mission
+from pymavlink import mavutil
+
 from app.customTypes import (
     IncomingParam,
     MotorTestAllValues,
@@ -18,10 +23,6 @@ from app.customTypes import (
     Response,
     ResponseWithData,
 )
-from flightModes import FlightModes
-from gripper import Gripper
-from mission import Mission
-from pymavlink import mavutil
 from app.utils import commandAccepted
 
 LOG_LINE_LIMIT = 50000
@@ -907,31 +908,28 @@ class Drone:
             )
 
         responses = 0
-        now = time.gmtime()
 
-        while True:
-            try:
-                response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+        try:
+            response = self.master.recv_match(
+                type="COMMAND_ACK", blocking=True, timeout=RESPONSE_TIMEOUT
+            )
 
-                if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                    responses += 1
-                    if responses == self.number_of_motors:
-                        return {"success": True, "message": "All motor test started"}
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                responses += 1
+                if responses == self.number_of_motors:
+                    return {"success": True, "message": "All motor test started"}
+            else:
+                return {"success": False, "message": "All motor test not started"}
+        except serial.serialutil.SerialException:
+            return {
+                "success": False,
+                "message": "All motor test not started, serial exception",
+            }
 
-                else:
-                    return {"success": False, "message": "All motor test not started"}
-
-                if time.gmtime().tm_sec - now.tm_sec > RESPONSE_TIMEOUT:
-                    return {
-                        "success": False,
-                        "message": "All motor test not started, timed out",
-                    }
-
-            except serial.serialutil.SerialException:
-                return {
-                    "success": False,
-                    "message": "All motor test not started, serial exception",
-                }
+        return {
+            "success": False,
+            "message": "All motor test not started, timed out",
+        }
 
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.

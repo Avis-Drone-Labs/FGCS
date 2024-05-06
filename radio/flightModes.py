@@ -67,6 +67,8 @@ class FlightModes:
         Args:
             mode_number (int): The flight mode number
             flight_mode (int): The flight mode to set
+        Returns:
+            A message showing if the flight mode number was successfully set to the flight mode
         """
 
         if mode_number < 1 or mode_number > 6:
@@ -95,11 +97,19 @@ class FlightModes:
                 "message": f"Failed to set flight mode {mode_number} to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}",
             }
 
-    def setCurrentFlightMode(self, flightmode):
+    def setCurrentFlightMode(self, flightMode: int) -> Response:
+        """
+        Sends a Mavlink message to the drone for setting its current flight mode
+
+        Args:
+            flightmode (int): The numeric value for the current flight mode setting
+        Returns:
+            A message to show if the drone recieved the message and succesfully set the new mode
+        """
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_SET_MODE,
             param1=1,
-            param2=flightmode,
+            param2=flightMode,
             param3=0,
             param4=0,
             param5=0,

@@ -80,3 +80,20 @@ def refreshFlightModeData() -> None:
         "flight_mode_config",
         {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
     )
+
+
+@socketio.on("set_current_flight_mode")
+def setCurrentFlightMode(modenum):
+    """
+    Sets the current flight mode of the drone from the dashboard
+    """
+    global state
+    if state != "dashboard":
+        return
+
+    global drone
+    if not drone:
+        return
+
+    result = drone.flightModes.setCurrentFlightMode(modenum)
+    socketio.emit("set_current_flight_mode_result", result)

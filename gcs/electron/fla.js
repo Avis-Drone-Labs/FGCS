@@ -8,7 +8,7 @@ function parseDataflashLogFile(fileData, webContents) {
   // https://ardupilot.org/copter/docs/logmessages.html
   // https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Logger
 
-  const stringTypes = ['n', 'N', 'Z']
+  const stringTypes = ['n', 'N', 'Z', 'M']
 
   const formatMessages = {}
   const messages = {}

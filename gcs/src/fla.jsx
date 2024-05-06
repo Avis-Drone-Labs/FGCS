@@ -77,15 +77,18 @@ export default function FLA() {
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+
   const [logMessages, setLogMessages] = useState(null)
   const [logEvents, setLogEvents] = useState(null)
-  const [chartData, setChartData] = useState({ datasets: [] })
+  const [flightModeMessages, setFlightModeMessages] = useState([])
+  const [logType, setLogType] = useState('dastaflash')
+
   const [messageFilters, setMessageFilters] = useState(null)
+  const [messageMeans, setMessageMeans] = useState({})
+
+  const [chartData, setChartData] = useState({ datasets: [] })
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
-  const [messageMeans, setMessageMeans] = useState({})
-  const [logType, setLogType] = useState('dataflash')
-  const [graphConfig, setGraphConfig] = useState(dataflashOptions)
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -99,6 +102,29 @@ export default function FLA() {
         setLogType(result.logType)
         setLogMessages(loadedLogMessages)
         setLoadingFile(false)
+
+        if (result.logType === 'dataflash') {
+          setFlightModeMessages(loadedLogMessages.MODE)
+        } else if (result.logType === 'fgcs_telemetry') {
+          const modeMessages = []
+
+          // Get the heartbeat messages only where index is the first or last or the mode changes
+          for (let i = 0; i < loadedLogMessages.HEARTBEAT.length; i++) {
+            const msg = loadedLogMessages.HEARTBEAT[i]
+            if (
+              modeMessages.length === 0 ||
+              i === loadedLogMessages.HEARTBEAT.length - 1
+            ) {
+              modeMessages.push(msg)
+            } else {
+              const lastMsg = modeMessages[modeMessages.length - 1]
+              if (lastMsg.custom_mode !== msg.custom_mode) {
+                modeMessages.push(msg)
+              }
+            }
+          }
+          setFlightModeMessages(modeMessages)
+        }
 
         // Set the default state to false for all message filters
         const logMessageFilterDefaultState = {}
@@ -394,15 +420,6 @@ export default function FLA() {
     setChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
-  useEffect(() => {
-    // set the graph config options depending on the type of log file opened
-    if (logType === 'dataflash') {
-      setGraphConfig(dataflashOptions)
-    } else if (logType === 'fgcs_telemetry') {
-      setGraphConfig(fgcsOptions)
-    }
-  }, [logType])
-
   return (
     <Layout currentPage='fla'>
       {logMessages === null ? (
@@ -495,7 +512,10 @@ export default function FLA() {
               <Graph
                 data={chartData}
                 events={logEvents}
-                graphConfig={graphConfig}
+                flightModes={flightModeMessages}
+                graphConfig={
+                  logType === 'dataflash' ? dataflashOptions : fgcsOptions
+                }
               />
 
               {/* Plots Setup */}

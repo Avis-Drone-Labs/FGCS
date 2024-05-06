@@ -103,15 +103,18 @@ export default function FLA() {
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+
   const [logMessages, setLogMessages] = useState(null)
   const [logEvents, setLogEvents] = useState(null)
-  const [chartData, setChartData] = useState({ datasets: [] })
+  const [flightModeMessages, setFlightModeMessages] = useState([])
+  const [logType, setLogType] = useState(null)
+
   const [messageFilters, setMessageFilters] = useState(null)
+  const [messageMeans, setMessageMeans] = useState({})
+
+  const [chartData, setChartData] = useState({ datasets: [] })
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
-  const [messageMeans, setMessageMeans] = useState({})
-  const [logType, setLogType] = useState(null)
-  const [flightModeMessages, setFlightModeMessages] = useState([])
 
   // Load file, if set, and show the graph
   async function loadFile() {

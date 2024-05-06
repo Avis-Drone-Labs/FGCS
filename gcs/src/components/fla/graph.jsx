@@ -4,6 +4,10 @@ a toolbar for different graph actions such as zooming and screenshotting, as wel
 as graph annotations to show events or different flight modes.
 */
 
+// Base imports
+import { useEffect, useRef, useState } from 'react'
+
+// 3rd party imports
 import { ActionIcon, Tooltip as MantineTooltip } from '@mantine/core'
 import { useToggle } from '@mantine/hooks'
 import {
@@ -29,10 +33,13 @@ import {
 import annotationPlugin from 'chartjs-plugin-annotation'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import createColormap from 'colormap'
-import { useEffect, useRef, useState } from 'react'
 import { Line } from 'react-chartjs-2'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config.js'
+
+// Custom components and helpers
 import { COPTER_MODES_FLIGHT_MODE_MAP } from '../../helpers/mavlinkConstants.js'
 import { showSuccessNotification } from '../../helpers/notification.js'
 

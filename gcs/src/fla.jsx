@@ -28,6 +28,7 @@ import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
+import { presetCategories } from './components/fla/presetCategories.js'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
@@ -41,33 +42,6 @@ function hexToRgba(hex, alpha) {
   const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
   return `rgba(${r},${g},${b},${alpha})`
 }
-
-// Preset categories for filtering
-const presetCategories = [
-  {
-    name: 'Speed',
-    filters: [
-      {
-        name: 'Ground speed vs Air Speed',
-        filters: { GPS: ['Spd'], ARSP: ['Airspeed'] },
-      },
-    ],
-  },
-  {
-    name: 'Attitude',
-    filters: [
-      { name: 'Achieved Roll and Pitch', filters: { ATT: ['Roll', 'Pitch'] } },
-      {
-        name: 'Desired Roll vs Achieved Roll',
-        filters: { ATT: ['DesRoll', 'Roll'] },
-      },
-      {
-        name: 'Desired Pitch vs Achieved Pitch',
-        filters: { ATT: ['DesPitch', 'Pitch'] },
-      },
-    ],
-  },
-]
 
 const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER', 'TIMESYNC', 'PARAM_VALUE']
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
@@ -110,7 +84,7 @@ export default function FLA() {
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
   const [messageMeans, setMessageMeans] = useState({})
-  const [logType, setLogType] = useState(null)
+  const [logType, setLogType] = useState('dataflash')
   const [graphConfig, setGraphConfig] = useState(dataflashOptions)
 
   // Load file, if set, and show the graph
@@ -295,7 +269,7 @@ export default function FLA() {
     setColorIndex(0)
     setMeanValues(null)
     setLogEvents(null)
-    setLogType(null)
+    setLogType('dataflash')
   }
 
   // Set IPC renderer for log messages
@@ -477,7 +451,7 @@ export default function FLA() {
                     <Accordion.Control>Presets</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
-                        {presetCategories.map((category) => {
+                        {presetCategories[logType]?.map((category) => {
                           return (
                             <Fragment key={category.name}>
                               <PresetAccordionItem

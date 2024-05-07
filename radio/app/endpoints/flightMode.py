@@ -1,5 +1,5 @@
 import app.droneStatus as droneStatus
-from app import print, socketio
+from app import logger, socketio
 from app.customTypes import SetFlightModeValueAndNumber
 from app.utils import droneErrorCb
 
@@ -14,7 +14,7 @@ def getFlightModeConfig() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        print(f"Current state: {droneStatus.state}")
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -42,7 +42,7 @@ def setFlightMode(data: SetFlightModeValueAndNumber) -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        print(f"Current state: {droneStatus.state}")
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -69,7 +69,7 @@ def refreshFlightModeData() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        print(f"Current state: {droneStatus.state}")
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

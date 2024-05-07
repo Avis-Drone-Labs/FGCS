@@ -1,5 +1,5 @@
-from app import socketio, print
 import app.droneStatus as droneStatus
+from app import logger, socketio
 
 
 @socketio.on("get_current_mission")
@@ -14,7 +14,7 @@ def getCurrentMission() -> None:
                 "message": "You must be on the dashboard screen to get the current mission."
             },
         )
-        print(f"Current state: {droneStatus.state}")
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

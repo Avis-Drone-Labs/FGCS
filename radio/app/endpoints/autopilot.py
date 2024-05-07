@@ -1,10 +1,11 @@
 import time
+
 import serial
 
-from app import socketio, print
+import app.droneStatus as droneStatus
+from app import logger, socketio
 from app.drone import Drone
 from app.utils import getComPortNames
-import app.droneStatus as droneStatus
 
 
 @socketio.on("reboot_autopilot")
@@ -34,7 +35,7 @@ def rebootAutopilot() -> None:
         counter += 1
         time.sleep(0.5)
     else:
-        print("Port not open after 5 seconds.")
+        logger.debug("Port not open after 5 seconds.")
         socketio.emit(
             "reboot_autopilot",
             {"success": False, "message": "Port not open after 5 seconds."},
@@ -56,7 +57,7 @@ def rebootAutopilot() -> None:
             tries += 1
             time.sleep(1)
     else:
-        print("Could not reconnect to drone after 3 attempts.")
+        logger.debug("Could not reconnect to drone after 3 attempts.")
         socketio.emit(
             "reboot_autopilot",
             {
@@ -68,7 +69,7 @@ def rebootAutopilot() -> None:
 
     time.sleep(1)
     socketio.emit("connected_to_drone")
-    print("Rebooted autopilot successfully.")
+    logger.debug("Rebooted autopilot successfully.")
     socketio.emit(
         "reboot_autopilot",
         {"success": True, "message": "Rebooted autopilot successfully."},

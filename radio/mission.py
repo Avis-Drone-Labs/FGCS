@@ -26,21 +26,21 @@ class Mission:
 
         mission_items = self.getMissionItems()
         if not mission_items.get("success"):
-            print(mission_items.get("message"))
+            self.drone.logger.warning(mission_items.get("message"))
             return
         else:
             self.mission_items = mission_items.get("data")
 
         fence_items = self.getMissionItems(mission_type=1)
         if not fence_items.get("success"):
-            print(fence_items.get("message"))
+            self.drone.logger.warning(fence_items.get("message"))
             return
         else:
             self.fence_items = fence_items.get("data")
 
         rally_items = self.getMissionItems(mission_type=2)
         if not rally_items.get("success"):
-            print(rally_items.get("message"))
+            self.drone.logger.warning(rally_items.get("message"))
             return
         else:
             self.rally_items = rally_items.get("data")

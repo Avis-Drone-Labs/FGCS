@@ -3,6 +3,7 @@ import os
 import struct
 import time
 import traceback
+from logging import Logger, getLogger
 from pathlib import Path
 from queue import Queue
 from secrets import token_hex
@@ -10,11 +11,6 @@ from threading import Thread
 from typing import Callable, Optional, Union
 
 import serial
-from flightModes import FlightModes
-from gripper import Gripper
-from mission import Mission
-from pymavlink import mavutil
-
 from app.customTypes import (
     IncomingParam,
     MotorTestAllValues,
@@ -24,6 +20,10 @@ from app.customTypes import (
     ResponseWithData,
 )
 from app.utils import commandAccepted
+from flightModes import FlightModes
+from gripper import Gripper
+from mission import Mission
+from pymavlink import mavutil
 
 LOG_LINE_LIMIT = 50000
 
@@ -54,6 +54,7 @@ class Drone:
         port: str,
         baud: int = 57600,
         wireless: bool = False,
+        logger: Logger = getLogger("fgcs"),
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
     ) -> None:
@@ -70,23 +71,24 @@ class Drone:
         self.port = port
         self.baud = baud
         self.wireless = wireless
+        self.logger = logger
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
 
         self.connectionError: Optional[str] = None
 
-        print("Trying to setup master")
+        self.logger.debug("Trying to setup master")
         try:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except PermissionError as e:
-            print(traceback.format_exc())
+            self.logger.exception(traceback.format_exc())
             self.master = None
             self.connectionError = str(e)
             return
 
         initial_heartbeat = self.master.wait_heartbeat(timeout=5)
         if initial_heartbeat is None:
-            print("Heartbeat timed out after 5 seconds")
+            self.logger.error("Heartbeat timed out after 5 seconds")
             self.mater = None
             self.connectionError = (
                 "Could not connect to the drone. Perhaps try a different COM port."
@@ -97,7 +99,7 @@ class Drone:
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component
 
-        print(
+        self.logger.debug(
             f"Heartbeat received (system {self.target_system} component {self.target_component})"
         )
 
@@ -186,7 +188,7 @@ class Drone:
                             or next_log_file not in log_files
                             or not next_log_file.is_file()
                         ):
-                            print(
+                            self.logger.error(
                                 f"Could not find the next log file {next_log_file_name}, stopping recovery"
                             )
                             no_next_log_file_flag = True
@@ -224,7 +226,7 @@ class Drone:
                                 or next_log_file not in log_files
                                 or not next_log_file.is_file()
                             ):
-                                print(
+                                self.logger.error(
                                     f"Could not find the next log file {next_log_file_name}, stopping recovery"
                                 )
                                 next_log_file = None
@@ -235,7 +237,7 @@ class Drone:
                     os.remove(current_log_file)
 
             if exif_date is not None:
-                print(
+                self.logger.debug(
                     f"Recovered logs {number_of_first_recovered_log_files} from {exif_date}"
                 )
                 new_final_recovered_log_file_name = self.log_directory.joinpath(
@@ -248,7 +250,7 @@ class Drone:
             else:
                 new_final_recovered_log_file_name = final_recovered_log_file
 
-            print(
+            self.logger.info(
                 f"Saved {number_of_first_recovered_log_files} recovered drone logs to: {str(new_final_recovered_log_file_name)}"
             )
 
@@ -350,17 +352,17 @@ class Drone:
             try:
                 msg = self.master.recv_msg()
             except mavutil.mavlink.MAVError as e:
-                print("mav recv error: %s" % str(e))
+                self.logger.error(e, exc_info=True)
                 if self.droneErrorCb:
                     self.droneErrorCb(str(e))
                 continue
             except AttributeError as e:
-                print(f"mav recv error: {e}")
+                self.logger.error(e, exc_info=True)
             except KeyboardInterrupt:
                 break
             except serial.serialutil.SerialException as e:
-                print("Autopilot disconnected")
-                print(str(e))
+                self.logger.error("Autopilot disconnected")
+                self.logger.error(e, exc_info=True)
                 if self.droneDisconnectCb:
                     self.droneDisconnectCb()
                 self.is_listening = False
@@ -368,7 +370,7 @@ class Drone:
                 break
             except Exception as e:
                 # Log any other unexpected exception
-                print(traceback.format_exc())
+                self.logger.error(e, exc_info=True)
                 if self.droneErrorCb:
                     self.droneErrorCb(str(e))
                 continue
@@ -399,9 +401,9 @@ class Drone:
                     self.master.mav.timesync_send(local_timestamp, component_timestamp)
                     continue
                 elif msg.msgname == "STATUSTEXT":
-                    print(msg.text)
+                    self.logger.info(msg.text)
 
-                # print(msg.msgname)
+                # self.logger.debug(msg.msgname)
 
                 # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
 
@@ -432,7 +434,7 @@ class Drone:
                 q = self.message_queue.get()
                 self.message_listeners[q[0]](q[1])
             except KeyError as e:
-                print(
+                self.logger.error(
                     f"Could not execute message (likely due to backend abruptly stopping): {e}"
                 )
 
@@ -520,7 +522,6 @@ class Drone:
                         "data": response,
                     }
                 else:
-                    print(response)
                     self.is_listening = True
                     return {
                         "success": False,
@@ -608,13 +609,17 @@ class Drone:
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT32:
                     struct.pack(">i", int(param_value))
                 else:
-                    print("can't send %s of type %u" % (param_name, param_type))
+                    self.logger.error(
+                        "can't send %s of type %u" % (param_name, param_type)
+                    )
                     self.is_listening = True
                     return False
                 # vfloat, = struct.unpack(">f", vstr)
             vfloat = float(param_value)
         except struct.error as e:
-            print(f"Could not set parameter {param_name} with value {param_value}: {e}")
+            self.logger.error(
+                f"Could not set parameter {param_name} with value {param_value}: {e}"
+            )
             self.is_listening = True
             return False
 
@@ -629,14 +634,14 @@ class Drone:
                     continue
                 if str(param_name).upper() == str(ack.param_id).upper():
                     got_ack = True
-                    print(
+                    self.logger.debug(
                         f"Got parameter saving ack for {param_name} for value {param_value}"
                     )
                     self.saveParam(ack.param_id, ack.param_value, ack.param_type)
                     break
 
         if not got_ack:
-            print(f"timeout setting {param_name} to {vfloat}")
+            self.logger.error(f"timeout setting {param_name} to {vfloat}")
             self.is_listening = True
             return False
 
@@ -683,13 +688,13 @@ class Drone:
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
             ):
-                print("Rebooting")
+                self.logger.debug("Rebooting")
                 self.close()
             else:
-                print("Reboot failed")
+                self.logger.error("Reboot failed")
                 self.is_listening = True
         except serial.serialutil.SerialException:
-            print("Rebooting")
+            self.logger.debug("Rebooting")
             self.close()
 
     def arm(self, force: bool = False) -> Response:
@@ -717,15 +722,15 @@ class Drone:
             self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
-                print("Waiting for arm")
+                self.logger.debug("Waiting for arm")
                 while not self.armed:
                     time.sleep(0.05)
-                print("ARMED")
+                self.logger.debug("ARMED")
                 return {"success": True, "message": "Armed successfully"}
             else:
-                print("Arming failed")
+                self.logger.debug("Arming failed")
         except Exception as e:
-            print(traceback.format_exc())
+            self.logger.error(e, exc_info=True)
             if self.droneErrorCb:
                 self.droneErrorCb(str(e))
                 return {"success": False, "message": "Could not arm"}
@@ -757,15 +762,15 @@ class Drone:
             self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
-                print("Waiting for disarm")
+                self.logger.debug("Waiting for disarm")
                 while self.armed:
                     time.sleep(0.05)
-                print("DISARMED")
+                self.logger.debug("DISARMED")
                 return {"success": True, "message": "Disarmed successfully"}
             else:
-                print("Disarming failed")
+                self.logger.debug("Disarming failed")
         except Exception as e:
-            print(traceback.format_exc())
+            self.logger.error(e, exc_info=True)
             if self.droneErrorCb:
                 self.droneErrorCb(str(e))
                 return {"success": False, "message": "Could not disarm"}
@@ -1034,7 +1039,7 @@ class Drone:
                 # Open all the log files that were written to in the current session and write their data to the final log file
                 for log_file in self.log_file_names:
                     if not log_file.is_file():
-                        print(f"Log file {log_file} is not a file.")
+                        self.logger.warning(f"Log file {log_file} is not a file.")
                         continue
 
                     with open(log_file) as log_file_handle:
@@ -1044,10 +1049,11 @@ class Drone:
 
             # Delete file if empty
             if empty:
-                print(f"Log file is empty, deleting '{final_log_file}'")
+                self.logger.debug(f"Log file is empty, deleting '{final_log_file}'")
                 os.remove(final_log_file)
         except Exception as e:
-            print(f"Failed to save drone logs: {e}")
+            self.logger.error("Failed to save drone logs")
+            self.logger.error(e, exc_info=True)
 
-        print(f"Saved drone logs to: {final_log_file}")
-        print("Closed connection to drone")
+        self.logger.info(f"Saved drone logs to: {final_log_file}")
+        self.logger.debug("Closed connection to drone")

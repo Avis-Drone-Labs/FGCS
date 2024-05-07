@@ -43,7 +43,7 @@ class FlightModes:
             if flight_mode.get("success"):
                 self.flight_modes.append(flight_mode.get("data").param_value)
             else:
-                print(flight_mode.get("message"))
+                self.drone.logger.error(flight_mode.get("message"))
                 self.flight_modes.append("UNKNOWN")
 
     def getFlightModeChannel(self) -> None:
@@ -54,7 +54,7 @@ class FlightModes:
         if flight_mode_channel.get("success"):
             self.flight_mode_channel = flight_mode_channel.get("data").param_value
         else:
-            print(flight_mode_channel.get("message"))
+            self.drone.logger.error(flight_mode_channel.get("message"))
 
     def refreshData(self) -> None:
         """Refresh the flight mode data."""
@@ -72,7 +72,9 @@ class FlightModes:
         """
 
         if mode_number < 1 or mode_number > 6:
-            print("Invalid flight mode number, must be between 1 and 6 inclusive.")
+            self.drone.logger.error(
+                "Invalid flight mode number, must be between 1 and 6 inclusive."
+            )
             return
 
         param_type = 2
@@ -82,7 +84,7 @@ class FlightModes:
         )
 
         if param_set_success:
-            print(
+            self.drone.logger.info(
                 f"Flight mode {mode_number} set to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}"
             )
             self.flight_modes[mode_number - 1] = flight_mode

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import functools
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import serial
 from app.customTypes import Response
-from pymavlink import mavutil
 from app.utils import commandAccepted
+from pymavlink import mavutil
 
 if TYPE_CHECKING:
     from radio.app.drone import Drone
@@ -25,14 +25,14 @@ class Gripper:
 
         gripper_enabled_response = self.drone.getSingleParam(param_name="GRIP_ENABLE")
         if not (gripper_enabled_response.get("success")):
-            print("Gripper is not enabled")
+            self.drone.logger.warning("Gripper is not enabled")
             return None
 
         self.enabled = bool(gripper_enabled_response.get("data").param_value)
         self.params = {}
 
         if not self.enabled:
-            print("Gripper is not enabled")
+            self.drone.logger.warning("Gripper is not enabled")
         else:
             self.params = {
                 "gripAutoclose": self.drone.getSingleParam("GRIP_AUTOCLOSE").get(
@@ -53,7 +53,7 @@ class Gripper:
         @functools.wraps(func)
         def wrap(self, *args, **kwargs):
             if not self.enabled:
-                print("Gripper is not enabled")
+                self.drone.logger.error("Gripper is not enabled")
                 return False
             return func(self, *args, **kwargs)
 

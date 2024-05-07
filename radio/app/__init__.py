@@ -1,22 +1,18 @@
 import logging
+
 from flask import Flask
 from flask_socketio import SocketIO
 
 logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger("fgcs")
+logger.setLevel(logging.DEBUG)
+
+flask_logger = logging.getLogger("werkzeug")
+flask_logger.setLevel(logging.INFO)
+
+
 socketio = SocketIO(cors_allowed_origins="*")
-
-
-# Default flush print so that they dont get hung with socketio.run()
-def decorator(func):
-    printer = func
-
-    def wrapped(*args):
-        printer("DEBUG >", *args, flush=True)
-
-    return wrapped
-
-
-print = decorator(print)
 
 
 def create_app(debug: bool = False) -> None:
@@ -34,6 +30,6 @@ def create_app(debug: bool = False) -> None:
 
     app.register_blueprint(endpoints)
 
-    print("Initialising app")
+    logger.info("Initialising app")
     socketio.init_app(app)
     return app

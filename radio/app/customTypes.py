@@ -30,3 +30,7 @@ class MotorTestAllValues(TypedDict):
     motorInstance: int
     throttle: int
     duration: int
+
+class SetFlightModeValueAndNumber(TypedDict):
+    mode_number: int
+    flight_mode: int

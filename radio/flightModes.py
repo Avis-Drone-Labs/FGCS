@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import serial
 from app.customTypes import Response
 from pymavlink import mavutil
 
@@ -66,6 +67,8 @@ class FlightModes:
         Args:
             mode_number (int): The flight mode number
             flight_mode (int): The flight mode to set
+        Returns:
+            A message showing if the flight mode number was successfully set to the flight mode
         """
 
         if mode_number < 1 or mode_number > 6:
@@ -93,3 +96,38 @@ class FlightModes:
                 "success": False,
                 "message": f"Failed to set flight mode {mode_number} to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}",
             }
+
+    def setCurrentFlightMode(self, flightMode: int) -> Response:
+        """
+        Sends a Mavlink message to the drone for setting its current flight mode
+
+        Args:
+            flightmode (int): The numeric value for the current flight mode setting
+        Returns:
+            A message to show if the drone recieved the message and succesfully set the new mode
+        """
+        self.drone.sendCommand(
+            mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+            param1=1,
+            param2=flightMode,
+            param3=0,
+            param4=0,
+            param5=0,
+            param6=0,
+            param7=0,
+        )
+
+        try:
+            response = self.drone.master.recv_match(type="COMMAND_ACK")
+
+            if self.drone.commandAccepted(
+                response, mavutil.mavlink.MAV_CMD_DO_SET_MODE
+            ):
+                return {"success": True, "message": "Flight mode set successfully"}
+            else:
+                return {
+                    "success": False,
+                    "message": "Could not set flight mode as active",
+                }
+        except serial.serialutil.SerialException:
+            return {"success": False, "message": "Could not set flight mode as active"}

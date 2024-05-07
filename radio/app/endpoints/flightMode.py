@@ -1,7 +1,7 @@
-from app import socketio, print
-from app.utils import droneErrorCb
 import app.droneStatus as droneStatus
-from customTypes import SetFlightModeValueAndNumber
+from app import print, socketio
+from app.customTypes import SetFlightModeValueAndNumber
+from app.utils import droneErrorCb
 
 
 @socketio.on("get_flight_mode_config")
@@ -90,7 +90,7 @@ def refreshFlightModeData() -> None:
 def setCurrentFlightMode(modenum: int) -> None:
     """
     Sets the current flight mode of the drone, only works when the dashboard is loaded
-    
+
     Args:
         modenum (int): The numeric value of the flight mode to be set
     """

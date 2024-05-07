@@ -20,9 +20,12 @@ IF NOT "%venv%"=="" (
         npm i -g concurrently
 
         cd ../
+        ECHO Yarn is up to date
+    ) ELSE (
+        ECHO Yarn and PIP packages could be out of date, try adding --update to update!
     )
 
-    ECHO Yarn is up to date, running concurrently
+    ECHO Starting backend and frontend...
     concurrently "python radio/app.py" "cd gcs && yarn dev" -n "backend,frontend" -c "red,blue"
 ) ELSE (
     ECHO You forgot to provide a path to your venv, for example "./run.bat radio/venv"

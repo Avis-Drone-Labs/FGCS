@@ -57,6 +57,8 @@ class Mission:
 
         items = []
 
+        # TODO: try waypoint_request_list_send instead if a TypeError is raised,
+        # otherwise return failure message
         self.drone.master.mav.mission_request_list_send(
             self.drone.target_system,
             mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,

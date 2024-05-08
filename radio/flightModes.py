@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 import serial
 from app.customTypes import Response
+from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -108,8 +110,10 @@ class FlightModes:
         Returns:
             A message to show if the drone recieved the message and succesfully set the new mode
         """
+        self.drone.is_listening = False
+        time.sleep(0.3)
         self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+            message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
             param1=1,
             param2=flightMode,
             param3=0,
@@ -120,16 +124,20 @@ class FlightModes:
         )
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK")
+            response = self.drone.master.recv_match(type="COMMAND_ACK", timeout=5)
 
-            if self.drone.commandAccepted(
-                response, mavutil.mavlink.MAV_CMD_DO_SET_MODE
-            ):
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
+                self.drone.is_listening = True
                 return {"success": True, "message": "Flight mode set successfully"}
             else:
+                self.drone.is_listening = True
                 return {
                     "success": False,
-                    "message": "Could not set flight mode as active",
+                    "message": "Could not set flight mode",
                 }
         except serial.serialutil.SerialException:
-            return {"success": False, "message": "Could not set flight mode as active"}
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": "Could not set flight mode, serial exception",
+            }

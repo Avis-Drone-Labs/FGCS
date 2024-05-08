@@ -47,13 +47,6 @@ import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import Layout from './components/layout'
 
-const flightModesSelectValuesMap = Object.keys(
-  COPTER_MODES_FLIGHT_MODE_MAP,
-).map((mappedFlightModeNumber) => ({
-  value: mappedFlightModeNumber.toString(),
-  label: COPTER_MODES_FLIGHT_MODE_MAP[mappedFlightModeNumber],
-}))
-
 export default function Dashboard() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
@@ -83,7 +76,9 @@ export default function Dashboard() {
   })
 
   const [followDrone, setFollowDrone] = useState(false)
-  const [currentFlightMode, setCurrentFlightMode] = useState('UNKNOWN')
+  const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
+  const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
+
   const mapRef = useRef()
 
   const [playArmed] = useSound('/sounds/armed.mp3', { volume: 0.1 })
@@ -171,7 +166,10 @@ export default function Dashboard() {
     ) {
       playDisarmed()
     }
-    setCurrentFlightMode(getFlightMode)
+
+    if (currentFlightModeNumber !== heartbeatData.custom_mode) {
+      setCurrentFlightModeNumber(heartbeatData.custom_mode)
+    }
   }, [heartbeatData])
 
   function getFlightMode() {
@@ -202,7 +200,10 @@ export default function Dashboard() {
   }
 
   function setNewFlightMode(modeNumber) {
-    socket.emit('set_current_flight_mode', { modeNumber })
+    if (modeNumber === null || modeNumber === currentFlightModeNumber) {
+      return
+    }
+    socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
   }
 
   return (
@@ -334,14 +335,31 @@ export default function Dashboard() {
             >
               {getIsArmed() ? 'Disarm' : 'Arm'}
             </Button>
-            <Select
-              value={currentFlightMode.toString()}
-              label={'Current Flight mode'}
-              onChange={(value) => {
-                setNewFlightMode(value)
-              }}
-              data={flightModesSelectValuesMap}
-            />
+          </div>
+          <div className='flex flex-row space-x-2 mt-4'>
+            {currentFlightModeNumber !== null && (
+              <>
+                <Select
+                  value={newFlightModeNumber.toString()}
+                  label={'Current Flight mode'}
+                  onChange={(value) => {
+                    setNewFlightModeNumber(parseInt(value))
+                  }}
+                  data={Object.keys(COPTER_MODES_FLIGHT_MODE_MAP).map((key) => {
+                    return {
+                      value: key,
+                      label: COPTER_MODES_FLIGHT_MODE_MAP[key],
+                    }
+                  })}
+                />
+                <Button
+                  onClick={() => setNewFlightMode(newFlightModeNumber)}
+                  className='mt-6'
+                >
+                  Set flight mode
+                </Button>
+              </>
+            )}
           </div>
         </div>
 

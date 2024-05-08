@@ -77,10 +77,14 @@ class Mission:
                 for i in range(0, response.count):
                     item_response = self.getItemDetails(i, mission_type=mission_type)
                     if not item_response.get("success"):
-                        return {
-                            "success": False,
-                            "message": item_response.get("message", failure_message),
-                        }
+                        return Response(
+                            {
+                                "success": False,
+                                "message": item_response.get(
+                                    "message", failure_message
+                                ),
+                            }
+                        )
 
                     if (
                         self.drone.autopilot
@@ -93,21 +97,27 @@ class Mission:
 
                     items.append(item_response.get("data"))
 
-                return {
-                    "success": True,
-                    "data": items,
-                }
+                return ResponseWithData(
+                    {
+                        "success": True,
+                        "data": items,
+                    }
+                )
             else:
-                return {
-                    "success": False,
-                    "message": failure_message,
-                }
+                return Response(
+                    {
+                        "success": False,
+                        "message": failure_message,
+                    }
+                )
 
         except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": f"{failure_message}, serial exception",
-            }
+            return Response(
+                {
+                    "success": False,
+                    "message": f"{failure_message}, serial exception",
+                }
+            )
 
     def getItemDetails(
         self, item_number: int, mission_type: int = 0
@@ -140,17 +150,23 @@ class Mission:
             )
 
             if response:
-                return {
-                    "success": True,
-                    "data": response,
-                }
+                return ResponseWithData(
+                    {
+                        "success": True,
+                        "data": response,
+                    }
+                )
             else:
-                return {
-                    "success": False,
-                    "message": failure_message,
-                }
+                return Response(
+                    {
+                        "success": False,
+                        "message": failure_message,
+                    }
+                )
         except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": f"{failure_message}, serial exception",
-            }
+            return Response(
+                {
+                    "success": False,
+                    "message": f"{failure_message}, serial exception",
+                }
+            )

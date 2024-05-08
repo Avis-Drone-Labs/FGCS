@@ -1,12 +1,12 @@
 import time
-from typing import List
+from typing import Any, List
 
 import app.droneStatus as droneStatus
 from app import logger, socketio
 
 
 @socketio.on("set_multiple_params")
-def set_multiple_params(params_list: List[any]) -> None:
+def set_multiple_params(params_list: List[Any]) -> None:
     """
     Set multiple parameters at the same time.
 

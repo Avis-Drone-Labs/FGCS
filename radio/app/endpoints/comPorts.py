@@ -1,12 +1,11 @@
 import sys
 import time
 
-from serial.tools import list_ports
-
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
 from app.utils import droneErrorCb, getComPortNames
+from serial.tools import list_ports
 
 
 @socketio.on("get_com_ports")
@@ -59,7 +58,7 @@ def setComPort(data) -> None:
 
     logger.debug("Trying to connect to drone")
     baud = data.get("baud")
-    drone: Drone = Drone(
+    drone = Drone(
         port,
         wireless=data.get("wireless", True),
         baud=baud,

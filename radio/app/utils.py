@@ -1,9 +1,10 @@
 import sys
-
-from . import socketio
 from typing import List
+
 from pymavlink import mavutil
 from serial.tools import list_ports
+
+from . import socketio
 
 
 def getComPort() -> str:
@@ -78,9 +79,9 @@ def secondsToMicroseconds(secs: float) -> int:
         secs: The number in seconds
 
     Returns:
-        The input "secs" in microseconds
+        The input "secs" in microseconds, as an integer
     """
-    return secs * 1e6
+    return int(secs * 1e6)
 
 
 def commandAccepted(response, command) -> bool:
@@ -114,7 +115,7 @@ def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) 
     Returns:
         The normalised PWM value
     """
-    return 2 * ((val - min_val) / (max_val - min_val)) - 1
+    return int(2 * ((val - min_val) / (max_val - min_val)) - 1)
 
 
 def droneErrorCb(msg) -> None:

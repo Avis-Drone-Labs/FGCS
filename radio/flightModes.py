@@ -9,7 +9,7 @@ from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from radio.app.drone import Drone
+    from app.drone import Drone
 
 
 FLIGHT_MODES = [
@@ -77,7 +77,10 @@ class FlightModes:
             self.drone.logger.error(
                 "Invalid flight mode number, must be between 1 and 6 inclusive."
             )
-            return
+            return {
+                "success": False,
+                "message": f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}.",
+            }
 
         param_type = 2
 

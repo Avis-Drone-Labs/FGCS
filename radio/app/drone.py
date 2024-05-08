@@ -8,7 +8,7 @@ from pathlib import Path
 from queue import Queue
 from secrets import token_hex
 from threading import Thread
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import serial
 from app.customTypes import (
@@ -103,13 +103,13 @@ class Drone:
             f"Heartbeat received (system {self.target_system} component {self.target_component})"
         )
 
-        self.message_listeners = {}
+        self.message_listeners: Dict[str, Callable] = {}
         self.message_queue: Queue = Queue()
         self.log_message_queue: Queue = Queue()
         self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.log_directory.mkdir(parents=True, exist_ok=True)
         self.current_log_file = None
-        self.log_file_names = []
+        self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
         self.is_active = True
@@ -117,7 +117,7 @@ class Drone:
         self.current_param_index = 0
         self.total_number_of_params = 0
         self.number_of_motors = 4  # Is there a way to get this from the drone?
-        self.params = []
+        self.params: List[Any] = []
 
         self.armed = False
 
@@ -313,7 +313,7 @@ class Drone:
         )
 
     def addMessageListener(
-        self, message_id: int, func: Optional[Callable] = None
+        self, message_id: str, func: Optional[Callable] = None
     ) -> bool:
         """Add a message listener for a specific message.
 
@@ -329,11 +329,11 @@ class Drone:
             return True
         return False
 
-    def removeMessageListener(self, message_id: int) -> bool:
+    def removeMessageListener(self, message_id: str) -> bool:
         """Removes a message listener for a specific message.
 
         Args:
-            message_id (int): The message to remove the listener for.
+            message_id (str): The message to remove the listener for.
 
         Returns:
             bool: True if the listener was removed, False if it does not exist
@@ -492,13 +492,13 @@ class Drone:
         self.log_thread.start()
 
     def getSingleParam(
-        self, param_name: str, timeout: Optional[int] = 1.5
+        self, param_name: str, timeout: Optional[float] = 1.5
     ) -> Union[Response, ResponseWithData]:
         """Gets a specific parameter value.
 
         Args:
             param_name (str): The name of the parameter to get
-            timeout (int, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
+            timeout (float, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
 
         Returns:
             Response: The response from the retrieval of the specific parameter

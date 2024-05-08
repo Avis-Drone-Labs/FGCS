@@ -9,7 +9,7 @@ from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from radio.app.drone import Drone
+    from app.drone import Drone
 
 
 class Gripper:
@@ -46,7 +46,7 @@ class Gripper:
                 "gripType": self.drone.getSingleParam("GRIP_TYPE").get("data"),
             }
 
-    # @staticmethod
+    @staticmethod
     def gripperEnabled(func: Callable) -> Callable:
         """Runs the decorated function only if the gripper is enabled."""
 

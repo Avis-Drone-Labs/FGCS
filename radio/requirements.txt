@@ -12,7 +12,6 @@ future==0.18.3
 h11==0.14.0
 identify==2.5.31
 importlib-metadata==7.0.0
-isort==5.13.2
 itsdangerous==2.1.2
 Jinja2==3.1.4
 lxml==4.9.3

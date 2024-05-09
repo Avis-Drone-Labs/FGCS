@@ -1,11 +1,19 @@
 import sys
 import time
 
+from serial.tools import list_ports
+from typing_extensions import TypedDict
+
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
 from app.utils import droneErrorCb, getComPortNames
-from serial.tools import list_ports
+
+
+class SetComPortType(TypedDict):
+    port: str
+    baud: int
+    wireless: bool
 
 
 @socketio.on("get_com_ports")
@@ -34,7 +42,7 @@ def getComPort() -> None:
 
 
 @socketio.on("set_com_port")
-def setComPort(data) -> None:
+def setComPort(data: SetComPortType) -> None:
     """
     Set the com port of the drone and let the client know. This method is responsible for creating
     the initialising the drone object.
@@ -57,7 +65,7 @@ def setComPort(data) -> None:
         return
 
     logger.debug("Trying to connect to drone")
-    baud = data.get("baud")
+    baud = data.get("baud", 57600)
     drone = Drone(
         port,
         wireless=data.get("wireless", True),
@@ -85,7 +93,9 @@ def disconnectFromDrone() -> None:
     """
     Disconnect from drone and reset all global variables, send a message to client disconnecting as well
     """
-    droneStatus.drone.close()
-    droneStatus.drone = None
+    if droneStatus.drone:
+        droneStatus.drone.close()
+        droneStatus.drone = None
+
     droneStatus.state = None
     socketio.emit("disconnected_from_drone")

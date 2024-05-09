@@ -23,7 +23,7 @@ def gripperEnabled() -> None:
 
 
 @socketio.on("set_gripper")
-def setGripper(action) -> None:
+def setGripper(action: str) -> None:
     """
     Sets the gripper value based off the input action, this only works on the config page.
 

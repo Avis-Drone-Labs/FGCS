@@ -13,12 +13,8 @@ class IncomingParam(TypedDict):
 
 class Response(TypedDict):
     success: bool
-    message: str
-
-
-class ResponseWithData(TypedDict):
-    success: bool
-    data: Any
+    message: NotRequired[str]
+    data: NotRequired[Any]
 
 
 class MotorTestThrottleAndDuration(TypedDict):

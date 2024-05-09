@@ -1,12 +1,19 @@
 import time
+
+from pymavlink import mavutil
+from typing_extensions import TypedDict
+
+import app.droneStatus as droneStatus
 from app import socketio
 from app.utils import sendMessage
-import app.droneStatus as droneStatus
-from pymavlink import mavutil
+
+
+class SetStateType(TypedDict):
+    state: str
 
 
 @socketio.on("set_state")
-def set_state(data) -> None:
+def set_state(data: SetStateType) -> None:
     """
     Set the state of the drone based on the file current page we are on
 

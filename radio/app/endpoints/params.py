@@ -22,6 +22,9 @@ def set_multiple_params(params_list: List[Any]) -> None:
         logger.debug(f"Current state: {droneStatus.state}")
         return
 
+    if not droneStatus.drone:
+        return
+
     success = droneStatus.drone.setMultipleParams(params_list)
     if success:
         socketio.emit(
@@ -42,6 +45,9 @@ def refresh_params() -> None:
             {"message": "You must be on the params screen to refresh the parameters."},
         )
         logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
         return
 
     droneStatus.drone.getAllParams()

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, List
 
 import serial
-from app.customTypes import Response, ResponseWithData
+from app.customTypes import Response
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -20,34 +20,32 @@ class Mission:
 
         self.drone = drone
 
-        self.mission_items = []
-        self.fence_items = []
-        self.rally_items = []
+        self.mission_items: List[Any] = []
+        self.fence_items: List[Any] = []
+        self.rally_items: List[Any] = []
 
         mission_items = self.getMissionItems()
         if not mission_items.get("success"):
             self.drone.logger.warning(mission_items.get("message"))
             return
         else:
-            self.mission_items = mission_items.get("data")
+            self.mission_items = mission_items.get("data", [])
 
         fence_items = self.getMissionItems(mission_type=1)
         if not fence_items.get("success"):
             self.drone.logger.warning(fence_items.get("message"))
             return
         else:
-            self.fence_items = fence_items.get("data")
+            self.fence_items = fence_items.get("data", [])
 
         rally_items = self.getMissionItems(mission_type=2)
         if not rally_items.get("success"):
             self.drone.logger.warning(rally_items.get("message"))
             return
         else:
-            self.rally_items = rally_items.get("data")
+            self.rally_items = rally_items.get("data", [])
 
-    def getMissionItems(
-        self, mission_type: int = 0
-    ) -> Union[Response, ResponseWithData]:
+    def getMissionItems(self, mission_type: int = 0) -> Response:
         """Get all mission items of a specific type from the drone.
 
         Args:
@@ -84,51 +82,41 @@ class Mission:
                 for i in range(0, response.count):
                     item_response = self.getItemDetails(i, mission_type=mission_type)
                     if not item_response.get("success"):
-                        return Response(
-                            {
-                                "success": False,
-                                "message": item_response.get(
-                                    "message", failure_message
-                                ),
-                            }
-                        )
+                        return {
+                            "success": False,
+                            "message": item_response.get("message", failure_message),
+                        }
 
                     if (
                         self.drone.autopilot
                         == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
                         and i == 0
                         and mission_type == 0
-                        and item_response.get("data").frame == 0
                     ):
-                        continue
+                        item_response_data = item_response.get("data")
+                        if item_response_data and item_response_data.frame == 0:
+                            continue
 
                     items.append(item_response.get("data"))
 
-                return ResponseWithData(
-                    {
-                        "success": True,
-                        "data": items,
-                    }
-                )
+                return {
+                    "success": True,
+                    "data": items,
+                }
+
             else:
-                return Response(
-                    {
-                        "success": False,
-                        "message": failure_message,
-                    }
-                )
+                return {
+                    "success": False,
+                    "message": failure_message,
+                }
 
         except serial.serialutil.SerialException:
-            return Response(
-                {
-                    "success": False,
-                    "message": f"{failure_message}, serial exception",
-                }
-            )
+            return {
+                "success": False,
+                "message": f"{failure_message}, serial exception",
+            }
 
-    def getItemDetails(
-        self, item_number: int, mission_type: int = 0
-    ) -> Union[Response, ResponseWithData]:
+    def getItemDetails(self, item_number: int, mission_type: int = 0) -> Response:
         """Get the details of a specific mission item.
 
         Args:
@@ -157,23 +145,19 @@ class Mission:
             )
 
             if response:
-                return ResponseWithData(
-                    {
-                        "success": True,
-                        "data": response,
-                    }
-                )
-            else:
-                return Response(
-                    {
-                        "success": False,
-                        "message": failure_message,
-                    }
-                )
-        except serial.serialutil.SerialException:
-            return Response(
-                {
-                    "success": False,
-                    "message": f"{failure_message}, serial exception",
+                return {
+                    "success": True,
+                    "data": response,
                 }
-            )
+
+            else:
+                return {
+                    "success": False,
+                    "message": failure_message,
+                }
+
+        except serial.serialutil.SerialException:
+            return {
+                "success": False,
+                "message": f"{failure_message}, serial exception",
+            }

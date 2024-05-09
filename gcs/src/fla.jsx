@@ -11,7 +11,9 @@ import { Fragment, useEffect, useState } from 'react'
 import {
   Accordion,
   Button,
+  Divider,
   FileButton,
+  LoadingOverlay,
   Progress,
   ScrollArea,
   Tooltip,
@@ -22,6 +24,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
+import moment from 'moment'
 import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Graph from './components/fla/graph'
 import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
@@ -74,6 +77,8 @@ const colorInputSwatch = [
 
 export default function FLA() {
   // States in react frontend
+  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
+
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
@@ -96,12 +101,25 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
+      if (result === null) {
+        showErrorNotification('Error loading file, file not found.')
+        setLoadingFile(false)
+        return
+      }
+
       if (result.success) {
         // Load messages into states
+        setLoadingFile(false)
+
         const loadedLogMessages = result.messages
+
+        if (loadedLogMessages === null) {
+          showErrorNotification('Error loading file, no messages found.')
+          return
+        }
+
         setLogType(result.logType)
         setLogMessages(loadedLogMessages)
-        setLoadingFile(false)
 
         if (result.logType === 'dataflash') {
           setFlightModeMessages(loadedLogMessages.MODE)
@@ -304,6 +322,13 @@ export default function FLA() {
       setLoadingFileProgress(message.percent)
     })
 
+    // Get a list of the recent FGCS telemetry logs
+    async function getFgcsLogs() {
+      setRecentFgcsLogs(await window.ipcRenderer.getFgcsLogs())
+    }
+
+    getFgcsLogs()
+
     return () => {
       window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
     }
@@ -424,16 +449,48 @@ export default function FLA() {
     <Layout currentPage='fla'>
       {logMessages === null ? (
         // Open flight logs section
-        <div className='flex flex-col items-center justify-center h-full mx-auto w-min'>
-          <FileButton
-            color={tailwindColors.blue[600]}
-            variant='filled'
-            onChange={setFile}
-            accept={['.log', '.ftlog']}
-            loading={loadingFile}
-          >
-            {(props) => <Button {...props}>Analyse a log</Button>}
-          </FileButton>
+        <div className='flex flex-col items-center justify-center h-full mx-auto'>
+          <div className='flex flex-row gap-8 items-center justify-center'>
+            <FileButton
+              color={tailwindColors.blue[600]}
+              variant='filled'
+              onChange={setFile}
+              accept={['.log', '.ftlog']}
+              loading={loadingFile}
+            >
+              {(props) => <Button {...props}>Analyse a log</Button>}
+            </FileButton>
+            <Divider size='sm' orientation='vertical' />
+            <div className='relative'>
+              <LoadingOverlay
+                visible={recentFgcsLogs === null || loadingFile}
+              />
+              <div className='flex flex-col gap-2 items-center'>
+                <p className='font-bold'>Recent FGCS telemetry logs</p>
+                <ScrollArea h={250} offsetScrollbars>
+                  {recentFgcsLogs !== null &&
+                    recentFgcsLogs.map((log, idx) => (
+                      <div
+                        key={idx}
+                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-80 hover:rounded-sm w-80'
+                        onClick={() => setFile(log)}
+                      >
+                        <p>{log.name} </p>
+                        <div className='flex flex-row gap-2'>
+                          <p className='text-gray-400 text-sm'>
+                            {moment(log.name, 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                          </p>
+                          <p className='text-gray-400 text-sm'>
+                            {Math.round(log.size / 1024)}KB
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </ScrollArea>
+              </div>
+            </div>
+          </div>
+
           {loadingFile && (
             <Progress
               value={loadingFileProgress}

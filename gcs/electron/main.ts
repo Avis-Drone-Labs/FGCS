@@ -1,6 +1,8 @@
 import { BrowserWindow, app, ipcMain } from 'electron'
-
+import { glob } from 'glob'
+import fs from 'node:fs'
 import path from 'node:path'
+import os from 'os'
 import openFile from './fla'
 // The built directory structure
 //
@@ -88,5 +90,20 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   createLoadingWindow()
   ipcMain.handle('fla:open-file', openFile)
+  ipcMain.handle('fla:get-fgcs-logs', async () => {
+    const fgcsLogsPath = path.join(os.homedir(), 'FGCS','logs')
+    const fgcsLogs = await glob(path.join(fgcsLogsPath, '*.ftlog'), {nodir: true, windowsPathsNoEscape:true}) // Get a list of .ftlog files
+    const slicedFgcsLogs = fgcsLogs.slice(0, 20) // Only return the last 20 logs
+
+    return slicedFgcsLogs.map((logPath) => {
+      const logName = path.basename(logPath, '.ftlog')
+      const fileStats = fs.statSync(logPath)
+      return {
+        name: logName,
+        path: logPath,
+        size: fileStats.size
+      }
+    })
+  })
   createWindow()
 })

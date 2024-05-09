@@ -105,6 +105,10 @@ function parseFgcsTelemetryLogFile(fileData, webContents) {
   const formatMessages = {}
   const messages = {}
   const numberOfLines = fileData.length
+  if (numberOfLines < 2) {
+    return null
+  }
+
   for (const [idx, line] of fileData.entries()) {
     if (line.includes('==')) {
       // ignore lines which aren't meant for parsing

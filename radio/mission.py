@@ -57,13 +57,20 @@ class Mission:
 
         items = []
 
-        # TODO: try waypoint_request_list_send instead if a TypeError is raised,
-        # otherwise return failure message
-        self.drone.master.mav.mission_request_list_send(
-            self.drone.target_system,
-            mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
-            mission_type=mission_type,
-        )
+        # TODO: Try send custom mission request list command?
+        try:
+            self.drone.master.mav.mission_request_list_send(
+                self.drone.target_system,
+                mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
+                mission_type=mission_type,
+            )
+        except TypeError:
+            # TypeError is raised if mavlink V1 is used where the mission_request_list_send
+            # function does not have a mission_type parameter
+            return {
+                "success": False,
+                "message": failure_message,
+            }
 
         try:
             response = self.drone.master.recv_match(

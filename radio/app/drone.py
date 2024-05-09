@@ -11,19 +11,16 @@ from threading import Thread
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import serial
-from app.customTypes import (
-    IncomingParam,
-    MotorTestAllValues,
-    MotorTestThrottleAndDuration,
-    Number,
-    Response,
-    ResponseWithData,
-)
+from app.customTypes import (IncomingParam, MotorTestAllValues,
+                             MotorTestThrottleAndDuration, Number, Response,
+                             ResponseWithData)
 from app.utils import commandAccepted
 from flightModes import FlightModes
 from gripper import Gripper
 from mission import Mission
 from pymavlink import mavutil
+
+# Constants
 
 LOG_LINE_LIMIT = 50000
 
@@ -1029,31 +1026,35 @@ class Drone:
         self.is_active = False
         self.master.close()
 
-        final_log_file = self.log_directory.joinpath(
-            f"{self.__getCurrentDateTimeStr()}.ftlog"
-        )
+        if len(self.log_file_names) == 0:
+            self.logger.debug("No logs to save")
+        elif (
+            len(self.log_file_names) == 1
+            and os.stat(self.log_file_names[0]).st_size <= 0
+        ):
+            os.remove(self.log_file_names[0])
+            self.logger.debug("No logs to save")
+        else:
+            final_log_file = self.log_directory.joinpath(
+                f"{self.__getCurrentDateTimeStr()}.ftlog"
+            )
 
-        empty = True
-        try:
-            with open(final_log_file, "a") as final_log_file_handle:
-                # Open all the log files that were written to in the current session and write their data to the final log file
-                for log_file in self.log_file_names:
-                    if not log_file.is_file():
-                        self.logger.warning(f"Log file {log_file} is not a file.")
-                        continue
+            try:
+                with open(final_log_file, "a") as final_log_file_handle:
+                    # Open all the log files that were written to in the current session and write their data to the final log file
+                    for log_file in self.log_file_names:
+                        if not log_file.is_file():
+                            self.logger.warning(f"Log file {log_file} is not a file.")
+                            continue
 
-                    with open(log_file) as log_file_handle:
-                        final_log_file_handle.writelines(log_file_handle.readlines())
-                        empty = False if os.stat(log_file).st_size > 0 else True
-                    os.remove(log_file)
+                        with open(log_file) as log_file_handle:
+                            final_log_file_handle.writelines(
+                                log_file_handle.readlines()
+                            )
+                        os.remove(log_file)
+            except Exception as e:
+                self.logger.error("Failed to save drone logs")
+                self.logger.error(e, exc_info=True)
 
-            # Delete file if empty
-            if empty:
-                self.logger.debug(f"Log file is empty, deleting '{final_log_file}'")
-                os.remove(final_log_file)
-        except Exception as e:
-            self.logger.error("Failed to save drone logs")
-            self.logger.error(e, exc_info=True)
-
-        self.logger.info(f"Saved drone logs to: {final_log_file}")
+            self.logger.info(f"Saved drone logs to: {final_log_file}")
         self.logger.debug("Closed connection to drone")

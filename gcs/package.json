@@ -63,5 +63,8 @@
     "vite-plugin-electron": "^0.14.0",
     "vite-plugin-electron-renderer": "^0.14.5"
   },
+  "resolutions": {
+    "strip-ansi": "6.0.1"
+  },
   "main": "dist-electron/main.js"
 }

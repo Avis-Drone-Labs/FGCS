@@ -87,7 +87,7 @@ class MotorTestController:
                     "message": f"Motor test started for motor {motor_instance}",
                 }
             else:
-                self.drone.error(
+                self.drone.logger.error(
                     f"Motor test for motor {motor_instance} not started",
                 )
                 return {
@@ -95,7 +95,7 @@ class MotorTestController:
                     "message": f"Motor test for motor {motor_instance} not started",
                 }
         except serial.serialutil.SerialException:
-            self.drone.error(
+            self.drone.logger.error(
                 f"Motor test for motor {motor_instance} not started, serial exception"
             )
             return {
@@ -138,7 +138,6 @@ class MotorTestController:
             else:
                 self.drone.logger.error("Motor sequence test not started")
                 return {"success": False, "message": "Motor sequence test not started"}
-
         except serial.serialutil.SerialException:
             self.drone.logger.error("Motor sequence test not started, serial exception")
             return {
@@ -190,6 +189,18 @@ class MotorTestController:
                 if responses == self.drone.number_of_motors:
                     self.drone.logger.info("All motor test started")
                     return {"success": True, "message": "All motor test started"}
+                elif responses < self.drone.number_of_motors:
+                    # TODO: Test if this works, do we not have to put this in a while loop
+                    # And wait for the command ack every loop, and once we receive one we restart the loop?
+                    pass
+                else:
+                    self.drone.logger.info(
+                        "All motor test potentially started, but received {responses} responses with {self.drone.number_of_motors} motors"
+                    )
+                    return {
+                        "success": True,
+                        "message": "All motor test potentially started",
+                    }
             else:
                 self.drone.logger.error("All motor not test started")
                 return {"success": False, "message": "All motor test not started"}
@@ -199,3 +210,8 @@ class MotorTestController:
                 "success": False,
                 "message": "All motor test not started, serial exception",
             }
+
+        return {
+            "success": False,
+            "message": "Unknown status about all motor test",
+        }

@@ -8,12 +8,16 @@ from pathlib import Path
 from queue import Queue
 from secrets import token_hex
 from threading import Thread
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import serial
-from app.customTypes import (IncomingParam, MotorTestAllValues,
-                             MotorTestThrottleAndDuration, Number, Response,
-                             ResponseWithData)
+from app.customTypes import (
+    IncomingParam,
+    MotorTestAllValues,
+    MotorTestThrottleAndDuration,
+    Number,
+    Response,
+)
 from app.utils import commandAccepted
 from flightModes import FlightModes
 from gripper import Gripper
@@ -100,13 +104,13 @@ class Drone:
             f"Heartbeat received (system {self.target_system} component {self.target_component})"
         )
 
-        self.message_listeners = {}
+        self.message_listeners: Dict[str, Callable] = {}
         self.message_queue: Queue = Queue()
         self.log_message_queue: Queue = Queue()
         self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.log_directory.mkdir(parents=True, exist_ok=True)
-        self.current_log_file = None
-        self.log_file_names = []
+        self.current_log_file: Optional[Path] = None
+        self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
         self.is_active = True
@@ -114,7 +118,7 @@ class Drone:
         self.current_param_index = 0
         self.total_number_of_params = 0
         self.number_of_motors = 4  # Is there a way to get this from the drone?
-        self.params = []
+        self.params: List[Any] = []
 
         self.armed = False
 
@@ -309,9 +313,7 @@ class Drone:
             0,
         )
 
-    def addMessageListener(
-        self, message_id: int, func: Optional[Callable] = None
-    ) -> bool:
+    def addMessageListener(self, message_id: str, func: Callable) -> bool:
         """Add a message listener for a specific message.
 
         Args:
@@ -326,11 +328,11 @@ class Drone:
             return True
         return False
 
-    def removeMessageListener(self, message_id: int) -> bool:
+    def removeMessageListener(self, message_id: str) -> bool:
         """Removes a message listener for a specific message.
 
         Args:
-            message_id (int): The message to remove the listener for.
+            message_id (str): The message to remove the listener for.
 
         Returns:
             bool: True if the listener was removed, False if it does not exist
@@ -489,13 +491,13 @@ class Drone:
         self.log_thread.start()
 
     def getSingleParam(
-        self, param_name: str, timeout: Optional[int] = 1.5
-    ) -> Union[Response, ResponseWithData]:
+        self, param_name: str, timeout: Optional[float] = 1.5
+    ) -> Response:
         """Gets a specific parameter value.
 
         Args:
             param_name (str): The name of the parameter to get
-            timeout (int, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
+            timeout (float, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
 
         Returns:
             Response: The response from the retrieval of the specific parameter
@@ -812,6 +814,9 @@ class Drone:
 
         motor_instance = data.get("motorInstance")
 
+        if motor_instance is None:
+            return {"success": False, "message": "No motor instance provided"}
+
         self.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
             param1=motor_instance,  # ID of the motor to be tested
@@ -977,30 +982,32 @@ class Drone:
         """
         self.is_listening = False
 
-        return self.gripper.setGripper(action)
+        gripperActionResponse = self.gripper.setGripper(action)
+
+        return gripperActionResponse
 
     def sendCommand(
         self,
         message: int,
-        param1=0,
-        param2=0,
-        param3=0,
-        param4=0,
-        param5=0,
-        param6=0,
-        param7=0,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        param5: float = 0,
+        param6: float = 0,
+        param7: float = 0,
     ) -> None:
         """Send a command to the drone.
 
         Args:
-            message (int): The message to send
-            param1 (int, optional)
-            param2 (int, optional)
-            param3 (int, optional)
-            param4 (int, optional)
-            param5 (int, optional)
-            param6 (int, optional)
-            param7 (int, optional)
+            message (float): The message to send
+            param1 (float, optional)
+            param2 (float, optional)
+            param3 (float, optional)
+            param4 (float, optional)
+            param5 (float, optional)
+            param6 (float, optional)
+            param7 (float, optional)
         """
         message = self.master.mav.command_long_encode(
             self.target_system,

@@ -1,9 +1,16 @@
-from app import socketio
+from typing_extensions import TypedDict
+
 import app.droneStatus as droneStatus
+from app import socketio
+
+
+class ArmDisarmType(TypedDict):
+    arm: bool
+    force: bool
 
 
 @socketio.on("arm_disarm")
-def arm(data) -> None:
+def arm(data: ArmDisarmType) -> None:
     """
     Attempts to arm/disarm the drone
 

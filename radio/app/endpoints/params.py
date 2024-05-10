@@ -1,12 +1,12 @@
 import time
-from typing import List
+from typing import Any, List
 
 import app.droneStatus as droneStatus
 from app import logger, socketio
 
 
 @socketio.on("set_multiple_params")
-def set_multiple_params(params_list: List[any]) -> None:
+def set_multiple_params(params_list: List[Any]) -> None:
     """
     Set multiple parameters at the same time.
 
@@ -20,6 +20,9 @@ def set_multiple_params(params_list: List[any]) -> None:
             {"message": "You must be on the params screen to save parameters."},
         )
         logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
         return
 
     success = droneStatus.drone.setMultipleParams(params_list)
@@ -42,6 +45,9 @@ def refresh_params() -> None:
             {"message": "You must be on the params screen to refresh the parameters."},
         )
         logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
         return
 
     droneStatus.drone.getAllParams()

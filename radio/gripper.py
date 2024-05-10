@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import serial
 from app.customTypes import Response
@@ -9,7 +9,7 @@ from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from radio.app.drone import Drone
+    from app.drone import Drone
 
 
 class Gripper:
@@ -28,7 +28,9 @@ class Gripper:
             self.drone.logger.warning("Gripper is not enabled")
             return None
 
-        self.enabled = bool(gripper_enabled_response.get("data").param_value)
+        gripper_enabled_response_data = gripper_enabled_response.get("data")
+        if gripper_enabled_response_data:
+            self.enabled = bool(gripper_enabled_response_data.param_value)
         self.params = {}
 
         if not self.enabled:
@@ -46,12 +48,12 @@ class Gripper:
                 "gripType": self.drone.getSingleParam("GRIP_TYPE").get("data"),
             }
 
-    # @staticmethod
-    def gripperEnabled(func: Callable) -> Callable:
+    @staticmethod
+    def gripperEnabled(func: Callable[..., Any]) -> Callable[..., Any]:
         """Runs the decorated function only if the gripper is enabled."""
 
         @functools.wraps(func)
-        def wrap(self, *args, **kwargs):
+        def wrap(self, *args: Any, **kwargs: Any) -> Any:
             if not self.enabled:
                 self.drone.logger.error("Gripper is not enabled")
                 return False
@@ -64,10 +66,10 @@ class Gripper:
         """Sets the gripper to either release or grab.
 
         Args:
-            action (_type_): The action to perform on the gripper, either "release" or "grab"
+            action (str): The action to perform on the gripper, either "release" or "grab"
 
         Returns:
-            Response: _description_
+            Response
         """
         if action not in ["release", "grab"]:
             return {

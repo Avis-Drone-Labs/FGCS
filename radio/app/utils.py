@@ -1,9 +1,10 @@
 import sys
+from typing import Any, List
 
-from . import socketio
-from typing import List
 from pymavlink import mavutil
 from serial.tools import list_ports
+
+from . import socketio
 
 
 def getComPort() -> str:
@@ -78,12 +79,12 @@ def secondsToMicroseconds(secs: float) -> int:
         secs: The number in seconds
 
     Returns:
-        The input "secs" in microseconds
+        The input "secs" in microseconds, as an integer
     """
-    return secs * 1e6
+    return int(secs * 1e6)
 
 
-def commandAccepted(response, command) -> bool:
+def commandAccepted(response: Any, command: int) -> bool:
     """
     Check if a command has been accepted
 
@@ -94,7 +95,7 @@ def commandAccepted(response, command) -> bool:
     Returns:
         True if the command has been accepted, False otherwise.
     """
-    return (
+    return bool(
         response
         and command
         and response.command == command
@@ -114,10 +115,10 @@ def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) 
     Returns:
         The normalised PWM value
     """
-    return 2 * ((val - min_val) / (max_val - min_val)) - 1
+    return int(2 * ((val - min_val) / (max_val - min_val)) - 1)
 
 
-def droneErrorCb(msg) -> None:
+def droneErrorCb(msg: Any) -> None:
     """
     Send drone error to the socket
 
@@ -127,7 +128,7 @@ def droneErrorCb(msg) -> None:
     socketio.emit("drone_error", {"message": msg})
 
 
-def sendMessage(msg) -> None:
+def sendMessage(msg: Any) -> None:
     """
     Sends a message to the frontend with a timestamp
 

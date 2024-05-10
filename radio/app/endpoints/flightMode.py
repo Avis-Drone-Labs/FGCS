@@ -2,6 +2,11 @@ import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.customTypes import SetFlightModeValueAndNumber
 from app.utils import droneErrorCb
+from typing_extensions import TypedDict
+
+
+class SetCurrentFlightModeType(TypedDict):
+    newFlightMode: int
 
 
 @socketio.on("get_flight_mode_config")
@@ -87,7 +92,7 @@ def refreshFlightModeData() -> None:
 
 
 @socketio.on("set_current_flight_mode")
-def setCurrentFlightMode(data: dict) -> None:
+def setCurrentFlightMode(data: SetCurrentFlightModeType) -> None:
     """
     Sets the current flight mode of the drone, only works when the dashboard is loaded
 

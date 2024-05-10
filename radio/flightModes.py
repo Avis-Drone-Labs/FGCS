@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union
 
 import serial
 from app.customTypes import Response
@@ -9,7 +9,7 @@ from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from radio.app.drone import Drone
+    from app.drone import Drone
 
 
 FLIGHT_MODES = [
@@ -32,7 +32,7 @@ class FlightModes:
 
         self.drone = drone
 
-        self.flight_modes = []
+        self.flight_modes: List[Union[str, float]] = []
 
         self.getFlightModes()
         self.getFlightModeChannel()
@@ -43,7 +43,12 @@ class FlightModes:
         for mode in FLIGHT_MODES:
             flight_mode = self.drone.getSingleParam(mode)
             if flight_mode.get("success"):
-                self.flight_modes.append(flight_mode.get("data").param_value)
+                flight_mode_data = flight_mode.get("data")
+                if flight_mode_data:
+                    print(
+                        flight_mode_data.param_value, type(flight_mode_data.param_value)
+                    )
+                    self.flight_modes.append(flight_mode_data.param_value)
             else:
                 self.drone.logger.error(flight_mode.get("message"))
                 self.flight_modes.append("UNKNOWN")
@@ -54,7 +59,9 @@ class FlightModes:
         flight_mode_channel = self.drone.getSingleParam("FLTMODE_CH")
 
         if flight_mode_channel.get("success"):
-            self.flight_mode_channel = flight_mode_channel.get("data").param_value
+            flight_mode_channel_data = flight_mode_channel.get("data")
+            if flight_mode_channel_data:
+                self.flight_mode_channel = flight_mode_channel_data.param_value
         else:
             self.drone.logger.error(flight_mode_channel.get("message"))
 
@@ -77,7 +84,10 @@ class FlightModes:
             self.drone.logger.error(
                 "Invalid flight mode number, must be between 1 and 6 inclusive."
             )
-            return
+            return {
+                "success": False,
+                "message": f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}.",
+            }
 
         param_type = 2
 

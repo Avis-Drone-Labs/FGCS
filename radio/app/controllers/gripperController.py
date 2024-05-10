@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from app.drone import Drone
 
 
-class Gripper:
+class GripperController:
     def __init__(self, drone: Drone) -> None:
         """The gripper controls all gripper-related actions.
 
@@ -76,6 +76,9 @@ class Gripper:
                 "success": False,
                 "message": 'Gripper action must be either "release" or "grab"',
             }
+
+        self.drone.is_listening = False
+
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_GRIPPER,
             0,
@@ -89,6 +92,8 @@ class Gripper:
 
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
                 return {

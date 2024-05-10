@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from app.drone import Drone
 
 
-class Mission:
+class MissionController:
     def __init__(self, drone: Drone) -> None:
         """The mission class controls all mission-related actions.
 

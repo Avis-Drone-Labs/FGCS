@@ -19,7 +19,7 @@ def gripperEnabled() -> None:
     if not droneStatus.drone:
         return
 
-    socketio.emit("gripper_enabled", droneStatus.drone.gripper.enabled)
+    socketio.emit("gripper_enabled", droneStatus.drone.gripperController.enabled)
 
 
 @socketio.on("set_gripper")
@@ -45,5 +45,5 @@ def setGripper(action: str) -> None:
         droneErrorCb('Gripper action must be either "release" or "grab"')
         return
 
-    result = droneStatus.drone.setGripper(action)
+    result = droneStatus.drone.gripperController.setGripper(action)
     socketio.emit("set_gripper_result", result)

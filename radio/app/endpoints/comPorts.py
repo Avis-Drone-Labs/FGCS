@@ -1,11 +1,19 @@
 import sys
 import time
-from serial.tools import list_ports
 
-from app import socketio, print
-from app.utils import getComPortNames, droneErrorCb
-from app.drone import Drone
+from serial.tools import list_ports
+from typing_extensions import TypedDict
+
 import app.droneStatus as droneStatus
+from app import logger, socketio
+from app.drone import Drone
+from app.utils import droneErrorCb, getComPortNames
+
+
+class SetComPortType(TypedDict):
+    port: str
+    baud: int
+    wireless: bool
 
 
 @socketio.on("get_com_ports")
@@ -34,9 +42,10 @@ def getComPort() -> None:
 
 
 @socketio.on("set_com_port")
-def setComPort(data) -> None:
+def setComPort(data: SetComPortType) -> None:
     """
-    Set the com port of the drone and let the client know
+    Set the com port of the drone and let the client know. This method is responsible for creating
+    the initialising the drone object.
 
     Args:
         data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
@@ -55,9 +64,9 @@ def setComPort(data) -> None:
         socketio.emit("com_port_error", {"message": "COM port not found."})
         return
 
-    print("Trying to connect to drone")
-    baud = data.get("baud")
-    drone: Drone = Drone(
+    logger.debug("Trying to connect to drone")
+    baud = data.get("baud", 57600)
+    drone = Drone(
         port,
         wireless=data.get("wireless", True),
         baud=baud,
@@ -75,7 +84,7 @@ def setComPort(data) -> None:
 
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
-    print("Created drone instance")
+    logger.debug("Created drone instance")
     socketio.emit("connected_to_drone")
 
 
@@ -84,7 +93,9 @@ def disconnectFromDrone() -> None:
     """
     Disconnect from drone and reset all global variables, send a message to client disconnecting as well
     """
-    droneStatus.drone.close()
-    droneStatus.drone = None
+    if droneStatus.drone:
+        droneStatus.drone.close()
+        droneStatus.drone = None
+
     droneStatus.state = None
     socketio.emit("disconnected_from_drone")

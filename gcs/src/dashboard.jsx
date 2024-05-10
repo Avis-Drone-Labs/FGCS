@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { ActionIcon, Button, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
 import { useListState, useLocalStorage, usePrevious } from '@mantine/hooks'
 import {
   IconAnchor,
@@ -30,7 +30,10 @@ import {
   MAV_STATE,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from './helpers/mavlinkConstants'
-import { showErrorNotification } from './helpers/notification'
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from './helpers/notification'
 import { socket } from './helpers/socket'
 
 // Custom component
@@ -73,6 +76,9 @@ export default function Dashboard() {
   })
 
   const [followDrone, setFollowDrone] = useState(false)
+  const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
+  const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
+
   const mapRef = useRef()
 
   const [playArmed] = useSound('/sounds/armed.mp3', { volume: 0.1 })
@@ -121,10 +127,19 @@ export default function Dashboard() {
       setMissionItems(msg)
     })
 
+    socket.on('set_current_flight_mode_result', (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
       socket.off('current_mission')
+      socket.off('set_current_flight_mode_result')
     }
   }, [connected])
 
@@ -150,6 +165,10 @@ export default function Dashboard() {
       previousHeartbeatData.base_mode & 128
     ) {
       playDisarmed()
+    }
+
+    if (currentFlightModeNumber !== heartbeatData.custom_mode) {
+      setCurrentFlightModeNumber(heartbeatData.custom_mode)
     }
   }, [heartbeatData])
 
@@ -178,6 +197,13 @@ export default function Dashboard() {
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
     socket.emit('arm_disarm', { arm: arm, force: force })
+  }
+
+  function setNewFlightMode(modeNumber) {
+    if (modeNumber === null || modeNumber === currentFlightModeNumber) {
+      return
+    }
+    socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
   }
 
   return (
@@ -300,14 +326,40 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <div>
+          <div className='flex flex-row space-x-14'>
             <Button
+              className='mt-6'
               onClick={() => {
                 armDisarm(!getIsArmed())
               }}
             >
               {getIsArmed() ? 'Disarm' : 'Arm'}
             </Button>
+          </div>
+          <div className='flex flex-row space-x-2 mt-4'>
+            {currentFlightModeNumber !== null && (
+              <>
+                <Select
+                  value={newFlightModeNumber.toString()}
+                  label={'Current Flight mode'}
+                  onChange={(value) => {
+                    setNewFlightModeNumber(parseInt(value))
+                  }}
+                  data={Object.keys(COPTER_MODES_FLIGHT_MODE_MAP).map((key) => {
+                    return {
+                      value: key,
+                      label: COPTER_MODES_FLIGHT_MODE_MAP[key],
+                    }
+                  })}
+                />
+                <Button
+                  onClick={() => setNewFlightMode(newFlightModeNumber)}
+                  className='mt-6'
+                >
+                  Set flight mode
+                </Button>
+              </>
+            )}
           </div>
         </div>
 

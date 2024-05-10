@@ -1,5 +1,4 @@
 import time
-from pprint import pprint
 
 from app.drone import Drone
 from app.utils import getComPort
@@ -14,7 +13,7 @@ if __name__ == "__main__":
     port = getComPort()
     drone = Drone(port, droneErrorCb=test_cb, droneDisconnectCb=test_cb)
 
-    pprint([item.to_dict() for item in drone.flight_modes.flight_modes])
+    # pprint([item.to_dict() for item in drone.flight_modes.flight_modes])
 
     # print(drone.gripper.doGripper("release"))
     # drone.master.waypoint_request_list_send()

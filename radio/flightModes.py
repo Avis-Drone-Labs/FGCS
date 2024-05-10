@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import time
+from typing import TYPE_CHECKING, List, Union
 
+import serial
 from app.customTypes import Response
+from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
-    from radio.app.drone import Drone
+    from app.drone import Drone
 
 
 FLIGHT_MODES = [
@@ -29,7 +32,7 @@ class FlightModes:
 
         self.drone = drone
 
-        self.flight_modes = []
+        self.flight_modes: List[Union[str, float]] = []
 
         self.getFlightModes()
         self.getFlightModeChannel()
@@ -40,9 +43,14 @@ class FlightModes:
         for mode in FLIGHT_MODES:
             flight_mode = self.drone.getSingleParam(mode)
             if flight_mode.get("success"):
-                self.flight_modes.append(flight_mode.get("data").param_value)
+                flight_mode_data = flight_mode.get("data")
+                if flight_mode_data:
+                    print(
+                        flight_mode_data.param_value, type(flight_mode_data.param_value)
+                    )
+                    self.flight_modes.append(flight_mode_data.param_value)
             else:
-                print(flight_mode.get("message"))
+                self.drone.logger.error(flight_mode.get("message"))
                 self.flight_modes.append("UNKNOWN")
 
     def getFlightModeChannel(self) -> None:
@@ -51,9 +59,11 @@ class FlightModes:
         flight_mode_channel = self.drone.getSingleParam("FLTMODE_CH")
 
         if flight_mode_channel.get("success"):
-            self.flight_mode_channel = flight_mode_channel.get("data").param_value
+            flight_mode_channel_data = flight_mode_channel.get("data")
+            if flight_mode_channel_data:
+                self.flight_mode_channel = flight_mode_channel_data.param_value
         else:
-            print(flight_mode_channel.get("message"))
+            self.drone.logger.error(flight_mode_channel.get("message"))
 
     def refreshData(self) -> None:
         """Refresh the flight mode data."""
@@ -66,11 +76,18 @@ class FlightModes:
         Args:
             mode_number (int): The flight mode number
             flight_mode (int): The flight mode to set
+        Returns:
+            A message showing if the flight mode number was successfully set to the flight mode
         """
 
         if mode_number < 1 or mode_number > 6:
-            print("Invalid flight mode number, must be between 1 and 6 inclusive.")
-            return
+            self.drone.logger.error(
+                "Invalid flight mode number, must be between 1 and 6 inclusive."
+            )
+            return {
+                "success": False,
+                "message": f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}.",
+            }
 
         param_type = 2
 
@@ -79,7 +96,7 @@ class FlightModes:
         )
 
         if param_set_success:
-            print(
+            self.drone.logger.info(
                 f"Flight mode {mode_number} set to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}"
             )
             self.flight_modes[mode_number - 1] = flight_mode
@@ -92,4 +109,45 @@ class FlightModes:
             return {
                 "success": False,
                 "message": f"Failed to set flight mode {mode_number} to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}",
+            }
+
+    def setCurrentFlightMode(self, flightMode: int) -> Response:
+        """
+        Sends a Mavlink message to the drone for setting its current flight mode
+
+        Args:
+            flightmode (int): The numeric value for the current flight mode setting
+        Returns:
+            A message to show if the drone recieved the message and succesfully set the new mode
+        """
+        self.drone.is_listening = False
+        time.sleep(0.3)
+        self.drone.sendCommand(
+            message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+            param1=1,
+            param2=flightMode,
+            param3=0,
+            param4=0,
+            param5=0,
+            param6=0,
+            param7=0,
+        )
+
+        try:
+            response = self.drone.master.recv_match(type="COMMAND_ACK", timeout=5)
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
+                self.drone.is_listening = True
+                return {"success": True, "message": "Flight mode set successfully"}
+            else:
+                self.drone.is_listening = True
+                return {
+                    "success": False,
+                    "message": "Could not set flight mode",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": "Could not set flight mode, serial exception",
             }

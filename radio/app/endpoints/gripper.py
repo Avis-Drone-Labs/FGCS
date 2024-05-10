@@ -1,6 +1,6 @@
-from app import socketio, print
-from app.utils import droneErrorCb
 import app.droneStatus as droneStatus
+from app import logger, socketio
+from app.utils import droneErrorCb
 
 
 @socketio.on("gripper_enabled")
@@ -13,7 +13,7 @@ def gripperEnabled() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the gripper."},
         )
-        print(f"Current state: {droneStatus.state}")
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -23,7 +23,7 @@ def gripperEnabled() -> None:
 
 
 @socketio.on("set_gripper")
-def setGripper(action) -> None:
+def setGripper(action: str) -> None:
     """
     Sets the gripper value based off the input action, this only works on the config page.
 
@@ -35,7 +35,7 @@ def setGripper(action) -> None:
             "params_error",
             {"message": "You must be on the config screen to access the gripper."},
         )
-        print(f"Current state: {droneStatus.state}")
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

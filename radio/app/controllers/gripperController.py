@@ -23,7 +23,9 @@ class GripperController:
 
         self.enabled = False
 
-        gripper_enabled_response = self.drone.getSingleParam(param_name="GRIP_ENABLE")
+        gripper_enabled_response = self.drone.paramsController.getSingleParam(
+            param_name="GRIP_ENABLE"
+        )
         if not (gripper_enabled_response.get("success")):
             self.drone.logger.warning("Gripper is not enabled")
             return None
@@ -37,15 +39,27 @@ class GripperController:
             self.drone.logger.warning("Gripper is not enabled")
         else:
             self.params = {
-                "gripAutoclose": self.drone.getSingleParam("GRIP_AUTOCLOSE").get(
+                "gripAutoclose": self.drone.paramsController.getSingleParam(
+                    "GRIP_AUTOCLOSE"
+                ).get("data"),
+                "gripCanId": self.drone.paramsController.getSingleParam(
+                    "GRIP_CAN_ID"
+                ).get("data"),
+                "gripGrab": self.drone.paramsController.getSingleParam("GRIP_GRAB").get(
                     "data"
                 ),
-                "gripCanId": self.drone.getSingleParam("GRIP_CAN_ID").get("data"),
-                "gripGrab": self.drone.getSingleParam("GRIP_GRAB").get("data"),
-                "gripNeutral": self.drone.getSingleParam("GRIP_NEUTRAL").get("data"),
-                "gripRegrab": self.drone.getSingleParam("GRIP_REGRAB").get("data"),
-                "gripRelease": self.drone.getSingleParam("GRIP_RELEASE").get("data"),
-                "gripType": self.drone.getSingleParam("GRIP_TYPE").get("data"),
+                "gripNeutral": self.drone.paramsController.getSingleParam(
+                    "GRIP_NEUTRAL"
+                ).get("data"),
+                "gripRegrab": self.drone.paramsController.getSingleParam(
+                    "GRIP_REGRAB"
+                ).get("data"),
+                "gripRelease": self.drone.paramsController.getSingleParam(
+                    "GRIP_RELEASE"
+                ).get("data"),
+                "gripType": self.drone.paramsController.getSingleParam("GRIP_TYPE").get(
+                    "data"
+                ),
             }
 
     @staticmethod

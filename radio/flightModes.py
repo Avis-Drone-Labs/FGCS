@@ -41,7 +41,7 @@ class FlightModes:
         """Get the current flight modes of the drone."""
         self.flight_modes = []
         for mode in FLIGHT_MODES:
-            flight_mode = self.drone.getSingleParam(mode)
+            flight_mode = self.drone.paramsController.getSingleParam(mode)
             if flight_mode.get("success"):
                 flight_mode_data = flight_mode.get("data")
                 if flight_mode_data:
@@ -56,7 +56,7 @@ class FlightModes:
     def getFlightModeChannel(self) -> None:
         """Get the flight mode channel of the drone."""
         self.flight_mode_channel = "UNKNOWN"
-        flight_mode_channel = self.drone.getSingleParam("FLTMODE_CH")
+        flight_mode_channel = self.drone.paramsController.getSingleParam("FLTMODE_CH")
 
         if flight_mode_channel.get("success"):
             flight_mode_channel_data = flight_mode_channel.get("data")
@@ -91,7 +91,7 @@ class FlightModes:
 
         param_type = 2
 
-        param_set_success = self.drone.setParam(
+        param_set_success = self.drone.paramsController.setParam(
             f"FLTMODE{mode_number}", flight_mode, param_type
         )
 

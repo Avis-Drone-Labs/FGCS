@@ -54,16 +54,19 @@ def set_state(data: SetStateType) -> None:
     elif droneStatus.state == "params":
         droneStatus.drone.stopAllDataStreams()
 
-        if len(droneStatus.drone.params):
-            socketio.emit("params", droneStatus.drone.params)
+        if len(droneStatus.drone.paramsController.params):
+            socketio.emit("params", droneStatus.drone.paramsController.params)
             return
 
-        droneStatus.drone.getAllParams()
+        droneStatus.drone.paramsController.getAllParams()
 
         timeout = time.time() + 60 * 3  # 3 minutes from now
         last_index_sent = -1
 
-        while droneStatus.drone and droneStatus.drone.is_requesting_params:
+        while (
+            droneStatus.drone
+            and droneStatus.drone.paramsController.is_requesting_params
+        ):
             if time.time() > timeout:
                 socketio.emit(
                     "params_error",
@@ -72,22 +75,24 @@ def set_state(data: SetStateType) -> None:
                 return
 
             if (
-                last_index_sent != droneStatus.drone.current_param_index
-                and droneStatus.drone.current_param_index > last_index_sent
+                last_index_sent
+                != droneStatus.drone.paramsController.current_param_index
+                and droneStatus.drone.paramsController.current_param_index
+                > last_index_sent
             ):
                 socketio.emit(
                     "param_request_update",
                     {
-                        "current_param_index": droneStatus.drone.current_param_index,
-                        "total_number_of_params": droneStatus.drone.total_number_of_params,
+                        "current_param_index": droneStatus.drone.paramsController.current_param_index,
+                        "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
                     },
                 )
-                last_index_sent = droneStatus.drone.current_param_index
+                last_index_sent = droneStatus.drone.paramsController.current_param_index
 
             time.sleep(0.2)
 
         if droneStatus.drone:
-            socketio.emit("params", droneStatus.drone.params)
+            socketio.emit("params", droneStatus.drone.paramsController.params)
     elif droneStatus.state == "config":
         droneStatus.drone.stopAllDataStreams()
     elif droneStatus.state == "config.flight_modes":

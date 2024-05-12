@@ -23,7 +23,7 @@ def falcon_test(
         pass_drone (bool): Pass the drone object created at the start of the file's test
     """
 
-    def run_test(test_func: Callable = None):
+    def run_test(test_func: Optional[Callable] = None):
         """Inner wrapper to run test"""
 
         if test_func is None:

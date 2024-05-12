@@ -8,7 +8,7 @@ IF NOT "%venv%"=="" (
     "./%venv%/Scripts/activate"
 
     @REM Update all packkages, only triggered with second parameter
-    IF NOT "%update%"=="" (
+    IF NOT "%update%"=="" if NOT "%update%"=="-nfc" (
         ECHO Making sure packages are up to date
         pip install -r radio/requirements.txt
 
@@ -27,7 +27,11 @@ IF NOT "%venv%"=="" (
 
     ECHO Starting tests
     cd radio
-    python run_tests.py
+    if "%update%"=="-nfc" (
+        python run_tests.py -nfc
+    ) ELSE (
+        python run_tests.py
+    )
 ) ELSE (
     ECHO You forgot to provide a path to your venv, for example "./test.bat radio/venv"
     ECHO If this is the first time running the script it will auto update all packages, this is done by adding "update" to the end of the command. For examplee "./test.bat api/venv update"

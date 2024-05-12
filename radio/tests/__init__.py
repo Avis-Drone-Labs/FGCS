@@ -11,6 +11,13 @@ app = create_app(debug=True)
 socketio = socketio
 drone: Optional[Drone] = None
 
+# Create flask/socketio clients to be used in tests
+flask_client: FlaskClient = app.test_client()
+socketio_client: SocketIOTestClient = socketio.test_client(
+    app, flask_test_client=flask_client
+)
+
+
 
 def falcon_test(
     pass_drone_status: bool = False, pass_flask: bool = False, pass_drone: bool = False
@@ -33,12 +40,6 @@ def falcon_test(
             )
 
         def inner(*args, **kwargs):
-            # Create flask/socketio client to be used in each test
-            flask_client: FlaskClient = app.test_client()
-            socketio_client: SocketIOTestClient = socketio.test_client(
-                app, flask_test_client=flask_client
-            )
-
             # Make sure the server did not rejected the connection
             assert socketio_client.is_connected()
 

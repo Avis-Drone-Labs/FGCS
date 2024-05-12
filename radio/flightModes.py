@@ -45,9 +45,6 @@ class FlightModes:
             if flight_mode.get("success"):
                 flight_mode_data = flight_mode.get("data")
                 if flight_mode_data:
-                    print(
-                        flight_mode_data.param_value, type(flight_mode_data.param_value)
-                    )
                     self.flight_modes.append(flight_mode_data.param_value)
             else:
                 self.drone.logger.error(flight_mode.get("message"))

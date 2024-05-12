@@ -82,8 +82,8 @@ class ParamsController:
 
         while True:
             try:
-                msg = self.drone.master.recv_msg(type="PARAM_VALUE")
-                if msg:
+                msg = self.drone.master.recv_msg()
+                if msg and msg.name == "PARAM_VALUE":
                     self.saveParam(msg.param_id, msg.param_value, msg.param_type)
 
                     self.current_param_index = msg.param_index

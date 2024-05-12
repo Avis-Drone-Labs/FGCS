@@ -1,8 +1,9 @@
+import app.droneStatus as droneStatus
 from typing import Callable, Optional
 from app import create_app, socketio
 from app.drone import Drone
-import app.droneStatus as droneStatus
 
+import pytest
 from flask_socketio.test_client import SocketIOTestClient
 from flask.testing import FlaskClient
 
@@ -51,7 +52,10 @@ def falcon_test(
                 passing_variables["drone"] = drone
 
             # Run test
-            test_func(socketio_client, *args, **passing_variables, **kwargs)
+            if drone is None and pass_drone:
+                pytest.skip("Passing as no flight controller was found.")
+            else:
+                test_func(socketio_client, *args, **passing_variables, **kwargs)
 
         return inner
 

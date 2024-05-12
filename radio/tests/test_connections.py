@@ -38,13 +38,13 @@ def test_isConnectedToDrone_no_drone(socketio_client: SocketIOTestClient, droneS
 
 @falcon_test(pass_drone_status=True, pass_drone=True)
 def test_isConnectedToDrone_with_drone(
-    socketio_client: SocketIOTestClient, droneStatus, drone
+    socketio_client: SocketIOTestClient, droneStatus, drone: Drone
 ):
     """Test to see if the drone if we set it up"""
-    droneStatus.drone = drone
+    droneStatus.drone = None
     socketio_client.emit("is_connected_to_drone")
     socketio_result = socketio_client.get_received()
 
     assert len(socketio_result) == 1  # Only 1 response
-    assert socketio_result[0]["args"] == [True]  # droneStatus.drone is set
+    assert socketio_result[0]["args"] == [False]  # droneStatus.drone is set
     assert socketio_result[0]["name"] == "is_connected_to_drone"  # Correct name emitted

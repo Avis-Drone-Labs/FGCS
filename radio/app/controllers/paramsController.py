@@ -88,16 +88,21 @@ class ParamsController:
         self.is_requesting_params = True
 
     def getAllParamsThreadFunc(self) -> None:
+        """The thread function to get all parameters from the drone."""
         timeout = time.time() + 60 * 3  # 3 minutes from now
 
         while True:
             try:
                 if time.time() > timeout:
                     self.drone.logger.warning("Get all params thread timed out")
+                    self.is_requesting_params = False
+                    self.current_param_index = 0
+                    self.total_number_of_params = 0
+                    self.params = []
+                    self.drone.is_listening = True
                     return
 
                 msg = self.drone.master.recv_msg()
-                self.drone.logger.info(f"Got message {msg}")
                 if msg and msg.msgname == "PARAM_VALUE":
                     self.saveParam(msg.param_id, msg.param_value, msg.param_type)
 

@@ -342,6 +342,7 @@ class Drone:
         """Check for messages from the drone and add them to the message queue."""
         while self.is_active:
             if not self.is_listening:
+                time.sleep(0.05)  # Sleep a bit to not clog up processing usage
                 continue
 
             try:

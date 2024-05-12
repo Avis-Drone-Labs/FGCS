@@ -1,24 +1,24 @@
-# The below is done so we cna import from ../app
-import sys
-sys.path.append("..")
-
-from typing import Callable
+from typing import Callable, Optional
 from app import create_app, socketio
+from app.drone import Drone
+import app.droneStatus as droneStatus
+
 from flask_socketio.test_client import SocketIOTestClient
 from flask.testing import FlaskClient
-import app.droneStatus as droneStatus
 
 app = create_app(debug=True)
 socketio = socketio
+drone: Optional[Drone] = None
 
 
-def falcon_test(pass_drone: bool = False, pass_flask: bool = False):
+def falcon_test(pass_drone_status: bool = False, pass_flask: bool = False, pass_drone: bool = False):
     """
     A wrapper to connect to backend and pass necessary details to test function
 
     Args:
-        pass_drone (bool): True if you want to accept the droneStatus file to the test func
+        pass_drone_status (bool): True if you want to accept the droneStatus file to the test func
         pass_flask (bool): True if you want to accept the flask_test_client file to the test func
+        pass_drone (bool): Pass the drone object created at the start of the file's test
     """
 
     def run_test(test_func: Callable = None):
@@ -37,13 +37,25 @@ def falcon_test(pass_drone: bool = False, pass_flask: bool = False):
 
             # Get variables to pass into test_func
             passing_variables = {}
-            if pass_drone:
+            if pass_drone_status:
                 passing_variables["droneStatus"] = droneStatus
             if pass_flask:
                 passing_variables["flask_client"] = flask_client
+            if pass_drone:
+                passing_variables["drone"] = drone
 
             # Run test
             test_func(socketio_client, *args, **passing_variables, **kwargs)
 
         return inner
     return run_test
+
+def setupDrone(givenDrone: Drone) -> None:
+    """
+    Setup the drone globally, this is done before running pytest
+
+    Args:
+        givenDrone (Drone): The drone object to be used within the tests
+    """
+    global drone
+    drone = givenDrone

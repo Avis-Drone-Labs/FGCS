@@ -10,9 +10,9 @@ from threading import Thread
 from typing import Callable, Dict, List, Optional
 
 import serial
-from flightModes import FlightModes
 from pymavlink import mavutil
 
+from app.controllers.flightModesController import FlightModesController
 from app.controllers.armController import ArmController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
@@ -118,7 +118,7 @@ class Drone:
 
         self.paramsController = ParamsController(self)
         self.armController = ArmController(self)
-        self.flightModesController = FlightModes(self)
+        self.flightModesController = FlightModesController(self)
         self.motorTestController = MotorTestController(self)
         self.gripperController = GripperController(self)
         self.missionController = MissionController(self)

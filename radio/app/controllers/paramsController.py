@@ -25,7 +25,7 @@ class ParamsController:
         self.current_param_index = 0
         self.total_number_of_params = 0
         self.is_requesting_params = False
-        self.getAllParamsThread = None
+        self.getAllParamsThread: Optional[Thread] = None
 
     def getSingleParam(
         self, param_name: str, timeout: Optional[float] = 1.5

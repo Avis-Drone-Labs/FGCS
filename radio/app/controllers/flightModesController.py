@@ -22,7 +22,7 @@ FLIGHT_MODES = [
 ]
 
 
-class FlightModes:
+class FlightModesController:
     def __init__(self, drone: Drone) -> None:
         """The flight modes class controls all flight mode related actions.
 
@@ -135,6 +135,7 @@ class FlightModes:
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
                 self.drone.is_listening = True
+                self.drone.logger.info("Flight mode set successfully")
                 return {"success": True, "message": "Flight mode set successfully"}
             else:
                 self.drone.is_listening = True

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import struct
 import time
+from threading import Thread
 from typing import TYPE_CHECKING, Any, List, Optional
 
 import serial
@@ -24,6 +25,7 @@ class ParamsController:
         self.current_param_index = 0
         self.total_number_of_params = 0
         self.is_requesting_params = False
+        self.getAllParamsThread = None
 
     def getSingleParam(
         self, param_name: str, timeout: Optional[float] = 1.5
@@ -77,13 +79,26 @@ class ParamsController:
         self.drone.stopAllDataStreams()
         self.drone.is_listening = False
 
+        self.getAllParamsThread = Thread(
+            target=self.getAllParamsThreadFunc, daemon=True
+        )
+        self.getAllParamsThread.start()
+
         self.drone.master.param_fetch_all()
         self.is_requesting_params = True
 
+    def getAllParamsThreadFunc(self) -> None:
+        timeout = time.time() + 60 * 3  # 3 minutes from now
+
         while True:
             try:
+                if time.time() > timeout:
+                    self.drone.logger.warning("Get all params thread timed out")
+                    return
+
                 msg = self.drone.master.recv_msg()
-                if msg and msg.name == "PARAM_VALUE":
+                self.drone.logger.info(f"Got message {msg}")
+                if msg and msg.msgname == "PARAM_VALUE":
                     self.saveParam(msg.param_id, msg.param_value, msg.param_type)
 
                     self.current_param_index = msg.param_index
@@ -97,6 +112,7 @@ class ParamsController:
                         self.total_number_of_params = 0
                         self.params = sorted(self.params, key=lambda k: k["param_id"])
                         self.drone.is_listening = True
+                        self.drone.logger.info("Got all params")
                         return
             except serial.serialutil.SerialException:
                 self.is_requesting_params = False
@@ -104,6 +120,7 @@ class ParamsController:
                 self.total_number_of_params = 0
                 self.params = []
                 self.drone.is_listening = True
+                self.drone.logger.error("Serial exception while getting all params")
                 return
 
     def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:

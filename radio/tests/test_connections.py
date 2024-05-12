@@ -34,5 +34,6 @@ def test_isConnectedToDrone(socketio_client: SocketIOTestClient, droneStatus):
     assert socketio_result[0]["name"] == "is_connected_to_drone"  # Correct name emitted back
 
     # Set drone and ask if we're connected
+    
 
 

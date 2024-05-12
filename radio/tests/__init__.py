@@ -11,7 +11,9 @@ socketio = socketio
 drone: Optional[Drone] = None
 
 
-def falcon_test(pass_drone_status: bool = False, pass_flask: bool = False, pass_drone: bool = False):
+def falcon_test(
+    pass_drone_status: bool = False, pass_flask: bool = False, pass_drone: bool = False
+):
     """
     A wrapper to connect to backend and pass necessary details to test function
 
@@ -25,12 +27,16 @@ def falcon_test(pass_drone_status: bool = False, pass_flask: bool = False, pass_
         """Inner wrapper to run test"""
 
         if test_func is None:
-            raise ValueError("You forgot to write parenthesis around falcon_test() so test_func was set to None")
+            raise ValueError(
+                "You forgot to write parenthesis around falcon_test() so test_func was set to None"
+            )
 
         def inner(*args, **kwargs):
             # Create flask/socketio client to be used in each test
             flask_client: FlaskClient = app.test_client()
-            socketio_client: SocketIOTestClient = socketio.test_client(app, flask_test_client=flask_client)
+            socketio_client: SocketIOTestClient = socketio.test_client(
+                app, flask_test_client=flask_client
+            )
 
             # Make sure the server did not rejected the connection
             assert socketio_client.is_connected()
@@ -48,7 +54,9 @@ def falcon_test(pass_drone_status: bool = False, pass_flask: bool = False, pass_
             test_func(socketio_client, *args, **passing_variables, **kwargs)
 
         return inner
+
     return run_test
+
 
 def setupDrone(givenDrone: Drone) -> None:
     """

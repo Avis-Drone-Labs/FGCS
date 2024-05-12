@@ -38,7 +38,7 @@ def test_isConnectedToDrone_no_drone(socketio_client: SocketIOTestClient, droneS
 
 @falcon_test(pass_drone_status=True, pass_drone=True)
 def test_isConnectedToDrone_with_drone(
-    socketio_client: SocketIOTestClient, droneStatus, drone
+    socketio_client: SocketIOTestClient, droneStatus, drone: Drone
 ):
     """Test to see if the drone if we set it up"""
     droneStatus.drone = drone

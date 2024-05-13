@@ -349,6 +349,12 @@ export default function FLA() {
       Object.keys(filter.filters).map((categoryName) => {
         if (Object.keys(messageFilters).includes(categoryName)) {
           filter.filters[categoryName].map((field) => {
+            if (!(field in messageFilters[categoryName])) {
+              showErrorNotification(
+                `Your log file does not include ${categoryName}/${field} data`,
+              )
+              return
+            }
             newFilters[categoryName][field] = true
 
             // Assign a color

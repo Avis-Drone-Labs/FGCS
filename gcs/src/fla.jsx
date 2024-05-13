@@ -311,9 +311,9 @@ export default function FLA() {
                     Object.keys(newColors).length % colorPalette.length
                   ]
               }
+              setColorIndex(Object.keys(newColors).length)
               return newColors
             })
-            setColorIndex(2) // this is risky.
           })
         } else {
           showErrorNotification(
@@ -380,6 +380,7 @@ export default function FLA() {
           const color = customColors[label]
           datasets.push({
             label: label,
+            yAxisID: categoryName, 
             data: logMessages[categoryName].map((d) => ({
               x: d.TimeUS,
               y: d[fieldName],

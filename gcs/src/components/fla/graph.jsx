@@ -95,6 +95,28 @@ export default function Graph({ data, events, graphConfig }) {
     img.src = originalDataURI
   }
 
+  function generateStackedScales(categoryNames) {
+    const scales = {...graphConfig.defaultOptions.scales,}
+
+    categoryNames.forEach((categoryName, index) => {
+      scales[categoryName] = {
+        position: 'left', // Only on Left
+        grid: {
+          color: tailwindColors.gray[600],
+          drawOnChartArea: index === 0, // Only draw grid lines for the first axis
+        },
+      }
+    })
+
+    setConfig({
+      ...graphConfig,
+      scales: {
+        ...graphConfig.scales,
+        ...scales
+      },
+    })
+  }
+
   function downloadGraphAsImage() {
     const height = chartRef?.current?.height
     const width = chartRef?.current?.width
@@ -149,6 +171,36 @@ export default function Graph({ data, events, graphConfig }) {
   useEffect(() => {
     setConfig({ ...graphConfig })
   }, [graphConfig])
+
+  useEffect(() => {
+    const yAxisIDs = [...new Set(data.datasets.map(dataset => dataset.yAxisID))];
+    const scales = {}
+
+    if(yAxisIDs.length == 0){
+      graphConfig.scales.y={
+        grid: { color: tailwindColors.gray[600] },
+      }
+    }else{
+      delete graphConfig.scales.y
+    }
+    yAxisIDs.forEach((yAxisIDs, index) => {
+      scales[yAxisIDs] = {
+        position: 'left', // Only on Left
+        grid: {
+          color: tailwindColors.gray[600],
+          drawOnChartArea: index === 0, // Only draw grid lines for the first axis
+        },
+      }
+    })
+    
+    setConfig({
+      ...graphConfig,
+      scales: {
+        ...graphConfig.scales,
+        ...scales
+      },
+    })
+  }, [data])
 
   useEffect(() => {
     if (events !== null) {

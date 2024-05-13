@@ -183,12 +183,16 @@ export default function Graph({ data, events, graphConfig }) {
     }else{
       delete graphConfig.scales.y
     }
-    yAxisIDs.forEach((yAxisIDs, index) => {
-      scales[yAxisIDs] = {
+    yAxisIDs.forEach((yAxisID, index) => {
+      scales[yAxisID] = {
         position: 'left', // Only on Left
         grid: {
           color: tailwindColors.gray[600],
           drawOnChartArea: index === 0, // Only draw grid lines for the first axis
+        },
+        title: {
+          display: true,
+          text: yAxisID,
         },
       }
     })

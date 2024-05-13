@@ -544,7 +544,7 @@ export default function FLA() {
                   <Accordion.Item key='messages' value='messages'>
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
-                      <Accordion multiple={false}>
+                      <Accordion multiple={true}>
                         {Object.keys(messageFilters).map((messageName, idx) => {
                           return (
                             <Fragment key={idx}>

@@ -151,22 +151,24 @@ export default function Graph({ data, events, graphConfig }) {
   }, [graphConfig])
 
   useEffect(() => {
-    const yAxisIDs = [...new Set(data.datasets.map(dataset => dataset.yAxisID))];
+    const yAxisIDs = [
+      ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
+    ]
     const scales = {}
 
-    if(yAxisIDs.length == 0){
-      graphConfig.scales.y={
-        grid: { color: tailwindColors.gray[600] },
+    if (yAxisIDs.length == 0) {
+      graphConfig.scales.y = {
+        grid: { color: tailwindColors.gray[500] },
       }
-    }else{
+    } else {
       delete graphConfig.scales.y
     }
-    
+
     yAxisIDs.forEach((yAxisID, index) => {
       scales[yAxisID] = {
         position: 'left', // Only on Left
         grid: {
-          color: tailwindColors.gray[600],
+          color: tailwindColors.gray[500],
           drawOnChartArea: index === 0, // Only draw grid lines for the first axis
         },
         title: {
@@ -175,12 +177,12 @@ export default function Graph({ data, events, graphConfig }) {
         },
       }
     })
-    
+
     setConfig({
       ...graphConfig,
       scales: {
         ...graphConfig.scales,
-        ...scales
+        ...scales,
       },
     })
   }, [data])

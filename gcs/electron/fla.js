@@ -12,6 +12,7 @@ function parseDataflashLogFile(fileData, webContents) {
 
   const formatMessages = {}
   const messages = {}
+  const units = {}
   const numberOfLines = fileData.length
   for (const [idx, line] of fileData.entries()) {
     const splitLineData = line.split(',').map(function (item) {
@@ -39,8 +40,22 @@ function parseDataflashLogFile(fileData, webContents) {
       // }
     } else if (messageName === 'UNIT') {
       // Message mapping from single character to SI unit
+      const unitId = splitLineData[2]
+      const unitName = splitLineData[3]
+      units[String.fromCharCode(unitId)] = unitName
     } else if (messageName === 'FMTU') {
       // Message defining units and multipliers used for fields of other messages
+      const messageType = parseInt(splitLineData[2])
+      const messageUnits = splitLineData[3]
+      const messageMultiplier = splitLineData[4]
+
+      Object.keys(formatMessages).forEach((formatMessageName) => {
+        const formatMessage = formatMessages[formatMessageName]
+        if (formatMessage.type === messageType) {
+          formatMessage.units = messageUnits
+          formatMessage.multiplier = messageMultiplier
+        }
+      })
     } else if (messageName === 'MULT') {
       // Message mapping from single character to numeric multiplier
     } else if (messageName === 'PARM') {
@@ -98,6 +113,7 @@ function parseDataflashLogFile(fileData, webContents) {
 
   // Add format messages to messages for later digesting and return
   messages['format'] = formatMessages
+  messages['units'] = units
   return messages
 }
 

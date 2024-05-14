@@ -54,7 +54,6 @@ export default function Config() {
     socket.on('gripper_enabled', setGripperEnabled)
 
     socket.on('set_gripper_result', (data) => {
-      console.log(data)
       if (data.success) {
         showSuccessNotification(data.message)
       } else {

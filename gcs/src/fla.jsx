@@ -92,6 +92,9 @@ export default function FLA() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
 
+  const [units, setUnits] = useState({})
+  const [formatMessages, setFormatMessages] = useState({})
+
   const [logMessages, setLogMessages] = useState(null)
   const [logEvents, setLogEvents] = useState(null)
   const [flightModeMessages, setFlightModeMessages] = useState([])
@@ -104,8 +107,6 @@ export default function FLA() {
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
 
-  const [units, setUnits] = useState({})
-  const [formatMessages, setFormatMessages] = useState({})
   // Load file, if set, and show the graph
   async function loadFile() {
     if (file != null) {
@@ -446,7 +447,6 @@ export default function FLA() {
       if (fieldIndex !== -1 && formatMessage.units) {
         const unitId = formatMessage.units[fieldIndex]
         if (unitId in units) {
-          console.log(units)
           return units[unitId]
         }
       }

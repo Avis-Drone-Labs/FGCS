@@ -42,7 +42,6 @@ export default function BitmaskSelect({ className, value, onChange, param, optio
       initialValue,
     )
     selectedHandler.setState(value)
-    console.log(bitmask)
     onChange(bitmask, param)
   }
 

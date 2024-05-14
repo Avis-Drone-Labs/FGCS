@@ -166,45 +166,8 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
   }, [graphConfig])
 
   useEffect(() => {
-    const yAxisIDs = [
-      ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
-    ]
-    const scales = {}
-
-    if (yAxisIDs.length == 0) {
-      graphConfig.scales.y = {
-        grid: { color: tailwindColors.gray[500] },
-      }
-    } else {
-      delete graphConfig.scales.y
-    }
-
-    yAxisIDs.forEach((yAxisID, index) => {
-      scales[yAxisID] = {
-        position: 'left', // Only on Left
-        grid: {
-          color: tailwindColors.gray[500],
-          drawOnChartArea: index === 0, // Only draw grid lines for the first axis
-        },
-        title: {
-          display: true,
-          text: yAxisID,
-        },
-      }
-    })
-
-    setConfig({
-      ...graphConfig,
-      scales: {
-        ...graphConfig.scales,
-        ...scales,
-      },
-    })
-  }, [data])
-
-  useEffect(() => {
     const annotations = []
-    
+
     if (events !== null) {
       events.forEach((event) => {
         annotations.push({
@@ -285,8 +248,39 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
       }
     }
 
+    const yAxisIDs = [
+      ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
+    ]
+    const scales = {}
+
+    if (yAxisIDs.length === 0) {
+      graphConfig.scales.y = {
+        grid: { color: tailwindColors.gray[500] },
+      }
+    } else {
+      delete graphConfig.scales.y
+    }
+
+    yAxisIDs.forEach((yAxisID, index) => {
+      scales[yAxisID] = {
+        position: 'left', // Only on Left
+        grid: {
+          color: tailwindColors.gray[500],
+          drawOnChartArea: index === 0, // Only draw grid lines for the first axis
+        },
+        title: {
+          display: true,
+          text: yAxisID,
+        },
+      }
+    })
+
     setConfig({
       ...config,
+      scales: {
+        ...config.scales,
+        ...scales,
+      },
       plugins: {
         ...config.plugins,
         annotation: {

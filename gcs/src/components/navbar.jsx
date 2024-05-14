@@ -12,11 +12,13 @@ import { Link } from 'react-router-dom'
 import ComPortModal from './comPortModal.jsx'
 
 // Third party imports
+import { Button, Tooltip } from '@mantine/core'
 import {
-  Button,
-  Tooltip,
-} from '@mantine/core'
-import { useDisclosure, useInterval, useLocalStorage, useSessionStorage } from '@mantine/hooks'
+  useDisclosure,
+  useInterval,
+  useLocalStorage,
+  useSessionStorage,
+} from '@mantine/hooks'
 
 // Styling imports
 import { twMerge } from 'tailwind-merge'
@@ -46,7 +48,7 @@ export default function Navbar({ currentPage }) {
   const [connectedToSocket, setConnectedToSocket] = useSessionStorage({
     key: 'socketConnection',
     defaultValue: false,
-  });
+  })
   const checkIfConnectedToSocket = useInterval(
     () => setConnectedToSocket(socket.connected),
     3000,
@@ -54,6 +56,11 @@ export default function Navbar({ currentPage }) {
   const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
     key: 'baudrate',
     defaultValue: '9600',
+  })
+
+  const [aircraftType, setAircraftType] = useLocalStorage({
+    key: 'aircraftType',
+    defaultValue: 0,
   })
 
   // Com Ports
@@ -104,8 +111,9 @@ export default function Navbar({ currentPage }) {
     })
 
     // Flags that the drone is connected
-    socket.on('connected_to_drone', () => {
-      console.log('connected to drone')
+    socket.on('connected_to_drone', (data) => {
+      console.log(`connected to drone of type ${data.aircraft_type}`)
+      setAircraftType(data.aircraft_type)
       setConnected(true)
       setConnecting(false)
       close()
@@ -159,7 +167,7 @@ export default function Navbar({ currentPage }) {
 
   const linkClassName =
     'text-md hover:text-falconred-60 transition-colors delay-50'
-  
+
   return (
     <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
       <ComPortModal
@@ -230,10 +238,14 @@ export default function Navbar({ currentPage }) {
         <p>{connected && selectedComPort}</p>
         {connectedToSocket ? (
           <Button
-            onClick={connected ? disconnect : () => {
-                getComPorts(); 
-                open()
-            }}
+            onClick={
+              connected
+                ? disconnect
+                : () => {
+                    getComPorts()
+                    open()
+                  }
+            }
             color={
               connected ? tailwindColors.red[600] : tailwindColors.green[600]
             }

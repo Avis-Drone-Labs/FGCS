@@ -85,7 +85,7 @@ def setComPort(data: SetComPortType) -> None:
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
     logger.debug("Created drone instance")
-    socketio.emit("connected_to_drone")
+    socketio.emit("connected_to_drone", {"aircraft_type": drone.aircraft_type})
 
 
 @socketio.on("disconnect_from_drone")

@@ -33,18 +33,21 @@ const FLIGHT_MODE_PWM_VALUES = [
   [1750],
 ]
 
-const flightModesSelectValuesMap = Object.keys(
-  COPTER_MODES_FLIGHT_MODE_MAP,
-).map((mappedFlightModeNumber) => ({
-  value: mappedFlightModeNumber.toString(),
-  label: COPTER_MODES_FLIGHT_MODE_MAP[mappedFlightModeNumber],
-}))
-
 export default function FlightModes() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
   })
+
+  function getCurrentFlightMap(currentFlightState) {
+    if (currentFlightState === 1) {
+      return PLANE_MODES_FLIGHT_MODE_MAP
+    } else if (currentFlightState === 2) {
+      return COPTER_MODES_FLIGHT_MODE_MAP
+    }
+
+    return {}
+  }
 
   const [flightModes, flightModesHandler] = useListState([
     'UNKNOWN',
@@ -56,9 +59,19 @@ export default function FlightModes() {
   ])
   const [flightModeChannel, setFlightModeChannel] = useState('UNKNOWN')
   const [currentFlightMode, setCurrentFlightMode] = useState('UNKNOWN')
+  const [aircraftType] = useLocalStorage({
+    key: 'aircraftType',
+  })
   const [currentPwmValue, setCurrentPwmValue] = useState(0)
   const [refreshingFlightModeData, setRefreshingFlightModeData] =
     useState(false)
+
+  const flightModesSelectValuesMap = Object.keys(
+    getCurrentFlightMap(aircraftType),
+  ).map((mappedFlightModeNumber) => ({
+    value: mappedFlightModeNumber.toString(),
+    label: getCurrentFlightMap(aircraftType)[mappedFlightModeNumber],
+  }))
 
   useEffect(() => {
     if (!connected) {

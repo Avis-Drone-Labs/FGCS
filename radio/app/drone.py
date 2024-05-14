@@ -11,6 +11,11 @@ from threading import Thread
 from typing import Any, Callable, Dict, List, Optional
 
 import serial
+from flightModes import FlightModes
+from gripper import Gripper
+from mission import Mission
+from pymavlink import mavutil
+
 from app.customTypes import (
     IncomingParam,
     MotorTestAllValues,
@@ -19,10 +24,6 @@ from app.customTypes import (
     Response,
 )
 from app.utils import commandAccepted
-from flightModes import FlightModes
-from gripper import Gripper
-from mission import Mission
-from pymavlink import mavutil
 
 # Constants
 
@@ -96,6 +97,7 @@ class Drone:
             )
             return
 
+        self.aircraft_type = initial_heartbeat.type
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component

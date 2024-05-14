@@ -21,33 +21,6 @@ export const MAV_SEVERITY = [
   'DEBUG',
 ]
 
-export const PLANE_MODES = [
-  'MANUAL',
-  'CIRCLE',
-  'STABILIZE',
-  'TRAINING',
-  'ACRO',
-  'FBWA',
-  'FBWB',
-  'CRUISE',
-  'AUTOTUNE',
-  'AUTO',
-  'RTL',
-  'LOITER',
-  'TAKEOFF',
-  'AVOID_ADSB',
-  'GUIDED',
-  'INITIALISING',
-  'QSTABILIZE',
-  'QHOVER',
-  'QLOITER',
-  'QLAND',
-  'QRTL',
-  'QAUTOTUNE',
-  'QACRO',
-  'THERMAL',
-]
-
 export const PLANE_MODES_FLIGHT_MODE_MAP = {
   0: 'Manual',
   1: 'CIRCLE',
@@ -74,34 +47,6 @@ export const PLANE_MODES_FLIGHT_MODE_MAP = {
   24: 'THERMAL',
   25: 'Loiter to QLand',
 }
-
-export const COPTER_MODES = [
-  'STABILIZE',
-  'ACRO',
-  'ALT_HOLD',
-  'AUTO',
-  'GUIDED',
-  'LOITER',
-  'RTL',
-  'CIRCLE',
-  'LAND',
-  'DRIFT',
-  'SPORT',
-  'FLIP',
-  'AUTOTUNE',
-  'POSHOLD',
-  'BRAKE',
-  'THROW',
-  'AVOID_ADSB',
-  'GUIDED_NOGPS',
-  'SMART_RTL',
-  'FLOWHOLD',
-  'FOLLOW',
-  'ZIGZAG',
-  'SYSTEMID',
-  'AUTOROTATE',
-  'AUTO_RTL',
-]
 
 export const COPTER_MODES_FLIGHT_MODE_MAP = {
   0: 'Stabilize',

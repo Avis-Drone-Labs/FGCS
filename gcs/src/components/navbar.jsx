@@ -58,7 +58,7 @@ export default function Navbar({ currentPage }) {
     defaultValue: '9600',
   })
 
-  const [aircraftType, setAircraftType] = useLocalStorage({
+  const [setAircraftType] = useLocalStorage({
     key: 'aircraftType',
     defaultValue: 0,
   })

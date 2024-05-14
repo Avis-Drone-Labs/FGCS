@@ -95,28 +95,6 @@ export default function Graph({ data, events, graphConfig }) {
     img.src = originalDataURI
   }
 
-  function generateStackedScales(categoryNames) {
-    const scales = {...graphConfig.defaultOptions.scales,}
-
-    categoryNames.forEach((categoryName, index) => {
-      scales[categoryName] = {
-        position: 'left', // Only on Left
-        grid: {
-          color: tailwindColors.gray[600],
-          drawOnChartArea: index === 0, // Only draw grid lines for the first axis
-        },
-      }
-    })
-
-    setConfig({
-      ...graphConfig,
-      scales: {
-        ...graphConfig.scales,
-        ...scales
-      },
-    })
-  }
-
   function downloadGraphAsImage() {
     const height = chartRef?.current?.height
     const width = chartRef?.current?.width
@@ -183,6 +161,7 @@ export default function Graph({ data, events, graphConfig }) {
     }else{
       delete graphConfig.scales.y
     }
+    
     yAxisIDs.forEach((yAxisID, index) => {
       scales[yAxisID] = {
         position: 'left', // Only on Left

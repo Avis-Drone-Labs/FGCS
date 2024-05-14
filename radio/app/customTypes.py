@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Union
 
 from typing_extensions import NotRequired, TypedDict
 
@@ -13,12 +13,8 @@ class IncomingParam(TypedDict):
 
 class Response(TypedDict):
     success: bool
-    message: str
-
-
-class ResponseWithData(TypedDict):
-    success: bool
-    data: any
+    message: NotRequired[str]
+    data: NotRequired[Any]
 
 
 class MotorTestThrottleAndDuration(TypedDict):
@@ -30,3 +26,8 @@ class MotorTestAllValues(TypedDict):
     motorInstance: int
     throttle: int
     duration: int
+
+
+class SetFlightModeValueAndNumber(TypedDict):
+    mode_number: int
+    flight_mode: int

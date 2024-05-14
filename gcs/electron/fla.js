@@ -8,7 +8,7 @@ function parseDataflashLogFile(fileData, webContents) {
   // https://ardupilot.org/copter/docs/logmessages.html
   // https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Logger
 
-  const stringTypes = ['n', 'N', 'Z']
+  const stringTypes = ['n', 'N', 'Z', 'M']
 
   const formatMessages = {}
   const messages = {}
@@ -121,6 +121,10 @@ function parseFgcsTelemetryLogFile(fileData, webContents) {
   const formatMessages = {}
   const messages = {}
   const numberOfLines = fileData.length
+  if (numberOfLines < 2) {
+    return null
+  }
+
   for (const [idx, line] of fileData.entries()) {
     if (line.includes('==')) {
       // ignore lines which aren't meant for parsing

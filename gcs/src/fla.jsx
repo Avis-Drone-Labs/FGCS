@@ -11,7 +11,9 @@ import { Fragment, useEffect, useState } from 'react'
 import {
   Accordion,
   Button,
+  Divider,
   FileButton,
+  LoadingOverlay,
   Progress,
   ScrollArea,
   Tooltip,
@@ -22,6 +24,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
+import moment from 'moment'
 import ChartDataCard from './components/fla/chartDataCard.jsx'
 import Graph from './components/fla/graph'
 import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
@@ -83,18 +86,23 @@ const colorInputSwatch = [
 
 export default function FLA() {
   // States in react frontend
+  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
+
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+
   const [logMessages, setLogMessages] = useState(null)
   const [logEvents, setLogEvents] = useState(null)
-  const [chartData, setChartData] = useState({ datasets: [] })
+  const [flightModeMessages, setFlightModeMessages] = useState([])
+  const [logType, setLogType] = useState('dastaflash')
+
   const [messageFilters, setMessageFilters] = useState(null)
+  const [messageMeans, setMessageMeans] = useState({})
+
+  const [chartData, setChartData] = useState({ datasets: [] })
   const [customColors, setCustomColors] = useState({})
   const [colorIndex, setColorIndex] = useState(0)
-  const [messageMeans, setMessageMeans] = useState({})
-  const [logType, setLogType] = useState('dataflash')
-  const [graphConfig, setGraphConfig] = useState(dataflashOptions)
 
   const [units, setUnits] = useState({})
   const [formatMessages, setFormatMessages] = useState({})
@@ -104,12 +112,48 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
+      if (result === null) {
+        showErrorNotification('Error loading file, file not found.')
+        setLoadingFile(false)
+        return
+      }
+
       if (result.success) {
         // Load messages into states
+        setLoadingFile(false)
+
         const loadedLogMessages = result.messages
+
+        if (loadedLogMessages === null) {
+          showErrorNotification('Error loading file, no messages found.')
+          return
+        }
+
         setLogType(result.logType)
         setLogMessages(loadedLogMessages)
-        setLoadingFile(false)
+
+        if (result.logType === 'dataflash') {
+          setFlightModeMessages(loadedLogMessages.MODE)
+        } else if (result.logType === 'fgcs_telemetry') {
+          const modeMessages = []
+
+          // Get the heartbeat messages only where index is the first or last or the mode changes
+          for (let i = 0; i < loadedLogMessages.HEARTBEAT.length; i++) {
+            const msg = loadedLogMessages.HEARTBEAT[i]
+            if (
+              modeMessages.length === 0 ||
+              i === loadedLogMessages.HEARTBEAT.length - 1
+            ) {
+              modeMessages.push(msg)
+            } else {
+              const lastMsg = modeMessages[modeMessages.length - 1]
+              if (lastMsg.custom_mode !== msg.custom_mode) {
+                modeMessages.push(msg)
+              }
+            }
+          }
+          setFlightModeMessages(modeMessages)
+        }
 
         if ('units' in loadedLogMessages) {
           setUnits(loadedLogMessages['units'])
@@ -297,6 +341,13 @@ export default function FLA() {
       setLoadingFileProgress(message.percent)
     })
 
+    // Get a list of the recent FGCS telemetry logs
+    async function getFgcsLogs() {
+      setRecentFgcsLogs(await window.ipcRenderer.getFgcsLogs())
+    }
+
+    getFgcsLogs()
+
     return () => {
       window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
     }
@@ -317,6 +368,12 @@ export default function FLA() {
       Object.keys(filter.filters).map((categoryName) => {
         if (Object.keys(messageFilters).includes(categoryName)) {
           filter.filters[categoryName].map((field) => {
+            if (!(field in messageFilters[categoryName])) {
+              showErrorNotification(
+                `Your log file does not include ${categoryName}/${field} data`,
+              )
+              return
+            }
             newFilters[categoryName][field] = true
 
             // Assign a color
@@ -434,29 +491,52 @@ export default function FLA() {
     setChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
-  useEffect(() => {
-    // set the graph config options depending on the type of log file opened
-    if (logType === 'dataflash') {
-      setGraphConfig(dataflashOptions)
-    } else if (logType === 'fgcs_telemetry') {
-      setGraphConfig(fgcsOptions)
-    }
-  }, [logType])
-
   return (
     <Layout currentPage='fla'>
       {logMessages === null ? (
         // Open flight logs section
-        <div className='flex flex-col items-center justify-center h-full mx-auto w-min'>
-          <FileButton
-            color={tailwindColors.blue[600]}
-            variant='filled'
-            onChange={setFile}
-            accept={['.log', '.ftlog']}
-            loading={loadingFile}
-          >
-            {(props) => <Button {...props}>Analyse a log</Button>}
-          </FileButton>
+        <div className='flex flex-col items-center justify-center h-full mx-auto'>
+          <div className='flex flex-row gap-8 items-center justify-center'>
+            <FileButton
+              color={tailwindColors.blue[600]}
+              variant='filled'
+              onChange={setFile}
+              accept={['.log', '.ftlog']}
+              loading={loadingFile}
+            >
+              {(props) => <Button {...props}>Analyse a log</Button>}
+            </FileButton>
+            <Divider size='sm' orientation='vertical' />
+            <div className='relative'>
+              <LoadingOverlay
+                visible={recentFgcsLogs === null || loadingFile}
+              />
+              <div className='flex flex-col gap-2 items-center'>
+                <p className='font-bold'>Recent FGCS telemetry logs</p>
+                <ScrollArea h={250} offsetScrollbars>
+                  {recentFgcsLogs !== null &&
+                    recentFgcsLogs.map((log, idx) => (
+                      <div
+                        key={idx}
+                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-80 hover:rounded-sm w-80'
+                        onClick={() => setFile(log)}
+                      >
+                        <p>{log.name} </p>
+                        <div className='flex flex-row gap-2'>
+                          <p className='text-gray-400 text-sm'>
+                            {moment(log.name, 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                          </p>
+                          <p className='text-gray-400 text-sm'>
+                            {Math.round(log.size / 1024)}KB
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </ScrollArea>
+              </div>
+            </div>
+          </div>
+
           {loadingFile && (
             <Progress
               value={loadingFileProgress}
@@ -510,7 +590,7 @@ export default function FLA() {
                   <Accordion.Item key='messages' value='messages'>
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
-                      <Accordion multiple={false}>
+                      <Accordion multiple={true}>
                         {Object.keys(messageFilters).map((messageName, idx) => {
                           return (
                             <Fragment key={idx}>
@@ -535,7 +615,10 @@ export default function FLA() {
               <Graph
                 data={chartData}
                 events={logEvents}
-                graphConfig={graphConfig}
+                flightModes={flightModeMessages}
+                graphConfig={
+                  logType === 'dataflash' ? dataflashOptions : fgcsOptions
+                }
               />
 
               {/* Plots Setup */}

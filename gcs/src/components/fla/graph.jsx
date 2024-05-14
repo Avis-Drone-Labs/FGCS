@@ -1,3 +1,13 @@
+/*
+This graph component is responsible for rendering the graph for FLA. It includes
+a toolbar for different graph actions such as zooming and screenshotting, as well
+as graph annotations to show events or different flight modes.
+*/
+
+// Base imports
+import { useEffect, useRef, useState } from 'react'
+
+// 3rd party imports
 import { ActionIcon, Tooltip as MantineTooltip } from '@mantine/core'
 import { useToggle } from '@mantine/hooks'
 import {
@@ -22,10 +32,15 @@ import {
 } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import zoomPlugin from 'chartjs-plugin-zoom'
-import { useEffect, useRef, useState } from 'react'
+import createColormap from 'colormap'
 import { Line } from 'react-chartjs-2'
+
+// Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config.js'
+
+// Custom components and helpers
+import { COPTER_MODES_FLIGHT_MODE_MAP } from '../../helpers/mavlinkConstants.js'
 import { showSuccessNotification } from '../../helpers/notification.js'
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
@@ -58,7 +73,7 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, events, graphConfig }) {
+export default function Graph({ data, events, flightModes, graphConfig }) {
   const [config, setConfig] = useState({ ...graphConfig })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
@@ -188,9 +203,11 @@ export default function Graph({ data, events, graphConfig }) {
   }, [data])
 
   useEffect(() => {
+    const annotations = []
+    
     if (events !== null) {
-      const annotations = events.map((event) => {
-        return {
+      events.forEach((event) => {
+        annotations.push({
           type: 'line',
           mode: 'vertical',
           scaleID: 'x',
@@ -206,20 +223,78 @@ export default function Graph({ data, events, graphConfig }) {
             display: showEvents,
             position: 'start',
           },
-        }
-      })
-
-      setConfig({
-        ...config,
-        plugins: {
-          ...config.plugins,
-          annotation: {
-            annotations: annotations,
-          },
-        },
+        })
       })
     }
-  }, [events, showEvents])
+
+    if (flightModes?.length && data?.datasets?.length) {
+      let colors = createColormap({
+        colormap: 'hsv',
+        nshades: Math.max(11, flightModes.length), // HSV map requires at least 11 shades
+        format: 'rgbaString',
+        alpha: 0.035,
+      })
+
+      // Create a box annotation to show the different flight modes
+      for (let i = 0; i < flightModes.length; i++) {
+        const flightMode = flightModes[i]
+        const nextFlightMode = flightModes[i + 1]
+
+        const backgroundColor = colors[i]
+        // https://stackoverflow.com/a/8179549/10077669
+        const labelColor = backgroundColor.replace(/[^,]+(?=\))/, '1')
+
+        // Depending on log file, set different annotation config options
+        var labelContent = ''
+        var xMax = 'end'
+        if (flightMode.name === 'MODE') {
+          labelContent = flightMode.Mode
+        } else if (flightMode.name === 'HEARTBEAT') {
+          // TODO: Change if plane
+          labelContent = COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+          xMax = flightModes[0].TimeUS
+        }
+
+        const flightModeChange = {
+          type: 'box',
+          xScaleID: 'x',
+          yMin: 'end',
+          yMax: 'start',
+          xMin: flightMode.TimeUS,
+          xMax: xMax,
+          backgroundColor: backgroundColor,
+          borderWidth: 0,
+          display: true,
+          z: -100,
+          label: {
+            backgroundColor: tailwindColors.gray[800],
+            content: labelContent,
+            display: true,
+            position: { y: 'end', x: 'start' },
+            color: labelColor,
+          },
+        }
+
+        // If there is a next flight mode, then set the xMax of the current flight
+        // mode to the xMin of the next flight mode
+        if (nextFlightMode !== undefined) {
+          flightModeChange.xMax = nextFlightMode.TimeUS
+        }
+
+        annotations.push(flightModeChange)
+      }
+    }
+
+    setConfig({
+      ...config,
+      plugins: {
+        ...config.plugins,
+        annotation: {
+          annotations: annotations,
+        },
+      },
+    })
+  }, [events, showEvents, flightModes, data])
 
   return (
     <div>

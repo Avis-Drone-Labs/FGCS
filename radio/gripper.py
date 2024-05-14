@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import functools
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import serial
-from customTypes import Response
+from app.customTypes import Response
+from app.utils import commandAccepted
 from pymavlink import mavutil
-from utils import commandAccepted
 
 if TYPE_CHECKING:
-    from drone import Drone
+    from app.drone import Drone
 
 
 class Gripper:
@@ -25,14 +25,16 @@ class Gripper:
 
         gripper_enabled_response = self.drone.getSingleParam(param_name="GRIP_ENABLE")
         if not (gripper_enabled_response.get("success")):
-            print("Gripper is not enabled")
+            self.drone.logger.warning("Gripper is not enabled")
             return None
 
-        self.enabled = bool(gripper_enabled_response.get("data").param_value)
+        gripper_enabled_response_data = gripper_enabled_response.get("data")
+        if gripper_enabled_response_data:
+            self.enabled = bool(gripper_enabled_response_data.param_value)
         self.params = {}
 
         if not self.enabled:
-            print("Gripper is not enabled")
+            self.drone.logger.warning("Gripper is not enabled")
         else:
             self.params = {
                 "gripAutoclose": self.drone.getSingleParam("GRIP_AUTOCLOSE").get(
@@ -46,14 +48,14 @@ class Gripper:
                 "gripType": self.drone.getSingleParam("GRIP_TYPE").get("data"),
             }
 
-    # @staticmethod
-    def gripperEnabled(func: Callable) -> Callable:
+    @staticmethod
+    def gripperEnabled(func: Callable[..., Any]) -> Callable[..., Any]:
         """Runs the decorated function only if the gripper is enabled."""
 
         @functools.wraps(func)
-        def wrap(self, *args, **kwargs):
+        def wrap(self, *args: Any, **kwargs: Any) -> Any:
             if not self.enabled:
-                print("Gripper is not enabled")
+                self.drone.logger.error("Gripper is not enabled")
                 return False
             return func(self, *args, **kwargs)
 
@@ -64,10 +66,10 @@ class Gripper:
         """Sets the gripper to either release or grab.
 
         Args:
-            action (_type_): The action to perform on the gripper, either "release" or "grab"
+            action (str): The action to perform on the gripper, either "release" or "grab"
 
         Returns:
-            Response: _description_
+            Response
         """
         if action not in ["release", "grab"]:
             return {

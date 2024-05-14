@@ -76,7 +76,6 @@ export default function Graphs() {
   }, [connected])
 
   useEffect(() => {
-    console.log(selectValues)
     socket.on('incoming_msg', (msg) => {
       const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
       if (graphResults !== false) {
@@ -129,7 +128,6 @@ export default function Graphs() {
 
   function updateSelectValues(values) {
     const updatedSelectValues = { ...selectValues, ...values }
-    console.log('updatedSelectValues', updatedSelectValues)
     setSelectValues(updatedSelectValues)
   }
 
@@ -171,10 +169,10 @@ export default function Graphs() {
               setValue={updateSelectValues}
             />
           </div>
-          <GraphPanel 
-            selectValues={selectValues} 
-            graphRefs={graphRefs} 
-            graphColors={graphColors} 
+          <GraphPanel
+            selectValues={selectValues}
+            graphRefs={graphRefs}
+            graphColors={graphColors}
           />
         </div>
       ) : (

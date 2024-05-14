@@ -46,7 +46,16 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
-const ignoredMessages = ['ERR', 'EV', 'MSG', 'VER', 'TIMESYNC', 'PARAM_VALUE']
+const ignoredMessages = [
+  'ERR',
+  'EV',
+  'MSG',
+  'VER',
+  'TIMESYNC',
+  'PARAM_VALUE',
+  'units',
+  'format',
+]
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
 const colorPalette = [
   '#36a2eb',
@@ -82,6 +91,9 @@ export default function FLA() {
   const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+
+  const [units, setUnits] = useState({})
+  const [formatMessages, setFormatMessages] = useState({})
 
   const [logMessages, setLogMessages] = useState(null)
   const [logEvents, setLogEvents] = useState(null)
@@ -142,6 +154,14 @@ export default function FLA() {
             }
           }
           setFlightModeMessages(modeMessages)
+        }
+
+        if ('units' in loadedLogMessages) {
+          setUnits(loadedLogMessages['units'])
+        }
+
+        if ('format' in loadedLogMessages) {
+          setFormatMessages(loadedLogMessages['format'])
         }
 
         // Set the default state to false for all message filters
@@ -226,7 +246,7 @@ export default function FLA() {
 
     // Putting all raw data into a list
     Object.keys(loadedLogMessages).forEach((key) => {
-      if (key != 'format') {
+      if (!ignoredMessages.includes(key)) {
         let messageData = loadedLogMessages[key]
         let messageDataMeans = {}
 
@@ -368,9 +388,9 @@ export default function FLA() {
                     Object.keys(newColors).length % colorPalette.length
                   ]
               }
+              setColorIndex(Object.keys(newColors).length)
               return newColors
             })
-            setColorIndex(2) // this is risky.
           })
         } else {
           showErrorNotification(
@@ -416,6 +436,24 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  function getUnit(messageName, fieldName) {
+    if (messageName.includes('ESC')) {
+      messageName = 'ESC'
+    }
+
+    if (messageName in formatMessages) {
+      const formatMessage = formatMessages[messageName]
+      const fieldIndex = formatMessage.fields.indexOf(fieldName)
+      if (fieldIndex !== -1 && formatMessage.units) {
+        const unitId = formatMessage.units[fieldIndex]
+        if (unitId in units) {
+          return units[unitId]
+        }
+      }
+    }
+    return 'UNKNOWN'
+  }
+
   // Ensure file is loaded when selected
   useEffect(() => {
     if (file !== null) {
@@ -435,8 +473,10 @@ export default function FLA() {
         if (category[fieldName]) {
           const label = `${categoryName}/${fieldName}`
           const color = customColors[label]
+          const unit = getUnit(categoryName, fieldName)
           datasets.push({
             label: label,
+            yAxisID: unit,
             data: logMessages[categoryName].map((d) => ({
               x: d.TimeUS,
               y: d[fieldName],
@@ -600,6 +640,10 @@ export default function FLA() {
                     <Fragment key={item.label}>
                       <ChartDataCard
                         item={item}
+                        unit={getUnit(
+                          item.label.split('/')[0],
+                          item.label.split('/')[1],
+                        )}
                         messageMeans={messageMeans}
                         colorInputSwatch={colorInputSwatch}
                         changeColorFunc={changeColor}

@@ -58,7 +58,8 @@ export default function Navbar({ currentPage }) {
     defaultValue: '9600',
   })
 
-  const [setAircraftType] = useLocalStorage({
+  // eslint-disable-next-line no-unused-vars
+  const [aircraftType, setAircraftType] = useLocalStorage({
     key: 'aircraftType',
     defaultValue: 0,
   })

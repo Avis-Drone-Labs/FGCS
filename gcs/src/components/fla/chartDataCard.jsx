@@ -52,9 +52,8 @@ export default function ChartDataCard({
 
       {/* Min, max, min */}
       <Box className='w-full text-gray-400'>
-        Min: {messageMeans[item.label]['min']}, Max:{' '}
-        {messageMeans[item.label]['max']}, Mean:{' '}
-        {messageMeans[item.label]['mean']}
+        Min: {messageMeans[item.label]?.min}, Max:{' '}
+        {messageMeans[item.label]?.max}, Mean: {messageMeans[item.label]?.mean}
       </Box>
     </div>
   )

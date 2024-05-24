@@ -254,7 +254,7 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
     const scales = {}
 
     if (yAxisIDs.length === 0) {
-      graphConfig.scales.y = {
+      scales.y = {
         grid: { color: tailwindColors.gray[500] },
       }
     } else {
@@ -275,10 +275,11 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
       }
     })
 
+    scales.x = { ...config.scales.x }
+
     setConfig({
       ...config,
       scales: {
-        ...config.scales,
         ...scales,
       },
       plugins: {

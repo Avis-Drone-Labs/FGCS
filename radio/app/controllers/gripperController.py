@@ -14,7 +14,8 @@ if TYPE_CHECKING:
 
 class GripperController:
     def __init__(self, drone: Drone) -> None:
-        """The gripper controls all gripper-related actions.
+        """
+        The gripper controls all gripper-related actions.
 
         Args:
             drone (Drone): The main drone object
@@ -64,7 +65,8 @@ class GripperController:
 
     @staticmethod
     def gripperEnabled(func: Callable[..., Any]) -> Callable[..., Any]:
-        """Runs the decorated function only if the gripper is enabled."""
+        """
+        Runs the decorated function only if the gripper is enabled."""
 
         @functools.wraps(func)
         def wrap(self, *args: Any, **kwargs: Any) -> Any:
@@ -77,7 +79,8 @@ class GripperController:
 
     @gripperEnabled
     def setGripper(self, action: str) -> Response:
-        """Sets the gripper to either release or grab.
+        """
+        Sets the gripper to either release or grab.
 
         Args:
             action (str): The action to perform on the gripper, either "release" or "grab"

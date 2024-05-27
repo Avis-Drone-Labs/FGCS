@@ -13,7 +13,8 @@ if TYPE_CHECKING:
 
 class MotorTestController:
     def __init__(self, drone: Drone) -> None:
-        """The MotorTest controls all motor tests.
+        """
+        The MotorTest controls all motor tests.
 
         Args:
             drone (Drone): The main drone object
@@ -23,7 +24,8 @@ class MotorTestController:
     def checkMotorTestValues(
         self, data: MotorTestThrottleAndDuration
     ) -> tuple[int, int, Optional[str]]:
-        """Check the values for a motor test.
+        """
+        Check the values for a motor test.
 
         Args:
             data (MotorTestThrottleAndDuration): The data to check
@@ -48,7 +50,8 @@ class MotorTestController:
         return throttle, duration, None
 
     def testOneMotor(self, data: MotorTestAllValues) -> Response:
-        """Test a single motor.
+        """
+        Test a single motor.
 
         Args:
             data (MotorTestAllValues): The data for the motor test
@@ -63,7 +66,6 @@ class MotorTestController:
             return {"success": False, "message": err}
 
         motor_instance = data.get("motorInstance")
-
         if motor_instance is None:
             return {"success": False, "message": "No motor instance provided"}
 
@@ -104,7 +106,8 @@ class MotorTestController:
             }
 
     def testMotorSequence(self, data: MotorTestThrottleAndDuration) -> Response:
-        """Test a sequence of motors.
+        """
+        Test a sequence of motors.
 
         Args:
             data (MotorTestThrottleAndDuration): The data for the motor test
@@ -146,7 +149,8 @@ class MotorTestController:
             }
 
     def testAllMotors(self, data: MotorTestThrottleAndDuration) -> Response:
-        """Test all motors.
+        """
+        Test all motors.
 
         Args:
             data (MotorTestThrottleAndDuration): The data for the motor test

@@ -13,7 +13,8 @@ if TYPE_CHECKING:
 
 class ArmController:
     def __init__(self, drone: Drone) -> None:
-        """The Arm controller controls all arm/disarming operations.
+        """
+        The Arm controller controls all arm/disarming operations.
 
         Args:
             drone (Drone): The main drone object
@@ -21,7 +22,8 @@ class ArmController:
         self.drone = drone
 
     def arm(self, force: bool = False) -> Response:
-        """Arm the drone.
+        """
+        Arm the drone.
 
         Args:
             force (bool, optional): Option to force arm the drone. Defaults to False.
@@ -45,6 +47,7 @@ class ArmController:
             self.drone.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
+                # Wait for the drone to be armed fully after the command has been accepted
                 self.drone.logger.debug("Waiting for arm")
                 while not self.drone.armed:
                     time.sleep(0.05)
@@ -61,7 +64,8 @@ class ArmController:
         return {"success": False, "message": "Could not arm"}
 
     def disarm(self, force: bool = False) -> Response:
-        """Disarm the drone.
+        """
+        Disarm the drone.
 
         Args:
             force (bool, optional): Option to force disarm the drone. Defaults to False.
@@ -85,6 +89,7 @@ class ArmController:
             self.drone.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
+                # Wait for the drone to be disarmed fully after the command has been accepted
                 self.drone.logger.debug("Waiting for disarm")
                 while self.drone.armed:
                     time.sleep(0.05)

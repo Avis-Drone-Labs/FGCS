@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 
 class ParamsController:
     def __init__(self, drone: Drone) -> None:
-        """The Params controller controls all parameter related operations.
+        """
+        The Params controller controls all parameter related operations.
 
         Args:
             drone (Drone): The main drone object
@@ -30,7 +31,8 @@ class ParamsController:
     def getSingleParam(
         self, param_name: str, timeout: Optional[float] = 1.5
     ) -> Response:
-        """Gets a specific parameter value.
+        """
+        Gets a specific parameter value.
 
         Args:
             param_name (str): The name of the parameter to get
@@ -49,33 +51,34 @@ class ParamsController:
             -1,
         )
 
-        while True:
-            try:
-                response = self.drone.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=timeout
-                )
-                if response and response.param_id == param_name:
-                    self.drone.is_listening = True
-                    return {
-                        "success": True,
-                        "data": response,
-                    }
-                else:
-                    self.drone.is_listening = True
-                    return {
-                        "success": False,
-                        "message": failure_message,
-                    }
-
-            except serial.serialutil.SerialException:
+        try:
+            response = self.drone.master.recv_match(
+                type="PARAM_VALUE", blocking=True, timeout=timeout
+            )
+            if response and response.param_id == param_name:
+                self.drone.is_listening = True
+                return {
+                    "success": True,
+                    "data": response,
+                }
+            else:
                 self.drone.is_listening = True
                 return {
                     "success": False,
-                    "message": f"{failure_message}, serial exception",
+                    "message": failure_message,
                 }
 
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": f"{failure_message}, serial exception",
+            }
+
     def getAllParams(self) -> None:
-        """Request all parameters from the drone."""
+        """
+        Request all parameters from the drone.
+        """
         self.drone.stopAllDataStreams()
         self.drone.is_listening = False
 
@@ -88,7 +91,9 @@ class ParamsController:
         self.is_requesting_params = True
 
     def getAllParamsThreadFunc(self) -> None:
-        """The thread function to get all parameters from the drone."""
+        """
+        The thread function to get all parameters from the drone.
+        """
         timeout = time.time() + 60 * 3  # 3 minutes from now
 
         while True:
@@ -129,7 +134,8 @@ class ParamsController:
                 return
 
     def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
-        """Sets multiple parameters on the drone.
+        """
+        Sets multiple parameters on the drone.
 
         Args:
             params_list (list[IncomingParam]): The list of parameters to set
@@ -160,7 +166,8 @@ class ParamsController:
         param_type: int,
         retries: int = 3,
     ) -> bool:
-        """Sets a single parameter on the drone.
+        """
+        Sets a single parameter on the drone.
 
         Args:
             param_name (str): The name of the parameter to set
@@ -209,6 +216,7 @@ class ParamsController:
             self.drone.is_listening = True
             return False
 
+        # Keep trying to set the parameter until we get an ack or run out of retries or timeout
         while retries > 0 and not got_ack:
             retries -= 1
             self.drone.master.param_set_send(
@@ -237,7 +245,8 @@ class ParamsController:
         return True
 
     def saveParam(self, param_name: str, param_value: Number, param_type: int) -> None:
-        """Save a parameter to the params list.
+        """
+        Save a parameter to the params list.
 
         Args:
             param_name (str): The name of the parameter

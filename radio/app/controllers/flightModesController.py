@@ -24,7 +24,8 @@ FLIGHT_MODES = [
 
 class FlightModesController:
     def __init__(self, drone: Drone) -> None:
-        """The flight modes class controls all flight mode related actions.
+        """
+        The flight modes class controls all flight mode related actions.
 
         Args:
             drone (Drone): The main drone object
@@ -38,7 +39,8 @@ class FlightModesController:
         self.getFlightModeChannel()
 
     def getFlightModes(self) -> None:
-        """Get the current flight modes of the drone."""
+        """
+        Get the current flight modes of the drone."""
         self.flight_modes = []
         for mode in FLIGHT_MODES:
             flight_mode = self.drone.paramsController.getSingleParam(mode)
@@ -51,7 +53,8 @@ class FlightModesController:
                 self.flight_modes.append("UNKNOWN")
 
     def getFlightModeChannel(self) -> None:
-        """Get the flight mode channel of the drone."""
+        """
+        Get the flight mode channel of the drone."""
         self.flight_mode_channel = "UNKNOWN"
         flight_mode_channel = self.drone.paramsController.getSingleParam("FLTMODE_CH")
 
@@ -63,12 +66,14 @@ class FlightModesController:
             self.drone.logger.error(flight_mode_channel.get("message"))
 
     def refreshData(self) -> None:
-        """Refresh the flight mode data."""
+        """
+        Refresh the flight mode data."""
         self.getFlightModes()
         self.getFlightModeChannel()
 
     def setFlightMode(self, mode_number: int, flight_mode: int) -> Response:
-        """Set the flight mode of the drone.
+        """
+        Set the flight mode of the drone.
 
         Args:
             mode_number (int): The flight mode number

@@ -97,20 +97,23 @@ class FlightModesController:
             f"FLTMODE{mode_number}", flight_mode, param_type
         )
 
+        if self.drone.aircraft_type == 1:
+            mode_name = mavutil.mavlink.enums["PLANE_MODE"][flight_mode].name
+        else:
+            mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
+
         if param_set_success:
-            self.drone.logger.info(
-                f"Flight mode {mode_number} set to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}"
-            )
+            self.drone.logger.info(f"Flight mode {mode_number} set to {mode_name}")
             self.flight_modes[mode_number - 1] = flight_mode
 
             return {
                 "success": True,
-                "message": f"Flight mode {mode_number} set to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}",
+                "message": f"Flight mode {mode_number} set to {mode_name}",
             }
         else:
             return {
                 "success": False,
-                "message": f"Failed to set flight mode {mode_number} to {mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name}",
+                "message": f"Failed to set flight mode {mode_number} to {mode_name}",
             }
 
     def setCurrentFlightMode(self, flightMode: int) -> Response:

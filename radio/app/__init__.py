@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 
 from flask import Flask
@@ -17,7 +16,7 @@ flask_logger.setLevel(logging.INFO)
 socketio = SocketIO(cors_allowed_origins="*")
 
 
-def create_app(debug: bool = False) -> Any:
+def create_app(debug: bool = False) -> Flask:
     """
     Creates the flask/socketio application.
 

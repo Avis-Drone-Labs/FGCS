@@ -52,6 +52,9 @@ export default function Dashboard() {
     key: 'connectedToDrone',
     defaultValue: false,
   })
+  const [aircraftType] = useLocalStorage({
+    key: 'aircraftType',
+  })
   const [telemetryData, setTelemetryData] = useState({})
   const [gpsData, setGpsData] = useState({})
   const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
@@ -173,15 +176,23 @@ export default function Dashboard() {
   }, [heartbeatData])
 
   function getFlightMode() {
-    if (!heartbeatData.type) {
-      return 'UNKNOWN'
-    } else if (heartbeatData.type === 1) {
+    if (aircraftType === 1) {
       return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
-    } else if (heartbeatData.type === 2) {
+    } else if (aircraftType === 2) {
       return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
     }
 
     return 'UNKNOWN'
+  }
+
+  function getFlightModeMap() {
+    if (aircraftType === 1) {
+      return PLANE_MODES_FLIGHT_MODE_MAP
+    } else if (aircraftType === 2) {
+      return COPTER_MODES_FLIGHT_MODE_MAP
+    }
+
+    return {}
   }
 
   function getIsArmed() {
@@ -345,10 +356,10 @@ export default function Dashboard() {
                   onChange={(value) => {
                     setNewFlightModeNumber(parseInt(value))
                   }}
-                  data={Object.keys(COPTER_MODES_FLIGHT_MODE_MAP).map((key) => {
+                  data={Object.keys(getFlightModeMap()).map((key) => {
                     return {
                       value: key,
-                      label: COPTER_MODES_FLIGHT_MODE_MAP[key],
+                      label: getFlightModeMap()[key],
                     }
                   })}
                 />

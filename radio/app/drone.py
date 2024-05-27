@@ -12,8 +12,8 @@ from typing import Callable, Dict, List, Optional
 import serial
 from pymavlink import mavutil
 
-from app.controllers.flightModesController import FlightModesController
 from app.controllers.armController import ArmController
+from app.controllers.flightModesController import FlightModesController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
@@ -93,6 +93,7 @@ class Drone:
             )
             return
 
+        self.aircraft_type = initial_heartbeat.type
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component

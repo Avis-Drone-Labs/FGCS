@@ -3,17 +3,30 @@
 */
 
 // Base imports
-import { memo } from "react"
+import { memo, useEffect, useState } from 'react'
 
 // 3rd party imports
-import { ScrollArea, Tooltip } from "@mantine/core"
+import { ScrollArea, Tooltip } from '@mantine/core'
+import { useLocalStorage } from '@mantine/hooks'
 
 // Custom components, helpers and data
-import ValueInput from "./valueInput"
-import apmParamDefs from '../../../data/gen_apm_params_def.json'
+import apmParamDefsCopter from '../../../data/gen_apm_params_def_copter.json'
+import apmParamDefsPlane from '../../../data/gen_apm_params_def_plane.json'
+import ValueInput from './valueInput'
 
 const RowItem = memo(({ param, style, onChange }) => {
-  const paramDef = apmParamDefs[param.param_id]
+  const [aircraftType] = useLocalStorage({
+    key: 'aircraftType',
+  })
+  const [paramDef, setParamDef] = useState({})
+
+  useEffect(() => {
+    if (aircraftType === 1) {
+      setParamDef(apmParamDefsPlane[param.param_id])
+    } else if (aircraftType === 2) {
+      setParamDef(apmParamDefsCopter[param.param_id])
+    }
+  }, [aircraftType, param])
 
   return (
     <div style={style} className='flex flex-row items-center space-x-4'>
@@ -27,7 +40,7 @@ const RowItem = memo(({ param, style, onChange }) => {
         onChange={onChange}
         className='w-3/12'
       />
-      
+
       <div className='w-1/2'>
         <ScrollArea.Autosize className='max-h-24'>
           {paramDef?.Description}

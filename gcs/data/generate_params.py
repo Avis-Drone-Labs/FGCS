@@ -1,7 +1,8 @@
 import json
 
+# https://autotest.ardupilot.org/Parameters/
 input_filename = "apm.pdef.json"
-output_filename = "gen_apm_params_def.json"
+output_filename = "gen_apm_params_def_plane.json"
 
 with open(input_filename, "r") as f:
     data = json.load(f)

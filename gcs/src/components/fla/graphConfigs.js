@@ -47,9 +47,6 @@ const defaultOptions = {
       type: 'linear',
       grid: { color: tailwindColors.gray[600] },
     },
-    y: {
-      grid: { color: tailwindColors.gray[600] },
-    },
   },
   elements: {
     point: {

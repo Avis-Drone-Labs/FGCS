@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
 import { Tooltip } from '@mantine/core'
+import arrow from "../../../public/arrow.svg"
 
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -70,7 +71,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             scale={0.1}
           >
             <img
-              src='/arrow.svg'
+              src={arrow}
               className='w-6 h-6'
               style={{ transform: `rotate(${heading ?? 0}deg)` }}
             />

@@ -28,3 +28,4 @@ release
 *.pdef.json
 
 package-lock.json
+.env

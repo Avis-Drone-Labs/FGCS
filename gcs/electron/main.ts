@@ -1,9 +1,11 @@
 import { BrowserWindow, app, ipcMain } from 'electron'
 import { glob } from 'glob'
+import { spawn } from "node:child_process"
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
-// @ts-ignore
+
+// @ts-expect-error - no types available
 import openFile from './fla'
 // The built directory structure
 //
@@ -24,41 +26,6 @@ let loadingWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
-// // Building exe
-// const PY_DIST_FOLDER = "../../radio/exe"
-// const PY_FOLDER = "../../radio"
-// const PY_MODULE = "api"
-
-// const guessPackaged = () => {
-//   const fullPath = path.join(__dirname, PY_DIST_FOLDER);
-//   return require("fs").existSync(fullPath);
-// }
-
-// const getScriptPath = () => {
-//   // exe not made
-//   if (!guessPackaged()) {
-//     return path.join(__dirname, PY_FOLDER, PY_MODULE + ".py")
-//   }
-
-//   // windows
-//   if (process.platform === "win32") {
-//     return path.join(__dirname, PY_DIST_FOLDER, PY_MODULE + ".exe")
-//   }
-  
-//   // linux/mac
-//   return path.join(__dirname, PY_DIST_FOLDER, PY_MODULE)
-// }
-
-// const createPyProc = () => {
-//   let script = getScriptPath()
-//   let pyProc;
-
-//   if (guessPackaged()) {
-//     pyProc = require('child_process').execFile(script)
-//   } else {
-//     pyProc = require('child_process').spawn('python', [script])
-//   }
-// }
 
 function createWindow() {
   win = new BrowserWindow({
@@ -142,5 +109,15 @@ app.whenReady().then(() => {
       }
     })
   })
+
+  const pythonBackend = spawn("extras/fgcs_backend.exe");
+
+  pythonBackend.stderr.on('data', (data) => {
+    console.error(`Backend: ${data}`);
+  })
+  pythonBackend.on('error', () => {
+    console.error('Failed to start backend.');
+  })
+
   createWindow()
 })

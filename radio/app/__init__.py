@@ -1,6 +1,5 @@
 import logging
 
-
 from flask import Flask
 from flask_socketio import SocketIO
 
@@ -13,7 +12,7 @@ flask_logger = logging.getLogger("werkzeug")
 flask_logger.setLevel(logging.INFO)
 
 
-socketio = SocketIO(cors_allowed_origins="*")
+socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 
 
 def create_app(debug: bool = False) -> Flask:

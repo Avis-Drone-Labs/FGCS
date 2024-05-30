@@ -1,5 +1,7 @@
-from app import create_app, socketio
 import app.droneStatus as droneStatus
+from app import create_app, socketio
+
+# from engineio import async_threading
 
 app = create_app(debug=True)
 

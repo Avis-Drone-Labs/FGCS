@@ -22,9 +22,10 @@ FLIGHT_MODES = [
 ]
 
 
-class FlightModes:
+class FlightModesController:
     def __init__(self, drone: Drone) -> None:
-        """The flight modes class controls all flight mode related actions.
+        """
+        The flight modes class controls all flight mode related actions.
 
         Args:
             drone (Drone): The main drone object
@@ -38,25 +39,24 @@ class FlightModes:
         self.getFlightModeChannel()
 
     def getFlightModes(self) -> None:
-        """Get the current flight modes of the drone."""
+        """
+        Get the current flight modes of the drone."""
         self.flight_modes = []
         for mode in FLIGHT_MODES:
-            flight_mode = self.drone.getSingleParam(mode)
+            flight_mode = self.drone.paramsController.getSingleParam(mode)
             if flight_mode.get("success"):
                 flight_mode_data = flight_mode.get("data")
                 if flight_mode_data:
-                    print(
-                        flight_mode_data.param_value, type(flight_mode_data.param_value)
-                    )
                     self.flight_modes.append(flight_mode_data.param_value)
             else:
                 self.drone.logger.error(flight_mode.get("message"))
                 self.flight_modes.append("UNKNOWN")
 
     def getFlightModeChannel(self) -> None:
-        """Get the flight mode channel of the drone."""
+        """
+        Get the flight mode channel of the drone."""
         self.flight_mode_channel = "UNKNOWN"
-        flight_mode_channel = self.drone.getSingleParam("FLTMODE_CH")
+        flight_mode_channel = self.drone.paramsController.getSingleParam("FLTMODE_CH")
 
         if flight_mode_channel.get("success"):
             flight_mode_channel_data = flight_mode_channel.get("data")
@@ -66,12 +66,14 @@ class FlightModes:
             self.drone.logger.error(flight_mode_channel.get("message"))
 
     def refreshData(self) -> None:
-        """Refresh the flight mode data."""
+        """
+        Refresh the flight mode data."""
         self.getFlightModes()
         self.getFlightModeChannel()
 
     def setFlightMode(self, mode_number: int, flight_mode: int) -> Response:
-        """Set the flight mode of the drone.
+        """
+        Set the flight mode of the drone.
 
         Args:
             mode_number (int): The flight mode number
@@ -91,19 +93,17 @@ class FlightModes:
 
         param_type = 2
 
-        param_set_success = self.drone.setParam(
+        param_set_success = self.drone.paramsController.setParam(
             f"FLTMODE{mode_number}", flight_mode, param_type
         )
 
         if self.drone.aircraft_type == 1:
-            mode_name = mavutil.mavlink.enums['PLANE_MODE'][flight_mode].name
+            mode_name = mavutil.mavlink.enums["PLANE_MODE"][flight_mode].name
         else:
-            mode_name = mavutil.mavlink.enums['COPTER_MODE'][flight_mode].name
+            mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
 
         if param_set_success:
-            self.drone.logger.info(
-                f"Flight mode {mode_number} set to {mode_name}"
-            )
+            self.drone.logger.info(f"Flight mode {mode_number} set to {mode_name}")
             self.flight_modes[mode_number - 1] = flight_mode
 
             return {
@@ -139,10 +139,14 @@ class FlightModes:
         )
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", timeout=5)
+            response = self.drone.master.recv_match(
+                type="COMMAND_ACK", blocking=True, timeout=3
+            )
+            print(response)
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
                 self.drone.is_listening = True
+                self.drone.logger.info("Flight mode set successfully")
                 return {"success": True, "message": "Flight mode set successfully"}
             else:
                 self.drone.is_listening = True

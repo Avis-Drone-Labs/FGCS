@@ -98,21 +98,27 @@ export default function RadioCalibration() {
   return (
     <div className='m-4 flex flex-row gap-4 relative'>
       <div className='flex flex-col gap-2 w-1/2'>
-        {Object.keys(channels).map((channel, idx) => (
-          <div key={idx} className='flex flex-row w-full items-center'>
-            <p className='w-24'>{getChannelName(channel)}</p>
-            <Progress.Root size='xl' className='w-full !h-6'>
-              <Progress.Section
-                value={getPercentageValueFromPWM(channels[channel])}
-                color={colors[idx]}
-              >
-                <Progress.Label className='!text-lg !font-normal'>
-                  {channels[channel]}
-                </Progress.Label>
-              </Progress.Section>
-            </Progress.Root>
-          </div>
-        ))}
+        {Object.keys(channels).length === 0 ? (
+          <p>No incoming RC data received.</p>
+        ) : (
+          <>
+            {Object.keys(channels).map((channel, idx) => (
+              <div key={idx} className='flex flex-row w-full items-center'>
+                <p className='w-24'>{getChannelName(channel)}</p>
+                <Progress.Root size='xl' className='w-full !h-6'>
+                  <Progress.Section
+                    value={getPercentageValueFromPWM(channels[channel])}
+                    color={colors[idx]}
+                  >
+                    <Progress.Label className='!text-lg !font-normal'>
+                      {channels[channel]}
+                    </Progress.Label>
+                  </Progress.Section>
+                </Progress.Root>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   )

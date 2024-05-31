@@ -15,10 +15,11 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../tailwind.config.js'
 
 // Custom components and helpers
-import Layout from './components/layout'
-import { socket } from './helpers/socket'
 import GraphPanel from './components/graphs/graphPanel.jsx'
 import MessageSelector from './components/graphs/messageSelector.jsx'
+import Layout from './components/layout'
+import NoDroneConnected from './components/noDroneConnected.jsx'
+import { socket } from './helpers/socket'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -176,11 +177,7 @@ export default function Graphs() {
           />
         </div>
       ) : (
-        <div className='flex items-center justify-center h-full'>
-          <p className='text-red-400'>
-            Not connected to drone. Please connect to view graphs
-          </p>
-        </div>
+        <NoDroneConnected />
       )}
     </Layout>
   )

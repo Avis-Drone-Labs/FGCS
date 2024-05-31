@@ -12,9 +12,10 @@ if TYPE_CHECKING:
     from app.drone import Drone
 
 
-class Gripper:
+class GripperController:
     def __init__(self, drone: Drone) -> None:
-        """The gripper controls all gripper-related actions.
+        """
+        The gripper controls all gripper-related actions.
 
         Args:
             drone (Drone): The main drone object
@@ -23,7 +24,9 @@ class Gripper:
 
         self.enabled = False
 
-        gripper_enabled_response = self.drone.getSingleParam(param_name="GRIP_ENABLE")
+        gripper_enabled_response = self.drone.paramsController.getSingleParam(
+            param_name="GRIP_ENABLE"
+        )
         if not (gripper_enabled_response.get("success")):
             self.drone.logger.warning("Gripper is not enabled")
             return None
@@ -37,20 +40,33 @@ class Gripper:
             self.drone.logger.warning("Gripper is not enabled")
         else:
             self.params = {
-                "gripAutoclose": self.drone.getSingleParam("GRIP_AUTOCLOSE").get(
+                "gripAutoclose": self.drone.paramsController.getSingleParam(
+                    "GRIP_AUTOCLOSE"
+                ).get("data"),
+                "gripCanId": self.drone.paramsController.getSingleParam(
+                    "GRIP_CAN_ID"
+                ).get("data"),
+                "gripGrab": self.drone.paramsController.getSingleParam("GRIP_GRAB").get(
                     "data"
                 ),
-                "gripCanId": self.drone.getSingleParam("GRIP_CAN_ID").get("data"),
-                "gripGrab": self.drone.getSingleParam("GRIP_GRAB").get("data"),
-                "gripNeutral": self.drone.getSingleParam("GRIP_NEUTRAL").get("data"),
-                "gripRegrab": self.drone.getSingleParam("GRIP_REGRAB").get("data"),
-                "gripRelease": self.drone.getSingleParam("GRIP_RELEASE").get("data"),
-                "gripType": self.drone.getSingleParam("GRIP_TYPE").get("data"),
+                "gripNeutral": self.drone.paramsController.getSingleParam(
+                    "GRIP_NEUTRAL"
+                ).get("data"),
+                "gripRegrab": self.drone.paramsController.getSingleParam(
+                    "GRIP_REGRAB"
+                ).get("data"),
+                "gripRelease": self.drone.paramsController.getSingleParam(
+                    "GRIP_RELEASE"
+                ).get("data"),
+                "gripType": self.drone.paramsController.getSingleParam("GRIP_TYPE").get(
+                    "data"
+                ),
             }
 
     @staticmethod
     def gripperEnabled(func: Callable[..., Any]) -> Callable[..., Any]:
-        """Runs the decorated function only if the gripper is enabled."""
+        """
+        Runs the decorated function only if the gripper is enabled."""
 
         @functools.wraps(func)
         def wrap(self, *args: Any, **kwargs: Any) -> Any:
@@ -63,7 +79,8 @@ class Gripper:
 
     @gripperEnabled
     def setGripper(self, action: str) -> Response:
-        """Sets the gripper to either release or grab.
+        """
+        Sets the gripper to either release or grab.
 
         Args:
             action (str): The action to perform on the gripper, either "release" or "grab"
@@ -76,6 +93,9 @@ class Gripper:
                 "success": False,
                 "message": 'Gripper action must be either "release" or "grab"',
             }
+
+        self.drone.is_listening = False
+
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_GRIPPER,
             0,
@@ -89,6 +109,8 @@ class Gripper:
 
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
                 return {

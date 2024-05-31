@@ -1,6 +1,6 @@
+import app.droneStatus as droneStatus
 from app import socketio
 from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration
-import app.droneStatus as droneStatus
 
 
 @socketio.on("test_one_motor")
@@ -14,7 +14,7 @@ def testOneMotor(data: MotorTestAllValues) -> None:
     if not droneStatus.drone:
         return
 
-    result = droneStatus.drone.testOneMotor(data)
+    result = droneStatus.drone.motorTestController.testOneMotor(data)
     socketio.emit(
         "motor_test_result",
         result,
@@ -32,7 +32,7 @@ def testMotorSequence(data: MotorTestThrottleAndDuration) -> None:
     if not droneStatus.drone:
         return
 
-    result = droneStatus.drone.testMotorSequence(data)
+    result = droneStatus.drone.motorTestController.testMotorSequence(data)
     socketio.emit("motor_test_result", result)
 
 
@@ -47,5 +47,5 @@ def testAllMotors(data: MotorTestThrottleAndDuration) -> None:
     if not droneStatus.drone:
         return
 
-    result = droneStatus.drone.testAllMotors(data)
+    result = droneStatus.drone.motorTestController.testAllMotors(data)
     socketio.emit("motor_test_result", result)

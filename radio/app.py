@@ -1,5 +1,5 @@
-from app import create_app, socketio
 import app.droneStatus as droneStatus
+from app import create_app, socketio
 
 app = create_app(debug=True)
 

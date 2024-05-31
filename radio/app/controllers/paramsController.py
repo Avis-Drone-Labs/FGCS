@@ -180,6 +180,7 @@ class ParamsController:
         """
         self.drone.is_listening = False
         got_ack = False
+        save_timeout = 5
 
         try:
             # Check if value fits inside the param type
@@ -223,7 +224,7 @@ class ParamsController:
                 param_name.upper(), vfloat, parm_type=param_type
             )
             tstart = time.time()
-            while time.time() - tstart < 2:
+            while time.time() - tstart < save_timeout:
                 ack = self.drone.master.recv_match(type="PARAM_VALUE")
                 if ack is None:
                     time.sleep(0.1)

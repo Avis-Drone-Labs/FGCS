@@ -139,7 +139,10 @@ class FlightModesController:
         )
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", timeout=5)
+            response = self.drone.master.recv_match(
+                type="COMMAND_ACK", blocking=True, timeout=3
+            )
+            print(response)
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
                 self.drone.is_listening = True

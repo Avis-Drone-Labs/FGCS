@@ -1,8 +1,11 @@
 import { BrowserWindow, app, ipcMain } from 'electron'
 import { glob } from 'glob'
+import { spawn } from "node:child_process"
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
+
+// @ts-expect-error - no types available
 import openFile from './fla'
 // The built directory structure
 //
@@ -22,6 +25,7 @@ let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+
 
 function createWindow() {
   win = new BrowserWindow({
@@ -105,5 +109,15 @@ app.whenReady().then(() => {
       }
     })
   })
+
+  const pythonBackend = spawn("extras/fgcs_backend.exe");
+
+  pythonBackend.stderr.on('data', (data) => {
+    console.error(`Backend: ${data}`);
+  })
+  pythonBackend.on('error', () => {
+    console.error('Failed to start backend.');
+  })
+
   createWindow()
 })

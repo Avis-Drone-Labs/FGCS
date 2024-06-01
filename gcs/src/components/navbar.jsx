@@ -80,7 +80,6 @@ export default function Navbar({ currentPage }) {
     checkIfConnectedToSocket.start()
 
     if (selectedComPort === null) {
-      console.log('check connection to drone')
       socket.emit('is_connected_to_drone')
     }
 
@@ -113,7 +112,6 @@ export default function Navbar({ currentPage }) {
 
     // Flags that the drone is connected
     socket.on('connected_to_drone', (data) => {
-      console.log(`connected to drone of type ${data.aircraft_type}`)
       setAircraftType(data.aircraft_type)
       setConnected(true)
       setConnecting(false)

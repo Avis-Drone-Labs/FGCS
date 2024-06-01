@@ -10,9 +10,10 @@ if TYPE_CHECKING:
     from app.drone import Drone
 
 
-class Mission:
+class MissionController:
     def __init__(self, drone: Drone) -> None:
-        """The mission class controls all mission-related actions.
+        """
+        The mission class controls all mission-related actions.
 
         Args:
             drone (Drone): The main drone object
@@ -46,7 +47,8 @@ class Mission:
             self.rally_items = rally_items.get("data", [])
 
     def getMissionItems(self, mission_type: int = 0) -> Response:
-        """Get all mission items of a specific type from the drone.
+        """
+        Get all mission items of a specific type from the drone.
 
         Args:
             mission_type (int, optional): The type of mission to get. 0=Mission,1=Fence,2=Rally.
@@ -117,7 +119,8 @@ class Mission:
             }
 
     def getItemDetails(self, item_number: int, mission_type: int = 0) -> Response:
-        """Get the details of a specific mission item.
+        """
+        Get the details of a specific mission item.
 
         Args:
             item_number (int): The number of the mission item to get

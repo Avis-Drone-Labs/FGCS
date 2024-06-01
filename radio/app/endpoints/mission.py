@@ -20,9 +20,15 @@ def getCurrentMission() -> None:
     if not droneStatus.drone:
         return
 
-    mission_items = [item.to_dict() for item in droneStatus.drone.mission.mission_items]
-    fence_items = [item.to_dict() for item in droneStatus.drone.mission.fence_items]
-    rally_items = [item.to_dict() for item in droneStatus.drone.mission.rally_items]
+    mission_items = [
+        item.to_dict() for item in droneStatus.drone.missionController.mission_items
+    ]
+    fence_items = [
+        item.to_dict() for item in droneStatus.drone.missionController.fence_items
+    ]
+    rally_items = [
+        item.to_dict() for item in droneStatus.drone.missionController.rally_items
+    ]
 
     socketio.emit(
         "current_mission",

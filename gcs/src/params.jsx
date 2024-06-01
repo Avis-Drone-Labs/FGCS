@@ -9,8 +9,6 @@ import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
 import { Progress } from '@mantine/core'
-import { FixedSizeList } from 'react-window'
-import AutoSizer from 'react-virtualized-auto-sizer'
 import {
   useDebouncedValue,
   useDisclosure,
@@ -18,17 +16,20 @@ import {
   useLocalStorage,
   useToggle,
 } from '@mantine/hooks'
+import AutoSizer from 'react-virtualized-auto-sizer'
+import { FixedSizeList } from 'react-window'
 
 // Custom components, helpers, and data
 import Layout from './components/layout.jsx'
-import { socket } from './helpers/socket.js'
-import { Row } from './components/params/row.jsx'
-import ParamsToolbar from './components/params/paramsToolbar.jsx'
+import NoDroneConnected from './components/noDroneConnected.jsx'
 import AutopilotRebootModal from './components/params/autopilotRebootModal.jsx'
+import ParamsToolbar from './components/params/paramsToolbar.jsx'
+import { Row } from './components/params/row.jsx'
 import {
   showErrorNotification,
   showSuccessNotification,
 } from './helpers/notification.js'
+import { socket } from './helpers/socket.js'
 
 export default function Params() {
   const [connected] = useLocalStorage({
@@ -208,51 +209,57 @@ export default function Params() {
 
   return (
     <Layout currentPage='params'>
-      <AutopilotRebootModal
-        rebootData={rebootData}
-        opened={opened}
-        onClose={close}
-      />
-
-      {fetchingVars && (
-        <Progress
-          radius='xs'
-          value={fetchingVarsProgress}
-          className='w-1/3 mx-auto my-auto'
-        />
-      )}
-
-      {Object.keys(params).length !== 0 && (
-        <div className='w-full h-full contents'>
-          <ParamsToolbar
-            searchValue={searchValue}
-            modifiedParams={modifiedParams}
-            showModifiedParams={showModifiedParams}
-            refreshCallback={refreshParams}
-            rebootCallback={rebootAutopilot}
-            modifiedCallback={showModifiedParamsToggle}
-            searchCallback={setSearchValue}
+      {connected ? (
+        <>
+          <AutopilotRebootModal
+            rebootData={rebootData}
+            opened={opened}
+            onClose={close}
           />
 
-          <div className='h-full w-2/3 mx-auto'>
-            <AutoSizer>
-              {({ height, width }) => (
-                <FixedSizeList
-                  height={height}
-                  width={width}
-                  itemSize={120}
-                  itemCount={shownParams.length}
-                  itemData={{
-                    params: shownParams,
-                    onChange: addToModifiedParams,
-                  }}
-                >
-                  {Row}
-                </FixedSizeList>
-              )}
-            </AutoSizer>
-          </div>
-        </div>
+          {fetchingVars && (
+            <Progress
+              radius='xs'
+              value={fetchingVarsProgress}
+              className='w-1/3 mx-auto my-auto'
+            />
+          )}
+
+          {Object.keys(params).length !== 0 && (
+            <div className='w-full h-full contents'>
+              <ParamsToolbar
+                searchValue={searchValue}
+                modifiedParams={modifiedParams}
+                showModifiedParams={showModifiedParams}
+                refreshCallback={refreshParams}
+                rebootCallback={rebootAutopilot}
+                modifiedCallback={showModifiedParamsToggle}
+                searchCallback={setSearchValue}
+              />
+
+              <div className='h-full w-2/3 mx-auto'>
+                <AutoSizer>
+                  {({ height, width }) => (
+                    <FixedSizeList
+                      height={height}
+                      width={width}
+                      itemSize={120}
+                      itemCount={shownParams.length}
+                      itemData={{
+                        params: shownParams,
+                        onChange: addToModifiedParams,
+                      }}
+                    >
+                      {Row}
+                    </FixedSizeList>
+                  )}
+                </AutoSizer>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <NoDroneConnected />
       )}
     </Layout>
   )

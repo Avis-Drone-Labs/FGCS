@@ -21,6 +21,7 @@ import Gripper from './components/config/gripper'
 import Motortestpanel from './components/config/motorTest'
 import RadioCalibration from './components/config/radioCalibration'
 import Layout from './components/layout'
+import NoDroneConnected from './components/noDroneConnected'
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -88,7 +89,7 @@ export default function Config() {
 
   return (
     <Layout currentPage='config'>
-      {
+      {connected ? (
         <div className='w-full h-full'>
           <Tabs
             orientation='vertical'
@@ -125,7 +126,9 @@ export default function Config() {
             </Tabs.Panel>
           </Tabs>
         </div>
-      }
+      ) : (
+        <NoDroneConnected />
+      )}
     </Layout>
   )
 }

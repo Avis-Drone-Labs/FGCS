@@ -3,14 +3,19 @@
 */
 
 // Base imports
-import { useEffect } from "react"
+import { useEffect } from 'react'
 
 // 3rd party imports
-import { useListState } from "@mantine/hooks"
-import { MultiSelect, ScrollArea } from "@mantine/core"
+import { useListState } from '@mantine/hooks'
+import { MultiSelect, ScrollArea } from '@mantine/core'
 
-
-export default function BitmaskSelect({ className, value, onChange, param, options }) {
+export default function BitmaskSelect({
+  className,
+  value,
+  onChange,
+  param,
+  options,
+}) {
   const [selected, selectedHandler] = useListState([])
 
   useEffect(() => {
@@ -23,13 +28,13 @@ export default function BitmaskSelect({ className, value, onChange, param, optio
     const selectedArray = []
 
     binaryString
-    .split('')
-    .reverse()
-    .map((bit, index) => {
-      if (bit === '1') {
-        selectedArray.push(`${index}`)
-      }
-    })
+      .split('')
+      .reverse()
+      .map((bit, index) => {
+        if (bit === '1') {
+          selectedArray.push(`${index}`)
+        }
+      })
 
     selectedHandler.setState(selectedArray)
   }
@@ -56,7 +61,7 @@ export default function BitmaskSelect({ className, value, onChange, param, optio
         onChange={createBitmask}
         data={Object.keys(options).map((key) => ({
           value: `${key}`,
-          label: `${options[key]}`
+          label: `${options[key]}`,
         }))}
       />
     </ScrollArea.Autosize>

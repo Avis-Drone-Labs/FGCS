@@ -1,8 +1,8 @@
 /*
-  The dashboard map. 
+  The dashboard map.
 
-  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet 
-  connection to load but this will be addressed in later versions of FGCS. Please check 
+  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet
+  connection to load but this will be addressed in later versions of FGCS. Please check
   docs/changelogs if this description has not been updated.
 */
 
@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
 import { Tooltip } from '@mantine/core'
-import arrow from "../../../public/arrow.svg"
+import arrow from '../../../public/arrow.svg'
 
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'

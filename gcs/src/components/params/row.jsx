@@ -4,7 +4,7 @@
 */
 
 // Custom components, helpers and data
-import RowItem from "./rowItem"
+import RowItem from './rowItem'
 
 export const Row = ({ data, index, style }) => {
   const param = data.params[index]

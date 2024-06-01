@@ -8,10 +8,16 @@
 import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import { Progress} from '@mantine/core'
+import { Progress } from '@mantine/core'
 import { FixedSizeList } from 'react-window'
 import AutoSizer from 'react-virtualized-auto-sizer'
-import { useDebouncedValue, useDisclosure, useListState, useLocalStorage, useToggle } from '@mantine/hooks'
+import {
+  useDebouncedValue,
+  useDisclosure,
+  useListState,
+  useLocalStorage,
+  useToggle,
+} from '@mantine/hooks'
 
 // Custom components, helpers, and data
 import Layout from './components/layout.jsx'
@@ -19,12 +25,12 @@ import { socket } from './helpers/socket.js'
 import { Row } from './components/params/row.jsx'
 import ParamsToolbar from './components/params/paramsToolbar.jsx'
 import AutopilotRebootModal from './components/params/autopilotRebootModal.jsx'
-import { showErrorNotification, showSuccessNotification } from './helpers/notification.js'
-
-
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from './helpers/notification.js'
 
 export default function Params() {
-
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: true,
@@ -86,17 +92,19 @@ export default function Params() {
    * @returns true if the given parameter is in modifiedParams, otherwise false
    */
   function isModified(param) {
-    return modifiedParams.find((obj) => { return obj.param_id === param.param_id})
+    return modifiedParams.find((obj) => {
+      return obj.param_id === param.param_id
+    })
   }
 
   /**
    * Updates the parameter value in the given useListState handler
-   * 
-   * @param {*} handler 
-   * @param {*} param 
-   * @param {*} value 
+   *
+   * @param {*} handler
+   * @param {*} param
+   * @param {*} value
    */
-  function updateParamValue(handler, param, value){
+  function updateParamValue(handler, param, value) {
     handler.applyWhere(
       (item) => item.param_id === param.param_id,
       (item) => ({ ...item, param_value: value }),
@@ -106,17 +114,16 @@ export default function Params() {
   /**
    * Adds a parameter to the list of parameters that have been modified since the
    * last save
-   * 
-   * @param {*} value 
-   * @param {*} param 
-   * @returns 
+   *
+   * @param {*} value
+   * @param {*} param
+   * @returns
    */
   function addToModifiedParams(value, param) {
     if (value === '') return
 
-    // If param has already been modified since last save then update it 
-    if (isModified(param)) 
-      updateParamValue(modifiedParamsHandler, param, value)
+    // If param has already been modified since last save then update it
+    if (isModified(param)) updateParamValue(modifiedParamsHandler, param, value)
     else {
       // Otherwise add it to modified params
       param.param_value = value
@@ -127,7 +134,6 @@ export default function Params() {
   }
 
   useEffect(() => {
-
     // Updates the autopilot modal depending on the success of the reboot
     socket.on('reboot_autopilot', (msg) => {
       setRebootData(msg)
@@ -176,7 +182,7 @@ export default function Params() {
       setFetchingVars(false)
     })
 
-    // 
+    //
     return () => {
       socket.off('params')
       socket.off('param_request_update')
@@ -190,21 +196,18 @@ export default function Params() {
     if (!params) return
 
     // Filter parameters based on search value
-    const filteredParams = (showModifiedParams ? modifiedParams : params).filter(
-      (param) =>
-        param.param_id
-          .toLowerCase()
-          .includes(debouncedSearchValue.toLowerCase()),
+    const filteredParams = (
+      showModifiedParams ? modifiedParams : params
+    ).filter((param) =>
+      param.param_id.toLowerCase().includes(debouncedSearchValue.toLowerCase()),
     )
 
     // Show the filtered parameters
     shownParamsHandler.setState(filteredParams)
   }, [debouncedSearchValue, showModifiedParams])
 
-
   return (
     <Layout currentPage='params'>
-
       <AutopilotRebootModal
         rebootData={rebootData}
         opened={opened}
@@ -243,7 +246,7 @@ export default function Params() {
                     params: shownParams,
                     onChange: addToModifiedParams,
                   }}
-                > 
+                >
                   {Row}
                 </FixedSizeList>
               )}

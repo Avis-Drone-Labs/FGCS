@@ -3,14 +3,14 @@
 */
 
 // 3rd party imports
-import { Button, Loader, Modal } from "@mantine/core";
+import { Button, Loader, Modal } from '@mantine/core'
 
 // Styling imports
 import tailwindConfig from '../../../tailwind.config.js'
 import resolveConfig from 'tailwindcss/resolveConfig'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function AutopilotRebootModal({rebootData, opened, onClose}){
+export default function AutopilotRebootModal({ rebootData, opened, onClose }) {
   return (
     <Modal
       opened={opened}
@@ -30,20 +30,20 @@ export default function AutopilotRebootModal({rebootData, opened, onClose}){
           <Loader />
         ) : (
           <>
-          {!rebootData.success && (
-            <>
-              <p className='my-2'>
-                {rebootData.message} You will need to reconnect.
-              </p>
-              <Button
-                onClick={close}
-                color={tailwindColors.red[600]}
-                className='mt-4'
-              >
-                Close
-              </Button>
-            </>
-          )}
+            {!rebootData.success && (
+              <>
+                <p className='my-2'>
+                  {rebootData.message} You will need to reconnect.
+                </p>
+                <Button
+                  onClick={close}
+                  color={tailwindColors.red[600]}
+                  className='mt-4'
+                >
+                  Close
+                </Button>
+              </>
+            )}
           </>
         )}
       </div>

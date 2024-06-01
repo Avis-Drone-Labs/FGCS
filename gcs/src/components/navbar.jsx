@@ -1,8 +1,8 @@
 /*
   The navbar component.
 
-  This is shown at the top of each page. To change this please look at the layout component as this 
-  is where it is loaded. This also handles the connections to the drone as this is always loaded, 
+  This is shown at the top of each page. To change this please look at the layout component as this
+  is where it is loaded. This also handles the connections to the drone as this is always loaded,
   in the future we may change this so that its loaded in its own component.
 */
 
@@ -26,6 +26,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config.js'
 
 // Helper imports
+import { IconAlertTriangle } from '@tabler/icons-react'
 import { showErrorNotification } from '../helpers/notification.js'
 import { socket } from '../helpers/socket'
 
@@ -34,6 +35,8 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export default function Navbar({ currentPage }) {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
+
+  const [outOfDate] = useSessionStorage({ key: 'outOfDate' })
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)
@@ -234,6 +237,15 @@ export default function Navbar({ currentPage }) {
       </Link>
 
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
+        {outOfDate && (
+          <a
+            href='https://github.com/Project-Falcon/FGCS/releases'
+            target='_blank'
+            className='flex flex-row gap-2 text-red-400 hover:text-red-600'
+          >
+            <IconAlertTriangle /> FGCS out of date
+          </a>
+        )}
         <p>{connected && selectedComPort}</p>
         {connectedToSocket ? (
           <Button

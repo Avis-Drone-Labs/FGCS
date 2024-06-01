@@ -1,4 +1,4 @@
-import { BrowserWindow, app, ipcMain } from 'electron'
+import { BrowserWindow, app, ipcMain, shell } from 'electron'
 import { glob } from 'glob'
 import { spawn } from "node:child_process"
 import fs from 'node:fs'
@@ -39,10 +39,19 @@ function createWindow() {
 
   win.setMenuBarVisibility(false)
 
+  // Open links in browser, not within the electron window.
+  // Note, links must have target="_blank"
+  win.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+
+    return { action: 'deny' }
+  })
+
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
+
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -109,12 +118,11 @@ app.whenReady().then(() => {
       }
     })
   })
+  ipcMain.handle('app:get-node-env', () => process.env.NODE_ENV)
+  ipcMain.handle('app:get-version', () => app.getVersion())
 
   const pythonBackend = spawn("extras/fgcs_backend.exe");
 
-  pythonBackend.stderr.on('data', (data) => {
-    console.error(`Backend: ${data}`);
-  })
   pythonBackend.on('error', () => {
     console.error('Failed to start backend.');
   })

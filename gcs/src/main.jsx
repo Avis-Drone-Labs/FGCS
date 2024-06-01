@@ -9,27 +9,28 @@ import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import Dashboard from './dashboard.jsx'
+import SingleRunWrapper from './components/SingleRunWrapper.jsx'
 import Config from './config.jsx'
+import Dashboard from './dashboard.jsx'
+import FLA from './fla.jsx'
 import Graphs from './graphs.jsx'
 import Params from './params.jsx'
-import FLA from './fla.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  // <React.StrictMode>
   <MantineProvider defaultColorScheme='dark'>
     <Notifications />
     <HashRouter>
-      <Routes>
-        <Route path='/' element={<Dashboard />} />
-        <Route path='/graphs' element={<Graphs />} />
-        <Route path='/params' element={<Params />} />
-        <Route path='/config' element={<Config />} />
-        <Route path='/fla' element={<FLA />} />
-      </Routes>
+      <SingleRunWrapper>
+        <Routes>
+          <Route path='/' element={<Dashboard />} />
+          <Route path='/graphs' element={<Graphs />} />
+          <Route path='/params' element={<Params />} />
+          <Route path='/config' element={<Config />} />
+          <Route path='/fla' element={<FLA />} />
+        </Routes>
+      </SingleRunWrapper>
     </HashRouter>
   </MantineProvider>,
-  // </React.StrictMode>,
 )
 
 // Remove Preload scripts loading

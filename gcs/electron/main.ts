@@ -123,17 +123,17 @@ app.whenReady().then(() => {
       }
     })
   })
-  ipcMain.handle('app:get-node-env', () => process.env.NODE_ENV)
+  ipcMain.handle('app:get-node-env', () => app.isPackaged ? 'production' : 'development')
   ipcMain.handle('app:get-version', () => app.getVersion())
 
-  if (process.env.NODE_ENV === 'production' && pythonBackend === null) {
+  if (app.isPackaged && pythonBackend === null) {
     console.log('Starting backend')
     pythonBackend = spawn("extras/fgcs_backend.exe");
 
-  pythonBackend.on('error', () => {
-    console.error('Failed to start backend.');
-  })
-}
+    pythonBackend.on('error', () => {
+      console.error('Failed to start backend.');
+    })
+  }
 
   createWindow()
 })

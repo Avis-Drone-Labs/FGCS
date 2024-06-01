@@ -94,6 +94,7 @@ app.on('window-all-closed', () => {
 
   console.log('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
+  // Windows
   spawn('taskkill /f /im fgcs_backend.exe', {shell:true})
 })
 

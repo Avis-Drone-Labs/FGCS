@@ -1,6 +1,6 @@
 import { BrowserWindow, app, ipcMain } from 'electron'
 import { glob } from 'glob'
-import { spawn } from "node:child_process"
+import { ChildProcessWithoutNullStreams, spawn } from "node:child_process"
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
@@ -26,6 +26,7 @@ let loadingWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
+let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
 function createWindow() {
   win = new BrowserWindow({
@@ -81,6 +82,10 @@ app.on('window-all-closed', () => {
     app.quit()
     win = null
   }
+
+  console.log('Killing backend')
+  // kill any processes with the name "fgcs_backend.exe"
+  spawn('taskkill /f /im fgcs_backend.exe', {shell:true})
 })
 
 app.on('activate', () => {
@@ -110,14 +115,17 @@ app.whenReady().then(() => {
     })
   })
 
-  const pythonBackend = spawn("extras/fgcs_backend.exe");
+  if (process.env.NODE_ENV === 'production' && pythonBackend === null) {
+    console.log('Starting backend')
+    pythonBackend = spawn("extras/fgcs_backend.exe");
 
-  pythonBackend.stderr.on('data', (data) => {
-    console.error(`Backend: ${data}`);
-  })
-  pythonBackend.on('error', () => {
-    console.error('Failed to start backend.');
-  })
+    pythonBackend.stderr.on('data', (data) => {
+      console.error(`Backend: ${data}`);
+    })
+    pythonBackend.on('error', () => {
+      console.error('Failed to start backend.');
+    })
+  }
 
   createWindow()
 })

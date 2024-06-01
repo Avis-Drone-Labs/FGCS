@@ -1,8 +1,6 @@
 import app.droneStatus as droneStatus
 from app import create_app, socketio
 
-# from engineio import async_threading
-
 app = create_app(debug=True)
 
 if __name__ == "__main__":

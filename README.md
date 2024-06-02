@@ -1,6 +1,6 @@
 # FGCS
 
-Falcon Ground Control Station.
+Falcon Ground Control Station. Learn more on our [website](https://fgcs.projectfalcon.uk)!
 
 ![UI Screenshot](ui.png)
 

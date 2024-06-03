@@ -42,13 +42,15 @@ Create a new Python virtual environment using `python -m venv venv`. This can th
 
 ### Running both simultaneously
 
+> NOTE: You don't _need_ to run them at the same time with 1 command, you can run each one individually in separate terminals
+
 To run both the frontend and backend at the same time, you need to make sure all the requirements are installed for both yarn and Python. Then you can install a script globally using `npm install -g concurrently`. After activating your Python virtual environment, you can run `./run.bat` and this should start up both the frontend and backend in one terminal.
 
 </details>
 
 <details><summary>Mac/Linux</summary>
 
-We currently dont have instructions for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them.
+We currently dont have instructions or releases for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them. Howerver, you can still run both the frontend and backend indivudally by following the windows version with slight alterations to the commands.
   
 </details>
 

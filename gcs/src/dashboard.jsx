@@ -47,6 +47,10 @@ import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import Layout from './components/layout'
 
+// Sounds
+import armSound from '../public/sounds/armed.mp3'
+import disarmSound from '../public/sounds/disarmed.mp3'
+
 export default function Dashboard() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
@@ -84,9 +88,9 @@ export default function Dashboard() {
 
   const mapRef = useRef()
 
-  const [playArmed] = useSound('/sounds/armed.mp3', { volume: 0.1 })
+  const [playArmed] = useSound(armSound, { volume: 0.1 })
 
-  const [playDisarmed] = useSound('/sounds/disarmed.mp3', { volume: 0.1 })
+  const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),

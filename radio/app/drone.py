@@ -1,6 +1,5 @@
 import copy
 import os
-import struct
 import time
 import traceback
 from logging import Logger, getLogger
@@ -8,21 +7,18 @@ from pathlib import Path
 from queue import Queue
 from secrets import token_hex
 from threading import Thread
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import serial
-from flightModes import FlightModes
-from gripper import Gripper
-from mission import Mission
 from pymavlink import mavutil
 
-from app.customTypes import (
-    IncomingParam,
-    MotorTestAllValues,
-    MotorTestThrottleAndDuration,
-    Number,
-    Response,
-)
+from app.controllers.armController import ArmController
+from app.controllers.flightModesController import FlightModesController
+from app.controllers.gripperController import GripperController
+from app.controllers.missionController import MissionController
+from app.controllers.motorTestController import MotorTestController
+from app.controllers.paramsController import ParamsController
+from app.customTypes import Response
 from app.utils import commandAccepted
 
 # Constants
@@ -124,18 +120,17 @@ class Drone:
         self.cleanTempLogs()
 
         self.is_active = True
-        self.is_requesting_params = False
-        self.current_param_index = 0
-        self.total_number_of_params = 0
+
         self.number_of_motors = 4  # Is there a way to get this from the drone?
-        self.params: List[Any] = []
 
         self.armed = False
 
-        self.flight_modes = FlightModes(self)
-
-        self.gripper = Gripper(self)
-        self.mission = Mission(self)
+        self.paramsController = ParamsController(self)
+        self.armController = ArmController(self)
+        self.flightModesController = FlightModesController(self)
+        self.motorTestController = MotorTestController(self)
+        self.gripperController = GripperController(self)
+        self.missionController = MissionController(self)
 
         self.stopAllDataStreams()
 
@@ -356,6 +351,7 @@ class Drone:
         """Check for messages from the drone and add them to the message queue."""
         while self.is_active:
             if not self.is_listening:
+                time.sleep(0.05)  # Sleep a bit to not clog up processing usage
                 continue
 
             try:
@@ -413,25 +409,6 @@ class Drone:
                     self.logger.info(msg.text)
 
                 # self.logger.debug(msg.msgname)
-
-                # TODO: maybe move PARAM_VALUE message receive logic into getAllParams
-
-                if self.is_requesting_params and msg.msgname != "PARAM_VALUE":
-                    continue
-
-                if self.is_requesting_params and msg.msgname == "PARAM_VALUE":
-                    self.saveParam(msg.param_id, msg.param_value, msg.param_type)
-
-                    self.current_param_index = msg.param_index
-
-                    if self.total_number_of_params != msg.param_count:
-                        self.total_number_of_params = msg.param_count
-
-                    if msg.param_index == msg.param_count - 1:
-                        self.is_requesting_params = False
-                        self.current_param_index = 0
-                        self.total_number_of_params = 0
-                        self.params = sorted(self.params, key=lambda k: k["param_id"])
 
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])
@@ -500,186 +477,6 @@ class Drone:
         self.sender_thread.start()
         self.log_thread.start()
 
-    def getSingleParam(
-        self, param_name: str, timeout: Optional[float] = 1.5
-    ) -> Response:
-        """Gets a specific parameter value.
-
-        Args:
-            param_name (str): The name of the parameter to get
-            timeout (float, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
-
-        Returns:
-            Response: The response from the retrieval of the specific parameter
-        """
-        self.is_listening = False
-        failure_message = f"Failed to get parameter {param_name}"
-
-        self.master.mav.param_request_read_send(
-            self.target_system, self.target_component, param_name.encode(), -1
-        )
-
-        while True:
-            try:
-                response = self.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=timeout
-                )
-                if response and response.param_id == param_name:
-                    self.is_listening = True
-                    return {
-                        "success": True,
-                        "data": response,
-                    }
-                else:
-                    self.is_listening = True
-                    return {
-                        "success": False,
-                        "message": failure_message,
-                    }
-
-            except serial.serialutil.SerialException:
-                self.is_listening = True
-                return {
-                    "success": False,
-                    "message": f"{failure_message}, serial exception",
-                }
-
-    def getAllParams(self) -> None:
-        """Request all parameters from the drone."""
-        self.stopAllDataStreams()
-
-        self.master.param_fetch_all()
-        self.is_requesting_params = True
-
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
-        """Sets multiple parameters on the drone.
-
-        Args:
-            params_list (list[IncomingParam]): The list of parameters to set
-
-        Returns:
-            bool: True if all parameters were set, False if any failed
-        """
-        if not params_list:
-            return False
-
-        for param in params_list:
-            param_id = param.get("param_id")
-            param_value = param.get("param_value")
-            param_type = param.get("param_type")
-            if not param_id or not param_value or not param_type:
-                continue
-
-            done = self.setParam(param_id, param_value, param_type)
-            if not done:
-                return False
-
-        return True
-
-    def setParam(
-        self,
-        param_name: str,
-        param_value: Number,
-        param_type: int,
-        retries: int = 3,
-    ) -> bool:
-        """Sets a single parameter on the drone.
-
-        Args:
-            param_name (str): The name of the parameter to set
-            param_value (Number): The value to set the parameter to
-            param_type (int): The type of the parameter
-            retries (int, optional): The number of times a parameter will be attempted to be set. Defaults to 3.
-
-        Returns:
-            bool: True if the parameter was set, False if it failed
-        """
-        self.is_listening = False
-        got_ack = False
-
-        try:
-            # Check if value fits inside the param type
-            # https://github.com/ArduPilot/pymavlink/blob/4d8c4ff274d41b9bc8da1a411cb172d39786e46b/mavparm.py#L30C10-L30C10
-            if (
-                param_type is not None
-                and param_type != mavutil.mavlink.MAV_PARAM_TYPE_REAL32
-            ):
-                # need to encode as a float for sending - not being used
-                if param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT8:
-                    struct.pack(">xxxB", int(param_value))
-                elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT8:
-                    struct.pack(">xxxb", int(param_value))
-                elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT16:
-                    struct.pack(">xxH", int(param_value))
-                elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT16:
-                    struct.pack(">xxh", int(param_value))
-                elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT32:
-                    struct.pack(">I", int(param_value))
-                elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT32:
-                    struct.pack(">i", int(param_value))
-                else:
-                    self.logger.error(
-                        "can't send %s of type %u" % (param_name, param_type)
-                    )
-                    self.is_listening = True
-                    return False
-                # vfloat, = struct.unpack(">f", vstr)
-            vfloat = float(param_value)
-        except struct.error as e:
-            self.logger.error(
-                f"Could not set parameter {param_name} with value {param_value}: {e}"
-            )
-            self.is_listening = True
-            return False
-
-        while retries > 0 and not got_ack:
-            retries -= 1
-            self.master.param_set_send(param_name.upper(), vfloat, parm_type=param_type)
-            tstart = time.time()
-            while time.time() - tstart < 2:
-                ack = self.master.recv_match(type="PARAM_VALUE")
-                if ack is None:
-                    time.sleep(0.1)
-                    continue
-                if str(param_name).upper() == str(ack.param_id).upper():
-                    got_ack = True
-                    self.logger.debug(
-                        f"Got parameter saving ack for {param_name} for value {param_value}"
-                    )
-                    self.saveParam(ack.param_id, ack.param_value, ack.param_type)
-                    break
-
-        if not got_ack:
-            self.logger.error(f"timeout setting {param_name} to {vfloat}")
-            self.is_listening = True
-            return False
-
-        self.is_listening = True
-        return True
-
-    def saveParam(self, param_name: str, param_value: Number, param_type: int) -> None:
-        """Save a parameter to the params list.
-
-        Args:
-            param_name (str): The name of the parameter
-            param_value (Number): The value of the parameter
-            param_type (int): The type of the parameter
-        """
-        existing_param_idx = next(
-            (i for i, x in enumerate(self.params) if x["param_id"] == param_name), None
-        )
-
-        if existing_param_idx is not None:
-            self.params[existing_param_idx]["param_value"] = param_value
-        else:
-            self.params.append(
-                {
-                    "param_id": param_name,
-                    "param_value": param_value,
-                    "param_type": param_type,
-                }
-            )
-
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
         self.is_listening = False
@@ -705,248 +502,6 @@ class Drone:
         except serial.serialutil.SerialException:
             self.logger.debug("Rebooting")
             self.close()
-
-    def arm(self, force: bool = False) -> Response:
-        """Arm the drone.
-
-        Args:
-            force (bool, optional): Option to force arm the drone. Defaults to False.
-
-        Returns:
-            Response: The response from the arm command
-        """
-        if self.armed:
-            return {"success": False, "message": "Already armed"}
-
-        self.is_listening = False
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-            param1=1,  # 0=disarm, 1=arm
-            param2=2989 if force else 0,  # force arm/disarm
-        )
-
-        try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.is_listening = True
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
-                self.logger.debug("Waiting for arm")
-                while not self.armed:
-                    time.sleep(0.05)
-                self.logger.debug("ARMED")
-                return {"success": True, "message": "Armed successfully"}
-            else:
-                self.logger.debug("Arming failed")
-        except Exception as e:
-            self.logger.error(e, exc_info=True)
-            if self.droneErrorCb:
-                self.droneErrorCb(str(e))
-                return {"success": False, "message": "Could not arm"}
-
-        return {"success": False, "message": "Could not arm"}
-
-    def disarm(self, force: bool = False) -> Response:
-        """Disarm the drone.
-
-        Args:
-            force (bool, optional): Option to force disarm the drone. Defaults to False.
-
-        Returns:
-            Response: The response from the disarm command
-        """
-        if not self.armed:
-            return {"success": False, "message": "Already disarmed"}
-
-        self.is_listening = False
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-            param1=0,  # 0=disarm, 1=arm
-            param2=2989 if force else 0,  # force arm/disarm
-        )
-
-        try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.is_listening = True
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
-                self.logger.debug("Waiting for disarm")
-                while self.armed:
-                    time.sleep(0.05)
-                self.logger.debug("DISARMED")
-                return {"success": True, "message": "Disarmed successfully"}
-            else:
-                self.logger.debug("Disarming failed")
-        except Exception as e:
-            self.logger.error(e, exc_info=True)
-            if self.droneErrorCb:
-                self.droneErrorCb(str(e))
-                return {"success": False, "message": "Could not disarm"}
-
-        return {"success": False, "message": "Could not disarm"}
-
-    def checkMotorTestValues(
-        self, data: MotorTestThrottleAndDuration
-    ) -> tuple[int, int, Optional[str]]:
-        """Check the values for a motor test.
-
-        Args:
-            data (MotorTestThrottleAndDuration): The data to check
-
-        Returns:
-            tuple[int, int, Optional[str]]: The throttle, duration, and error message if it exists
-        """
-        throttle = data.get("throttle", -1)
-        if 0 > throttle > 100:
-            return 0, 0, "Invalid value for throttle"
-
-        duration = data.get("duration", -1)
-        if duration < 0:
-            return 0, 0, "Invalid value for duration"
-
-        return throttle, duration, None
-
-    def testOneMotor(self, data: MotorTestAllValues) -> Response:
-        """Test a single motor.
-
-        Args:
-            data (MotorTestAllValues): The data for the motor test
-
-        Returns:
-            Response: The response from the motor test
-        """
-        self.is_listening = False
-
-        throttle, duration, err = self.checkMotorTestValues(data)
-        if err:
-            return {"success": False, "message": err}
-
-        motor_instance = data.get("motorInstance")
-
-        if motor_instance is None:
-            return {"success": False, "message": "No motor instance provided"}
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-            param1=motor_instance,  # ID of the motor to be tested
-            param2=0,  # throttle type (PWM,% etc)
-            param3=throttle,  # value of the throttle - 0 to 100%
-            param4=duration,  # duration of the test in seconds
-            param5=0,  # number of motors to test in a sequence
-            param6=0,  # test order
-        )
-
-        try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                return {
-                    "success": True,
-                    "message": f"Motor test started for motor {motor_instance}",
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": f"Motor test for motor {motor_instance} not started",
-                }
-        except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": f"Motor test for motor {motor_instance} not started, serial exception",
-            }
-
-    def testMotorSequence(self, data: MotorTestThrottleAndDuration) -> Response:
-        """Test a sequence of motors.
-
-        Args:
-            data (MotorTestThrottleAndDuration): The data for the motor test
-
-        Returns:
-            Response: The response from the motor test
-        """
-        self.is_listening = False
-
-        throttle, duration, err = self.checkMotorTestValues(data)
-        if err:
-            return {"success": False, "message": err}
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-            param1=0,  # ID of the motor to be tested
-            param2=0,  # throttle type (PWM,% etc)
-            param3=throttle,  # value of the throttle - 0 to 100%
-            param4=duration,  # delay between tests in seconds
-            param5=self.number_of_motors + 1,  # number of motors to test in a sequence
-            param6=0,  # test order
-        )
-
-        try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                return {"success": True, "message": "Motor sequence test started"}
-            else:
-                return {"success": False, "message": "Motor sequence test not started"}
-
-        except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": "Motor sequence test not started, serial exception",
-            }
-
-    def testAllMotors(self, data: MotorTestThrottleAndDuration) -> Response:
-        """Test all motors.
-
-        Args:
-            data (MotorTestThrottleAndDuration): The data for the motor test
-
-        Returns:
-            Response: The response from the motor test
-        """
-        # Timeout after 3 seconds waiting for the motor test confirmation
-        RESPONSE_TIMEOUT = 3
-
-        self.is_listening = False
-
-        throttle, duration, err = self.checkMotorTestValues(data)
-        if err:
-            return {"success": False, "message": err}
-
-        for idx in range(1, self.number_of_motors):
-            self.sendCommand(
-                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-                param1=idx,  # ID of the motor to be tested
-                param2=0,  # throttle type (PWM,% etc)
-                param3=throttle,  # value of the throttle - 0 to 100%
-                param4=duration,  # duration of the test in seconds
-                param5=0,  # number of motors to test in a sequence
-                param6=0,  # test order
-            )
-
-        responses = 0
-
-        try:
-            response = self.master.recv_match(
-                type="COMMAND_ACK", blocking=True, timeout=RESPONSE_TIMEOUT
-            )
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                responses += 1
-                if responses == self.number_of_motors:
-                    return {"success": True, "message": "All motor test started"}
-            else:
-                return {"success": False, "message": "All motor test not started"}
-        except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": "All motor test not started, serial exception",
-            }
-
-        return {
-            "success": False,
-            "message": "All motor test not started, timed out",
-        }
 
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.
@@ -980,21 +535,6 @@ class Drone:
                 "success": False,
                 "message": "Setting servo failed, serial exception",
             }
-
-    def setGripper(self, action: str) -> Response:
-        """Set the gripper to a specific action.
-
-        Args:
-            action (str): The action to set the gripper to, either "release" or "grab"
-
-        Returns:
-            Response: The response from the gripper set command
-        """
-        self.is_listening = False
-
-        gripperActionResponse = self.gripper.setGripper(action)
-
-        return gripperActionResponse
 
     def sendCommand(
         self,

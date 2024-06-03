@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   ...withPrototype(ipcRenderer),
   loadFile: (data) => ipcRenderer.invoke('fla:open-file', data),
   getFgcsLogs: () => ipcRenderer.invoke('fla:get-fgcs-logs'),
+  getNodeEnv: () => ipcRenderer.invoke('app:get-node-env'),
+  getVersion: () => ipcRenderer.invoke('app:get-version'),
 })
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.

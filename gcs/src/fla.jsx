@@ -274,8 +274,14 @@ export default function FLA() {
       let messageData = rawValues[key]
       Object.keys(messageData).forEach((messageKey) => {
         let messageValues = messageData[messageKey]
-        let min = Math.min(...messageValues)
-        let max = Math.max(...messageValues)
+        let min = messageValues.reduce(
+          (x, y) => Math.min(x, y),
+          Number.NEGATIVE_INFINITY,
+        )
+        let max = messageValues.reduce(
+          (x, y) => Math.max(x, y),
+          Number.NEGATIVE_INFINITY,
+        )
         let mean =
           messageValues.reduce((acc, curr) => acc + curr, 0) /
           messageValues.length

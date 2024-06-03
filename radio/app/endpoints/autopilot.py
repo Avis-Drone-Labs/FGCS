@@ -12,7 +12,7 @@ from app.utils import getComPortNames
 def rebootAutopilot() -> None:
     """
     Attempt to reboot the autopilot, this will try to reconnect to the drone 3 times before stopping. This will also stop if the port
-    is not open for 5 seconds.
+    is not open for 10 seconds.
     """
     if not droneStatus.drone:
         return
@@ -25,20 +25,20 @@ def rebootAutopilot() -> None:
     socketio.emit("disconnected_from_drone")
     droneStatus.drone.rebootAutopilot()
 
-    while droneStatus.drone.is_active:
+    while droneStatus.drone is not None and droneStatus.drone.is_active:
         time.sleep(0.05)
 
     counter = 0
-    while counter < 10:
+    while counter < 20:
         if port in getComPortNames():
             break
         counter += 1
         time.sleep(0.5)
     else:
-        logger.debug("Port not open after 5 seconds.")
+        logger.error("Port not open after 10 seconds.")
         socketio.emit(
             "reboot_autopilot",
-            {"success": False, "message": "Port not open after 5 seconds."},
+            {"success": False, "message": "Port not open after 10 seconds."},
         )
         return
 
@@ -57,7 +57,7 @@ def rebootAutopilot() -> None:
             tries += 1
             time.sleep(1)
     else:
-        logger.debug("Could not reconnect to drone after 3 attempts.")
+        logger.error("Could not reconnect to drone after 3 attempts.")
         socketio.emit(
             "reboot_autopilot",
             {
@@ -69,7 +69,7 @@ def rebootAutopilot() -> None:
 
     time.sleep(1)
     socketio.emit("connected_to_drone")
-    logger.debug("Rebooted autopilot successfully.")
+    logger.info("Rebooted autopilot successfully.")
     socketio.emit(
         "reboot_autopilot",
         {"success": True, "message": "Rebooted autopilot successfully."},

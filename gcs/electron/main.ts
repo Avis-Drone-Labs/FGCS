@@ -1,8 +1,11 @@
-import { BrowserWindow, app, ipcMain } from 'electron'
+import { BrowserWindow, app, ipcMain, shell } from 'electron'
 import { glob } from 'glob'
+import { ChildProcessWithoutNullStreams, spawn } from "node:child_process"
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
+
+// @ts-expect-error - no types available
 import openFile from './fla'
 // The built directory structure
 //
@@ -23,6 +26,8 @@ let loadingWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
+let pythonBackend: ChildProcessWithoutNullStreams | null = null
+
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
@@ -35,10 +40,19 @@ function createWindow() {
 
   win.setMenuBarVisibility(false)
 
+  // Open links in browser, not within the electron window.
+  // Note, links must have target="_blank"
+  win.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+
+    return { action: 'deny' }
+  })
+
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
+
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
@@ -77,6 +91,11 @@ app.on('window-all-closed', () => {
     app.quit()
     win = null
   }
+
+  console.log('Killing backend')
+  // kill any processes with the name "fgcs_backend.exe"
+  // Windows
+  spawn('taskkill /f /im fgcs_backend.exe', {shell:true})
 })
 
 app.on('activate', () => {
@@ -105,5 +124,17 @@ app.whenReady().then(() => {
       }
     })
   })
+  ipcMain.handle('app:get-node-env', () => app.isPackaged ? 'production' : 'development')
+  ipcMain.handle('app:get-version', () => app.getVersion())
+
+  if (app.isPackaged && pythonBackend === null) {
+    console.log('Starting backend')
+    pythonBackend = spawn("extras/fgcs_backend.exe");
+
+    pythonBackend.on('error', () => {
+      console.error('Failed to start backend.');
+    })
+  }
+
   createWindow()
 })

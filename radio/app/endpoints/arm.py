@@ -27,8 +27,8 @@ def arm(data: ArmDisarmType) -> None:
     force = data.get("force", False)
 
     if arm:
-        result = droneStatus.drone.arm(force)
+        result = droneStatus.drone.armController.arm(force)
     else:
-        result = droneStatus.drone.disarm(force)
+        result = droneStatus.drone.armController.disarm(force)
 
     socketio.emit("arm_disarm", result)

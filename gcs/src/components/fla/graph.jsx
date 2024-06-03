@@ -191,21 +191,28 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
     }
 
     if (flightModes?.length && data?.datasets?.length) {
-      let colors = createColormap({
+      const colors = createColormap({
         colormap: 'hsv',
         nshades: Math.max(11, flightModes.length), // HSV map requires at least 11 shades
         format: 'rgbaString',
         alpha: 0.035,
+      })
+      const flightModeColorsMap = {}
+      flightModes.forEach((flightMode, index) => {
+        if (flightMode.name === 'MODE') {
+          flightModeColorsMap[flightMode.Mode] = colors[index]
+        } else if (flightMode.name === 'HEARTBEAT') {
+          // TODO: Change if plane
+          flightModeColorsMap[
+            COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+          ] = colors[index]
+        }
       })
 
       // Create a box annotation to show the different flight modes
       for (let i = 0; i < flightModes.length; i++) {
         const flightMode = flightModes[i]
         const nextFlightMode = flightModes[i + 1]
-
-        const backgroundColor = colors[i]
-        // https://stackoverflow.com/a/8179549/10077669
-        const labelColor = backgroundColor.replace(/[^,]+(?=\))/, '1')
 
         // Depending on log file, set different annotation config options
         var labelContent = ''
@@ -217,6 +224,11 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
           labelContent = COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
           xMax = flightModes[0].TimeUS
         }
+
+        const backgroundColor = flightModeColorsMap[labelContent]
+
+        // https://stackoverflow.com/a/8179549/10077669
+        const labelColor = backgroundColor.replace(/[^,]+(?=\))/, '1')
 
         const flightModeChange = {
           type: 'box',
@@ -254,7 +266,7 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
     const scales = {}
 
     if (yAxisIDs.length === 0) {
-      graphConfig.scales.y = {
+      scales.y = {
         grid: { color: tailwindColors.gray[500] },
       }
     } else {
@@ -275,10 +287,11 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
       }
     })
 
+    scales.x = { ...config.scales.x }
+
     setConfig({
       ...config,
       scales: {
-        ...config.scales,
         ...scales,
       },
       plugins: {

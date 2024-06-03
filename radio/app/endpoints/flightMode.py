@@ -1,8 +1,9 @@
+from typing_extensions import TypedDict
+
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.customTypes import SetFlightModeValueAndNumber
 from app.utils import droneErrorCb
-from typing_extensions import TypedDict
 
 
 class SetCurrentFlightModeType(TypedDict):
@@ -25,8 +26,8 @@ def getFlightModeConfig() -> None:
     if not droneStatus.drone:
         return
 
-    flight_modes = droneStatus.drone.flight_modes.flight_modes
-    flight_mode_channel = droneStatus.drone.flight_modes.flight_mode_channel
+    flight_modes = droneStatus.drone.flightModesController.flight_modes
+    flight_mode_channel = droneStatus.drone.flightModesController.flight_mode_channel
 
     socketio.emit(
         "flight_mode_config",
@@ -60,7 +61,9 @@ def setFlightMode(data: SetFlightModeValueAndNumber) -> None:
         droneErrorCb("Mode number and flight mode must be specified.")
         return
 
-    result = droneStatus.drone.flight_modes.setFlightMode(mode_number, flight_mode)
+    result = droneStatus.drone.flightModesController.setFlightMode(
+        mode_number, flight_mode
+    )
     socketio.emit("set_flight_mode_result", result)
 
 
@@ -80,10 +83,10 @@ def refreshFlightModeData() -> None:
     if not droneStatus.drone:
         return
 
-    droneStatus.drone.flight_modes.refreshData()
+    droneStatus.drone.flightModesController.refreshData()
 
-    flight_modes = droneStatus.drone.flight_modes.flight_modes
-    flight_mode_channel = droneStatus.drone.flight_modes.flight_mode_channel
+    flight_modes = droneStatus.drone.flightModesController.flight_modes
+    flight_mode_channel = droneStatus.drone.flightModesController.flight_mode_channel
 
     socketio.emit(
         "flight_mode_config",
@@ -111,5 +114,7 @@ def setCurrentFlightMode(data: SetCurrentFlightModeType) -> None:
         droneErrorCb("Flight mode must be specified.")
         return
 
-    result = droneStatus.drone.flight_modes.setCurrentFlightMode(new_flight_mode)
+    result = droneStatus.drone.flightModesController.setCurrentFlightMode(
+        new_flight_mode
+    )
     socketio.emit("set_current_flight_mode_result", result)

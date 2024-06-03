@@ -48,8 +48,6 @@ To run both the frontend and backend at the same time, you need to make sure all
 
 <details><summary>Mac/Linux</summary>
 
-## How to run (mac, linux)
-
 We currently dont have instructions for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them.
   
 </details>

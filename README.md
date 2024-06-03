@@ -10,6 +10,11 @@ When adding a new folder please write up about it in the correct README.md and a
 
 ## How to run
 
+### Prerequsits 
+
+1. Ensure npm is installed, to do so follow [this guide](https://kinsta.com/blog/how-to-install-node-js/). Note: node version must be >= v20.10.0
+2. Ensure yarn is installed, to do so run `npm install --global yarn` or follow [this guide](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
+
 ### Running Frontend Manually
 
 1. `cd gcs`

@@ -1,6 +1,7 @@
 # FGCS
 
-Falcon Ground Control Station. Learn more on our [website](https://fgcs.projectfalcon.uk)!
+Falcon Ground Control Station. 
+> Learn more on our [website](https://fgcs.projectfalcon.uk)!
 
 ![UI Screenshot](ui.png)
 
@@ -56,31 +57,43 @@ We currently dont have instructions or releases for mac or linux, we will in fut
 
 ---
 
-## Stack
+## Development Info
 
+<details><summary>Stack</summary>
+  
 - GUI
   - Electron + Vite + React (JavaScript)
 - Backend
   - Flask (Python)
+ 
+</details>
 
-## Python Version
+<details><summary>Python</summary>
+
+### Version
 
 We are going to be using **python 3.11.x** so please install that on your computer from [Python's website](https://www.python.org/downloads/). Please try to use a virtual environment when programming, if you don't know how to do this please message me (Julian)! Name the folder either "env" or "venv" so its in the .gitignore as we don't want to be uploading that to github.
 
-## Python Code Style
+## Code Style
 
 We will be using `ruff` as the code style for python, please look at the documentation found [here](https://docs.astral.sh/ruff/). When pushing code we have an action to check if it is in the correct code style, if it is not in the correct style it will fail the run and you will need to fix it by running `python -m ruff format .` in your virtual environment (or something `ruff format .` works on different systems); this should automatically reformat everything so you can push it again!
+  
+</details>
 
-## Pre-commit
+<details><summary>Pre-Commit</summary>
 
 When cloning the repo for the first time, please install `pre-commit`. This can be done with a simple `pip install pre-commit` and then `pre-commit install`. Our pre-commit hooks will run every time you try to push something, if any of the checks fail then you will not be able to push that commit and receive an error message, often the files will be fixed but not staged, so make sure to re-stage and retry the with pushing commit.
+  
+</details>
 
-## Packaging
+<details><summary>Packaging</summary>
 
-### Backend
+## Backend
 
 From within the `radio` folder run `pyinstaller --paths .\venv\Lib\site-packages\ --add-data=".\venv\Lib\site-packages\pymavlink\message_definitions\:message_definitions" --add-data=".\venv\Lib\site-packages\pymavlink\:pymavlink" --hidden-import pymavlink .\app.py -n fgcs_backend`. This will create an exe and folder within the `dist/fgcs_backend/` folder.
 
-### Frontend
+## Frontend
 
 After compiling the backend, place the contents of `radio/dist/fgcs_backend` into a folder in `gcs/extras`. Then from within the `gcs` folder run `yarn build`.
+  
+</details>

@@ -4,16 +4,24 @@ Falcon Ground Control Station. Learn more on our [website](https://fgcs.projectf
 
 ![UI Screenshot](ui.png)
 
-## How to update
-
-When adding a new folder please write up about it in the correct README.md and also ask for permission with folders (this is so that we don't end up with clutter, you will most likely be allowed to add it).
+---
 
 ## How to run
+<details><summary>Windows - Installation</summary>
+  
+1. Go to [releases](https://github.com/Project-Falcon/FGCS/releases) and download the most recent versions `.exe` file
+2. Run the downloaded file, you may have to click "more" then "run anyway" if windows defender blocks it
+3. Once installed it should be accessible via the start menu as "FGCS"
+   
+</details>
+
+<details><summary>Windows - Manually</summary>
 
 ### Prerequsits 
 
 1. Ensure npm is installed, to do so follow [this guide](https://kinsta.com/blog/how-to-install-node-js/). Note: node version must be >= v20.10.0
 2. Ensure yarn is installed, to do so run `npm install --global yarn` or follow [this guide](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
+3. We are using `python 3.11.9` so make sure its installed before creating the venv. If you have multiple environments then please run `python3.11 -m venv venv`
 
 ### Running Frontend Manually
 
@@ -24,8 +32,9 @@ When adding a new folder please write up about it in the correct README.md and a
 ### Running Backend Manually
 
 1. `cd radio`
-2. Make sure you're in a virtual environment and all dependencies are installed using `pip install -r requirements.txt`
-3. `python app.py`
+2. Make sure you're in a virtual environment (or create one via `python3 -m venv venv`) and all dependencies are installed using `pip install -r requirements.txt`
+> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and winodws](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html) 
+4. `python app.py`
 
 #### Creating a virtual environment
 
@@ -34,6 +43,18 @@ Create a new Python virtual environment using `python -m venv venv`. This can th
 ### Running both simultaneously
 
 To run both the frontend and backend at the same time, you need to make sure all the requirements are installed for both yarn and Python. Then you can install a script globally using `npm install -g concurrently`. After activating your Python virtual environment, you can run `./run.bat` and this should start up both the frontend and backend in one terminal.
+
+</details>
+
+<details><summary>Mac/Linux</summary>
+
+## How to run (mac, linux)
+
+We currently dont have instructions for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them.
+  
+</details>
+
+---
 
 ## Stack
 

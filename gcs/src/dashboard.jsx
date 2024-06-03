@@ -153,8 +153,8 @@ export default function Dashboard() {
   // Following drone logic
   useEffect(() => {
     if (mapRef.current && !gpsData.lon && !gpsData.lat && followDrone) {
-      let lat = gpsData.lat * 1e-7
-      let lon = gpsData.lon * 1e-7
+      let lat = parseFloat((gpsData.lat * 1e-7).toFixed(6));
+      let lon = parseFloat((gpsData.lon * 1e-7).toFixed(6));
       mapRef.current.setCenter({ lng: lon, lat: lat })
     }
   }, [gpsData])
@@ -386,8 +386,8 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? gpsData.lat * 1e-7 : 0}, ${
-              gpsData.lon !== undefined ? gpsData.lon * 1e-7 : 0
+            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
+              gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
             })`}
             tooltip='GPS (lat, lon)'
           />

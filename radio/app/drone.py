@@ -96,6 +96,7 @@ class Drone:
         self.aircraft_type = initial_heartbeat.type
         if self.aircraft_type not in (1, 2):
             self.logger.error("Aircraft not plane or quadcopter")
+            self.master.close()
             self.master = None
             self.connectionError = (
                 "Could not connect to the drone. Aircraft not plane or quadcopter."

@@ -97,3 +97,9 @@ From within the `radio` folder run `pyinstaller --paths .\venv\Lib\site-packages
 After compiling the backend, place the contents of `radio/dist/fgcs_backend` into a folder in `gcs/extras`. Then from within the `gcs` folder run `yarn build`.
   
 </details>
+
+---
+
+## Need Help?
+
+Feel free to ask questions in the [discussion area](https://github.com/Project-Falcon/FGCS/discussions).

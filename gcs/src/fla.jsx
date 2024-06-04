@@ -243,57 +243,58 @@ export default function FLA() {
   // Loop over all fields and precalculate min, max, mean
   function setMeanValues(loadedLogMessages) {
     let rawValues = {}
+    if(loadedLogMessages !== null){
+      // Putting all raw data into a list
+      Object.keys(loadedLogMessages).forEach((key) => {
+        if (!ignoredMessages.includes(key)) {
+          let messageData = loadedLogMessages[key]
+          let messageDataMeans = {}
 
-    // Putting all raw data into a list
-    Object.keys(loadedLogMessages).forEach((key) => {
-      if (!ignoredMessages.includes(key)) {
-        let messageData = loadedLogMessages[key]
-        let messageDataMeans = {}
-
-        messageData.map((message) => {
-          Object.keys(message).forEach((dataPointKey) => {
-            let dataPoint = message[dataPointKey]
-            if (dataPointKey != dataPoint && dataPointKey != 'name') {
-              if (messageDataMeans[dataPointKey] == undefined) {
-                messageDataMeans[dataPointKey] = [dataPoint]
-              } else {
-                messageDataMeans[dataPointKey].push(dataPoint)
+          messageData.map((message) => {
+            Object.keys(message).forEach((dataPointKey) => {
+              let dataPoint = message[dataPointKey]
+              if (dataPointKey != dataPoint && dataPointKey != 'name') {
+                if (messageDataMeans[dataPointKey] == undefined) {
+                  messageDataMeans[dataPointKey] = [dataPoint]
+                } else {
+                  messageDataMeans[dataPointKey].push(dataPoint)
+                }
               }
-            }
+            })
           })
-        })
 
-        rawValues[key] = messageDataMeans
-      }
-    })
-
-    // Looping over each list and finding min, max, mean
-    let means = {}
-    Object.keys(rawValues).forEach((key) => {
-      means[key] = {}
-      let messageData = rawValues[key]
-      Object.keys(messageData).forEach((messageKey) => {
-        let messageValues = messageData[messageKey]
-        let min = messageValues.reduce(
-          (x, y) => Math.min(x, y),
-          Number.NEGATIVE_INFINITY,
-        )
-        let max = messageValues.reduce(
-          (x, y) => Math.max(x, y),
-          Number.NEGATIVE_INFINITY,
-        )
-        let mean =
-          messageValues.reduce((acc, curr) => acc + curr, 0) /
-          messageValues.length
-
-        means[`${key}/${messageKey}`] = {
-          mean: mean.toFixed(2),
-          max: max.toFixed(2),
-          min: min.toFixed(2),
+          rawValues[key] = messageDataMeans
         }
       })
-    })
-    setMessageMeans(means)
+
+      // Looping over each list and finding min, max, mean
+      let means = {}
+      Object.keys(rawValues).forEach((key) => {
+        means[key] = {}
+        let messageData = rawValues[key]
+        Object.keys(messageData).forEach((messageKey) => {
+          let messageValues = messageData[messageKey]
+          let min = messageValues.reduce(
+            (x, y) => Math.min(x, y),
+            Number.NEGATIVE_INFINITY,
+          )
+          let max = messageValues.reduce(
+            (x, y) => Math.max(x, y),
+            Number.NEGATIVE_INFINITY,
+          )
+          let mean =
+            messageValues.reduce((acc, curr) => acc + curr, 0) /
+            messageValues.length
+
+          means[`${key}/${messageKey}`] = {
+            mean: mean.toFixed(2),
+            max: max.toFixed(2),
+            min: min.toFixed(2),
+          }
+        })
+      })
+      setMessageMeans(means)
+    }
   }
 
   // Turn on/off all filters

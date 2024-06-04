@@ -111,18 +111,25 @@ app.whenReady().then(() => {
   ipcMain.handle('fla:open-file', openFile)
   ipcMain.handle('fla:get-fgcs-logs', async () => {
     const fgcsLogsPath = path.join(os.homedir(), 'FGCS','logs')
-    const fgcsLogs = await glob(path.join(fgcsLogsPath, '*.ftlog'), {nodir: true, windowsPathsNoEscape:true}) // Get a list of .ftlog files
-    const slicedFgcsLogs = fgcsLogs.slice(0, 20) // Only return the last 20 logs
-
-    return slicedFgcsLogs.map((logPath) => {
-      const logName = path.basename(logPath, '.ftlog')
-      const fileStats = fs.statSync(logPath)
-      return {
-        name: logName,
-        path: logPath,
-        size: fileStats.size
+    try {
+      const fgcsLogs = await glob(path.join(fgcsLogsPath, '*.ftlog'), {nodir: true, windowsPathsNoEscape:true}) // Get a list of .ftlog files
+      if (!Array.isArray(fgcsLogs)) {
+        throw new Error(`Expected fgcsLogs to be an array, but got ${typeof fgcsLogs}`);
       }
-    })
+      const slicedFgcsLogs = fgcsLogs.slice(0, 20) // Only return the last 20 logs
+  
+      return slicedFgcsLogs.map((logPath) => {
+        const logName = path.basename(logPath, '.ftlog')
+        const fileStats = fs.statSync(logPath)
+        return {
+          name: logName,
+          path: logPath,
+          size: fileStats.size
+        }
+      })
+    } catch (error) {
+      return [];
+    }
   })
   ipcMain.handle('app:get-node-env', () => app.isPackaged ? 'production' : 'development')
   ipcMain.handle('app:get-version', () => app.getVersion())

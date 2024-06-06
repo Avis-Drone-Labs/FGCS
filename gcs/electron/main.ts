@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -75,8 +75,7 @@ function createWindow() {
 function setMainMenu() {
   const isMac = process.platform === 'darwin'
 
-  const template: any = [
-    // { role: 'appMenu' }
+  const template: MenuItemConstructorOptions[] = [
     {
       label: isMac ? app.name : 'Help',
       submenu: [
@@ -85,9 +84,9 @@ function setMainMenu() {
           click: async () => {
             const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
 
-            const options:any = {
+            const options: MessageBoxOptions = {
               type: 'info',
-              buttons: [ 'OK','Report Bug',],
+              buttons: [ 'OK','Report a bug',],
               title: 'About FGCS',
               message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
               detail: 'For more information, visit our GitHub page.',

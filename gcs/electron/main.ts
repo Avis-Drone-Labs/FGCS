@@ -39,7 +39,7 @@ function createWindow() {
     alwaysOnTop: true,
   })
 
-  win.setMenuBarVisibility(false)
+  win.setMenuBarVisibility(true)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"

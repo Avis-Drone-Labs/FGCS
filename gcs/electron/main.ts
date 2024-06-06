@@ -119,17 +119,6 @@ function setMainMenu() {
         ]
       : [
         {
-          label: 'File',
-          submenu: [
-            {
-              label: 'Exit',
-              click: async () => {
-                app.quit();
-              }
-            }
-          ]
-        },
-        {
           label: 'Help',
           submenu: [
             {
@@ -151,7 +140,19 @@ function setMainMenu() {
                     shell.openExternal(packageInfo.bugReportUrl); 
                 }
               }
-            }
+            },
+            { type: 'separator' },
+            {
+              label: 'Report a bug',
+              click: async () => {
+                await shell.openExternal(
+                  packageInfo.bugReportUrl,
+                )
+              },
+            },
+            { role: 'toggleDevTools' },
+            { type: 'separator' },
+            { role: 'quit' },
           ]
         }
       ]),

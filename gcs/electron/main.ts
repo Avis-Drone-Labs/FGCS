@@ -1,4 +1,4 @@
-import { BrowserWindow, app, ipcMain, shell, Menu } from 'electron'
+import { BrowserWindow, app, ipcMain, shell, Menu, dialog, nativeImage } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -95,23 +95,24 @@ function setMainMenu() {
           {
             label: app.name,
             submenu: [
-              // { role: 'about' },
-              // { type: 'separator' },
               {
                 label: 'About FGCS',
-                click: () => {
-                  let aboutWindow = new BrowserWindow({
-                    width: 300,
-                    height: 200,
-                    webPreferences: {
-                      nodeIntegration: true,
-                      preload: path.join(__dirname, 'preload.js'),
-                    },
-                  })
-                  aboutWindow.loadURL(`${VITE_DEV_SERVER_URL}/#/about`)
-                  aboutWindow.on('closed', function () {
-                    //aboutWindow = null;
-                  })
+                click: async () => {
+                  const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
+
+                  const options:any = {
+                    type: 'info',
+                    buttons: ['Report Bug', 'OK'],
+                    title: 'About FGCS',
+                    message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
+                    detail: 'For more information, visit our GitHub page.',
+                    icon: icon,
+                  };
+              
+                const response = await dialog.showMessageBox(options);
+                  if (response.response === 0) {
+                    shell.openExternal('https://github.com/Project-Falcon/FGCS/issues/new/choose'); 
+                  }
                 },
               },
               { type: 'separator' },

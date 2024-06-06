@@ -71,22 +71,10 @@ function createWindow() {
   setMainMenu()
 }
 
-function resolveHtmlPath(htmlFileName: string, hash?: string) {
-  if (process.env.NODE_ENV === 'development') {
-    const port = process.env.PORT || 5173
-    const url = new URL(`http://localhost:${port}`)
-    url.pathname = htmlFileName
-    return url.href
-  }
-  // Add hash here (if provided)
-  return `file://${path.resolve(process.env.DIST, htmlFileName)}${
-    // eslint-disable-next-line prefer-template
-    hash ? '#' + hash : ''
-  }`
-}
-
 function setMainMenu() {
   const isMac = process.platform === 'darwin'
+
+  const reportBugUrl = 'https://github.com/Project-Falcon/FGCS/issues/new/choose';
 
   const template: any = [
     // { role: 'appMenu' }
@@ -111,7 +99,7 @@ function setMainMenu() {
               
                 const response = await dialog.showMessageBox(options);
                   if (response.response === 0) {
-                    shell.openExternal('https://github.com/Project-Falcon/FGCS/issues/new/choose'); 
+                    shell.openExternal(reportBugUrl); 
                   }
                 },
               },
@@ -120,7 +108,7 @@ function setMainMenu() {
                 label: 'Report a bug',
                 click: async () => {
                   await shell.openExternal(
-                    'https://github.com/Project-Falcon/FGCS/issues/new/choose',
+                    reportBugUrl,
                   )
                 },
               },

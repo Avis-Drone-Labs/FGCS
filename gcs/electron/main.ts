@@ -77,85 +77,43 @@ function setMainMenu() {
 
   const template: any = [
     // { role: 'appMenu' }
-    ...(isMac
-      ? [
-          {
-            label: app.name,
-            submenu: [
-              {
-                label: 'About FGCS',
-                click: async () => {
-                  const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
-
-                  const options:any = {
-                    type: 'info',
-                    buttons: ['Report Bug', 'OK'],
-                    title: 'About FGCS',
-                    message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
-                    detail: 'For more information, visit our GitHub page.',
-                    icon: icon,
-                  };
-              
-                const response = await dialog.showMessageBox(options);
-                  if (response.response === 0) {
-                    shell.openExternal(packageInfo.bugReportUrl); 
-                  }
-                },
-              },
-              { type: 'separator' },
-              {
-                label: 'Report a bug',
-                click: async () => {
-                  await shell.openExternal(
-                    packageInfo.bugReportUrl,
-                  )
-                },
-              },
-              { role: 'toggleDevTools' },
-              { type: 'separator' },
-              { role: 'quit' },
-            ],
-          },
-        ]
-      : [
+    {
+      label: isMac ? app.name : 'Help',
+      submenu: [
         {
-          label: 'Help',
-          submenu: [
-            {
-              label: 'About FGCS',
-              click: async () => {
-                const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
+          label: 'About FGCS',
+          click: async () => {
+            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
 
-                const options:any = {
-                  type: 'info',
-                  buttons: ['Report Bug', 'OK'],
-                  title: 'About FGCS',
-                  message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
-                  detail: 'For more information, visit our GitHub page.',
-                  icon: icon,
-                };
-
-                const response = await dialog.showMessageBox(options);
-                  if (response.response === 0) {
-                    shell.openExternal(packageInfo.bugReportUrl); 
-                }
-              }
-            },
-            { type: 'separator' },
-            {
-              label: 'Report a bug',
-              click: async () => {
-                await shell.openExternal(
-                  packageInfo.bugReportUrl,
-                )
-              },
-            },
-            { role: 'toggleDevTools' },
-            { type: 'separator' },
-            { role: 'quit' },
-          ]
-        }
-      ]),
+            const options:any = {
+              type: 'info',
+              buttons: ['Report Bug', 'OK'],
+              title: 'About FGCS',
+              message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
+              detail: 'For more information, visit our GitHub page.',
+              icon: icon,
+            };
+        
+          const response = await dialog.showMessageBox(options);
+            if (response.response === 0) {
+              shell.openExternal(packageInfo.bugReportUrl); 
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Report a bug',
+          click: async () => {
+            await shell.openExternal(
+              packageInfo.bugReportUrl,
+            )
+          },
+        },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    },
   ]
 
   const menu = Menu.buildFromTemplate(template)

@@ -117,7 +117,44 @@ function setMainMenu() {
             ],
           },
         ]
-      : []),
+      : [
+        {
+          label: 'File',
+          submenu: [
+            {
+              label: 'Exit',
+              click: async () => {
+                app.quit();
+              }
+            }
+          ]
+        },
+        {
+          label: 'Help',
+          submenu: [
+            {
+              label: 'About FGCS',
+              click: async () => {
+                const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
+
+                const options:any = {
+                  type: 'info',
+                  buttons: ['Report Bug', 'OK'],
+                  title: 'About FGCS',
+                  message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
+                  detail: 'For more information, visit our GitHub page.',
+                  icon: icon,
+                };
+
+                const response = await dialog.showMessageBox(options);
+                  if (response.response === 0) {
+                    shell.openExternal(packageInfo.bugReportUrl); 
+                }
+              }
+            }
+          ]
+        }
+      ]),
   ]
 
   const menu = Menu.buildFromTemplate(template)

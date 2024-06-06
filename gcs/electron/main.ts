@@ -1,10 +1,10 @@
-import { BrowserWindow, app, ipcMain, shell, Menu, dialog, nativeImage } from 'electron'
+import { BrowserWindow, Menu, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
-import packageInfo from '../package.json';
+import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
 import openFile from './fla'
@@ -87,15 +87,16 @@ function setMainMenu() {
 
             const options:any = {
               type: 'info',
-              buttons: ['Report Bug', 'OK'],
+              buttons: [ 'OK','Report Bug',],
               title: 'About FGCS',
               message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
               detail: 'For more information, visit our GitHub page.',
               icon: icon,
+              defaultId: 1,
             };
         
           const response = await dialog.showMessageBox(options);
-            if (response.response === 0) {
+            if (response.response === 1) {
               shell.openExternal(packageInfo.bugReportUrl); 
             }
           },

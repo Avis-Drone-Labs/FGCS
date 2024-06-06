@@ -4,6 +4,7 @@ import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
+import packageInfo from '../package.json';
 
 // @ts-expect-error - no types available
 import openFile from './fla'
@@ -74,8 +75,6 @@ function createWindow() {
 function setMainMenu() {
   const isMac = process.platform === 'darwin'
 
-  const reportBugUrl = 'https://github.com/Project-Falcon/FGCS/issues/new/choose';
-
   const template: any = [
     // { role: 'appMenu' }
     ...(isMac
@@ -99,7 +98,7 @@ function setMainMenu() {
               
                 const response = await dialog.showMessageBox(options);
                   if (response.response === 0) {
-                    shell.openExternal(reportBugUrl); 
+                    shell.openExternal(packageInfo.bugReportUrl); 
                   }
                 },
               },
@@ -108,7 +107,7 @@ function setMainMenu() {
                 label: 'Report a bug',
                 click: async () => {
                   await shell.openExternal(
-                    reportBugUrl,
+                    packageInfo.bugReportUrl,
                   )
                 },
               },

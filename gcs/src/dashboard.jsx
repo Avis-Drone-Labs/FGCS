@@ -463,7 +463,7 @@ export default function Dashboard() {
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}
-            className='absolute bottom-0 left-0 bg-falcongrey/80 max-w-1/2 z-0'
+            className='absolute bottom-0 right-0 bg-falcongrey/80 max-w-1/2 z-10'
           />
         )}
       </div>

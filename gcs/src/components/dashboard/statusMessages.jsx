@@ -51,7 +51,7 @@ export default function StatusMessages(props) {
       >
         {props.messages.map((message, index) => {
           return (
-            <div key={index} className='flex flex-row space-x-2'>
+            <div key={index} className='flex flex-row space-x-2 text-xl font-bold'>
               <p className='text-gray-400'>
                 {moment.unix(message.timestamp).format('HH:mm:ss')}
               </p>

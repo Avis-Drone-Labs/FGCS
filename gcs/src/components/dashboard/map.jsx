@@ -18,6 +18,7 @@ import arrow from '../../../public/arrow.svg'
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config'
+import { AttributionControl } from 'react-map-gl'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Convert coordinates from mavlink into gps coordinates
@@ -71,6 +72,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
           import.meta.env.VITE_MAPTILER_API_KEY
         }`}
         ref={passedRef}
+        attributionControl={false}
       >
         {/* Show marker on map if the position is set */}
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
@@ -253,6 +255,9 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             </Marker>
           )
         })}
+
+        {/* Move attributions to bottom left */}
+        <AttributionControl position='bottom-left'></AttributionControl>
       </Map>
     </div>
   )

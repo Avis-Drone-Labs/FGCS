@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import functools
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING
 
 import serial
 from app.customTypes import Response
@@ -63,21 +62,6 @@ class GripperController:
                 ),
             }
 
-    # @staticmethod
-    def gripperEnabled(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        """
-        Runs the decorated function only if the gripper is enabled."""
-
-        @functools.wraps(func)
-        def wrap(self, *args: Any, **kwargs: Any) -> Any:
-            if not self.enabled:
-                self.drone.logger.error("Gripper is not enabled")
-                return False
-            return func(self, *args, **kwargs)
-
-        return wrap
-
-    @gripperEnabled
     def setGripper(self, action: str) -> Response:
         """
         Sets the gripper to either release or grab.
@@ -88,6 +72,13 @@ class GripperController:
         Returns:
             Response
         """
+        if not self.enabled:
+            self.drone.logger.error("Gripper is not enabled")
+            return {
+                "success": False,
+                "message": "Gripper is not enabled",
+            }
+
         if action not in ["release", "grab"]:
             return {
                 "success": False,

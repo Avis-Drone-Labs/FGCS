@@ -48,8 +48,8 @@ import StatusMessages from './components/dashboard/statusMessages'
 import Layout from './components/layout'
 
 // Sounds
-import armSound from '../public/sounds/armed.mp3'
-import disarmSound from '../public/sounds/disarmed.mp3'
+import armSound from './assets/sounds/armed.mp3'
+import disarmSound from './assets/sounds/disarmed.mp3'
 
 export default function Dashboard() {
   const [connected] = useLocalStorage({
@@ -153,8 +153,8 @@ export default function Dashboard() {
   // Following drone logic
   useEffect(() => {
     if (mapRef.current && !gpsData.lon && !gpsData.lat && followDrone) {
-      let lat = parseFloat((gpsData.lat * 1e-7).toFixed(6));
-      let lon = parseFloat((gpsData.lon * 1e-7).toFixed(6));
+      let lat = parseFloat((gpsData.lat * 1e-7).toFixed(6))
+      let lon = parseFloat((gpsData.lon * 1e-7).toFixed(6))
       mapRef.current.setCenter({ lng: lon, lat: lat })
     }
   }, [gpsData])

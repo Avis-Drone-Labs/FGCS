@@ -10,10 +10,10 @@
 import { useEffect, useState } from 'react'
 
 // Maplibre and mantine imports
+import { Tooltip } from '@mantine/core'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
-import { Tooltip } from '@mantine/core'
-import arrow from '../../../public/arrow.svg'
+import arrow from '../../assets/arrow.svg'
 
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'

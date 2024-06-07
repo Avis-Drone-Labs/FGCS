@@ -73,11 +73,9 @@ function createWindow() {
 }
 
 function setMainMenu() {
-  const isMac = process.platform === 'darwin'
-
   const template: MenuItemConstructorOptions[] = [
     {
-      label: isMac ? app.name : 'Help',
+      label: app.name,
       submenu: [
         {
           label: 'About FGCS',
@@ -93,10 +91,10 @@ function setMainMenu() {
               icon: icon,
               defaultId: 1,
             };
-        
+
           const response = await dialog.showMessageBox(options);
             if (response.response === 1) {
-              shell.openExternal(packageInfo.bugReportUrl); 
+              shell.openExternal(packageInfo.bugReportUrl);
             }
           },
         },
@@ -109,11 +107,24 @@ function setMainMenu() {
             )
           },
         },
-        { role: 'toggleDevTools' },
         { type: 'separator' },
         { role: 'quit' },
       ],
     },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    }
   ]
 
   const menu = Menu.buildFromTemplate(template)

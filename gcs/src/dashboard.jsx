@@ -21,6 +21,8 @@ import {
   IconGps,
   IconRadar,
   IconSatellite,
+  IconSun,
+  IconSunOff
 } from '@tabler/icons-react'
 
 // Helper javascript files
@@ -51,8 +53,10 @@ import Layout from './components/layout'
 // Sounds
 import armSound from '../public/sounds/armed.mp3'
 import disarmSound from '../public/sounds/disarmed.mp3'
+import { outside } from 'semver'
 
 export default function Dashboard() {
+  // Local Storage
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
@@ -60,37 +64,47 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
-  const [telemetryData, setTelemetryData] = useState({})
-  const [gpsData, setGpsData] = useState({})
-  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
-  const [batteryData, setBatteryData] = useState({})
+
+  // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
   const previousHeartbeatData = usePrevious(heartbeatData)
+
+  // System data
+  const [batteryData, setBatteryData] = useState({})
+  const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({
     onboard_control_sensors_enabled: 0,
   })
+  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
+  
+  // GPS and Telemetry
+  const [gpsData, setGpsData] = useState({})
+  const [telemetryData, setTelemetryData] = useState({})
+  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
   const [gpsRawIntData, setGpsRawIntData] = useState({
     fix_type: 0,
     satellites_visible: 0,
   })
-  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
+  // Mission
   const [missionItems, setMissionItems] = useState({
     mission_items: [],
     fence_items: [],
     rally_items: [],
   })
 
+  // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
-  const mapRef = useRef()
+  // Map and messages
+  const mapRef = useRef();
+  const [outsideVisibility, setOutsideVisibility] = useState(false);
 
+  // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
-
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
   const incomingMessageHandler = {
@@ -428,6 +442,7 @@ export default function Dashboard() {
 
         {/* Right side floating toolbar */}
         <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2'>
+          {/* Follow Drone */}
           <Tooltip
             label={
               !gpsData.lon && !gpsData.lat
@@ -446,6 +461,8 @@ export default function Dashboard() {
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}
             </ActionIcon>
           </Tooltip>
+          
+          {/* Center Map on Drone */}
           <Tooltip
             label={
               !gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'
@@ -458,11 +475,26 @@ export default function Dashboard() {
               <IconCrosshair />
             </ActionIcon>
           </Tooltip>
+
+          {/* Set outside visibility */}
+          <Tooltip
+            label={
+              outsideVisibility ? "Turn on outside text mode" : "Turn off outside text mode"
+            }
+          >
+            <ActionIcon
+              disabled={statustextMessages.length == 0}
+              onClick={() => {setOutsideVisibility(!outsideVisibility)}}
+            >
+              {outsideVisibility ? <IconSun /> : <IconSunOff />}
+            </ActionIcon>
+          </Tooltip>
         </div>
 
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}
+            outsideVisibility={outsideVisibility}
             className='absolute bottom-0 right-0 bg-falcongrey/80 max-w-1/2 z-10'
           />
         )}

@@ -42,10 +42,15 @@ export default function StatusMessages(props) {
     }
   }
 
+  function getVisibilityClassNames() {
+    let base = 'h-44 w-full p-4'
+    return props.outsideVisibility ? base + " bg-black" : base;
+  }
+
   return (
     <div className={props.className}>
       <ScrollArea
-        className='h-44 w-full p-4'
+        className={getVisibilityClassNames()}
         viewportRef={viewport}
         onScrollPositionChange={onScrollPositionChange}
       >

@@ -1,9 +1,17 @@
 {
   "name": "fgcs",
-  "productName":"FGCS",
+  "productName": "FGCS",
+  "description": "Falcon Ground Control Station",
+  "author": {
+    "name": "Project Falcon"
+  },
   "private": true,
   "version": "0.1.3-alpha",
-  "bugReportUrl": "https://github.com/Project-Falcon/FGCS/issues/new/choose",
+  "license": "GPL-3.0-only",
+  "homepage": "https://fgcs.projectfalcon.uk",
+  "bugs": {
+    "url": "https://github.com/Project-Falcon/FGCS/issues/new/choose"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",

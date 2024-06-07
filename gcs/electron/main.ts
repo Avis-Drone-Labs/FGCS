@@ -93,10 +93,10 @@ function setMainMenu() {
               icon: icon,
               defaultId: 1,
             };
-        
+
           const response = await dialog.showMessageBox(options);
             if (response.response === 1) {
-              shell.openExternal(packageInfo.bugReportUrl); 
+              shell.openExternal(packageInfo.bugs.url);
             }
           },
         },
@@ -105,7 +105,7 @@ function setMainMenu() {
           label: 'Report a bug',
           click: async () => {
             await shell.openExternal(
-              packageInfo.bugReportUrl,
+              packageInfo.bugs.url,
             )
           },
         },

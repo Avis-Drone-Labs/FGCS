@@ -1,7 +1,9 @@
 {
-  "name": "gcs",
+  "name": "fgcs",
+  "productName":"FGCS",
   "private": true,
   "version": "0.1.3-alpha",
+  "bugReportUrl": "https://github.com/Project-Falcon/FGCS/issues/new/choose",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",

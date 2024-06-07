@@ -246,7 +246,7 @@ export default function Dashboard() {
             missionItems={missionItems}
           />
         </div>
-        <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
+        <div className='absolute top-0 left-0 p-4 bg-falcongrey/80 z-10'>
           <div className='flex flex-col items-center space-y-2'>
             {getIsArmed() ? (
               <p className='font-bold text-falconred'>ARMED</p>
@@ -463,7 +463,7 @@ export default function Dashboard() {
         {statustextMessages.length !== 0 && (
           <StatusMessages
             messages={statustextMessages}
-            className='absolute bottom-0 left-0 bg-falcongrey/80 max-w-1/2'
+            className='absolute bottom-0 left-0 bg-falcongrey/80 max-w-1/2 z-0'
           />
         )}
       </div>

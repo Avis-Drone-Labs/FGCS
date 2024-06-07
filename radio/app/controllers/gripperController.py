@@ -64,7 +64,7 @@ class GripperController:
             }
 
     # @staticmethod
-    def gripperEnabled(func: Callable[..., Any]) -> Callable[..., Any]:
+    def gripperEnabled(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Runs the decorated function only if the gripper is enabled."""
 

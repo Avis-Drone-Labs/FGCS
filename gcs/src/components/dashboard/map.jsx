@@ -10,9 +10,9 @@
 import { useEffect, useState } from 'react'
 
 // Maplibre and mantine imports
+import { Tooltip } from '@mantine/core'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
-import { Tooltip } from '@mantine/core'
 import arrow from '../../../public/arrow.svg'
 
 // Tailwind styling
@@ -30,6 +30,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
     latitude: 53.381655,
     longitude: -1.481434,
   })
+  const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const [defaultLat, setDefaultLat] = useState(53.381655)
   const [defaultLon, setDefaultLon] = useState(-1.481434)
 
@@ -47,6 +48,14 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
     if (!isNaN(defaultLat) || !isNaN(defaultLon)) {
       setDefaultLat(lat)
       setDefaultLon(lon)
+
+      if (!firstCenteredToDrone) {
+        passedRef.current.getMap().flyTo({
+          center: [lon, lat],
+          zoom: 16,
+        })
+        setFirstCenteredToDrone(true)
+      }
     }
   }, [data])
 

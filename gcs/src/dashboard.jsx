@@ -251,7 +251,7 @@ export default function Dashboard() {
 
   return (
     <Layout currentPage='dashboard'>
-      <div className='relative flex flex-auto w-full h-full'>
+      <div className='relative flex flex-auto w-full h-full overflow-hidden'>
         <div className='w-full'>
           <MapSection
             passedRef={mapRef}
@@ -495,21 +495,23 @@ export default function Dashboard() {
           default={{
             x: 500,
             y: 500,
-            width: 400,
-            height: 200,
+            width: 500,
+            height: 100,
           }}
           enableResizing={{ top:false, right:false, bottom:false, left:false, topRight:false, bottomRight:false, bottomLeft:false, topLeft:true }}  // Have to set all of them
           bounds="parent"
-          resizeGrid={[20, 30]}
-          className='z-10'
+          minWidth={300}
+          minHeight={75}
         >
-          {statustextMessages.length !== 0 && (
-            <StatusMessages
-              messages={statustextMessages}
-              outsideVisibility={outsideVisibility}
-              className='absolute bottom-0 right-0 bg-falcongrey/80 max-w-1/2 z-10'
-            />
-          )}
+          <div className='overflow-hidden w-full h-full text-xl'>
+            {statustextMessages.length !== 0 && (
+              <StatusMessages
+                messages={statustextMessages}
+                outsideVisibility={outsideVisibility}
+                className='h-full bg-falcongrey/80 max-w-1/2'
+              />
+            )}
+          </div>
         </Rnd>
       </div>
     </Layout>

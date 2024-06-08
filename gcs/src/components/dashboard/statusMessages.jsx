@@ -43,15 +43,15 @@ export default function StatusMessages(props) {
   }
 
   function getScrollAreaOutsideVisibilityClassNames() {
-    let base = 'h-44 w-full p-4'
-    return props.outsideVisibility ? base + " bg-black !h-64" : base;
+    let base = 'h-full w-full p-4'
+    return props.outsideVisibility ? base + " bg-black" : base;
   }
 
   function getMessageOutsideVisibilityClassNames() {
-    let base = 'flex flex-row space-x-2 text-xl'
+    let base = 'flex flex-row space-x-2'
     return props.outsideVisibility ? base + " font-bold !text-2xl" : base;
   }
-  
+
   return (
     <div className={props.className}>
       <ScrollArea

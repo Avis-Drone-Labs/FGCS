@@ -87,13 +87,22 @@ class Drone:
         initial_heartbeat = self.master.wait_heartbeat(timeout=5)
         if initial_heartbeat is None:
             self.logger.error("Heartbeat timed out after 5 seconds")
-            self.mater = None
+            self.master = None
             self.connectionError = (
                 "Could not connect to the drone. Perhaps try a different COM port."
             )
             return
 
         self.aircraft_type = initial_heartbeat.type
+        if self.aircraft_type not in (1, 2):
+            self.logger.error("Aircraft not plane or quadcopter")
+            self.master.close()
+            self.master = None
+            self.connectionError = (
+                "Could not connect to the drone. Aircraft not plane or quadcopter."
+            )
+            return
+        
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component

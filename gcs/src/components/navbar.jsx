@@ -116,6 +116,9 @@ export default function Navbar({ currentPage }) {
     // Flags that the drone is connected
     socket.on('connected_to_drone', (data) => {
       setAircraftType(data.aircraft_type)
+      if (data.aircraft_type != 1 && data.aircraft_type != 2) {
+        showErrorNotification("Aircraft not of type quadcopter or plane")
+      }
       setConnected(true)
       setConnecting(false)
       close()

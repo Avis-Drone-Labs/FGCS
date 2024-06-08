@@ -24,7 +24,7 @@ import {
   IconSun,
   IconSunOff
 } from '@tabler/icons-react'
-import { Rnd } from 'react-rnd'
+import { ResizableBox } from 'react-resizable';
 
 // Helper javascript files
 import {
@@ -251,7 +251,7 @@ export default function Dashboard() {
 
   return (
     <Layout currentPage='dashboard'>
-      <div className='relative flex flex-auto w-full h-full overflow-hidden'>
+      <div className='relative flex flex-auto w-full h-full'>
         <div className='w-full'>
           <MapSection
             passedRef={mapRef}
@@ -491,19 +491,14 @@ export default function Dashboard() {
           </Tooltip>
         </div>
 
-        <Rnd
-          default={{
-            x: 500,
-            y: 500,
-            width: 500,
-            height: 100,
-          }}
-          enableResizing={{ top:true, right:true, bottom:true, left:true, topRight:true, bottomRight:true, bottomLeft:true, topLeft:true }}  // Have to set all of them
-          bounds="parent"
-          minWidth={300}
-          minHeight={75}
-        >
-          <div className='overflow-hidden w-full h-full text-xl z-10'>
+        <div className='absolute bottom-0 right-0 z-0'>
+          <ResizableBox 
+            height={150} 
+            width={600} 
+            resizeHandles={['nw']}
+            handle={(h, ref) => <span className={`custom-handle custom-handle-nw`} ref={ref} />}
+            handleSize={[32, 32]}
+          >
             {statustextMessages.length !== 0 && (
               <StatusMessages
                 messages={statustextMessages}
@@ -511,8 +506,8 @@ export default function Dashboard() {
                 className='h-full bg-falcongrey/80 max-w-1/2 object-fill text-xl'
               />
             )}
-          </div>
-        </Rnd>
+          </ResizableBox>
+        </div>
       </div>
     </Layout>
   )

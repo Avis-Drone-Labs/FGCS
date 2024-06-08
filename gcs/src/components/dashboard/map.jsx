@@ -257,7 +257,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
         })}
 
         {/* Move attributions to bottom left */}
-        <AttributionControl position='bottom-left'></AttributionControl>
+        {/* <AttributionControl position='bottom-left'></AttributionControl> */}
       </Map>
     </div>
   )

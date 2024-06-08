@@ -251,7 +251,7 @@ export default function Dashboard() {
 
   return (
     <Layout currentPage='dashboard'>
-      <div className='relative flex flex-auto w-full h-full'>
+      <div className='relative flex flex-auto w-full h-full overflow-hidden'>
         <div className='w-full'>
           <MapSection
             passedRef={mapRef}
@@ -260,149 +260,157 @@ export default function Dashboard() {
             missionItems={missionItems}
           />
         </div>
-        <div className='absolute top-0 left-0 p-4 bg-falcongrey/80 z-10'>
-          <div className='flex flex-col items-center space-y-2'>
-            {getIsArmed() ? (
-              <p className='font-bold text-falconred'>ARMED</p>
-            ) : (
-              <>
-                <p className='font-bold'>DISARMED</p>
-                {prearmEnabled() ? (
-                  <p className='text-green-500'>Prearm: Enabled</p>
-                ) : (
-                  <p className='font-bold text-falconred'>Prearm: Disabled</p>
-                )}
-              </>
-            )}
-            <div className='flex flex-row space-x-6'>
-              <p>{MAV_STATE[heartbeatData.system_status]}</p>
-              <p>{getFlightMode()}</p>
+        <div className='absolute top-0 left-0 flex flex-col justify-between p-4 bg-falcongrey/80 z-10 h-full'>
+          {/* Telemetry Information */}
+          <div>
+            <div className='flex flex-col items-center space-y-2'>
+              {getIsArmed() ? (
+                <p className='font-bold text-falconred'>ARMED</p>
+              ) : (
+                <>
+                  <p className='font-bold'>DISARMED</p>
+                  {prearmEnabled() ? (
+                    <p className='text-green-500'>Prearm: Enabled</p>
+                  ) : (
+                    <p className='font-bold text-falconred'>Prearm: Disabled</p>
+                  )}
+                </>
+              )}
+              <div className='flex flex-row space-x-6'>
+                <p>{MAV_STATE[heartbeatData.system_status]}</p>
+                <p>{getFlightMode()}</p>
+              </div>
+            </div>
+            <div className='flex flex-row items-center justify-center'>
+              <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                <p className='text-sm'>ms&#8315;&#185;</p>
+                <p>
+                  AS <br />{' '}
+                  {(telemetryData.airspeed ? telemetryData.airspeed : 0).toFixed(
+                    2,
+                  )}
+                </p>
+                <p>
+                  GS <br />{' '}
+                  {(telemetryData.groundspeed
+                    ? telemetryData.groundspeed
+                    : 0
+                  ).toFixed(2)}
+                </p>
+              </div>
+              <AttitudeIndicator
+                roll={attitudeData.roll * (180 / Math.PI)}
+                pitch={attitudeData.pitch * (180 / Math.PI)}
+                size={"20vh"}
+              />
+              <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                <p className='text-sm'>m</p>
+                <p>
+                  AMSL <br /> {(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
+                </p>
+                <p>
+                  AREL <br />{' '}
+                  {(gpsData.relative_alt
+                    ? gpsData.relative_alt / 1000
+                    : 0
+                  ).toFixed(2)}
+                </p>
+              </div>
+            </div>
+            <div className='flex flex-row items-center justify-center'>
+              <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                <p className='text-sm'>deg &#176;</p>
+                <p>
+                  HDG <br /> {(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
+                </p>
+                <p>
+                  YAW <br />{' '}
+                  {(attitudeData.yaw
+                    ? attitudeData.yaw * (180 / Math.PI)
+                    : 0
+                  ).toFixed(2)}
+                </p>
+              </div>
+              <HeadingIndicator heading={gpsData.hdg ? gpsData.hdg / 100 : 0} size={"20vh"} />
+              <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                <p className='text-sm'>m</p>
+                <p>
+                  WP <br />{' '}
+                  {(navControllerOutputData.wp_dist
+                    ? navControllerOutputData.wp_dist
+                    : 0
+                  ).toFixed(2)}
+                </p>
+                <p>
+                  HOME <br /> {(0).toFixed(2)}
+                </p>
+                {/* TOOD: Implement distance to home */}
+              </div>
+            </div>
+            <div className='flex flex-col items-center'>
+              <p>BATTERY</p>
+              <div className='flex flex-row space-x-4'>
+                <p>
+                  {(batteryData.voltages
+                    ? batteryData.voltages[0] / 1000
+                    : 0
+                  ).toFixed(2)}
+                  V
+                </p>
+                <p>
+                  {(batteryData.current_battery
+                    ? batteryData.current_battery / 100
+                    : 0
+                  ).toFixed(2)}
+                  A
+                </p>
+                <p>
+                  {batteryData.battery_remaining
+                    ? batteryData.battery_remaining
+                    : 0}
+                  %
+                </p>
+              </div>
             </div>
           </div>
-          <div className='flex flex-row items-center justify-center'>
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>ms&#8315;&#185;</p>
-              <p>
-                AS <br />{' '}
-                {(telemetryData.airspeed ? telemetryData.airspeed : 0).toFixed(
-                  2,
-                )}
-              </p>
-              <p>
-                GS <br />{' '}
-                {(telemetryData.groundspeed
-                  ? telemetryData.groundspeed
-                  : 0
-                ).toFixed(2)}
-              </p>
+
+          {/* Arming/Flight Modes */}
+          <div>
+            <div className='flex flex-row space-x-14'>
+              <Button
+                className='mt-6'
+                onClick={() => {
+                  armDisarm(!getIsArmed())
+                }}
+              >
+                {getIsArmed() ? 'Disarm' : 'Arm'}
+              </Button>
             </div>
-            <AttitudeIndicator
-              roll={attitudeData.roll * (180 / Math.PI)}
-              pitch={attitudeData.pitch * (180 / Math.PI)}
-            />
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>m</p>
-              <p>
-                AMSL <br /> {(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
-              </p>
-              <p>
-                AREL <br />{' '}
-                {(gpsData.relative_alt
-                  ? gpsData.relative_alt / 1000
-                  : 0
-                ).toFixed(2)}
-              </p>
+            <div className='flex flex-row space-x-2 mt-4'>
+              {currentFlightModeNumber !== null && (
+                <>
+                  <Select
+                    value={newFlightModeNumber.toString()}
+                    label={'Current Flight mode'}
+                    onChange={(value) => {
+                      setNewFlightModeNumber(parseInt(value))
+                    }}
+                    data={Object.keys(getFlightModeMap()).map((key) => {
+                      return {
+                        value: key,
+                        label: getFlightModeMap()[key],
+                      }
+                    })}
+                  />
+                  <Button
+                    onClick={() => setNewFlightMode(newFlightModeNumber)}
+                    className='mt-6'
+                  >
+                    Set flight mode
+                  </Button>
+                </>
+              )}
             </div>
-          </div>
-          <div className='flex flex-row items-center justify-center'>
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>deg &#176;</p>
-              <p>
-                HDG <br /> {(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-              </p>
-              <p>
-                YAW <br />{' '}
-                {(attitudeData.yaw
-                  ? attitudeData.yaw * (180 / Math.PI)
-                  : 0
-                ).toFixed(2)}
-              </p>
-            </div>
-            <HeadingIndicator heading={gpsData.hdg ? gpsData.hdg / 100 : 0} />
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>m</p>
-              <p>
-                WP <br />{' '}
-                {(navControllerOutputData.wp_dist
-                  ? navControllerOutputData.wp_dist
-                  : 0
-                ).toFixed(2)}
-              </p>
-              <p>
-                HOME <br /> {(0).toFixed(2)}
-              </p>
-              {/* TOOD: Implement distance to home */}
-            </div>
-          </div>
-          <div className='flex flex-col items-center'>
-            <p>BATTERY</p>
-            <div className='flex flex-row space-x-4'>
-              <p>
-                {(batteryData.voltages
-                  ? batteryData.voltages[0] / 1000
-                  : 0
-                ).toFixed(2)}
-                V
-              </p>
-              <p>
-                {(batteryData.current_battery
-                  ? batteryData.current_battery / 100
-                  : 0
-                ).toFixed(2)}
-                A
-              </p>
-              <p>
-                {batteryData.battery_remaining
-                  ? batteryData.battery_remaining
-                  : 0}
-                %
-              </p>
-            </div>
-          </div>
-          <div className='flex flex-row space-x-14'>
-            <Button
-              className='mt-6'
-              onClick={() => {
-                armDisarm(!getIsArmed())
-              }}
-            >
-              {getIsArmed() ? 'Disarm' : 'Arm'}
-            </Button>
-          </div>
-          <div className='flex flex-row space-x-2 mt-4'>
-            {currentFlightModeNumber !== null && (
-              <>
-                <Select
-                  value={newFlightModeNumber.toString()}
-                  label={'Current Flight mode'}
-                  onChange={(value) => {
-                    setNewFlightModeNumber(parseInt(value))
-                  }}
-                  data={Object.keys(getFlightModeMap()).map((key) => {
-                    return {
-                      value: key,
-                      label: getFlightModeMap()[key],
-                    }
-                  })}
-                />
-                <Button
-                  onClick={() => setNewFlightMode(newFlightModeNumber)}
-                  className='mt-6'
-                >
-                  Set flight mode
-                </Button>
-              </>
-            )}
           </div>
         </div>
 

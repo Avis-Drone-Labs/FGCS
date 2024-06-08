@@ -17,6 +17,7 @@ import {
   IconAnchorOff,
   IconAntenna,
   IconBattery2,
+  IconCrosshair,
   IconGps,
   IconRadar,
   IconSatellite,
@@ -152,9 +153,14 @@ export default function Dashboard() {
 
   // Following drone logic
   useEffect(() => {
-    if (mapRef.current && !gpsData.lon && !gpsData.lat && followDrone) {
-      let lat = parseFloat((gpsData.lat * 1e-7).toFixed(6))
-      let lon = parseFloat((gpsData.lon * 1e-7).toFixed(6))
+    if (
+      mapRef.current &&
+      gpsData?.lon !== 0 &&
+      gpsData?.lat !== 0 &&
+      followDrone
+    ) {
+      let lat = parseFloat(gpsData.lat * 1e-7)
+      let lon = parseFloat(gpsData.lon * 1e-7)
       mapRef.current.setCenter({ lng: lon, lat: lat })
     }
   }, [gpsData])
@@ -219,6 +225,14 @@ export default function Dashboard() {
       return
     }
     socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
+  }
+
+  function centerMapOnDrone() {
+    let lat = parseFloat(gpsData.lat * 1e-7)
+    let lon = parseFloat(gpsData.lon * 1e-7)
+    mapRef.current.getMap().flyTo({
+      center: [lon, lat],
+    })
   }
 
   return (
@@ -413,14 +427,14 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md'>
+        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2'>
           <Tooltip
             label={
               !gpsData.lon && !gpsData.lat
                 ? 'No GPS data'
                 : followDrone
-                  ? 'Stop Following'
-                  : 'Follow Drone'
+                  ? 'Stop following'
+                  : 'Follow drone'
             }
           >
             <ActionIcon
@@ -430,6 +444,18 @@ export default function Dashboard() {
               }}
             >
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip
+            label={
+              !gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'
+            }
+          >
+            <ActionIcon
+              disabled={!gpsData.lon && !gpsData.lat}
+              onClick={centerMapOnDrone}
+            >
+              <IconCrosshair />
             </ActionIcon>
           </Tooltip>
         </div>

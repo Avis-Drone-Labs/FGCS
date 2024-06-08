@@ -40,7 +40,10 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config.js'
 
 // Custom components and helpers
-import { COPTER_MODES_FLIGHT_MODE_MAP } from '../../helpers/mavlinkConstants.js'
+import {
+  COPTER_MODES_FLIGHT_MODE_MAP,
+  PLANE_MODES_FLIGHT_MODE_MAP,
+} from '../../helpers/mavlinkConstants.js'
 import { showSuccessNotification } from '../../helpers/notification.js'
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
@@ -202,10 +205,16 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
         if (flightMode.name === 'MODE') {
           flightModeColorsMap[flightMode.Mode] = colors[index]
         } else if (flightMode.name === 'HEARTBEAT') {
-          // TODO: Change if plane
-          flightModeColorsMap[
-            COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
-          ] = colors[index]
+          // Check if the flight mode is a plane or copter to select the correct flight mode
+          if (flightMode === 1) {
+            flightModeColorsMap[
+              PLANE_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+            ] = colors[index]
+          } else {
+            flightModeColorsMap[
+              COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+            ] = colors[index]
+          }
         }
       })
 
@@ -220,8 +229,12 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
         if (flightMode.name === 'MODE') {
           labelContent = flightMode.Mode
         } else if (flightMode.name === 'HEARTBEAT') {
-          // TODO: Change if plane
-          labelContent = COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+          // Check if the flight mode is a plane or copter to select the correct flight mode
+          if (flightMode === 1) {
+            labelContent = PLANE_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+          } else {
+            labelContent = COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+          }
           xMax = flightModes[0].TimeUS
         }
 

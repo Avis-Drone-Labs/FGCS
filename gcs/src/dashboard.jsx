@@ -49,8 +49,8 @@ import StatusMessages from './components/dashboard/statusMessages'
 import Layout from './components/layout'
 
 // Sounds
-import armSound from '../public/sounds/armed.mp3'
-import disarmSound from '../public/sounds/disarmed.mp3'
+import armSound from './assets/sounds/armed.mp3'
+import disarmSound from './assets/sounds/disarmed.mp3'
 
 export default function Dashboard() {
   const [connected] = useLocalStorage({

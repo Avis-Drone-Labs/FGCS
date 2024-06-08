@@ -30,3 +30,4 @@ release
 package-lock.json
 .env
 extras
+yarn.lock

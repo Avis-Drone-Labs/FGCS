@@ -263,6 +263,7 @@ export default function Dashboard() {
         <div className='absolute top-0 left-0 flex flex-col justify-between p-4 bg-falcongrey/80 z-10 h-full'>
           {/* Telemetry Information */}
           <div>
+            {/* Information above indicators */}
             <div className='flex flex-col items-center space-y-2'>
               {getIsArmed() ? (
                 <p className='font-bold text-falconred'>ARMED</p>
@@ -281,6 +282,8 @@ export default function Dashboard() {
                 <p>{getFlightMode()}</p>
               </div>
             </div>
+
+            {/* Attitude Indicator */}
             <div className='flex flex-row items-center justify-center'>
               <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
                 <p className='text-sm'>ms&#8315;&#185;</p>
@@ -317,6 +320,8 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
+
+            {/* Heading Indicator */}
             <div className='flex flex-row items-center justify-center'>
               <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
                 <p className='text-sm'>deg &#176;</p>
@@ -347,6 +352,8 @@ export default function Dashboard() {
                 {/* TOOD: Implement distance to home */}
               </div>
             </div>
+
+            {/* Batter information */}
             <div className='flex flex-col items-center'>
               <p>BATTERY</p>
               <div className='flex flex-row space-x-4'>
@@ -499,7 +506,7 @@ export default function Dashboard() {
           </Tooltip>
         </div>
 
-        <div className='absolute bottom-0 right-0 z-0'>
+        <div className='absolute bottom-0 right-0 z-20'>
           <ResizableBox 
             height={150} 
             width={600} 

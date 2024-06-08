@@ -24,6 +24,7 @@ import {
   IconSun,
   IconSunOff
 } from '@tabler/icons-react'
+import { Rnd } from 'react-rnd'
 
 // Helper javascript files
 import {
@@ -53,7 +54,6 @@ import Layout from './components/layout'
 // Sounds
 import armSound from '../public/sounds/armed.mp3'
 import disarmSound from '../public/sounds/disarmed.mp3'
-import { outside } from 'semver'
 
 export default function Dashboard() {
   // Local Storage
@@ -129,7 +129,7 @@ export default function Dashboard() {
       return
     } else {
       socket.emit('set_state', { state: 'dashboard' })
-      statustextMessagesHandler.setState([])
+      statustextMessagesHandler.setState([{mavpackettype: "STATUSTEXT", severity: 2, text: "This is a super important message, trust me", timestamp: 1717803794.5780833}])
       socket.emit('get_current_mission')
     }
 
@@ -491,13 +491,26 @@ export default function Dashboard() {
           </Tooltip>
         </div>
 
-        {statustextMessages.length !== 0 && (
-          <StatusMessages
-            messages={statustextMessages}
-            outsideVisibility={outsideVisibility}
-            className='absolute bottom-0 right-0 bg-falcongrey/80 max-w-1/2 z-10'
-          />
-        )}
+        <Rnd
+          default={{
+            x: 500,
+            y: 500,
+            width: 400,
+            height: 200,
+          }}
+          enableResizing={{ top:false, right:false, bottom:false, left:false, topRight:false, bottomRight:false, bottomLeft:false, topLeft:true }}  // Have to set all of them
+          bounds="parent"
+          resizeGrid={[20, 30]}
+          className='z-10'
+        >
+          {statustextMessages.length !== 0 && (
+            <StatusMessages
+              messages={statustextMessages}
+              outsideVisibility={outsideVisibility}
+              className='absolute bottom-0 right-0 bg-falcongrey/80 max-w-1/2 z-10'
+            />
+          )}
+        </Rnd>
       </div>
     </Layout>
   )

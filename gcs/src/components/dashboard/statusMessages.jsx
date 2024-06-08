@@ -51,7 +51,7 @@ export default function StatusMessages(props) {
     let base = 'flex flex-row space-x-2 text-xl'
     return props.outsideVisibility ? base + " font-bold !text-2xl" : base;
   }
-
+  
   return (
     <div className={props.className}>
       <ScrollArea

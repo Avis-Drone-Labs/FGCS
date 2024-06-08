@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import { Tooltip } from '@mantine/core'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
-import arrow from '../../../public/arrow.svg'
+import arrow from '../../assets/arrow.svg'
 
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'

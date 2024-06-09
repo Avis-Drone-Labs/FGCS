@@ -81,7 +81,7 @@
   top: 50%;
   right: 1%;
   transform: rotate(135deg);
-  cursor: nw-resize;
+  cursor: e-resize;
   position: absolute;
   width: 12px;
   height: 12px;

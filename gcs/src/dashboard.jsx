@@ -10,8 +10,13 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { useListState, useLocalStorage, usePrevious } from '@mantine/hooks'
+import { ActionIcon, Button, Divider, Select, Tooltip } from '@mantine/core'
+import {
+  useListState,
+  useLocalStorage,
+  usePrevious,
+  useViewportSize,
+} from '@mantine/hooks'
 import {
   IconAnchor,
   IconAnchorOff,
@@ -22,9 +27,9 @@ import {
   IconRadar,
   IconSatellite,
   IconSun,
-  IconSunOff
+  IconSunOff,
 } from '@tabler/icons-react'
-import { ResizableBox } from 'react-resizable';
+import { ResizableBox } from 'react-resizable'
 
 // Helper javascript files
 import {
@@ -54,6 +59,7 @@ import Layout from './components/layout'
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
+import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 
 export default function Dashboard() {
   // Local Storage
@@ -64,6 +70,16 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
+  const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
+    key: 'telemetryPanelSize',
+    defaultValue: { width: 400, height: Infinity },
+  })
+  const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
+    key: 'messagesPanelSize',
+    defaultValue: { width: 600, height: 150 },
+  })
+
+  const { height: viewportHeight, width: viewportWidth } = useViewportSize()
 
   // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
@@ -77,7 +93,7 @@ export default function Dashboard() {
     onboard_control_sensors_enabled: 0,
   })
   const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
-  
+
   // GPS and Telemetry
   const [gpsData, setGpsData] = useState({})
   const [telemetryData, setTelemetryData] = useState({})
@@ -100,8 +116,8 @@ export default function Dashboard() {
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
   // Map and messages
-  const mapRef = useRef();
-  const [outsideVisibility, setOutsideVisibility] = useState(false);
+  const mapRef = useRef()
+  const [outsideVisibility, setOutsideVisibility] = useState(false)
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -129,7 +145,6 @@ export default function Dashboard() {
       return
     } else {
       socket.emit('set_state', { state: 'dashboard' })
-      statustextMessagesHandler.setState([{mavpackettype: "STATUSTEXT", severity: 2, text: "This is a super important message, trust me", timestamp: 1717803794.5780833}])
       socket.emit('get_current_mission')
     }
 
@@ -261,17 +276,31 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className='absolute top-0 left-0 h-full z-10 bg-falcongrey/80'>
-          <ResizableBox 
-            height={Infinity}
-            width={400}
+        <div
+          className='absolute top-0 left-0 h-full z-10'
+          style={{
+            backgroundColor: outsideVisibility
+              ? 'rgb(28 32 33)'
+              : 'rgb(28 32 33 / 0.8)',
+          }}
+        >
+          <ResizableBox
+            height={telemetryPanelSize.height}
+            width={telemetryPanelSize.width}
+            minConstraints={[200, Infinity]}
+            maxConstraints={[viewportWidth - 200, Infinity]}
             resizeHandles={['e']}
-            handle={(h, ref) => <span className={`custom-handle-e`} ref={ref} />}
+            handle={(h, ref) => (
+              <span className={`custom-handle-e`} ref={ref} />
+            )}
             handleSize={[32, 32]}
-            axis="x"
+            axis='x'
+            onResize={(_, { size }) => {
+              setTelemetryPanelSize({ width: size.width, height: size.height })
+            }}
             className='h-full'
           >
-            <div className='flex flex-col justify-between p-4 h-full'>
+            <div className='flex flex-col p-2 h-full gap-2'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}
@@ -284,7 +313,9 @@ export default function Dashboard() {
                       {prearmEnabled() ? (
                         <p className='text-green-500'>Prearm: Enabled</p>
                       ) : (
-                        <p className='font-bold text-falconred'>Prearm: Disabled</p>
+                        <p className='font-bold text-falconred'>
+                          Prearm: Disabled
+                        </p>
                       )}
                     </>
                   )}
@@ -298,37 +329,39 @@ export default function Dashboard() {
                 <div className='flex flex-row items-center justify-center'>
                   <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
                     <p className='text-sm'>ms&#8315;&#185;</p>
-                    <p>
-                      AS <br />{' '}
-                      {(telemetryData.airspeed ? telemetryData.airspeed : 0).toFixed(
-                        2,
-                      )}
-                    </p>
-                    <p>
-                      GS <br />{' '}
-                      {(telemetryData.groundspeed
+                    <TelemetryValueDisplay
+                      title='AS'
+                      value={(telemetryData.airspeed
+                        ? telemetryData.airspeed
+                        : 0
+                      ).toFixed(2)}
+                    />
+                    <TelemetryValueDisplay
+                      title='GS'
+                      value={(telemetryData.groundspeed
                         ? telemetryData.groundspeed
                         : 0
                       ).toFixed(2)}
-                    </p>
+                    />
                   </div>
                   <AttitudeIndicator
                     roll={attitudeData.roll * (180 / Math.PI)}
                     pitch={attitudeData.pitch * (180 / Math.PI)}
-                    size={"20vh"}
+                    size={'20vmin'}
                   />
                   <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
                     <p className='text-sm'>m</p>
-                    <p>
-                      AMSL <br /> {(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
-                    </p>
-                    <p>
-                      AREL <br />{' '}
-                      {(gpsData.relative_alt
+                    <TelemetryValueDisplay
+                      title='AMSL'
+                      value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
+                    />
+                    <TelemetryValueDisplay
+                      title='AREL'
+                      value={(gpsData.relative_alt
                         ? gpsData.relative_alt / 1000
                         : 0
                       ).toFixed(2)}
-                    </p>
+                    />
                   </div>
                 </div>
 
@@ -336,31 +369,36 @@ export default function Dashboard() {
                 <div className='flex flex-row items-center justify-center'>
                   <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
                     <p className='text-sm'>deg &#176;</p>
-                    <p>
-                      HDG <br /> {(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-                    </p>
-                    <p>
-                      YAW <br />{' '}
-                      {(attitudeData.yaw
+                    <TelemetryValueDisplay
+                      title='HDG'
+                      value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
+                    />
+                    <TelemetryValueDisplay
+                      title='YAW'
+                      value={(attitudeData.yaw
                         ? attitudeData.yaw * (180 / Math.PI)
                         : 0
                       ).toFixed(2)}
-                    </p>
+                    />
                   </div>
-                  <HeadingIndicator heading={gpsData.hdg ? gpsData.hdg / 100 : 0} size={"20vh"} />
+                  <HeadingIndicator
+                    heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+                    size={'20vmin'}
+                  />
                   <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
                     <p className='text-sm'>m</p>
-                    <p>
-                      WP <br />{' '}
-                      {(navControllerOutputData.wp_dist
+                    <TelemetryValueDisplay
+                      title='WP'
+                      value={(navControllerOutputData.wp_dist
                         ? navControllerOutputData.wp_dist
                         : 0
                       ).toFixed(2)}
-                    </p>
-                    <p>
-                      HOME <br /> {(0).toFixed(2)}
-                    </p>
+                    />
                     {/* TOOD: Implement distance to home */}
+                    <TelemetryValueDisplay
+                      title='HOME'
+                      value={(0).toFixed(2)}
+                    />
                   </div>
                 </div>
 
@@ -368,21 +406,21 @@ export default function Dashboard() {
                 <div className='flex flex-col items-center'>
                   <p>BATTERY</p>
                   <div className='flex flex-row space-x-4'>
-                    <p>
+                    <p className='font-bold text-xl'>
                       {(batteryData.voltages
                         ? batteryData.voltages[0] / 1000
                         : 0
                       ).toFixed(2)}
                       V
                     </p>
-                    <p>
+                    <p className='font-bold text-xl'>
                       {(batteryData.current_battery
                         ? batteryData.current_battery / 100
                         : 0
                       ).toFixed(2)}
                       A
                     </p>
-                    <p>
+                    <p className='font-bold text-xl'>
                       {batteryData.battery_remaining
                         ? batteryData.battery_remaining
                         : 0}
@@ -392,44 +430,45 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              <Divider className='my-2' />
+
               {/* Arming/Flight Modes */}
-              <div>
-                <div className='flex flex-row space-x-14'>
-                  <Button
-                    className='mt-6'
-                    onClick={() => {
-                      armDisarm(!getIsArmed())
-                    }}
-                  >
-                    {getIsArmed() ? 'Disarm' : 'Arm'}
-                  </Button>
+              {connected && (
+                <div className='flex flex-col flex-wrap gap-4'>
+                  <div className='flex flex-row space-x-14'>
+                    <Button
+                      onClick={() => {
+                        armDisarm(!getIsArmed())
+                      }}
+                    >
+                      {getIsArmed() ? 'Disarm' : 'Arm'}
+                    </Button>
+                  </div>
+                  <div className='flex flex-row space-x-2'>
+                    {currentFlightModeNumber !== null && (
+                      <>
+                        <Select
+                          value={newFlightModeNumber.toString()}
+                          onChange={(value) => {
+                            setNewFlightModeNumber(parseInt(value))
+                          }}
+                          data={Object.keys(getFlightModeMap()).map((key) => {
+                            return {
+                              value: key,
+                              label: getFlightModeMap()[key],
+                            }
+                          })}
+                        />
+                        <Button
+                          onClick={() => setNewFlightMode(newFlightModeNumber)}
+                        >
+                          Set flight mode
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className='flex flex-row space-x-2 mt-4'>
-                  {currentFlightModeNumber !== null && (
-                    <>
-                      <Select
-                        value={newFlightModeNumber.toString()}
-                        label={'Current Flight mode'}
-                        onChange={(value) => {
-                          setNewFlightModeNumber(parseInt(value))
-                        }}
-                        data={Object.keys(getFlightModeMap()).map((key) => {
-                          return {
-                            value: key,
-                            label: getFlightModeMap()[key],
-                          }
-                        })}
-                      />
-                      <Button
-                        onClick={() => setNewFlightMode(newFlightModeNumber)}
-                        className='mt-6'
-                      >
-                        Set flight mode
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
           </ResizableBox>
         </div>
@@ -470,7 +509,7 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2'>
+        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'>
           {/* Follow Drone */}
           <Tooltip
             label={
@@ -490,7 +529,7 @@ export default function Dashboard() {
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}
             </ActionIcon>
           </Tooltip>
-          
+
           {/* Center Map on Drone */}
           <Tooltip
             label={
@@ -508,35 +547,45 @@ export default function Dashboard() {
           {/* Set outside visibility */}
           <Tooltip
             label={
-              outsideVisibility ? "Turn on outside text mode" : "Turn off outside text mode"
+              outsideVisibility
+                ? 'Turn on outside text mode'
+                : 'Turn off outside text mode'
             }
           >
             <ActionIcon
-              disabled={statustextMessages.length == 0}
-              onClick={() => {setOutsideVisibility(!outsideVisibility)}}
+              onClick={() => {
+                setOutsideVisibility(!outsideVisibility)
+              }}
             >
               {outsideVisibility ? <IconSun /> : <IconSunOff />}
             </ActionIcon>
           </Tooltip>
         </div>
 
-      {statustextMessages.length !== 0 && (
-        <div className='absolute bottom-0 right-0 z-20'>
-          <ResizableBox 
-            height={150} 
-            width={600} 
-            resizeHandles={['nw']}
-            handle={(h, ref) => <span className={`custom-handle-nw`} ref={ref} />}
-            handleSize={[32, 32]}
-          >
+        {statustextMessages.length !== 0 && (
+          <div className='absolute bottom-0 right-0 z-20'>
+            <ResizableBox
+              height={messagesPanelSize.height}
+              width={messagesPanelSize.width}
+              minConstraints={[600, 150]}
+              maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
+              resizeHandles={['nw']}
+              handle={(h, ref) => (
+                <span className={`custom-handle-nw`} ref={ref} />
+              )}
+              handleSize={[32, 32]}
+              onResize={(_, { size }) => {
+                setMessagesPanelSize({ width: size.width, height: size.height })
+              }}
+            >
               <StatusMessages
                 messages={statustextMessages}
                 outsideVisibility={outsideVisibility}
                 className='h-full bg-falcongrey/80 max-w-1/2 object-fill text-xl'
               />
-          </ResizableBox>
-        </div>
-      )}
+            </ResizableBox>
+          </div>
+        )}
       </div>
     </Layout>
   )

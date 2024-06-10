@@ -71,6 +71,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
           import.meta.env.VITE_MAPTILER_API_KEY
         }`}
         ref={passedRef}
+        attributionControl={false}
       >
         {/* Show marker on map if the position is set */}
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (

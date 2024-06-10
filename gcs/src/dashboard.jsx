@@ -10,8 +10,13 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { useListState, useLocalStorage, usePrevious } from '@mantine/hooks'
+import { ActionIcon, Button, Divider, Select, Tooltip } from '@mantine/core'
+import {
+  useListState,
+  useLocalStorage,
+  usePrevious,
+  useViewportSize,
+} from '@mantine/hooks'
 import {
   IconAnchor,
   IconAnchorOff,
@@ -21,7 +26,10 @@ import {
   IconGps,
   IconRadar,
   IconSatellite,
+  IconSun,
+  IconSunOff,
 } from '@tabler/icons-react'
+import { ResizableBox } from 'react-resizable'
 
 // Helper javascript files
 import {
@@ -51,8 +59,10 @@ import Layout from './components/layout'
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
+import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 
 export default function Dashboard() {
+  // Local Storage
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
@@ -60,37 +70,57 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
-  const [telemetryData, setTelemetryData] = useState({})
-  const [gpsData, setGpsData] = useState({})
-  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
-  const [batteryData, setBatteryData] = useState({})
+  const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
+    key: 'telemetryPanelSize',
+    defaultValue: { width: 400, height: Infinity },
+  })
+  const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
+    key: 'messagesPanelSize',
+    defaultValue: { width: 600, height: 150 },
+  })
+
+  const { height: viewportHeight, width: viewportWidth } = useViewportSize()
+
+  // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
   const previousHeartbeatData = usePrevious(heartbeatData)
+
+  // System data
+  const [batteryData, setBatteryData] = useState({})
+  const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({
     onboard_control_sensors_enabled: 0,
   })
+  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
+
+  // GPS and Telemetry
+  const [gpsData, setGpsData] = useState({})
+  const [telemetryData, setTelemetryData] = useState({})
+  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
   const [gpsRawIntData, setGpsRawIntData] = useState({
     fix_type: 0,
     satellites_visible: 0,
   })
-  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
+  // Mission
   const [missionItems, setMissionItems] = useState({
     mission_items: [],
     fence_items: [],
     rally_items: [],
   })
 
+  // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
+  // Map and messages
   const mapRef = useRef()
+  const [outsideVisibility, setOutsideVisibility] = useState(false)
 
+  // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
-
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
   const incomingMessageHandler = {
@@ -115,7 +145,6 @@ export default function Dashboard() {
       return
     } else {
       socket.emit('set_state', { state: 'dashboard' })
-      statustextMessagesHandler.setState([])
       socket.emit('get_current_mission')
     }
 
@@ -237,7 +266,7 @@ export default function Dashboard() {
 
   return (
     <Layout currentPage='dashboard'>
-      <div className='relative flex flex-auto w-full h-full'>
+      <div className='relative flex flex-auto w-full h-full overflow-hidden'>
         <div className='w-full'>
           <MapSection
             passedRef={mapRef}
@@ -246,152 +275,205 @@ export default function Dashboard() {
             missionItems={missionItems}
           />
         </div>
-        <div className='absolute top-0 left-0 p-4 bg-falcongrey/80'>
-          <div className='flex flex-col items-center space-y-2'>
-            {getIsArmed() ? (
-              <p className='font-bold text-falconred'>ARMED</p>
-            ) : (
-              <>
-                <p className='font-bold'>DISARMED</p>
-                {prearmEnabled() ? (
-                  <p className='text-green-500'>Prearm: Enabled</p>
-                ) : (
-                  <p className='font-bold text-falconred'>Prearm: Disabled</p>
-                )}
-              </>
+
+        <div
+          className='absolute top-0 left-0 h-full z-10'
+          style={{
+            backgroundColor: outsideVisibility
+              ? 'rgb(28 32 33)'
+              : 'rgb(28 32 33 / 0.8)',
+          }}
+        >
+          <ResizableBox
+            height={telemetryPanelSize.height}
+            width={telemetryPanelSize.width}
+            minConstraints={[200, Infinity]}
+            maxConstraints={[viewportWidth - 200, Infinity]}
+            resizeHandles={['e']}
+            handle={(h, ref) => (
+              <span className={`custom-handle-e`} ref={ref} />
             )}
-            <div className='flex flex-row space-x-6'>
-              <p>{MAV_STATE[heartbeatData.system_status]}</p>
-              <p>{getFlightMode()}</p>
+            handleSize={[32, 32]}
+            axis='x'
+            onResize={(_, { size }) => {
+              setTelemetryPanelSize({ width: size.width, height: size.height })
+            }}
+            className='h-full'
+          >
+            <div className='flex flex-col p-2 h-full gap-2'>
+              {/* Telemetry Information */}
+              <div>
+                {/* Information above indicators */}
+                <div className='flex flex-col items-center space-y-2'>
+                  {getIsArmed() ? (
+                    <p className='font-bold text-falconred'>ARMED</p>
+                  ) : (
+                    <>
+                      <p className='font-bold'>DISARMED</p>
+                      {prearmEnabled() ? (
+                        <p className='text-green-500'>Prearm: Enabled</p>
+                      ) : (
+                        <p className='font-bold text-falconred'>
+                          Prearm: Disabled
+                        </p>
+                      )}
+                    </>
+                  )}
+                  <div className='flex flex-row space-x-6'>
+                    <p>{MAV_STATE[heartbeatData.system_status]}</p>
+                    <p>{getFlightMode()}</p>
+                  </div>
+                </div>
+
+                {/* Attitude Indicator */}
+                <div className='flex flex-row items-center justify-center'>
+                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                    <p className='text-sm'>ms&#8315;&#185;</p>
+                    <TelemetryValueDisplay
+                      title='AS'
+                      value={(telemetryData.airspeed
+                        ? telemetryData.airspeed
+                        : 0
+                      ).toFixed(2)}
+                    />
+                    <TelemetryValueDisplay
+                      title='GS'
+                      value={(telemetryData.groundspeed
+                        ? telemetryData.groundspeed
+                        : 0
+                      ).toFixed(2)}
+                    />
+                  </div>
+                  <AttitudeIndicator
+                    roll={attitudeData.roll * (180 / Math.PI)}
+                    pitch={attitudeData.pitch * (180 / Math.PI)}
+                    size={'20vmin'}
+                  />
+                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                    <p className='text-sm'>m</p>
+                    <TelemetryValueDisplay
+                      title='AMSL'
+                      value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
+                    />
+                    <TelemetryValueDisplay
+                      title='AREL'
+                      value={(gpsData.relative_alt
+                        ? gpsData.relative_alt / 1000
+                        : 0
+                      ).toFixed(2)}
+                    />
+                  </div>
+                </div>
+
+                {/* Heading Indicator */}
+                <div className='flex flex-row items-center justify-center'>
+                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                    <p className='text-sm'>deg &#176;</p>
+                    <TelemetryValueDisplay
+                      title='HDG'
+                      value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
+                    />
+                    <TelemetryValueDisplay
+                      title='YAW'
+                      value={(attitudeData.yaw
+                        ? attitudeData.yaw * (180 / Math.PI)
+                        : 0
+                      ).toFixed(2)}
+                    />
+                  </div>
+                  <HeadingIndicator
+                    heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+                    size={'20vmin'}
+                  />
+                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                    <p className='text-sm'>m</p>
+                    <TelemetryValueDisplay
+                      title='WP'
+                      value={(navControllerOutputData.wp_dist
+                        ? navControllerOutputData.wp_dist
+                        : 0
+                      ).toFixed(2)}
+                    />
+                    {/* TOOD: Implement distance to home */}
+                    <TelemetryValueDisplay
+                      title='HOME'
+                      value={(0).toFixed(2)}
+                    />
+                  </div>
+                </div>
+
+                {/* Batter information */}
+                <div className='flex flex-col items-center'>
+                  <p>BATTERY</p>
+                  <div className='flex flex-row space-x-4'>
+                    <p className='font-bold text-xl'>
+                      {(batteryData.voltages
+                        ? batteryData.voltages[0] / 1000
+                        : 0
+                      ).toFixed(2)}
+                      V
+                    </p>
+                    <p className='font-bold text-xl'>
+                      {(batteryData.current_battery
+                        ? batteryData.current_battery / 100
+                        : 0
+                      ).toFixed(2)}
+                      A
+                    </p>
+                    <p className='font-bold text-xl'>
+                      {batteryData.battery_remaining
+                        ? batteryData.battery_remaining
+                        : 0}
+                      %
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Divider className='my-2' />
+
+              {/* Arming/Flight Modes */}
+              {connected && (
+                <div className='flex flex-col flex-wrap gap-4'>
+                  <div className='flex flex-row space-x-14'>
+                    <Button
+                      onClick={() => {
+                        armDisarm(!getIsArmed())
+                      }}
+                    >
+                      {getIsArmed() ? 'Disarm' : 'Arm'}
+                    </Button>
+                  </div>
+                  <div className='flex flex-row space-x-2'>
+                    {currentFlightModeNumber !== null && (
+                      <>
+                        <Select
+                          value={newFlightModeNumber.toString()}
+                          onChange={(value) => {
+                            setNewFlightModeNumber(parseInt(value))
+                          }}
+                          data={Object.keys(getFlightModeMap()).map((key) => {
+                            return {
+                              value: key,
+                              label: getFlightModeMap()[key],
+                            }
+                          })}
+                        />
+                        <Button
+                          onClick={() => setNewFlightMode(newFlightModeNumber)}
+                        >
+                          Set flight mode
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-          <div className='flex flex-row items-center justify-center'>
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>ms&#8315;&#185;</p>
-              <p>
-                AS <br />{' '}
-                {(telemetryData.airspeed ? telemetryData.airspeed : 0).toFixed(
-                  2,
-                )}
-              </p>
-              <p>
-                GS <br />{' '}
-                {(telemetryData.groundspeed
-                  ? telemetryData.groundspeed
-                  : 0
-                ).toFixed(2)}
-              </p>
-            </div>
-            <AttitudeIndicator
-              roll={attitudeData.roll * (180 / Math.PI)}
-              pitch={attitudeData.pitch * (180 / Math.PI)}
-            />
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>m</p>
-              <p>
-                AMSL <br /> {(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
-              </p>
-              <p>
-                AREL <br />{' '}
-                {(gpsData.relative_alt
-                  ? gpsData.relative_alt / 1000
-                  : 0
-                ).toFixed(2)}
-              </p>
-            </div>
-          </div>
-          <div className='flex flex-row items-center justify-center'>
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>deg &#176;</p>
-              <p>
-                HDG <br /> {(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-              </p>
-              <p>
-                YAW <br />{' '}
-                {(attitudeData.yaw
-                  ? attitudeData.yaw * (180 / Math.PI)
-                  : 0
-                ).toFixed(2)}
-              </p>
-            </div>
-            <HeadingIndicator heading={gpsData.hdg ? gpsData.hdg / 100 : 0} />
-            <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-              <p className='text-sm'>m</p>
-              <p>
-                WP <br />{' '}
-                {(navControllerOutputData.wp_dist
-                  ? navControllerOutputData.wp_dist
-                  : 0
-                ).toFixed(2)}
-              </p>
-              <p>
-                HOME <br /> {(0).toFixed(2)}
-              </p>
-              {/* TOOD: Implement distance to home */}
-            </div>
-          </div>
-          <div className='flex flex-col items-center'>
-            <p>BATTERY</p>
-            <div className='flex flex-row space-x-4'>
-              <p>
-                {(batteryData.voltages
-                  ? batteryData.voltages[0] / 1000
-                  : 0
-                ).toFixed(2)}
-                V
-              </p>
-              <p>
-                {(batteryData.current_battery
-                  ? batteryData.current_battery / 100
-                  : 0
-                ).toFixed(2)}
-                A
-              </p>
-              <p>
-                {batteryData.battery_remaining
-                  ? batteryData.battery_remaining
-                  : 0}
-                %
-              </p>
-            </div>
-          </div>
-          <div className='flex flex-row space-x-14'>
-            <Button
-              className='mt-6'
-              onClick={() => {
-                armDisarm(!getIsArmed())
-              }}
-            >
-              {getIsArmed() ? 'Disarm' : 'Arm'}
-            </Button>
-          </div>
-          <div className='flex flex-row space-x-2 mt-4'>
-            {currentFlightModeNumber !== null && (
-              <>
-                <Select
-                  value={newFlightModeNumber.toString()}
-                  label={'Current Flight mode'}
-                  onChange={(value) => {
-                    setNewFlightModeNumber(parseInt(value))
-                  }}
-                  data={Object.keys(getFlightModeMap()).map((key) => {
-                    return {
-                      value: key,
-                      label: getFlightModeMap()[key],
-                    }
-                  })}
-                />
-                <Button
-                  onClick={() => setNewFlightMode(newFlightModeNumber)}
-                  className='mt-6'
-                >
-                  Set flight mode
-                </Button>
-              </>
-            )}
-          </div>
+          </ResizableBox>
         </div>
 
+        {/* Status Bar */}
         <StatusBar className='absolute top-0 right-0'>
           <StatusSection
             icon={<IconRadar />}
@@ -427,7 +509,8 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2'>
+        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'>
+          {/* Follow Drone */}
           <Tooltip
             label={
               !gpsData.lon && !gpsData.lat
@@ -446,6 +529,8 @@ export default function Dashboard() {
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}
             </ActionIcon>
           </Tooltip>
+
+          {/* Center Map on Drone */}
           <Tooltip
             label={
               !gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'
@@ -458,13 +543,48 @@ export default function Dashboard() {
               <IconCrosshair />
             </ActionIcon>
           </Tooltip>
+
+          {/* Set outside visibility */}
+          <Tooltip
+            label={
+              outsideVisibility
+                ? 'Turn on outside text mode'
+                : 'Turn off outside text mode'
+            }
+          >
+            <ActionIcon
+              onClick={() => {
+                setOutsideVisibility(!outsideVisibility)
+              }}
+            >
+              {outsideVisibility ? <IconSun /> : <IconSunOff />}
+            </ActionIcon>
+          </Tooltip>
         </div>
 
         {statustextMessages.length !== 0 && (
-          <StatusMessages
-            messages={statustextMessages}
-            className='absolute bottom-0 left-0 bg-falcongrey/80 max-w-1/2'
-          />
+          <div className='absolute bottom-0 right-0 z-20'>
+            <ResizableBox
+              height={messagesPanelSize.height}
+              width={messagesPanelSize.width}
+              minConstraints={[600, 150]}
+              maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
+              resizeHandles={['nw']}
+              handle={(h, ref) => (
+                <span className={`custom-handle-nw`} ref={ref} />
+              )}
+              handleSize={[32, 32]}
+              onResize={(_, { size }) => {
+                setMessagesPanelSize({ width: size.width, height: size.height })
+              }}
+            >
+              <StatusMessages
+                messages={statustextMessages}
+                outsideVisibility={outsideVisibility}
+                className='h-full bg-falcongrey/80 max-w-1/2 object-fill text-xl'
+              />
+            </ResizableBox>
+          </div>
         )}
       </div>
     </Layout>

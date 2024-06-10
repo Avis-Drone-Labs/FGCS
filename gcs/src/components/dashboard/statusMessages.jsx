@@ -42,16 +42,26 @@ export default function StatusMessages(props) {
     }
   }
 
+  function getScrollAreaOutsideVisibilityClassNames() {
+    let base = 'h-full w-full p-4'
+    return props.outsideVisibility ? base + " bg-black" : base;
+  }
+
+  function getMessageOutsideVisibilityClassNames() {
+    let base = 'flex flex-row space-x-2'
+    return props.outsideVisibility ? base + " font-bold !text-2xl" : base;
+  }
+
   return (
     <div className={props.className}>
       <ScrollArea
-        className='h-44 w-full p-4'
+        className={getScrollAreaOutsideVisibilityClassNames()}
         viewportRef={viewport}
         onScrollPositionChange={onScrollPositionChange}
       >
         {props.messages.map((message, index) => {
           return (
-            <div key={index} className='flex flex-row space-x-2'>
+            <div key={index} className={getMessageOutsideVisibilityClassNames()}>
               <p className='text-gray-400'>
                 {moment.unix(message.timestamp).format('HH:mm:ss')}
               </p>

@@ -17,10 +17,14 @@ class Response(TypedDict):
     data: NotRequired[Any]
 
 
+class MotorTestThrottleDurationAndNumber(TypedDict):
+    throttle: int
+    duration: int
+    number_of_motors: int
+
 class MotorTestThrottleAndDuration(TypedDict):
     throttle: int
     duration: int
-
 
 class MotorTestAllValues(TypedDict):
     motorInstance: int

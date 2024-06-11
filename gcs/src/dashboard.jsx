@@ -548,8 +548,8 @@ export default function Dashboard() {
           <Tooltip
             label={
               outsideVisibility
-                ? 'Turn on outside text mode'
-                : 'Turn off outside text mode'
+                ? 'Turn off outside text mode'
+                : 'Turn on outside text mode'
             }
           >
             <ActionIcon

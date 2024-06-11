@@ -1,7 +1,7 @@
 /*
   This is the motor test panel for the config page.
 
-  Allows testing the motors individually,in-sequence and simultaneously with throttle and duration parameters for the test
+  Allows testing the motors individually,in-sequence and simultaneously with throttle and duration parameters for the test. Shows frame type and class of drone
 */
 // Base Imports
 import {useEffect,useState} from "react";
@@ -25,7 +25,7 @@ export default function Motortestpanel() {
     key: 'connectedToDrone',
     defaultValue: false,
   })
-  const [frameType,setFrameType] = useState({motorOrder:null,direction:null,ftype:null})
+  const [frameType,setFrameType] = useState({motorOrder:null,direction:null,frametype:null})
   const [frameClass, setFrameClass] = useState(null)
   const [numberOfMotors,setNumberOfMotors] = useState(4)
   const [selectedThrottle, setSelectedThrottle] = useState(10)
@@ -40,17 +40,18 @@ export default function Motortestpanel() {
       socket.emit('get_frame_config')
     }
     socket.on("frame_type_config",(data) => {
-      let frameType = data.frame_type
-      let frameClass = data.frame_class
-      if (FRAME_CLASS_MAP[frameClass].frametype){
-        if(Object.keys(FRAME_CLASS_MAP[frameClass].frametype).includes(frameType.toString())){
-         setFrameType(FRAME_CLASS_MAP[frameClass].frametype[frameType])
+      let currentFrameType = data.frame_type
+      let currentFrameClass = data.frame_class
+      // Checks if the frame class has any compatible frame types and if the current frame type param is comaptible
+      if (FRAME_CLASS_MAP[currentFrameClass].frameclass){
+        if(Object.keys(FRAME_CLASS_MAP[currentFrameClass].frameclass).includes(currentFrameType.toString())){
+         setFrameType(FRAME_CLASS_MAP[currentFrameClass].frameclass[currentFrameType])
         }
       } else {
         setFrameType({motorOrder:null,direction:null,ftype:frameType})
       }
-      setFrameClass(FRAME_CLASS_MAP[frameClass].name)
-      setNumberOfMotors(FRAME_CLASS_MAP[frameClass].numberOfMotors)
+      setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name)
+      setNumberOfMotors(FRAME_CLASS_MAP[currentFrameClass].numberOfMotors)
     })
 
     return () => {
@@ -111,13 +112,13 @@ export default function Motortestpanel() {
         </div>
 
         <div className='flex flex-col gap-2 mt-6'>
-          {/* Individual motor testing buttons*/}
           {frameClass != null && (
               <>
                 <p> FrameClass:{frameClass} </p>
               </>
           )}
-          {[Array.from({length:numberOfMotors},(index)=>{index+1})].map((motor, index) => (
+          {/* Individual motor testing buttons */}
+          {Array(numberOfMotors).keys().map((motor, index) => (
             <Button
               key={index}
               onClick={() => {
@@ -164,6 +165,7 @@ export default function Motortestpanel() {
           )}
         </div>
         <div className='flex flex-col gap-5'>
+          {/* Motor Order and direction details */}
           {frameType.motorOrder != null  && (
               <>
               {frameType.motorOrder.map((mappedMotorNumber,idx)=>{

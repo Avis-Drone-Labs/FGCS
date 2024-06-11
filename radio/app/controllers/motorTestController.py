@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import serial
-from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration, Response
+from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration,MotorTestThrottleDurationAndNumber, Response
 from app.utils import commandAccepted
 from pymavlink import mavutil
 
@@ -105,12 +105,12 @@ class MotorTestController:
                 "message": f"Motor test for motor {motor_instance} not started, serial exception",
             }
 
-    def testMotorSequence(self, data: MotorTestThrottleAndDuration) -> Response:
+    def testMotorSequence(self, data: MotorTestThrottleDurationAndNumber) -> Response:
         """
         Test a sequence of motors.
 
         Args:
-            data (MotorTestThrottleAndDuration): The data for the motor test
+            data (MotorTestThrottleDurationAndNumber): The data for the motor test
 
         Returns:
             Response: The response from the motor test
@@ -148,12 +148,12 @@ class MotorTestController:
                 "message": "Motor sequence test not started, serial exception",
             }
 
-    def testAllMotors(self, data: MotorTestThrottleAndDuration) -> Response:
+    def testAllMotors(self, data: MotorTestThrottleDurationAndNumber) -> Response:
         """
         Test all motors.
 
         Args:
-            data (MotorTestThrottleAndDuration): The data for the motor test
+            data (MotorTestThrottleDurationAndNumber): The data for the motor test
 
         Returns:
             Response: The response from the motor test

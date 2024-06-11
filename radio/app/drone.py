@@ -18,6 +18,7 @@ from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
 from app.controllers.paramsController import ParamsController
+from app.controllers.frameController import FrameController
 from app.customTypes import Response
 from app.utils import commandAccepted
 
@@ -132,6 +133,7 @@ class Drone:
         self.motorTestController = MotorTestController(self)
         self.gripperController = GripperController(self)
         self.missionController = MissionController(self)
+        self.frameController = FrameController(self)
 
         self.stopAllDataStreams()
 

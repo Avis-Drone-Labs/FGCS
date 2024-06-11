@@ -11,7 +11,7 @@ from pymavlink import mavutil
 if TYPE_CHECKING:
     from radio.app.drone import Drone
 
-class Frame:
+class FrameController:
     def __init__(self,drone:Drone):
         """The frame class controls all frame class and type related actions
 

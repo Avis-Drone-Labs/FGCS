@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
 import { ActionIcon, Button, Divider, Select, Tooltip } from '@mantine/core'
@@ -30,7 +30,7 @@ import {
   IconSunOff,
 } from '@tabler/icons-react'
 import { ResizableBox } from 'react-resizable'
-
+import Webcam from 'react-webcam'
 // Helper javascript files
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
@@ -123,6 +123,9 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
+  const [deviceId, setDeviceId] = useState(null)
+  const [devices, setDevices] = useState([])
+
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
     BATTERY_STATUS: (msg) => setBatteryData(msg),
@@ -139,6 +142,16 @@ export default function Dashboard() {
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
   }
+
+  const handleDevices = useCallback(
+    (mediaDevices) =>
+      setDevices(mediaDevices.filter(({ kind }) => kind === 'videoinput')),
+    [setDevices],
+  )
+
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then(handleDevices)
+  }, [handleDevices])
 
   useEffect(() => {
     if (!connected) {
@@ -300,7 +313,7 @@ export default function Dashboard() {
             }}
             className='h-full'
           >
-            <div className='flex flex-col p-2 h-full gap-2'>
+            <div className='flex flex-col p-1 h-full gap-2 overflow-x-hidden overflow-y-auto'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}
@@ -430,7 +443,26 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <Divider className='my-2' />
+              <Divider className='my-1' />
+
+              <div className='flex flex-col gap-2'>
+                <Select
+                  label='Select camera input'
+                  data={devices.map((device) => {
+                    return { value: device.deviceId, label: device.label }
+                  })}
+                  value={deviceId}
+                  onChange={setDeviceId}
+                />
+                {deviceId !== null && (
+                  <Webcam
+                    audio={false}
+                    videoConstraints={{ deviceId: deviceId }}
+                  />
+                )}
+              </div>
+
+              <Divider className='my-1' />
 
               {/* Arming/Flight Modes */}
               {connected && (

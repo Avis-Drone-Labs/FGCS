@@ -18,7 +18,6 @@ socketio_client: SocketIOTestClient = socketio.test_client(
 )
 
 
-
 def falcon_test(
     pass_drone_status: bool = False, pass_flask: bool = False, pass_drone: bool = False
 ):

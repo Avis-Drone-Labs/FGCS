@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import serial
-from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration,MotorTestThrottleDurationAndNumber, Response
+from app.customTypes import (
+    MotorTestAllValues,
+    MotorTestThrottleAndDuration,
+    MotorTestThrottleDurationAndNumber,
+    Response,
+)
 from app.utils import commandAccepted
 from pymavlink import mavutil
 

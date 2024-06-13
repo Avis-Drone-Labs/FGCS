@@ -22,9 +22,11 @@ class MotorTestThrottleDurationAndNumber(TypedDict):
     duration: int
     number_of_motors: int
 
+
 class MotorTestThrottleAndDuration(TypedDict):
     throttle: int
     duration: int
+
 
 class MotorTestAllValues(TypedDict):
     motorInstance: int

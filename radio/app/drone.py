@@ -103,7 +103,7 @@ class Drone:
                 "Could not connect to the drone. Aircraft not plane or quadcopter."
             )
             return
-        
+
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component

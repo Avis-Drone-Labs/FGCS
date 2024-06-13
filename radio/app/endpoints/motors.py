@@ -50,5 +50,3 @@ def testAllMotors(data: MotorTestThrottleDurationAndNumber) -> None:
 
     result = droneStatus.drone.motorTestController.testAllMotors(data)
     socketio.emit("motor_test_result", result)
-
-

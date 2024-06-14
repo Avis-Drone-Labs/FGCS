@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from radio.app.drone import Drone
+    from app.drone import Drone
 
 
 class FrameController:

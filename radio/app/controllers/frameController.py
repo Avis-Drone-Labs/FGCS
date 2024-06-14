@@ -24,11 +24,11 @@ class FrameController:
         frame_type_result = self.drone.paramsController.getSingleParam("FRAME_TYPE")
 
         if frame_type_result.get("success"):
-            frame_type_data = frameType.get("data")
+            frame_type_data = frame_type_result.get("data")
             if frame_type_data:
                 self.frame_type = frame_type_data.param_value
         else:
-            self.drone.logger.error(frameType.get("message"))
+            self.drone.logger.error(frame_type_result.get("message"))
 
     def getFrameClass(self) -> None:
         """
@@ -37,8 +37,8 @@ class FrameController:
         frame_class_result = self.drone.paramsController.getSingleParam("FRAME_CLASS")
 
         if frame_class_result.get("success"):
-            frame_class_data = frameClass.get("data")
+            frame_class_data = frame_class_result.get("data")
             if frame_class_data:
                 self.frame_class = frame_class_data.param_value
         else:
-            self.drone.logger.error(frameClass.get("message"))
+            self.drone.logger.error(frame_class_result.get("message"))

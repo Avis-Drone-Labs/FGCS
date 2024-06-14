@@ -16,7 +16,10 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
 import { useLocalStorage } from '@mantine/hooks'
-import { FRAME_CLASS_MAP, LETTERS } from '../../helpers/mavlinkConstants'
+import {
+  FRAME_CLASS_MAP,
+  MOTOR_LETTER_LABELS,
+} from '../../helpers/mavlinkConstants'
 import { socket } from '../../helpers/socket'
 
 export default function MotorTestPanel() {
@@ -40,7 +43,9 @@ export default function MotorTestPanel() {
     socket.on('frame_type_config', (data) => {
       const currentFrameType = data.frame_type
       const currentFrameClass = data.frame_class
-      
+      console.log(currentFrameClass)
+      console.log(currentFrameType)
+
       // Checks if the frame class has any compatible frame types and if the current frame type param is comaptible
       if (FRAME_CLASS_MAP[currentFrameClass].frametype) {
         if (
@@ -48,16 +53,11 @@ export default function MotorTestPanel() {
             currentFrameType.toString(),
           )
         ) {
-          const frameInfo = FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
-          setFrameTypeDirection(
-            frameInfo.direction,
-          )
-          setFrameTypeOrder(
-            frameInfo.motorOrder,
-          )
-          setFrameTypename(
-            frameInfo.frametypename,
-          )
+          const frameInfo =
+            FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
+          setFrameTypeDirection(frameInfo.direction)
+          setFrameTypeOrder(frameInfo.motorOrder)
+          setFrameTypename(frameInfo.frametypename)
         }
       } else {
         setFrameTypeDirection(null)
@@ -132,7 +132,7 @@ export default function MotorTestPanel() {
             </>
           )}
           {/* Individual motor testing buttons */}
-          {LETTERS.slice(0, numberOfMotors).map((motor, index) => (
+          {MOTOR_LETTER_LABELS.slice(0, numberOfMotors).map((motor, index) => (
             <Button
               key={index}
               onClick={() => {

@@ -33,7 +33,7 @@ class FrameController:
     def getFrameClass(self) -> None:
         """
         Gets the current frame class of the drone."""
-        self.frame_class = "UNKNOWN"
+        self.frame_class = 0
         frame_class_result = self.drone.paramsController.getSingleParam("FRAME_CLASS")
 
         if frame_class_result.get("success"):

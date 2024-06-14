@@ -21,10 +21,9 @@ def getFrameDetails() -> None:
     if not droneStatus.drone:
         return
 
-    frameType = droneStatus.drone.frameController.frameType
-    frameClass = droneStatus.drone.frameController.frameClass
-    logger.debug(f"{frameClass},{frameType}")
+    frame_type = droneStatus.drone.frameController.frame_type
+    frame_class = droneStatus.drone.frameController.frame_class
     socketio.emit(
         "frame_type_config",
-        {"frame_type": frameType, "frame_class": frameClass},
+        {"frame_type": frame_type, "frame_class": frame_class},
     )

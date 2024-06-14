@@ -40,7 +40,6 @@ export default function MotorTestPanel() {
     socket.on('frame_type_config', (data) => {
       const currentFrameType = data.frame_type
       const currentFrameClass = data.frame_class
-      console.log('got here')
       
       // Checks if the frame class has any compatible frame types and if the current frame type param is comaptible
       if (FRAME_CLASS_MAP[currentFrameClass].frametype) {

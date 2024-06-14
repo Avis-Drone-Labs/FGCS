@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
-
-import serial
-from app.utils import commandAccepted
-from pymavlink import mavutil
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from radio.app.drone import Drone

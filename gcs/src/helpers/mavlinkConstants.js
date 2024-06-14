@@ -290,4 +290,4 @@ export const FRAME_CLASS_MAP = {
   14: { name: 'Deca', frametype: false, numberOfMotors: 10 },
 }
 
-export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+export const MOTOR_LETTER_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H','I','J','K','L']

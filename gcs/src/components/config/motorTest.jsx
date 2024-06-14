@@ -19,7 +19,7 @@ import { useLocalStorage } from '@mantine/hooks'
 import { FRAME_CLASS_MAP, LETTERS } from '../../helpers/mavlinkConstants'
 import { socket } from '../../helpers/socket'
 
-export default function Motortestpanel() {
+export default function MotorTestPanel() {
   const [connected] = useLocalStorage({
     key: 'connectedToDrone',
     defaultValue: false,
@@ -33,17 +33,15 @@ export default function Motortestpanel() {
   const [selectedDuration, setSelectedDuration] = useState(2)
 
   useEffect(() => {
-    if (!connected) {
-      return
-    } else {
+    if (connected) {
       socket.emit('set_state', { state: 'config.motor_test' })
       socket.emit('get_frame_config')
     }
     socket.on('frame_type_config', (data) => {
-      let currentFrameType = data.frame_type
-      let currentFrameClass = data.frame_class
+      const currentFrameType = data.frame_type
+      const currentFrameClass = data.frame_class
       console.log('got here')
-
+      
       // Checks if the frame class has any compatible frame types and if the current frame type param is comaptible
       if (FRAME_CLASS_MAP[currentFrameClass].frametype) {
         if (
@@ -51,17 +49,15 @@ export default function Motortestpanel() {
             currentFrameType.toString(),
           )
         ) {
+          const frameInfo = FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
           setFrameTypeDirection(
-            FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
-              .direction,
+            frameInfo.direction,
           )
           setFrameTypeOrder(
-            FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
-              .motorOrder,
+            frameInfo.motorOrder,
           )
           setFrameTypename(
-            FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
-              .frametypename,
+            frameInfo.frametypename,
           )
         }
       } else {
@@ -131,7 +127,7 @@ export default function Motortestpanel() {
         </div>
 
         <div className='flex flex-col gap-2 mt-6'>
-          {frameClass != null && (
+          {frameClass !== null && (
             <>
               <p> FrameClass:{frameClass} </p>
             </>
@@ -177,7 +173,7 @@ export default function Motortestpanel() {
       </div>
       <div className='flex flex-col gap-16'>
         <div className='mt-6'>
-          {frameTypename != null && (
+          {frameTypename !== null && (
             <>
               <p> Type:{frameTypename} </p>
             </>
@@ -185,7 +181,7 @@ export default function Motortestpanel() {
         </div>
         <div className='flex flex-col gap-5 mt-5'>
           {/* Motor Order and direction details */}
-          {frameTypeOrder != null && (
+          {frameTypeOrder !== null && (
             <>
               {frameTypeOrder.map((mappedMotorNumber, idx) => {
                 return (

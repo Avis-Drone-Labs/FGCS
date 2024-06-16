@@ -55,6 +55,7 @@ const ignoredMessages = [
   'PARAM_VALUE',
   'units',
   'format',
+  'aircraftType',
 ]
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
 const colorPalette = [
@@ -94,6 +95,7 @@ export default function FLA() {
 
   const [units, setUnits] = useState({})
   const [formatMessages, setFormatMessages] = useState({})
+  const [aircraftType, setAircraftType] = useState(null)
 
   const [logMessages, setLogMessages] = useState(null)
   const [logEvents, setLogEvents] = useState(null)
@@ -132,6 +134,8 @@ export default function FLA() {
 
         setLogType(result.logType)
         setLogMessages(loadedLogMessages)
+        setAircraftType(loadedLogMessages.aircraftType)
+        delete loadedLogMessages.aircraftType // Remove aircraftType so it's not iterated upon later
 
         if (result.logType === 'dataflash') {
           setFlightModeMessages(loadedLogMessages.MODE)
@@ -243,7 +247,7 @@ export default function FLA() {
   // Loop over all fields and precalculate min, max, mean
   function setMeanValues(loadedLogMessages) {
     let rawValues = {}
-    if(loadedLogMessages !== null){
+    if (loadedLogMessages !== null) {
       // Putting all raw data into a list
       Object.keys(loadedLogMessages).forEach((key) => {
         if (!ignoredMessages.includes(key)) {
@@ -570,6 +574,7 @@ export default function FLA() {
                 <Tooltip label={file.path}>
                   <p className='mx-4 my-2'>{file.name}</p>
                 </Tooltip>
+                <p>{aircraftType}</p>
               </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>

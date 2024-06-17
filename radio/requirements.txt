@@ -61,7 +61,7 @@ six==1.16.0
 tomli==2.0.1
 types-pyserial==3.5.0.20240311
 typing_extensions==4.10.0
-urllib3==2.1.0
+urllib3==2.2.2
 virtualenv==20.24.6
 Werkzeug==3.0.1
 wsproto==1.2.0

@@ -10,7 +10,14 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { ActionIcon, Button, Divider, Select, Tooltip } from '@mantine/core'
+import {
+  ActionIcon,
+  Button,
+  Divider,
+  Select,
+  Tabs,
+  Tooltip,
+} from '@mantine/core'
 import {
   useListState,
   useLocalStorage,
@@ -61,6 +68,19 @@ import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
 import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 
+function EscTemp({ escNumber, temp }) {
+  let color = 'white'
+  if (40 < temp && temp < 70) color = 'limegreen'
+  else if (70 <= temp && temp < 100) color = 'yellow'
+  else if (100 <= temp && temp < 130) color = 'orange'
+  else if (temp >= 130) color = 'red'
+  return (
+    <p className='text-2xl'>
+      ESC {escNumber}: <b style={{ color: color }}>{temp}°C</b>
+    </p>
+  )
+}
+
 export default function Dashboard() {
   // Local Storage
   const [connected] = useLocalStorage({
@@ -102,6 +122,7 @@ export default function Dashboard() {
     fix_type: 0,
     satellites_visible: 0,
   })
+  const [escTelemetryData, setEscTelemetryData] = useState({})
 
   // Mission
   const [missionItems, setMissionItems] = useState({
@@ -138,6 +159,7 @@ export default function Dashboard() {
     SYS_STATUS: (msg) => setSysStatusData(msg),
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
+    ESC_TELEMETRY_5_TO_8: (msg) => setEscTelemetryData(msg),
   }
 
   useEffect(() => {
@@ -432,43 +454,68 @@ export default function Dashboard() {
 
               <Divider className='my-2' />
 
-              {/* Arming/Flight Modes */}
-              {connected && (
-                <div className='flex flex-col flex-wrap gap-4'>
-                  <div className='flex flex-row space-x-14'>
-                    <Button
-                      onClick={() => {
-                        armDisarm(!getIsArmed())
-                      }}
-                    >
-                      {getIsArmed() ? 'Disarm' : 'Arm'}
-                    </Button>
+              <Tabs defaultValue='data'>
+                <Tabs.List>
+                  <Tabs.Tab value='data'>Data</Tabs.Tab>
+                  <Tabs.Tab value='actions'>Actions</Tabs.Tab>
+                </Tabs.List>
+
+                <Tabs.Panel value='data'>
+                  <div className='flex flex-col gap-2 py-2'>
+                    {escTelemetryData.temperature?.map((temp, i) => {
+                      return (
+                        <div key={i}>
+                          <EscTemp escNumber={i + 5} temp={temp} />
+                        </div>
+                      )
+                    })}
                   </div>
-                  <div className='flex flex-row space-x-2'>
-                    {currentFlightModeNumber !== null && (
-                      <>
-                        <Select
-                          value={newFlightModeNumber.toString()}
-                          onChange={(value) => {
-                            setNewFlightModeNumber(parseInt(value))
-                          }}
-                          data={Object.keys(getFlightModeMap()).map((key) => {
-                            return {
-                              value: key,
-                              label: getFlightModeMap()[key],
-                            }
-                          })}
-                        />
+                </Tabs.Panel>
+
+                <Tabs.Panel value='actions'>
+                  {/* Arming/Flight Modes */}
+                  {connected && (
+                    <div className='flex flex-col flex-wrap gap-4'>
+                      <div className='flex flex-row space-x-14'>
                         <Button
-                          onClick={() => setNewFlightMode(newFlightModeNumber)}
+                          onClick={() => {
+                            armDisarm(!getIsArmed())
+                          }}
                         >
-                          Set flight mode
+                          {getIsArmed() ? 'Disarm' : 'Arm'}
                         </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
+                      </div>
+                      <div className='flex flex-row space-x-2'>
+                        {currentFlightModeNumber !== null && (
+                          <>
+                            <Select
+                              value={newFlightModeNumber.toString()}
+                              onChange={(value) => {
+                                setNewFlightModeNumber(parseInt(value))
+                              }}
+                              data={Object.keys(getFlightModeMap()).map(
+                                (key) => {
+                                  return {
+                                    value: key,
+                                    label: getFlightModeMap()[key],
+                                  }
+                                },
+                              )}
+                            />
+                            <Button
+                              onClick={() =>
+                                setNewFlightMode(newFlightModeNumber)
+                              }
+                            >
+                              Set flight mode
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Tabs.Panel>
+              </Tabs>
             </div>
           </ResizableBox>
         </div>

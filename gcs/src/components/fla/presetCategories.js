@@ -39,15 +39,6 @@ const dataflashPresetCategories = [
     ],
   },
   {
-    name: 'Battery',
-    filters: [
-      {
-        name: 'Battery Voltage vs Current',
-        filters: { BATT: ['Volt', 'Curr'] },
-      },
-    ],
-  },
-  {
     name: 'Control Tuning',
     filters: [
       {

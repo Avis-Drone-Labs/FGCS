@@ -19,6 +19,7 @@ import {
   Tooltip,
 } from '@mantine/core'
 import {
+  useDisclosure,
   useListState,
   useLocalStorage,
   usePrevious,
@@ -62,6 +63,7 @@ import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import Layout from './components/layout'
+import DashboardDataModal from './components/dashboardDataModal'
 
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
@@ -77,6 +79,19 @@ function EscTemp({ escNumber, temp }) {
   return (
     <p className='text-2xl'>
       ESC {escNumber}: <b style={{ color: color }}>{temp}°C</b>
+    </p>
+  )
+}
+
+function DataMessage({ label, temp }) {
+  let color = 'white'
+  if (40 < temp && temp < 70) color = 'limegreen'
+  else if (70 <= temp && temp < 100) color = 'yellow'
+  else if (100 <= temp && temp < 130) color = 'orange'
+  else if (temp >= 130) color = 'red'
+  return (
+    <p className='text-sm'>
+      {label}: <b style={{ color: color }}>{temp}°C</b>
     </p>
   )
 }
@@ -122,7 +137,7 @@ export default function Dashboard() {
     fix_type: 0,
     satellites_visible: 0,
   })
-  const [escTelemetryData, setEscTelemetryData] = useState({})
+  const [escTelemetryData, setEscTelemetryData] = useState({ temperature: [70]})
 
   // Mission
   const [missionItems, setMissionItems] = useState({
@@ -143,6 +158,27 @@ export default function Dashboard() {
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
+
+  // Incoming messages
+  const [possibleData, setPossibleData] = useState({})
+  const [wantedData, setWantedData] = useState({})
+
+  // Data Modal
+  const [opened, { open, close }] = useDisclosure(false)
+  // Test Message Data 
+  const testData = {
+    "airspeed": 1.6184577941894531,
+    "groundspeed": 0.0274711474776268,
+    "heading": 227,
+    "throttle": 0,
+    "alt": 145.0500030517578,
+    "climb": 0.004107808228582144,
+    "timestamp": 1720022850.1995258
+  };
+
+  const handleDoubleClick = () => {
+    open();
+  };
 
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
@@ -173,6 +209,9 @@ export default function Dashboard() {
     socket.on('incoming_msg', (msg) => {
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
         incomingMessageHandler[msg.mavpackettype](msg)
+        if(msg.mavpackettype in possibleData === false){
+          setPossibleData({...possibleData, [msg.mavpackettype]: Object.keys(msg).filter(key => key !== 'mavpackettype' && key !== 'timestamp')})
+        }
       }
     })
 
@@ -460,15 +499,23 @@ export default function Dashboard() {
                   <Tabs.Tab value='actions'>Actions</Tabs.Tab>
                 </Tabs.List>
 
-                <Tabs.Panel value='data'>
-                  <div className='flex flex-col gap-2 py-2'>
-                    {escTelemetryData.temperature?.map((temp, i) => {
-                      return (
-                        <div key={i}>
-                          <EscTemp escNumber={i + 5} temp={temp} />
-                        </div>
-                      )
-                    })}
+                <Tabs.Panel value='data'> 
+                  <div>
+                  <Tooltip label="Double Click to select data">
+                    <div className='flex flex-col gap-2 py-2 overflow-auto max-h-[250px]' onDoubleClick={handleDoubleClick}>
+                      {
+                        Object.entries(testData).map(([key, value], i) => {
+                          return (
+                            <div key={i}>
+                              <DataMessage label={key} temp={value} />
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  </Tooltip>
+                  {opened && <DashboardDataModal opened={opened} close={close} possibleData={possibleData}/>}
+                    
                   </div>
                 </Tabs.Panel>
 

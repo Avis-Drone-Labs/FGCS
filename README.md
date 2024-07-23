@@ -10,7 +10,7 @@ Falcon Ground Control Station.
 ## How to run
 <details><summary>Windows - Installation</summary>
   
-1. Go to [releases](https://github.com/Project-Falcon/FGCS/releases) and download the most recent versions `.exe` file
+1. Go to [releases](https://github.com/Avis-Drone-Labs/FGCS/releases) and download the most recent versions `.exe` file
 2. Run the downloaded file, you may have to click "more" then "run anyway" if windows defender blocks it
 3. Once installed it should be accessible via the start menu as "FGCS"
    
@@ -102,4 +102,4 @@ After compiling the backend, place the contents of `radio/dist/fgcs_backend` int
 
 ## Need Help?
 
-Feel free to ask questions in the [discussion area](https://github.com/Project-Falcon/FGCS/discussions).
+Feel free to ask questions in the [discussion area](https://github.com/Avis-Drone-Labs/FGCS/discussions).

@@ -3,7 +3,7 @@
 Falcon Ground Control Station. 
 > Learn more on our [website](https://fgcs.projectfalcon.uk)!
 
-![UI Screenshot](ui.png)
+![UI Screenshot](ui.webp)
 
 ---
 

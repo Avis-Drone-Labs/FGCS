@@ -220,17 +220,17 @@ export default function Dashboard() {
           setCollectedKeys(prevKeys => [...new Set([...prevKeys, ...keys])]); // To Ensure uniqueness
           // Update possibleData with {msg.mavpackettype: [array of keys in msg except mavpackettype and timestamp]}
           setPossibleData(prevData => ({...prevData, [msg.mavpackettype]: keys}));
-          // Store the key and value
-          setIncomingMessage(prevData => ({
-            ...prevData,
-            ...Object.keys(msg)
-              .filter(key => key !== 'mavpackettype' && key !== 'timestamp')
-              .reduce((obj, key) => {
-                obj[key] = msg[key]; 
-                return obj;
-              }, {})
-          }));
+          
         }
+        // Store the key and value
+        setIncomingMessage(prevData => ({
+          ...Object.keys(msg)
+            .filter(key => key !== 'mavpackettype' && key !== 'timestamp')
+            .reduce((obj, key) => {
+              obj[key] = msg[key]; 
+              return obj;
+            }, {})
+        }));
       }
     })
 

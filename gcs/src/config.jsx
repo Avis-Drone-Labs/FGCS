@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import { Tabs } from '@mantine/core'
+import {Tabs} from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
 
 // Styling imports
@@ -39,8 +39,6 @@ export default function Config() {
   // States in the frontend
   const [activeTab, setActiveTab] = useState(null)
   const [gripperEnabled, setGripperEnabled] = useState(false)
-  const [selectedThrottle, setSelectedThrottle] = useState(10)
-  const [selectedDuration, setSelectedDuration] = useState(2)
 
   // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
@@ -111,12 +109,7 @@ export default function Config() {
               <Gripper />
             </Tabs.Panel>
             <Tabs.Panel value='motor_test'>
-              <Motortestpanel
-                selectedThrottle={selectedThrottle}
-                selectedDuration={selectedDuration}
-                setSelectedThrottle={setSelectedThrottle}
-                setselectedDuration={setSelectedDuration}
-              />
+              <Motortestpanel />
             </Tabs.Panel>
             <Tabs.Panel value='rc_calibration'>
               <RadioCalibration />

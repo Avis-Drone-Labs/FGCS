@@ -149,7 +149,7 @@ export default function Dashboard() {
   const [possibleData, setPossibleData] = useState({})
   const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "groundspeed", "heading", "alt", "climb"]); // samples
   
-  const wantedData = {
+  const incomingMsg = {
     "airspeed": 1.6184577941894531,
     "groundspeed": 0.0274711474776268,
     "heading": 227,
@@ -161,16 +161,16 @@ export default function Dashboard() {
   // Data Modal
   const [opened, { open, close }] = useDisclosure(false)
   // Selected Data to be displayed
-  const [displayedData, setDisplayedData] = useState(wantedData); // sample
+  const [displayedData, setDisplayedData] = useState(incomingMsg); // sample
   const [checkboxStates, setCheckboxStates] = useState({})
   const handleCheckboxChange = (index, isChecked) => {
     setCheckboxStates(prev => ({ ...prev, [index]: isChecked }));
   }
   const filterDisplayedData = (selectedItems) => {
-    const filteredData = Object.keys(wantedData)
+    const filteredData = Object.keys(incomingMsg)
       .filter(key => selectedItems.includes(key))
       .reduce((obj, key) => {
-        obj[key] = wantedData[key];
+        obj[key] = incomingMsg[key];
         return obj;
       }, {});
     setDisplayedData(filteredData);

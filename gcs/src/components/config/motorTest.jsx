@@ -64,6 +64,7 @@ export default function MotorTestPanel() {
         setFrameTypeOrder(null)
         setFrameTypename(currentFrameType)
       }
+      console.log(FRAME_CLASS_MAP[currentFrameClass].name)
       setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name)
       setNumberOfMotors(FRAME_CLASS_MAP[currentFrameClass].numberOfMotors)
     })
@@ -102,7 +103,7 @@ export default function MotorTestPanel() {
   }
 
   return (
-    <div className='m-6 w-min flex flex-row gap-16'>
+    <div className='flex flex-row gap-16 p-6'>
       <div className='flex flex-col gap-2'>
         {/* Input throttle and duration/delay of the test*/}
         <div className='flex gap-2'>
@@ -126,11 +127,6 @@ export default function MotorTestPanel() {
         </div>
 
         <div className='flex flex-col gap-2 mt-6'>
-          {frameClass !== null && (
-            <>
-              <p> FrameClass:{frameClass} </p>
-            </>
-          )}
           {/* Individual motor testing buttons */}
           {MOTOR_LETTER_LABELS.slice(0, numberOfMotors).map((motor, index) => (
             <Button
@@ -170,24 +166,25 @@ export default function MotorTestPanel() {
           Click here to see your motor numbers and directions
         </a>
       </div>
-      <div className='flex flex-col gap-16'>
+      <div className='flex flex-col gap-8'>
         <div className='mt-6'>
           {frameTypename !== null && (
             <>
-              <p> Type:{frameTypename} </p>
+              <p>Frame: {frameClass}</p>
+              <p>Type: {frameTypename} </p>
             </>
           )}
         </div>
-        <div className='flex flex-col gap-5 mt-5'>
+        <div className='flex flex-col gap-4'>
           {/* Motor Order and direction details */}
           {frameTypeOrder !== null && (
             <>
               {frameTypeOrder.map((mappedMotorNumber, idx) => {
                 return (
-                  <h>
+                  <p key={idx}>
                     {' '}
-                    MotorNumber:{mappedMotorNumber},{frameTypeDirection[idx]}{' '}
-                  </h>
+                    Motor number: {mappedMotorNumber}, {frameTypeDirection[idx]}{' '}
+                  </p>
                 )
               })}
             </>

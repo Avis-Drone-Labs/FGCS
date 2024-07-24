@@ -93,12 +93,12 @@ export const MAV_AUTOPILOT_INVALID = 8
 export const FRAME_TYPE_MAP_QUAD = {
   0: {
     motorOrder: [1, 4, 2, 3],
-    direction: ['CW', 'CCW', 'CW', 'CCW'],
+    direction: ['CCW', 'CW', 'CCW', 'CW'],
     frametypename: 'Plus',
   },
   1: {
-    motorOrder: [3, 1, 4, 2],
-    direction: ['CW', 'CCW', 'CW', 'CCW'],
+    motorOrder: [1, 4, 2, 3],
+    direction: ['CCW', 'CW', 'CCW', 'CW'],
     frametypename: 'X',
   },
   2: {
@@ -202,7 +202,7 @@ export const FRAME_TYPE_MAP_OCTA_QUAD = {
   },
   3: {
     motorOrder: [1, 6, 4, 7, 3, 8, 2, 5],
-    direction: ['CCW', 'CW', 'CW', 'CCW', 'CCW', 'CW', 'CW', 'CCW'],
+    direction: ['CW', 'CCW', 'CCW', 'CW', 'CW', 'CCW', 'CCW', 'CW'],
     frametypename: 'H',
   },
 }
@@ -211,7 +211,7 @@ export const FRAME_TYPE_MAP_Y6 = {
   0: {
     motorOrder: [5, 1, 6, 4, 2, 3],
     direction: ['CW', 'CCW', 'CCW', 'CW', 'CW', 'CCW'],
-    frametypename: 'X',
+    frametypename: 'Y6A',
   },
   10: {
     motorOrder: [1, 2, 3, 4, 5, 6],
@@ -290,4 +290,17 @@ export const FRAME_CLASS_MAP = {
   14: { name: 'Deca', frametype: false, numberOfMotors: 10 },
 }
 
-export const MOTOR_LETTER_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H','I','J','K','L']
+export const MOTOR_LETTER_LABELS = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+]

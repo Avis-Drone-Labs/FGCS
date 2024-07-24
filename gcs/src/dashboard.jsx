@@ -37,6 +37,7 @@ import {
   IconSatellite,
   IconSun,
   IconSunOff,
+  IconInfoCircle,
 } from '@tabler/icons-react'
 import { ResizableBox } from 'react-resizable'
 
@@ -520,13 +521,20 @@ export default function Dashboard() {
                 <Tabs.Panel value='data'> 
                   <div>
                   <Tooltip label="Double Click to select data">
-                    <Grid onDoubleClick={handleDoubleClick}>
-                      {Object.entries(displayedData).map(([key, value], i) => (
+                  <Grid onDoubleClick={handleDoubleClick}>
+                    {Object.entries(displayedData).length > 0 ? (
+                      Object.entries(displayedData).map(([key, value], i) => (
                         <Grid.Col span={3} key={i}>
                           <DataMessage label={key} temp={value} />
                         </Grid.Col>
-                      ))}
-                    </Grid>
+                      ))
+                    ) : (
+                      <div className="flex justify-center items-center p-4">
+                        <IconInfoCircle size={20} />
+                        <p className="ml-2">Double Click to select data</p>
+                      </div>
+                    )}
+                  </Grid>
                   </Tooltip>
                   <DashboardDataModal 
                     opened={opened} 

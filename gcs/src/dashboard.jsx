@@ -54,6 +54,8 @@ import {
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
+// Possible mavlink Messages
+import { mavlinkMsgParams } from './helpers/mavllinkDataStreams.js'
 
 // Custom component
 import useSound from 'use-sound'
@@ -160,10 +162,39 @@ export default function Dashboard() {
   // Data Modal
   const [opened, { open, close }] = useDisclosure(false)
   const [displayedData, setDisplayedData] = useState(incomingMsg); // sample
-  const [checkboxStates, setCheckboxStates] = useState({})
-  const handleCheckboxChange = (index, isChecked) => {
-    setCheckboxStates(prev => ({ ...prev, [index]: isChecked }));
+  const [wantedData, setWantedData] = useState({})
+
+  const handleCheckboxChange = (key, subkey, isChecked) => {
+    // Update wantedData on checkbox change
+    setWantedData(prev => ({
+      ...prev,
+      [`${key}-${subkey}`]: isChecked
+    }));
+    console.log(wantedData)
   }
+  const handleConfirm = () => {
+    // Some items may be set to false from previous selections, but still remain in wantedData
+    // Filter out only the data items that are set to true in wantedData
+    const filteredData = Object.keys(wantedData).reduce((acc, item) => {
+      if (wantedData[item]) {
+        acc[item] = wantedData[item];
+      }
+      return acc;
+    }, {});
+    // Replace the original wantedData with the filteredData
+    setWantedData(filteredData);
+
+    // 3 things. displayedData contains data we retain, or we need to add new data, or we need to flush data
+
+    const newDisplayedData = displayedData;
+    Object.keys(filteredData).map((specificData)=>{
+      newDisplayedData[specificData] = wantedData[specificData] || 0;
+    })
+    // Set the displayed data
+    setDisplayedData(foundMessages)
+    close();
+  }
+
   const filterDisplayedData = (selectedItems) => {
     const filteredData = Object.keys(incomingMsg)
       .filter(key => selectedItems.includes(key))
@@ -174,11 +205,6 @@ export default function Dashboard() {
     setDisplayedData(filteredData);
   }
 
-  const handleConfirm = () => {
-    const selectedItems = collectedKeys.filter((_, index) => checkboxStates[index]);
-    filterDisplayedData(selectedItems);
-    close();
-  }
 
   const handleDoubleClick = () => {
     open();
@@ -210,28 +236,18 @@ export default function Dashboard() {
     }
 
     socket.on('incoming_msg', (msg) => {
+      const foundMessages = {}
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler[msg.mavpackettype](msg)
-        // Check if the mavpackettype of the message is not already in possibleData
-        if(!(msg.mavpackettype in possibleData)){
-          // Collect keys from msg, excluding 'mavpackettype' and 'timestamp'
-          const keys = Object.keys(msg).filter(key => key !== 'mavpackettype' && key !== 'timestamp');
-          // Update the collectedKeys array with these keys
-          setCollectedKeys(prevKeys => [...new Set([...prevKeys, ...keys])]); // To Ensure uniqueness
-          // Update possibleData with {msg.mavpackettype: [array of keys in msg except mavpackettype and timestamp]}
-          setPossibleData(prevData => ({...prevData, [msg.mavpackettype]: keys}));
-          
-        }
-        // Store the key and value
-        setIncomingMessage(prevData => ({
-          ...prevData,
-          ...Object.keys(msg)
-            .filter(key => key !== 'mavpackettype' && key !== 'timestamp')
-            .reduce((obj, key) => {
-              obj[key] = msg[key]; 
-              return obj;
-            }, {})
-        }));
+        incomingMessageHandler[msg.mavpackettype](msg) 
+        const packetType = msg.mavpackettype;
+        // Check if incoming message is in wantedData
+        Object.keys(msg).map((specificData)=>{
+          if(wantedData[`${packetType}-${specificData}`]){
+            foundMessages[specificData] = msg[specificData];
+          }
+        })
+        // Set the displayed data
+        setDisplayedData(foundMessages)
       }
     })
 
@@ -540,10 +556,10 @@ export default function Dashboard() {
                   <DashboardDataModal 
                     opened={opened} 
                     close={close} 
-                    possibleData={collectedKeys}
+                    possibleData={mavlinkMsgParams}
                     handleCheckboxChange={handleCheckboxChange}
                     handleConfirm={handleConfirm}
-                    checkboxStates={checkboxStates}
+                    wantedData={wantedData}
                     />
                   </div>
                 </Tabs.Panel>

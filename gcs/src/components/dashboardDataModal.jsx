@@ -7,9 +7,11 @@
 import {
     Button,
     Checkbox,
+    LoadingOverlay,
     Group,
     Modal,
-    Grid
+    Grid,
+    Tooltip
   } from '@mantine/core'
   
   // Styling imports
@@ -24,7 +26,7 @@ import {
     possibleData,
     handleCheckboxChange,
     handleConfirm,
-    checkboxStates,
+    wantedData,
   }) {
     return (
       <Modal
@@ -32,6 +34,7 @@ import {
         onClose={() => {
           close()
         }}
+        size={'100%'}
         title='Select Data'
         centered
         overlayProps={{
@@ -41,16 +44,30 @@ import {
         withCloseButton={false}
       >
         {/* Loading overlay should be hidden when all possible data is collected */}
-        {/* <LoadingOverlay visible={fetchingComPorts} /> */}
+        {!possibleData && (
+          <div>
+            <LoadingOverlay visible={true} />
+            <p className="text-center mt-10">Fetching data...</p>
+          </div>
+        )}
         <Grid>
-          {possibleData?.map((item, index) => (
-            <Grid.Col span={3} key={index}>
-                <Checkbox
-                    label={item}
-                    id={`checkbox-${index}`}
-                    checked={checkboxStates[index] || false}
-                    onChange={(e) => handleCheckboxChange(index, e.target.checked)}
-                />
+          {Object.entries(possibleData).map(([key, value], index) => (
+            <Grid.Col span={12} key={index}>
+            <h3 className='mb-2'>{key}</h3>
+            <Grid>
+                {Object.entries(value).map(([subkey, subvalue], subIndex) => (
+                <Grid.Col span={2} key={subkey}>
+                    <Tooltip label={subvalue} withArrow>
+                    <Checkbox
+                        label={subkey}
+                        id={`checkbox-${key}-${subkey}`}
+                        checked={wantedData[`${key}-${subkey}`] || false}
+                        onChange={(e) => handleCheckboxChange(key, subkey, e.target.checked)}
+                    />
+                    </Tooltip>
+                </Grid.Col>
+                ))}
+            </Grid>
             </Grid.Col>
           ))}
         </Grid>

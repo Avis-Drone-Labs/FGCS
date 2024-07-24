@@ -20,12 +20,15 @@ import {
   import tailwindConfig from '../../tailwind.config.js'
   
   const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-  const items = ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7'];
   
   export default function DashboardDataModal({
     opened,
     close,
     possibleData,
+    setWantedData,
+    handleCheckboxChange,
+    handleConfirm,
+    checkboxStates,
   }) {
     return (
       <Modal
@@ -41,14 +44,21 @@ import {
         }}
         withCloseButton={false}
       >
+        {/* Loading overlay should be hidden when all possible data is collected */}
         {/* <LoadingOverlay visible={fetchingComPorts} /> */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {items.map((item, index) => (
-                <div key={index} className="flex items-center">
-                <input type="checkbox" id={`checkbox-${index}`} className="mr-2" />
-                <label htmlFor={`checkbox-${index}`}>{item}</label>
-                </div>
-            ))}
+          {possibleData.map((item, index) => (
+            <div key={index} className="flex items-center">
+            <input
+                type="checkbox"
+                id={`checkbox-${index}`}
+                className="mr-2"
+                checked={checkboxStates[index] || false}
+                onChange={(e) => handleCheckboxChange(index, e.target.checked)}
+            />
+            <label htmlFor={`checkbox-${index}`}>{item}</label>
+            </div>
+          ))}
         </div>
         <Group justify='space-between' className='pt-4'>
           <Button
@@ -63,7 +73,7 @@ import {
           <Button
             variant='filled'
             color={tailwindColors.green[600]}
-            onClick={() => close()}
+            onClick={() => handleConfirm()}
             data-autofocus
           >
             Confirm

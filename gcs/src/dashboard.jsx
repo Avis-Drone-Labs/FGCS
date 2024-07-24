@@ -161,11 +161,12 @@ export default function Dashboard() {
 
   // Incoming messages
   const [possibleData, setPossibleData] = useState({})
+  const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "groundspeed", "heading"]); // samples
   const [wantedData, setWantedData] = useState({})
 
   // Data Modal
   const [opened, { open, close }] = useDisclosure(false)
-  // Test Message Data 
+  // Selected Data to be displayed
   const testData = {
     "airspeed": 1.6184577941894531,
     "groundspeed": 0.0274711474776268,
@@ -175,6 +176,16 @@ export default function Dashboard() {
     "climb": 0.004107808228582144,
     "timestamp": 1720022850.1995258
   };
+  const [checkboxStates, setCheckboxStates] = useState({})
+  const handleCheckboxChange = (index, isChecked) => {
+    setCheckboxStates(prev => ({ ...prev, [index]: isChecked }));
+  }
+  const handleConfirm = () => {
+    const selectedItems = collectedKeys.filter((_, index) => checkboxStates[index]);
+    setWantedData(selectedItems);
+    console.log(selectedItems);
+    close();
+  }
 
   const handleDoubleClick = () => {
     open();
@@ -209,8 +220,14 @@ export default function Dashboard() {
     socket.on('incoming_msg', (msg) => {
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
         incomingMessageHandler[msg.mavpackettype](msg)
-        if(msg.mavpackettype in possibleData === false){
-          setPossibleData({...possibleData, [msg.mavpackettype]: Object.keys(msg).filter(key => key !== 'mavpackettype' && key !== 'timestamp')})
+        // Check if the mavpackettype of the message is not already in possibleData
+        if(!(msg.mavpackettype in possibleData)){
+          // Collect keys from msg, excluding 'mavpackettype' and 'timestamp'
+          const keys = Object.keys(msg).filter(key => key !== 'mavpackettype' && key !== 'timestamp');
+          // Update the collectedKeys array with these keys
+          setCollectedKeys(prevKeys => [...new Set([...prevKeys, ...keys])]); // To Ensure uniqueness
+          // Update possibleData with {msg.mavpackettype: [array of keys in msg except mavpackettype and timestamp]}
+          setPossibleData(prevData => ({...prevData, [msg.mavpackettype]: keys}));
         }
       }
     })
@@ -514,8 +531,15 @@ export default function Dashboard() {
                       }
                     </div>
                   </Tooltip>
-                  {opened && <DashboardDataModal opened={opened} close={close} possibleData={possibleData}/>}
-                    
+                  {opened && <DashboardDataModal 
+                              opened={opened} 
+                              close={close} 
+                              possibleData={collectedKeys} 
+                              setWantedData={setWantedData}
+                              handleCheckboxChange={handleCheckboxChange}
+                              handleConfirm={handleConfirm}
+                              checkboxStates={checkboxStates}
+                              />}
                   </div>
                 </Tabs.Panel>
 

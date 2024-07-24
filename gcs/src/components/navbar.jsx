@@ -242,7 +242,7 @@ export default function Navbar({ currentPage }) {
       <div className='!ml-auto flex flex-row space-x-4 items-center'>
         {outOfDate && (
           <a
-            href='https://github.com/Project-Falcon/FGCS/releases'
+            href='https://github.com/Avis-Drone-Labs/FGCS/releases'
             target='_blank'
             className='flex flex-row gap-2 text-red-400 hover:text-red-600'
           >

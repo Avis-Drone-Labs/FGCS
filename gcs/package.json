@@ -3,14 +3,14 @@
   "productName": "FGCS",
   "description": "Falcon Ground Control Station",
   "author": {
-    "name": "Project Falcon"
+    "name": "Avis-Drone-Labs"
   },
   "private": true,
   "version": "0.1.4-alpha",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
   "bugs": {
-    "url": "https://github.com/Project-Falcon/FGCS/issues/new/choose"
+    "url": "https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
   },
   "scripts": {
     "dev": "vite",

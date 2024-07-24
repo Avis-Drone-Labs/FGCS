@@ -9,6 +9,7 @@ import {
     Checkbox,
     Group,
     Modal,
+    Grid
   } from '@mantine/core'
   
   // Styling imports
@@ -41,19 +42,18 @@ import {
       >
         {/* Loading overlay should be hidden when all possible data is collected */}
         {/* <LoadingOverlay visible={fetchingComPorts} /> */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <Grid>
           {possibleData.map((item, index) => (
-            <div key={index} className="flex items-center">
-            <Checkbox
-            label={item}
-            id={`checkbox-${index}`}
-            className="mr-2"
-            checked={checkboxStates[index] || false}
-            onChange={(e) => handleCheckboxChange(index, e.target.checked)}
-            />
-            </div>
+            <Grid.Col span={3} key={index}>
+                <Checkbox
+                    label={item}
+                    id={`checkbox-${index}`}
+                    checked={checkboxStates[index] || false}
+                    onChange={(e) => handleCheckboxChange(index, e.target.checked)}
+                />
+            </Grid.Col>
           ))}
-        </div>
+        </Grid>
         <Group justify='space-between' className='pt-4'>
           <Button
             variant='filled'

@@ -17,6 +17,7 @@ import {
   Select,
   Tabs,
   Tooltip,
+  Grid,
 } from '@mantine/core'
 import {
   useDisclosure,
@@ -72,14 +73,18 @@ import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 
 function DataMessage({ label, temp }) {
   let color = 'white'
-  if (40 < temp && temp < 70) color = 'limegreen'
-  else if (70 <= temp && temp < 100) color = 'yellow'
-  else if (100 <= temp && temp < 130) color = 'orange'
-  else if (temp >= 130) color = 'red'
+  // Convert temp to a fixed 2 decimal places
+  const formattedTemp = temp.toFixed(2);
+  
   return (
-    <p className='text-sm'>
-      {label}: <b style={{ color: color }}>{temp}°C</b>
-    </p>
+      <div className="flex flex-col items-center justify-center">
+        <p className="text-base">
+          {label}
+        </p>
+        <p className="text-2xl" style={{ color: color }}>
+          {formattedTemp}
+        </p>
+      </div>
   )
 }
 
@@ -147,11 +152,10 @@ export default function Dashboard() {
 
   // Incoming messages
   const [possibleData, setPossibleData] = useState({})
-  const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "groundspeed", "heading", "alt", "climb"]); // samples
+  const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "heading", "alt", "climb"]); // samples
   
   const incomingMsg = {
     "airspeed": 1.6184577941894531,
-    "groundspeed": 0.0274711474776268,
     "heading": 227,
     "throttle": 0,
     "alt": 145.0500030517578,
@@ -160,7 +164,6 @@ export default function Dashboard() {
 
   // Data Modal
   const [opened, { open, close }] = useDisclosure(false)
-  // Selected Data to be displayed
   const [displayedData, setDisplayedData] = useState(incomingMsg); // sample
   const [checkboxStates, setCheckboxStates] = useState({})
   const handleCheckboxChange = (index, isChecked) => {
@@ -177,9 +180,7 @@ export default function Dashboard() {
   }
   const handleConfirm = () => {
     const selectedItems = collectedKeys.filter((_, index) => checkboxStates[index]);
-    // setWantedData(selectedItems);
     filterDisplayedData(selectedItems);
-    console.log(selectedItems);
     close();
   }
 
@@ -514,26 +515,22 @@ export default function Dashboard() {
                 <Tabs.Panel value='data'> 
                   <div>
                   <Tooltip label="Double Click to select data">
-                    <div className='flex flex-col gap-2 py-2 overflow-auto max-h-[250px]' onDoubleClick={handleDoubleClick}>
-                      {
-                        Object.entries(displayedData).map(([key, value], i) => {
-                          return (
-                            <div key={i}>
-                              <DataMessage label={key} temp={value} />
-                            </div>
-                          );
-                        })
-                      }
-                    </div>
+                    <Grid onDoubleClick={handleDoubleClick}>
+                      {Object.entries(displayedData).map(([key, value], i) => (
+                        <Grid.Col span={3} key={i}>
+                          <DataMessage label={key} temp={value} />
+                        </Grid.Col>
+                      ))}
+                    </Grid>
                   </Tooltip>
-                  {opened && <DashboardDataModal 
-                              opened={opened} 
-                              close={close} 
-                              possibleData={collectedKeys}
-                              handleCheckboxChange={handleCheckboxChange}
-                              handleConfirm={handleConfirm}
-                              checkboxStates={checkboxStates}
-                              />}
+                  <DashboardDataModal 
+                    opened={opened} 
+                    close={close} 
+                    possibleData={collectedKeys}
+                    handleCheckboxChange={handleCheckboxChange}
+                    handleConfirm={handleConfirm}
+                    checkboxStates={checkboxStates}
+                    />
                   </div>
                 </Tabs.Panel>
 

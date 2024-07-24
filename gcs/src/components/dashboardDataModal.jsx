@@ -8,12 +8,8 @@ import {
     Button,
     Checkbox,
     Group,
-    LoadingOverlay,
     Modal,
-    Select,
-    Tooltip,
   } from '@mantine/core'
-  import { IconInfoCircle, IconRefresh } from '@tabler/icons-react'
   
   // Styling imports
   import resolveConfig from 'tailwindcss/resolveConfig'
@@ -25,7 +21,6 @@ import {
     opened,
     close,
     possibleData,
-    setWantedData,
     handleCheckboxChange,
     handleConfirm,
     checkboxStates,
@@ -49,14 +44,13 @@ import {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {possibleData.map((item, index) => (
             <div key={index} className="flex items-center">
-            <input
-                type="checkbox"
-                id={`checkbox-${index}`}
-                className="mr-2"
-                checked={checkboxStates[index] || false}
-                onChange={(e) => handleCheckboxChange(index, e.target.checked)}
+            <Checkbox
+            label={item}
+            id={`checkbox-${index}`}
+            className="mr-2"
+            checked={checkboxStates[index] || false}
+            onChange={(e) => handleCheckboxChange(index, e.target.checked)}
             />
-            <label htmlFor={`checkbox-${index}`}>{item}</label>
             </div>
           ))}
         </div>

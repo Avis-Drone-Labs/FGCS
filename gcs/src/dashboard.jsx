@@ -70,19 +70,6 @@ import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
 import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 
-function EscTemp({ escNumber, temp }) {
-  let color = 'white'
-  if (40 < temp && temp < 70) color = 'limegreen'
-  else if (70 <= temp && temp < 100) color = 'yellow'
-  else if (100 <= temp && temp < 130) color = 'orange'
-  else if (temp >= 130) color = 'red'
-  return (
-    <p className='text-2xl'>
-      ESC {escNumber}: <b style={{ color: color }}>{temp}°C</b>
-    </p>
-  )
-}
-
 function DataMessage({ label, temp }) {
   let color = 'white'
   if (40 < temp && temp < 70) color = 'limegreen'
@@ -137,7 +124,6 @@ export default function Dashboard() {
     fix_type: 0,
     satellites_visible: 0,
   })
-  const [escTelemetryData, setEscTelemetryData] = useState({ temperature: [70]})
 
   // Mission
   const [missionItems, setMissionItems] = useState({
@@ -161,28 +147,38 @@ export default function Dashboard() {
 
   // Incoming messages
   const [possibleData, setPossibleData] = useState({})
-  const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "groundspeed", "heading"]); // samples
-  const [wantedData, setWantedData] = useState({})
-
-  // Data Modal
-  const [opened, { open, close }] = useDisclosure(false)
-  // Selected Data to be displayed
-  const testData = {
+  const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "groundspeed", "heading", "alt", "climb"]); // samples
+  
+  const wantedData = {
     "airspeed": 1.6184577941894531,
     "groundspeed": 0.0274711474776268,
     "heading": 227,
     "throttle": 0,
     "alt": 145.0500030517578,
-    "climb": 0.004107808228582144,
-    "timestamp": 1720022850.1995258
-  };
+    "climb": 0.004107808228582144
+  }; // sample
+
+  // Data Modal
+  const [opened, { open, close }] = useDisclosure(false)
+  // Selected Data to be displayed
+  const [displayedData, setDisplayedData] = useState(wantedData); // sample
   const [checkboxStates, setCheckboxStates] = useState({})
   const handleCheckboxChange = (index, isChecked) => {
     setCheckboxStates(prev => ({ ...prev, [index]: isChecked }));
   }
+  const filterDisplayedData = (selectedItems) => {
+    const filteredData = Object.keys(wantedData)
+      .filter(key => selectedItems.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = wantedData[key];
+        return obj;
+      }, {});
+    setDisplayedData(filteredData);
+  }
   const handleConfirm = () => {
     const selectedItems = collectedKeys.filter((_, index) => checkboxStates[index]);
-    setWantedData(selectedItems);
+    // setWantedData(selectedItems);
+    filterDisplayedData(selectedItems);
     console.log(selectedItems);
     close();
   }
@@ -206,7 +202,6 @@ export default function Dashboard() {
     SYS_STATUS: (msg) => setSysStatusData(msg),
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
-    ESC_TELEMETRY_5_TO_8: (msg) => setEscTelemetryData(msg),
   }
 
   useEffect(() => {
@@ -521,7 +516,7 @@ export default function Dashboard() {
                   <Tooltip label="Double Click to select data">
                     <div className='flex flex-col gap-2 py-2 overflow-auto max-h-[250px]' onDoubleClick={handleDoubleClick}>
                       {
-                        Object.entries(testData).map(([key, value], i) => {
+                        Object.entries(displayedData).map(([key, value], i) => {
                           return (
                             <div key={i}>
                               <DataMessage label={key} temp={value} />
@@ -534,8 +529,7 @@ export default function Dashboard() {
                   {opened && <DashboardDataModal 
                               opened={opened} 
                               close={close} 
-                              possibleData={collectedKeys} 
-                              setWantedData={setWantedData}
+                              possibleData={collectedKeys}
                               handleCheckboxChange={handleCheckboxChange}
                               handleConfirm={handleConfirm}
                               checkboxStates={checkboxStates}

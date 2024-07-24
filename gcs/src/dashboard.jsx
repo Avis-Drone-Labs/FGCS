@@ -152,15 +152,9 @@ export default function Dashboard() {
 
   // Incoming messages
   const [possibleData, setPossibleData] = useState({})
-  const [collectedKeys, setCollectedKeys] = useState(["airspeed", "throttle", "heading", "alt", "climb"]); // samples
+  const [collectedKeys, setCollectedKeys] = useState(); 
   
-  const incomingMsg = {
-    "airspeed": 1.6184577941894531,
-    "heading": 227,
-    "throttle": 0,
-    "alt": 145.0500030517578,
-    "climb": 0.004107808228582144
-  }; // sample
+  const [incomingMsg, setIncomingMessage] = useState({}); 
 
   // Data Modal
   const [opened, { open, close }] = useDisclosure(false)
@@ -178,6 +172,7 @@ export default function Dashboard() {
       }, {});
     setDisplayedData(filteredData);
   }
+
   const handleConfirm = () => {
     const selectedItems = collectedKeys.filter((_, index) => checkboxStates[index]);
     filterDisplayedData(selectedItems);
@@ -224,6 +219,16 @@ export default function Dashboard() {
           setCollectedKeys(prevKeys => [...new Set([...prevKeys, ...keys])]); // To Ensure uniqueness
           // Update possibleData with {msg.mavpackettype: [array of keys in msg except mavpackettype and timestamp]}
           setPossibleData(prevData => ({...prevData, [msg.mavpackettype]: keys}));
+          // Store the key and value
+          setIncomingMessage(prevData => ({
+            ...prevData,
+            ...Object.keys(msg)
+              .filter(key => key !== 'mavpackettype' && key !== 'timestamp')
+              .reduce((obj, key) => {
+                obj[key] = msg[key]; 
+                return obj;
+              }, {})
+          }));
         }
       }
     })

@@ -43,7 +43,7 @@ import {
         {/* Loading overlay should be hidden when all possible data is collected */}
         {/* <LoadingOverlay visible={fetchingComPorts} /> */}
         <Grid>
-          {possibleData.map((item, index) => (
+          {possibleData?.map((item, index) => (
             <Grid.Col span={3} key={index}>
                 <Checkbox
                     label={item}

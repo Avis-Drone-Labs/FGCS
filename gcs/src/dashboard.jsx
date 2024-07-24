@@ -224,6 +224,7 @@ export default function Dashboard() {
         }
         // Store the key and value
         setIncomingMessage(prevData => ({
+          ...prevData,
           ...Object.keys(msg)
             .filter(key => key !== 'mavpackettype' && key !== 'timestamp')
             .reduce((obj, key) => {

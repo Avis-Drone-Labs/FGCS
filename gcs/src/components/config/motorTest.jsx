@@ -62,7 +62,6 @@ export default function MotorTestPanel() {
         setFrameTypeOrder(null)
         setFrameTypename(currentFrameType)
       }
-      console.log(FRAME_CLASS_MAP[currentFrameClass].name)
       setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name)
       setNumberOfMotors(FRAME_CLASS_MAP[currentFrameClass].numberOfMotors)
     })

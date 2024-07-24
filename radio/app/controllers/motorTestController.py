@@ -84,6 +84,8 @@ class MotorTestController:
             param6=0,  # test order
         )
 
+        motor_letter = chr(64 + motor_instance)
+
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
@@ -91,7 +93,7 @@ class MotorTestController:
                 self.drone.logger.info(f"Motor test started for motor {motor_instance}")
                 return {
                     "success": True,
-                    "message": f"Motor test started for motor {motor_instance}",
+                    "message": f"Motor test started for motor {motor_letter}",
                 }
             else:
                 self.drone.logger.error(
@@ -99,7 +101,7 @@ class MotorTestController:
                 )
                 return {
                     "success": False,
-                    "message": f"Motor test for motor {motor_instance} not started",
+                    "message": f"Motor test for motor {motor_letter} not started",
                 }
         except serial.serialutil.SerialException:
             self.drone.logger.error(
@@ -107,7 +109,7 @@ class MotorTestController:
             )
             return {
                 "success": False,
-                "message": f"Motor test for motor {motor_instance} not started, serial exception",
+                "message": f"Motor test for motor {motor_letter} not started, serial exception",
             }
 
     def testMotorSequence(self, data: MotorTestThrottleDurationAndNumber) -> Response:

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class FrameController:
-    def __init__(self, drone: Drone):
+    def __init__(self, drone: Drone) -> None:
         """The frame class controls all frame class and type related actions
 
         Args:

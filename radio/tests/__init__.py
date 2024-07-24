@@ -1,11 +1,11 @@
-import app.droneStatus as droneStatus
 from typing import Callable, Optional
+
+import app.droneStatus as droneStatus
+import pytest
 from app import create_app, socketio
 from app.drone import Drone
-
-import pytest
-from flask_socketio.test_client import SocketIOTestClient
 from flask.testing import FlaskClient
+from flask_socketio.test_client import SocketIOTestClient
 
 app = create_app(debug=True)
 socketio = socketio
@@ -20,7 +20,7 @@ socketio_client: SocketIOTestClient = socketio.test_client(
 
 def falcon_test(
     pass_drone_status: bool = False, pass_flask: bool = False, pass_drone: bool = False
-):
+) -> Callable:
     """
     A wrapper to connect to backend and pass necessary details to test function
 

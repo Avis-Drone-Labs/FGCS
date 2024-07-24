@@ -153,7 +153,7 @@ export default function Dashboard() {
 
   // Incoming messages
   const [possibleData, setPossibleData] = useState({})
-  const [collectedKeys, setCollectedKeys] = useState(); 
+  const [collectedKeys, setCollectedKeys] = useState([]); 
   
   const [incomingMsg, setIncomingMessage] = useState({}); 
 

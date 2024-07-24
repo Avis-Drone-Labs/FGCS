@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import serial
-from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration, Response
+from app.customTypes import (
+    MotorTestAllValues,
+    MotorTestThrottleAndDuration,
+    MotorTestThrottleDurationAndNumber,
+    Response,
+)
 from app.utils import commandAccepted
 from pymavlink import mavutil
 
@@ -79,6 +84,8 @@ class MotorTestController:
             param6=0,  # test order
         )
 
+        motor_letter = chr(64 + motor_instance)
+
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
@@ -86,7 +93,7 @@ class MotorTestController:
                 self.drone.logger.info(f"Motor test started for motor {motor_instance}")
                 return {
                     "success": True,
-                    "message": f"Motor test started for motor {motor_instance}",
+                    "message": f"Motor test started for motor {motor_letter}",
                 }
             else:
                 self.drone.logger.error(
@@ -94,7 +101,7 @@ class MotorTestController:
                 )
                 return {
                     "success": False,
-                    "message": f"Motor test for motor {motor_instance} not started",
+                    "message": f"Motor test for motor {motor_letter} not started",
                 }
         except serial.serialutil.SerialException:
             self.drone.logger.error(
@@ -102,15 +109,15 @@ class MotorTestController:
             )
             return {
                 "success": False,
-                "message": f"Motor test for motor {motor_instance} not started, serial exception",
+                "message": f"Motor test for motor {motor_letter} not started, serial exception",
             }
 
-    def testMotorSequence(self, data: MotorTestThrottleAndDuration) -> Response:
+    def testMotorSequence(self, data: MotorTestThrottleDurationAndNumber) -> Response:
         """
         Test a sequence of motors.
 
         Args:
-            data (MotorTestThrottleAndDuration): The data for the motor test
+            data (MotorTestThrottleDurationAndNumber): The data for the motor test
 
         Returns:
             Response: The response from the motor test
@@ -148,12 +155,12 @@ class MotorTestController:
                 "message": "Motor sequence test not started, serial exception",
             }
 
-    def testAllMotors(self, data: MotorTestThrottleAndDuration) -> Response:
+    def testAllMotors(self, data: MotorTestThrottleDurationAndNumber) -> Response:
         """
         Test all motors.
 
         Args:
-            data (MotorTestThrottleAndDuration): The data for the motor test
+            data (MotorTestThrottleDurationAndNumber): The data for the motor test
 
         Returns:
             Response: The response from the motor test

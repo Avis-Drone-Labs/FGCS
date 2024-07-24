@@ -47,7 +47,7 @@ export default function SingleRunWrapper({ children }) {
       const latestGithubRelease = await octokit.request(
         'GET /repos/{owner}/{repo}/releases/latest',
         {
-          owner: 'project-falcon',
+          owner: 'Avis-Drone-Labs',
           repo: 'fgcs',
           headers: {
             'X-GitHub-Api-Version': '2022-11-28',
@@ -105,7 +105,7 @@ export default function SingleRunWrapper({ children }) {
         </p>
         <Button
           component='a'
-          href='https://github.com/Project-Falcon/FGCS/releases'
+          href='https://github.com/Avis-Drone-Labs/FGCS/releases'
           target='_blank'
           className='mt-6'
           fullWidth

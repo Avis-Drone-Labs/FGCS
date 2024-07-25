@@ -55,7 +55,7 @@ import {
             <Grid.Col span={12} key={index}>
             <h3 className='mb-2'>{key}</h3>
             <Grid>
-                {Object.entries(value).map(([subkey, subvalue], subIndex) => (
+                {Object.entries(value).map(([subkey, subvalue]) => (
                 <Grid.Col span={2} key={subkey}>
                     <Tooltip label={subvalue} withArrow>
                     <Checkbox

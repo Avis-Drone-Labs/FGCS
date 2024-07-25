@@ -247,7 +247,6 @@ export default function Dashboard() {
     }
 
     socket.on('incoming_msg', (msg) => {
-      const foundMessages = {}
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
         incomingMessageHandler[msg.mavpackettype](msg) 
         // Store packetType that has arrived
@@ -260,7 +259,7 @@ export default function Dashboard() {
         updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
           if (dataItem.currently_selected.startsWith(packetType)) {
             const specificData = dataItem.currently_selected.split('.')[1];
-            if (msg.hasOwnProperty(specificData)) {
+            if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
               return { ...dataItem, value: msg[specificData] };
             }
           }

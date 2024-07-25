@@ -12,12 +12,6 @@ import {
     Tooltip
   } from '@mantine/core'
   
-  // Styling imports
-  import resolveConfig from 'tailwindcss/resolveConfig'
-  import tailwindConfig from '../../tailwind.config.js'
-  
-  const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-  
   export default function DashboardDataModal({
     opened,
     close,

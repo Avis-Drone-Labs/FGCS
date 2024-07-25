@@ -74,20 +74,22 @@ import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
 import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 
-function DataMessage({ label, temp }) {
+function DataMessage({ label, value, currentlySelected }) {
   let color = 'white'
   // Convert temp to a fixed 2 decimal places
-  const formattedTemp = temp?.toFixed(2);
+  const formattedValue = value?.toFixed(2);
   
   return (
+    <Tooltip label={currentlySelected}>
       <div className="flex flex-col items-center justify-center">
-        <p className="text-base">
+        <p className="text-sm">
           {label}
         </p>
-        <p className="text-2xl" style={{ color: color }}>
-          {formattedTemp}
+        <p className="text-5xl" style={{ color: color }}>
+          {formattedValue}
         </p>
       </div>
+    </Tooltip>
   )
 }
 
@@ -155,38 +157,67 @@ export default function Dashboard() {
 
   // Data Modal Functions
   const [opened, { open, close }] = useDisclosure(false)
-  const [displayedData, setDisplayedData] = useState({})
-  const [wantedData, setWantedData] = useState({})
+  const boxTrackerList = [
+    {
+      'boxId': 0,
+      'currently_selected': 'GPS_RAW_INT.alt',
+      'display_name': 'Altitude (mm)',
+      'value': 0   // (Constantly updated by socket, default 0)
+    },
+    {
+      'boxId': 1,
+      'currently_selected': 'GPS_RAW_INT.alt',
+      'display_name': 'Altitude (mm)',
+      'value': 0   // (Constantly updated by socket, default 0)
+    },
+    {
+      'boxId': 2,
+      'currently_selected': 'GPS_RAW_INT.alt',
+      'display_name': 'Altitude (mm)',
+      'value': 0   // (Constantly updated by socket, default 0)
+    },
+    {
+      'boxId': 3,
+      'currently_selected': 'GPS_RAW_INT.alt',
+      'display_name': 'Altitude (mm)',
+      'value': 0   // (Constantly updated by socket, default 0)
+    },
+    {
+      'boxId': 4,
+      'currently_selected': 'GPS_RAW_INT.alt',
+      'display_name': 'Altitude (mm)',
+      'value': 0   // (Constantly updated by socket, default 0)
+    },
+    {
+      'boxId': 5,
+      'currently_selected': 'GPS_RAW_INT.alt',
+      'display_name': 'Altitude (mm)',
+      'value': 0   // (Constantly updated by socket, default 0)
+    },
+  ]
+  const [displayedData, setDisplayedData] = useState(boxTrackerList)
+  const [selectedBox, setSelectedBox] = useState(null)
 
-  const handleCheckboxChange = (key, subkey, isChecked) => {
+  const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
-    setWantedData(prev => ({
-      ...prev,
-      [`${key}-${subkey}`]: isChecked
-    }));
-  }
-  const handleConfirm = () => {
-    // Some items may be set to false from previous selections, but still remain in wantedData
-    // Filter out only the data items that are set to true in wantedData
-    const filteredData = Object.keys(wantedData).reduce((acc, item) => {
-      if (wantedData[item]) {
-        acc[item] = wantedData[item];
-      }
-      return acc;
-    }, {});
-    setWantedData(filteredData);
-
-    // Update displayedData based on filteredData
-    const newDisplayedData = {};
-    Object.keys(filteredData).forEach((specificData) => {
-      newDisplayedData[specificData] = displayedData[specificData] ?? 0;
-    });
-    setDisplayedData(newDisplayedData);
-    
-    close();
+    if(isChecked){
+      const newDisplay = displayedData.map((item, index) => {
+        if (index === boxId) {
+          return {
+            ...item,
+            currently_selected: `${key}.${subkey}`,
+            display_name: subvalue,
+          };
+        }
+        return item;
+      });
+      setDisplayedData(newDisplay)
+      close()
+    }
   }
 
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (box) => {
+    setSelectedBox(box)
     open();
   };
 
@@ -219,15 +250,25 @@ export default function Dashboard() {
       const foundMessages = {}
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
         incomingMessageHandler[msg.mavpackettype](msg) 
+        // Store packetType that has arrived
         const packetType = msg.mavpackettype;
-        // Check if incoming message is in wantedData
-        Object.keys(msg).map((specificData)=>{
-          if(wantedData[`${packetType}-${specificData}`]){
-            foundMessages[specificData] = msg[specificData];
+
+        // Create a copy of displayedData to modify
+        let updatedDisplayedData = [...displayedData];
+
+        // Iterate over displayedData to find and update the matching item
+        updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
+          if (dataItem.currently_selected.startsWith(packetType)) {
+            const specificData = dataItem.currently_selected.split('.')[1];
+            if (msg.hasOwnProperty(specificData)) {
+              return { ...dataItem, value: msg[specificData] };
+            }
           }
-        })
-        // Set the displayed data
-        setDisplayedData(foundMessages)
+          return dataItem;
+        });
+
+        // Update the state with the modified displayedData
+        setDisplayedData(updatedDisplayedData);
       }
     })
 
@@ -517,12 +558,19 @@ export default function Dashboard() {
 
                 <Tabs.Panel value='data'> 
                   <div>
-                  <Tooltip label="Double Click to select data">
-                  <Grid onDoubleClick={handleDoubleClick}>
-                    {Object.entries(displayedData).length > 0 ? (
-                      Object.entries(displayedData).map(([key, value], i) => (
-                        <Grid.Col span={3} key={i}>
-                          <DataMessage label={key} temp={value} />
+                  <Grid className="cursor-pointer select-none">
+                    {displayedData.length > 0 ? (
+                      displayedData.map((data) => (
+                        <Grid.Col 
+                          span={6} 
+                          key={data.boxId} 
+                          onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
+                        >
+                          <DataMessage 
+                            label={data.display_name} 
+                            value={data.value} 
+                            currentlySelected={data.currently_selected} 
+                          />
                         </Grid.Col>
                       ))
                     ) : (
@@ -532,14 +580,12 @@ export default function Dashboard() {
                       </div>
                     )}
                   </Grid>
-                  </Tooltip>
                   <DashboardDataModal 
                     opened={opened} 
                     close={close} 
                     possibleData={mavlinkMsgParams}
+                    selectedBox={selectedBox}
                     handleCheckboxChange={handleCheckboxChange}
-                    handleConfirm={handleConfirm}
-                    wantedData={wantedData}
                     />
                   </div>
                 </Tabs.Panel>

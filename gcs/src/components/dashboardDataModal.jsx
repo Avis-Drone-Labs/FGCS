@@ -5,10 +5,8 @@
 
 // Third party imports
 import {
-    Button,
     Checkbox,
     LoadingOverlay,
-    Group,
     Modal,
     Grid,
     Tooltip
@@ -24,9 +22,8 @@ import {
     opened,
     close,
     possibleData,
+    selectedBox,
     handleCheckboxChange,
-    handleConfirm,
-    wantedData,
   }) {
     return (
       <Modal
@@ -41,7 +38,6 @@ import {
           backgroundOpacity: 0.55,
           blur: 3,
         }}
-        withCloseButton={false}
       >
         {/* Loading overlay should be hidden when all possible data is collected */}
         {!possibleData && (
@@ -61,8 +57,8 @@ import {
                     <Checkbox
                         label={subkey}
                         id={`checkbox-${key}-${subkey}`}
-                        checked={wantedData[`${key}-${subkey}`] || false}
-                        onChange={(e) => handleCheckboxChange(key, subkey, e.target.checked)}
+                        checked={selectedBox?.currently_selected === `${key}.${subkey}` || false}
+                        onChange={(e) => handleCheckboxChange(key, subkey, subvalue, selectedBox?.boxId, e.target.checked)}
                     />
                     </Tooltip>
                 </Grid.Col>
@@ -71,25 +67,6 @@ import {
             </Grid.Col>
           ))}
         </Grid>
-        <Group justify='space-between' className='pt-4'>
-          <Button
-            variant='filled'
-            color={tailwindColors.red[600]}
-            onClick={() => {
-              close()
-            }}
-          >
-            Close
-          </Button>
-          <Button
-            variant='filled'
-            color={tailwindColors.green[600]}
-            onClick={() => handleConfirm()}
-            data-autofocus
-          >
-            Confirm
-          </Button>
-        </Group>
       </Modal>
     )
   }

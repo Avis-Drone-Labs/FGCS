@@ -66,6 +66,6 @@ virtualenv==20.24.6
 Werkzeug==3.0.1
 wsproto==1.2.0
 yarl==1.9.4
-zipp==3.19.1
+zipp==3.19.2
 zope.event==5.0
 zope.interface==6.4.post2

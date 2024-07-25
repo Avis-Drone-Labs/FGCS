@@ -77,7 +77,7 @@ import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 function DataMessage({ label, temp }) {
   let color = 'white'
   // Convert temp to a fixed 2 decimal places
-  const formattedTemp = temp.toFixed(2);
+  const formattedTemp = temp?.toFixed(2);
   
   return (
       <div className="flex flex-col items-center justify-center">
@@ -153,15 +153,9 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
-  // Incoming messages
-  const [possibleData, setPossibleData] = useState({})
-  const [collectedKeys, setCollectedKeys] = useState([]); 
-  
-  const [incomingMsg, setIncomingMessage] = useState({}); 
-
-  // Data Modal
+  // Data Modal Functions
   const [opened, { open, close }] = useDisclosure(false)
-  const [displayedData, setDisplayedData] = useState(incomingMsg); // sample
+  const [displayedData, setDisplayedData] = useState({})
   const [wantedData, setWantedData] = useState({})
 
   const handleCheckboxChange = (key, subkey, isChecked) => {
@@ -170,7 +164,6 @@ export default function Dashboard() {
       ...prev,
       [`${key}-${subkey}`]: isChecked
     }));
-    console.log(wantedData)
   }
   const handleConfirm = () => {
     // Some items may be set to false from previous selections, but still remain in wantedData
@@ -181,30 +174,17 @@ export default function Dashboard() {
       }
       return acc;
     }, {});
-    // Replace the original wantedData with the filteredData
     setWantedData(filteredData);
 
-    // 3 things. displayedData contains data we retain, or we need to add new data, or we need to flush data
-
-    const newDisplayedData = displayedData;
-    Object.keys(filteredData).map((specificData)=>{
-      newDisplayedData[specificData] = wantedData[specificData] || 0;
-    })
-    // Set the displayed data
-    setDisplayedData(foundMessages)
+    // Update displayedData based on filteredData
+    const newDisplayedData = {};
+    Object.keys(filteredData).forEach((specificData) => {
+      newDisplayedData[specificData] = displayedData[specificData] ?? 0;
+    });
+    setDisplayedData(newDisplayedData);
+    
     close();
   }
-
-  const filterDisplayedData = (selectedItems) => {
-    const filteredData = Object.keys(incomingMsg)
-      .filter(key => selectedItems.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = incomingMsg[key];
-        return obj;
-      }, {});
-    setDisplayedData(filteredData);
-  }
-
 
   const handleDoubleClick = () => {
     open();

@@ -10,8 +10,17 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { ActionIcon, Button, Divider, Select, Tooltip } from '@mantine/core'
 import {
+  ActionIcon,
+  Button,
+  Divider,
+  Grid,
+  Select,
+  Tabs,
+  Tooltip,
+} from '@mantine/core'
+import {
+  useDisclosure,
   useListState,
   useLocalStorage,
   usePrevious,
@@ -24,6 +33,7 @@ import {
   IconBattery2,
   IconCrosshair,
   IconGps,
+  IconInfoCircle,
   IconRadar,
   IconSatellite,
   IconSun,
@@ -54,12 +64,54 @@ import {
 import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
+import DashboardDataModal from './components/dashboardDataModal'
 import Layout from './components/layout'
 
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
 import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
+import { defaultDataMessages } from './helpers/dashboardDefaultDataMessages'
+import { mavlinkDataStreamFormatters } from './helpers/mavlinkDataStreamsFormatters'
+
+function to2dp(num) {
+  // https://stackoverflow.com/questions/4187146/truncate-number-to-two-decimal-places-without-rounding
+  return num.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0]
+}
+
+const colorPalette = [
+  '#36a2eb',
+  '#ff6383',
+  '#fe9e40',
+  '#4ade80',
+  '#ffcd57',
+  '#4cbfc0',
+  '#9966ff',
+  '#c8cbce',
+]
+
+function DataMessage({ label, value, currentlySelected, id }) {
+  let color = colorPalette[id % colorPalette.length]
+
+  var formattedValue = to2dp(value)
+
+  if (currentlySelected in mavlinkDataStreamFormatters) {
+    formattedValue = to2dp(
+      mavlinkDataStreamFormatters[currentlySelected](value),
+    )
+  }
+
+  return (
+    <Tooltip label={currentlySelected}>
+      <div className='flex flex-col items-center justify-center'>
+        <p className='text-sm'>{label}</p>
+        <p className='text-5xl' style={{ color: color }}>
+          {formattedValue}
+        </p>
+      </div>
+    </Tooltip>
+  )
+}
 
 export default function Dashboard() {
   // Local Storage
@@ -123,6 +175,38 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
+  // Data Modal Functions
+  const [opened, { open, close }] = useDisclosure(false)
+
+  const [displayedData, setDisplayedData] = useLocalStorage({
+    key: 'dashboardDataMessages',
+    defaultValue: defaultDataMessages,
+  })
+  const [selectedBox, setSelectedBox] = useState(null)
+
+  const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
+    // Update wantedData on checkbox change
+    if (isChecked) {
+      const newDisplay = displayedData.map((item, index) => {
+        if (index === boxId) {
+          return {
+            ...item,
+            currently_selected: `${key}.${subkey}`,
+            display_name: subvalue,
+          }
+        }
+        return item
+      })
+      setDisplayedData(newDisplay)
+      close()
+    }
+  }
+
+  const handleDoubleClick = (box) => {
+    setSelectedBox(box)
+    open()
+  }
+
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
     BATTERY_STATUS: (msg) => setBatteryData(msg),
@@ -141,6 +225,20 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
+    // Use localStorage.getItem as useLocalStorage hook updates slower
+    const oldDisplayedData = localStorage.getItem('dashboardDataMessages')
+
+    if (oldDisplayedData) {
+      const resetDisplayedDataValues = Object.keys(
+        JSON.parse(oldDisplayedData),
+      ).map((key) => {
+        return { ...JSON.parse(oldDisplayedData)[key], value: 0 }
+      })
+      setDisplayedData(resetDisplayedDataValues)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!connected) {
       return
     } else {
@@ -151,6 +249,27 @@ export default function Dashboard() {
     socket.on('incoming_msg', (msg) => {
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
         incomingMessageHandler[msg.mavpackettype](msg)
+        // Store packetType that has arrived
+        const packetType = msg.mavpackettype
+
+        // Use functional form of setState to ensure the latest state is used
+        setDisplayedData((prevDisplayedData) => {
+          // Create a copy of displayedData to modify
+          let updatedDisplayedData = [...prevDisplayedData]
+
+          // Iterate over displayedData to find and update the matching item
+          updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
+            if (dataItem.currently_selected.startsWith(packetType)) {
+              const specificData = dataItem.currently_selected.split('.')[1]
+              if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+                return { ...dataItem, value: msg[specificData] }
+              }
+            }
+            return dataItem
+          })
+
+          return updatedDisplayedData
+        })
       }
     })
 
@@ -432,43 +551,90 @@ export default function Dashboard() {
 
               <Divider className='my-2' />
 
-              {/* Arming/Flight Modes */}
-              {connected && (
-                <div className='flex flex-col flex-wrap gap-4'>
-                  <div className='flex flex-row space-x-14'>
-                    <Button
-                      onClick={() => {
-                        armDisarm(!getIsArmed())
-                      }}
-                    >
-                      {getIsArmed() ? 'Disarm' : 'Arm'}
-                    </Button>
-                  </div>
-                  <div className='flex flex-row space-x-2'>
-                    {currentFlightModeNumber !== null && (
-                      <>
-                        <Select
-                          value={newFlightModeNumber.toString()}
-                          onChange={(value) => {
-                            setNewFlightModeNumber(parseInt(value))
-                          }}
-                          data={Object.keys(getFlightModeMap()).map((key) => {
-                            return {
-                              value: key,
-                              label: getFlightModeMap()[key],
-                            }
-                          })}
-                        />
+              <Tabs defaultValue='data'>
+                <Tabs.List>
+                  <Tabs.Tab value='data'>Data</Tabs.Tab>
+                  <Tabs.Tab value='actions'>Actions</Tabs.Tab>
+                </Tabs.List>
+
+                <Tabs.Panel value='data'>
+                  <>
+                    <Grid className='cursor-pointer select-none mt-2'>
+                      {displayedData.length > 0 ? (
+                        displayedData.map((data) => (
+                          <Grid.Col
+                            span={6}
+                            key={data.boxId}
+                            onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
+                          >
+                            <DataMessage
+                              label={data.display_name}
+                              value={data.value}
+                              currentlySelected={data.currently_selected}
+                              id={data.boxId}
+                            />
+                          </Grid.Col>
+                        ))
+                      ) : (
+                        <div className='flex justify-center items-center p-4'>
+                          <IconInfoCircle size={20} />
+                          <p className='ml-2'>Double Click to select data</p>
+                        </div>
+                      )}
+                    </Grid>
+                    <DashboardDataModal
+                      opened={opened}
+                      close={close}
+                      selectedBox={selectedBox}
+                      handleCheckboxChange={handleCheckboxChange}
+                    />
+                  </>
+                </Tabs.Panel>
+
+                <Tabs.Panel value='actions'>
+                  {/* Arming/Flight Modes */}
+                  {connected && (
+                    <div className='flex flex-col flex-wrap gap-4'>
+                      <div className='flex flex-row space-x-14'>
                         <Button
-                          onClick={() => setNewFlightMode(newFlightModeNumber)}
+                          onClick={() => {
+                            armDisarm(!getIsArmed())
+                          }}
                         >
-                          Set flight mode
+                          {getIsArmed() ? 'Disarm' : 'Arm'}
                         </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
+                      </div>
+                      <div className='flex flex-row space-x-2'>
+                        {currentFlightModeNumber !== null && (
+                          <>
+                            <Select
+                              value={newFlightModeNumber.toString()}
+                              onChange={(value) => {
+                                setNewFlightModeNumber(parseInt(value))
+                              }}
+                              data={Object.keys(getFlightModeMap()).map(
+                                (key) => {
+                                  return {
+                                    value: key,
+                                    label: getFlightModeMap()[key],
+                                  }
+                                },
+                              )}
+                            />
+                            <Button
+                              onClick={() =>
+                                setNewFlightMode(newFlightModeNumber)
+                              }
+                            >
+                              Set flight mode
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Tabs.Panel>
+              </Tabs>
             </div>
           </ResizableBox>
         </div>

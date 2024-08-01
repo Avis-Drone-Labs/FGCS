@@ -37,6 +37,7 @@ def set_state(data: SetStateType) -> None:
             "SYS_STATUS",
             "GPS_RAW_INT",
             "RC_CHANNELS",
+            "ESC_TELEMETRY_5_TO_8",
         ],
         "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],
         "config.flight_modes": ["RC_CHANNELS", "HEARTBEAT"],

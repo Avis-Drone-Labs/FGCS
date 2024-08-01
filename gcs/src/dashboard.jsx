@@ -167,7 +167,10 @@ export default function Dashboard() {
   // Data Modal Functions
   const [opened, { open, close }] = useDisclosure(false)
 
-  const [displayedData, setDisplayedData] = useState(defaultDataMessages)
+  const [displayedData, setDisplayedData] = useLocalStorage({
+    key: 'dashboardDataMessages',
+    defaultValue: defaultDataMessages,
+  })
   const [selectedBox, setSelectedBox] = useState(null)
 
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
@@ -209,6 +212,20 @@ export default function Dashboard() {
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
   }
+
+  useEffect(() => {
+    // Use localStorage.getItem as useLocalStorage hook updates slower
+    const oldDisplayedData = localStorage.getItem('dashboardDataMessages')
+
+    if (oldDisplayedData) {
+      const resetDisplayedDataValues = Object.keys(
+        JSON.parse(oldDisplayedData),
+      ).map((key) => {
+        return { ...JSON.parse(oldDisplayedData)[key], value: 0 }
+      })
+      setDisplayedData(resetDisplayedDataValues)
+    }
+  }, [])
 
   useEffect(() => {
     if (!connected) {

@@ -4,7 +4,7 @@
 */
 
 // Third party imports
-import { Checkbox, LoadingOverlay, Modal, Grid, Tooltip } from '@mantine/core'
+import { Checkbox, Grid, LoadingOverlay, Modal, Tooltip } from '@mantine/core'
 import { mavlinkMsgParams } from '../helpers/mavllinkDataStreams.js'
 export default function DashboardDataModal({
   opened,
@@ -38,21 +38,21 @@ export default function DashboardDataModal({
           <Grid.Col span={12} key={index}>
             <h3 className='mb-2'>{key}</h3>
             <Grid>
-              {Object.entries(value).map(([subkey, subvalue]) => (
-                <Grid.Col span={2} key={subkey}>
-                  <Tooltip label={subvalue} withArrow>
+              {Object.entries(value).map(([dataKey, dataLabel]) => (
+                <Grid.Col span={2} key={dataKey}>
+                  <Tooltip label={dataLabel} withArrow>
                     <Checkbox
-                      label={subkey}
-                      id={`checkbox-${key}-${subkey}`}
+                      label={dataKey}
+                      id={`checkbox-${key}-${dataKey}`}
                       checked={
                         selectedBox?.currently_selected ===
-                          `${key}.${subkey}` || false
+                          `${key}.${dataKey}` || false
                       }
                       onChange={(e) =>
                         handleCheckboxChange(
                           key,
-                          subkey,
-                          subvalue,
+                          dataKey,
+                          dataLabel,
                           selectedBox?.boxId,
                           e.target.checked,
                         )

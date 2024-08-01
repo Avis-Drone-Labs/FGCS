@@ -143,12 +143,12 @@ export const mavlinkMsgParams = {
 
   // MAV_DATA_STREAM_EXTRA1
   ATTITUDE: {
-    pitch: 'Pitch angle (rad)',
+    pitch: 'Pitch angle (°)',
     pitchspeed: 'Pitch angular speed (rad/s)',
-    roll: 'Roll angle (rad)',
+    roll: 'Roll angle (°)',
     rollspeed: 'Roll angular speed (rad/s)',
     time_boot_ms: 'Timestamp (ms)',
-    yaw: 'Yaw angle (rad)',
+    yaw: 'Yaw angle (°)',
     yawspeed: 'Yaw angular speed (rad/s)',
   },
   SIM_STATE: {

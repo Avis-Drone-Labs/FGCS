@@ -79,8 +79,19 @@ function to2dp(num) {
   return num.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0]
 }
 
-function DataMessage({ label, value, currentlySelected }) {
-  let color = 'white'
+const colorPalette = [
+  '#36a2eb',
+  '#ff6383',
+  '#fe9e40',
+  '#4ade80',
+  '#ffcd57',
+  '#4cbfc0',
+  '#9966ff',
+  '#c8cbce',
+]
+
+function DataMessage({ label, value, currentlySelected, id }) {
+  let color = colorPalette[id % colorPalette.length]
 
   var formattedValue = to2dp(value)
 
@@ -560,6 +571,7 @@ export default function Dashboard() {
                               label={data.display_name}
                               value={data.value}
                               currentlySelected={data.currently_selected}
+                              id={data.boxId}
                             />
                           </Grid.Col>
                         ))

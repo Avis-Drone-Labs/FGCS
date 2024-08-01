@@ -14,10 +14,10 @@ import {
   ActionIcon,
   Button,
   Divider,
+  Grid,
   Select,
   Tabs,
   Tooltip,
-  Grid,
 } from '@mantine/core'
 import {
   useDisclosure,
@@ -33,11 +33,11 @@ import {
   IconBattery2,
   IconCrosshair,
   IconGps,
+  IconInfoCircle,
   IconRadar,
   IconSatellite,
   IconSun,
   IconSunOff,
-  IconInfoCircle,
 } from '@tabler/icons-react'
 import { ResizableBox } from 'react-resizable'
 
@@ -54,8 +54,6 @@ import {
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
-// Possible mavlink Messages
-import { mavlinkMsgParams } from './helpers/mavllinkDataStreams.js'
 
 // Custom component
 import useSound from 'use-sound'
@@ -66,18 +64,25 @@ import {
 import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
-import Layout from './components/layout'
 import DashboardDataModal from './components/dashboardDataModal'
+import Layout from './components/layout'
 
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
 import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
+import { defaultDataMessages } from './helpers/dashboardDefaultDataMessages'
+
+function to2dp(num) {
+  // https://stackoverflow.com/questions/4187146/truncate-number-to-two-decimal-places-without-rounding
+  return num.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0]
+}
 
 function DataMessage({ label, value, currentlySelected }) {
   let color = 'white'
+
   // Convert temp to a fixed 2 decimal places
-  const formattedValue = value?.toFixed(2)
+  const formattedValue = to2dp(value)
 
   return (
     <Tooltip label={currentlySelected}>
@@ -155,45 +160,8 @@ export default function Dashboard() {
 
   // Data Modal Functions
   const [opened, { open, close }] = useDisclosure(false)
-  const boxTrackerList = [
-    {
-      boxId: 0,
-      currently_selected: 'GPS_RAW_INT.alt',
-      display_name: 'Altitude (mm)',
-      value: 0, // (Constantly updated by socket, default 0)
-    },
-    {
-      boxId: 1,
-      currently_selected: 'GPS_RAW_INT.alt',
-      display_name: 'Altitude (mm)',
-      value: 0, // (Constantly updated by socket, default 0)
-    },
-    {
-      boxId: 2,
-      currently_selected: 'GPS_RAW_INT.alt',
-      display_name: 'Altitude (mm)',
-      value: 0, // (Constantly updated by socket, default 0)
-    },
-    {
-      boxId: 3,
-      currently_selected: 'GPS_RAW_INT.alt',
-      display_name: 'Altitude (mm)',
-      value: 0, // (Constantly updated by socket, default 0)
-    },
-    {
-      boxId: 4,
-      currently_selected: 'GPS_RAW_INT.alt',
-      display_name: 'Altitude (mm)',
-      value: 0, // (Constantly updated by socket, default 0)
-    },
-    {
-      boxId: 5,
-      currently_selected: 'GPS_RAW_INT.alt',
-      display_name: 'Altitude (mm)',
-      value: 0, // (Constantly updated by socket, default 0)
-    },
-  ]
-  const [displayedData, setDisplayedData] = useState(boxTrackerList)
+
+  const [displayedData, setDisplayedData] = useState(defaultDataMessages)
   const [selectedBox, setSelectedBox] = useState(null)
 
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
@@ -253,21 +221,21 @@ export default function Dashboard() {
         // Use functional form of setState to ensure the latest state is used
         setDisplayedData((prevDisplayedData) => {
           // Create a copy of displayedData to modify
-          let updatedDisplayedData = [...prevDisplayedData];
+          let updatedDisplayedData = [...prevDisplayedData]
 
           // Iterate over displayedData to find and update the matching item
           updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
             if (dataItem.currently_selected.startsWith(packetType)) {
-              const specificData = dataItem.currently_selected.split('.')[1];
+              const specificData = dataItem.currently_selected.split('.')[1]
               if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-                return { ...dataItem, value: msg[specificData] };
+                return { ...dataItem, value: msg[specificData] }
               }
             }
-            return dataItem;
-          });
+            return dataItem
+          })
 
-          return updatedDisplayedData;
-        });
+          return updatedDisplayedData
+        })
       }
     })
 
@@ -556,7 +524,7 @@ export default function Dashboard() {
                 </Tabs.List>
 
                 <Tabs.Panel value='data'>
-                  <div>
+                  <>
                     <Grid className='cursor-pointer select-none mt-2'>
                       {displayedData.length > 0 ? (
                         displayedData.map((data) => (
@@ -582,11 +550,10 @@ export default function Dashboard() {
                     <DashboardDataModal
                       opened={opened}
                       close={close}
-                      possibleData={mavlinkMsgParams}
                       selectedBox={selectedBox}
                       handleCheckboxChange={handleCheckboxChange}
                     />
-                  </div>
+                  </>
                 </Tabs.Panel>
 
                 <Tabs.Panel value='actions'>

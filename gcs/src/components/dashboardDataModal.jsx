@@ -5,11 +5,10 @@
 
 // Third party imports
 import { Checkbox, LoadingOverlay, Modal, Grid, Tooltip } from '@mantine/core'
-
+import { mavlinkMsgParams } from '../helpers/mavllinkDataStreams.js'
 export default function DashboardDataModal({
   opened,
   close,
-  possibleData,
   selectedBox,
   handleCheckboxChange,
 }) {
@@ -28,14 +27,14 @@ export default function DashboardDataModal({
       }}
     >
       {/* Loading overlay should be hidden when all possible data is collected */}
-      {!possibleData && (
+      {!mavlinkMsgParams && (
         <div>
           <LoadingOverlay visible={true} />
           <p className='text-center mt-10'>Fetching data...</p>
         </div>
       )}
       <Grid>
-        {Object.entries(possibleData).map(([key, value], index) => (
+        {Object.entries(mavlinkMsgParams).map(([key, value], index) => (
           <Grid.Col span={12} key={index}>
             <h3 className='mb-2'>{key}</h3>
             <Grid>

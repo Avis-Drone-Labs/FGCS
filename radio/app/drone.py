@@ -14,11 +14,11 @@ from pymavlink import mavutil
 
 from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
+from app.controllers.frameController import FrameController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
 from app.controllers.paramsController import ParamsController
-from app.controllers.frameController import FrameController
 from app.customTypes import Response
 from app.utils import commandAccepted
 
@@ -79,7 +79,7 @@ class Drone:
         self.logger.debug("Trying to setup master")
         try:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
-        except PermissionError as e:
+        except Exception as e:
             self.logger.exception(traceback.format_exc())
             self.master = None
             self.connectionError = str(e)
@@ -89,9 +89,7 @@ class Drone:
         if initial_heartbeat is None:
             self.logger.error("Heartbeat timed out after 5 seconds")
             self.master = None
-            self.connectionError = (
-                "Could not connect to the drone. Perhaps try a different COM port."
-            )
+            self.connectionError = "Could not connect to the drone."
             return
 
         self.aircraft_type = initial_heartbeat.type

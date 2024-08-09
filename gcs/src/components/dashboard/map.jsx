@@ -72,6 +72,8 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
         }`}
         ref={passedRef}
         attributionControl={false}
+        dragRotate={false}
+        touchRotate={false}
       >
         {/* Show marker on map if the position is set */}
         {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (

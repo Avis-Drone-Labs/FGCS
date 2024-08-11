@@ -38,7 +38,7 @@ jobs:
 
     - name: Run Backend
       working-directory: ./radio
-      run: python app.py
+      run: python app.py &
     
     - name: Run Playwright tests
       run: yarn playwright test

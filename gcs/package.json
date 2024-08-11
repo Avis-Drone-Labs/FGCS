@@ -13,7 +13,8 @@
     "url": "https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
   },
   "scripts": {
-    "dev": "vite",
+    "test": "yarn playwright test",
+    "dev": "vite --port 5173",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint src --ext js,jsx",
     "lint:fix": "eslint src --ext js,jsx --fix",

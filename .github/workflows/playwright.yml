@@ -25,11 +25,13 @@ jobs:
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
 
-    - name: Run FGCS frontend
-      run: yarn dev &
+    # - name: Run FGCS frontend
+    #   run: yarn dev &
     
     - name: Run Playwright tests
-      run: yarn playwright test
+      uses: coactions/setup-xvfb@v1
+      with:
+        run: yarn playwright test
     
     - uses: actions/upload-artifact@v4
       if: always()

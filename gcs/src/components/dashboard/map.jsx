@@ -11,8 +11,10 @@ import { useEffect, useState } from 'react'
 
 // Maplibre and mantine imports
 import { Tooltip } from '@mantine/core'
+import { useLocalStorage } from '@mantine/hooks'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
+
 import arrow from '../../assets/arrow.svg'
 
 // Tailwind styling
@@ -26,13 +28,13 @@ function intToCoord(val) {
 }
 
 export default function MapSection({ passedRef, data, heading, missionItems }) {
-  const [position, setPosition] = useState({
-    latitude: 53.381655,
-    longitude: -1.481434,
-  })
+  const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
-  const [defaultLat, setDefaultLat] = useState(53.381655)
-  const [defaultLon, setDefaultLon] = useState(-1.481434)
+  const [initialViewState, setInitialViewState] = useLocalStorage({
+    key: 'initialViewState',
+    defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
+    getInitialValueInEffect: false,
+  })
 
   useEffect(() => {
     // Check latest data point is valid
@@ -44,29 +46,19 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
 
-    // Update default lat and lon if they're ready to be updated
-    if (!isNaN(defaultLat) || !isNaN(defaultLon)) {
-      setDefaultLat(lat)
-      setDefaultLon(lon)
-
-      if (!firstCenteredToDrone) {
-        passedRef.current.getMap().flyTo({
-          center: [lon, lat],
-          zoom: 16,
-        })
-        setFirstCenteredToDrone(true)
-      }
+    if (!firstCenteredToDrone) {
+      passedRef.current.getMap().flyTo({
+        center: [lon, lat],
+        zoom: initialViewState.zoom,
+      })
+      setFirstCenteredToDrone(true)
     }
   }, [data])
 
   return (
     <div className='w-initial h-full' id='map'>
       <Map
-        initialViewState={{
-          latitude: defaultLat,
-          longitude: defaultLon,
-          zoom: 16,
-        }}
+        initialViewState={initialViewState}
         mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
           import.meta.env.VITE_MAPTILER_API_KEY
         }`}
@@ -74,21 +66,30 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
         attributionControl={false}
         dragRotate={false}
         touchRotate={false}
+        onMoveEnd={(newViewState) =>
+          setInitialViewState({
+            latitude: newViewState.viewState.latitude,
+            longitude: newViewState.viewState.longitude,
+            zoom: newViewState.viewState.zoom,
+          })
+        }
       >
         {/* Show marker on map if the position is set */}
-        {!isNaN(position?.latitude) && !isNaN(position?.longitude) && (
-          <Marker
-            latitude={position.latitude}
-            longitude={position.longitude}
-            scale={0.1}
-          >
-            <img
-              src={arrow}
-              className='w-6 h-6'
-              style={{ transform: `rotate(${heading ?? 0}deg)` }}
-            />
-          </Marker>
-        )}
+        {position !== null &&
+          !isNaN(position?.latitude) &&
+          !isNaN(position?.longitude) && (
+            <Marker
+              latitude={position.latitude}
+              longitude={position.longitude}
+              scale={0.1}
+            >
+              <img
+                src={arrow}
+                className='w-6 h-6'
+                style={{ transform: `rotate(${heading ?? 0}deg)` }}
+              />
+            </Marker>
+          )}
 
         {/* Show mission item LABELS */}
         {missionItems.mission_items.map((item, index) => {

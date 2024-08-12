@@ -10,10 +10,11 @@ from app.drone import Drone
 from app.utils import droneErrorCb, getComPortNames
 
 
-class SetComPortType(TypedDict):
+class ConnectionDataType(TypedDict):
     port: str
     baud: int
     wireless: bool
+    connectionType: str
 
 
 @socketio.on("get_com_ports")
@@ -41,11 +42,11 @@ def getComPort() -> None:
     socketio.emit("list_com_ports", droneStatus.correct_ports)
 
 
-@socketio.on("set_com_port")
-def setComPort(data: SetComPortType) -> None:
+@socketio.on("connect_to_drone")
+def connectToDrone(data: ConnectionDataType) -> None:
     """
-    Set the com port of the drone and let the client know. This method is responsible for creating
-    the initialising the drone object.
+    This method is responsible for creating the initialising the drone object by
+    connecting to it with the data given.
 
     Args:
         data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
@@ -54,18 +55,33 @@ def setComPort(data: SetComPortType) -> None:
         droneStatus.drone.close()
         drone = None
 
-    port = data.get("port")
-    if not port:
-        socketio.emit("com_port_error", {"message": "COM port not specified."})
+    connectionType = data.get("connectionType")
+
+    if connectionType not in ["serial", "network"]:
+        socketio.emit("connection_error", {"message": "Connection type not specified."})
         return
 
-    port = port.split(":")[0]
-    if port not in getComPortNames():
-        socketio.emit("com_port_error", {"message": "COM port not found."})
-        return
+    if connectionType == "serial":
+        port = data.get("port")
+        if not port:
+            socketio.emit("connection_error", {"message": "COM port not specified."})
+            return
+
+        port = port.split(":")[0]
+        if port not in getComPortNames():
+            socketio.emit("connection_error", {"message": "COM port not found."})
+            return
+    else:
+        port = data.get("port")  # networktype:ip:port
+        if not port:
+            socketio.emit(
+                "connection_error", {"message": "Connection address not specified."}
+            )
+            return
 
     logger.debug("Trying to connect to drone")
     baud = data.get("baud", 57600)
+
     drone = Drone(
         port,
         wireless=data.get("wireless", True),
@@ -75,7 +91,7 @@ def setComPort(data: SetComPortType) -> None:
     )
 
     if drone.connectionError is not None:
-        socketio.emit("com_port_error", {"message": drone.connectionError})
+        socketio.emit("connection_error", {"message": drone.connectionError})
         drone = None
         return
 

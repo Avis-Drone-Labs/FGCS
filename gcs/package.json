@@ -14,7 +14,7 @@
   },
   "scripts": {
     "test": "yarn playwright test",
-    "dev": "vite --port 5173",
+  "dev": "vite --port 5173",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint src --ext js,jsx",
     "lint:fix": "eslint src --ext js,jsx --fix",
@@ -56,7 +56,8 @@
     "socket.io-client": "^4.7.2",
     "tailwind-merge": "^2.1.0",
     "tailwindcss": "^3.3.6",
-    "use-sound": "^4.0.1"
+    "use-sound": "^4.0.1",
+    "vitest": "^2.0.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.46.0",
@@ -66,6 +67,7 @@
     "@typescript-eslint/eslint-plugin": "^6.6.0",
     "@typescript-eslint/parser": "^6.6.0",
     "@vitejs/plugin-react": "^4.0.4",
+    "@vitest/browser": "^2.0.5",
     "autoprefixer": "^10.4.16",
     "electron": "^26.1.0",
     "electron-builder": "^24.6.4",

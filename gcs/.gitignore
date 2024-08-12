@@ -31,3 +31,7 @@ package-lock.json
 .env
 extras
 yarn.lock
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

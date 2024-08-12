@@ -1,6 +1,6 @@
-import app.droneStatus as droneStatus
 from app import socketio
-from app.customTypes import MotorTestAllValues, MotorTestThrottleAndDuration
+from app.customTypes import MotorTestAllValues, MotorTestThrottleDurationAndNumber
+import app.droneStatus as droneStatus
 
 
 @socketio.on("test_one_motor")
@@ -22,7 +22,7 @@ def testOneMotor(data: MotorTestAllValues) -> None:
 
 
 @socketio.on("test_motor_sequence")
-def testMotorSequence(data: MotorTestThrottleAndDuration) -> None:
+def testMotorSequence(data: MotorTestThrottleDurationAndNumber) -> None:
     """
     Tests motors in sequence
 
@@ -37,7 +37,7 @@ def testMotorSequence(data: MotorTestThrottleAndDuration) -> None:
 
 
 @socketio.on("test_all_motors")
-def testAllMotors(data: MotorTestThrottleAndDuration) -> None:
+def testAllMotors(data: MotorTestThrottleDurationAndNumber) -> None:
     """
     Tests all motors
 

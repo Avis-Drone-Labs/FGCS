@@ -14,6 +14,7 @@ from pymavlink import mavutil
 
 from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
+from app.controllers.frameController import FrameController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
@@ -78,8 +79,9 @@ class Drone:
         self.logger.debug("Trying to setup master")
         try:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
-        except PermissionError as e:
+        except Exception as e:
             self.logger.exception(traceback.format_exc())
+            self.master.close()
             self.master = None
             self.connectionError = str(e)
             return
@@ -87,10 +89,9 @@ class Drone:
         initial_heartbeat = self.master.wait_heartbeat(timeout=5)
         if initial_heartbeat is None:
             self.logger.error("Heartbeat timed out after 5 seconds")
+            self.master.close()
             self.master = None
-            self.connectionError = (
-                "Could not connect to the drone. Perhaps try a different COM port."
-            )
+            self.connectionError = "Could not connect to the drone."
             return
 
         self.aircraft_type = initial_heartbeat.type
@@ -102,7 +103,7 @@ class Drone:
                 "Could not connect to the drone. Aircraft not plane or quadcopter."
             )
             return
-        
+
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
         self.target_component = self.master.target_component
@@ -132,6 +133,7 @@ class Drone:
         self.motorTestController = MotorTestController(self)
         self.gripperController = GripperController(self)
         self.missionController = MissionController(self)
+        self.frameController = FrameController(self)
 
         self.stopAllDataStreams()
 

@@ -14,7 +14,8 @@
   },
   "scripts": {
     "test": "yarn playwright test",
-  "dev": "vite --port 5173",
+    "dev": "vite --port 5173",
+    "dev:test": "vite --port 5173 --config ./vite.test.config.ts",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint src --ext js,jsx",
     "lint:fix": "eslint src --ext js,jsx --fix",

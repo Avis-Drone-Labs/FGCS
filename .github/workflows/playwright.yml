@@ -28,7 +28,7 @@ jobs:
       run: yarn playwright install --with-deps
 
     - name: Run FGCS frontend
-      run: yarn dev &
+      run: yarn dev:test &
     
     - name: Run Playwright tests
       uses: coactions/setup-xvfb@v1

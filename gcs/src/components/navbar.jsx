@@ -196,7 +196,7 @@ export default function Navbar({ currentPage }) {
         showErrorNotification('IP Address and Port cannot be empty')
         return
       }
-      const networkString = `${networkType}in:${ip}:${port}`
+      const networkString = `${networkType}:${ip}:${port}`
       socket.emit('connect_to_drone', {
         port: networkString,
         baud: 115200,
@@ -404,7 +404,7 @@ export default function Navbar({ currentPage }) {
             <>
               {connectionType === 'serial'
                 ? selectedComPort
-                : `${networkType}in:${ip}:${port}`}
+                : `${networkType}:${ip}:${port}`}
             </>
           )}
         </p>

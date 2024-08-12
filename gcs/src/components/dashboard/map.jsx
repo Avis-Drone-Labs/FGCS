@@ -32,7 +32,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const [initialViewState, setInitialViewState] = useLocalStorage({
     key: 'initialViewState',
-    defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 16 },
+    defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
 
@@ -49,7 +49,7 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
     if (!firstCenteredToDrone) {
       passedRef.current.getMap().flyTo({
         center: [lon, lat],
-        zoom: 16,
+        zoom: initialViewState.zoom,
       })
       setFirstCenteredToDrone(true)
     }

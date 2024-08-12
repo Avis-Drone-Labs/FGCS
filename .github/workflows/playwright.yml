@@ -35,7 +35,6 @@ jobs:
       with:
         working-directory: gcs
         run: yarn playwright test
-        # run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- yarn playwright test
     
     - uses: actions/upload-artifact@v4
       if: always()

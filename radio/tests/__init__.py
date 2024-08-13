@@ -3,7 +3,6 @@ from typing import Callable, Optional
 import app.droneStatus as droneStatus
 import pytest
 from app import create_app, socketio
-from app.drone import Drone
 from flask.testing import FlaskClient
 from flask_socketio.test_client import SocketIOTestClient
 
@@ -54,14 +53,3 @@ def falcon_test(pass_drone_status: bool = False, pass_flask: bool = False) -> Ca
         return inner
 
     return run_test
-
-
-def setupDrone(givenDrone: Drone) -> None:
-    """
-    Setup the drone globally, this is done before running pytest
-
-    Args:
-        givenDrone (Drone): The drone object to be used within the tests
-    """
-    global droneStatus
-    droneStatus.drone = givenDrone

@@ -72,9 +72,23 @@ We currently dont have instructions or releases for mac or linux, we will in fut
 
 </details>
 
+<details><summary>Running tests</summary>
+
+## Backend
+
+For running Python tests, first make sure you're in the `radio` directory. By default the tests will attempt to connect to the simulator running within Docker. To run the tests simply run `pytest`. To use a physical device connected to your computer, you can use `pytest --fc -s` and a prompt will display to select the correct COM port for the device.
+
+</details>
+
+<details><summary>SITL with Docker</summary>
+
+To run the SITL simulator within Docker, first navigate to the root directory of FGCS and run `docker build . -t ardupilot_sitl`. Once done building the image you can run the container with `docker run -it --rm -p 5760:5760 ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
+
+</details>
+
 <details><summary>Python</summary>
 
-### Version
+## Version
 
 We are going to be using **python 3.11.x** so please install that on your computer from [Python's website](https://www.python.org/downloads/). Please try to use a virtual environment when programming, if you don't know how to do this please message me (Julian)! Name the folder either "env" or "venv" so its in the .gitignore as we don't want to be uploading that to github.
 
@@ -99,12 +113,6 @@ From within the `radio` folder run `pyinstaller --paths .\venv\Lib\site-packages
 ## Frontend
 
 After compiling the backend, place the contents of `radio/dist/fgcs_backend` into a folder in `gcs/extras`. Then from within the `gcs` folder run `yarn build`.
-
-</details>
-
-<details><summary>SITL with Docker</summary>
-
-To run the SITL simulator within Docker, first navigate to the root directory of FGCS and run `docker build . -t ardupilot_sitl`. Once done building the image you can run the container with `docker run -it --rm -p 5760:5760 ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
 
 </details>
 

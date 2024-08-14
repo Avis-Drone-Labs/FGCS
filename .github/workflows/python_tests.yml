@@ -1,4 +1,4 @@
-name: Run Python Tests with No Flight Controller
+name: Run Python Tests with simulator
 
 on:
   push:
@@ -9,9 +9,36 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    services:
+      service-name-1:
+        image: kushmakkapati/ardupilot_sitl:latest
+        ports:
+          - 5760:5760
     steps:
       - uses: actions/checkout@v3
+
+      # # Cache Docker layers
+      # - name: Cache Docker layers
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: /tmp/.buildx-cache
+      #     key: ${{ runner.os }}-docker-${{ github.sha }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-docker-
+
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
+
+      # # Build Docker image and use cache
+      # - name: Build Docker image
+      #   run: |
+      #     docker buildx build \
+      #       --cache-from=type=local,src=/tmp/.buildx-cache \
+      #       --cache-to=type=local,dest=/tmp/.buildx-cache \
+      #       -t ardupilot_sitl .
+
+      # - name: Run Docker container
+      #   run: docker run -d -p 5760:5760 --name ardupilot_sitl ardupilot_sitl
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -27,4 +54,7 @@ jobs:
 
       - name: Test with pytest
         working-directory: radio
-        run: pytest
+        run: pytest --log-cli-level=DEBUG
+
+      # - name: Stop and remove container
+      #   run: docker stop ardupilot_sitl && docker rm ardupilot_sitl

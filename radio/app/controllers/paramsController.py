@@ -28,9 +28,7 @@ class ParamsController:
         self.is_requesting_params = False
         self.getAllParamsThread: Optional[Thread] = None
 
-    def getSingleParam(
-        self, param_name: str, timeout: Optional[float] = 1.5
-    ) -> Response:
+    def getSingleParam(self, param_name: str, timeout: Optional[float] = 2) -> Response:
         """
         Gets a specific parameter value.
 
@@ -52,21 +50,27 @@ class ParamsController:
         )
 
         try:
-            response = self.drone.master.recv_match(
-                type="PARAM_VALUE", blocking=True, timeout=timeout
-            )
-            if response and response.param_id == param_name:
-                self.drone.is_listening = True
-                return {
-                    "success": True,
-                    "data": response,
-                }
-            else:
-                self.drone.is_listening = True
-                return {
-                    "success": False,
-                    "message": failure_message,
-                }
+            timeout = time.time() + 5  # 5 seconds
+            while True:
+                response = self.drone.master.recv_match(
+                    type="PARAM_VALUE", blocking=True, timeout=timeout
+                )
+
+                if response and response.param_id == param_name:
+                    self.drone.is_listening = True
+                    return {
+                        "success": True,
+                        "data": response,
+                    }
+                else:
+                    if time.time() > timeout:
+                        self.drone.is_listening = True
+                        return {
+                            "success": False,
+                            "message": f"{failure_message}, timed out",
+                        }
+                    else:
+                        continue
 
         except serial.serialutil.SerialException:
             self.drone.is_listening = True

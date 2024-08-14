@@ -30,7 +30,7 @@ export default function MessageSelector({
       classNames={{ option: 'capitalize', label: labelColor }}
       data={Object.keys(graphOptions).map((messageName) => ({
         group: messageName,
-        items: graphOptions[messageName].map((v) => ({
+        items: Object.keys(graphOptions[messageName]).map((v) => ({
           value: `${messageName}/${v}`,
           label: v,
         })),

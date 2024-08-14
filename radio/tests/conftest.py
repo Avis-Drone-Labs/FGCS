@@ -1,3 +1,4 @@
+import app.droneStatus as droneStatus  # noqa: F401
 import pytest
 from app.drone import Drone
 from app.utils import getComPort

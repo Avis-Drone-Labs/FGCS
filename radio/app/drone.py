@@ -81,7 +81,6 @@ class Drone:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.logger.exception(traceback.format_exc())
-            self.master.close()
             self.master = None
             self.connectionError = str(e)
             return

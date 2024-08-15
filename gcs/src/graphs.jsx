@@ -21,7 +21,7 @@ import Layout from './components/layout'
 import NoDroneConnected from './components/noDroneConnected.jsx'
 import { socket } from './helpers/socket'
 import { graphOptions } from './helpers/realTimeGraphOptions.js'
-import { realTimeGraphDataFormatters } from './helpers/realTimeGraphDataFormatters.js'
+import { dataFormatters } from './helpers/dataFormatters.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -114,8 +114,9 @@ export default function Graphs() {
 
         // Applying Data Formatters
         let formatted_value = msg[valueName]
-        if (messageKey in realTimeGraphDataFormatters) {
-          formatted_value = realTimeGraphDataFormatters[messageKey](msg[valueName].toFixed(3));
+        const formattedMessageKey = messageKey.split('/').join('.')
+        if (formattedMessageKey in dataFormatters) {
+          formatted_value = dataFormatters[formattedMessageKey](msg[valueName].toFixed(3));
         }
 
         returnDataArray.push({

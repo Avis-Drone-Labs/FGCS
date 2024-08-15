@@ -72,7 +72,7 @@ import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
 import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
 import { defaultDataMessages } from './helpers/dashboardDefaultDataMessages'
-import { mavlinkDataStreamFormatters } from './helpers/mavlinkDataStreamsFormatters'
+import { dataFormatters } from './helpers/dataFormatters'
 
 function to2dp(num) {
   // https://stackoverflow.com/questions/4187146/truncate-number-to-two-decimal-places-without-rounding
@@ -95,9 +95,9 @@ function DataMessage({ label, value, currentlySelected, id }) {
 
   var formattedValue = to2dp(value)
 
-  if (currentlySelected in mavlinkDataStreamFormatters) {
+  if (currentlySelected in dataFormatters) {
     formattedValue = to2dp(
-      mavlinkDataStreamFormatters[currentlySelected](value),
+      dataFormatters[currentlySelected](value),
     )
   }
 

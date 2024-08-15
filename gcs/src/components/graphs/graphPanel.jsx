@@ -19,7 +19,7 @@ import { graphOptions } from '../../helpers/realTimeGraphOptions.js'
 // Helper function to extract graph information
 const getGraphInfo = (selectValue) => {
   if (!selectValue) return null;
-  const [category, value] = selectValue.split('/');
+  const [category, value] = selectValue.split('.');
   return {
     value,
     label: `${value} ${graphOptions[category][value]}`

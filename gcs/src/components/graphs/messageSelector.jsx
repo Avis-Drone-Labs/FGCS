@@ -31,7 +31,7 @@ export default function MessageSelector({
       data={Object.keys(graphOptions).map((messageName) => ({
         group: messageName,
         items: Object.keys(graphOptions[messageName]).map((v) => ({
-          value: `${messageName}/${v}`,
+          value: `${messageName}.${v}`,
           label: v,
         })),
       }))}

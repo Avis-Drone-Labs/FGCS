@@ -110,13 +110,12 @@ export default function Graphs() {
     for (let graphKey in selectValues) {
       const messageKey = selectValues[graphKey]
       if (messageKey && messageKey.includes(targetMessageKey)) {
-        const [, valueName] = messageKey.split('/')
+        const [, valueName] = messageKey.split('.')
 
         // Applying Data Formatters
         let formatted_value = msg[valueName]
-        const formattedMessageKey = messageKey.split('/').join('.')
-        if (formattedMessageKey in dataFormatters) {
-          formatted_value = dataFormatters[formattedMessageKey](msg[valueName].toFixed(3));
+        if (messageKey in dataFormatters) {
+          formatted_value = dataFormatters[messageKey](msg[valueName].toFixed(3));
         }
 
         returnDataArray.push({

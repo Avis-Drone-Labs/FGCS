@@ -14,8 +14,40 @@
 // 3rd Party Imports
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import RealtimeGraph from '../realtimeGraph.jsx'
+import { graphOptions } from '../../helpers/realTimeGraphOptions.js'
 
+// Helper function to extract graph information
+const getGraphInfo = (selectValue) => {
+  if (!selectValue) return null;
+  const [category, value] = selectValue.split('.');
+  return {
+    value,
+    label: `${value} ${graphOptions[category][value]}`
+  };
+};
+
+// GraphPanel component
 export default function GraphPanel({ selectValues, graphRefs, graphColors }) {
+  const renderGraph = (graphKey) => {
+    const graphInfo = getGraphInfo(selectValues[graphKey]);
+    
+    if (graphInfo) {
+      return (
+        <RealtimeGraph
+          ref={graphRefs[graphKey]}
+          datasetLabel={graphInfo.label}
+          lineColor={graphColors[graphKey]}
+        />
+      );
+    }
+    
+    return (
+      <p className='flex items-center justify-center h-full'>
+        Select a value to plot on graph {graphKey.charAt(graphKey.length - 1).toUpperCase()}
+      </p>
+    );
+  };
+
   return (
     <PanelGroup
       autoSaveId='verticalGraphs'
@@ -25,33 +57,11 @@ export default function GraphPanel({ selectValues, graphRefs, graphColors }) {
       <Panel minSize={20}>
         <PanelGroup autoSaveId='horizontalGraphs1' direction='horizontal'>
           <Panel minSize={10}>
-            {selectValues.graph_a ? (
-              <RealtimeGraph
-                ref={graphRefs.graph_a}
-                datasetLabel={selectValues.graph_a.split('/')[1]}
-                lineColor={graphColors.graph_a}
-              />
-            ) : (
-              <p className='flex items-center justify-center h-full'>
-                Select a value to plot on graph A
-              </p>
-            )}
+            {renderGraph('graph_a')}
           </Panel>
-
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-
           <Panel minSize={10}>
-            {selectValues.graph_b ? (
-              <RealtimeGraph
-                ref={graphRefs.graph_b}
-                datasetLabel={selectValues.graph_b.split('/')[1]}
-                lineColor={graphColors.graph_b}
-              />
-            ) : (
-              <p className='flex items-center justify-center h-full'>
-                Select a value to plot on graph B
-              </p>
-            )}
+            {renderGraph('graph_b')}
           </Panel>
         </PanelGroup>
       </Panel>
@@ -59,36 +69,14 @@ export default function GraphPanel({ selectValues, graphRefs, graphColors }) {
       <Panel minSize={20}>
         <PanelGroup autoSaveId='horizontalGraphs2' direction='horizontal'>
           <Panel minSize={10}>
-            {selectValues.graph_c ? (
-              <RealtimeGraph
-                ref={graphRefs.graph_c}
-                datasetLabel={selectValues.graph_c.split('/')[1]}
-                lineColor={graphColors.graph_c}
-              />
-            ) : (
-              <p className='flex items-center justify-center h-full'>
-                Select a value to plot on graph C
-              </p>
-            )}
+            {renderGraph('graph_c')}
           </Panel>
-
           <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
-
           <Panel minSize={10}>
-            {selectValues.graph_d ? (
-              <RealtimeGraph
-                ref={graphRefs.graph_d}
-                datasetLabel={selectValues.graph_d.split('/')[1]}
-                lineColor={graphColors.graph_d}
-              />
-            ) : (
-              <p className='flex items-center justify-center h-full'>
-                Select a value to plot on graph D
-              </p>
-            )}
+            {renderGraph('graph_d')}
           </Panel>
         </PanelGroup>
       </Panel>
     </PanelGroup>
-  )
+  );
 }

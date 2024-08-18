@@ -20,14 +20,10 @@ import MessageSelector from './components/graphs/messageSelector.jsx'
 import Layout from './components/layout'
 import NoDroneConnected from './components/noDroneConnected.jsx'
 import { socket } from './helpers/socket'
+import { graphOptions } from './helpers/realTimeGraphOptions.js'
+import { dataFormatters } from './helpers/dataFormatters.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-const graphOptions = {
-  VFR_HUD: ['airspeed', 'groundspeed', 'throttle', 'alt', 'climb'],
-  SYS_STATUS: ['voltage_battery', 'current_battery', 'battery_remaining'],
-  ATTITUDE: ['roll', 'pitch', 'yaw', 'rollspeed', 'pitchspeed', 'yawspeed'],
-}
 
 const graphLabelColors = {
   graph_a: 'text-sky-400',
@@ -114,9 +110,16 @@ export default function Graphs() {
     for (let graphKey in selectValues) {
       const messageKey = selectValues[graphKey]
       if (messageKey && messageKey.includes(targetMessageKey)) {
-        const [, valueName] = messageKey.split('/')
+        const [, valueName] = messageKey.split('.')
+
+        // Applying Data Formatters
+        let formatted_value = msg[valueName]
+        if (messageKey in dataFormatters) {
+          formatted_value = dataFormatters[messageKey](msg[valueName].toFixed(3));
+        }
+
         returnDataArray.push({
-          data: { x: Date.now(), y: msg[valueName].toFixed(3) },
+          data: { x: Date.now(), y: formatted_value },
           graphKey: graphKey,
         })
       }

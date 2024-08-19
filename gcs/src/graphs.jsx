@@ -53,7 +53,17 @@ export default function Graphs() {
       graph_c: null,
       graph_d: null,
     },
-  })
+    // modify the deserialization process to set values containing '/' to null
+    deserialize: (strValue) => {
+      const parsedValue = JSON.parse(strValue);
+      for (const key in parsedValue) {
+        if (parsedValue[key] && parsedValue[key].includes('/')) {
+          parsedValue[key] = null;
+        }
+      }
+      return parsedValue;
+    },
+  });
 
   const previousSelectValues = usePrevious(selectValues)
 

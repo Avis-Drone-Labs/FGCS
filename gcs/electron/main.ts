@@ -37,6 +37,12 @@ function createWindow() {
     },
     show: false,
     alwaysOnTop: true,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#00000000',
+      symbolColor: '#E74C3C',
+      height: 25
+    }
   })
 
   win.setMenuBarVisibility(true)

@@ -27,3 +27,7 @@ body {
   flex-flow: column;
   height: 100%;
 }
+
+#toolbar { 
+  -webkit-app-region: drag;
+}

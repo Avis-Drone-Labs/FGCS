@@ -34,6 +34,7 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true
     },
     show: false,
     alwaysOnTop: true,

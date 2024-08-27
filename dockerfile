@@ -1,0 +1,32 @@
+FROM ubuntu:22.04
+USER root
+
+RUN apt-get update -y
+
+RUN apt-get install git sudo -y
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    g++ \
+    git \
+    python3-pip \
+    python-is-python3 \
+    libxml2-dev \
+    libxslt-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN git clone --recurse-submodules https://github.com/ArduPilot/ardupilot.git --depth 1
+
+WORKDIR /ardupilot
+
+USER root
+RUN pip3 install future lxml pymavlink MAVProxy pexpect flake8==3.7.9 requests==2.27.1 monotonic==1.6 geocoder empy==3.3.4 configparser==4.0.2 click==7.1.2 decorator==4.4.2 dronecan pygame intelhex empy
+RUN ./waf configure --board sitl
+RUN ./waf copter
+
+EXPOSE 5760/tcp
+
+ENV LAT=52.780569089726455
+ENV LON=-0.707923685716297
+ENV ALT=0
+ENV DIR=270
+
+ENTRYPOINT python ./Tools/autotest/sim_vehicle.py -v ArduCopter --custom-location=${LAT},${LON},${ALT},${DIR} --no-mavproxy

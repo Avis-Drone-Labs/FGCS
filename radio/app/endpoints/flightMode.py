@@ -103,6 +103,13 @@ def setCurrentFlightMode(data: SetCurrentFlightModeType) -> None:
         data (dict): A dictionary containing the flight mode to be set as an integer
     """
     if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the dashboard screen to set the current flight mode."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

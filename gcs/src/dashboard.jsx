@@ -24,6 +24,7 @@ import {
   useListState,
   useLocalStorage,
   usePrevious,
+  useSessionStorage,
   useViewportSize,
 } from '@mantine/hooks'
 import {
@@ -96,9 +97,7 @@ function DataMessage({ label, value, currentlySelected, id }) {
   var formattedValue = to2dp(value)
 
   if (currentlySelected in dataFormatters) {
-    formattedValue = to2dp(
-      dataFormatters[currentlySelected](value),
-    )
+    formattedValue = to2dp(dataFormatters[currentlySelected](value))
   }
 
   return (
@@ -175,7 +174,11 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
-  const [deviceId, setDeviceId] = useState(null)
+  // Camera devices
+  const [deviceId, setDeviceId] = useSessionStorage({
+    key: 'deviceId',
+    defaultValue: null,
+  })
   const [devices, setDevices] = useState([])
 
   // Data Modal Functions
@@ -568,24 +571,8 @@ export default function Dashboard() {
                 <Tabs.List>
                   <Tabs.Tab value='data'>Data</Tabs.Tab>
                   <Tabs.Tab value='actions'>Actions</Tabs.Tab>
+                  <Tabs.Tab value='camera'>Camera</Tabs.Tab>
                 </Tabs.List>
-
-                {/* <div className='flex flex-col gap-2'>
-                <Select
-                  label='Select camera input'
-                  data={devices.map((device) => {
-                    return { value: device.deviceId, label: device.label }
-                  })}
-                  value={deviceId}
-                  onChange={setDeviceId}
-                />
-                {deviceId !== null && (
-                  <Webcam
-                    audio={false}
-                    videoConstraints={{ deviceId: deviceId }}
-                  />
-                )}
-              </div> */}
 
                 <Tabs.Panel value='data'>
                   <>
@@ -663,6 +650,25 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+                </Tabs.Panel>
+
+                <Tabs.Panel value='camera'>
+                  <div className='flex flex-col gap-4 p-2'>
+                    <Select
+                      label='Select camera input'
+                      data={devices.map((device) => {
+                        return { value: device.deviceId, label: device.label }
+                      })}
+                      value={deviceId}
+                      onChange={setDeviceId}
+                    />
+                    {deviceId !== null && (
+                      <Webcam
+                        audio={false}
+                        videoConstraints={{ deviceId: deviceId }}
+                      />
+                    )}
+                  </div>
                 </Tabs.Panel>
               </Tabs>
             </div>

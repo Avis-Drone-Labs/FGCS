@@ -6,14 +6,24 @@
 */
 
 // Third Party Imports
-import { Button, Menu, Text } from "@mantine/core"
+import { Menu, Text, Image } from "@mantine/core"
+import { IconChevronUp, IconChevronDown, IconX } from "@tabler/icons-react";
+
+// Styling imports
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../tailwind.config.js'
+
 const { ipcRenderer } = window.require('electron');
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Toolbar() {
   return (
     <div className="flex flex-row content-center justify-between bg-falcongrey-100 p-1 px-2 h-max gap-x-2" id="toolbar">
       {/* Logo and Menu Items */}
-      <div className="flex flex-row content-center h-max gap-x-2">
+      <div className="flex flex-row items-center h-max gap-x-2">
+        {/* Icon */}
+        <img src="app_icon.ico" className="w-auto h-5 object-contain no-drag" />
+
         {/* FGCS */}
         <Menu position="bottom-start">
           <Menu.Target>
@@ -42,10 +52,10 @@ export default function Toolbar() {
       </div>
 
       {/* Window actions (close, minimise, maximise) */}
-      <div>
-        <button className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('minimise', [])}}>Minimise</button>
-        <button className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('maximise', [])}}>Maximise</button>
-        <button className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('close', [])}}>Close</button>
+      <div className="flex flex-row items-center h-max gap-x-2">
+        <div className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('minimise', [])}}><IconChevronDown className="h-[80%]" color={tailwindColors["falconred"][100]} /></div>
+        <div className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('maximise', [])}}><IconChevronUp className="h-[80%]" color={tailwindColors["falconred"][100]} /></div>
+        <div className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('close', [])}}><IconX className="h-[80%]" color={tailwindColors["falconred"][100]} /></div>
       </div>
     </div>
   )

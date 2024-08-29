@@ -29,21 +29,28 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
+// Handling custom window events (minimise, maximise, close)
+ipcMain.on('close', ()=> {closeWithBackend()})
+ipcMain.on('minimise', ()=> {BrowserWindow.getFocusedWindow()?.minimize()})
+ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.maximize()})
+
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     },
     show: false,
     alwaysOnTop: true,
     titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: '#00000000',
-      symbolColor: '#E74C3C',
-      height: 25
-    }
+    // titleBarOverlay: {
+    //   color: '#00000000',
+    //   symbolColor: '#E74C3C',
+    //   height: 25
+    
+    // }
   })
 
   win.setMenuBarVisibility(true)
@@ -76,67 +83,67 @@ function createWindow() {
     win?.setAlwaysOnTop(false)
   })
 
-  setMainMenu()
+  // setMainMenu()
 }
 
-function setMainMenu() {
-  const template: MenuItemConstructorOptions[] = [
-    {
-      label: app.name,
-      submenu: [
-        {
-          label: 'About FGCS',
-          click: async () => {
-            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
+// function setMainMenu() {
+//   const template: MenuItemConstructorOptions[] = [
+//     {
+//       label: app.name,
+//       submenu: [
+//         {
+//           label: 'About FGCS',
+//           click: async () => {
+//             const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
 
-            const options: MessageBoxOptions = {
-              type: 'info',
-              buttons: [ 'OK','Report a bug',],
-              title: 'About FGCS',
-              message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
-              detail: 'For more information, visit our GitHub page.',
-              icon: icon,
-              defaultId: 1,
-            };
+//             const options: MessageBoxOptions = {
+//               type: 'info',
+//               buttons: [ 'OK','Report a bug',],
+//               title: 'About FGCS',
+//               message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
+//               detail: 'For more information, visit our GitHub page.',
+//               icon: icon,
+//               defaultId: 1,
+//             };
 
-          const response = await dialog.showMessageBox(options);
-            if (response.response === 1) {
-              shell.openExternal(packageInfo.bugs.url)
-            }
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Report a bug',
-          click: async () => {
-            await shell.openExternal(
-              packageInfo.bugs.url,
-            )
-          },
-        },
-        { type: 'separator' },
-        { role: 'quit' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    }
-  ]
+//           const response = await dialog.showMessageBox(options);
+//             if (response.response === 1) {
+//               shell.openExternal(packageInfo.bugs.url)
+//             }
+//           },
+//         },
+//         { type: 'separator' },
+//         {
+//           label: 'Report a bug',
+//           click: async () => {
+//             await shell.openExternal(
+//               packageInfo.bugs.url,
+//             )
+//           },
+//         },
+//         { type: 'separator' },
+//         { role: 'quit' },
+//       ],
+//     },
+//     {
+//       label: 'View',
+//       submenu: [
+//         { role: 'reload' },
+//         { role: 'forceReload' },
+//         { role: 'toggleDevTools' },
+//         { type: 'separator' },
+//         { role: 'resetZoom' },
+//         { role: 'zoomIn' },
+//         { role: 'zoomOut' },
+//         { type: 'separator' },
+//         { role: 'togglefullscreen' }
+//       ]
+//     }
+//   ]
 
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
-}
+//   const menu = Menu.buildFromTemplate(template)
+//   Menu.setApplicationMenu(menu)
+// }
 
 function createLoadingWindow() {
   loadingWin = new BrowserWindow({
@@ -156,16 +163,19 @@ function createLoadingWindow() {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
   }
-
+  
   console.log('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
+}
+app.on('window-all-closed', () => {
+  closeWithBackend();
 })
 
 app.on('activate', () => {

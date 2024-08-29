@@ -45,12 +45,6 @@ function createWindow() {
     show: false,
     alwaysOnTop: true,
     titleBarStyle: 'hidden',
-    // titleBarOverlay: {
-    //   color: '#00000000',
-    //   symbolColor: '#E74C3C',
-    //   height: 25
-    
-    // }
   })
 
   win.setMenuBarVisibility(true)
@@ -82,8 +76,6 @@ function createWindow() {
     // Window starts always on top so it opens even if loading window is hid
     win?.setAlwaysOnTop(false)
   })
-
-  // setMainMenu()
 }
 
 // function setMainMenu() {

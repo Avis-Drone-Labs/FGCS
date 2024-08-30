@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell, screen } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -31,8 +31,19 @@ let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
 // Handling custom window events (minimise, maximise, close)
 ipcMain.on('close', ()=> {closeWithBackend()})
-ipcMain.on('minimise', ()=> {BrowserWindow.getFocusedWindow()?.minimize()})
 ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.maximize()})
+
+ipcMain.on('moveWindow', (event, mousePos) => {
+  // const { x, y } = screen.getCursorScreenPoint()
+  console.log("bruh", mousePos);
+  // BrowserWindow.getFocusedWindow()?.setBounds({
+  //   x: 0,
+  //   y: 0,
+  //   width: 500,
+  //   height: 500
+  // })
+  BrowserWindow.getFocusedWindow()?.minimize();
+});
 
 function createWindow() {
   win = new BrowserWindow({
@@ -46,8 +57,6 @@ function createWindow() {
     alwaysOnTop: true,
     titleBarStyle: 'hidden',
   })
-
-  win.setMenuBarVisibility(true)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -221,6 +230,11 @@ app.whenReady().then(() => {
       console.error('Failed to start backend.')
     })
   }
+
+  ipcMain.on('minimise', ()=> {
+    BrowserWindow.getFocusedWindow()?.unmaximize()
+    console.log("Minimise clicked!", BrowserWindow.getFocusedWindow())
+  })
 
   createWindow()
 })

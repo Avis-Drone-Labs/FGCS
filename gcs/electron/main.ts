@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
 import packageInfo from '../package.json'
+import { setupTitlebar, attachTitlebarToWindow } from "custom-electron-titlebar/main";
 
 // @ts-expect-error - no types available
 import openFile from './fla'
@@ -29,33 +30,20 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
-// Handling custom window events (minimise, maximise, close)
-ipcMain.on('close', ()=> {closeWithBackend()})
-ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.maximize()})
-
-ipcMain.on('moveWindow', (event, mousePos) => {
-  // const { x, y } = screen.getCursorScreenPoint()
-  console.log("bruh", mousePos);
-  // BrowserWindow.getFocusedWindow()?.setBounds({
-  //   x: 0,
-  //   y: 0,
-  //   width: 500,
-  //   height: 500
-  // })
-  BrowserWindow.getFocusedWindow()?.minimize();
-});
+// Setup titlebar
+setupTitlebar();
 
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false
+      sandbox: false
     },
     show: false,
     alwaysOnTop: true,
     titleBarStyle: 'hidden',
+    frame: false,
   })
 
   // Open links in browser, not within the electron window.
@@ -85,6 +73,8 @@ function createWindow() {
     // Window starts always on top so it opens even if loading window is hid
     win?.setAlwaysOnTop(false)
   })
+
+  attachTitlebarToWindow(win);
 }
 
 // function setMainMenu() {
@@ -230,11 +220,6 @@ app.whenReady().then(() => {
       console.error('Failed to start backend.')
     })
   }
-
-  ipcMain.on('minimise', ()=> {
-    BrowserWindow.getFocusedWindow()?.unmaximize()
-    console.log("Minimise clicked!", BrowserWindow.getFocusedWindow())
-  })
 
   createWindow()
 })

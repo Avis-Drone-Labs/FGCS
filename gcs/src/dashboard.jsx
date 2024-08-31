@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
 import {
@@ -24,6 +24,7 @@ import {
   useListState,
   useLocalStorage,
   usePrevious,
+  useSessionStorage,
   useViewportSize,
 } from '@mantine/hooks'
 import {
@@ -34,13 +35,14 @@ import {
   IconCrosshair,
   IconGps,
   IconInfoCircle,
+  IconMapPins,
   IconRadar,
   IconSatellite,
   IconSun,
   IconSunOff,
 } from '@tabler/icons-react'
 import { ResizableBox } from 'react-resizable'
-
+import Webcam from 'react-webcam'
 // Helper javascript files
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
@@ -96,9 +98,7 @@ function DataMessage({ label, value, currentlySelected, id }) {
   var formattedValue = to2dp(value)
 
   if (currentlySelected in dataFormatters) {
-    formattedValue = to2dp(
-      dataFormatters[currentlySelected](value),
-    )
+    formattedValue = to2dp(dataFormatters[currentlySelected](value))
   }
 
   return (
@@ -175,6 +175,13 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
+  // Camera devices
+  const [deviceId, setDeviceId] = useSessionStorage({
+    key: 'deviceId',
+    defaultValue: null,
+  })
+  const [devices, setDevices] = useState([])
+
   // Data Modal Functions
   const [opened, { open, close }] = useDisclosure(false)
 
@@ -223,6 +230,16 @@ export default function Dashboard() {
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
   }
+
+  const handleDevices = useCallback(
+    (mediaDevices) =>
+      setDevices(mediaDevices.filter(({ kind }) => kind === 'videoinput')),
+    [setDevices],
+  )
+
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then(handleDevices)
+  }, [handleDevices])
 
   useEffect(() => {
     // Use localStorage.getItem as useLocalStorage hook updates slower
@@ -383,6 +400,16 @@ export default function Dashboard() {
     })
   }
 
+  function centerMapOnFirstMissionItem() {
+    if (missionItems.mission_items.length > 0) {
+      let lat = parseFloat(missionItems.mission_items[0].x * 1e-7)
+      let lon = parseFloat(missionItems.mission_items[0].y * 1e-7)
+      mapRef.current.getMap().flyTo({
+        center: [lon, lat],
+      })
+    }
+  }
+
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full overflow-hidden'>
@@ -420,7 +447,7 @@ export default function Dashboard() {
             }}
             className='h-full'
           >
-            <div className='flex flex-col p-2 h-full gap-2'>
+            <div className='flex flex-col p-1 h-full gap-2 overflow-x-hidden overflow-y-auto'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}
@@ -556,6 +583,7 @@ export default function Dashboard() {
                 <Tabs.List>
                   <Tabs.Tab value='data'>Data</Tabs.Tab>
                   <Tabs.Tab value='actions'>Actions</Tabs.Tab>
+                  <Tabs.Tab value='camera'>Camera</Tabs.Tab>
                 </Tabs.List>
 
                 <Tabs.Panel value='data'>
@@ -635,6 +663,25 @@ export default function Dashboard() {
                     </div>
                   )}
                 </Tabs.Panel>
+
+                <Tabs.Panel value='camera'>
+                  <div className='flex flex-col gap-4 p-2'>
+                    <Select
+                      label='Select camera input'
+                      data={devices.map((device) => {
+                        return { value: device.deviceId, label: device.label }
+                      })}
+                      value={deviceId}
+                      onChange={setDeviceId}
+                    />
+                    {deviceId !== null && (
+                      <Webcam
+                        audio={false}
+                        videoConstraints={{ deviceId: deviceId }}
+                      />
+                    )}
+                  </div>
+                </Tabs.Panel>
               </Tabs>
             </div>
           </ResizableBox>
@@ -708,6 +755,22 @@ export default function Dashboard() {
               onClick={centerMapOnDrone}
             >
               <IconCrosshair />
+            </ActionIcon>
+          </Tooltip>
+
+          {/* Center Map on first mission item */}
+          <Tooltip
+            label={
+              !missionItems.mission_items.length > 0
+                ? 'No mission'
+                : 'Center on mission'
+            }
+          >
+            <ActionIcon
+              disabled={missionItems.mission_items.length <= 0}
+              onClick={centerMapOnFirstMissionItem}
+            >
+              <IconMapPins />
             </ActionIcon>
           </Tooltip>
 

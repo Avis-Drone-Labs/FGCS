@@ -34,6 +34,7 @@ import {
   IconCrosshair,
   IconGps,
   IconInfoCircle,
+  IconMapPins,
   IconRadar,
   IconSatellite,
   IconSun,
@@ -383,6 +384,16 @@ export default function Dashboard() {
     })
   }
 
+  function centerMapOnFirstMissionItem() {
+    if (missionItems.mission_items.length > 0) {
+      let lat = parseFloat(missionItems.mission_items[0].x * 1e-7)
+      let lon = parseFloat(missionItems.mission_items[0].y * 1e-7)
+      mapRef.current.getMap().flyTo({
+        center: [lon, lat],
+      })
+    }
+  }
+
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full overflow-hidden'>
@@ -707,6 +718,22 @@ export default function Dashboard() {
               onClick={centerMapOnDrone}
             >
               <IconCrosshair />
+            </ActionIcon>
+          </Tooltip>
+
+          {/* Center Map on first mission item */}
+          <Tooltip
+            label={
+              !missionItems.mission_items.length > 0
+                ? 'No mission'
+                : 'Center on mission'
+            }
+          >
+            <ActionIcon
+              disabled={missionItems.mission_items.length <= 0}
+              onClick={centerMapOnFirstMissionItem}
+            >
+              <IconMapPins />
             </ActionIcon>
           </Tooltip>
 

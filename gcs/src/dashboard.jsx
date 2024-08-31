@@ -391,6 +391,7 @@ export default function Dashboard() {
             passedRef={mapRef}
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+            desiredBearing={navControllerOutputData.nav_bearing}
             missionItems={missionItems}
           />
         </div>

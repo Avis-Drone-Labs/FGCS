@@ -5,12 +5,11 @@
   This also holds the "FGCS", "view", ... dropdowns that users can use.
 */
 
-// Third Party Imports
-import { FloatingIndicator } from "@mantine/core"
-
-// Custom Images
+// Custom Imports
 import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx";
-// import { useState } from "@mantine/hooks";
+import FileMenu from "./menus/file.jsx";
+import ViewMenu from "./menus/view.jsx";
+import HelpMenu from "./menus/help.jsx";
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -29,9 +28,9 @@ export default function Toolbar() {
           <img src="titlebar_logo.svg" className="w-auto h-2 pr-2 object-contain no-drag" />
 
           {/* Menu Links */}
-          <a className={menuLinkClasses}>File</a>
-          <a className={menuLinkClasses}>View</a>
-          <a className={menuLinkClasses}>Help</a>
+          <FileMenu menuLinkClasses={menuLinkClasses} />
+          <ViewMenu menuLinkClasses={menuLinkClasses} />
+          <HelpMenu menuLinkClasses={menuLinkClasses} />
         </div>
 
         {/* Window actions (close, minimise, maximise) */}

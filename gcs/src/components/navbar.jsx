@@ -232,6 +232,11 @@ export default function Navbar({ currentPage }) {
           blur: 3,
         }}
         withCloseButton={false}
+        styles={{
+          content: {
+            borderRadius: "0.5rem"
+          }
+        }}
       >
         <Tabs value={connectionType} onChange={setConnectionType}>
           <Tabs.List grow>

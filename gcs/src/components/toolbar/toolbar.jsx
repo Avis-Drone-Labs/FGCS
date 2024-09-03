@@ -6,10 +6,11 @@
 */
 
 // Third Party Imports
-import { Menu, Text } from "@mantine/core"
+import { FloatingIndicator } from "@mantine/core"
 
 // Custom Images
 import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx";
+// import { useState } from "@mantine/hooks";
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -17,54 +18,20 @@ import tailwindConfig from '../../../tailwind.config.js'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Toolbar() {
+  let menuLinkClasses = "px-2 rounded-md hover:cursor-pointer hover:bg-falcongrey-80 focus:bg-slate-700";
+
   return (
     <>
       <div className="flex flex-row items-center justify-between bg-falcongrey-100 h-8" id="toolbar">
         {/* Logo and Menu Items */}
-        <div className="pl-4 flex flex-row items-center h-full gap-x-2">
+        <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
           {/* Icon */}
-          <img src="titlebar_logo.svg" className="w-auto h-2 object-contain no-drag" />
+          <img src="titlebar_logo.svg" className="w-auto h-2 pr-2 object-contain no-drag" />
 
-          {/* FGCS */}
-          <Menu 
-            position="bottom-start"
-            styles={{
-              dropdown: {
-                borderRadius: "0px"
-              }
-            }}
-          >
-            <Menu.Target>
-              <Text size="xs" className="no-drag cursor-pointer">File</Text>
-            </Menu.Target>
-
-            <Menu.Dropdown>
-              <Menu.Item>
-                About FGCS
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item>
-                Report a Bug
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item>
-                Exit
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-
-          {/* View */}
-          <Menu position="bottom-start">
-            <Menu.Target>
-              <Text size="xs" className="no-drag cursor-pointer">Edit</Text>
-            </Menu.Target>
-
-            <Menu.Dropdown>
-              <Menu.Item>
-                Reload
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          {/* Menu Links */}
+          <a className={menuLinkClasses}>File</a>
+          <a className={menuLinkClasses}>View</a>
+          <a className={menuLinkClasses}>Help</a>
         </div>
 
         {/* Window actions (close, minimise, maximise) */}

@@ -5,7 +5,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'os'
 import packageInfo from '../package.json'
-import { setupTitlebar, attachTitlebarToWindow } from "custom-electron-titlebar/main";
 
 // @ts-expect-error - no types available
 import openFile from './fla'
@@ -30,8 +29,9 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
-// Setup titlebar
-setupTitlebar();
+ipcMain.on('close', ()=> {closeWithBackend()})
+ipcMain.on('minimise', ()=> {BrowserWindow.getFocusedWindow()?.minimize()})
+ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.maximize()})
 
 function createWindow() {
   win = new BrowserWindow({
@@ -73,8 +73,6 @@ function createWindow() {
     // Window starts always on top so it opens even if loading window is hid
     win?.setAlwaysOnTop(false)
   })
-
-  attachTitlebarToWindow(win);
 }
 
 // function setMainMenu() {

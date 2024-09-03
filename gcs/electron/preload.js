@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { Titlebar, TitlebarColor } from 'custom-electron-titlebar';
 import path from 'node:path';
 
 // --------- Expose some API to the Renderer process ---------
@@ -119,17 +118,8 @@ function useLoading() {
 const { appendLoading, removeLoading } = useLoading()
 domReady().then(appendLoading)
 
-const titlebarOptions = {
-  backgroundColor: TitlebarColor.fromHex("#1C2021"),
-  icon: "app_icon.ico"
-}
-
 window.onmessage = (ev) => {
   ev.data.payload === 'removeLoading' && removeLoading()
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  new Titlebar(titlebarOptions);
-})
 
 setTimeout(removeLoading, 4999)

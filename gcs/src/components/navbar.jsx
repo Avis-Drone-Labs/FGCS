@@ -215,10 +215,10 @@ export default function Navbar({ currentPage }) {
   }
 
   const linkClassName =
-    'text-md hover:text-falconred-60 transition-colors delay-50'
+    'text-md px-2 rounded-sm outline-falconred-100 focus:outline hover:text-falconred-60 transition-colors delay-50'
 
   return (
-    <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6 bg-falcongrey-120'>
+    <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-120'>
       <Modal
         opened={opened}
         onClose={() => {
@@ -421,12 +421,13 @@ export default function Navbar({ currentPage }) {
             color={
               connected ? tailwindColors.red[600] : tailwindColors.green[600]
             }
+            size="compact-md"
           >
             {connected ? 'Disconnect' : 'Connect'}
           </Button>
         ) : (
           <Tooltip label='Not connected to socket'>
-            <Button data-disabled onClick={(event) => event.preventDefault()}>
+            <Button data-disabled onClick={(event) => event.preventDefault()} size="compact-md">
               Connect
             </Button>
           </Tooltip>

@@ -19,11 +19,11 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export default function Toolbar() {
   return (
     <>
-      <div className="flex flex-row items-center justify-between bg-falcongrey-100 h-6" id="toolbar">
+      <div className="flex flex-row items-center justify-between bg-falcongrey-100 h-8" id="toolbar">
         {/* Logo and Menu Items */}
-        <div className="pl-2 flex flex-row items-center h-full gap-x-2">
+        <div className="pl-4 flex flex-row items-center h-full gap-x-2">
           {/* Icon */}
-          <img src="app_icon.ico" className="w-auto h-4 object-contain no-drag" />
+          <img src="titlebar_logo.svg" className="w-auto h-2 object-contain no-drag" />
 
           {/* FGCS */}
           <Menu 
@@ -35,7 +35,7 @@ export default function Toolbar() {
             }}
           >
             <Menu.Target>
-              <Text size="xs" className="no-drag cursor-pointer">FGCS</Text>
+              <Text size="xs" className="no-drag cursor-pointer">File</Text>
             </Menu.Target>
 
             <Menu.Dropdown>
@@ -56,7 +56,7 @@ export default function Toolbar() {
           {/* View */}
           <Menu position="bottom-start">
             <Menu.Target>
-              <Text size="xs" className="no-drag cursor-pointer">View</Text>
+              <Text size="xs" className="no-drag cursor-pointer">Edit</Text>
             </Menu.Target>
 
             <Menu.Dropdown>
@@ -71,17 +71,17 @@ export default function Toolbar() {
         <div className="flex flex-row items-center h-full">
           {/* Minimise */}
           <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {ipcRenderer.send('minimise', [])}} label="Minimise">
-            <MinimizeIcon className="stroke-slate-500" />
+            <MinimizeIcon className="stroke-slate-400" />
           </div>
 
           {/* Maximise */}
           <div title="Maximise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {ipcRenderer.send('maximise', [])}} label="Maximise">
-            <MaximizeIcon className="stroke-slate-500" />
+            <MaximizeIcon className="stroke-slate-400" />
           </div>
 
           {/* Close */}
           <div title="Close" className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500" onClick={() => {ipcRenderer.send('close', [])}} label="Close">
-            <CloseIcon className="stroke-slate-500 group-hover:stroke-white" />
+            <CloseIcon className="stroke-slate-400 group-hover:stroke-white" />
           </div>
         </div>
       </div>

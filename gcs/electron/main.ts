@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell, screen } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -31,7 +31,7 @@ let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
 ipcMain.on('close', ()=> {closeWithBackend()})
 ipcMain.on('minimise', ()=> {BrowserWindow.getFocusedWindow()?.minimize()})
-ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.maximize()})
+ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.isMaximized() ? BrowserWindow.getFocusedWindow()?.unmaximize() : BrowserWindow.getFocusedWindow()?.maximize()})
 
 function createWindow() {
   win = new BrowserWindow({

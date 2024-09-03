@@ -15,6 +15,7 @@ export default {
           DEFAULT: '#E74C3C',
         },
         falcongrey: {
+          120: '#171A1B',
           100: '#1C2021',
           80: '#32393A',
           60: '#535D5F',

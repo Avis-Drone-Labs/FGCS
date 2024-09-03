@@ -218,7 +218,7 @@ export default function Navbar({ currentPage }) {
     'text-md hover:text-falconred-60 transition-colors delay-50'
 
   return (
-    <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
+    <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6 bg-falcongrey-120'>
       <Modal
         opened={opened}
         onClose={() => {

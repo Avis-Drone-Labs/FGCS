@@ -7,21 +7,23 @@
 
 // Third Party Imports
 import { Menu, Text } from "@mantine/core"
-import { IconChevronUp, IconChevronDown, IconX } from "@tabler/icons-react";
+
+// Custom Images
+import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx";
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config.js'
+import tailwindConfig from '../../../tailwind.config.js'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Toolbar() {
   return (
     <>
-      <div className="flex flex-row content-center justify-between bg-falcongrey-100 p-1 px-2 h-max gap-x-2" id="toolbar">
+      <div className="flex flex-row items-center justify-between bg-falcongrey-100 h-6" id="toolbar">
         {/* Logo and Menu Items */}
-        <div className="flex flex-row items-center h-max gap-x-2">
+        <div className="pl-2 flex flex-row items-center h-full gap-x-2">
           {/* Icon */}
-          <img src="app_icon.ico" className="w-auto h-5 object-contain no-drag" />
+          <img src="app_icon.ico" className="w-auto h-4 object-contain no-drag" />
 
           {/* FGCS */}
           <Menu 
@@ -66,20 +68,20 @@ export default function Toolbar() {
         </div>
 
         {/* Window actions (close, minimise, maximise) */}
-        <div className="flex flex-row items-center h-max gap-x-2">
+        <div className="flex flex-row items-center h-full">
           {/* Minimise */}
-          <div title="Minimise" className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('minimise', [])}} label="Minimise">
-            <IconChevronDown className="h-[80%]" color={tailwindColors["falconred"][100]} />
+          <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {ipcRenderer.send('minimise', [])}} label="Minimise">
+            <MinimizeIcon className="stroke-slate-500" />
           </div>
 
           {/* Maximise */}
-          <div title="Maximise" className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('maximise', [])}} label="Maximise">
-            <IconChevronUp className="h-[80%]" color={tailwindColors["falconred"][100]} />
+          <div title="Maximise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {ipcRenderer.send('maximise', [])}} label="Maximise">
+            <MaximizeIcon className="stroke-slate-500" />
           </div>
 
           {/* Close */}
-          <div title="Close" className="no-drag cursor-pointer" onClick={() => {ipcRenderer.send('close', [])}} label="Close">
-            <IconX className="h-[80%]" color={tailwindColors["falconred"][100]} />
+          <div title="Close" className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500" onClick={() => {ipcRenderer.send('close', [])}} label="Close">
+            <CloseIcon className="stroke-slate-500 group-hover:stroke-white" />
           </div>
         </div>
       </div>

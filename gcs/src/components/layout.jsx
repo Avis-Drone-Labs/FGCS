@@ -9,7 +9,7 @@ import { useEffect } from 'react'
 import { showErrorNotification } from '../helpers/notification'
 import { socket } from '../helpers/socket'
 import Navbar from './navbar'
-import Toolbar from './toolbar'
+import Toolbar from './toolbar/toolbar'
 
 export default function Layout({ children, currentPage }) {
   // Handle drone errors

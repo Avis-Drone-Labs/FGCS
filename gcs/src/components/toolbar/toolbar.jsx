@@ -5,19 +5,25 @@
   This also holds the "FGCS", "view", ... dropdowns that users can use.
 */
 
+// Native Imports
+import { useState } from "react";
+
 // Custom Imports
 import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx";
 import FileMenu from "./menus/file.jsx";
 import ViewMenu from "./menus/view.jsx";
 import HelpMenu from "./menus/help.jsx";
 
-// Styling imports
+// Styling Imports
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config.js'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Toolbar() {
-  let menuLinkClasses = "outline-none px-2 rounded-md hover:cursor-pointer hover:bg-falcongrey-80 focus:bg-slate-700";
+  const [areMenusActive, setMenusActive] = useState(false);
+
+  let menuLinkClasses = "outline-none px-2 rounded-md hover:cursor-pointer hover:bg-falcongrey-80";
+  let menuDropdownClasses = "flex flex-col absolute z-100 outline-none px-4 py-1 rounded-md bg-falcongrey-80 hover:cursor-pointer";
 
   return (
     <>
@@ -28,9 +34,10 @@ export default function Toolbar() {
           <img src="titlebar_logo.svg" className="w-auto h-2 pr-2 object-contain no-drag" />
 
           {/* Menu Links */}
-          <FileMenu menuLinkClasses={menuLinkClasses} />
-          <ViewMenu menuLinkClasses={menuLinkClasses} />
-          <HelpMenu menuLinkClasses={menuLinkClasses} />
+          <FileMenu menuLinkClasses={menuLinkClasses} menuDropdownClasses={menuDropdownClasses} areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          <FileMenu menuLinkClasses={menuLinkClasses} menuDropdownClasses={menuDropdownClasses} areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          {/* <ViewMenu menuLinkClasses={menuLinkClasses} menuDropdownClasses={menuDropdownClasses} />
+          <HelpMenu menuLinkClasses={menuLinkClasses} menuDropdownClasses={menuDropdownClasses} /> */}
         </div>
 
         {/* Window actions (close, minimise, maximise) */}

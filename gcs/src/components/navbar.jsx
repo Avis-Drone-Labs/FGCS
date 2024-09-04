@@ -431,7 +431,7 @@ export default function Navbar({ currentPage }) {
           </Button>
         ) : (
           <Tooltip label='Not connected to socket'>
-            <Button data-disabled onClick={(event) => event.preventDefault()} size="compact-md">
+            <Button data-disabled onClick={(event) => event.preventDefault()}>
               Connect
             </Button>
           </Tooltip>

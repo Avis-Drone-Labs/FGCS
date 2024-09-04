@@ -215,7 +215,7 @@ export default function Navbar({ currentPage }) {
   }
 
   const linkClassName =
-    'text-md px-2 rounded-sm outline-falconred-100 focus:outline hover:text-falconred-60 transition-colors delay-50'
+    'text-md px-2 rounded-sm outline-none focus:text-falconred-60 hover:text-falconred-60 transition-colors delay-50'
 
   return (
     <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-120'>
@@ -426,7 +426,6 @@ export default function Navbar({ currentPage }) {
             color={
               connected ? tailwindColors.red[600] : tailwindColors.green[600]
             }
-            size="compact-md"
           >
             {connected ? 'Disconnect' : 'Connect'}
           </Button>

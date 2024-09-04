@@ -17,7 +17,7 @@ import tailwindConfig from '../../../tailwind.config.js'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Toolbar() {
-  let menuLinkClasses = "px-2 rounded-md hover:cursor-pointer hover:bg-falcongrey-80 focus:bg-slate-700";
+  let menuLinkClasses = "outline-none px-2 rounded-md hover:cursor-pointer hover:bg-falcongrey-80 focus:bg-slate-700";
 
   return (
     <>

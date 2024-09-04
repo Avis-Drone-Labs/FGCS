@@ -6,4 +6,4 @@ ALT=0
 DIR=270
 
 exec python /sitl_setup/mission_upload.py &
-exec python /ardupilot/Tools/autotest/sim_vehicle.py -v ArduCopter --custom-location=$LAT,$LON,$ALT,$DIR --no-mavproxy
+exec python /ardupilot/Tools/autotest/sim_vehicle.py -v ArduCopter --custom-location=$LAT,$LON,$ALT,$DIR --no-mavproxy --add-param-file=/sitl_setup/custom_params.parm

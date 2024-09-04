@@ -24,9 +24,13 @@ RUN ./waf copter
 
 EXPOSE 5760/tcp
 
-ENV LAT=52.780569089726455
-ENV LON=-0.707923685716297
-ENV ALT=0
-ENV DIR=270
+WORKDIR /
 
-ENTRYPOINT python ./Tools/autotest/sim_vehicle.py -v ArduCopter --custom-location=${LAT},${LON},${ALT},${DIR} --no-mavproxy
+ADD sitl_setup sitl_setup
+
+WORKDIR /sitl_setup
+
+RUN chmod +x run.sh
+
+# ENTRYPOINT python ./Tools/autotest/sim_vehicle.py -v ArduCopter --custom-location=${LAT},${LON},${ALT},${DIR} --no-mavproxy
+ENTRYPOINT [ "/sitl_setup/run.sh" ]

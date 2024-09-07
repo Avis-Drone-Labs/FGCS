@@ -20,6 +20,7 @@ export default {
           90: '#434849',
           80: '#32393A',
           60: '#535D5F',
+          TRANSLUCENT: "#171a1bcc",  // falcongrey-120 at 80% transparency
           DEFAULT: '#1C2021',
         },
       },

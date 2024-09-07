@@ -71,7 +71,7 @@ import Layout from './components/layout'
 
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
+import tailwindConfig from '../tailwind.config'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Sounds
@@ -175,7 +175,7 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
-  var outsideVisibilityColor = outsideVisibility ? tailwindColors["falcongrey"]["120"] : 'rgba(23, 26, 27, 0.8)'
+  var outsideVisibilityColor = outsideVisibility ? tailwindColors["falcongrey"]["120"] : tailwindColors["falcongrey"]["TRANSLUCENT"]
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })

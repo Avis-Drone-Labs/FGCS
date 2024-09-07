@@ -31,7 +31,7 @@ export default function ViewMenu(props) {
       </Button>
 
       <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}}>
-        <MenuItem name="Reload" shortcut="Ctrl + R"/>
+        <MenuItem name="Reload" shortcut="Ctrl + R" callback={() => this.forceUpdate()} />
         <MenuItem name="Force Reload" shortcut="Ctrl + Shift + R"/>
         <MenuItem name="Toggle Developer Tools" shortcut="Ctrl + Shift + I"/>
 

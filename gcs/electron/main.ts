@@ -38,7 +38,8 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      sandbox: false
+      nodeIntegration: true,
+      contextIsolation: false
     },
     show: false,
     alwaysOnTop: true,
@@ -74,65 +75,6 @@ function createWindow() {
     win?.setAlwaysOnTop(false)
   })
 }
-
-// function setMainMenu() {
-//   const template: MenuItemConstructorOptions[] = [
-//     {
-//       label: app.name,
-//       submenu: [
-//         {
-//           label: 'About FGCS',
-//           click: async () => {
-//             const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
-
-//             const options: MessageBoxOptions = {
-//               type: 'info',
-//               buttons: [ 'OK','Report a bug',],
-//               title: 'About FGCS',
-//               message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
-//               detail: 'For more information, visit our GitHub page.',
-//               icon: icon,
-//               defaultId: 1,
-//             };
-
-//           const response = await dialog.showMessageBox(options);
-//             if (response.response === 1) {
-//               shell.openExternal(packageInfo.bugs.url)
-//             }
-//           },
-//         },
-//         { type: 'separator' },
-//         {
-//           label: 'Report a bug',
-//           click: async () => {
-//             await shell.openExternal(
-//               packageInfo.bugs.url,
-//             )
-//           },
-//         },
-//         { type: 'separator' },
-//         { role: 'quit' },
-//       ],
-//     },
-//     {
-//       label: 'View',
-//       submenu: [
-//         { role: 'reload' },
-//         { role: 'forceReload' },
-//         { role: 'toggleDevTools' },
-//         { type: 'separator' },
-//         { role: 'resetZoom' },
-//         { role: 'zoomIn' },
-//         { role: 'zoomOut' },
-//         { type: 'separator' },
-//         { role: 'togglefullscreen' }
-//       ]
-//     }
-//   ]
-
-//   const menu = Menu.buildFromTemplate(template)
-//   Menu.setApplicationMenu(menu)
-// }
 
 function createLoadingWindow() {
   loadingWin = new BrowserWindow({

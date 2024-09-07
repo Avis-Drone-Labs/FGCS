@@ -30,10 +30,10 @@ export default function FileMenu(props) {
         File
       </Button>
 
-      <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}}>
-        <MenuItem name="About FGCS" />
+      <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}} onClick={() => {if (!props.areMenusActive) {setDropdownVisibility(false); props.setMenusActive(false)}}}>
+        <MenuItem name="About FGCS" link={true} href="https://github.com/avis-drone-labs/fgcs" />
         <Divider/>
-        <MenuItem name="Report a Bug" />
+        <MenuItem name="Report a Bug" link={true} href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose" />
         <Divider/>
         <MenuItem name="Exit" />
       </div>

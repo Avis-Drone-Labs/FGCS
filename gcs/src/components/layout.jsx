@@ -25,7 +25,7 @@ export default function Layout({ children, currentPage }) {
 
   return (
     <>
-      <Toolbar></Toolbar>
+      <Toolbar />
       <Navbar currentPage={currentPage} className="no-drag" />
       {children}
     </>

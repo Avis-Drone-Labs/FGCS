@@ -69,6 +69,11 @@ import StatusMessages from './components/dashboard/statusMessages'
 import DashboardDataModal from './components/dashboardDataModal'
 import Layout from './components/layout'
 
+// Tailwind styling
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../../tailwind.config'
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
@@ -170,7 +175,7 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
-  var outsideVisibilityColor = outsideVisibility ? '#171A1B' : 'rgba(23, 26, 27, 0.8)'
+  var outsideVisibilityColor = outsideVisibility ? tailwindColors["falcongrey"]["120"] : 'rgba(23, 26, 27, 0.8)'
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })

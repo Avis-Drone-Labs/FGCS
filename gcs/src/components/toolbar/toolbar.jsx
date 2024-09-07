@@ -16,9 +16,6 @@ import ViewMenu from "./menus/view.jsx";
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false);
 
-  let menuLinkClasses = "outline-none px-2 rounded-md hover:cursor-pointer group-hover:bg-falcongrey-90";
-  let menuDropdownClasses = "flex flex-col absolute z-50 outline-none px-1 py-1 rounded-md bg-falcongrey-80 ";
-
   return (
     <>
       <div className="flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag">
@@ -28,8 +25,8 @@ export default function Toolbar() {
           <img src="titlebar_logo.svg" className="w-auto h-2 pr-2 object-contain allow-drag" />
 
           {/* Menu Links */}
-          <FileMenu menuLinkClasses={menuLinkClasses} menuDropdownClasses={menuDropdownClasses} areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
-          <ViewMenu menuLinkClasses={menuLinkClasses} menuDropdownClasses={menuDropdownClasses} areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          <FileMenu areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          <ViewMenu areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
         </div>
 
         {/* Window actions (close, minimise, maximise) */}

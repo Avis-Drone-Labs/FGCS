@@ -30,18 +30,18 @@ export default function ViewMenu(props) {
         View
       </Button>
 
-      <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}}>
-        <MenuItem name="Reload" shortcut="Ctrl + R" callback={() => this.forceUpdate()} />
-        <MenuItem name="Force Reload" shortcut="Ctrl + Shift + R"/>
-        <MenuItem name="Toggle Developer Tools" shortcut="Ctrl + Shift + I"/>
+      <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}} onClick={() => {if (!props.areMenusActive) {setDropdownVisibility(false); props.setMenusActive(false)}}}>
+        <MenuItem name="Reload" shortcut="Ctrl + R" callback={() => window.ipcRenderer.send("reload")} />
+        <MenuItem name="Force Reload" shortcut="Ctrl + Shift + R" callback={() => window.ipcRenderer.send("force_reload")} />
+        <MenuItem name="Toggle Developer Tools" shortcut="Ctrl + Shift + I" callback={() => window.ipcRenderer.send("toggle_developer_tools")} />
 
-        <Divider/>
-        <MenuItem name="Actual Size" shortcut="Ctrl + 0"/>
-        <MenuItem name="Zoom In" shortcut="Ctrl + +"/>
-        <MenuItem name="Zoom Out" shortcut="Ctrl + -"/>
+        <Divider />
+        <MenuItem name="Actual Size" shortcut="Ctrl + 0" callback={() => window.ipcRenderer.send("actual_size")} />
+        <MenuItem name="Zoom In" shortcut="Ctrl + Shift + +" callback={() => window.ipcRenderer.send("zoom_in")} />
+        <MenuItem name="Zoom Out" shortcut="Ctrl + -" callback={() => window.ipcRenderer.send("zoom_out")} />
 
-        <Divider/>
-        <MenuItem name="Toggle Full Screen" shortcut="F11"/>
+        <Divider />
+        <MenuItem name="Toggle Full Screen" shortcut="F11" callback={() => window.ipcRenderer.send("toggle_fullscreen")} />
       </div>
     </div>
   )

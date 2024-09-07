@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, app, ipcMain, shell, webFrame } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -29,9 +29,26 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
+function getWindow() {
+  return BrowserWindow.getFocusedWindow()
+}
+
 ipcMain.on('close', ()=> {closeWithBackend()})
-ipcMain.on('minimise', ()=> {BrowserWindow.getFocusedWindow()?.minimize()})
-ipcMain.on('maximise', ()=> {BrowserWindow.getFocusedWindow()?.isMaximized() ? BrowserWindow.getFocusedWindow()?.unmaximize() : BrowserWindow.getFocusedWindow()?.maximize()})
+ipcMain.on('minimise', ()=> {getWindow()?.minimize()})
+ipcMain.on('maximise', ()=> {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
+ipcMain.on("reload", () => {getWindow()?.reload()})
+ipcMain.on("force_reload", () => {getWindow()?.webContents.reloadIgnoringCache()})
+ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTools()})
+ipcMain.on("actual_size", () => {getWindow()?.webContents.setZoomFactor(1)})
+ipcMain.on("toggle_fullscreen", () => {getWindow()?.isFullScreen() ? getWindow()?.setFullScreen(false) : getWindow()?.setFullScreen(true)})
+ipcMain.on("zoom_in", () => {
+  let window = getWindow()?.webContents;
+  window?.setZoomFactor(window?.getZoomFactor() + 0.1)
+})
+ipcMain.on("zoom_out", () => {
+  let window = getWindow()?.webContents;
+  window?.setZoomFactor(window?.getZoomFactor() - 0.1)
+})
 
 function createWindow() {
   win = new BrowserWindow({

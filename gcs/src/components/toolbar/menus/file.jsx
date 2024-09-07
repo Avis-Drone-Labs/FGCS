@@ -32,10 +32,12 @@ export default function FileMenu(props) {
 
       <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}} onClick={() => {if (!props.areMenusActive) {setDropdownVisibility(false); props.setMenusActive(false)}}}>
         <MenuItem name="About FGCS" link={true} href="https://github.com/avis-drone-labs/fgcs" />
-        <Divider/>
+        <Divider />
         <MenuItem name="Report a Bug" link={true} href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose" />
-        <Divider/>
-        <MenuItem name="Exit" callback={() => window.ipcRenderer.send('close', [])} />
+        <Divider />
+        <MenuItem name="Minimise" callback={() => window.ipcRenderer.send("minimise")} />
+        <MenuItem name="Toggle Maximise" callback={() => window.ipcRenderer.send("maximise")} />
+        <MenuItem name="Exit" callback={() => window.ipcRenderer.send("close")} />
       </div>
     </div>
   )

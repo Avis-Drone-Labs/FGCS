@@ -35,17 +35,17 @@ export default function Toolbar() {
         {/* Window actions (close, minimise, maximise) */}
         <div className="flex flex-row items-center h-full">
           {/* Minimise */}
-          <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {ipcRenderer.send('minimise', [])}} label="Minimise">
+          <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {window.ipcRenderer.send('minimise', [])}} label="Minimise">
             <MinimizeIcon className="stroke-slate-400" />
           </div>
 
           {/* Maximise */}
-          <div title="Maximise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {ipcRenderer.send('maximise', [])}} label="Maximise">
+          <div title="Maximise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {window.ipcRenderer.send('maximise', [])}} label="Maximise">
             <MaximizeIcon className="stroke-slate-400" />
           </div>
 
           {/* Close */}
-          <div title="Close" className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500" onClick={() => {ipcRenderer.send('close', [])}} label="Close">
+          <div title="Close" className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500" onClick={() => {window.ipcRenderer.send('close', [])}} label="Close">
             <CloseIcon className="stroke-slate-400 group-hover:stroke-white" />
           </div>
         </div>

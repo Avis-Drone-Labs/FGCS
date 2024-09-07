@@ -35,7 +35,7 @@ export default function FileMenu(props) {
         <Divider/>
         <MenuItem name="Report a Bug" link={true} href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose" />
         <Divider/>
-        <MenuItem name="Exit" />
+        <MenuItem name="Exit" callback={() => window.ipcRenderer.send('close', [])} />
       </div>
     </div>
   )

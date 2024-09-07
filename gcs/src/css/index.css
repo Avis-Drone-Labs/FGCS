@@ -28,7 +28,7 @@ body {
   height: 100%;
 }
 
-#toolbar { 
+.allow-drag { 
   -webkit-app-region: drag;
 }
 

@@ -6,11 +6,13 @@
 import Divider from './divider';
 import MenuItem from './menuItem';
 import MenuTemplate from './menuTemplate';
+import packageJson from "../../../../package.json"
 
 export default function FileMenu(props) {
   return (
     <MenuTemplate title="File" areMenusActive={props.areMenusActive} setMenusActive={props.setMenusActive}>
       <MenuItem name="About FGCS" link={true} href="https://github.com/avis-drone-labs/fgcs" />
+      <MenuItem name="Current Version" shortcut={packageJson.version} />
       <Divider />
       <MenuItem name="Report a Bug" link={true} href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose" />
       <Divider />

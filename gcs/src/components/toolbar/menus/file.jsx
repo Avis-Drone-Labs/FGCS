@@ -2,9 +2,14 @@
   File menu button and dropdown, this is for the toolbar.
 */
 
+// Third Party Imports
 import { Button } from '@headlessui/react'
 import { useState, useRef } from 'react';
 import { useOutsideAlerter } from '../../../helpers/outsideAlerter';
+
+// Local Imports
+import Divider from './divider';
+import MenuItem from './menuItem';
 
 export default function FileMenu(props) {
   const [dropdownVisibility, setDropdownVisibility] = useState(false);
@@ -13,6 +18,7 @@ export default function FileMenu(props) {
 
   return (
     <div 
+      className="group"
       ref={wrapperRef} 
       onMouseLeave={() => {if (props.areMenusActive) {setDropdownVisibility(false)}}}
       onMouseEnter={() => {if (props.areMenusActive) {setDropdownVisibility(true)}}}
@@ -25,8 +31,11 @@ export default function FileMenu(props) {
       </Button>
 
       <div className={props.menuDropdownClasses} style={{display: dropdownVisibility ? 'block' : 'none'}}>
-        <div>Item 1</div>
-        <div>Item 2</div>
+        <MenuItem name="About FGCS" />
+        <Divider/>
+        <MenuItem name="Report a Bug" />
+        <Divider/>
+        <MenuItem name="Exit" />
       </div>
     </div>
   )

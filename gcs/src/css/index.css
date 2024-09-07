@@ -34,4 +34,22 @@ body {
 
 .no-drag {
   -webkit-app-region: no-drag;
+/* width */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #1c2021;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #91615b;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #b43e31;
 }

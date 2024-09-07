@@ -35,9 +35,9 @@ export default function FileMenu(props) {
         <Divider />
         <MenuItem name="Report a Bug" link={true} href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose" />
         <Divider />
-        <MenuItem name="Minimise" callback={() => window.ipcRenderer.send("minimise")} />
-        <MenuItem name="Toggle Maximise" callback={() => window.ipcRenderer.send("maximise")} />
-        <MenuItem name="Exit" callback={() => window.ipcRenderer.send("close")} />
+        <MenuItem name="Minimise" shortcut="Alt + Esc" callback={() => window.ipcRenderer.send("minimise")} />
+        <MenuItem name="Toggle Maximise" shortcut="Win + Down, Win + Up" callback={() => window.ipcRenderer.send("maximise")} />
+        <MenuItem name="Exit" shortcut="Alt + F4" callback={() => window.ipcRenderer.send("close")} />
       </div>
     </div>
   )

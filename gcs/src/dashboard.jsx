@@ -69,6 +69,11 @@ import StatusMessages from './components/dashboard/statusMessages'
 import DashboardDataModal from './components/dashboardDataModal'
 import Layout from './components/layout'
 
+// Tailwind styling
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../tailwind.config'
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
@@ -170,6 +175,7 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
+  var outsideVisibilityColor = outsideVisibility ? tailwindColors["falcongrey"]["120"] : tailwindColors["falcongrey"]["TRANSLUCENT"]
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -425,11 +431,7 @@ export default function Dashboard() {
 
         <div
           className='absolute top-0 left-0 h-full z-10'
-          style={{
-            backgroundColor: outsideVisibility
-              ? 'rgb(28 32 33)'
-              : 'rgb(28 32 33 / 0.8)',
-          }}
+          style={{backgroundColor: outsideVisibilityColor}}
         >
           <ResizableBox
             height={telemetryPanelSize.height}
@@ -688,7 +690,7 @@ export default function Dashboard() {
         </div>
 
         {/* Status Bar */}
-        <StatusBar className='absolute top-0 right-0'>
+        <StatusBar className='absolute top-0 right-0' outsideVisibilityColor={outsideVisibilityColor}>
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
@@ -723,7 +725,7 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'>
+        <div className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30' style={{backgroundColor: outsideVisibilityColor}}>
           {/* Follow Drone */}
           <Tooltip
             label={

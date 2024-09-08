@@ -41,6 +41,8 @@ function createWindow() {
     },
     show: false,
     alwaysOnTop: true,
+    minWidth: 750,
+    minHeight: 500
   })
 
   win.setMenuBarVisibility(true)

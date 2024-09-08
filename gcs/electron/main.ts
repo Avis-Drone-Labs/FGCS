@@ -64,7 +64,7 @@ function createWindow() {
     show: false,
     alwaysOnTop: true,
     minWidth: 750,
-    minHeight: 500
+    minHeight: 500,
     titleBarStyle: 'hidden',
     frame: false,
   })

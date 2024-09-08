@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, app, ipcMain, shell, webFrame } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -33,17 +33,39 @@ const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
+function getWindow() {
+  return BrowserWindow.getFocusedWindow()
+}
+
+ipcMain.on('close', ()=> {closeWithBackend()})
+ipcMain.on('minimise', ()=> {getWindow()?.minimize()})
+ipcMain.on('maximise', ()=> {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
+ipcMain.on("reload", () => {getWindow()?.reload()})
+ipcMain.on("force_reload", () => {getWindow()?.webContents.reloadIgnoringCache()})
+ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTools()})
+ipcMain.on("actual_size", () => {getWindow()?.webContents.setZoomFactor(1)})
+ipcMain.on("toggle_fullscreen", () => {getWindow()?.isFullScreen() ? getWindow()?.setFullScreen(false) : getWindow()?.setFullScreen(true)})
+ipcMain.on("zoom_in", () => {
+  let window = getWindow()?.webContents;
+  window?.setZoomFactor(window?.getZoomFactor() + 0.1)
+})
+ipcMain.on("zoom_out", () => {
+  let window = getWindow()?.webContents;
+  window?.setZoomFactor(window?.getZoomFactor() - 0.1)
+})
+
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
     },
     show: false,
     alwaysOnTop: true,
+    titleBarStyle: 'hidden',
+    frame: false,
   })
-
-  win.setMenuBarVisibility(true)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -72,67 +94,6 @@ function createWindow() {
     // Window starts always on top so it opens even if loading window is hid
     win?.setAlwaysOnTop(false)
   })
-
-  setMainMenu()
-}
-
-function setMainMenu() {
-  const template: MenuItemConstructorOptions[] = [
-    {
-      label: app.name,
-      submenu: [
-        {
-          label: 'About FGCS',
-          click: async () => {
-            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
-
-            const options: MessageBoxOptions = {
-              type: 'info',
-              buttons: [ 'OK','Report a bug',],
-              title: 'About FGCS',
-              message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
-              detail: 'For more information, visit our GitHub page.',
-              icon: icon,
-              defaultId: 1,
-            };
-
-          const response = await dialog.showMessageBox(options);
-            if (response.response === 1) {
-              shell.openExternal(packageInfo.bugs.url)
-            }
-          },
-        },
-        { type: 'separator' },
-        {
-          label: 'Report a bug',
-          click: async () => {
-            await shell.openExternal(
-              packageInfo.bugs.url,
-            )
-          },
-        },
-        { type: 'separator' },
-        { role: 'quit' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    }
-  ]
-
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
 }
 
 function createLoadingWindow() {
@@ -153,16 +114,19 @@ function createLoadingWindow() {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
   }
-
+  
   console.log('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
+}
+app.on('window-all-closed', () => {
+  closeWithBackend();
 })
 
 app.on('activate', () => {

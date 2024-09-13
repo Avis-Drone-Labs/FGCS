@@ -99,7 +99,7 @@ function createWindow() {
   })
 
   // Set Main Menu on Mac Only
-  if(process.platform == 'darwin'){
+  if(process.platform === 'darwin'){
     setMainMenu()
   }
 

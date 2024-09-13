@@ -25,7 +25,7 @@ export default function Toolbar() {
 
   return (
     <>
-      <div className={"flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag" + (isMac ? " flex-row-reverse" : "")}>
+      <div className={"flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag" + (isMac ? " flex-row-reverse pr-2" : "")}>
         {/* Logo and Menu Items */}
         <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
           {/* Icon */}

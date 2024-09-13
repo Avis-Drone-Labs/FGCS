@@ -6,7 +6,7 @@
 */
 
 // Native Imports
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Custom Imports
 import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx";
@@ -15,12 +15,19 @@ import ViewMenu from "./menus/view.jsx";
 
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    window.ipcRenderer.invoke("isMac").then((result) => {
+      setIsMac(result)
+    })
+  }, [])
 
   return (
     <>
-      <div className="flex flex-row-reverse flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag">
+      <div className={"flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag" + (isMac ? " hidden" : "")}>
         {/* Logo and Menu Items */}
-        <div className="pl-4 flex flex-row-reverse flex-row items-center h-full no-drag text-sm">
+        <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
           {/* Icon */}
           <img src="titlebar_logo.svg" className="w-auto h-2 pr-2 object-contain allow-drag" />
 
@@ -30,7 +37,7 @@ export default function Toolbar() {
         </div>
 
         {/* Window actions (close, minimise, maximise) */}
-        <div className="flex flex-row items-center h-full hidden">
+        <div className="flex flex-row items-center h-full">
           {/* Minimise */}
           <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {window.ipcRenderer.send('minimise', [])}} label="Minimise">
             <MinimizeIcon className="stroke-slate-400" />

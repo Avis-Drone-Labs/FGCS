@@ -37,9 +37,10 @@ function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
 
-ipcMain.on('close', ()=> {closeWithBackend()})
-ipcMain.on('minimise', ()=> {getWindow()?.minimize()})
-ipcMain.on('maximise', ()=> {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
+ipcMain.handle("isMac", () => { return process.platform == "darwin" })
+ipcMain.on('close', () => {closeWithBackend()})
+ipcMain.on('minimise', () => {getWindow()?.minimize()})
+ipcMain.on('maximise', () => {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
 ipcMain.on("reload", () => {getWindow()?.reload()})
 ipcMain.on("force_reload", () => {getWindow()?.webContents.reloadIgnoringCache()})
 ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTools()})

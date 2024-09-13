@@ -258,7 +258,7 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('app:get-version', () => app.getVersion())
 
-  if (!app.isPackaged && pythonBackend === null) {
+  if (app.isPackaged && pythonBackend === null) {
     startBackend()
   }
 

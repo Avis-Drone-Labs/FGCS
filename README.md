@@ -82,11 +82,12 @@ For running Python tests, first make sure you're in the `radio` directory. By de
 
 <details><summary>SITL with Docker</summary>
 
-To run the SITL simulator within Docker, first navigate to the root directory of FGCS and run `docker build . -t ardupilot_sitl`. Once done building the image you can run the container with `docker run -it --rm -p 5760:5760 ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
+To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
 
 Note: Steps to push an updated image to docker hub:
 
 ```plaintext
+docker build . -t ardupilot_sitl
 docker tag ardupilot_sitl:latest kushmakkapati/ardupilot_sitl:latest
 docker push kushmakkapati/ardupilot_sitl:latest
 ```

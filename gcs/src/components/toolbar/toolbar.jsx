@@ -25,19 +25,23 @@ export default function Toolbar() {
 
   return (
     <>
-      <div className={"flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag" + (isMac ? " hidden" : "")}>
+      <div className={"flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag" + (isMac ? " flex-row-reverse" : "")}>
         {/* Logo and Menu Items */}
         <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
           {/* Icon */}
           <img src="titlebar_logo.svg" className="w-auto h-2 pr-2 object-contain allow-drag" />
 
           {/* Menu Links */}
-          <FileMenu areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
-          <ViewMenu areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          <div className={isMac ? "hidden" : ""}>
+            <FileMenu areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          </div>
+          <div className={isMac ? "hidden" : ""}>
+            <ViewMenu areMenusActive={areMenusActive} setMenusActive={setMenusActive} />
+          </div>
         </div>
 
         {/* Window actions (close, minimise, maximise) */}
-        <div className="flex flex-row items-center h-full">
+        <div className={"flex flex-row items-center h-full" + (isMac ? " hidden" : "")}>
           {/* Minimise */}
           <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {window.ipcRenderer.send('minimise', [])}} label="Minimise">
             <MinimizeIcon className="stroke-slate-400" />

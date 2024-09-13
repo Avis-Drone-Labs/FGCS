@@ -161,9 +161,7 @@ function startBackend() {
   // Add more platforms here
   const backendPaths: Partial<Record<NodeJS.Platform, string>> ={
     win32: 'extras/fgcs_backend.exe',
-    darwin: app.isPackaged
-      ? path.join(process.resourcesPath, '../extras', 'fgcs_backend.app', 'Contents', 'MacOS', 'fgcs_backend')
-      : path.join(app.getAppPath(), 'extras', 'fgcs_backend.app', 'Contents', 'MacOS', 'fgcs_backend')
+    darwin: path.join(process.resourcesPath, '../extras', 'fgcs_backend.app', 'Contents', 'MacOS', 'fgcs_backend')
   };
 
   const backendPath = backendPaths[process.platform];

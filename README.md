@@ -132,6 +132,16 @@ After compiling the backend, copy the `radio/dist/fgcs_backend.app` directory an
 
 </details>
 
+### Configuration
+
+<details><summary>Environmental Variables/Ports</summary>
+
+We have two `.env` files, one for the backend and one for the frontend. These are located in `radio/.env` and `gcs/.env` respectively. If you want to change the port that the backend runs on you will need to edit it in the backend **and** in the frontend. This is slightly annoying but is needed when packaging. 
+
+> Note: The default port is `4237`. 
+
+</details>
+
 ---
 
 ## Need Help?

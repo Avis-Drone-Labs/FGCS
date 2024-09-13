@@ -119,23 +119,15 @@ From within the `radio` folder run `pyinstaller --paths .\venv\Lib\site-packages
 
 On Mac:
 From within the `radio` folder run
-`pyinstaller --paths ./venv/lib/python3.11/site-packages/ --add-data="./venv/lib/python3.11/site-packages/pymavlink/message_definitions:message_definitions" --add-data="./venv/lib/python3.11/site-packages/pymavlink:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading --windowed --name fgcs_backend ./app.py`.
-
-A security hardening change was introduced with iOS 10, macOS Sierra, watchOS 3, and tvOS 10.
-Code signing no longer allows any file in an app bundle to have an extended attribute containing a resource fork or Finder info.
-Therefore, the following error will appear: 
-Error while signing the bundle: codesign command [...] resource fork, Finder information, or similar detritus not allowed
-For more information, see [Apple's Developer Website Answers on security hardening changes](https://developer.apple.com/library/archive/qa/qa1940/_index.html).
-
-Still in the radio directory, execute the following command:
-`xattr -cr <path_to_/dist/fgcs_backend.app>`
-Delete `radio/build` and `radio/dist`
-Rebuild.
-This will sign the bundle successfully and create the `dist/fgcs_backend.app/` folder.
+`pyinstaller --paths ./venv/lib/python3.11/site-packages/ --add-data="./venv/lib/python*/site-packages/pymavlink/message_definitions:message_definitions" --add-data="./venv/lib/python*/site-packages/pymavlink:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading --windowed --name fgcs_backend ./app.py`.
+This will create the `dist/fgcs_backend.app/` folder. 
 
 ## Frontend
 
 After compiling the backend, place the contents of `radio/dist/fgcs_backend` into a folder in `gcs/extras`. Then from within the `gcs` folder run `yarn build`.
+
+On Mac:
+After compiling the backend, copy the `radio/dist/fgcs_backend.app` directory and move it to `gcs/extras`. Then from within the `gcs` folder run `yarn build`. Install from the .dmg file.
 
 </details>
 

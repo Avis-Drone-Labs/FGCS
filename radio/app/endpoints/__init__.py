@@ -11,5 +11,6 @@ from . import mission as mission
 from . import motors as motors
 from . import params as params
 from . import states as states
+from . import flightInfo as flightInfo
 
 endpoints = Blueprint("endpoints", __name__)

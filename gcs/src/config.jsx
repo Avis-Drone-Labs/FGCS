@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 
 // 3rd Party Imports
-import {Tabs} from '@mantine/core'
+import { Tabs } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
 
 // Styling imports

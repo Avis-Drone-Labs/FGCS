@@ -8,6 +8,7 @@
 
 // Base imports
 import { useCallback, useEffect, useRef, useState } from 'react'
+import moment from 'moment'
 
 // 3rd Party Imports
 import {
@@ -21,6 +22,7 @@ import {
 } from '@mantine/core'
 import {
   useDisclosure,
+  useInterval,
   useListState,
   useLocalStorage,
   usePrevious,
@@ -148,6 +150,7 @@ export default function Dashboard() {
 
   // GPS and Telemetry
   const [gpsData, setGpsData] = useState({})
+  const previousGpsData = usePrevious(gpsData)
   const [telemetryData, setTelemetryData] = useState({})
   const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
   const [gpsRawIntData, setGpsRawIntData] = useState({
@@ -166,6 +169,13 @@ export default function Dashboard() {
   const [followDrone, setFollowDrone] = useState(false)
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
+  const [armingTimeUtc, setArmingTimeUtc] = useState(null)
+  const [timeSinceArming, setTimeSinceArming] = useState(0)
+
+  const [takeoffTimeUtc, setTakeoffTimeUtc] = useState(null)
+  const [timeSinceTakeoff, setTimeSinceTakeoff] = useState(0)
+
+  const [bootupTime, setBootupTime] = useState(null)
 
   // Map and messages
   const mapRef = useRef()
@@ -241,6 +251,18 @@ export default function Dashboard() {
     navigator.mediaDevices.enumerateDevices().then(handleDevices)
   }, [handleDevices])
 
+  const updateFlightInfo = useInterval(() => {
+    if (armingTimeUtc) {
+      setTimeSinceArming(Math.floor(Date.now() - armingTimeUtc) / 1000)
+    }
+    if (takeoffTimeUtc) {
+      setTimeSinceTakeoff(Math.floor(Date.now() - takeoffTimeUtc) / 1000)
+    }
+    if (bootupTime) {
+      setTimeSinceBoot(Math.floor(Date.now() - bootupTime) / 1000)
+    }
+  }, 1000)
+
   useEffect(() => {
     // Use localStorage.getItem as useLocalStorage hook updates slower
     const oldDisplayedData = localStorage.getItem('dashboardDataMessages')
@@ -261,6 +283,7 @@ export default function Dashboard() {
     } else {
       socket.emit('set_state', { state: 'dashboard' })
       socket.emit('get_current_mission')
+      socket.emit('get_flight_info')
     }
 
     socket.on('incoming_msg', (msg) => {
@@ -308,11 +331,28 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('get_flight_info_result', (data) => {
+      if (data.success) {
+        console.log('Got arm time from backend')
+        showSuccessNotification(data.message)
+        setArmingTimeUtc(data.data.arming_time)
+        setTakeoffTimeUtc(data.data.takeoff_time)
+        setBootupTime(data.data.booting_time)
+        console.log(data.data.booting_time)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
+    updateFlightInfo.start()
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
       socket.off('current_mission')
       socket.off('set_current_flight_mode_result')
+      socket.off('get_flight_info_result')
+      updateFlightInfo.stop
     }
   }, [connected])
 
@@ -328,6 +368,9 @@ export default function Dashboard() {
       let lon = parseFloat(gpsData.lon * 1e-7)
       mapRef.current.setCenter({ lng: lon, lat: lat })
     }
+    if (gpsData?.alt > 1 && previousGpsData?.alt <= 1) {
+      socket.emit('get_flight_info')
+    }
   }, [gpsData])
 
   useEffect(() => {
@@ -338,11 +381,14 @@ export default function Dashboard() {
       !(previousHeartbeatData.base_mode & 128)
     ) {
       playArmed()
+      socket.emit('get_flight_info')
+      console.log('Sent message to backend for getting arm time')
     } else if (
       !(heartbeatData.base_mode & 128) &&
       previousHeartbeatData.base_mode & 128
     ) {
       playDisarmed()
+      setTimeSinceArming(0)
     }
 
     if (currentFlightModeNumber !== heartbeatData.custom_mode) {
@@ -572,6 +618,22 @@ export default function Dashboard() {
                         ? batteryData.battery_remaining
                         : 0}
                       %
+                    </p>
+                  </div>
+                </div>
+
+                {/*Flight Information*/}
+                <div className='flex flex-row items-center space-x-4 mt-4 justify-center'>
+                  <div className='flex flex-col text-center y-4'>
+                    <p>Arming Duration</p>
+                    <p className='font-bold text-xl'>
+                      {moment.utc(timeSinceArming).format('HH:mm:ss')}
+                    </p>
+                  </div>
+                  <div className='flex flex-col text-center y-4'>
+                    <p>Takeoff Duration</p>
+                    <p className='font-bold text-xl'>
+                      {moment.utc(timeSinceTakeoff).format('HH:mm:ss')}
                     </p>
                   </div>
                 </div>

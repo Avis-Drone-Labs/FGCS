@@ -21,6 +21,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.paramsController import ParamsController
 from app.customTypes import Response
 from app.utils import commandAccepted
+from app.controllers.flightInfoController import FlightInforController
 
 # Constants
 
@@ -133,6 +134,7 @@ class Drone:
         self.gripperController = GripperController(self)
         self.missionController = MissionController(self)
         self.frameController = FrameController(self)
+        self.flightInfoController = FlightInforController(self)
 
         self.stopAllDataStreams()
 
@@ -409,8 +411,6 @@ class Drone:
                     continue
                 elif msg.msgname == "STATUSTEXT":
                     self.logger.info(msg.text)
-
-                # self.logger.debug(msg.msgname)
 
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])

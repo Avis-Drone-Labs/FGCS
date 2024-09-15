@@ -243,7 +243,7 @@ export default function FLA() {
   // Loop over all fields and precalculate min, max, mean
   function setMeanValues(loadedLogMessages) {
     let rawValues = {}
-    if(loadedLogMessages !== null){
+    if (loadedLogMessages !== null) {
       // Putting all raw data into a list
       Object.keys(loadedLogMessages).forEach((key) => {
         if (!ignoredMessages.includes(key)) {

@@ -422,7 +422,7 @@ export default function Dashboard() {
           <ResizableBox
             height={telemetryPanelSize.height}
             width={telemetryPanelSize.width}
-            minConstraints={[200, Infinity]}
+            minConstraints={[300, Infinity]}
             maxConstraints={[viewportWidth - 200, Infinity]}
             resizeHandles={['e']}
             handle={(h, ref) => (
@@ -435,7 +435,7 @@ export default function Dashboard() {
             }}
             className='h-full'
           >
-            <div className='flex flex-col p-1 h-full gap-2 overflow-x-hidden overflow-y-auto'>
+            <div className='flex flex-col px-[2vw] h-full gap-2 overflow-x-hidden overflow-y-auto'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}

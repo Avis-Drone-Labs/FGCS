@@ -4,6 +4,7 @@ import app.droneStatus as droneStatus
 import pytest
 from app import create_app, socketio
 from flask.testing import FlaskClient
+from serial.serialutil import SerialException
 from flask_socketio.test_client import SocketIOTestClient
 
 app = create_app(debug=True)
@@ -53,3 +54,27 @@ def falcon_test(pass_drone_status: bool = False, pass_flask: bool = False) -> Ca
         return inner
 
     return run_test
+
+
+class FakeTCP:
+    """
+    Context manager that replaces the mavlink read method with one that raises a serial.serialutils.SerialException.
+    Use when forcing serial exceptions for unit tests.
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    @staticmethod
+    def recv_match(condition=None, type=None, blocking=False, timeout=None) -> None:
+        raise SerialException("Test Exception")
+
+    def __enter__(self) -> None:
+        
+        # Replace drone mavtcp recv_match function with one that raises SerialException
+        self.old_recv = droneStatus.drone.master.recv_match
+        droneStatus.drone.master.recv_match = FakeTCP.recv_match
+    
+    def __exit__(self, type, value, traceback) -> None:
+        # Reset recv_match method
+        droneStatus.drone.master.recv_match = self.old_recv

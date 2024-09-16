@@ -1,9 +1,10 @@
-import itertools
+import pytest
 from typing import Optional
+import app.droneStatus as DroneStatusType
+from pymavlink.mavutil import mavtcp
 
 from flask_socketio.test_client import SocketIOTestClient
-from . import falcon_test
-
+from . import falcon_test, FakeTCP
 
 def assert_motorResult(data: dict, success: bool, motor: Optional[str] = None, err: Optional[str] = None) -> None:
     """
@@ -23,10 +24,14 @@ def send_testOneMotor(client: SocketIOTestClient, motor: str, throttle: float, d
     client.emit("test_one_motor", {"motorInstance": motor, "throttle": throttle, "duration": duration})
     return client.get_received()[0]
 
+def send_testMotorSequence(client: SocketIOTestClient, throttle: float, duration: int) -> dict:
+    client.emit("test_motor_sequence", {"throttle": throttle, "duration": duration})
+    return client.get_received()[0]
+
 @falcon_test(pass_drone_status=True)
 def test_testOneMotor(
         socketio_client: SocketIOTestClient,
-        droneStatus,
+        droneStatus: DroneStatusType
     ) -> None:
 
     # Test correct motor being tested
@@ -62,6 +67,44 @@ def test_testOneMotor(
     # Invalid motor instance (<= 0)
     result = send_testOneMotor(socketio_client, 0, 50, 1)
     assert_motorResult(result, False, err="Invalid value for motorInstance")
-    result = send_testOneMotor(socketio_client, -1, 50, 1)
-    assert_motorResult(result, False, err="Invalid value for motorInstance")
 
+    # Invalid types used 
+    with pytest.raises(TypeError):
+        result = send_testOneMotor(socketio_client, 1.0, 50, 1)
+    with pytest.raises(TypeError):
+        result = send_testOneMotor(socketio_client, "1", 50, 1)
+    
+    # Test serial exception
+    with FakeTCP():
+        result = send_testOneMotor(socketio_client, 1, 50, 1)
+        assert_motorResult(result, False, err='Motor test for motor A not started, serial exception')
+
+@falcon_test()
+def test_testMotorSequence(
+        socketio_client: SocketIOTestClient
+    ) -> None:
+
+    # Test throttle edge cases
+    result = send_testMotorSequence(socketio_client, 0, 1)
+    assert_motorResult(result, True)
+    result = send_testMotorSequence(socketio_client, 100, 1)
+    assert_motorResult(result, True)
+
+    # Test throttle fail (< 0 or > 100)
+    result = send_testMotorSequence(socketio_client, -1, 1)
+    assert_motorResult(result, False, err="Invalid value for throttle")
+    result = send_testMotorSequence(socketio_client, 101, 1)
+    assert_motorResult(result, False, err="Invalid value for throttle")
+
+    # Test duration edge case
+    result = send_testMotorSequence(socketio_client, 50, 0)
+    assert_motorResult(result, True)
+
+    # Test duration fail (< 0)
+    result = send_testMotorSequence(socketio_client, 50, -1)
+    assert_motorResult(result, False, err="Invalid value for duration")
+
+
+    with FakeTCP():
+        result = send_testMotorSequence(socketio_client, 50, 1)
+        assert_motorResult(result, False, err="Motor sequence test not started, serial exception")

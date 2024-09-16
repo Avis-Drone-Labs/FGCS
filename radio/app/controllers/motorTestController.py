@@ -38,8 +38,9 @@ class MotorTestController:
         Returns:
             tuple[int, int, Optional[str]]: The throttle, duration, and error message if it exists
         """
+        #self.drone.logger.info(f"Testing drone values: {data}")
         throttle = data.get("throttle", -1)
-        if 0 > throttle > 100:
+        if not (0 <= throttle <= 100):
             self.drone.logger.error(
                 f"Invalid value for motor test throttle, got {throttle}"
             )
@@ -70,9 +71,14 @@ class MotorTestController:
         if err:
             return {"success": False, "message": err}
 
-        motor_instance = data.get("motorInstance")
-        if motor_instance is None:
-            return {"success": False, "message": "No motor instance provided"}
+        motor_instance = data.get("motorInstance", None)
+
+        # TODO: ensure failure if motor_instance is greater than the number of motors on the drone
+        if motor_instance is None or motor_instance < 1:
+            self.drone.logger.error(
+                f"Invalid value for motor instance, got {motor_instance}"
+            )
+            return {"success": False, "message": "Invalid value for motorInstance"}
 
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,

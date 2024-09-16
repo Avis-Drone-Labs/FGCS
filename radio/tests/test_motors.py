@@ -20,7 +20,7 @@ def send_testOneMotor(client: SocketIOTestClient, motor: str, throttle: float, d
     """
     Tests one motor with the given params and returns the result 
     """
-    client.send("test_one_motor", {"motorInstance": motor, "throttle": throttle, "duration": duration})
+    client.emit("test_one_motor", {"motorInstance": motor, "throttle": throttle, "duration": duration})
     return client.get_received()[0]
 
 @falcon_test(pass_drone_status=True)
@@ -58,4 +58,10 @@ def test_testOneMotor(
     # Test duration fail (< 0)
     result = send_testOneMotor(socketio_client, 1, 50, -1)
     assert_motorResult(result, False, err="Invalid value for duration")
+    
+    # Invalid motor instance (<= 0)
+    result = send_testOneMotor(socketio_client, 0, 50, 1)
+    assert_motorResult(result, False, err="Invalid value for motorInstance")
+    result = send_testOneMotor(socketio_client, -1, 50, 1)
+    assert_motorResult(result, False, err="Invalid value for motorInstance")
 

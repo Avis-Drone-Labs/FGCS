@@ -76,9 +76,7 @@ def send_testMotors(
 
 
 @falcon_test(pass_drone_status=True)
-def test_testOneMotor(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
+def test_testOneMotor(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Test correct motor being tested
     result = send_testOneMotor(socketio_client, 1, 50, 1)
     assert_motorResult(result, True, "A")
@@ -122,9 +120,7 @@ def test_testOneMotor(
 
 
 @falcon_test(pass_drone_status=True)
-def test_testMotorSequence(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
+def test_testMotorSequence(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Test with varying number of motors and valid throttle / duration
     result = send_testMotors(socketio_client, 50, 1, num_motors=1)
     assert_motorResult(result, True)

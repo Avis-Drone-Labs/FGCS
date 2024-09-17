@@ -38,7 +38,7 @@ class MotorTestController:
         Returns:
             tuple[int, int, Optional[str]]: The throttle, duration, and error message if it exists
         """
-        #self.drone.logger.info(f"Testing drone values: {data}")
+        # self.drone.logger.info(f"Testing drone values: {data}")
         throttle = data.get("throttle", -1)
         if not (0 <= throttle <= 100):
             self.drone.logger.error(
@@ -73,7 +73,6 @@ class MotorTestController:
 
         motor_instance = data.get("motorInstance", None)
 
-        # TODO: ensure failure if motor_instance is greater than the number of motors on the drone
         if motor_instance is None or motor_instance < 1:
             self.drone.logger.error(
                 f"Invalid value for motor instance, got {motor_instance}"
@@ -133,7 +132,7 @@ class MotorTestController:
         throttle, duration, err = self.checkMotorTestValues(data)
         if err:
             return {"success": False, "message": err}
-        
+
         num_motors = data.get("number_of_motors", None)
         if num_motors is None or num_motors < 1:
             self.drone.logger.error(
@@ -147,8 +146,7 @@ class MotorTestController:
             param2=0,  # throttle type (PWM,% etc)
             param3=throttle,  # value of the throttle - 0 to 100%
             param4=duration,  # delay between tests in seconds
-            param5=num_motors
-            + 1,  # number of motors to test in a sequence
+            param5=num_motors + 1,  # number of motors to test in a sequence
             param6=0,  # test order
         )
 
@@ -186,7 +184,7 @@ class MotorTestController:
         throttle, duration, err = self.checkMotorTestValues(data)
         if err:
             return {"success": False, "message": err}
-        
+
         # Validate number of motors
         num_motors = data.get("number_of_motors", None)
         if num_motors is None or num_motors < 1:
@@ -228,8 +226,13 @@ class MotorTestController:
             self.drone.logger.info("All motor test started successfully")
             return {"success": True, "message": "All motor test started successfully"}
         elif successful_responses < num_motors:
-            self.drone.logger.warning(f"Successful responses ({successful_responses}) was less than number of motors ({num_motors})")
-            return {"success": False, "message": ""}
+            self.drone.logger.warning(
+                f"Number of successful responses ({successful_responses}) was less than number of motors ({num_motors})"
+            )
+            return {
+                "success": False,
+                "message": f"All motor test successfully started {successful_responses} / {num_motors} motors",
+            }
         else:
             # We should never reach this (since we should only ever have successful_responses <= num_motors)
             self.drone.logger.info(

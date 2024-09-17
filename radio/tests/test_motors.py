@@ -51,7 +51,7 @@ def send_testOneMotor(
     return client.get_received()[0]
 
 
-def send_testMotorSequence(
+def send_testMotors(
     client: SocketIOTestClient,
     throttle: int,
     duration: int,
@@ -132,35 +132,36 @@ def test_testMotorSequence(
     socketio_client: SocketIOTestClient, droneStatus: DroneStatusType
 ) -> None:
     # Test with varying number of motors and valid throttle / duration
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=1)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=1)
     assert_motorResult(result, True)
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=4)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=4)
     assert_motorResult(result, True)
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=6)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=6)
     assert_motorResult(result, True)
 
     # Test throttle edge cases
-    result = send_testMotorSequence(socketio_client, 0, 1)
+    result = send_testMotors(socketio_client, 0, 1)
     assert_motorResult(result, True)
-    result = send_testMotorSequence(socketio_client, 100, 1)
+    result = send_testMotors(socketio_client, 100, 1)
     assert_motorResult(result, True)
 
     # Test throttle fail (< 0 or > 100)
-    result = send_testMotorSequence(socketio_client, -1, 1)
+    result = send_testMotors(socketio_client, -1, 1)
     assert_motorResult(result, False, err="Invalid value for throttle")
-    result = send_testMotorSequence(socketio_client, 101, 1)
+    result = send_testMotors(socketio_client, 101, 1)
     assert_motorResult(result, False, err="Invalid value for throttle")
 
     # Test duration edge case
-    result = send_testMotorSequence(socketio_client, 50, 0)
+    result = send_testMotors(socketio_client, 50, 0)
     assert_motorResult(result, True)
 
     # Test duration fail (< 0)
-    result = send_testMotorSequence(socketio_client, 50, -1)
+    result = send_testMotors(socketio_client, 50, -1)
     assert_motorResult(result, False, err="Invalid value for duration")
 
+    # Test serial exception handling
     with FakeTCP():
-        result = send_testMotorSequence(socketio_client, 50, 1)
+        result = send_testMotors(socketio_client, 50, 1)
         assert_motorResult(
             result, False, err="Motor sequence test not started, serial exception"
         )
@@ -169,43 +170,46 @@ def test_testMotorSequence(
 @falcon_test()
 def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
     # Test with varying number of motors and valid throttle / duration
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=1, test_all=True)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=1, test_all=True)
     assert_motorResult(result, True)
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=4, test_all=True)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=4, test_all=True)
     assert_motorResult(result, True)
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=6, test_all=True)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=6, test_all=True)
     assert_motorResult(result, True)
 
     # Test with bad number of motors (<= 0)
-    result = send_testMotorSequence(socketio_client, 50, 1, num_motors=0, test_all=True)
+    result = send_testMotors(socketio_client, 50, 1, num_motors=0, test_all=True)
     assert_motorResult(result, False, err="Invalid value for number_of_motors")
-    result = send_testMotorSequence(
-        socketio_client, 50, 1, num_motors=-1, test_all=True
-    )
+    result = send_testMotors(socketio_client, 50, 1, num_motors=-1, test_all=True)
     assert_motorResult(result, False, err="Invalid value for number_of_motors")
 
     # Test with massive number of motors (10)
-    result = send_testMotorSequence(
-        socketio_client, 50, 1, num_motors=10, test_all=True
-    )
+    result = send_testMotors(socketio_client, 50, 1, num_motors=10, test_all=True)
     assert_motorResult(result, True)
 
     # Test throttle edge cases
-    result = send_testMotorSequence(socketio_client, 0, 1, test_all=True)
+    result = send_testMotors(socketio_client, 0, 1, test_all=True)
     assert_motorResult(result, True)
-    result = send_testMotorSequence(socketio_client, 100, 1, test_all=True)
+    result = send_testMotors(socketio_client, 100, 1, test_all=True)
     assert_motorResult(result, True)
 
     # Test throttle fail (< 0 or > 100)
-    result = send_testMotorSequence(socketio_client, -1, 1, test_all=True)
+    result = send_testMotors(socketio_client, -1, 1, test_all=True)
     assert_motorResult(result, False, err="Invalid value for throttle")
-    result = send_testMotorSequence(socketio_client, 101, 1, test_all=True)
+    result = send_testMotors(socketio_client, 101, 1, test_all=True)
     assert_motorResult(result, False, err="Invalid value for throttle")
 
     # Test duration edge case
-    result = send_testMotorSequence(socketio_client, 50, 0, test_all=True)
+    result = send_testMotors(socketio_client, 50, 0, test_all=True)
     assert_motorResult(result, True)
 
     # Test duration fail (< 0)
-    result = send_testMotorSequence(socketio_client, 50, -1, test_all=True)
+    result = send_testMotors(socketio_client, 50, -1, test_all=True)
     assert_motorResult(result, False, err="Invalid value for duration")
+
+    # Test serial exception handling
+    with FakeTCP():
+        result = send_testMotors(socketio_client, 50, 1, test_all=True)
+        assert_motorResult(
+            result, False, err="All motor test not started, serial exception"
+        )

@@ -10,7 +10,8 @@ def assert_motorResult(
     data: dict,
     success: bool,
     motor: Optional[str] = None,
-    err: Optional[str] = None,
+    message: Optional[str] = None,
+    err: Optional[str] = None
 ) -> None:
     """
     Takes the data recieved from the socketio test client and asserts that it matches the given
@@ -26,8 +27,8 @@ def assert_motorResult(
     assert test_result["success"] is success
     if motor:
         assert test_result["message"] == f"Motor test started for motor {motor}"
-    if err:
-        assert test_result["message"] == err
+    if err or message:
+        assert test_result["message"] == (err or message)
 
 
 def send_testOneMotor(
@@ -171,11 +172,11 @@ def test_testMotorSequence(
 def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
     # Test with varying number of motors and valid throttle / duration
     result = send_testMotors(socketio_client, 50, 1, num_motors=1, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
     result = send_testMotors(socketio_client, 50, 1, num_motors=4, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
     result = send_testMotors(socketio_client, 50, 1, num_motors=6, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
 
     # Test with bad number of motors (<= 0)
     result = send_testMotors(socketio_client, 50, 1, num_motors=0, test_all=True)
@@ -185,13 +186,13 @@ def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
 
     # Test with massive number of motors (10)
     result = send_testMotors(socketio_client, 50, 1, num_motors=10, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
 
     # Test throttle edge cases
     result = send_testMotors(socketio_client, 0, 1, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
     result = send_testMotors(socketio_client, 100, 1, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
 
     # Test throttle fail (< 0 or > 100)
     result = send_testMotors(socketio_client, -1, 1, test_all=True)
@@ -201,7 +202,7 @@ def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
 
     # Test duration edge case
     result = send_testMotors(socketio_client, 50, 0, test_all=True)
-    assert_motorResult(result, True)
+    assert_motorResult(result, True, message="All motor test started successfully")
 
     # Test duration fail (< 0)
     result = send_testMotors(socketio_client, 50, -1, test_all=True)

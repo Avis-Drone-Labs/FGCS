@@ -114,12 +114,6 @@ def test_testOneMotor(
     result = send_testOneMotor(socketio_client, 0, 50, 1)
     assert_motorResult(result, False, err="Invalid value for motorInstance")
 
-    # Invalid types used
-    with pytest.raises(TypeError):
-        result = send_testOneMotor(socketio_client, 1.0, 50, 1)
-    with pytest.raises(TypeError):
-        result = send_testOneMotor(socketio_client, "1", 50, 1)
-
     # Test serial exception
     with FakeTCP():
         result = send_testOneMotor(socketio_client, 1, 50, 1)

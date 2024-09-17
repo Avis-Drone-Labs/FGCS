@@ -133,6 +133,13 @@ class MotorTestController:
         throttle, duration, err = self.checkMotorTestValues(data)
         if err:
             return {"success": False, "message": err}
+        
+        num_motors = data.get("number_of_motors", None)
+        if num_motors is None or num_motors < 1:
+            self.drone.logger.error(
+                f"Invalid value for number of motors, got {num_motors}"
+            )
+            return {"success": False, "message": "Invalid value for number_of_motors"}
 
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
@@ -140,7 +147,7 @@ class MotorTestController:
             param2=0,  # throttle type (PWM,% etc)
             param3=throttle,  # value of the throttle - 0 to 100%
             param4=duration,  # delay between tests in seconds
-            param5=self.drone.number_of_motors
+            param5=num_motors
             + 1,  # number of motors to test in a sequence
             param6=0,  # test order
         )

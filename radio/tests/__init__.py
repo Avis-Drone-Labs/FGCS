@@ -72,9 +72,11 @@ class FakeTCP:
 
     def __enter__(self) -> None:
         # Replace drone mavtcp recv_match function with one that raises SerialException
-        self.old_recv = droneStatus.drone.master.recv_match
-        droneStatus.drone.master.recv_match = FakeTCP.recv_match_override
+        if droneStatus.drone is not None:
+            self.old_recv = droneStatus.drone.master.recv_match
+            droneStatus.drone.master.recv_match = FakeTCP.recv_match_override
 
     def __exit__(self, type, value, traceback) -> None:
         # Reset recv_match method
-        droneStatus.drone.master.recv_match = self.old_recv
+        if droneStatus.drone is not None:
+            droneStatus.drone.master.recv_match = self.old_recv

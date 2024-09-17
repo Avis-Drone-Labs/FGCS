@@ -10,11 +10,11 @@ def assert_motorResult(
     data: dict,
     success: bool,
     motor: Optional[str] = None,
-    message: Optional[str] = None,
     err: Optional[str] = None,
 ) -> None:
     """
-    Recieves the data from the socketio_client and checks asserts whether the recieved data contains the expected value
+    Takes the data recieved from the socketio test client and asserts that it matches the given
+    expected values
 
     Args:
         data (dict): The data recieved using `client.get_recieved()`
@@ -26,7 +26,7 @@ def assert_motorResult(
     assert test_result["success"] is success
     if motor:
         assert test_result["message"] == f"Motor test started for motor {motor}"
-    if err or message:
+    if err:
         assert test_result["message"] == err
 
 

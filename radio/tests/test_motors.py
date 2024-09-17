@@ -11,7 +11,7 @@ def assert_motorResult(
     success: bool,
     motor: Optional[str] = None,
     message: Optional[str] = None,
-    err: Optional[str] = None
+    err: Optional[str] = None,
 ) -> None:
     """
     Takes the data recieved from the socketio test client and asserts that it matches the given

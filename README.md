@@ -30,12 +30,17 @@ Falcon Ground Control Station.
 
 1. `cd gcs`
 2. `yarn` (to install dependencies)
-3. `yarn dev`
+3. Create a `.env` file and add these two entries:
+   - `VITE_MAPTILER_API_KEY=` + Your maptiler API key (can be generated [on maptilers website](https://cloud.maptiler.com/account/keys))
+   - `VITE_BACKEND_URL=127.0.0.1:4723` (if you want to change the port see: [Configuration > Changing Ports](#Configuration))
+5. `yarn dev`
 
 ### Running Backend Manually
 
 1. `cd radio`
 2. Make sure you're in a virtual environment (or create one via `python3 -m venv venv`) and all dependencies are installed using `pip install -r requirements.txt`
+3. Optionally, If you want to change ports then create a `.env` file and add these entries:
+   - `PORT=4237`
 
 > NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and winodws](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
 
@@ -134,7 +139,7 @@ After compiling the backend, copy the `radio/dist/fgcs_backend.app` directory an
 
 ### Configuration
 
-<details><summary>Environmental Variables/Ports</summary>
+<details><summary>Changing Ports</summary>
 
 We have two `.env` files, one for the backend and one for the frontend. These are located in `radio/.env` and `gcs/.env` respectively. If you want to change the port that the backend runs on you will need to edit it in the backend **and** in the frontend. This is slightly annoying but is needed when packaging. 
 

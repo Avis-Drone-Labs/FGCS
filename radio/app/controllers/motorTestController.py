@@ -146,7 +146,7 @@ class MotorTestController:
             param2=0,  # throttle type (PWM,% etc)
             param3=throttle,  # value of the throttle - 0 to 100%
             param4=duration,  # delay between tests in seconds
-            param5=num_motors + 1,  # number of motors to test in a sequence
+            param5=num_motors,  # number of motors to test in a sequence
             param6=0,  # test order
         )
 

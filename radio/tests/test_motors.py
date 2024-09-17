@@ -1,4 +1,3 @@
-import pytest
 from typing import Optional
 from flask_socketio.test_client import SocketIOTestClient
 

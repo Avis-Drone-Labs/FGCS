@@ -103,7 +103,7 @@ function DataMessage({ label, value, currentlySelected, id }) {
   return (
     <Tooltip label={currentlySelected}>
       <div className='flex flex-col items-center justify-center'>
-        <p className='text-sm'>{label}</p>
+        <p className='text-sm text-center'>{label}</p>
         <p className='text-5xl' style={{ color: color }}>
           {formattedValue}
         </p>
@@ -125,6 +125,7 @@ export default function Dashboard() {
     key: 'telemetryPanelSize',
     defaultValue: { width: 400, height: Infinity },
   })
+  const [telemtryFontSize, setTelemetryFontSize] = useState(calcBigTextFontSize())
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
     key: 'messagesPanelSize',
     defaultValue: { width: 600, height: 150 },
@@ -399,6 +400,14 @@ export default function Dashboard() {
     })
   }
 
+  function calcBigTextFontSize(){
+    let w = telemetryPanelSize.width
+    const baseSize = 1.25;
+    if (w < 400)
+        return baseSize * (1 - (400 - w) / 400)
+    return baseSize;
+  }
+
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full overflow-hidden'>
@@ -422,7 +431,7 @@ export default function Dashboard() {
           <ResizableBox
             height={telemetryPanelSize.height}
             width={telemetryPanelSize.width}
-            minConstraints={[300, Infinity]}
+            minConstraints={[330, Infinity]}
             maxConstraints={[viewportWidth - 200, Infinity]}
             resizeHandles={['e']}
             handle={(h, ref) => (
@@ -431,11 +440,12 @@ export default function Dashboard() {
             handleSize={[32, 32]}
             axis='x'
             onResize={(_, { size }) => {
-              setTelemetryPanelSize({ width: size.width, height: size.height })
+              setTelemetryPanelSize({ width: size.width, height: size.height });
+              setTelemetryFontSize(calcBigTextFontSize())
             }}
             className='h-full'
           >
-            <div className='flex flex-col px-[2vw] h-full gap-2 overflow-x-hidden overflow-y-auto'>
+            <div className='flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}
@@ -462,14 +472,15 @@ export default function Dashboard() {
 
                 {/* Attitude Indicator */}
                 <div className='flex flex-row items-center justify-center'>
-                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-                    <p className='text-sm'>ms&#8315;&#185;</p>
+                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                    <p className='text-sm text-center'>ms&#8315;&#185;</p>
                     <TelemetryValueDisplay
                       title='AS'
                       value={(telemetryData.airspeed
                         ? telemetryData.airspeed
                         : 0
                       ).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                     <TelemetryValueDisplay
                       title='GS'
@@ -477,6 +488,7 @@ export default function Dashboard() {
                         ? telemetryData.groundspeed
                         : 0
                       ).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                   </div>
                   <AttitudeIndicator
@@ -484,11 +496,15 @@ export default function Dashboard() {
                     pitch={attitudeData.pitch * (180 / Math.PI)}
                     size={'20vmin'}
                   />
-                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-                    <p className='text-sm'>m</p>
+                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                    <p className='text-sm text-center'>m</p>
                     <TelemetryValueDisplay
                       title='AMSL'
-                      value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
+                      value={(gpsData.alt 
+                        ? gpsData.alt / 1000 
+                        : 0
+                      ).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                     <TelemetryValueDisplay
                       title='AREL'
@@ -496,17 +512,19 @@ export default function Dashboard() {
                         ? gpsData.relative_alt / 1000
                         : 0
                       ).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                   </div>
                 </div>
 
                 {/* Heading Indicator */}
                 <div className='flex flex-row items-center justify-center'>
-                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
-                    <p className='text-sm'>deg &#176;</p>
+                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                    <p className='text-sm text-center'>deg &#176;</p>
                     <TelemetryValueDisplay
                       title='HDG'
                       value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                     <TelemetryValueDisplay
                       title='YAW'
@@ -514,13 +532,14 @@ export default function Dashboard() {
                         ? attitudeData.yaw * (180 / Math.PI)
                         : 0
                       ).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                   </div>
                   <HeadingIndicator
                     heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
                     size={'20vmin'}
                   />
-                  <div className='flex flex-col items-center justify-center w-10 space-y-4 text-center'>
+                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm'>m</p>
                     <TelemetryValueDisplay
                       title='WP'
@@ -528,11 +547,13 @@ export default function Dashboard() {
                         ? navControllerOutputData.wp_dist
                         : 0
                       ).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                     {/* TOOD: Implement distance to home */}
                     <TelemetryValueDisplay
                       title='HOME'
                       value={(0).toFixed(2)}
+                      fs={telemtryFontSize}
                     />
                   </div>
                 </div>
@@ -568,7 +589,7 @@ export default function Dashboard() {
               <Divider className='my-2' />
 
               <Tabs defaultValue='data'>
-                <Tabs.List>
+                <Tabs.List grow>
                   <Tabs.Tab value='data'>Data</Tabs.Tab>
                   <Tabs.Tab value='actions'>Actions</Tabs.Tab>
                   <Tabs.Tab value='camera'>Camera</Tabs.Tab>

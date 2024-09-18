@@ -56,6 +56,7 @@ class ArmController:
             else:
                 self.drone.logger.debug("Arming failed")
         except Exception as e:
+            self.drone.is_listening = True
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
@@ -98,6 +99,7 @@ class ArmController:
             else:
                 self.drone.logger.debug("Disarming failed")
         except Exception as e:
+            self.drone.is_listening = True
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))

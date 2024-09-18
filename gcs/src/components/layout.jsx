@@ -9,7 +9,6 @@ import { useEffect } from 'react'
 import { showErrorNotification } from '../helpers/notification'
 import { socket } from '../helpers/socket'
 import Navbar from './navbar'
-import Toolbar from './toolbar/toolbar'
 
 export default function Layout({ children, currentPage }) {
   // Handle drone errors
@@ -25,7 +24,6 @@ export default function Layout({ children, currentPage }) {
 
   return (
     <>
-      <Toolbar />
       <Navbar currentPage={currentPage} className="no-drag" />
       {children}
     </>

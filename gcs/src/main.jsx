@@ -16,12 +16,14 @@ import Dashboard from './dashboard.jsx'
 import FLA from './fla.jsx'
 import Graphs from './graphs.jsx'
 import Params from './params.jsx'
+import Toolbar from './components/toolbar/toolbar.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <MantineProvider defaultColorScheme='dark'>
     <Notifications />
     <HashRouter>
       <SingleRunWrapper>
+        <Toolbar />
         <Routes>
           <Route path='/' element={<Dashboard />} />
           <Route path='/graphs' element={<Graphs />} />

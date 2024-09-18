@@ -60,7 +60,7 @@ class ArmController:
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-                return {"success": False, "message": "Could not arm"}
+            return {"success": False, "message": "Could not arm"}
 
         return {"success": False, "message": "Could not arm"}
 
@@ -103,6 +103,6 @@ class ArmController:
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-                return {"success": False, "message": "Could not disarm"}
+            return {"success": False, "message": "Could not disarm"}
 
         return {"success": False, "message": "Could not disarm"}

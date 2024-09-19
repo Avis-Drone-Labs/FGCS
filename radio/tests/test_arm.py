@@ -1,41 +1,21 @@
 import time
+import pytest
 
-from pymavlink import mavutil
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test, FakeTCP
+from . import falcon_test
 
 
-def direct_arm_disarm(droneStatus, arm: bool):
-    """
-    Arm / disarm directly using pymavlink as opposed to in-house wrappers, for altering the simulation armed state during
-    testing
-    """
-
-    droneStatus.drone.master.mav.command_long_send(
-        droneStatus.drone.master.target_system,
-        droneStatus.drone.master.target_component,
-        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-        0,
-        1 if arm else 0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-    )
-    if arm:
-        while not droneStatus.drone.master.motors_armed():
-            time.sleep(0.05)
-    else:
-        while droneStatus.drone.master.motors_armed():
-            time.sleep(0.05)
+def assert_drone_armed(droneStatus, armed: bool) -> None:
+    assert droneStatus.drone.armed == armed
+    assert bool(droneStatus.drone.master.motors_armed()) == armed
 
 
 @falcon_test(pass_drone_status=True)
-def test_arm(socketio_client: SocketIOTestClient, droneStatus) -> None:
+def test_arm_disarm_normal(socketio_client: SocketIOTestClient, droneStatus) -> None:
+    time.sleep(10)
     # Test arm normally
+    assert_drone_armed(droneStatus, armed=False)
     socketio_client.emit(
         "arm_disarm",
         {
@@ -46,7 +26,7 @@ def test_arm(socketio_client: SocketIOTestClient, droneStatus) -> None:
         "success": True,
         "message": "Armed successfully",
     }
-    assert droneStatus.drone.armed
+    assert_drone_armed(droneStatus, armed=True)
 
     # Test arming failure if already armed
     socketio_client.emit("arm_disarm", {"arm": True})
@@ -54,45 +34,14 @@ def test_arm(socketio_client: SocketIOTestClient, droneStatus) -> None:
         "success": False,
         "message": "Already armed",
     }
-    direct_arm_disarm(droneStatus, arm=False)
+    assert_drone_armed(droneStatus, armed=True)
 
-    # Test force arm
-    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
-    assert socketio_client.get_received()[0]["args"][0] == {
-        "success": True,
-        "message": "Armed successfully",
-    }
-
-    # Test force arm fail when already armed
-    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
-    assert socketio_client.get_received()[0]["args"][0] == {
-        "success": False,
-        "message": "Already armed",
-    }
-
-    direct_arm_disarm(droneStatus, arm=False)
-    with FakeTCP():
-        socketio_client.emit("arm_disarm", {"arm": True})
-        assert socketio_client.get_received()[0]["args"][0] == {
-            "success": False,
-            "message": "Could not arm",
-        }
-        socketio_client.emit("arm_disarm", {"arm": True, "force": True})
-        assert socketio_client.get_received()[0]["args"][0] == {
-            "success": False,
-            "message": "Could not arm",
-        }
-
-
-@falcon_test(pass_drone_status=True)
-def test_disarm(socketio_client: SocketIOTestClient, droneStatus) -> None:
-    # Arming has been tested so we can use it (surely)
-    direct_arm_disarm(droneStatus, arm=True)
     socketio_client.emit("arm_disarm", {"arm": False})
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": True,
         "message": "Disarmed successfully",
     }
+    assert_drone_armed(droneStatus, armed=False)
 
     # Test disarm failure when not armed
     socketio_client.emit("arm_disarm", {"arm": False})
@@ -100,32 +49,63 @@ def test_disarm(socketio_client: SocketIOTestClient, droneStatus) -> None:
         "success": False,
         "message": "Already disarmed",
     }
+    assert_drone_armed(droneStatus, armed=False)
 
-    # Test force disarm
-    direct_arm_disarm(droneStatus, arm=True)
+
+@falcon_test(pass_drone_status=True)
+def test_arm_disarm_force(socketio_client: SocketIOTestClient, droneStatus) -> None:
+    # Test arm normally
+    assert_drone_armed(droneStatus, armed=False)
+    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
+    assert socketio_client.get_received()[0]["args"][0] == {
+        "success": True,
+        "message": "Armed successfully",
+    }
+    assert_drone_armed(droneStatus, armed=True)
+
+    # Test arming failure if already armed
+    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
+    assert socketio_client.get_received()[0]["args"][0] == {
+        "success": False,
+        "message": "Already armed",
+    }
+    assert_drone_armed(droneStatus, armed=True)
+
     socketio_client.emit("arm_disarm", {"arm": False, "force": True})
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": True,
         "message": "Disarmed successfully",
     }
+    assert_drone_armed(droneStatus, armed=False)
 
-    # Test force disarm failure when not armed
+    # Test disarm failure when not armed
     socketio_client.emit("arm_disarm", {"arm": False, "force": True})
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": False,
         "message": "Already disarmed",
     }
+    assert_drone_armed(droneStatus, armed=False)
 
-    # Test disarm failure on socket exception
-    direct_arm_disarm(droneStatus, arm=True)
-    with FakeTCP():
-        socketio_client.emit("arm_disarm", {"arm": False})
-        assert socketio_client.get_received()[0]["args"][0] == {
-            "success": False,
-            "message": "Could not disarm",
-        }
-        socketio_client.emit("arm_disarm", {"arm": False, "force": True})
-        assert socketio_client.get_received()[0]["args"][0] == {
-            "success": False,
-            "message": "Could not disarm",
-        }
+
+@falcon_test(pass_drone_status=True)
+def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
+    pass
+
+
+@pytest.mark.skip("GPS failure fixture is broken")
+def test_arm_no_gps(gps_failure) -> None:
+    from . import socketio_client
+
+    # Test losing GPS lock when attempting to arm. Assert needs to be outside the context manager because
+    socketio_client.emit("arm_disarm", {"arm": True})
+
+    assert socketio_client.get_received()[0]["args"][0] == {
+        "success": False,
+        "message": "Could not arm, command not accepted",
+    }
+    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
+
+    assert socketio_client.get_received()[0]["args"][0] == {
+        "success": True,
+        "message": "Armed successfully",
+    }

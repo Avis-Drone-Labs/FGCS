@@ -409,6 +409,10 @@ export default function Dashboard() {
     return 1.0;
   }
 
+  function calcIndicatorSize(){
+    return Math.min(telemetryPanelSize.width - (sideBarRef.current.clientWidth + 24)*2, 190)
+  }
+
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full overflow-hidden'>
@@ -472,7 +476,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Attitude Indicator */}
-                <div className='flex flex-row items-center justify-center'>
+                <div className='flex flex-row items-center justify-center' style={{
+                    "paddingTop": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`,
+                    "paddingBottom": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`
+                }}>
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm text-center'>ms&#8315;&#185;</p>
                     <TelemetryValueDisplay
@@ -495,7 +502,7 @@ export default function Dashboard() {
                   <AttitudeIndicator
                     roll={attitudeData.roll * (180 / Math.PI)}
                     pitch={attitudeData.pitch * (180 / Math.PI)}
-                    size={`${Math.min(telemetryPanelSize.width - (sideBarRef.current.clientWidth + 24)*2, 190)}px`}
+                    size={`${calcIndicatorSize()}px`}
                   />
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm text-center'>m</p>
@@ -519,7 +526,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Heading Indicator */}
-                <div className='flex flex-row items-center justify-center'>
+                <div className='flex flex-row items-center justify-center' style={{
+                    "paddingTop": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`,
+                    "paddingBottom": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`
+                }}>
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm text-center'>deg &#176;</p>
                     <TelemetryValueDisplay
@@ -538,7 +548,7 @@ export default function Dashboard() {
                   </div>
                   <HeadingIndicator
                     heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-                    size={`${Math.min(telemetryPanelSize.width - (sideBarRef.current.clientWidth + 24)*2, 190)}px`}
+                    size={`${calcIndicatorSize()}px`}
                   />
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14' ref={sideBarRef}>
                     <p className='text-sm'>m</p>

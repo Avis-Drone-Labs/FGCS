@@ -126,14 +126,18 @@ export default function Dashboard() {
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
     key: 'telemetryPanelSize',
     defaultValue: { width: 400, height: Infinity },
+    deserialize: (value) => {
+      const parsed = JSON.parse(value);
+      if(parsed === null || parsed === undefined)
+        return { width: 400, height: Infinity }
+      return {...parsed, width: Math.max(parsed['width'], 275)}
+    }
   })
-  // Prevent smaller value stored in localStorage
-  setTelemetryPanelSize(Math.max(275, telemetryPanelSize))
   const [telemtryFontSize, setTelemetryFontSize] = useState(calcBigTextFontSize())
   const sideBarRef = useRef();
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
     key: 'messagesPanelSize',
-    defaultValue: { width: 600, height: 150 },
+    defaultValue: { width: 600, height: 150 }
   })
 
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()

@@ -126,6 +126,7 @@ export default function Dashboard() {
     defaultValue: { width: 400, height: Infinity },
   })
   const [telemtryFontSize, setTelemetryFontSize] = useState(calcBigTextFontSize())
+  const sideBarRef = useRef();
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
     key: 'messagesPanelSize',
     defaultValue: { width: 600, height: 150 },
@@ -441,7 +442,7 @@ export default function Dashboard() {
             axis='x'
             onResize={(_, { size }) => {
               setTelemetryPanelSize({ width: size.width, height: size.height });
-              setTelemetryFontSize(calcBigTextFontSize())
+              setTelemetryFontSize(calcBigTextFontSize());
             }}
             className='h-full'
           >
@@ -494,7 +495,7 @@ export default function Dashboard() {
                   <AttitudeIndicator
                     roll={attitudeData.roll * (180 / Math.PI)}
                     pitch={attitudeData.pitch * (180 / Math.PI)}
-                    size={'20vmin'}
+                    size={`${Math.min(telemetryPanelSize.width - (sideBarRef.current.clientWidth + 24)*2, 190)}px`}
                   />
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm text-center'>m</p>
@@ -537,9 +538,9 @@ export default function Dashboard() {
                   </div>
                   <HeadingIndicator
                     heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-                    size={'20vmin'}
+                    size={`${Math.min(telemetryPanelSize.width - (sideBarRef.current.clientWidth + 24)*2, 190)}px`}
                   />
-                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14' ref={sideBarRef}>
                     <p className='text-sm'>m</p>
                     <TelemetryValueDisplay
                       title='WP'

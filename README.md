@@ -82,11 +82,12 @@ For running Python tests, first make sure you're in the `radio` directory. By de
 
 <details><summary>SITL with Docker</summary>
 
-To run the SITL simulator within Docker, first navigate to the root directory of FGCS and run `docker build . -t ardupilot_sitl`. Once done building the image you can run the container with `docker run -it --rm -p 5760:5760 ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
+To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
 
 Note: Steps to push an updated image to docker hub:
 
 ```plaintext
+docker build . -t ardupilot_sitl
 docker tag ardupilot_sitl:latest kushmakkapati/ardupilot_sitl:latest
 docker push kushmakkapati/ardupilot_sitl:latest
 ```
@@ -117,9 +118,27 @@ When cloning the repo for the first time, please install `pre-commit`. This can 
 
 From within the `radio` folder run `pyinstaller --paths .\venv\Lib\site-packages\ --add-data=".\venv\Lib\site-packages\pymavlink\message_definitions\:message_definitions" --add-data=".\venv\Lib\site-packages\pymavlink\:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading .\app.py -n fgcs_backend`. This will create an exe and folder within the `dist/fgcs_backend/` folder.
 
+On Mac:
+From within the `radio` folder run
+`pyinstaller --paths ./venv/lib/python3.11/site-packages/ --add-data="./venv/lib/python*/site-packages/pymavlink/message_definitions:message_definitions" --add-data="./venv/lib/python*/site-packages/pymavlink:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading --windowed --name fgcs_backend ./app.py`.
+This will create the `dist/fgcs_backend.app/` folder. 
+
 ## Frontend
 
 After compiling the backend, place the contents of `radio/dist/fgcs_backend` into a folder in `gcs/extras`. Then from within the `gcs` folder run `yarn build`.
+
+On Mac:
+After compiling the backend, copy the `radio/dist/fgcs_backend.app` directory and move it to `gcs/extras`. Then from within the `gcs` folder run `yarn build`. Install from the .dmg file.
+
+</details>
+
+### Configuration
+
+<details><summary>Environmental Variables/Ports</summary>
+
+We have two `.env` files, one for the backend and one for the frontend. These are located in `radio/.env` and `gcs/.env` respectively. If you want to change the port that the backend runs on you will need to edit it in the backend **and** in the frontend. This is slightly annoying but is needed when packaging. 
+
+> Note: The default port is `4237`. 
 
 </details>
 

@@ -35,6 +35,7 @@ import {
   IconCrosshair,
   IconGps,
   IconInfoCircle,
+  IconMapPins,
   IconRadar,
   IconSatellite,
   IconSun,
@@ -67,6 +68,11 @@ import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import DashboardDataModal from './components/dashboardDataModal'
 import Layout from './components/layout'
+
+// Tailwind styling
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../tailwind.config'
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
@@ -179,6 +185,7 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
+  var outsideVisibilityColor = outsideVisibility ? tailwindColors["falcongrey"]["120"] : tailwindColors["falcongrey"]["TRANSLUCENT"]
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -425,6 +432,15 @@ export default function Dashboard() {
   function calcIndicatorPadding(){
     let sideBarHeight = sideBarRef.current ? sideBarRef.current.clientHeight  : 164;
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight))/2
+   
+  function centerMapOnFirstMissionItem() {
+    if (missionItems.mission_items.length > 0) {
+      let lat = parseFloat(missionItems.mission_items[0].x * 1e-7)
+      let lon = parseFloat(missionItems.mission_items[0].y * 1e-7)
+      mapRef.current.getMap().flyTo({
+        center: [lon, lat],
+      })
+    }
   }
 
   return (
@@ -435,17 +451,14 @@ export default function Dashboard() {
             passedRef={mapRef}
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+            desiredBearing={navControllerOutputData.nav_bearing}
             missionItems={missionItems}
           />
         </div>
 
         <div
           className='absolute top-0 left-0 h-full z-10'
-          style={{
-            backgroundColor: outsideVisibility
-              ? 'rgb(28 32 33)'
-              : 'rgb(28 32 33 / 0.8)',
-          }}
+          style={{backgroundColor: outsideVisibilityColor}}
         >
           <ResizableBox
             height={telemetryPanelSize.height}
@@ -722,7 +735,7 @@ export default function Dashboard() {
         </div>
 
         {/* Status Bar */}
-        <StatusBar className='absolute top-0 right-0'>
+        <StatusBar className='absolute top-0 right-0' outsideVisibilityColor={outsideVisibilityColor}>
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
@@ -757,7 +770,7 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 bg-falcongrey/80 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'>
+        <div className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30' style={{backgroundColor: outsideVisibilityColor}}>
           {/* Follow Drone */}
           <Tooltip
             label={
@@ -789,6 +802,22 @@ export default function Dashboard() {
               onClick={centerMapOnDrone}
             >
               <IconCrosshair />
+            </ActionIcon>
+          </Tooltip>
+
+          {/* Center Map on first mission item */}
+          <Tooltip
+            label={
+              !missionItems.mission_items.length > 0
+                ? 'No mission'
+                : 'Center on mission'
+            }
+          >
+            <ActionIcon
+              disabled={missionItems.mission_items.length <= 0}
+              onClick={centerMapOnFirstMissionItem}
+            >
+              <IconMapPins />
             </ActionIcon>
           </Tooltip>
 

@@ -121,10 +121,14 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
+
+  // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
     key: 'telemetryPanelSize',
     defaultValue: { width: 400, height: Infinity },
   })
+  // Prevent smaller value stored in localStorage
+  setTelemetryPanelSize(Math.max(275, telemetryPanelSize))
   const [telemtryFontSize, setTelemetryFontSize] = useState(calcBigTextFontSize())
   const sideBarRef = useRef();
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({

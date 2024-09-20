@@ -410,7 +410,13 @@ export default function Dashboard() {
   }
 
   function calcIndicatorSize(){
-    return Math.min(telemetryPanelSize.width - (sideBarRef.current.clientWidth + 24)*2, 190)
+    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56;
+    return Math.min(telemetryPanelSize.width - (sideBarWidth + 24)*2, 190)
+  }
+
+  function calcIndicatorPadding(){
+    let sideBarHeight = sideBarRef.current ? sideBarRef.current.clientHeight  : 164;
+    return (190 - Math.max(calcIndicatorSize(), sideBarHeight))/2
   }
 
   return (
@@ -477,8 +483,8 @@ export default function Dashboard() {
 
                 {/* Attitude Indicator */}
                 <div className='flex flex-row items-center justify-center' style={{
-                    "paddingTop": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`,
-                    "paddingBottom": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`
+                    "paddingTop": `${calcIndicatorPadding()}px`,
+                    "paddingBottom": `${calcIndicatorPadding()}px`
                 }}>
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm text-center'>ms&#8315;&#185;</p>
@@ -527,8 +533,8 @@ export default function Dashboard() {
 
                 {/* Heading Indicator */}
                 <div className='flex flex-row items-center justify-center' style={{
-                    "paddingTop": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`,
-                    "paddingBottom": `${(190 - Math.max(calcIndicatorSize(), sideBarRef.current.clientHeight))/2}px`
+                    "paddingTop": `${calcIndicatorPadding()}px`,
+                    "paddingBottom": `${calcIndicatorPadding()}px`
                 }}>
                   <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                     <p className='text-sm text-center'>deg &#176;</p>

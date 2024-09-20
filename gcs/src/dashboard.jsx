@@ -432,7 +432,8 @@ export default function Dashboard() {
   function calcIndicatorPadding(){
     let sideBarHeight = sideBarRef.current ? sideBarRef.current.clientHeight  : 164;
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight))/2
-   
+  }
+
   function centerMapOnFirstMissionItem() {
     if (missionItems.mission_items.length > 0) {
       let lat = parseFloat(missionItems.mission_items[0].x * 1e-7)

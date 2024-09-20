@@ -116,6 +116,8 @@ def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
             "message": "Could not disarm, serial exception",
         }
     socketio_client.emit("arm_disarm", {"arm": False})
+    socketio_client.get_received()
+    assert_drone_armed(droneStatus, armed=False)
 
 
 @pytest.mark.skip("GPS failure fixture is broken")

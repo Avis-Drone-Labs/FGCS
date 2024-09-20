@@ -33,6 +33,10 @@ class FakeTCP:
 
 @pytest.fixture
 def gps_failure():
+    """Fixture to use when you want the test being ran to simulate a GPS system failure.
+
+    TODO: This does not work for some reason. Fix?
+    """
     droneStatus.drone.logger.info("Enabling SIM_GPS_DISABLE")
     droneStatus.drone.master.param_set_send("SIM_GPS_DISABLE", 1.0, 2)
     droneStatus.drone.master.param_set_send("SIM_GPS2_DISABLE", 1.0, 2)

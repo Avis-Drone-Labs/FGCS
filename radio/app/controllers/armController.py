@@ -96,12 +96,12 @@ class ArmController:
                 self.drone.logger.debug("DISARMED")
                 return {"success": True, "message": "Disarmed successfully"}
             else:
-                self.drone.logger.debug("Could not disarm: command not accepted")
+                self.drone.logger.debug("Could not disarm, command not accepted")
         except Exception as e:
             self.drone.is_listening = True
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-            return {"success": False, "message": "Could not disarm: serial exception"}
+            return {"success": False, "message": "Could not disarm, serial exception"}
 
-        return {"success": False, "message": "Could not disarm: command not accepted"}
+        return {"success": False, "message": "Could not disarm, command not accepted"}

@@ -4,6 +4,7 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
+from .helpers import FakeTCP
 
 
 def assert_drone_armed(droneStatus, armed: bool) -> None:
@@ -89,7 +90,32 @@ def test_arm_disarm_force(socketio_client: SocketIOTestClient, droneStatus) -> N
 
 @falcon_test(pass_drone_status=True)
 def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
-    pass
+    with FakeTCP():
+        socketio_client.emit("arm_disarm", {"arm": True})
+        assert socketio_client.get_received()[0]["args"][0] == {
+            "success": False,
+            "message": "Could not arm, serial exception",
+        }
+        socketio_client.emit("arm_disarm", {"arm": True, "force": True})
+        assert socketio_client.get_received()[0]["args"][0] == {
+            "success": False,
+            "message": "Could not arm, serial exception",
+        }
+
+    socketio_client.emit("arm_disarm", {"arm": True})
+
+    with FakeTCP():
+        socketio_client.emit("arm_disarm", {"arm": False})
+        assert socketio_client.get_received()[1]["args"][0] == {
+            "success": False,
+            "message": "Could not disarm, serial exception",
+        }
+        socketio_client.emit("arm_disarm", {"arm": False, "force": True})
+        assert socketio_client.get_received()[0]["args"][0] == {
+            "success": False,
+            "message": "Could not disarm, serial exception",
+        }
+    socketio_client.emit("arm_disarm", {"arm": False})
 
 
 @pytest.mark.skip("GPS failure fixture is broken")

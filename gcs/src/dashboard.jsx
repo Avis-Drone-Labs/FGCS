@@ -402,10 +402,10 @@ export default function Dashboard() {
 
   function calcBigTextFontSize(){
     let w = telemetryPanelSize.width
-    const baseSize = 1.25;
-    if (w < 400)
-        return baseSize * (1 - (400 - w) / 400)
-    return baseSize;
+    const BREAKPOINT_SM = 350.0;
+    if (w < BREAKPOINT_SM)
+        return (1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM)
+    return 1.0;
   }
 
   return (
@@ -431,7 +431,7 @@ export default function Dashboard() {
           <ResizableBox
             height={telemetryPanelSize.height}
             width={telemetryPanelSize.width}
-            minConstraints={[330, Infinity]}
+            minConstraints={[275, Infinity]}
             maxConstraints={[viewportWidth - 200, Infinity]}
             resizeHandles={['e']}
             handle={(h, ref) => (
@@ -500,8 +500,8 @@ export default function Dashboard() {
                     <p className='text-sm text-center'>m</p>
                     <TelemetryValueDisplay
                       title='AMSL'
-                      value={(gpsData.alt 
-                        ? gpsData.alt / 1000 
+                      value={(gpsData.alt
+                        ? gpsData.alt / 1000
                         : 0
                       ).toFixed(2)}
                       fs={telemtryFontSize}

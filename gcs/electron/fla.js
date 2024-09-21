@@ -3,6 +3,9 @@ This file contains the logic for parsing different types of log files on the mai
 */
 
 import fs from 'fs'
+import createRecentLogsManager from './recentLogManager'
+
+const recentLogsManager = createRecentLogsManager()
 
 function parseDataflashLogFile(fileData, webContents) {
   // https://ardupilot.org/copter/docs/logmessages.html
@@ -230,6 +233,16 @@ function determineLogFileType(filePath, firstLine) {
   }
 }
 
+// New function to get recent files
+export function getRecentFiles() {
+  return recentLogsManager.getRecentLogs()
+}
+
+// New function to clear recent files
+export function clearRecentFiles() {
+  recentLogsManager.clearRecentLogs()
+}
+
 export default function openFile(event, filePath) {
   if (filePath == null) {
     return null
@@ -258,10 +271,14 @@ export default function openFile(event, filePath) {
       return { success: false, error: 'Unknown log file type' }
     }
 
-    return {
-      success: true,
-      messages,
-      logType,
+    if (messages !== null) {
+      // add recent file
+      recentLogsManager.addRecentLog(filePath)
+      return {
+        success: true,
+        messages,
+        logType,
+      }
     }
   } catch (err) {
     console.error(err)

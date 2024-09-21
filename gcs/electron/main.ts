@@ -1,13 +1,11 @@
 import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
-import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'os'
 import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
-import openFile from './fla'
+import openFile, { getRecentFiles, clearRecentFiles } from './fla'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -256,34 +254,34 @@ app.on('activate', () => {
 
 app.whenReady().then(() => {
   createLoadingWindow()
+  // Open file
   ipcMain.handle('fla:open-file', openFile)
-  ipcMain.handle('fla:get-fgcs-logs', async () => {
-    const fgcsLogsPath = path.join(os.homedir(), 'FGCS', 'logs')
+  // Get Recent Logs
+  ipcMain.handle('fla:get-recent-logs', async () => {
     try {
-      const fgcsLogs = await glob(path.join(fgcsLogsPath, '*.ftlog'), {
-        nodir: true,
-        windowsPathsNoEscape: true,
-      }) // Get a list of .ftlog files
-      if (!Array.isArray(fgcsLogs)) {
+      const recentLogs = getRecentFiles();
+      if (!Array.isArray(recentLogs)) {
         throw new Error(
-          `Expected fgcsLogs to be an array, but got ${typeof fgcsLogs}`,
+          `Expected recentLogs to be an array, but got ${typeof recentLogs}`,
         )
       }
-      const slicedFgcsLogs = fgcsLogs.slice(0, 20) // Only return the last 20 logs
-
-      return slicedFgcsLogs.map((logPath) => {
-        const logName = path.basename(logPath, '.ftlog')
+      return recentLogs.map((logPath) => {
+        const logName = path.basename(logPath)
         const fileStats = fs.statSync(logPath)
         return {
           name: logName,
           path: logPath,
           size: fileStats.size,
+          timestamp: fileStats.mtime,
         }
       })
     } catch (error) {
       return []
     }
   })
+  // Clear recent logs
+  ipcMain.handle('fla:clear-recent-logs', clearRecentFiles)
+
   ipcMain.handle('app:get-node-env', () =>
     app.isPackaged ? 'production' : 'development',
   )

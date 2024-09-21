@@ -243,7 +243,7 @@ export default function FLA() {
   // Loop over all fields and precalculate min, max, mean
   function setMeanValues(loadedLogMessages) {
     let rawValues = {}
-    if(loadedLogMessages !== null){
+    if (loadedLogMessages !== null) {
       // Putting all raw data into a list
       Object.keys(loadedLogMessages).forEach((key) => {
         if (!ignoredMessages.includes(key)) {
@@ -329,6 +329,17 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  // Get a list of the recent FGCS telemetry logs
+  async function getFgcsLogs() {
+    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+  }
+
+  // Clear the list of recent FGCS telemetry logs
+  async function clearFgcsLogs() {
+    await window.ipcRenderer.clearRecentLogs()
+    getFgcsLogs()
+  }
+
   // Close file
   function closeLogFile() {
     setFile(null)
@@ -341,6 +352,7 @@ export default function FLA() {
     setMeanValues(null)
     setLogEvents(null)
     setLogType('dataflash')
+    getFgcsLogs()
   }
 
   // Set IPC renderer for log messages
@@ -348,12 +360,6 @@ export default function FLA() {
     window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
       setLoadingFileProgress(message.percent)
     })
-
-    // Get a list of the recent FGCS telemetry logs
-    async function getFgcsLogs() {
-      setRecentFgcsLogs(await window.ipcRenderer.getFgcsLogs())
-    }
-
     getFgcsLogs()
 
     return () => {
@@ -504,15 +510,24 @@ export default function FLA() {
         // Open flight logs section
         <div className='flex flex-col items-center justify-center h-full mx-auto'>
           <div className='flex flex-row gap-8 items-center justify-center'>
-            <FileButton
-              color={tailwindColors.blue[600]}
-              variant='filled'
-              onChange={setFile}
-              accept={['.log', '.ftlog']}
-              loading={loadingFile}
-            >
-              {(props) => <Button {...props}>Analyse a log</Button>}
-            </FileButton>
+            <div className='flex flex-col gap-4'>
+              <FileButton
+                color={tailwindColors.blue[600]}
+                variant='filled'
+                onChange={setFile}
+                accept={['.log', '.ftlog']}
+                loading={loadingFile}
+              >
+                {(props) => <Button {...props}>Analyse a log</Button>}
+              </FileButton>
+              <Button
+                color={tailwindColors.red[600]}
+                variant='filled'
+                onClick={clearFgcsLogs}
+              >
+                Clear Logs
+              </Button>
+            </div>
             <Divider size='sm' orientation='vertical' />
             <div className='relative'>
               <LoadingOverlay
@@ -531,7 +546,7 @@ export default function FLA() {
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
                           <p className='text-gray-400 text-sm'>
-                            {moment(log.name, 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                            {moment(log.timestamp.toISOString(), 'YYYY-MM-DD_HH-mm-ss').fromNow()}
                           </p>
                           <p className='text-gray-400 text-sm'>
                             {Math.round(log.size / 1024)}KB

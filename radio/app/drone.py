@@ -94,7 +94,7 @@ class Drone:
 
         self.logger.debug("Trying to setup master")
 
-        if not self.checkBaudrateValid(baud):
+        if not Drone.checkBaudrateValid(baud):
             self.connectionError = (
                 f"{baud} is an invalid baudrate. Valid baud rates are {VALID_BAUDRATES}"
             )
@@ -176,7 +176,8 @@ class Drone:
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
-    def checkBaudrateValid(self, baud: int) -> bool:
+    @staticmethod
+    def checkBaudrateValid(baud: int) -> bool:
         return baud in VALID_BAUDRATES
 
     @staticmethod

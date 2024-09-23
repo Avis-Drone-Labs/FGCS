@@ -98,7 +98,6 @@ class Drone:
             self.connectionError = (
                 f"{baud} is an invalid baudrate. Valid baud rates are {VALID_BAUDRATES}"
             )
-            self.master = None
             return
 
         try:

@@ -9,7 +9,7 @@ from . import socketio_client
 from .helpers import send_and_recieve
 from .conftest import setupDrone
 
-global VALID_DRONE_PORT
+VALID_DRONE_PORT: str | ListPortInfo
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -17,6 +17,7 @@ def run_once_after_all_tests():
     """
     Saves the valid connection string then ensures that the drone connection is established again after the tests have run
     """
+    assert droneStatus.drone is not None
     global VALID_DRONE_PORT
     VALID_DRONE_PORT = droneStatus.drone.port
 
@@ -58,11 +59,12 @@ def test_getComPort() -> None:
 
 # Only run serial connection test if tests are being run with a serial connection to the drone
 @pytest.mark.skipif(
-    not droneStatus.drone.port.startswith("COM"),
+    droneStatus.drone is not None and not droneStatus.drone.port.startswith("COM"),
     reason="Simulator in use. Only network connection can be tested.",
 )
 def test_connectToDrone_serial() -> None:
-    SIM_PORT = droneStatus.drone.port
+    global VALID_DRONE_PORT
+    SIM_PORT = VALID_DRONE_PORT
     # Failure on no port specified
     assert send_and_recieve("connect_to_drone", {"connectionType": "serial"}) == {
         "message": "COM port not specified."
@@ -80,12 +82,14 @@ def test_connectToDrone_serial() -> None:
     assert send_and_recieve(
         "connect_to_drone", {"connectionType": "serial", "port": SIM_PORT}
     ) == {"aircraft_type": 2}
+    assert droneStatus.drone is not None
     assert droneStatus.drone.port == SIM_PORT
 
     assert send_and_recieve(
         "connect_to_drone",
         {"connectionType": "network", "port": SIM_PORT, "baud": 9600},
     ) == {"aircraft_type": 2}
+    assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
     assert droneStatus.drone.master.baud == 9600
 
@@ -111,11 +115,12 @@ def test_connectToDrone_serial() -> None:
 
 # Only run network connection test if tests are being run with a network connection to the drone
 @pytest.mark.skipif(
-    not droneStatus.drone.port.startswith("tcp"),
+    droneStatus.drone is not None and not droneStatus.drone.port.startswith("tcp"),
     reason="Physical connection is being used. Only serial connection can be tested.",
 )
 def test_connectToDrone_network() -> None:
-    SIM_PORT = droneStatus.drone.port
+    global VALID_DRONE_PORT
+    SIM_PORT = VALID_DRONE_PORT
     # Failure on no port specified
     assert send_and_recieve("connect_to_drone", {"connectionType": "network"}) == {
         "message": "Connection address not specified."
@@ -133,12 +138,14 @@ def test_connectToDrone_network() -> None:
     assert send_and_recieve(
         "connect_to_drone", {"connectionType": "network", "port": SIM_PORT}
     ) == {"aircraft_type": 2}
+    assert droneStatus.drone is not None
     assert droneStatus.drone.port == SIM_PORT
 
     assert send_and_recieve(
         "connect_to_drone",
         {"connectionType": "network", "port": SIM_PORT, "baud": 9600},
     ) == {"aircraft_type": 2}
+    assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
 
     assert send_and_recieve(

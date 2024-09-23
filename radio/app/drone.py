@@ -8,6 +8,7 @@ from pathlib import Path
 from queue import Queue
 from secrets import token_hex
 from threading import Thread
+from serial.serialutil import SerialException
 from typing import Callable, Dict, List, Optional
 
 from pymavlink import mavutil
@@ -105,7 +106,14 @@ class Drone:
         except Exception as e:
             self.logger.exception(traceback.format_exc())
             self.master = None
-            self.connectionError = str(e)
+            if isinstance(e, SerialException):
+                self.logger.error(str(e))
+                self.connectionError = "Could not connect to drone, invalid port."
+            elif isinstance(e, ConnectionRefusedError):
+                self.logger.error(str(e))
+                self.connectionError = "Could not connect to drone, connection refused."
+            else:
+                self.connectionError = str(e)
             return
 
         initial_heartbeat = self.master.wait_heartbeat(timeout=5)

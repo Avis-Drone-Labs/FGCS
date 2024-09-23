@@ -26,6 +26,13 @@ Falcon Ground Control Station.
 2. Ensure yarn is installed, to do so run `npm install --global yarn` or follow [this guide](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
 3. Install `python 3.11.9` (this can be found [here](https://www.python.org/downloads/release/python-3119/)) then create a virtual environment for it (see [Creating a virtual environment](#creating-a-virtual-environment) for help)
 
+#### Creating a virtual environment
+
+Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
+
+> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and windows](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
+
+
 <details><summary>Running with bat file</summary>
 
 1. If this is your first time running, please create a venv (see [Creating a virtual environment](#creating-a-virtual-environment)) and then run `./run.bat /path/to/venv update`
@@ -51,15 +58,6 @@ Falcon Ground Control Station.
 3. Install requirements `pip install -r requirements.txt`
 4. `python app.py`
 
-</details>
-
-<details><summary>Creating a virtual environment</summary>
-
-#### Creating a virtual environment
-
-Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
-
-> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and windows](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
 </details>
 
 ---

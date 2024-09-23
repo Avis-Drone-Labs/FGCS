@@ -1,6 +1,7 @@
 import copy
 import os
 import time
+import serial
 import traceback
 from logging import Logger, getLogger
 from pathlib import Path
@@ -9,7 +10,6 @@ from secrets import token_hex
 from threading import Thread
 from typing import Callable, Dict, List, Optional
 
-import serial
 from pymavlink import mavutil
 
 from app.controllers.armController import ArmController
@@ -46,6 +46,21 @@ DATASTREAM_RATES_WIRELESS = {
     mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 1,
 }
 
+VALID_BAUDRATES = [
+    300,
+    1200,
+    4800,
+    9600,
+    19200,
+    13400,
+    38400,
+    57600,
+    75880,
+    115200,
+    230400,
+    250000,
+]
+
 
 class Drone:
     def __init__(
@@ -77,6 +92,14 @@ class Drone:
         self.connectionError: Optional[str] = None
 
         self.logger.debug("Trying to setup master")
+
+        if not self.checkBaudrateValid(baud):
+            self.connectionError = (
+                f"{baud} is an invalid baudrate. Valid baud rates are {VALID_BAUDRATES}"
+            )
+            self.master = None
+            return
+
         try:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
@@ -145,6 +168,13 @@ class Drone:
 
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+    def checkBaudrateValid(self, baud: int) -> bool:
+        return baud in VALID_BAUDRATES
+
+    @staticmethod
+    def getValidBaudrates() -> list[int]:
+        return VALID_BAUDRATES
 
     def cleanTempLogs(self) -> None:
         """
@@ -578,6 +608,7 @@ class Drone:
 
     def close(self) -> None:
         """Close the connection to the drone."""
+        self.logger.info(f"Cleaning up resources for drone at {self}")
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 

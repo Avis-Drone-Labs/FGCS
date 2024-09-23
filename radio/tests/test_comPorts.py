@@ -1,3 +1,4 @@
+import sys
 import pytest
 from serial.tools import list_ports
 from serial.tools.list_ports_common import ListPortInfo
@@ -29,11 +30,28 @@ def run_once_after_all_tests():
     droneStatus.drone.logger.info(f"Re-connected to drone on {VALID_DRONE_PORT}")
 
 
+def get_comport_name(port):
+    if sys.platform == "darwin":
+        port_name = port.name
+        if port_name[:3] == "cu.":
+            port_name = port_name[3:]
+
+        port_name = f"/dev/tty.{port_name}"
+    elif sys.platform in ["linux", "linux2"]:
+        port_name = f"/dev/{port.name}"
+    else:
+        port_name = port.name
+    return port_name
+
+
 def test_getComPort() -> None:
     # TODO: we should automate different OS environments for our unit tests maybe?
     assert (
         send_and_recieve("get_com_ports")
-        == [f"{port.name}: {port.description}" for port in list_ports.comports()]
+        == [
+            f"{get_comport_name(port)}: {port.description}"
+            for port in list_ports.comports()
+        ]
         == droneStatus.correct_ports
     )
 
@@ -106,16 +124,10 @@ def test_connectToDrone_network() -> None:
     # Failure on bad port specified
     assert send_and_recieve(
         "connect_to_drone", {"connectionType": "network", "port": "testport"}
-    ) == {
-        "message": "could not open port 'testport': FileNotFoundError(2, 'The system cannot "
-        + "find the file specified.', None, 2)"
-    }
+    ) == {"message": "Could not connect to drone, invalid port."}
     assert send_and_recieve(
         "connect_to_drone", {"connectionType": "network", "port": "tcp:127.0.0.1:5761"}
-    ) == {
-        "message": "[WinError 10061] No connection could be made because the target machine "
-        + "actively refused it"
-    }
+    ) == {"message": "Could not connect to drone, connection refused."}
 
     # Success on correct port
     assert send_and_recieve(

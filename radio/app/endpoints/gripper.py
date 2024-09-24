@@ -17,6 +17,8 @@ def gripperEnabled() -> None:
         return
 
     if not droneStatus.drone:
+        droneErrorCb("You must be connected to the drone to access the gripper.")
+        logger.warning("Attempted to get gripper state when drone is None.")
         return
 
     socketio.emit("gripper_enabled", droneStatus.drone.gripperController.enabled)
@@ -28,7 +30,7 @@ def setGripper(action: str) -> None:
     Sets the gripper value based off the input action, this only works on the config page.
 
     Args:
-      action: The action the gripper should be set to, either 'release' or 'grab'.
+        action: The action the gripper should be set to, either 'release' or 'grab'.
     """
     if droneStatus.state != "config":
         socketio.emit(
@@ -39,6 +41,8 @@ def setGripper(action: str) -> None:
         return
 
     if not droneStatus.drone:
+        droneErrorCb("You must be connected to the drone to access the gripper.")
+        logger.warning("Attempted to set gripper value when drone is None.")
         return
 
     if action not in ["release", "grab"]:

@@ -12,7 +12,7 @@ def run_once_after_all_tests():
     yield
     from . import socketio_client
 
-    socketio_client.emit("set_current_flight_mode", {"newFlightMode": 4})
+    socketio_client.emit("set_current_flight_mode", {"newFlightMode": 0})
     socketio_client.get_received()[0]
 
 

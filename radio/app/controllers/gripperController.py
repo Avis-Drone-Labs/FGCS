@@ -101,7 +101,7 @@ class GripperController:
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
-            self.is_listening = True
+            self.drone.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
                 return {
@@ -114,6 +114,7 @@ class GripperController:
                     "message": "Setting gripper failed",
                 }
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Setting gripper failed, serial exception",

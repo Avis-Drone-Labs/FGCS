@@ -3,6 +3,7 @@ from serial.serialutil import SerialException
 
 
 from app import droneStatus
+from . import socketio_client
 
 
 class FakeTCP:
@@ -30,6 +31,23 @@ class FakeTCP:
         if droneStatus.drone is not None:
             droneStatus.drone.master.recv_match = self.old_recv
 
+def send_and_recieve(endpoint: str, args: dict | None = None) -> dict:
+    """Sends a request to the socketio test client and returns the response
+
+    Parameters
+    ----------
+    endpoint : str
+        The endpoint to send the request to
+    args : dict | None, optional
+        The arguments to pass to the endpoint, by default None
+
+    Returns
+    -------
+    dict
+        The data recieved from the client
+    """
+    socketio_client.emit(endpoint, args) if args is not None else socketio_client.emit(endpoint)
+    return socketio_client.get_received()[0]['args'][0]
 
 @pytest.fixture
 def gps_failure():

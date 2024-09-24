@@ -52,8 +52,11 @@ def connectToDrone(data: ConnectionDataType) -> None:
         data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
     """
     if droneStatus.drone:
+        droneStatus.drone.logger.warning(
+            "Attempting a connection to drone when connection is already established."
+        )
         droneStatus.drone.close()
-        drone = None
+        droneStatus.drone = None
 
     connectionType = data.get("connectionType")
 
@@ -92,7 +95,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
 
     if drone.connectionError is not None:
         socketio.emit("connection_error", {"message": drone.connectionError})
-        drone = None
+        droneStatus.drone = None
         return
 
     # Set droneStatus drone to local drone

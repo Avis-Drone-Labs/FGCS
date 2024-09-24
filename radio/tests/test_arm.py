@@ -6,6 +6,16 @@ from flask_socketio.test_client import SocketIOTestClient
 from . import falcon_test
 from .helpers import FakeTCP
 
+@pytest.fixture(scope="module", autouse=True)
+def run_once_after_all_tests():
+    """
+    Saves the valid connection string then ensures that the drone connection is established again after the tests have run
+    """
+    from app import droneStatus
+    assert not droneStatus.drone.armed
+    yield
+    assert not droneStatus.drone.armed
+
 
 def assert_drone_armed(droneStatus, armed: bool) -> None:
     assert droneStatus.drone.armed == armed

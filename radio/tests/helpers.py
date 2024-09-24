@@ -48,7 +48,7 @@ class NoDrone:
         droneStatus.drone = self.oldDrone
 
 
-def send_and_recieve(endpoint: str, args: dict | None = None) -> dict:
+def send_and_recieve(endpoint: str, args: dict | None | str = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 
     Parameters

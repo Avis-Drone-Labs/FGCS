@@ -1,4 +1,4 @@
-import { BrowserWindow, app, ipcMain, shell, webFrame } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { glob } from 'glob'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -37,9 +37,10 @@ function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
 
-ipcMain.on('close', ()=> {closeWithBackend()})
-ipcMain.on('minimise', ()=> {getWindow()?.minimize()})
-ipcMain.on('maximise', ()=> {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
+ipcMain.handle("isMac", () => { return process.platform == "darwin" })
+ipcMain.on('close', () => {closeWithBackend()})
+ipcMain.on('minimise', () => {getWindow()?.minimize()})
+ipcMain.on('maximise', () => {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
 ipcMain.on("reload", () => {getWindow()?.reload()})
 ipcMain.on("force_reload", () => {getWindow()?.webContents.reloadIgnoringCache()})
 ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTools()})
@@ -96,7 +97,73 @@ function createWindow() {
     // Window starts always on top so it opens even if loading window is hid
     win?.setAlwaysOnTop(false)
   })
+
+  // Set Main Menu on Mac Only
+  if(process.platform === 'darwin'){
+    setMainMenu()
+  }
+
 }
+
+// For Mac only
+function setMainMenu() {
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: app.name,
+      submenu: [
+        {
+          label: 'About FGCS',
+          click: async () => {
+            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
+
+            const options: MessageBoxOptions = {
+              type: 'info',
+              buttons: [ 'OK','Report a bug',],
+              title: 'About FGCS',
+              message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
+              detail: 'For more information, visit our GitHub page.',
+              icon: icon,
+              defaultId: 1,
+            };
+
+          const response = await dialog.showMessageBox(options);
+            if (response.response === 1) {
+              shell.openExternal(packageInfo.bugs.url)
+            }
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Report a bug',
+          click: async () => {
+            await shell.openExternal(
+              packageInfo.bugs.url,
+            )
+          },
+        },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    }
+  ]
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+}
+
 
 function createLoadingWindow() {
   loadingWin = new BrowserWindow({

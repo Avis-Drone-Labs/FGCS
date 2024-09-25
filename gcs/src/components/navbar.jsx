@@ -187,7 +187,7 @@ export default function Navbar({ currentPage }) {
     if (type === 'serial') {
       socket.emit('connect_to_drone', {
         port: selectedComPort,
-        baud: Number(selectedBaudRate),
+        baud: selectedBaudRate,
         wireless: wireless,
         connectionType: 'serial',
       })

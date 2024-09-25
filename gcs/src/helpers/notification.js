@@ -10,7 +10,7 @@ export function showErrorNotification(message) {
     message: message,
     color: tailwindColors.red[600],
     style: {
-      backgroundColor: tailwindColors.falcongrey[120]
+      backgroundColor: tailwindColors.falcongrey[900]
     }
   })
 }
@@ -21,7 +21,7 @@ export function showSuccessNotification(message) {
     message: message,
     color: tailwindColors.green[600],
     style: {
-      backgroundColor: tailwindColors.falcongrey[120]
+      backgroundColor: tailwindColors.falcongrey[900]
     }
   })
 }
@@ -32,7 +32,7 @@ export function showNotification(title, message) {
     message: message,
     color: tailwindColors.blue[600],
     style: {
-      backgroundColor: tailwindColors.falcongrey[120]
+      backgroundColor: tailwindColors.falcongrey[900]
     }
   })
 }

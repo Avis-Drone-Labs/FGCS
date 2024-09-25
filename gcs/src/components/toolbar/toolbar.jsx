@@ -25,7 +25,7 @@ export default function Toolbar() {
 
   return (
     <>
-      <div className={`flex flex-row items-center justify-between bg-falcongrey-100 h-8 allow-drag ${isMac && "flex-row-reverse pr-2"}`}>
+      <div className={`flex flex-row items-center justify-between bg-falcongrey-800 h-8 allow-drag ${isMac && "flex-row-reverse pr-2"}`}>
         {/* Logo and Menu Items */}
         <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
           {/* Icon */}
@@ -48,12 +48,12 @@ export default function Toolbar() {
         {!isMac && 
           <div className="flex flex-row items-center h-full">
             {/* Minimise */}
-            <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {window.ipcRenderer.send('minimise', [])}} label="Minimise">
+            <div title="Minimise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-700" onClick={() => {window.ipcRenderer.send('minimise', [])}} label="Minimise">
               <MinimizeIcon className="stroke-slate-400" />
             </div>
 
             {/* Maximise */}
-            <div title="Maximise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-80" onClick={() => {window.ipcRenderer.send('maximise', [])}} label="Maximise">
+            <div title="Maximise" className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-700" onClick={() => {window.ipcRenderer.send('maximise', [])}} label="Maximise">
               <MaximizeIcon className="stroke-slate-400" />
             </div>
 

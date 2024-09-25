@@ -54,7 +54,7 @@ const customCanvasBackgroundColor = {
     const { ctx } = chart
     ctx.save()
     ctx.globalCompositeOperation = 'destination-over'
-    ctx.fillStyle = tailwindColors.falcongrey[100]
+    ctx.fillStyle = tailwindColors.falcongrey[800]
     ctx.fillRect(0, 0, chart.width, chart.height)
     ctx.restore()
   },

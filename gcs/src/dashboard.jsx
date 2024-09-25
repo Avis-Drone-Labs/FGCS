@@ -185,7 +185,7 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
-  var outsideVisibilityColor = outsideVisibility ? tailwindColors["falcongrey"]["120"] : tailwindColors["falcongrey"]["TRANSLUCENT"]
+  var outsideVisibilityColor = outsideVisibility ? tailwindColors.falcongrey["900"] : tailwindColors.falcongrey["TRANSLUCENT"]
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -859,7 +859,7 @@ export default function Dashboard() {
               <StatusMessages
                 messages={statustextMessages}
                 outsideVisibility={outsideVisibility}
-                className='h-full bg-falcongrey/80 max-w-1/2 object-fill text-xl'
+                className={`bg-[${tailwindColors.falcongrey['TRANSLUCENT']}] h-full lucent max-w-1/2 object-fill text-xl`}
               />
             </ResizableBox>
           </div>

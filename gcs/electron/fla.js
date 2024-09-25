@@ -281,7 +281,6 @@ export default function openFile(event, filePath) {
       }
     }
   } catch (err) {
-    console.error(err)
     return { success: false, error: err }
   }
 }

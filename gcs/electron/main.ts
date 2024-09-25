@@ -254,9 +254,8 @@ app.on('activate', () => {
 
 app.whenReady().then(() => {
   createLoadingWindow()
-  // Open file
+  // Open file and Get Recent Logs
   ipcMain.handle('fla:open-file', openFile)
-  // Get Recent Logs
   ipcMain.handle('fla:get-recent-logs', async () => {
     try {
       const recentLogs = getRecentFiles();

@@ -113,12 +113,6 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
-      if (result === null || !result.success) {
-        showErrorNotification('Error loading file, file not found.')
-        setLoadingFile(false)
-        return
-      }
-
       if (result.success) {
         // Load messages into states
         setLoadingFile(false)
@@ -232,14 +226,12 @@ export default function FLA() {
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-      } else {
+      } 
+      else if (result === null || !result.success) {
         // Error
-        showErrorNotification(result.error)
+        showErrorNotification('Error loading file, file not found. Reload.')
         setLoadingFile(false)
       }
-    }
-    if(file == null){
-      console.log('yes')
     }
   }
 

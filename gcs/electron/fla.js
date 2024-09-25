@@ -3,7 +3,7 @@ This file contains the logic for parsing different types of log files on the mai
 */
 
 import fs from 'fs'
-import createRecentLogsManager from './recentLogManager'
+import createRecentLogsManager from '../settings/recentLogManager'
 
 const recentLogsManager = createRecentLogsManager()
 

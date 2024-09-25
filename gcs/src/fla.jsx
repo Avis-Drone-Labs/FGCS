@@ -113,7 +113,7 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
-      if (result === null) {
+      if (result === null || !result.success) {
         showErrorNotification('Error loading file, file not found.')
         setLoadingFile(false)
         return
@@ -237,6 +237,9 @@ export default function FLA() {
         showErrorNotification(result.error)
         setLoadingFile(false)
       }
+    }
+    if(file == null){
+      console.log('yes')
     }
   }
 

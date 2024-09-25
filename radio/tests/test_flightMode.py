@@ -1,6 +1,19 @@
+import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
+
+
+@pytest.fixture(scope="module", autouse=True)
+def run_once_after_all_tests():
+    """
+    Sets the flight mode back to default after testing to ensure arm tests do not fail
+    """
+    yield
+    from . import socketio_client
+
+    socketio_client.emit("set_current_flight_mode", {"newFlightMode": 0})
+    socketio_client.get_received()[0]
 
 
 @falcon_test(pass_drone_status=True)

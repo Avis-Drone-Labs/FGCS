@@ -1,7 +1,8 @@
 from typing import Optional
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test, FakeTCP
+from . import falcon_test
+from .helpers import FakeTCP
 
 
 def assert_motorResult(

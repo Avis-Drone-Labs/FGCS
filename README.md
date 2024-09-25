@@ -20,42 +20,53 @@ Falcon Ground Control Station.
 
 <details><summary>Windows - Manually</summary>
 
-### Prerequsits
+### Prerequisites
 
 1. Ensure npm is installed, to do so follow [this guide](https://kinsta.com/blog/how-to-install-node-js/). Note: node version must be >= v20.10.0
 2. Ensure yarn is installed, to do so run `npm install --global yarn` or follow [this guide](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
-3. We are using `python 3.11.9` so make sure its installed before creating the venv. If you have multiple environments then please run `python3.11 -m venv venv`
-
-### Running Frontend Manually
-
-1. `cd gcs`
-2. `yarn` (to install dependencies)
-3. `yarn dev`
-
-### Running Backend Manually
-
-1. `cd radio`
-2. Make sure you're in a virtual environment (or create one via `python3 -m venv venv`) and all dependencies are installed using `pip install -r requirements.txt`
-
-> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and winodws](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
-
-4. `python app.py`
+3. Install `python 3.11.9` (this can be found [here](https://www.python.org/downloads/release/python-3119/)) then create a virtual environment for it (see [Creating a virtual environment](#creating-a-virtual-environment) for help)
 
 #### Creating a virtual environment
 
 Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
 
-### Running both simultaneously
+> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and windows](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
 
-> NOTE: You don't _need_ to run them at the same time with 1 command, you can run each one individually in separate terminals
 
-To run both the frontend and backend at the same time, you need to make sure all the requirements are installed for both yarn and Python. Then you can install a script globally using `npm install -g concurrently`. After activating your Python virtual environment, you can run `./run.bat` and this should start up both the frontend and backend in one terminal.
+<details><summary>Running with bat file</summary>
+
+1. If this is your first time running, please create a venv (see [Creating a virtual environment](#creating-a-virtual-environment)) and then run `./run.bat /path/to/venv update`
+2. After this you can run `./run.bat /path/to/venv` (without the word update after)
+
+</details>
+
+<details><summary>Running independently</summary>
+
+### Frontend
+
+1. `cd gcs`
+2. `yarn` (to install dependencies)
+3. Create a `.env` file and add these two entries:
+   - `VITE_MAPTILER_API_KEY=` + Your maptiler API key (can be generated [on maptilers website](https://cloud.maptiler.com/account/keys))
+   - `VITE_BACKEND_URL=http://127.0.0.1:4723` (if you want to change the port and host see: [Configuration > Changing Ports](#Configuration))
+5. `yarn dev`
+
+### Backend
+
+1. `cd radio`
+2. Make sure you're in a virtual environment (see [Creating a virtual environment](#creating-a-virtual-environment))
+3. Install requirements `pip install -r requirements.txt`
+4. `python app.py`
+
+</details>
+
+---
 
 </details>
 
 <details><summary>Mac/Linux</summary>
 
-We currently dont have instructions or releases for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them. Howerver, you can still run both the frontend and backend indivudally by following the windows version with slight alterations to the commands.
+We currently don't have instructions or releases for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them. However, you can still run both the frontend and backend individually by following the windows version with slight alterations to the commands.
 
 </details>
 
@@ -134,11 +145,11 @@ After compiling the backend, copy the `radio/dist/fgcs_backend.app` directory an
 
 ### Configuration
 
-<details><summary>Environmental Variables/Ports</summary>
+<details><summary>Changing Ports</summary>
 
-We have two `.env` files, one for the backend and one for the frontend. These are located in `radio/.env` and `gcs/.env` respectively. If you want to change the port that the backend runs on you will need to edit it in the backend **and** in the frontend. This is slightly annoying but is needed when packaging. 
+We have an `.env` file located in `gcs/.env`. To change the host and port for the backend, please edit `VITE_BACKEND_URL`.
 
-> Note: The default port is `4237`. 
+> Note: The default host and port is `http://127.0.0.1:4237`. 
 
 </details>
 

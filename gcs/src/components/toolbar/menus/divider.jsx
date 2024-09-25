@@ -12,6 +12,6 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Divider() {
   return (
-    <MantineDivider className="px-1 my-1" color={tailwindColors["falcongrey"]["90"]} size="sm"/>
+    <MantineDivider className="px-1 my-1" color={tailwindColors["falcongrey"][600]} size="sm"/>
   )
 }

@@ -215,10 +215,10 @@ export default function Navbar({ currentPage }) {
   }
 
   const linkClassName =
-    'text-md px-2 rounded-sm outline-none focus:text-falconred-60 hover:text-falconred-60 transition-colors delay-50'
+    'text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50'
 
   return (
-    <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-120'>
+    <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900'>
       <Modal
         opened={opened}
         onClose={() => {

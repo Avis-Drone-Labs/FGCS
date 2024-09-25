@@ -1,8 +1,7 @@
 import pytest
 from serial.serialutil import SerialException
 
-
-from app import droneStatus
+from app import droneStatus, logger
 from . import socketio_client
 
 
@@ -31,7 +30,25 @@ class FakeTCP:
         if droneStatus.drone is not None:
             droneStatus.drone.master.recv_match = self.old_recv
 
-def send_and_recieve(endpoint: str, args: dict | None = None) -> dict:
+
+class NoDrone:
+    """Context manager that sets the drone to `None` for the scope of the tests called within, then ensures the drone
+    is returned to its previous state
+    """
+
+    def __enter__(self) -> None:
+        if droneStatus.drone is None:
+            logger.warning(
+                "Calling NoDrone context manager when drone is already None."
+            )
+        self.oldDrone = droneStatus.drone
+        droneStatus.drone = None
+
+    def __exit__(self, type, value, traceback) -> None:
+        droneStatus.drone = self.oldDrone
+
+
+def send_and_recieve(endpoint: str, args: dict | None | str = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 
     Parameters
@@ -46,8 +63,11 @@ def send_and_recieve(endpoint: str, args: dict | None = None) -> dict:
     dict
         The data recieved from the client
     """
-    socketio_client.emit(endpoint, args) if args is not None else socketio_client.emit(endpoint)
-    return socketio_client.get_received()[0]['args'][0]
+    socketio_client.emit(endpoint, args) if args is not None else socketio_client.emit(
+        endpoint
+    )
+    return socketio_client.get_received()[0]["args"][0]
+
 
 @pytest.fixture
 def gps_failure():

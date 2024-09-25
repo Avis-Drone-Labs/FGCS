@@ -5,11 +5,13 @@
         "falcongrey",
         "falconred",
         "maplibre",
+        "maptilers",
         "mavutil",
         "pymavlink",
         "PYQT",
         "RSSI",
         "serialutil",
+        "SITL",
         "statustext"
     ]
 }

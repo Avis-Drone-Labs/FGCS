@@ -9,6 +9,9 @@ export function showErrorNotification(message) {
     title: 'Error',
     message: message,
     color: tailwindColors.red[600],
+    style: {
+      backgroundColor: tailwindColors.falcongrey[120]
+    }
   })
 }
 
@@ -17,6 +20,9 @@ export function showSuccessNotification(message) {
     title: 'Success',
     message: message,
     color: tailwindColors.green[600],
+    style: {
+      backgroundColor: tailwindColors.falcongrey[120]
+    }
   })
 }
 
@@ -25,5 +31,8 @@ export function showNotification(title, message) {
     title: title,
     message: message,
     color: tailwindColors.blue[600],
+    style: {
+      backgroundColor: tailwindColors.falcongrey[120]
+    }
   })
 }

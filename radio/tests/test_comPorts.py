@@ -94,15 +94,25 @@ def test_connectToDrone_serial() -> None:
     assert droneStatus.drone.master.baud == 9600
 
     assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "network", "port": SIM_PORT, "baud": -1}
+        "connect_to_drone", {"connectionType": "serial", "port": SIM_PORT, "baud": -1}
     ) == {
         "message": f"{-1} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
     }
     assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "network", "port": SIM_PORT, "baud": 110}
+        "connect_to_drone", {"connectionType": "serial", "port": SIM_PORT, "baud": 110}
     ) == {
         "message": f"{110} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
     }
+
+    # Invalid baud rate types
+    assert send_and_recieve(
+        "connect_to_drone",
+        {"connectionType": "serial", "port": SIM_PORT, "baud": 9600.0},
+    ) == {"message": "Expected integer value for baud, recieved float."}
+    assert send_and_recieve(
+        "connect_to_drone",
+        {"connectionType": "serial", "port": SIM_PORT, "baud": "9600"},
+    ) == {"message": "Expected integer value for baud, recieved str."}
 
     # Success on disconnect
     socketio_client.emit("disconnect_from_drone")
@@ -148,6 +158,7 @@ def test_connectToDrone_network() -> None:
     assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
 
+    # Invalid baud rate
     assert send_and_recieve(
         "connect_to_drone", {"connectionType": "network", "port": SIM_PORT, "baud": -1}
     ) == {
@@ -158,6 +169,16 @@ def test_connectToDrone_network() -> None:
     ) == {
         "message": f"{110} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
     }
+
+    # Invalid baud rate types
+    assert send_and_recieve(
+        "connect_to_drone",
+        {"connectionType": "network", "port": SIM_PORT, "baud": 9600.0},
+    ) == {"message": "Expected integer value for baud, recieved float."}
+    assert send_and_recieve(
+        "connect_to_drone",
+        {"connectionType": "network", "port": SIM_PORT, "baud": "9600"},
+    ) == {"message": "Expected integer value for baud, recieved str."}
 
     # Success on disconnect
     socketio_client.emit("disconnect_from_drone")

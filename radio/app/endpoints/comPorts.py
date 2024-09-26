@@ -85,6 +85,16 @@ def connectToDrone(data: ConnectionDataType) -> None:
     logger.debug("Trying to connect to drone")
     baud = data.get("baud", 57600)
 
+    if not isinstance(baud, int):
+        socketio.emit(
+            "connection_error",
+            {
+                "message": f"Expected integer value for baud, recieved {type(baud).__name__}."
+            },
+        )
+        droneStatus.drone = None
+        return
+
     drone = Drone(
         port,
         wireless=data.get("wireless", True),

@@ -87,7 +87,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
 
     if not isinstance(baud, int):
         socketio.emit(
-            "argument_error",
+            "connection_error",
             {
                 "message": f"Expected integer value for baud, recieved {type(baud).__name__}."
             },

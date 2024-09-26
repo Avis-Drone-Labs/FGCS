@@ -4,7 +4,7 @@
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  /* line-height: 1.5; */
   font-weight: 400;
 
   font-synthesis: none;
@@ -13,7 +13,11 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  @apply bg-falcongrey-100 text-neutral-50 h-full max-h-full min-h-screen;
+  @apply bg-falcongrey-800 text-neutral-50 h-full max-h-full min-h-screen;
+}
+
+:root[data-mantine-color-scheme="dark"] {
+  --mantine-color-body: #1C2021 !important;  /* Falcon grey default */
 }
 
 html,
@@ -39,6 +43,7 @@ body {
 /* width */
 ::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 
 /* Track */
@@ -48,7 +53,7 @@ body {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #91615b;
+  background: #d36565;
 }
 
 /* Handle on hover */

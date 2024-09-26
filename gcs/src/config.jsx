@@ -91,7 +91,7 @@ export default function Config() {
         <div className='w-full h-full'>
           <Tabs
             orientation='vertical'
-            color={tailwindColors.falconred[100]}
+            color={tailwindColors.falconred[700]}
             className='h-full'
             keepMounted={false}
             value={activeTab}

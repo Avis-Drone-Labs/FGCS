@@ -22,6 +22,7 @@ def rebootAutopilot() -> None:
     wireless = droneStatus.drone.wireless
     droneErrorCb = droneStatus.drone.droneErrorCb
     droneDisconnectCb = droneStatus.drone.droneDisconnectCb
+    droneConnectStatusCb = droneStatus.drone.droneConnectStatusCb
     socketio.emit("disconnected_from_drone")
     droneStatus.drone.rebootAutopilot()
 
@@ -51,6 +52,7 @@ def rebootAutopilot() -> None:
                 wireless=wireless,
                 droneErrorCb=droneErrorCb,
                 droneDisconnectCb=droneDisconnectCb,
+                droneConnectStatusCb=droneConnectStatusCb,
             )
             break
         except serial.serialutil.SerialException:

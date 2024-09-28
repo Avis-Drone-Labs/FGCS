@@ -128,6 +128,16 @@ def droneErrorCb(msg: Any) -> None:
     socketio.emit("drone_error", {"message": msg})
 
 
+def droneConnectStatusCb(msg: Any) -> None:
+    """
+    Send drone connect status updates to the socket
+
+    Args:
+        msg: The connect message to send to the client
+    """
+    socketio.emit("drone_connect_status", {"message": msg})
+
+
 def sendMessage(msg: Any) -> None:
     """
     Sends a message to the frontend with a timestamp

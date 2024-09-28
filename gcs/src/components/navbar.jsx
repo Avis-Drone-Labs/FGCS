@@ -99,6 +99,9 @@ export default function Navbar({ currentPage }) {
     defaultValue: '5760',
   })
 
+  const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
+    useState(null)
+
   function getComPorts() {
     if (!connectedToSocket) return
     socket.emit('get_com_ports')
@@ -171,6 +174,10 @@ export default function Navbar({ currentPage }) {
       setConnected(false)
     })
 
+    socket.on('drone_connect_status', (msg) => {
+      setDroneConnectionStatusMessage(msg.message)
+    })
+
     return () => {
       checkIfConnectedToSocket.stop()
       socket.off('is_connected_to_drone')
@@ -179,6 +186,7 @@ export default function Navbar({ currentPage }) {
       socket.off('disconnected_from_drone')
       socket.off('disconnect')
       socket.off('connection_error')
+      socket.off('drone_connect_status')
       setConnected(false)
     }
   }, [])
@@ -234,8 +242,8 @@ export default function Navbar({ currentPage }) {
         withCloseButton={false}
         styles={{
           content: {
-            borderRadius: "0.5rem"
-          }
+            borderRadius: '0.5rem',
+          },
         }}
       >
         <Tabs value={connectionType} onChange={setConnectionType}>
@@ -346,6 +354,10 @@ export default function Navbar({ currentPage }) {
             Connect
           </Button>
         </Group>
+
+        {connecting && droneConnectionStatusMessage !== null && (
+          <p className='text-center mt-4'>{droneConnectionStatusMessage}</p>
+        )}
       </Modal>
 
       <Link

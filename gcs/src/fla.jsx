@@ -633,7 +633,7 @@ export default function FLA() {
                 <Tooltip label={file.path}>
                   <p className='mx-4 my-2'>{file.name}</p>
                 </Tooltip>
-                <p>{aircraftType}</p>
+                <p className='mx-4 my-2'>Aircraft Type: {aircraftType}</p>
               </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>

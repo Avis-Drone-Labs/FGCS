@@ -187,7 +187,7 @@ export default function Navbar({ currentPage }) {
     if (type === 'serial') {
       socket.emit('connect_to_drone', {
         port: selectedComPort,
-        baud: selectedBaudRate,
+        baud: parseInt(selectedBaudRate),
         wireless: wireless,
         connectionType: 'serial',
       })
@@ -215,10 +215,10 @@ export default function Navbar({ currentPage }) {
   }
 
   const linkClassName =
-    'text-md hover:text-falconred-60 transition-colors delay-50'
+    'text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50'
 
   return (
-    <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
+    <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900'>
       <Modal
         opened={opened}
         onClose={() => {
@@ -232,6 +232,11 @@ export default function Navbar({ currentPage }) {
           blur: 3,
         }}
         withCloseButton={false}
+        styles={{
+          content: {
+            borderRadius: "0.5rem"
+          }
+        }}
       >
         <Tabs value={connectionType} onChange={setConnectionType}>
           <Tabs.List grow>

@@ -115,12 +115,6 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
-      if (result === null) {
-        showErrorNotification('Error loading file, file not found.')
-        setLoadingFile(false)
-        return
-      }
-
       if (result.success) {
         // Load messages into states
         setLoadingFile(false)
@@ -236,9 +230,10 @@ export default function FLA() {
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-      } else {
+      } 
+      else if (result === null || !result.success) {
         // Error
-        showErrorNotification(result.error)
+        showErrorNotification('Error loading file, file not found. Reload.')
         setLoadingFile(false)
       }
     }
@@ -333,6 +328,17 @@ export default function FLA() {
     setMessageFilters(newFilters)
   }
 
+  // Get a list of the recent FGCS telemetry logs
+  async function getFgcsLogs() {
+    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+  }
+
+  // Clear the list of recent FGCS telemetry logs
+  async function clearFgcsLogs() {
+    await window.ipcRenderer.clearRecentLogs()
+    getFgcsLogs()
+  }
+
   // Close file
   function closeLogFile() {
     setFile(null)
@@ -345,6 +351,7 @@ export default function FLA() {
     setMeanValues(null)
     setLogEvents(null)
     setLogType('dataflash')
+    getFgcsLogs()
   }
 
   // Set IPC renderer for log messages
@@ -352,12 +359,6 @@ export default function FLA() {
     window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
       setLoadingFileProgress(message.percent)
     })
-
-    // Get a list of the recent FGCS telemetry logs
-    async function getFgcsLogs() {
-      setRecentFgcsLogs(await window.ipcRenderer.getFgcsLogs())
-    }
-
     getFgcsLogs()
 
     return () => {
@@ -508,15 +509,24 @@ export default function FLA() {
         // Open flight logs section
         <div className='flex flex-col items-center justify-center h-full mx-auto'>
           <div className='flex flex-row gap-8 items-center justify-center'>
-            <FileButton
-              color={tailwindColors.blue[600]}
-              variant='filled'
-              onChange={setFile}
-              accept={['.log', '.ftlog']}
-              loading={loadingFile}
-            >
-              {(props) => <Button {...props}>Analyse a log</Button>}
-            </FileButton>
+            <div className='flex flex-col gap-4'>
+              <FileButton
+                color={tailwindColors.blue[600]}
+                variant='filled'
+                onChange={setFile}
+                accept={['.log', '.ftlog']}
+                loading={loadingFile}
+              >
+                {(props) => <Button {...props}>Analyse a log</Button>}
+              </FileButton>
+              <Button
+                color={tailwindColors.red[600]}
+                variant='filled'
+                onClick={clearFgcsLogs}
+              >
+                Clear Logs
+              </Button>
+            </div>
             <Divider size='sm' orientation='vertical' />
             <div className='relative'>
               <LoadingOverlay
@@ -529,13 +539,13 @@ export default function FLA() {
                     recentFgcsLogs.map((log, idx) => (
                       <div
                         key={idx}
-                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-80 hover:rounded-sm w-80'
+                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
                         onClick={() => setFile(log)}
                       >
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
                           <p className='text-gray-400 text-sm'>
-                            {moment(log.name, 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                            {moment(log.timestamp.toISOString(), 'YYYY-MM-DD_HH-mm-ss').fromNow()}
                           </p>
                           <p className='text-gray-400 text-sm'>
                             {Math.round(log.size / 1024)}KB
@@ -559,7 +569,7 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className='flex gap-4 h-3/4'>
+          <div className='flex gap-4 h-full overflow-x-auto py-4 px-2'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
               <div className=''>

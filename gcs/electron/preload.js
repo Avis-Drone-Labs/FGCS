@@ -1,10 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import path from 'node:path';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   ...withPrototype(ipcRenderer),
   loadFile: (data) => ipcRenderer.invoke('fla:open-file', data),
-  getFgcsLogs: () => ipcRenderer.invoke('fla:get-fgcs-logs'),
+  getRecentLogs: () => ipcRenderer.invoke('fla:get-recent-logs'),
+  clearRecentLogs: () => ipcRenderer.invoke('fla:clear-recent-logs'),
   getNodeEnv: () => ipcRenderer.invoke('app:get-node-env'),
   getVersion: () => ipcRenderer.invoke('app:get-version'),
 })

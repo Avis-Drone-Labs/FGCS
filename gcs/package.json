@@ -6,7 +6,7 @@
     "name": "Avis-Drone-Labs"
   },
   "private": true,
-  "version": "0.1.6-alpha",
+  "version": "0.1.7-alpha",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
   "bugs": {
@@ -25,6 +25,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "2.1.4",
     "@mantine/core": "^7.3.2",
     "@mantine/hooks": "^7.3.2",
     "@mantine/notifications": "^7.4.0",
@@ -52,6 +53,7 @@
     "react-resizable-panels": "^2.0.16",
     "react-router-dom": "^6.21.0",
     "react-virtualized-auto-sizer": "^1.0.20",
+    "react-webcam": "^7.2.0",
     "react-window": "^1.8.10",
     "semver": "^7.6.2",
     "socket.io-client": "^4.7.2",

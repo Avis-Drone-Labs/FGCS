@@ -104,7 +104,9 @@ export const fgcsOptions = {
       ...defaultOptions.scales.x,
       type: 'time',
       time: {
-        unit: 'second',
+        // removed to fix issue #342
+        // correct units are still displayed on the graph
+        //unit: 'second',
         displayFormats: {
           second: 'HH:mm:ss',
         },

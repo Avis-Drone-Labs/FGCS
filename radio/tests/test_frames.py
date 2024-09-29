@@ -1,6 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
+from .helpers import NoDrone
 
 
 @falcon_test(pass_drone_status=True)
@@ -26,3 +27,19 @@ def test_getFrameDetails_correctState(socketio_client: SocketIOTestClient, drone
         "frame_type": 0,
         "frame_class": 1,
     }
+
+
+@falcon_test(pass_drone_status=True)
+def test_getFrameDetails_noDroneConnection(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.motor_test"
+
+    with NoDrone():
+        socketio_client.emit("get_frame_config")
+        socketio_result = socketio_client.get_received()[0]
+
+        assert socketio_result["name"] == "connection_error"  # Correct name emitted
+        assert socketio_result["args"][0] == {
+            "message": "Must be connected to the drone to get frame config."
+        }

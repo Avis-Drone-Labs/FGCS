@@ -42,10 +42,11 @@ def test_setMultipleParams_wrongState(socketio_client: SocketIOTestClient, drone
         socketio_client, "set_multiple_params", []
     )
 
-    assert socketio_result["name"] == "params_error"
-    assert socketio_result["args"][0] == {
-        "message": "You must be on the params screen to save parameters."
-    }
+    assert_test_params(
+        socketio_result,
+        {"message": "You must be on the params screen to save parameters."},
+        "params_error",
+    )
 
 
 @falcon_test(pass_drone_status=True)
@@ -77,7 +78,7 @@ def test_setMultipleParams_invalidData(
     assert socketio_result["name"] == "params_error"
     assert socketio_result["args"][0] == {"message": "Failed to save parameters."}
 
-    # Param Value too big to fit into param_type
+    # Param Value too big to fit into param_type data type structure
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
@@ -132,7 +133,7 @@ def test_setMultipleParams_invalidData(
         socketio_result, {"message": "Failed to save parameters."}, "params_error"
     )
 
-    # Param Value too small to fit into param_type
+    # Param Value too small to fit into param_type data type structure
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
@@ -199,8 +200,9 @@ def test_setMultipleParams_paramSetTimeout(
             "set_multiple_params",
             [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
         )
-        assert socketio_result["name"] == "params_error"
-        assert socketio_result["args"][0] == {"message": "Failed to save parameters."}
+        assert_test_params(
+            socketio_result, {"message": "Failed to save parameters."}, "params_error"
+        )
 
 
 @falcon_test(pass_drone_status=True)
@@ -214,8 +216,11 @@ def test_setMultipleParams_sucessfullySet_paramsState(
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
     )
 
-    assert socketio_result["name"] == "param_set_success"
-    assert socketio_result["args"][0] == {"message": "Parameters saved successfully."}
+    assert_test_params(
+        socketio_result,
+        {"message": "Parameters saved successfully."},
+        "param_set_success",
+    )
 
 
 @falcon_test(pass_drone_status=True)
@@ -229,5 +234,8 @@ def test_setMultipleParams_sucessfullySet_configState(
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
     )
 
-    assert socketio_result["name"] == "param_set_success"
-    assert socketio_result["args"][0] == {"message": "Parameters saved successfully."}
+    assert_test_params(
+        socketio_result,
+        {"message": "Parameters saved successfully."},
+        "param_set_success",
+    )

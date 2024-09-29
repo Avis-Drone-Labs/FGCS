@@ -50,7 +50,7 @@ class NoDrone:
 
 class ParamSetTimeout:
     """Context manager that replaces the mavlink recv_match function in drone.master with a function that return a None value
-    to cause the setmultipleparams functionto timeout
+    to cause the setmultipleparams function to timeout
     """
 
     @staticmethod

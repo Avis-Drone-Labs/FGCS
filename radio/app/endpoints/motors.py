@@ -2,6 +2,8 @@ from app import socketio
 from app.customTypes import MotorTestAllValues, MotorTestThrottleDurationAndNumber
 import app.droneStatus as droneStatus
 
+from app.utils import notConnectedError
+
 
 @socketio.on("test_one_motor")
 def testOneMotor(data: MotorTestAllValues) -> None:
@@ -9,10 +11,10 @@ def testOneMotor(data: MotorTestAllValues) -> None:
     Tests one motor
 
     Args:
-      data: The data passed from the frontend, contains all motor tests values (motor, throttle, duration)
+        data: The data passed from the frontend, contains all motor tests values (motor, throttle, duration)
     """
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="test one motor")
 
     result = droneStatus.drone.motorTestController.testOneMotor(data)
     socketio.emit(
@@ -27,10 +29,10 @@ def testMotorSequence(data: MotorTestThrottleDurationAndNumber) -> None:
     Tests motors in sequence
 
     Args:
-      data: The data passed from the frontend, contains throttle and duration.
+        data: The data passed from the frontend, contains throttle and duration.
     """
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="test motor sequence")
 
     result = droneStatus.drone.motorTestController.testMotorSequence(data)
     socketio.emit("motor_test_result", result)
@@ -42,10 +44,10 @@ def testAllMotors(data: MotorTestThrottleDurationAndNumber) -> None:
     Tests all motors
 
     Args:
-      data: The data passed from the frontend, contains which throttle and duration.
+        data: The data passed from the frontend, contains which throttle and duration.
     """
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="test all motors")
 
     result = droneStatus.drone.motorTestController.testAllMotors(data)
     socketio.emit("motor_test_result", result)

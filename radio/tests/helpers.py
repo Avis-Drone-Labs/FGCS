@@ -50,7 +50,7 @@ class NoDrone:
 
 class ParamSetTimeout:
     """Context manager that replaces the mavlink recv_match function in drone.master with a function that return a None value
-    to cause the setmultipleparams function to timeout
+    to cause the set multipleparams function to timeout
     """
 
     @staticmethod
@@ -67,6 +67,34 @@ class ParamSetTimeout:
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
             droneStatus.drone.master.recv_match = self.old_recv
+
+
+class ParamRefreshTimeout:
+    """Context manager that replaces the mavlink recv_msg function in drone.master with a function that returns a False value
+    and sets current_param_index to -1 to cause the refresh_params function to timeout with no params received from the drone
+    """
+
+    @staticmethod
+    def recv_msg_false_value(
+        condition=None, Type=None, blocking=False, timeout=None
+    ) -> None:
+        return False
+
+    def __enter__(self) -> None:
+        if droneStatus.drone is not None:
+            self.old_recv_msg = droneStatus.drone.master.recv_msg
+            droneStatus.drone.master.recv_msg = ParamRefreshTimeout.recv_msg_false_value
+            self.old_param_index = (
+                droneStatus.drone.paramsController.current_param_index
+            )
+            droneStatus.drone.paramsController.current_param_index = -1
+
+    def __exit__(self, type, value, traceback) -> None:
+        if droneStatus.drone is not None:
+            droneStatus.drone.master.recv_msg = self.old_recv_msg
+            droneStatus.drone.paramsController.current_param_index = (
+                self.old_param_index
+            )
 
 
 def send_and_recieve(endpoint: str, args: dict | None | str = None) -> dict:

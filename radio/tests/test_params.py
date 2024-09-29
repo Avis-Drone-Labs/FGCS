@@ -1,7 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import ParamSetTimeout
+from .helpers import ParamSetTimeout, ParamRefreshTimeout
 from typing import List, Any
 
 
@@ -37,7 +37,9 @@ def assert_test_params(data: dict, message: dict, name: str) -> None:
 
 
 @falcon_test(pass_drone_status=True)
-def test_setMultipleParams_wrongState(socketio_client: SocketIOTestClient, droneStatus):
+def test_setMultipleParams_wrongState(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
     droneStatus.state = "dashboard"
     socketio_result = send_and_receive_params(
         socketio_client, "set_multiple_params", []
@@ -53,7 +55,7 @@ def test_setMultipleParams_wrongState(socketio_client: SocketIOTestClient, drone
 @falcon_test(pass_drone_status=True)
 def test_setMultipleParams_missingData(
     socketio_client: SocketIOTestClient, droneStatus
-):
+) -> None:
     droneStatus.state = "params"
     socketio_result = send_and_receive_params(
         socketio_client, "set_multiple_params", []
@@ -67,7 +69,7 @@ def test_setMultipleParams_missingData(
 @falcon_test(pass_drone_status=True)
 def test_setMultipleParams_invalidData(
     socketio_client: SocketIOTestClient, droneStatus
-):
+) -> None:
     # Invalid Param Type
     droneStatus.state = "params"
     socketio_result = send_and_receive_params(
@@ -193,7 +195,7 @@ def test_setMultipleParams_invalidData(
 @falcon_test(pass_drone_status=True)
 def test_setMultipleParams_paramSetTimeout(
     socketio_client: SocketIOTestClient, droneStatus
-):
+) -> None:
     droneStatus.state = "params"
     with ParamSetTimeout():
         socketio_result = send_and_receive_params(
@@ -209,7 +211,7 @@ def test_setMultipleParams_paramSetTimeout(
 @falcon_test(pass_drone_status=True)
 def test_setMultipleParams_sucessfullySet_paramsState(
     socketio_client: SocketIOTestClient, droneStatus
-):
+) -> None:
     droneStatus.state = "params"
     socketio_result = send_and_receive_params(
         socketio_client,
@@ -227,7 +229,7 @@ def test_setMultipleParams_sucessfullySet_paramsState(
 @falcon_test(pass_drone_status=True)
 def test_setMultipleParams_sucessfullySet_configState(
     socketio_client: SocketIOTestClient, droneStatus
-):
+) -> None:
     droneStatus.state = "config"
     socketio_result = send_and_receive_params(
         socketio_client,
@@ -240,3 +242,57 @@ def test_setMultipleParams_sucessfullySet_configState(
         {"message": "Parameters saved successfully."},
         "param_set_success",
     )
+
+
+@falcon_test(pass_drone_status=True)
+def test_refreshParams_wrongState(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "dashboard"
+    socketio_result = send_and_receive_params(socketio_client, "refresh_params")
+    assert_test_params(
+        socketio_result,
+        {"message": "You must be on the params screen to refresh the parameters."},
+        "params_error",
+    )
+
+
+@falcon_test(pass_drone_status=True)
+def test_refreshParams_timeout(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "params"
+    with ParamRefreshTimeout():
+        socketio_result = send_and_receive_params(socketio_client, "refresh_params")
+        assert (
+            socketio_result["name"] == "params_error"
+            or socketio_result["name"] == "params"
+        )
+        if socketio_result["name"] == "params_error":
+            assert socketio_result["args"][0] == {
+                "message": "Parameter request timed out after 3 minutes."
+            }
+
+        if socketio_result["name"] == "params":
+            assert (
+                socketio_result["args"][0] == droneStatus.drone.paramsController.params
+            )
+
+
+@falcon_test(pass_drone_status=True)
+def test_refreshParams_sucessfullyRefreshed(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "params"
+    socketio_result = send_and_receive_params(socketio_client, "refresh_params")
+    assert (
+        socketio_result["name"] == "param_request_update"
+        or socketio_result["name"] == "params"
+    )
+    if socketio_result["name"] == "param_request_update":
+        assert len(socketio_result["args"][0]) == 2
+        assert socketio_result["args"][0]["total_number_of_params"] == 1400
+        assert socketio_result["args"][0]["current_param_index"] <= 1400
+
+    if socketio_result["name"] == "params":
+        assert socketio_result["args"][0] == droneStatus.drone.paramsController.params

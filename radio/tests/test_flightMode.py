@@ -1,3 +1,4 @@
+import time
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
@@ -10,6 +11,13 @@ def run_once_after_all_tests():
     """
     Sets the flight mode back to default after testing to ensure arm tests do not fail
     """
+    from app import droneStatus
+
+    droneStatus.drone.paramsController.getAllParams()
+    time.sleep(1)
+    while droneStatus.drone.paramsController.is_requesting_params:
+        pass
+
     yield
     from . import socketio_client
 

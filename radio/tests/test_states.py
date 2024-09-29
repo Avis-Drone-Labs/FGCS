@@ -1,8 +1,12 @@
 from flask_socketio import SocketIOTestClient
+from pymavlink import mavutil
 
 from . import falcon_test
 from .helpers import send_and_recieve, NoDrone
 
+def stream_is_active(msg):
+    #TODO: THIS DOESNT WORK YAYYYYYYYYYYYYY
+    return True
 
 @falcon_test(pass_drone_status=True)
 def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
@@ -20,6 +24,29 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Success on changing state to dashboard
     socketio_client.emit("set_state", {"state": "dashboard"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.messageListeners) == 2
+    assert len(droneStatus.drone.message_listeners) == 12
 
-    # Success on changing state to
+    droneStatus.drone.message_listeners = {}
+
+    socketio_client.emit("set_state", {"state": "graphs"})
+    assert len(socketio_client.get_received()) == 0
+    assert len(droneStatus.drone.message_listeners) == 3
+
+    droneStatus.drone.message_listeners = {}
+
+    socketio_client.emit("set_state", {"state": "config.flight_modes"})
+    assert len(socketio_client.get_received()) == 0
+    assert len(droneStatus.drone.message_listeners) == 2
+
+    droneStatus.drone.message_listeners = {}
+
+    socketio_client.emit("set_state", {"state": "config.rc_calibration"})
+    assert len(socketio_client.get_received()) == 0
+    assert len(droneStatus.drone.message_listeners) == 0
+
+    droneStatus.drone.message_listeners = {}
+
+    socketio_client.emit("set_state", {"state": "params"})
+    assert len(socketio_client.get_received()) == 0
+    assert len(droneStatus.drone.message_listeners) == 0
+

@@ -93,6 +93,8 @@ def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> No
     droneStatus.drone.paramsController.setParam(
         "GRIP_ENABLE", 0, mavutil.mavlink.MAV_PARAM_TYPE_REAL32
     )
+    # Allow time for gripper to be updated
+    time.sleep(1.5)
 
     assert send_and_recieve("gripper_enabled") is False
     assert send_and_recieve("set_gripper", "release") == {

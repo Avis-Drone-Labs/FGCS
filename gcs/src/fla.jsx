@@ -18,6 +18,7 @@ import {
   ScrollArea,
   Tooltip,
 } from '@mantine/core'
+import { useLocalStorage } from '@mantine/hooks'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -36,6 +37,7 @@ import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
   showSuccessNotification,
+  showNotification
 } from './helpers/notification.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -85,10 +87,17 @@ const colorInputSwatch = [
 ]
 
 export default function FLA() {
+  // Retrieve saved session from local storage
+  const [savedSession, setsavedSession] = useLocalStorage({
+    key: 'savedSession',
+    defaultValue: {},
+    getInitialValueInEffect: false,
+  })
+
   // States in react frontend
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
 
-  const [file, setFile] = useState(null)
+  const [file, setFile] = useState(savedSession.file || null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
 
@@ -100,17 +109,40 @@ export default function FLA() {
   const [flightModeMessages, setFlightModeMessages] = useState([])
   const [logType, setLogType] = useState('dastaflash')
 
-  const [messageFilters, setMessageFilters] = useState(null)
+  const [messageFilters, setMessageFilters] = useState(
+    savedSession.messageFilters || null,
+  )
   const [messageMeans, setMessageMeans] = useState({})
 
-  const [chartData, setChartData] = useState({ datasets: [] })
-  const [customColors, setCustomColors] = useState({})
-  const [colorIndex, setColorIndex] = useState(0)
+  const [chartData, setChartData] = useState(
+    savedSession.chartData || { datasets: [] },
+  )
+  const [customColors, setCustomColors] = useState(
+    savedSession.customColors || {},
+  )
+  const [colorIndex, setColorIndex] = useState(savedSession.colorIndex || 0)
+
+  // useEffect to save needed states in local storage
+  useEffect(() => {
+    setsavedSession({
+      file,
+      messageFilters,
+      chartData,
+      customColors,
+      colorIndex,
+    })
+  }, [chartData])
 
   // Load file, if set, and show the graph
   async function loadFile() {
     if (file != null) {
       setLoadingFile(true)
+
+      // Let user know that previous session is being restored
+      if (savedSession.file != null){
+        showNotification('Restoring Session...')
+      }
+
       const result = await window.ipcRenderer.loadFile(file.path)
 
       if (result.success) {
@@ -210,8 +242,10 @@ export default function FLA() {
             acc[c] = logMessageFilterDefaultState[c]
             return acc
           }, {})
-
-        setMessageFilters(sortedLogMessageFilterState)
+        
+        if (messageFilters === null) {
+          setMessageFilters(sortedLogMessageFilterState)
+        }
         setMeanValues(loadedLogMessages)
 
         // Set event logs for the event lines on graph
@@ -226,8 +260,7 @@ export default function FLA() {
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-      } 
-      else if (result === null || !result.success) {
+      } else if (result === null || !result.success) {
         // Error
         showErrorNotification('Error loading file, file not found. Reload.')
         setLoadingFile(false)
@@ -348,6 +381,7 @@ export default function FLA() {
     setLogEvents(null)
     setLogType('dataflash')
     getFgcsLogs()
+    setsavedSession({})
   }
 
   // Set IPC renderer for log messages
@@ -471,7 +505,7 @@ export default function FLA() {
 
   // Update datasets based on the message filters constantly
   useEffect(() => {
-    if (!messageFilters) return
+    if (!messageFilters || !logMessages) return
 
     const datasets = []
     Object.keys(messageFilters).map((categoryName) => {
@@ -541,7 +575,10 @@ export default function FLA() {
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
                           <p className='text-gray-400 text-sm'>
-                            {moment(log.timestamp.toISOString(), 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                            {moment(
+                              log.timestamp.toISOString(),
+                              'YYYY-MM-DD_HH-mm-ss',
+                            ).fromNow()}
                           </p>
                           <p className='text-gray-400 text-sm'>
                             {Math.round(log.size / 1024)}KB

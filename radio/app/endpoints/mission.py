@@ -1,5 +1,6 @@
 import app.droneStatus as droneStatus
 from app import logger, socketio
+from app.utils import notConnectedError
 
 
 @socketio.on("get_current_mission")
@@ -18,7 +19,7 @@ def getCurrentMission() -> None:
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="get current mission")
 
     mission_items = [
         item.to_dict() for item in droneStatus.drone.missionController.mission_items

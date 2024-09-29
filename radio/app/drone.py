@@ -1,17 +1,17 @@
 import copy
 import os
 import time
-import serial
 import traceback
 from logging import Logger, getLogger
 from pathlib import Path
 from queue import Queue
 from secrets import token_hex
 from threading import Thread
-from serial.serialutil import SerialException
 from typing import Callable, Dict, List, Optional
 
+import serial
 from pymavlink import mavutil
+from serial.serialutil import SerialException
 
 from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
@@ -72,6 +72,7 @@ class Drone:
         logger: Logger = getLogger("fgcs"),
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
+        droneConnectStatusCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -82,6 +83,7 @@ class Drone:
             wireless (bool, optional): Whether the connection is wireless. Defaults to False.
             droneErrorCb (Optional[Callable], optional): Callback function for drone errors. Defaults to None.
             droneDisconnectCb (Optional[Callable], optional): Callback function for drone disconnection. Defaults to None.
+            droneConnectStatusCb (Optional[Callable], optional): Callback function for drone connection providing an update as the drone connects. Defaults to None.
         """
         self.port = port
         self.baud = baud
@@ -89,6 +91,7 @@ class Drone:
         self.logger = logger
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
+        self.droneConnectStatusCb = droneConnectStatusCb
 
         self.connectionError: Optional[str] = None
 
@@ -101,6 +104,7 @@ class Drone:
             return
 
         try:
+            self.sendConnectionStatusUpdate("Connecting to drone")
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.logger.exception(traceback.format_exc())
@@ -122,6 +126,8 @@ class Drone:
             self.master = None
             self.connectionError = "Could not connect to the drone."
             return
+
+        self.sendConnectionStatusUpdate("Received heartbeat")
 
         self.aircraft_type = initial_heartbeat.type
         if self.aircraft_type not in (1, 2):
@@ -150,6 +156,8 @@ class Drone:
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
+        self.sendConnectionStatusUpdate("Cleaned temp logs")
+
         self.is_active = True
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
@@ -157,12 +165,25 @@ class Drone:
         self.armed = False
 
         self.paramsController = ParamsController(self)
+        self.sendConnectionStatusUpdate("Setup parameters controller")
+
         self.armController = ArmController(self)
+        self.sendConnectionStatusUpdate("Setup arm controller")
+
         self.flightModesController = FlightModesController(self)
+        self.sendConnectionStatusUpdate("Setup flight modes controller")
+
         self.motorTestController = MotorTestController(self)
+        self.sendConnectionStatusUpdate("Setup motor controller")
+
         self.gripperController = GripperController(self)
+        self.sendConnectionStatusUpdate("Setup gripper controller")
+
         self.missionController = MissionController(self)
+        self.sendConnectionStatusUpdate("Setup mission controller")
+
         self.frameController = FrameController(self)
+        self.sendConnectionStatusUpdate("Setup frame controller")
 
         self.stopAllDataStreams()
 
@@ -175,6 +196,10 @@ class Drone:
 
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+    def sendConnectionStatusUpdate(self, msg):
+        if self.droneConnectStatusCb:
+            self.droneConnectStatusCb(msg)
 
     @staticmethod
     def checkBaudrateValid(baud: int) -> bool:

@@ -9,6 +9,7 @@ import '@mantine/notifications/styles.css'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { Provider } from 'react-redux'
 
 // Mantine imports
 import { MantineProvider } from '@mantine/core'
@@ -20,6 +21,9 @@ import Dashboard from './dashboard.jsx'
 import FLA from './fla.jsx'
 import Graphs from './graphs.jsx'
 import Params from './params.jsx'
+
+// Provider Imports
+import {store} from './redux/store'
 
 // Component imports
 import { CustomMantineTheme } from './components/customMantineTheme.jsx'
@@ -38,7 +42,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path='/graphs' element={<Graphs />} />
           <Route path='/params' element={<Params />} />
           <Route path='/config' element={<Config />} />
-          <Route path='/fla' element={<FLA />} />
+          <Route
+            path='/fla'
+            element={
+              <Provider store={store}>
+                <FLA />
+              </Provider>
+            }
+          />
         </Routes>
       </SingleRunWrapper>
     </HashRouter>

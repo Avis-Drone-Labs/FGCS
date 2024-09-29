@@ -9,6 +9,7 @@ const dataflashPresetCategories = [
       {
         name: 'Ground Speed vs Air Speed',
         filters: { GPS: ['Spd'], ARSP: ['Airspeed'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
     ],
   },
@@ -18,14 +19,17 @@ const dataflashPresetCategories = [
       {
         name: 'Desired Roll vs Achieved Roll',
         filters: { ATT: ['DesRoll', 'Roll'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
       {
         name: 'Desired Pitch vs Achieved Pitch',
         filters: { ATT: ['DesPitch', 'Pitch'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
       {
         name: 'Desired Yaw vs Achieved Yaw',
         filters: { ATT: ['DesYaw', 'Yaw'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
     ],
   },
@@ -35,6 +39,7 @@ const dataflashPresetCategories = [
       {
         name: 'Vibration XYZ',
         filters: { VIBE: ['VibeX', 'VibeY', 'VibeZ'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
     ],
   },
@@ -44,6 +49,7 @@ const dataflashPresetCategories = [
       {
         name: 'Battery Voltage vs Current',
         filters: { BATT: ['Volt', 'Curr'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
     ],
   },
@@ -53,18 +59,42 @@ const dataflashPresetCategories = [
       {
         name: 'Desired Alt vs Achieved Alt vs Barometer Alt',
         filters: { CTUN: ['DAlt', 'Alt', 'BAlt'] },
+        aircraftType: ['copter', 'plane'],
       },
       {
         name: 'Desired Rangefinder Alt vs Achieved Rangefinder Alt vs Achieved Alt',
         filters: { CTUN: ['DSAlt', 'SAlt', 'Alt'] },
+        aircraftType: ['copter', 'plane'],
       },
       {
         name: 'Desired Climb Rate vs Achieved Climb Rate',
         filters: { CTUN: ['DCRt', 'CRt'] },
+        aircraftType: ['copter', 'plane'],
       },
       {
         name: 'Throttle Input vs Throttle Output',
         filters: { CTUN: ['ThI', 'ThO'] },
+        aircraftType: ['copter', 'plane'],
+      },
+      {
+        name: 'Desired Alt vs Achieved Alt vs Barometer Alt',
+        filters: { QTUN: ['DAlt', 'Alt', 'BAlt'] },
+        aircraftType: ['quadplane'],
+      },
+      {
+        name: 'Desired Rangefinder Alt vs Achieved Rangefinder Alt vs Achieved Alt',
+        filters: { QTUN: ['DSAlt', 'SAlt', 'Alt'] },
+        aircraftType: ['quadplane'],
+      },
+      {
+        name: 'Desired Climb Rate vs Achieved Climb Rate',
+        filters: { QTUN: ['DCRt', 'CRt'] },
+        aircraftType: ['quadplane'],
+      },
+      {
+        name: 'Throttle Input vs Throttle Output',
+        filters: { QTUN: ['ThI', 'ThO'] },
+        aircraftType: ['quadplane'],
       },
     ],
   },
@@ -74,6 +104,7 @@ const dataflashPresetCategories = [
       {
         name: 'RC Inputs 1-4',
         filters: { RCIN: ['C1', 'C2', 'C3', 'C4'] },
+        aircraftType: ['copter', 'plane', 'quadplane'],
       },
     ],
   },

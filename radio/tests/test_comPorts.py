@@ -85,12 +85,19 @@ def test_connectToDrone_badPort() -> None:
         "connect_to_drone", {"connectionType": "serial", "port": "COM10:5761"}
     ) == {"message": "COM port not found."}
 
-    assert send_and_recieve(
+    socketio_client.emit(
         "connect_to_drone", {"connectionType": "network", "port": "testport"}
-    ) == {"message": "Could not connect to drone, invalid port."}
-    assert send_and_recieve(
+    )
+    assert socketio_client.get_received()[1]["args"][0] == {
+        "message": "Could not connect to drone, invalid port."
+    }
+
+    socketio_client.emit(
         "connect_to_drone", {"connectionType": "network", "port": "tcp:127.0.0.1:5761"}
-    ) == {"message": "Could not connect to drone, connection refused."}
+    )
+    assert socketio_client.get_received()[1]["args"][0] == {
+        "message": "Could not connect to drone, connection refused."
+    }
 
 
 def test_connectToDrone_validConnection() -> None:
@@ -102,19 +109,21 @@ def test_connectToDrone_validConnection() -> None:
     )
 
     # Success on correct port
-    assert send_and_recieve(
+    # Success on correct port with specified baud rate
+    socketio_client.emit(
         "connect_to_drone", {"connectionType": connectionType, "port": VALID_DRONE_PORT}
-    ) == {"aircraft_type": 2}
+    )
+    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
     assert droneStatus.drone is not None
     assert droneStatus.drone.port == VALID_DRONE_PORT
     assert droneStatus.drone.baud == 57600
 
     # Success on correct port with specified baud rate
-    assert send_and_recieve(
+    socketio_client.emit(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
-    ) == {"aircraft_type": 2}
-
+    )
+    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
     assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
 
@@ -161,9 +170,11 @@ def test_disconnectFromDrone() -> None:
     )
 
     # Connect to drone in order to test disconnect
-    assert send_and_recieve(
-        "connect_to_drone", {"connectionType": connectionType, "port": VALID_DRONE_PORT}
-    ) == {"aircraft_type": 2}
+    socketio_client.emit(
+        "connect_to_drone",
+        {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
+    )
+    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
 
     socketio_client.emit("disconnect_from_drone")
     assert socketio_client.get_received()[0]["name"] == "disconnected_from_drone"

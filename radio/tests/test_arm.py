@@ -4,7 +4,8 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import FakeTCP
+from .helpers import FakeTCP, NoDrone
+
 
 @pytest.fixture(scope="module", autouse=True)
 def run_once_after_all_tests():
@@ -12,6 +13,7 @@ def run_once_after_all_tests():
     Saves the valid connection string then ensures that the drone connection is established again after the tests have run
     """
     from app import droneStatus
+
     assert not droneStatus.drone.armed
     yield
     assert not droneStatus.drone.armed
@@ -128,6 +130,26 @@ def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
     socketio_client.emit("arm_disarm", {"arm": False})
     socketio_client.get_received()
     assert_drone_armed(droneStatus, armed=False)
+
+@falcon_test(pass_drone_status=True)
+def test_arm_disarm_no_drone(socketio_client: SocketIOTestClient, droneStatus):
+    with NoDrone():
+        socketio_client.emit("arm_disarm", {"arm": True})
+        result = socketio_client.get_received()[0]
+        assert result["name"] == "connection_error"
+        assert result["args"][0] == {"message": "Must be connected to the drone to arm or disarm."}
+
+        socketio_client.emit("arm_disarm", {"arm": False, "force": True})
+        result = socketio_client.get_received()[0]
+        assert result["name"] == "connection_error"
+        assert result["args"][0] == {"message": "Must be connected to the drone to arm or disarm."}
+
+@falcon_test(pass_drone_status=True)
+def test_arm_disarm_wrong_args(socketio_client: SocketIOTestClient, droneStatus):
+    socketio_client.emit("arm_disarm", {})
+    result = socketio_client.get_received()[0]
+    assert result["name"] == "drone_error"
+    assert result["args"][0] == {"message": "Request to endpoint arm_disarm missing value for parameter: arm."}
 
 
 @pytest.mark.skip("GPS failure fixture is broken")

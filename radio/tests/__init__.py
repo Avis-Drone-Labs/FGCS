@@ -1,10 +1,10 @@
-import pytest
 from typing import Callable, Optional
+
+import app.droneStatus as droneStatus
+import pytest
+from app import create_app, socketio
 from flask.testing import FlaskClient
 from flask_socketio.test_client import SocketIOTestClient
-
-from app import create_app, socketio
-import app.droneStatus as droneStatus
 
 app = create_app(debug=True)
 socketio = socketio

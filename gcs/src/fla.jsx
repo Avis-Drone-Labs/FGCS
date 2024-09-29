@@ -72,6 +72,7 @@ const ignoredMessages = [
   'PARAM_VALUE',
   'units',
   'format',
+  'aircraftType',
 ]
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
 const colorPalette = [
@@ -145,6 +146,22 @@ export default function FLA() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
 
+  const [units, setUnits] = useState({})
+  const [formatMessages, setFormatMessages] = useState({})
+  const [aircraftType, setAircraftType] = useState(null)
+
+  const [logMessages, setLogMessages] = useState(null)
+  const [logEvents, setLogEvents] = useState(null)
+  const [flightModeMessages, setFlightModeMessages] = useState([])
+  const [logType, setLogType] = useState('dastaflash')
+
+  const [messageFilters, setMessageFilters] = useState(null)
+  const [messageMeans, setMessageMeans] = useState({})
+
+  const [chartData, setChartData] = useState({ datasets: [] })
+  const [customColors, setCustomColors] = useState({})
+  const [colorIndex, setColorIndex] = useState(0)
+
   // Load file, if set, and show the graph
   async function loadFile() {
     // if log messages have already been loaded from prev session, don't load again
@@ -164,8 +181,10 @@ export default function FLA() {
           return
         }
 
-        updateLogType(result.logType)
-        updateLogMessages(loadedLogMessages)
+        setLogType(result.logType)
+        setLogMessages(loadedLogMessages)
+        setAircraftType(loadedLogMessages.aircraftType)
+        delete loadedLogMessages.aircraftType // Remove aircraftType so it's not iterated upon later
 
         if (result.logType === 'dataflash') {
           updateFlightModeMessages(loadedLogMessages.MODE)
@@ -625,6 +644,7 @@ export default function FLA() {
                 <Tooltip label={file.path}>
                   <p className='mx-4 my-2'>{file.name}</p>
                 </Tooltip>
+                <p>{aircraftType}</p>
               </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
@@ -640,6 +660,7 @@ export default function FLA() {
                                 key={category.name}
                                 category={category}
                                 selectPresetFunc={selectPreset}
+                                aircraftType={aircraftType}
                               />
                             </Fragment>
                           )

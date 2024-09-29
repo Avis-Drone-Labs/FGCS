@@ -44,7 +44,7 @@ export default function StatusMessages(props) {
 
   function getScrollAreaOutsideVisibilityClassNames() {
     let base = 'h-full w-full p-4'
-    return props.outsideVisibility ? base + " bg-black" : base;
+    return props.outsideVisibility ? base + " bg-falcongrey-950" : base + " bg-falcongrey-TRANSLUCENT";
   }
 
   function getMessageOutsideVisibilityClassNames() {

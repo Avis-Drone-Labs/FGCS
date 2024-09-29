@@ -128,6 +128,39 @@ def droneErrorCb(msg: Any) -> None:
     socketio.emit("drone_error", {"message": msg})
 
 
+def notConnectedError(action: str | None = None) -> None:
+    """
+    Send error to the socket indicating that drone connection must be established to complete this action
+
+    Args:
+        action (str | None): The action the that requires drone connection. Default `None`.
+    """
+    socketio.emit(
+        "connection_error",
+        {
+            "message": f"Must be connected to the drone to {'perform this action' if action is None else action}."
+        },
+    )
+
+
+def missingParameterError(endpoint: str, params: str | list[str]) -> None:
+    """ "
+    Send error to the socket indicating that a request made to the server was missing required parameters
+
+    Args
+        endpoint (str): The endpoint that is missing a parameter
+        params (str | list[str]): The names of the parameter/s that are missing from the request
+    """
+    socketio.emit(
+        "drone_error",
+        {
+            "message": f"Request to endpoint {endpoint} missing value for parameter"
+            + (f": {params}" if isinstance(params, str) else ", ".join(params))
+            + "."
+        },
+    )
+
+
 def sendMessage(msg: Any) -> None:
     """
     Sends a message to the frontend with a timestamp

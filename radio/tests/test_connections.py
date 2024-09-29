@@ -5,6 +5,7 @@ from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
 
+
 @pytest.fixture(scope="module", autouse=True)
 def run_once_after_all_tests():
     """
@@ -26,6 +27,7 @@ def run_once_after_all_tests():
     setupDrone(VALID_DRONE_PORT)
     droneStatus.drone.logger.info(f"Re-connected to drone on {VALID_DRONE_PORT}")
 
+
 @falcon_test()
 def test_connect(socketio_client: SocketIOTestClient):
     """Test connecting to socket"""
@@ -45,7 +47,6 @@ def test_isConnectedToDrone_with_drone(
     assert len(socketio_result) == 1  # Only 1 response
     assert socketio_result[0]["args"] == [True]  # droneStatus.drone is set
     assert socketio_result[0]["name"] == "is_connected_to_drone"  # Correct name emitted
-
 
 
 @falcon_test(pass_drone_status=True)

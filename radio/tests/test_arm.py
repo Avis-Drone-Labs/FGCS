@@ -131,25 +131,33 @@ def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
     socketio_client.get_received()
     assert_drone_armed(droneStatus, armed=False)
 
+
 @falcon_test(pass_drone_status=True)
 def test_arm_disarm_no_drone(socketio_client: SocketIOTestClient, droneStatus):
     with NoDrone():
         socketio_client.emit("arm_disarm", {"arm": True})
         result = socketio_client.get_received()[0]
         assert result["name"] == "connection_error"
-        assert result["args"][0] == {"message": "Must be connected to the drone to arm or disarm."}
+        assert result["args"][0] == {
+            "message": "Must be connected to the drone to arm or disarm."
+        }
 
         socketio_client.emit("arm_disarm", {"arm": False, "force": True})
         result = socketio_client.get_received()[0]
         assert result["name"] == "connection_error"
-        assert result["args"][0] == {"message": "Must be connected to the drone to arm or disarm."}
+        assert result["args"][0] == {
+            "message": "Must be connected to the drone to arm or disarm."
+        }
+
 
 @falcon_test(pass_drone_status=True)
 def test_arm_disarm_wrong_args(socketio_client: SocketIOTestClient, droneStatus):
     socketio_client.emit("arm_disarm", {})
     result = socketio_client.get_received()[0]
     assert result["name"] == "drone_error"
-    assert result["args"][0] == {"message": "Request to endpoint arm_disarm missing value for parameter: arm."}
+    assert result["args"][0] == {
+        "message": "Request to endpoint arm_disarm missing value for parameter: arm."
+    }
 
 
 @pytest.mark.skip("GPS failure fixture is broken")

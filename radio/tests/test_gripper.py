@@ -13,8 +13,13 @@ def run_once_after_all_tests():
     """Adds a guaranteed delay of 1s after the tests have finished running to ensure
     all actions related to the gripper have completed
     """
-    yield
     from app import droneStatus
+
+    droneStatus.drone.paramsController.getAllParams()
+    time.sleep(1)
+    while droneStatus.drone.paramsController.is_requesting_params:
+        pass
+    yield
 
     # Ensure gripper is definitely re-enabled even if tests pass
     droneStatus.drone.paramsController.setParam(

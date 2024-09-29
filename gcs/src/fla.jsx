@@ -230,8 +230,7 @@ export default function FLA() {
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-      } 
-      else if (result === null || !result.success) {
+      } else if (result === null || !result.success) {
         // Error
         showErrorNotification('Error loading file, file not found. Reload.')
         setLoadingFile(false)
@@ -545,7 +544,10 @@ export default function FLA() {
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
                           <p className='text-gray-400 text-sm'>
-                            {moment(log.timestamp.toISOString(), 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                            {moment(
+                              log.timestamp.toISOString(),
+                              'YYYY-MM-DD_HH-mm-ss',
+                            ).fromNow()}
                           </p>
                           <p className='text-gray-400 text-sm'>
                             {Math.round(log.size / 1024)}KB
@@ -600,6 +602,7 @@ export default function FLA() {
                                 key={category.name}
                                 category={category}
                                 selectPresetFunc={selectPreset}
+                                aircraftType={aircraftType}
                               />
                             </Fragment>
                           )

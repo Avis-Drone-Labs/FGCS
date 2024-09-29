@@ -77,7 +77,7 @@ class ParamRefreshTimeout:
     @staticmethod
     def recv_msg_false_value(
         condition=None, Type=None, blocking=False, timeout=None
-    ) -> None:
+    ) -> bool:
         return False
 
     def __enter__(self) -> None:

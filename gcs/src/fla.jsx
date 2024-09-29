@@ -37,8 +37,7 @@ import { presetCategories } from './components/fla/presetCategories.js'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
-  showSuccessNotification,
-  showNotification,
+  showSuccessNotification
 } from './helpers/notification.js'
 import {
   setFile,
@@ -53,6 +52,7 @@ import {
   setChartData,
   setCustomColors,
   setColorIndex,
+  setAircraftType,
 } from './redux/logAnalyserSlice.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -117,6 +117,7 @@ export default function FLA() {
     chartData,
     customColors,
     colorIndex,
+    aircraftType,
   } = useSelector((state) => state.logAnalyser)
 
   // Create dispatch functions for each state variable
@@ -139,28 +140,13 @@ export default function FLA() {
     dispatch(setCustomColors(newCustomColors))
   const updateColorIndex = (newColorIndex) =>
     dispatch(setColorIndex(newColorIndex))
+  const updateAircraftType = (newAircraftType) => dispatch(setAircraftType(newAircraftType))
 
   // States in react frontend
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
 
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
-
-  const [units, setUnits] = useState({})
-  const [formatMessages, setFormatMessages] = useState({})
-  const [aircraftType, setAircraftType] = useState(null)
-
-  const [logMessages, setLogMessages] = useState(null)
-  const [logEvents, setLogEvents] = useState(null)
-  const [flightModeMessages, setFlightModeMessages] = useState([])
-  const [logType, setLogType] = useState('dastaflash')
-
-  const [messageFilters, setMessageFilters] = useState(null)
-  const [messageMeans, setMessageMeans] = useState({})
-
-  const [chartData, setChartData] = useState({ datasets: [] })
-  const [customColors, setCustomColors] = useState({})
-  const [colorIndex, setColorIndex] = useState(0)
 
   // Load file, if set, and show the graph
   async function loadFile() {
@@ -181,10 +167,13 @@ export default function FLA() {
           return
         }
 
-        setLogType(result.logType)
-        setLogMessages(loadedLogMessages)
-        setAircraftType(loadedLogMessages.aircraftType)
+        updateLogType(result.logType)
+
+        updateAircraftType(loadedLogMessages.aircraftType)
+
         delete loadedLogMessages.aircraftType // Remove aircraftType so it's not iterated upon later
+
+        updateLogMessages(loadedLogMessages)
 
         if (result.logType === 'dataflash') {
           updateFlightModeMessages(loadedLogMessages.MODE)
@@ -404,7 +393,7 @@ export default function FLA() {
     updateColorIndex(0)
     setMeanValues(null)
     updateLogEvents(null)
-    setLogType('dataflash')
+    updateLogType('dataflash')
     getFgcsLogs()
   }
 
@@ -644,7 +633,7 @@ export default function FLA() {
                 <Tooltip label={file.path}>
                   <p className='mx-4 my-2'>{file.name}</p>
                 </Tooltip>
-                <p>{aircraftType}</p>
+                <p className='mx-4 my-2'>Aircraft Type: {aircraftType}</p>
               </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>

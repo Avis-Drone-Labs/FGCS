@@ -9,12 +9,13 @@ const logAnalyserSlice = createSlice({
     logMessages: null,
     logEvents: null,
     flightModeMessages: [],
-    logType: 'dastaflash',
+    logType: 'dataflash',
     messageFilters: null,
     messageMeans: {},
     chartData: { datasets: [] },
     customColors: {},
     colorIndex: 0,
+    aircraftType: null,
   },
   reducers: {
     setFile: (state, action) => {
@@ -53,6 +54,9 @@ const logAnalyserSlice = createSlice({
     setColorIndex: (state, action) => {
       state.colorIndex = action.payload
     },
+    setAircraftType: (state, action) => {
+      state.aircraftType = action.payload
+    },
   },
 })
 
@@ -69,6 +73,7 @@ export const {
   setChartData,
   setCustomColors,
   setColorIndex,
+  setAircraftType,
 } = logAnalyserSlice.actions
 
 export default logAnalyserSlice.reducer

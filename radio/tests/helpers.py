@@ -48,6 +48,27 @@ class NoDrone:
         droneStatus.drone = self.oldDrone
 
 
+class ParamSetTimeout:
+    """Context manager that replaces the mavlink recv_match function in drone.master with a function that return a None value
+    to cause the setmultipleparams functionto timeout
+    """
+
+    @staticmethod
+    def recv_match_null_value(
+        condition=None, type=None, blocking=False, timeout=None
+    ) -> None:
+        return None
+
+    def __enter__(self) -> None:
+        if droneStatus.drone is not None:
+            self.old_recv = droneStatus.drone.master.recv_match
+            droneStatus.drone.master.recv_match = ParamSetTimeout.recv_match_null_value
+
+    def __exit__(self, type, value, traceback) -> None:
+        if droneStatus.drone is not None:
+            droneStatus.drone.master.recv_match = self.old_recv
+
+
 def send_and_recieve(endpoint: str, args: dict | None | str = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 

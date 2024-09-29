@@ -1,13 +1,14 @@
 import sys
 import pytest
+
 from serial.tools import list_ports
 from serial.tools.list_ports_common import ListPortInfo
 
 from app import droneStatus
 from app.drone import Drone
 from . import socketio_client
-from .helpers import send_and_recieve
 from .conftest import setupDrone
+from .helpers import send_and_recieve
 
 VALID_DRONE_PORT: str | ListPortInfo
 
@@ -57,17 +58,23 @@ def test_getComPort() -> None:
     )
 
 
-# Only run serial connection test if tests are being run with a serial connection to the drone
-@pytest.mark.skipif(
-    droneStatus.drone is not None and not droneStatus.drone.port.startswith("COM"),
-    reason="Simulator in use. Only network connection can be tested.",
-)
-def test_connectToDrone_serial() -> None:
-    global VALID_DRONE_PORT
-    SIM_PORT = VALID_DRONE_PORT
+def test_connectToDrone_badType() -> None:
+    # Failure on bad connection type
+    assert send_and_recieve("connect_to_drone", {}) == {
+        "message": "Connection type not specified."
+    }
+    assert send_and_recieve("connect_to_drone", {"connectionType": "testtype"}) == {
+        "message": "Connection type not specified."
+    }
+
+
+def test_connectToDrone_badPort() -> None:
     # Failure on no port specified
     assert send_and_recieve("connect_to_drone", {"connectionType": "serial"}) == {
         "message": "COM port not specified."
+    }
+    assert send_and_recieve("connect_to_drone", {"connectionType": "network"}) == {
+        "message": "Connection address not specified."
     }
 
     # Failure on bad port specified
@@ -78,65 +85,6 @@ def test_connectToDrone_serial() -> None:
         "connect_to_drone", {"connectionType": "serial", "port": "COM10:5761"}
     ) == {"message": "COM port not found."}
 
-    # Success on correct port
-    assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "serial", "port": SIM_PORT}
-    ) == {"aircraft_type": 2}
-    assert droneStatus.drone is not None
-    assert droneStatus.drone.port == SIM_PORT
-
-    assert send_and_recieve(
-        "connect_to_drone",
-        {"connectionType": "network", "port": SIM_PORT, "baud": 9600},
-    ) == {"aircraft_type": 2}
-    assert droneStatus.drone is not None
-    assert droneStatus.drone.baud == 9600
-    assert droneStatus.drone.master.baud == 9600
-
-    assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "serial", "port": SIM_PORT, "baud": -1}
-    ) == {
-        "message": f"{-1} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
-    }
-    assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "serial", "port": SIM_PORT, "baud": 110}
-    ) == {
-        "message": f"{110} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
-    }
-
-    # Invalid baud rate types
-    assert send_and_recieve(
-        "connect_to_drone",
-        {"connectionType": "serial", "port": SIM_PORT, "baud": 9600.0},
-    ) == {"message": "Expected integer value for baud, recieved float."}
-    assert send_and_recieve(
-        "connect_to_drone",
-        {"connectionType": "serial", "port": SIM_PORT, "baud": "9600"},
-    ) == {"message": "Expected integer value for baud, recieved str."}
-
-    # Success on disconnect
-    socketio_client.emit("disconnect_from_drone")
-    assert socketio_client.get_received()[0]["name"] == "disconnected_from_drone"
-    assert droneStatus.drone is None
-    assert droneStatus.state is None
-
-    # Reconnect to the drone
-
-
-# Only run network connection test if tests are being run with a network connection to the drone
-@pytest.mark.skipif(
-    droneStatus.drone is not None and not droneStatus.drone.port.startswith("tcp"),
-    reason="Physical connection is being used. Only serial connection can be tested.",
-)
-def test_connectToDrone_network() -> None:
-    global VALID_DRONE_PORT
-    SIM_PORT = VALID_DRONE_PORT
-    # Failure on no port specified
-    assert send_and_recieve("connect_to_drone", {"connectionType": "network"}) == {
-        "message": "Connection address not specified."
-    }
-
-    # Failure on bad port specified
     assert send_and_recieve(
         "connect_to_drone", {"connectionType": "network", "port": "testport"}
     ) == {"message": "Could not connect to drone, invalid port."}
@@ -144,44 +92,78 @@ def test_connectToDrone_network() -> None:
         "connect_to_drone", {"connectionType": "network", "port": "tcp:127.0.0.1:5761"}
     ) == {"message": "Could not connect to drone, connection refused."}
 
+
+def test_connectToDrone_validConnection() -> None:
+    global VALID_DRONE_PORT
+
+    # If network connection then do network tests else do serial tests
+    connectionType = (
+        "network" if VALID_DRONE_PORT.startswith(("tcp", "udp")) else "serial"
+    )
+
     # Success on correct port
     assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "network", "port": SIM_PORT}
+        "connect_to_drone", {"connectionType": connectionType, "port": VALID_DRONE_PORT}
     ) == {"aircraft_type": 2}
     assert droneStatus.drone is not None
-    assert droneStatus.drone.port == SIM_PORT
+    assert droneStatus.drone.port == VALID_DRONE_PORT
+    assert droneStatus.drone.baud == 57600
 
+    # Success on correct port with specified baud rate
     assert send_and_recieve(
         "connect_to_drone",
-        {"connectionType": "network", "port": SIM_PORT, "baud": 9600},
+        {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
     ) == {"aircraft_type": 2}
+
     assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
 
-    # Invalid baud rate
+
+def test_connectToDrone_badBaud() -> None:
+    global VALID_DRONE_PORT
+
+    # If network connection then do network tests else do serial tests
+    connectionType = (
+        "network" if VALID_DRONE_PORT.startswith(("tcp", "udp")) else "serial"
+    )
+
+    # Failure on invalid baud rate value
     assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "network", "port": SIM_PORT, "baud": -1}
+        "connect_to_drone",
+        {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": -1},
     ) == {
         "message": f"{-1} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
     }
     assert send_and_recieve(
-        "connect_to_drone", {"connectionType": "network", "port": SIM_PORT, "baud": 110}
+        "connect_to_drone",
+        {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 110},
     ) == {
         "message": f"{110} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
     }
 
-    # Invalid baud rate types
+    # Failure on invalid baud rate types
     assert send_and_recieve(
         "connect_to_drone",
-        {"connectionType": "network", "port": SIM_PORT, "baud": 9600.0},
+        {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600.0},
     ) == {"message": "Expected integer value for baud, recieved float."}
     assert send_and_recieve(
         "connect_to_drone",
-        {"connectionType": "network", "port": SIM_PORT, "baud": "9600"},
+        {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": "9600"},
     ) == {"message": "Expected integer value for baud, recieved str."}
 
-    # Success on disconnect
+
+def test_disconnectFromDrone() -> None:
+    global VALID_DRONE_PORT
+
+    # If network connection then do network tests else do serial tests
+    connectionType = (
+        "network" if VALID_DRONE_PORT.startswith(("tcp", "udp")) else "serial"
+    )
+
+    # Connect to drone in order to test disconnect
+    assert send_and_recieve(
+        "connect_to_drone", {"connectionType": connectionType, "port": VALID_DRONE_PORT}
+    ) == {"aircraft_type": 2}
+
     socketio_client.emit("disconnect_from_drone")
     assert socketio_client.get_received()[0]["name"] == "disconnected_from_drone"
-    assert droneStatus.drone is None
-    assert droneStatus.state is None

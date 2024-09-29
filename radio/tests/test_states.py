@@ -20,5 +20,6 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Success on changing state to dashboard
     socketio_client.emit("set_state", {"state": "dashboard"})
     assert len(socketio_client.get_received()) == 0
+    assert len(droneStatus.drone.messageListeners) == 2
 
     # Success on changing state to

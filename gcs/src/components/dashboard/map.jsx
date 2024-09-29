@@ -27,7 +27,42 @@ function intToCoord(val) {
   return val * 1e-7
 }
 
-export default function MapSection({ passedRef, data, heading, missionItems }) {
+function degToRad(deg) {
+  return deg * (Math.PI / 180)
+}
+
+function radToDeg(rad) {
+  return rad * (180 / Math.PI)
+}
+
+function getPointAtDistance(lat1, lon1, distance, bearing) {
+  // https://stackoverflow.com/questions/7222382/get-lat-long-given-current-point-distance-and-bearing
+
+  const R = 6378.14 // Radius of the Earth in km
+  const brng = degToRad(bearing)
+  const lat1Rad = degToRad(lat1)
+  const lon1Rad = degToRad(lon1)
+  const lat2 = Math.asin(
+    Math.sin(lat1Rad) * Math.cos(distance / R) +
+      Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
+  )
+  const lon2 =
+    lon1Rad +
+    Math.atan2(
+      Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat1Rad),
+      Math.cos(distance / R) - Math.sin(lat1Rad) * Math.sin(lat2),
+    )
+
+  return [radToDeg(lat2), radToDeg(lon2)]
+}
+
+export default function MapSection({
+  passedRef,
+  data,
+  heading,
+  desiredBearing,
+  missionItems,
+}) {
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const [initialViewState, setInitialViewState] = useLocalStorage({
@@ -78,17 +113,86 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
         {position !== null &&
           !isNaN(position?.latitude) &&
           !isNaN(position?.longitude) && (
-            <Marker
-              latitude={position.latitude}
-              longitude={position.longitude}
-              scale={0.1}
-            >
-              <img
-                src={arrow}
-                className='w-6 h-6'
-                style={{ transform: `rotate(${heading ?? 0}deg)` }}
-              />
-            </Marker>
+            <>
+              <Marker
+                latitude={position.latitude}
+                longitude={position.longitude}
+                scale={0.1}
+              >
+                <img
+                  src={arrow}
+                  className='w-6 h-6'
+                  style={{ transform: `rotate(${heading ?? 0}deg)` }}
+                />
+              </Marker>
+
+              <Source
+                type='geojson'
+                data={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: [
+                      [position.longitude, position.latitude],
+                      getPointAtDistance(
+                        position.latitude,
+                        position.longitude,
+                        25000 / 2 ** initialViewState.zoom,
+                        desiredBearing ?? 0,
+                      ).reverse(),
+                    ],
+                  },
+                }}
+              >
+                <Layer
+                  {...{
+                    type: 'line',
+                    layout: {
+                      'line-join': 'round',
+                      'line-cap': 'round',
+                    },
+                    paint: {
+                      'line-color': tailwindColors.red[200],
+                      'line-width': 3,
+                    },
+                  }}
+                />
+              </Source>
+              <Source
+                type='geojson'
+                data={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: [
+                      [position.longitude, position.latitude],
+                      getPointAtDistance(
+                        position.latitude,
+                        position.longitude,
+                        25000 / 2 ** initialViewState.zoom,
+                        heading ?? 0,
+                      ).reverse(),
+                    ],
+                  },
+                }}
+              >
+                <Layer
+                  {...{
+                    type: 'line',
+                    layout: {
+                      'line-join': 'round',
+                      'line-cap': 'round',
+                    },
+                    paint: {
+                      'line-color': tailwindColors.blue[200],
+                      'line-width': 3,
+                    },
+                  }}
+                />
+              </Source>
+            </>
           )}
 
         {/* Show mission item LABELS */}

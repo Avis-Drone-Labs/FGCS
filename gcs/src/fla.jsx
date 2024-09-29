@@ -18,6 +18,8 @@ import {
   ScrollArea,
   Tooltip,
 } from '@mantine/core'
+import { useSelector, useDispatch } from 'react-redux'
+import _ from 'lodash'
 
 // Styling imports
 import resolveConfig from 'tailwindcss/resolveConfig'
@@ -35,8 +37,23 @@ import { presetCategories } from './components/fla/presetCategories.js'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
-  showSuccessNotification,
+  showSuccessNotification
 } from './helpers/notification.js'
+import {
+  setFile,
+  setUnits,
+  setFormatMessages,
+  setLogMessages,
+  setLogEvents,
+  setFlightModeMessages,
+  setLogType,
+  setMessageFilters,
+  setMessageMeans,
+  setChartData,
+  setCustomColors,
+  setColorIndex,
+  setAircraftType,
+} from './redux/logAnalyserSlice.js'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -55,6 +72,7 @@ const ignoredMessages = [
   'PARAM_VALUE',
   'units',
   'format',
+  'aircraftType',
 ]
 const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
 const colorPalette = [
@@ -85,39 +103,58 @@ const colorInputSwatch = [
 ]
 
 export default function FLA() {
+  const dispatch = useDispatch()
+  const {
+    file,
+    units,
+    formatMessages,
+    logMessages,
+    logEvents,
+    flightModeMessages,
+    logType,
+    messageFilters,
+    messageMeans,
+    chartData,
+    customColors,
+    colorIndex,
+    aircraftType,
+  } = useSelector((state) => state.logAnalyser)
+
+  // Create dispatch functions for each state variable
+  const updateFile = (newFile) => dispatch(setFile(newFile))
+  const updateUnits = (newUnits) => dispatch(setUnits(newUnits))
+  const updateFormatMessages = (newFormatMessages) =>
+    dispatch(setFormatMessages(newFormatMessages))
+  const updateLogMessages = (newLogMessages) =>
+    dispatch(setLogMessages(newLogMessages))
+  const updateLogEvents = (newLogEvents) => dispatch(setLogEvents(newLogEvents))
+  const updateFlightModeMessages = (newFlightModeMessages) =>
+    dispatch(setFlightModeMessages(newFlightModeMessages))
+  const updateLogType = (newLogType) => dispatch(setLogType(newLogType))
+  const updateMessageFilters = (newMessageFilters) =>
+    dispatch(setMessageFilters(newMessageFilters))
+  const updateMessageMeans = (newMessageMeans) =>
+    dispatch(setMessageMeans(newMessageMeans))
+  const updateChartData = (newChartData) => dispatch(setChartData(newChartData))
+  const updateCustomColors = (newCustomColors) =>
+    dispatch(setCustomColors(newCustomColors))
+  const updateColorIndex = (newColorIndex) =>
+    dispatch(setColorIndex(newColorIndex))
+  const updateAircraftType = (newAircraftType) => dispatch(setAircraftType(newAircraftType))
+
   // States in react frontend
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
 
-  const [file, setFile] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
 
-  const [units, setUnits] = useState({})
-  const [formatMessages, setFormatMessages] = useState({})
-
-  const [logMessages, setLogMessages] = useState(null)
-  const [logEvents, setLogEvents] = useState(null)
-  const [flightModeMessages, setFlightModeMessages] = useState([])
-  const [logType, setLogType] = useState('dastaflash')
-
-  const [messageFilters, setMessageFilters] = useState(null)
-  const [messageMeans, setMessageMeans] = useState({})
-
-  const [chartData, setChartData] = useState({ datasets: [] })
-  const [customColors, setCustomColors] = useState({})
-  const [colorIndex, setColorIndex] = useState(0)
-
   // Load file, if set, and show the graph
   async function loadFile() {
-    if (file != null) {
+    // if log messages have already been loaded from prev session, don't load again
+    if (file != null && logMessages === null) {
       setLoadingFile(true)
-      const result = await window.ipcRenderer.loadFile(file.path)
 
-      if (result === null) {
-        showErrorNotification('Error loading file, file not found.')
-        setLoadingFile(false)
-        return
-      }
+      const result = await window.ipcRenderer.loadFile(file.path)
 
       if (result.success) {
         // Load messages into states
@@ -130,11 +167,16 @@ export default function FLA() {
           return
         }
 
-        setLogType(result.logType)
-        setLogMessages(loadedLogMessages)
+        updateLogType(result.logType)
+
+        updateAircraftType(loadedLogMessages.aircraftType)
+
+        delete loadedLogMessages.aircraftType // Remove aircraftType so it's not iterated upon later
+
+        updateLogMessages(loadedLogMessages)
 
         if (result.logType === 'dataflash') {
-          setFlightModeMessages(loadedLogMessages.MODE)
+          updateFlightModeMessages(loadedLogMessages.MODE)
         } else if (result.logType === 'fgcs_telemetry') {
           const modeMessages = []
 
@@ -153,15 +195,15 @@ export default function FLA() {
               }
             }
           }
-          setFlightModeMessages(modeMessages)
+          updateFlightModeMessages(modeMessages)
         }
 
         if ('units' in loadedLogMessages) {
-          setUnits(loadedLogMessages['units'])
+          updateUnits(loadedLogMessages['units'])
         }
 
         if ('format' in loadedLogMessages) {
-          setFormatMessages(loadedLogMessages['format'])
+          updateFormatMessages(loadedLogMessages['format'])
         }
 
         // Set the default state to false for all message filters
@@ -217,12 +259,12 @@ export default function FLA() {
             return acc
           }, {})
 
-        setMessageFilters(sortedLogMessageFilterState)
+        updateMessageFilters(sortedLogMessageFilterState)
         setMeanValues(loadedLogMessages)
 
         // Set event logs for the event lines on graph
         if ('EV' in loadedLogMessages) {
-          setLogEvents(
+          updateLogEvents(
             loadedLogMessages['EV'].map((event) => ({
               time: event.TimeUS,
               message: logEventIds[event.Id],
@@ -232,9 +274,9 @@ export default function FLA() {
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-      } else {
+      } else if (result === null || !result.success) {
         // Error
-        showErrorNotification(result.error)
+        showErrorNotification('Error loading file, file not found. Reload.')
         setLoadingFile(false)
       }
     }
@@ -243,7 +285,7 @@ export default function FLA() {
   // Loop over all fields and precalculate min, max, mean
   function setMeanValues(loadedLogMessages) {
     let rawValues = {}
-    if(loadedLogMessages !== null){
+    if (loadedLogMessages !== null) {
       // Putting all raw data into a list
       Object.keys(loadedLogMessages).forEach((key) => {
         if (!ignoredMessages.includes(key)) {
@@ -293,54 +335,66 @@ export default function FLA() {
           }
         })
       })
-      setMessageMeans(means)
+      updateMessageMeans(means)
     }
   }
 
   // Turn on/off all filters
   function clearFilters() {
-    let newFilters = { ...messageFilters }
-    Object.keys(newFilters).map((categoryName) => {
+    let newFilters = _.cloneDeep(messageFilters)
+    Object.keys(newFilters).forEach((categoryName) => {
       const category = newFilters[categoryName]
-      Object.keys(category).map((fieldName) => {
+      Object.keys(category).forEach((fieldName) => {
         newFilters[categoryName][fieldName] = false
       })
     })
-    setMessageFilters(newFilters)
-    setCustomColors({})
-    setColorIndex(0)
+    updateMessageFilters(newFilters)
+    updateCustomColors({})
+    updateColorIndex(0)
   }
 
   // Turn off only one filter at a time
   function removeDataset(label) {
     let [categoryName, fieldName] = label.split('/')
-    let newFilters = { ...messageFilters }
+    let newFilters = _.cloneDeep(messageFilters)
     if (
       newFilters[categoryName] &&
       newFilters[categoryName][fieldName] !== undefined
     ) {
       newFilters[categoryName][fieldName] = false
     }
-    setCustomColors((prevColors) => {
-      let newColors = { ...prevColors }
-      delete newColors[label]
-      return newColors
-    })
-    setMessageFilters(newFilters)
+
+    let newColors = _.cloneDeep(customColors)
+    delete newColors[label]
+    updateCustomColors(newColors)
+
+    updateMessageFilters(newFilters)
+  }
+
+  // Get a list of the recent FGCS telemetry logs
+  async function getFgcsLogs() {
+    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+  }
+
+  // Clear the list of recent FGCS telemetry logs
+  async function clearFgcsLogs() {
+    await window.ipcRenderer.clearRecentLogs()
+    getFgcsLogs()
   }
 
   // Close file
   function closeLogFile() {
-    setFile(null)
+    updateFile(null)
     setLoadingFileProgress(0)
-    setLogMessages(null)
-    setChartData({ datasets: [] })
-    setMessageFilters(null)
-    setCustomColors({})
-    setColorIndex(0)
+    updateLogMessages(null)
+    updateChartData({ datasets: [] })
+    updateMessageFilters(null)
+    updateCustomColors({})
+    updateColorIndex(0)
     setMeanValues(null)
-    setLogEvents(null)
-    setLogType('dataflash')
+    updateLogEvents(null)
+    updateLogType('dataflash')
+    getFgcsLogs()
   }
 
   // Set IPC renderer for log messages
@@ -348,12 +402,6 @@ export default function FLA() {
     window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
       setLoadingFileProgress(message.percent)
     })
-
-    // Get a list of the recent FGCS telemetry logs
-    async function getFgcsLogs() {
-      setRecentFgcsLogs(await window.ipcRenderer.getFgcsLogs())
-    }
-
     getFgcsLogs()
 
     return () => {
@@ -363,84 +411,87 @@ export default function FLA() {
 
   // Color changer
   function changeColor(label, color) {
-    setCustomColors((prevColors) => ({ ...prevColors, [label]: color }))
+    // Create a deep copy of customColors
+    let newColors = _.cloneDeep(customColors)
+
+    // Modify the deep copy
+    newColors[label] = color
+
+    // Update customColors with the modified copy
+    updateCustomColors(newColors)
   }
 
   // Preset selection
   function selectPreset(filter) {
-    {
-      clearFilters()
-      setCustomColors({})
-      setColorIndex(0)
-      let newFilters = { ...messageFilters }
-      Object.keys(filter.filters).map((categoryName) => {
-        if (Object.keys(messageFilters).includes(categoryName)) {
-          filter.filters[categoryName].map((field) => {
-            if (!(field in messageFilters[categoryName])) {
-              showErrorNotification(
-                `Your log file does not include ${categoryName}/${field} data`,
-              )
-              return
-            }
-            newFilters[categoryName][field] = true
-
-            // Assign a color
-            setCustomColors((prevColors) => {
-              let newColors = {
-                ...prevColors,
-              }
-              if (!newColors[`${categoryName}/${field}`]) {
-                newColors[`${categoryName}/${field}`] =
-                  colorPalette[
-                    Object.keys(newColors).length % colorPalette.length
-                  ]
-              }
-              setColorIndex(Object.keys(newColors).length)
-              return newColors
-            })
-          })
-        } else {
-          showErrorNotification(
-            `Your log file does not include ${categoryName}`,
-          )
-        }
+    let newFilters = _.cloneDeep(messageFilters)
+    Object.keys(newFilters).forEach((categoryName) => {
+      const category = newFilters[categoryName]
+      Object.keys(category).forEach((fieldName) => {
+        newFilters[categoryName][fieldName] = false
       })
+    })
 
-      setMessageFilters(newFilters)
-    }
+    let newColors = {}
+
+    Object.keys(filter.filters).map((categoryName) => {
+      if (Object.keys(messageFilters).includes(categoryName)) {
+        filter.filters[categoryName].map((field) => {
+          if (!(field in messageFilters[categoryName])) {
+            showErrorNotification(
+              `Your log file does not include ${categoryName}/${field} data`,
+            )
+            return
+          }
+          newFilters[categoryName][field] = true
+
+          // Assign a color
+          if (!newColors[`${categoryName}/${field}`]) {
+            newColors[`${categoryName}/${field}`] =
+              colorPalette[Object.keys(newColors).length % colorPalette.length]
+          }
+
+          // Update the color index
+          updateColorIndex(Object.keys(newColors).length)
+        })
+      }
+      else {
+        showErrorNotification(
+          `Your log file does not include ${categoryName}`,
+        )}
+    })
+
+    // Update customColors with the newColors
+    updateCustomColors(newColors)
+    updateMessageFilters(newFilters)
   }
 
   function selectMessageFilter(event, messageName, fieldName) {
-    let newFilters = {
-      ...messageFilters,
-    }
+    let newFilters = _.cloneDeep(messageFilters)
     newFilters[messageName][fieldName] = event.currentTarget.checked
+
+    // Create a deep copy of customColors
+    let newColors = _.cloneDeep(customColors)
+
     // if unchecked remove custom color
     if (!newFilters[messageName][fieldName]) {
-      setCustomColors((prevColors) => {
-        let newColors = {
-          ...prevColors,
-        }
-        delete newColors[`${messageName}/${fieldName}`]
-        return newColors
-      })
+      delete newColors[`${messageName}/${fieldName}`]
+
+      // Update customColors with the modified copy
+      updateCustomColors(newColors)
     }
     // Else assign a color
     else {
-      setCustomColors((prevColors) => {
-        let newColors = {
-          ...prevColors,
-        }
-        if (!newColors[`${messageName}/${fieldName}`]) {
-          newColors[`${messageName}/${fieldName}`] =
-            colorPalette[colorIndex % colorPalette.length]
-          setColorIndex((colorIndex + 1) % colorPalette.length)
-        }
-        return newColors
-      })
+      if (!newColors[`${messageName}/${fieldName}`]) {
+        newColors[`${messageName}/${fieldName}`] =
+          colorPalette[colorIndex % colorPalette.length]
+        updateColorIndex((colorIndex + 1) % colorPalette.length)
+      }
+
+      // Update customColors with the modified copy
+      updateCustomColors(newColors)
     }
 
-    setMessageFilters(newFilters)
+    updateMessageFilters(newFilters)
   }
 
   function getUnit(messageName, fieldName) {
@@ -470,7 +521,7 @@ export default function FLA() {
 
   // Update datasets based on the message filters constantly
   useEffect(() => {
-    if (!messageFilters) return
+    if (!messageFilters || !logMessages) return
 
     const datasets = []
     Object.keys(messageFilters).map((categoryName) => {
@@ -495,7 +546,7 @@ export default function FLA() {
       })
     })
 
-    setChartData({ datasets: datasets })
+    updateChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
   return (
@@ -504,15 +555,24 @@ export default function FLA() {
         // Open flight logs section
         <div className='flex flex-col items-center justify-center h-full mx-auto'>
           <div className='flex flex-row gap-8 items-center justify-center'>
-            <FileButton
-              color={tailwindColors.blue[600]}
-              variant='filled'
-              onChange={setFile}
-              accept={['.log', '.ftlog']}
-              loading={loadingFile}
-            >
-              {(props) => <Button {...props}>Analyse a log</Button>}
-            </FileButton>
+            <div className='flex flex-col gap-4'>
+              <FileButton
+                color={tailwindColors.blue[600]}
+                variant='filled'
+                onChange={updateFile}
+                accept={['.log', '.ftlog']}
+                loading={loadingFile}
+              >
+                {(props) => <Button {...props}>Analyse a log</Button>}
+              </FileButton>
+              <Button
+                color={tailwindColors.red[600]}
+                variant='filled'
+                onClick={clearFgcsLogs}
+              >
+                Clear Logs
+              </Button>
+            </div>
             <Divider size='sm' orientation='vertical' />
             <div className='relative'>
               <LoadingOverlay
@@ -525,13 +585,16 @@ export default function FLA() {
                     recentFgcsLogs.map((log, idx) => (
                       <div
                         key={idx}
-                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-80 hover:rounded-sm w-80'
-                        onClick={() => setFile(log)}
+                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
+                        onClick={() => updateFile(log)}
                       >
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
                           <p className='text-gray-400 text-sm'>
-                            {moment(log.name, 'YYYY-MM-DD_HH-mm-ss').fromNow()}
+                            {moment(
+                              log.timestamp.toISOString(),
+                              'YYYY-MM-DD_HH-mm-ss',
+                            ).fromNow()}
                           </p>
                           <p className='text-gray-400 text-sm'>
                             {Math.round(log.size / 1024)}KB
@@ -555,7 +618,7 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className='flex gap-4 h-3/4'>
+          <div className='flex gap-4 h-full overflow-x-auto py-4 px-2'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
               <div className=''>
@@ -570,6 +633,7 @@ export default function FLA() {
                 <Tooltip label={file.path}>
                   <p className='mx-4 my-2'>{file.name}</p>
                 </Tooltip>
+                <p className='mx-4 my-2'>Aircraft Type: {aircraftType}</p>
               </div>
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
@@ -585,6 +649,7 @@ export default function FLA() {
                                 key={category.name}
                                 category={category}
                                 selectPresetFunc={selectPreset}
+                                aircraftType={aircraftType}
                               />
                             </Fragment>
                           )

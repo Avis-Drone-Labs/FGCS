@@ -99,6 +99,9 @@ export default function Navbar({ currentPage }) {
     defaultValue: '5760',
   })
 
+  const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
+    useState(null)
+
   function getComPorts() {
     if (!connectedToSocket) return
     socket.emit('get_com_ports')
@@ -171,6 +174,10 @@ export default function Navbar({ currentPage }) {
       setConnected(false)
     })
 
+    socket.on('drone_connect_status', (msg) => {
+      setDroneConnectionStatusMessage(msg.message)
+    })
+
     return () => {
       checkIfConnectedToSocket.stop()
       socket.off('is_connected_to_drone')
@@ -179,6 +186,7 @@ export default function Navbar({ currentPage }) {
       socket.off('disconnected_from_drone')
       socket.off('disconnect')
       socket.off('connection_error')
+      socket.off('drone_connect_status')
       setConnected(false)
     }
   }, [])
@@ -187,7 +195,7 @@ export default function Navbar({ currentPage }) {
     if (type === 'serial') {
       socket.emit('connect_to_drone', {
         port: selectedComPort,
-        baud: selectedBaudRate,
+        baud: parseInt(selectedBaudRate),
         wireless: wireless,
         connectionType: 'serial',
       })
@@ -215,10 +223,10 @@ export default function Navbar({ currentPage }) {
   }
 
   const linkClassName =
-    'text-md hover:text-falconred-60 transition-colors delay-50'
+    'text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50'
 
   return (
-    <div className='flex flex-row items-center justify-center px-10 py-2 space-x-6'>
+    <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900'>
       <Modal
         opened={opened}
         onClose={() => {
@@ -232,6 +240,11 @@ export default function Navbar({ currentPage }) {
           blur: 3,
         }}
         withCloseButton={false}
+        styles={{
+          content: {
+            borderRadius: '0.5rem',
+          },
+        }}
       >
         <Tabs value={connectionType} onChange={setConnectionType}>
           <Tabs.List grow>
@@ -341,6 +354,10 @@ export default function Navbar({ currentPage }) {
             Connect
           </Button>
         </Group>
+
+        {connecting && droneConnectionStatusMessage !== null && (
+          <p className='text-center mt-4'>{droneConnectionStatusMessage}</p>
+        )}
       </Modal>
 
       <Link

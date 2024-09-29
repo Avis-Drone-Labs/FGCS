@@ -4,13 +4,13 @@
 */
 
 // Base imports
-import { cloneElement, useEffect, useState } from 'react'
 import moment from 'moment'
+import { cloneElement, useEffect, useState } from 'react'
 
 // Third party imports
-import { IconClock, IconNetwork, IconNetworkOff } from '@tabler/icons-react'
 import { Tooltip } from '@mantine/core'
 import { useInterval } from '@mantine/hooks'
+import { IconClock, IconNetwork, IconNetworkOff } from '@tabler/icons-react'
 
 // Helper imports
 import { socket } from '../../helpers/socket'
@@ -37,23 +37,28 @@ export default function StatusBar(props) {
   }, [])
 
   return (
-    <div
-      className={`${props.className} bg-falcongrey/80 p-1 flex flex-row space-x-3`}
-    >
-      {props.children}
-
-      <StatusSection
-        icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
-        value=''
-        tooltip={
-          socket.connected ? 'Connected to socket' : 'Disconnected from socket'
-        }
-      />
-      <StatusSection
-        icon={<IconClock />}
-        value={time?.format('HH:mm:ss')}
-        tooltip='Local time'
-      />
+    <div className={`${props.className} flex flex-col items-end`}>
+      <div className='flex flex-row space-x-3 p-1' style={{backgroundColor: props.outsideVisibilityColor}}>
+        {props.children}
+        <StatusSection
+          icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
+          value=''
+          tooltip={
+            socket.connected
+              ? 'Connected to socket'
+              : 'Disconnected from socket'
+          }
+        />
+        <StatusSection
+          icon={<IconClock />}
+          value={time?.format('HH:mm:ss')}
+          tooltip='Local time'
+        />
+      </div>
+      <div className='flex flex-row space-x-3 p-1' style={{backgroundColor: props.outsideVisibilityColor}}>
+        <p className='text-sm text-blue-200'>Current heading</p>
+        <p className='text-sm text-red-200'>Desired heading</p>
+      </div>
     </div>
   )
 }

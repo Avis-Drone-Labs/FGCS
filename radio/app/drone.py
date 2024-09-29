@@ -11,6 +11,7 @@ from typing import Callable, Dict, List, Optional
 
 import serial
 from pymavlink import mavutil
+from serial.serialutil import SerialException
 
 from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
@@ -46,6 +47,21 @@ DATASTREAM_RATES_WIRELESS = {
     mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 1,
 }
 
+VALID_BAUDRATES = [
+    300,
+    1200,
+    4800,
+    9600,
+    19200,
+    13400,
+    38400,
+    57600,
+    75880,
+    115200,
+    230400,
+    250000,
+]
+
 
 class Drone:
     def __init__(
@@ -56,6 +72,7 @@ class Drone:
         logger: Logger = getLogger("fgcs"),
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
+        droneConnectStatusCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -66,6 +83,7 @@ class Drone:
             wireless (bool, optional): Whether the connection is wireless. Defaults to False.
             droneErrorCb (Optional[Callable], optional): Callback function for drone errors. Defaults to None.
             droneDisconnectCb (Optional[Callable], optional): Callback function for drone disconnection. Defaults to None.
+            droneConnectStatusCb (Optional[Callable], optional): Callback function for drone connection providing an update as the drone connects. Defaults to None.
         """
         self.port = port
         self.baud = baud
@@ -73,16 +91,32 @@ class Drone:
         self.logger = logger
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
+        self.droneConnectStatusCb = droneConnectStatusCb
 
         self.connectionError: Optional[str] = None
 
         self.logger.debug("Trying to setup master")
+
+        if not Drone.checkBaudrateValid(baud):
+            self.connectionError = (
+                f"{baud} is an invalid baudrate. Valid baud rates are {VALID_BAUDRATES}"
+            )
+            return
+
         try:
+            self.sendConnectionStatusUpdate("Connecting to drone")
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.logger.exception(traceback.format_exc())
             self.master = None
-            self.connectionError = str(e)
+            if isinstance(e, SerialException):
+                self.logger.error(str(e))
+                self.connectionError = "Could not connect to drone, invalid port."
+            elif isinstance(e, ConnectionRefusedError):
+                self.logger.error(str(e))
+                self.connectionError = "Could not connect to drone, connection refused."
+            else:
+                self.connectionError = str(e)
             return
 
         initial_heartbeat = self.master.wait_heartbeat(timeout=5)
@@ -92,6 +126,8 @@ class Drone:
             self.master = None
             self.connectionError = "Could not connect to the drone."
             return
+
+        self.sendConnectionStatusUpdate("Received heartbeat")
 
         self.aircraft_type = initial_heartbeat.type
         if self.aircraft_type not in (1, 2):
@@ -120,6 +156,8 @@ class Drone:
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
+        self.sendConnectionStatusUpdate("Cleaned temp logs")
+
         self.is_active = True
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
@@ -127,12 +165,25 @@ class Drone:
         self.armed = False
 
         self.paramsController = ParamsController(self)
+        self.sendConnectionStatusUpdate("Setup parameters controller")
+
         self.armController = ArmController(self)
+        self.sendConnectionStatusUpdate("Setup arm controller")
+
         self.flightModesController = FlightModesController(self)
+        self.sendConnectionStatusUpdate("Setup flight modes controller")
+
         self.motorTestController = MotorTestController(self)
+        self.sendConnectionStatusUpdate("Setup motor controller")
+
         self.gripperController = GripperController(self)
+        self.sendConnectionStatusUpdate("Setup gripper controller")
+
         self.missionController = MissionController(self)
+        self.sendConnectionStatusUpdate("Setup mission controller")
+
         self.frameController = FrameController(self)
+        self.sendConnectionStatusUpdate("Setup frame controller")
 
         self.stopAllDataStreams()
 
@@ -145,6 +196,18 @@ class Drone:
 
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+    def sendConnectionStatusUpdate(self, msg):
+        if self.droneConnectStatusCb:
+            self.droneConnectStatusCb(msg)
+
+    @staticmethod
+    def checkBaudrateValid(baud: int) -> bool:
+        return baud in VALID_BAUDRATES
+
+    @staticmethod
+    def getValidBaudrates() -> list[int]:
+        return VALID_BAUDRATES
 
     def cleanTempLogs(self) -> None:
         """
@@ -578,6 +641,7 @@ class Drone:
 
     def close(self) -> None:
         """Close the connection to the drone."""
+        self.logger.info(f"Cleaning up resources for drone at {self}")
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 

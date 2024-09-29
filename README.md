@@ -20,42 +20,53 @@ Falcon Ground Control Station.
 
 <details><summary>Windows - Manually</summary>
 
-### Prerequsits
+### Prerequisites
 
 1. Ensure npm is installed, to do so follow [this guide](https://kinsta.com/blog/how-to-install-node-js/). Note: node version must be >= v20.10.0
 2. Ensure yarn is installed, to do so run `npm install --global yarn` or follow [this guide](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
-3. We are using `python 3.11.9` so make sure its installed before creating the venv. If you have multiple environments then please run `python3.11 -m venv venv`
-
-### Running Frontend Manually
-
-1. `cd gcs`
-2. `yarn` (to install dependencies)
-3. `yarn dev`
-
-### Running Backend Manually
-
-1. `cd radio`
-2. Make sure you're in a virtual environment (or create one via `python3 -m venv venv`) and all dependencies are installed using `pip install -r requirements.txt`
-
-> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and winodws](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
-
-4. `python app.py`
+3. Install `python 3.11.9` (this can be found [here](https://www.python.org/downloads/release/python-3119/)) then create a virtual environment for it (see [Creating a virtual environment](#creating-a-virtual-environment) for help)
 
 #### Creating a virtual environment
 
 Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
 
-### Running both simultaneously
+> NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and windows](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
 
-> NOTE: You don't _need_ to run them at the same time with 1 command, you can run each one individually in separate terminals
 
-To run both the frontend and backend at the same time, you need to make sure all the requirements are installed for both yarn and Python. Then you can install a script globally using `npm install -g concurrently`. After activating your Python virtual environment, you can run `./run.bat` and this should start up both the frontend and backend in one terminal.
+<details><summary>Running with bat file</summary>
+
+1. If this is your first time running, please create a venv (see [Creating a virtual environment](#creating-a-virtual-environment)) and then run `./run.bat /path/to/venv update`
+2. After this you can run `./run.bat /path/to/venv` (without the word update after)
+
+</details>
+
+<details><summary>Running independently</summary>
+
+### Frontend
+
+1. `cd gcs`
+2. `yarn` (to install dependencies)
+3. Create a `.env` file and add these two entries:
+   - `VITE_MAPTILER_API_KEY=` + Your maptiler API key (can be generated [on maptilers website](https://cloud.maptiler.com/account/keys))
+   - `VITE_BACKEND_URL=http://127.0.0.1:4723` (if you want to change the port and host see: [Configuration > Changing Ports](#Configuration))
+5. `yarn dev`
+
+### Backend
+
+1. `cd radio`
+2. Make sure you're in a virtual environment (see [Creating a virtual environment](#creating-a-virtual-environment))
+3. Install requirements `pip install -r requirements.txt`
+4. `python app.py`
+
+</details>
+
+---
 
 </details>
 
 <details><summary>Mac/Linux</summary>
 
-We currently dont have instructions or releases for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them. Howerver, you can still run both the frontend and backend indivudally by following the windows version with slight alterations to the commands.
+We currently don't have instructions or releases for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them. However, you can still run both the frontend and backend individually by following the windows version with slight alterations to the commands.
 
 </details>
 
@@ -82,11 +93,12 @@ For running Python tests, first make sure you're in the `radio` directory. By de
 
 <details><summary>SITL with Docker</summary>
 
-To run the SITL simulator within Docker, first navigate to the root directory of FGCS and run `docker build . -t ardupilot_sitl`. Once done building the image you can run the container with `docker run -it --rm -p 5760:5760 ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
+To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
 
 Note: Steps to push an updated image to docker hub:
 
 ```plaintext
+docker build . -t ardupilot_sitl
 docker tag ardupilot_sitl:latest kushmakkapati/ardupilot_sitl:latest
 docker push kushmakkapati/ardupilot_sitl:latest
 ```
@@ -117,9 +129,27 @@ When cloning the repo for the first time, please install `pre-commit`. This can 
 
 From within the `radio` folder run `pyinstaller --paths .\venv\Lib\site-packages\ --add-data=".\venv\Lib\site-packages\pymavlink\message_definitions\:message_definitions" --add-data=".\venv\Lib\site-packages\pymavlink\:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading .\app.py -n fgcs_backend`. This will create an exe and folder within the `dist/fgcs_backend/` folder.
 
+On Mac:
+From within the `radio` folder run
+`pyinstaller --paths ./venv/lib/python3.11/site-packages/ --add-data="./venv/lib/python*/site-packages/pymavlink/message_definitions:message_definitions" --add-data="./venv/lib/python*/site-packages/pymavlink:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading --windowed --name fgcs_backend ./app.py`.
+This will create the `dist/fgcs_backend.app/` folder. 
+
 ## Frontend
 
 After compiling the backend, place the contents of `radio/dist/fgcs_backend` into a folder in `gcs/extras`. Then from within the `gcs` folder run `yarn build`.
+
+On Mac:
+After compiling the backend, copy the `radio/dist/fgcs_backend.app` directory and move it to `gcs/extras`. Then from within the `gcs` folder run `yarn build`. Install from the .dmg file.
+
+</details>
+
+### Configuration
+
+<details><summary>Changing Ports</summary>
+
+We have an `.env` file located in `gcs/.env`. To change the host and port for the backend, please edit `VITE_BACKEND_URL`.
+
+> Note: The default host and port is `http://127.0.0.1:4237`. 
 
 </details>
 

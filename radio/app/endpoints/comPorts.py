@@ -7,7 +7,7 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
-from app.utils import droneErrorCb, getComPortNames
+from app.utils import droneConnectStatusCb, droneErrorCb, getComPortNames
 
 
 class ConnectionDataType(TypedDict):
@@ -52,8 +52,11 @@ def connectToDrone(data: ConnectionDataType) -> None:
         data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
     """
     if droneStatus.drone:
+        droneStatus.drone.logger.warning(
+            "Attempting a connection to drone when connection is already established."
+        )
         droneStatus.drone.close()
-        drone = None
+        droneStatus.drone = None
 
     connectionType = data.get("connectionType")
 
@@ -82,17 +85,28 @@ def connectToDrone(data: ConnectionDataType) -> None:
     logger.debug("Trying to connect to drone")
     baud = data.get("baud", 57600)
 
+    if not isinstance(baud, int):
+        socketio.emit(
+            "connection_error",
+            {
+                "message": f"Expected integer value for baud, recieved {type(baud).__name__}."
+            },
+        )
+        droneStatus.drone = None
+        return
+
     drone = Drone(
         port,
         wireless=data.get("wireless", True),
         baud=baud,
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
+        droneConnectStatusCb=droneConnectStatusCb,
     )
 
     if drone.connectionError is not None:
         socketio.emit("connection_error", {"message": drone.connectionError})
-        drone = None
+        droneStatus.drone = None
         return
 
     # Set droneStatus drone to local drone

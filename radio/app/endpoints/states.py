@@ -5,7 +5,11 @@ from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
 from app import socketio
-from app.utils import sendMessage
+from app.utils import (
+    sendMessage,
+    notConnectedError,
+    missingParameterError,
+)
 
 
 class SetStateType(TypedDict):
@@ -21,8 +25,13 @@ def set_state(data: SetStateType) -> None:
         data: The form data passed in from the frontend, this contains the state we wish to change to
     """
     if not droneStatus.drone:
-        return
-    droneStatus.state = data.get("state")
+        return notConnectedError(action="set the drone state")
+
+    # Ensure that a state was actually sent
+    if (newState := data.get("state", None)) is None:
+        return missingParameterError("set_state", "state")
+
+    droneStatus.state = newState
 
     message_listeners = {
         "dashboard": [

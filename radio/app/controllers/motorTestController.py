@@ -38,8 +38,9 @@ class MotorTestController:
         Returns:
             tuple[int, int, Optional[str]]: The throttle, duration, and error message if it exists
         """
+        # self.drone.logger.info(f"Testing drone values: {data}")
         throttle = data.get("throttle", -1)
-        if 0 > throttle > 100:
+        if not (0 <= throttle <= 100):
             self.drone.logger.error(
                 f"Invalid value for motor test throttle, got {throttle}"
             )
@@ -70,9 +71,13 @@ class MotorTestController:
         if err:
             return {"success": False, "message": err}
 
-        motor_instance = data.get("motorInstance")
-        if motor_instance is None:
-            return {"success": False, "message": "No motor instance provided"}
+        motor_instance = data.get("motorInstance", None)
+
+        if motor_instance is None or motor_instance < 1:
+            self.drone.logger.error(
+                f"Invalid value for motor instance, got {motor_instance}"
+            )
+            return {"success": False, "message": "Invalid value for motorInstance"}
 
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
@@ -128,14 +133,20 @@ class MotorTestController:
         if err:
             return {"success": False, "message": err}
 
+        num_motors = data.get("number_of_motors", None)
+        if num_motors is None or num_motors < 1:
+            self.drone.logger.error(
+                f"Invalid value for number of motors, got {num_motors}"
+            )
+            return {"success": False, "message": "Invalid value for number_of_motors"}
+
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
             param1=0,  # ID of the motor to be tested
             param2=0,  # throttle type (PWM,% etc)
             param3=throttle,  # value of the throttle - 0 to 100%
             param4=duration,  # delay between tests in seconds
-            param5=self.drone.number_of_motors
-            + 1,  # number of motors to test in a sequence
+            param5=num_motors,  # number of motors to test in a sequence
             param6=0,  # test order
         )
 
@@ -174,7 +185,16 @@ class MotorTestController:
         if err:
             return {"success": False, "message": err}
 
-        for idx in range(1, self.drone.number_of_motors):
+        # Validate number of motors
+        num_motors = data.get("number_of_motors", None)
+        if num_motors is None or num_motors < 1:
+            self.drone.logger.error(
+                f"Invalid value for number of motors, got {num_motors}"
+            )
+            return {"success": False, "message": "Invalid value for number_of_motors"}
+
+        # Send all commands
+        for idx in range(1, num_motors + 1):
             self.drone.sendCommand(
                 mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
                 param1=idx,  # ID of the motor to be tested
@@ -185,36 +205,15 @@ class MotorTestController:
                 param6=0,  # test order
             )
 
-        responses = 0
-
+        successful_responses = 0
         try:
-            response = self.drone.master.recv_match(
-                type="COMMAND_ACK", blocking=True, timeout=RESPONSE_TIMEOUT
-            )
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                responses += 1
-                self.drone.logger.debug(
-                    f"All motor test started for {responses} motors"
+            # Attempt to gather all the command acknowledegements
+            for _ in range(num_motors):
+                response = self.drone.master.recv_match(
+                    type="COMMAND_ACK", blocking=True, timeout=RESPONSE_TIMEOUT
                 )
-                if responses == self.drone.number_of_motors:
-                    self.drone.logger.info("All motor test started")
-                    return {"success": True, "message": "All motor test started"}
-                elif responses < self.drone.number_of_motors:
-                    # TODO: Test if this works, do we not have to put this in a while loop
-                    # And wait for the command ack every loop, and once we receive one we restart the loop?
-                    pass
-                else:
-                    self.drone.logger.info(
-                        "All motor test potentially started, but received {responses} responses with {self.drone.number_of_motors} motors"
-                    )
-                    return {
-                        "success": True,
-                        "message": "All motor test potentially started",
-                    }
-            else:
-                self.drone.logger.error("All motor not test started")
-                return {"success": False, "message": "All motor test not started"}
+                if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
+                    successful_responses += 1
         except serial.serialutil.SerialException:
             self.drone.logger.error("All motor test not started, serial exception")
             return {
@@ -222,7 +221,24 @@ class MotorTestController:
                 "message": "All motor test not started, serial exception",
             }
 
-        return {
-            "success": False,
-            "message": "Unknown status about all motor test",
-        }
+        # Return data based on the number of successful command acknowledgements
+        if successful_responses == num_motors:
+            self.drone.logger.info("All motor test started successfully")
+            return {"success": True, "message": "All motor test started successfully"}
+        elif successful_responses < num_motors:
+            self.drone.logger.warning(
+                f"Number of successful responses ({successful_responses}) was less than number of motors ({num_motors})"
+            )
+            return {
+                "success": False,
+                "message": f"All motor test successfully started {successful_responses} / {num_motors} motors",
+            }
+        else:
+            # We should never reach this (since we should only ever have successful_responses <= num_motors)
+            self.drone.logger.info(
+                f"All motor test potentially started, but received {successful_responses} responses with {num_motors} motors"
+            )
+            return {
+                "success": True,
+                "message": "All motor test potentially started",
+            }

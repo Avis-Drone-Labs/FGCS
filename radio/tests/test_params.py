@@ -2,10 +2,11 @@ from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
 from .helpers import ParamSetTimeout
+from typing import List, Any
 
 
 def send_and_receive_params(
-    client: SocketIOTestClient, endpoint: str, args: dict | None | str = None
+    client: SocketIOTestClient, endpoint: str, args: List[Any] | None | str = None
 ) -> dict:
     """
     Sends a request to the socketio test client and awaits a response, returning the entire response (name and args)

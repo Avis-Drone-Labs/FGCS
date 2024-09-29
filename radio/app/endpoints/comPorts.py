@@ -7,7 +7,7 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
-from app.utils import droneErrorCb, getComPortNames
+from app.utils import droneConnectStatusCb, droneErrorCb, getComPortNames
 
 
 class ConnectionDataType(TypedDict):
@@ -101,6 +101,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         baud=baud,
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
+        droneConnectStatusCb=droneConnectStatusCb,
     )
 
     if drone.connectionError is not None:

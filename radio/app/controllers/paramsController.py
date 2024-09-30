@@ -32,7 +32,12 @@ class ParamsController:
     def setRequestAllParamsTimeout(self, timeout: int) -> None:
         self.requestAllParamsTimeout = timeout
 
-    def getNumberOfParams(self) -> int | None:
+    def getNumberOfParams(self) -> int:
+        """Gets the number of parameters available on the drone
+
+        Returns:
+            int: The number of params available, or 0 if the request timed out
+        """
         # Request all parameters
         self.drone.is_listening = False
         self.drone.master.mav.param_request_list_send(
@@ -47,7 +52,7 @@ class ParamsController:
             total_params = message.param_count
             self.drone.logger.info(f"Total number of parameters: {total_params}")
         else:
-            total_params = None
+            total_params = 0
 
         # Stop further param transmission
         self.drone.master.mav.param_request_read_send(
@@ -119,7 +124,19 @@ class ParamsController:
         updateFreq: int = 1,
     ) -> None:
         """
-        Request all parameters from the drone.
+        Request all parameters from the drone. Starts a thread which collects all recieved PARAM_VALUE
+        messages, and calls the given callbacks at each relevant place:\n
+        - timeoutCb should be of type `func(t: int)`, where t is the time in seconds that
+        the process took before timing out\n
+        - completeCb should be of type `func(p: list)`, where p is the list of parameters returned\n
+        - updateCb should be of type `func(i: int, t: int)` where i is the index of the last
+        loaded param and t is the total number of params
+
+        Args:
+            timeoutCb (typing.Callable): The callback to invoke if the thread times out
+            completeCb (typing.Callable): The callback to invoke when the thread completes
+            updateCb (typing.Callable): The callback to invoke at a fixed duration defined by `updateFreq`
+            updateFreq (int): The frequency in seconds that updates should be sent back to the client. Default 1
         """
         self.drone.stopAllDataStreams()
         self.drone.is_listening = False
@@ -143,10 +160,21 @@ class ParamsController:
         self.drone.is_listening = True
 
     def getAllParamsThreadFunc(
-        self, timeoutCb, updateCb, completeCb, updateFreq, timeout
+        self,
+        timeoutCb: Callable,
+        updateCb: Callable,
+        completeCb: Callable,
+        updateFreq: int,
+        timeout: int,
     ) -> None:
         """
         The thread function to get all parameters from the drone.
+
+        Args:
+            timeoutCb (typing.Callable): The callback to invoke if the thread times out
+            completeCb (typing.Callable): The callback to invoke when the thread completes
+            updateCb (typing.Callable): The callback to invoke at a fixed duration defined by `updateFreq`
+            updateFreq (int): The frequency in seconds that updates should be sent back to the client. Default 1
         """
         timeoutEpoch = time.time() + timeout
         updateEpoch = time.time() + updateFreq

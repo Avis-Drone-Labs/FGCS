@@ -1,7 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import ParamSetTimeout, ParamRefreshTimeout
+from .helpers import ParamSetTimeout
 from typing import List, Any
 
 
@@ -261,22 +261,28 @@ def test_refreshParams_wrongState(
 def test_refreshParams_timeout(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
+    # pytest.skip(reason="I fucking hate this test stop wasting 3 minutes of my time.")
     droneStatus.state = "params"
-    with ParamRefreshTimeout():
-        socketio_result = send_and_receive_params(socketio_client, "refresh_params")
-        assert (
-            socketio_result["name"] == "params_error"
-            or socketio_result["name"] == "params"
-        )
-        if socketio_result["name"] == "params_error":
-            assert socketio_result["args"][0] == {
-                "message": "Parameter request timed out after 3 minutes."
-            }
 
-        if socketio_result["name"] == "params":
-            assert (
-                socketio_result["args"][0] == droneStatus.drone.paramsController.params
-            )
+    # Set the timeout to 30 seconds to avoid waiting ages
+    droneStatus.drone.paramsController.setRequestAllParamsTimeout(30)
+    with ParamSetTimeout():
+        socketio_client.emit("refresh_params")
+        while True:
+            if (recieved := socketio_client.get_received()) and recieved[-1][
+                "name"
+            ] == "params_request_update":
+                assert recieved["args"][-1]["total_number_of_params"] == 1400
+                assert recieved["args"][-1]["current_param_index"] < 1400
+            elif recieved and recieved[-1]["name"] in ["params", "params_error"]:
+                break
+    assert recieved[-1]["name"] == "params_error"
+    assert recieved[-1]["args"][0] == {
+        "message": "Parameter request timed out after 30 seconds."
+    }
+
+    # reset timeout back to 3 mins
+    droneStatus.drone.paramsController.setRequestAllParamsTimeout(180)
 
 
 @falcon_test(pass_drone_status=True)
@@ -285,11 +291,14 @@ def test_refreshParams_successfullyRefreshed(
 ) -> None:
     droneStatus.state = "params"
     socketio_client.emit("refresh_params")
-    while (recieved := socketio_client.get_received()[-1])[
-        "name"
-    ] == "params_request_update":
-        assert recieved["args"][0]["total_number_of_params"] == 1400
-        assert recieved["args"][0]["current_param_index"] < 1400
+    while True:
+        if (recieved := socketio_client.get_received()) and recieved[-1][
+            "name"
+        ] == "params_request_update":
+            assert recieved["args"][-1]["total_number_of_params"] == 1400
+            assert recieved["args"][-1]["current_param_index"] < 1400
+        elif recieved and recieved[-1]["name"] == "params":
+            break
 
-    assert recieved["name"] == "params"
-    assert len(recieved["args"][0]) == 1400
+    assert recieved[-1]["name"] == "params"
+    assert len(recieved[-1]["args"][0]) == 1400

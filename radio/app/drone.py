@@ -87,6 +87,7 @@ class Drone:
         self.baud = baud
         self.wireless = wireless
         self.logger = logger
+        self.connectionType = "TCP" if self.port.startswith("tcp") else "SERIAL"
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
 
@@ -311,7 +312,7 @@ class Drone:
         - POSITION: LOCAL_POSITION, GLOBAL_POSITION_INT
         - EXTRA1: ESC_TELEMETRY_5_TO_8, ATTITUDE
         - EXTRA2: VFR_HUD
-        - EXTRA3: BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERRAIN_REPORT, EKF_STATUS_REPORT
+        - EXTRA3: BATTERY_STATUS, SYSTEM_TIME, VIBRATION, AHRS, WIND, TERsN_REPORT, EKF_STATUS_REPORT
         """
 
         # self.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS)

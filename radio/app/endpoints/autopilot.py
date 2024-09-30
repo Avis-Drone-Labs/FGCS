@@ -1,11 +1,14 @@
 import time
 
 import serial
+import json
 
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
-from app.utils import getComPortNames
+from app.utils import getComPortNames, checkNetworkPort
+
+from serial.tools.list_ports_common import ListPortInfo
 
 
 @socketio.on("reboot_autopilot")
@@ -29,18 +32,30 @@ def rebootAutopilot() -> None:
         time.sleep(0.05)
 
     counter = 0
-    while counter < 20:
-        if port in getComPortNames():
-            break
-        counter += 1
-        time.sleep(0.5)
-    else:
-        logger.error("Port not open after 10 seconds.")
-        socketio.emit(
-            "reboot_autopilot",
-            {"success": False, "message": "Port not open after 10 seconds."},
-        )
-        return
+
+    # different tests for each connection type
+    if droneStatus.drone.connectionType == "SERIAL":
+        while counter < 20:
+            if port in getComPortNames():
+                break
+            counter += 1
+            time.sleep(0.5)
+        else:
+            logger.error("Port not open after 10 seconds.")
+            socketio.emit(
+                "reboot_autopilot",
+                {"success": False, "message": "Port not open after 10 seconds."},
+            )
+            return 
+    elif droneStatus.drone.connectionType == "TCP":
+        port_status = checkNetworkPort(port)
+        if port_status == "CLOSED":
+            logger.error("Port not open after 10 seconds.")
+            socketio.emit(
+                "reboot_autopilot",
+                {"success": False, "message": "Port not open after 10 seconds."},
+            )
+            return 
 
     tries = 0
     while tries < 3:

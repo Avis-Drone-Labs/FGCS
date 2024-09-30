@@ -24,9 +24,28 @@ class ParamsController:
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0
-        self.total_number_of_params = 0
+        self.total_number_of_params = self.getNumberOfParams()
         self.is_requesting_params = False
         self.getAllParamsThread: Optional[Thread] = None
+
+    def getNumberOfParams(self) -> int:
+        # Request all parameters
+        self.drone.master.mav.param_request_list_send(
+            self.drone.master.target_system, self.drone.master.target_component
+        )
+
+        # Read param_count from the first message
+        message = self.drone.master.recv_match(
+            type="PARAM_VALUE", blocking=True, timeout=10
+        )
+        if message:
+            total_params = message.param_count
+            self.drone.logger.info(f"Total number of parameters: {total_params}")
+
+        # Stop further param transmission
+        self.drone.master.mav.param_request_read_send(
+            self.drone.master.target_system, self.drone.master.target_component, b"", -1
+        )
 
     def getSingleParam(self, param_name: str, timeout: Optional[float] = 2) -> Response:
         """
@@ -106,7 +125,6 @@ class ParamsController:
                     self.drone.logger.warning("Get all params thread timed out")
                     self.is_requesting_params = False
                     self.current_param_index = 0
-                    self.total_number_of_params = 0
                     self.params = []
                     self.drone.is_listening = True
                     return
@@ -123,7 +141,6 @@ class ParamsController:
                     if msg.param_index == msg.param_count - 1:
                         self.is_requesting_params = False
                         self.current_param_index = 0
-                        self.total_number_of_params = 0
                         self.params = sorted(self.params, key=lambda k: k["param_id"])
                         self.drone.is_listening = True
                         self.drone.logger.info("Got all params")
@@ -131,7 +148,6 @@ class ParamsController:
             except serial.serialutil.SerialException:
                 self.is_requesting_params = False
                 self.current_param_index = 0
-                self.total_number_of_params = 0
                 self.params = []
                 self.drone.is_listening = True
                 self.drone.logger.error("Serial exception while getting all params")

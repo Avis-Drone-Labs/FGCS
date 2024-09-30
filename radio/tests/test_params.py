@@ -1,7 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import ParamSetTimeout
+from .helpers import ParamSetTimeout, NoDrone
 from typing import List, Any
 
 
@@ -261,7 +261,6 @@ def test_refreshParams_wrongState(
 def test_refreshParams_timeout(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    # pytest.skip(reason="I fucking hate this test stop wasting 3 minutes of my time.")
     droneStatus.state = "params"
 
     # Set the timeout to 30 seconds to avoid waiting ages
@@ -302,3 +301,23 @@ def test_refreshParams_successfullyRefreshed(
 
     assert recieved[-1]["name"] == "params"
     assert len(recieved[-1]["args"][0]) == 1400
+
+
+@falcon_test(pass_drone_status=True)
+def test_params_noDrone(socketio_client: SocketIOTestClient, droneStatus) -> None:
+    droneStatus.state = "params"
+    with NoDrone():
+        response = send_and_receive_params(
+            socketio_client,
+            "set_multiple_params",
+            [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
+        )
+        assert response["name"] == "connection_error"
+        assert response["args"][0] == {
+            "message": "Must be connected to the drone to set parameter values."
+        }
+        response = send_and_receive_params(socketio_client, "refresh_params")
+        assert response["name"] == "connection_error"
+        assert response["args"][0] == {
+            "message": "Must be connected to the drone to get parameter values."
+        }

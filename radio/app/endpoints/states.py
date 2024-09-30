@@ -1,5 +1,3 @@
-import time
-
 from pymavlink import mavutil
 from typing_extensions import TypedDict
 

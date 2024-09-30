@@ -1,6 +1,3 @@
-import time
-import pytest
-
 from flask_socketio import SocketIOTestClient
 
 from . import falcon_test
@@ -50,8 +47,14 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
 
     droneStatus.drone.message_listeners = {}
 
-    pytest.skip(reason="Issues with parameterController to be fixed in alpha 0.1.8")
+    # Test
     socketio_client.emit("set_state", {"state": "params"})
-    time.sleep(15)
-    assert len(socketio_client.get_received()[-1]["args"][0]) == 1400
+    while (recieved := socketio_client.get_received()[-1])[
+        "name"
+    ] == "params_request_update":
+        assert recieved["args"][0]["total_number_of_params"] == 1400
+        assert recieved["args"][0]["current_param_index"] < 1400
+
+    assert recieved["name"] == "params"
+    assert len(recieved["args"][0]) == 1400
     assert len(droneStatus.drone.message_listeners) == 0

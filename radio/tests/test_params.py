@@ -285,17 +285,12 @@ def test_refreshParams_successfullyRefreshed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
     droneStatus.state = "params"
-    socketio_result = send_and_receive_params(socketio_client, "refresh_params")
-    assert (
-        socketio_result["name"] == "param_request_update"
-        or socketio_result["name"] == "params"
-    )
+    socketio_client.emit("refresh_params")
+    while (recieved := socketio_client.get_received()[-1])[
+        "name"
+    ] == "params_request_update":
+        assert recieved["args"][0]["total_number_of_params"] == 1400
+        assert recieved["args"][0]["current_param_index"] < 1400
 
-    pytest.skip(reason="Flaky test, needs fixing in alpha 0.1.8")
-    if socketio_result["name"] == "param_request_update":
-        assert len(socketio_result["args"][0]) == 2
-        assert socketio_result["args"][0]["total_number_of_params"] == 1400
-        assert socketio_result["args"][0]["current_param_index"] <= 1400
-
-    if socketio_result["name"] == "params":
-        assert socketio_result["args"][0] == droneStatus.drone.paramsController.params
+    assert recieved["name"] == "params"
+    assert len(recieved["args"][0]) == 1400

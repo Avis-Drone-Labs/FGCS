@@ -1,4 +1,3 @@
-import time
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 

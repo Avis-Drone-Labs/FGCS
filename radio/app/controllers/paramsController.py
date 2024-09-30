@@ -189,7 +189,7 @@ class ParamsController:
             while time.time() < timeoutEpoch:
                 if (
                     msg := self.drone.master.recv_match(
-                        type="PARAM_VALUE", blocking=True
+                        type="PARAM_VALUE", blocking=True, timeout=updateFreq
                     )
                 ) is None:
                     time.sleep(0.2)

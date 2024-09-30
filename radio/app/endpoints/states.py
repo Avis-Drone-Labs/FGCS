@@ -70,7 +70,10 @@ def set_state(data: SetStateType) -> None:
     elif droneStatus.state == "params":
         droneStatus.drone.stopAllDataStreams()
 
-        if len(droneStatus.drone.paramsController.params):
+        if (
+            len(droneStatus.drone.paramsController.params)
+            == droneStatus.drone.paramsController.total_number_of_params
+        ):
             socketio.emit("params", droneStatus.drone.paramsController.params)
             return
 

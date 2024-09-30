@@ -4,7 +4,9 @@ from typing import Any, List
 from pymavlink import mavutil
 from serial.tools import list_ports
 
-from . import socketio
+from . import socketio, logger
+
+import socket
 
 
 def getComPort() -> str:
@@ -138,3 +140,25 @@ def sendMessage(msg: Any) -> None:
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
     socketio.emit("incoming_msg", data)
+
+def checkNetworkPort(connect_string: str) -> str:
+    """
+        Checks if the provided network port is open
+    """
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP
+        #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        socket.setdefaulttimeout(2.0) # seconds (float)
+        result = sock.connect_ex(connect_string)
+        if result == 0:
+            # print ("Port is open")
+            sock.close()
+            return "LISTENING"
+        else:
+            # print ("Port is closed/filtered")
+            sock.close()
+            return "CLOSED"
+    except:
+        sock.close()
+        logger.error("Operation failed. Cannot connect to closed socket.")
+        

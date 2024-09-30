@@ -88,6 +88,7 @@ class Drone:
         self.wireless = wireless
         self.logger = logger
         self.droneErrorCb = droneErrorCb
+        self.connectionType = "TCP" if self.port.startswith("tcp") else "SERIAL"
         self.droneDisconnectCb = droneDisconnectCb
 
         self.connectionError: Optional[str] = None

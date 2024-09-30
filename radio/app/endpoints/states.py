@@ -6,9 +6,9 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import socketio
 from app.utils import (
-    sendMessage,
-    notConnectedError,
     missingParameterError,
+    notConnectedError,
+    sendMessage,
 )
 
 
@@ -120,7 +120,7 @@ def set_state(data: SetStateType) -> None:
 
         for message in message_listeners["config.flight_modes"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
-    elif droneStatus.state == "config.rc_calibration":
+    elif droneStatus.state == "config.rc":
         droneStatus.drone.stopAllDataStreams()
 
         droneStatus.drone.sendDataStreamRequestMessage(

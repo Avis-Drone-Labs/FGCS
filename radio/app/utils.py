@@ -4,7 +4,10 @@ from typing import Any, List
 from pymavlink import mavutil
 from serial.tools import list_ports
 
-from . import socketio
+from . import socketio, logger
+
+from serial.tools.list_ports_common import ListPortInfo
+import socket
 
 
 def getComPort() -> str:

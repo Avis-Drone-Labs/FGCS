@@ -1,4 +1,3 @@
-import time
 from typing import Any, List
 
 import app.droneStatus as droneStatus
@@ -51,32 +50,16 @@ def refresh_params() -> None:
         return
 
     droneStatus.drone.paramsController.getAllParams()
-
-    timeout = time.time() + 60 * 3  # 3 minutes from now
-    last_index_sent = -1
-
-    while droneStatus.drone and droneStatus.drone.paramsController.is_requesting_params:
-        if time.time() > timeout:
-            socketio.emit(
-                "params_error",
-                {"message": "Parameter request timed out after 3 minutes."},
-            )
-            return
-
-        if (
-            last_index_sent != droneStatus.drone.paramsController.current_param_index
-            and droneStatus.drone.paramsController.current_param_index > last_index_sent
-        ):
-            socketio.emit(
-                "param_request_update",
-                {
-                    "current_param_index": droneStatus.drone.paramsController.current_param_index,
-                    "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
-                },
-            )
-            last_index_sent = droneStatus.drone.paramsController.current_param_index
-
-        time.sleep(0.2)
+    droneStatus.drone.paramsController.fetchAllParams(
+        timeoutCb=lambda: socketio.emit(
+            "params_error",
+            {"message": "Parameter request timed out after 3 minutes."},
+        ),
+        updateCb=lambda i, t: socketio.emit(
+            "param_request_update",
+            {"current_param_index": i, "total_number_of_params": t},
+        ),
+    )
 
     if droneStatus.drone:
         socketio.emit("params", droneStatus.drone.paramsController.params)

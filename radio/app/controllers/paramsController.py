@@ -94,6 +94,35 @@ class ParamsController:
         self.drone.master.param_fetch_all()
         self.is_requesting_params = True
 
+    def fetchAllParams(
+        self, timeoutCb: callable, updateCb: callable, timeout: int = 180
+    ) -> None:
+        """
+        Blocking function which gets the status of the parameter fetching
+        begun by `getAllParams`, calling updateCb with the updated params info
+
+        Args:
+            timeoutCb (callable): The function to call in the event of a timeout
+            updateCb (callable): The callback to pass updates to (current index, total params)
+            timeout (int): The timeout of the function in secopnds. Default 180
+        """
+
+        timeoutTime = time.time() + timeout
+        last_index_sent = -1
+
+        while self.drone and self.is_requesting_params:
+            if time.time() > timeoutTime:
+                return timeoutCb()
+
+            if (
+                last_index_sent != self.current_param_index
+                and self.current_param_index > last_index_sent
+            ):
+                updateCb(self.current_param_index, self.total_number_of_params)
+                last_index_sent = self.drone.paramsController.current_param_index
+
+            time.sleep(0.2)
+
     def getAllParamsThreadFunc(self) -> None:
         """
         The thread function to get all parameters from the drone.

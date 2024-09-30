@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Callable
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -113,9 +113,9 @@ class ParamsController:
 
     def getAllParams(
         self,
-        timeoutCb: callable,
-        updateCb: callable,
-        completeCb: callable,
+        timeoutCb: Callable,
+        updateCb: Callable,
+        completeCb: Callable,
         updateFreq: int = 1,
     ) -> None:
         """

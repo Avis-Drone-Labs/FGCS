@@ -10,7 +10,7 @@ from . import socketio_client
 from .conftest import setupDrone
 from .helpers import send_and_recieve
 
-VALID_DRONE_PORT: str | ListPortInfo
+VALID_DRONE_PORT: str
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -19,12 +19,13 @@ def run_once_after_all_tests():
     Saves the valid connection string then ensures that the drone connection is established again after the tests have run
     """
     assert droneStatus.drone is not None
-    global VALID_DRONE_PORT
-    VALID_DRONE_PORT = droneStatus.drone.port
-
+    validPort = droneStatus.drone.port
     # Get the connection string
-    if isinstance(VALID_DRONE_PORT, ListPortInfo):
-        VALID_DRONE_PORT = VALID_DRONE_PORT.device
+    if isinstance(validPort, ListPortInfo):
+        validPort = validPort.device
+
+    global VALID_DRONE_PORT
+    VALID_DRONE_PORT = validPort
     droneStatus.drone.logger.info(f"Found drone running on port {VALID_DRONE_PORT}")
     yield
 

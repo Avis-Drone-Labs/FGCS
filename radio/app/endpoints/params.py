@@ -3,6 +3,7 @@ from typing import Any, List
 import app.droneStatus as droneStatus
 from app import logger, socketio
 
+from app.utils import notConnectedError
 
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list: List[Any]) -> None:
@@ -22,7 +23,7 @@ def set_multiple_params(params_list: List[Any]) -> None:
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="set parameter values")
 
     success = droneStatus.drone.paramsController.setMultipleParams(params_list)
     if success:
@@ -47,7 +48,7 @@ def refresh_params() -> None:
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError("get parameter values")
 
     # Reset params to guarantee full refresh
     droneStatus.drone.paramsController.params = []

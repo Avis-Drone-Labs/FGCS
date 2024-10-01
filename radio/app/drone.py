@@ -163,6 +163,8 @@ class Drone:
         self.number_of_motors = 4  # Is there a way to get this from the drone?
 
         self.armed = False
+        self.is_listening = True
+        self.startThread()
 
         self.paramsController = ParamsController(self)
         self.sendConnectionStatusUpdate("Setup parameters controller")
@@ -186,10 +188,6 @@ class Drone:
         self.sendConnectionStatusUpdate("Setup frame controller")
 
         self.stopAllDataStreams()
-
-        self.is_listening = True
-
-        self.startThread()
 
     def __getNextLogFilePath(self, line: str) -> str:
         return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
@@ -395,6 +393,7 @@ class Drone:
         """
         if message_id not in self.message_listeners:
             self.message_listeners[message_id] = func
+            self.logger.info(f"Added message listener {func.__name__} for {message_id}")
             return True
         return False
 

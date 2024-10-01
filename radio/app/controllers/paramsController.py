@@ -63,6 +63,8 @@ class ParamsController:
         while self.drone.master.recv_match(type="PARAM_VALUE"):
             pass
 
+        self.drone.is_listening = True
+
         return total_params
 
     def getSingleParam(self, param_name: str, timeout: Optional[float] = 2) -> Response:

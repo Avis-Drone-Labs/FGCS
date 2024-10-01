@@ -9,6 +9,7 @@ from threading import Lock
 from . import socketio
 from app import logger
 
+
 def getComPort() -> str:
     """
     Get a com port name from a selected list. This is only used in testing as its CLI interface and is NOT used in the GUI.
@@ -139,6 +140,7 @@ def droneConnectStatusCb(msg: Any) -> None:
     """
     socketio.emit("drone_connect_status", {"message": msg})
 
+
 def notConnectedError(action: str | None = None) -> None:
     """
     Send error to the socket indicating that drone connection must be established to complete this action
@@ -171,6 +173,7 @@ def missingParameterError(endpoint: str, params: str | list[str]) -> None:
         },
     )
 
+
 def sendMessage(msg: Any) -> None:
     """
     Sends a message to the frontend with a timestamp
@@ -182,17 +185,18 @@ def sendMessage(msg: Any) -> None:
     data["timestamp"] = msg._timestamp
     socketio.emit("incoming_msg", data)
 
-T = TypeVar('T')
+
+T = TypeVar("T")
+
+
 class MessageBuffer(Generic[T]):
-    """Last-in First-out message buffer for mavlink messages
-    """
+    """Last-in First-out message buffer for mavlink messages"""
 
     def __init__(self) -> None:
         self.buffer: list[T] = []
         self.buffer_lock = Lock()
 
     def getMessages(self, expected: int, timeout: int) -> list[T]:
-
         timeoutEpoch = time.time() + timeout
         while len(self.buffer) < expected and time.time() < timeoutEpoch:
             time.sleep(0.2)
@@ -222,17 +226,15 @@ class MessageBuffer(Generic[T]):
     def findFirst(self, key: Callable, timeout: int) -> T | None:
         timeoutEpoch = time.time() + timeout
         while time.time() < timeoutEpoch:
-
             if not self.buffer:
                 time.sleep(0.2)
             with self.buffer_lock:
-                if key( msg := self.buffer.pop(-1)):
+                if key(msg := self.buffer.pop(-1)):
                     return msg
         return None
 
-
     def addMessage(self, message: T) -> None:
-        #logger.info(f"ADDED {message}, buffer: {len(self.buffer)}")
+        # logger.info(f"ADDED {message}, buffer: {len(self.buffer)}")
         with self.buffer_lock:
             self.buffer.append(message)
 

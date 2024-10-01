@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Callable
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -24,9 +24,48 @@ class ParamsController:
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0
-        self.total_number_of_params = 0
+        self.total_number_of_params = self.getNumberOfParams()
         self.is_requesting_params = False
         self.getAllParamsThread: Optional[Thread] = None
+        self.requestAllParamsTimeout: int = 180  # Default timeout of 3 mins
+
+    def setRequestAllParamsTimeout(self, timeout: int) -> None:
+        self.requestAllParamsTimeout = timeout
+
+    def getNumberOfParams(self) -> int:
+        """Gets the number of parameters available on the drone
+
+        Returns:
+            int: The number of params available, or 0 if the request timed out
+        """
+        # Request all parameters
+        self.drone.is_listening = False
+        self.drone.master.mav.param_request_list_send(
+            self.drone.master.target_system, self.drone.master.target_component
+        )
+
+        # Read param_count from the first message
+        message = self.drone.master.recv_match(
+            type="PARAM_VALUE", blocking=True, timeout=10
+        )
+        if message:
+            total_params = message.param_count
+            self.drone.logger.info(f"Total number of parameters: {total_params}")
+        else:
+            total_params = 0
+
+        # Stop further param transmission
+        self.drone.master.mav.param_request_read_send(
+            self.drone.master.target_system, self.drone.master.target_component, b"", -1
+        )
+
+        # Clear message buffer
+        while self.drone.master.recv_match(type="PARAM_VALUE"):
+            pass
+
+        self.drone.is_listening = True
+
+        return total_params
 
     def getSingleParam(self, param_name: str, timeout: Optional[float] = 2) -> Response:
         """
@@ -79,63 +118,118 @@ class ParamsController:
                 "message": f"{failure_message}, serial exception",
             }
 
-    def getAllParams(self) -> None:
+    def getAllParams(
+        self,
+        timeoutCb: Callable,
+        updateCb: Callable,
+        completeCb: Callable,
+        updateFreq: int = 1,
+    ) -> None:
         """
-        Request all parameters from the drone.
+        Request all parameters from the drone. Starts a thread which collects all recieved PARAM_VALUE
+        messages, and calls the given callbacks at each relevant place:\n
+        - timeoutCb should be of type `func(t: int)`, where t is the time in seconds that
+        the process took before timing out\n
+        - completeCb should be of type `func(p: list)`, where p is the list of parameters returned\n
+        - updateCb should be of type `func(i: int, t: int)` where i is the index of the last
+        loaded param and t is the total number of params
+
+        Args:
+            timeoutCb (typing.Callable): The callback to invoke if the thread times out
+            completeCb (typing.Callable): The callback to invoke when the thread completes
+            updateCb (typing.Callable): The callback to invoke at a fixed duration defined by `updateFreq`
+            updateFreq (int): The frequency in seconds that updates should be sent back to the client. Default 1
         """
         self.drone.stopAllDataStreams()
         self.drone.is_listening = False
 
         self.getAllParamsThread = Thread(
-            target=self.getAllParamsThreadFunc, daemon=True
+            target=self.getAllParamsThreadFunc,
+            daemon=True,
+            args=(
+                timeoutCb,
+                updateCb,
+                completeCb,
+                updateFreq,
+                self.requestAllParamsTimeout,
+            ),
         )
         self.getAllParamsThread.start()
 
+    def setFinishedRequestingParams(self) -> None:
+        self.is_requesting_params = False
+        self.current_param_index = 0
+        self.drone.is_listening = True
+
+    def getAllParamsThreadFunc(
+        self,
+        timeoutCb: Callable,
+        updateCb: Callable,
+        completeCb: Callable,
+        updateFreq: int,
+        timeout: int,
+    ) -> None:
+        """
+        The thread function to get all parameters from the drone.
+
+        Args:
+            timeoutCb (typing.Callable): The callback to invoke if the thread times out
+            completeCb (typing.Callable): The callback to invoke when the thread completes
+            updateCb (typing.Callable): The callback to invoke at a fixed duration defined by `updateFreq`
+            updateFreq (int): The frequency in seconds that updates should be sent back to the client. Default 1
+        """
+        timeoutEpoch = time.time() + timeout
+        updateEpoch = time.time() + updateFreq
+
+        # Default to 1400 if failure and try and resolve total during loop
+        self.total_number_of_params = self.getNumberOfParams() or 1400
         self.drone.master.param_fetch_all()
         self.is_requesting_params = True
 
-    def getAllParamsThreadFunc(self) -> None:
-        """
-        The thread function to get all parameters from the drone.
-        """
-        timeout = time.time() + 60 * 3  # 3 minutes from now
+        self.drone.logger.info(f"Fetching {self.total_number_of_params} params")
+        try:
+            while time.time() < timeoutEpoch:
+                if (
+                    msg := self.drone.master.recv_match(
+                        type="PARAM_VALUE", blocking=True, timeout=updateFreq
+                    )
+                ) is None:
+                    time.sleep(0.2)
+                    continue
 
-        while True:
-            try:
-                if time.time() > timeout:
-                    self.drone.logger.warning("Get all params thread timed out")
-                    self.is_requesting_params = False
-                    self.current_param_index = 0
-                    self.total_number_of_params = 0
-                    self.params = []
-                    self.drone.is_listening = True
-                    return
+                self.saveParam(msg.param_id, msg.param_value, msg.param_type)
 
-                msg = self.drone.master.recv_msg()
-                if msg and msg.msgname == "PARAM_VALUE":
-                    self.saveParam(msg.param_id, msg.param_value, msg.param_type)
+                # Wrong param count
+                if self.total_number_of_params != msg.param_count:
+                    self.drone.logger.warning(
+                        f"Total params updated from {self.total_number_of_params} to {msg.param_count}"
+                    )
+                    self.total_number_of_params = msg.param_count
 
-                    self.current_param_index = msg.param_index
+                # Update callback
+                if time.time() > updateEpoch:
+                    updateCb(len(self.params), self.total_number_of_params)
+                    updateEpoch += updateFreq
 
-                    if self.total_number_of_params != msg.param_count:
-                        self.total_number_of_params = msg.param_count
+                # Loaded all params
+                if len(self.params) == self.total_number_of_params:
+                    self.params = sorted(self.params, key=lambda k: k["param_id"])
+                    self.setFinishedRequestingParams()
+                    self.drone.logger.info(
+                        f"Success fetching {len(self.params)} params"
+                    )
+                    return completeCb(self.params)
 
-                    if msg.param_index == msg.param_count - 1:
-                        self.is_requesting_params = False
-                        self.current_param_index = 0
-                        self.total_number_of_params = 0
-                        self.params = sorted(self.params, key=lambda k: k["param_id"])
-                        self.drone.is_listening = True
-                        self.drone.logger.info("Got all params")
-                        return
-            except serial.serialutil.SerialException:
-                self.is_requesting_params = False
-                self.current_param_index = 0
-                self.total_number_of_params = 0
-                self.params = []
-                self.drone.is_listening = True
-                self.drone.logger.error("Serial exception while getting all params")
-                return
+        except serial.serialutil.SerialException:
+            self.drone.logger.error("Serial exception while getting all params")
+            self.setFinishedRequestingParams()
+            return
+
+        self.drone.logger.warning(
+            f"Get all params thread timed out, loaded {len(self.params)} / {self.total_number_of_params}"
+        )
+        self.setFinishedRequestingParams()
+        timeoutCb(self.requestAllParamsTimeout)
 
     def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
         """

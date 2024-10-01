@@ -15,10 +15,6 @@ def run_once_after_all_tests():
     """
     from app import droneStatus
 
-    droneStatus.drone.paramsController.getAllParams()
-    time.sleep(1)
-    while droneStatus.drone.paramsController.is_requesting_params:
-        pass
     yield
 
     # Ensure gripper is definitely re-enabled even if tests pass

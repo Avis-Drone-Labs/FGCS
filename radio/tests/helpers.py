@@ -54,19 +54,23 @@ class ParamSetTimeout:
     """
 
     @staticmethod
-    def recv_match_null_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> None:
+    def findFirst(key, timeout) -> None:
         return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = ParamSetTimeout.recv_match_null_value
+            self.old_findFirst = (
+                droneStatus.drone.paramsController.param_message_buffer.findFirst
+            )
+            droneStatus.drone.paramsController.param_message_buffer.findFirst = (
+                ParamSetTimeout.findFirst
+            )
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
+            droneStatus.drone.paramsController.param_message_buffer.findFirst = (
+                self.old_findFirst
+            )
 
 
 class ParamRefreshTimeout:
@@ -75,25 +79,22 @@ class ParamRefreshTimeout:
     """
 
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, Type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
+    def getMessages(expected, timeout) -> list:
+        return []
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv_msg = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = ParamRefreshTimeout.recv_msg_false_value
-            self.old_param_index = (
-                droneStatus.drone.paramsController.current_param_index
+            self.old_getMessages = (
+                droneStatus.drone.paramsController.param_message_buffer.getMessages
             )
-            droneStatus.drone.paramsController.current_param_index = -1
+            droneStatus.drone.paramsController.param_message_buffer.getMessages = (
+                ParamRefreshTimeout.getMessages
+            )
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv_msg
-            droneStatus.drone.paramsController.current_param_index = (
-                self.old_param_index
+            droneStatus.drone.paramsController.param_message_buffer.getMessages = (
+                self.old_getMessages
             )
 
 

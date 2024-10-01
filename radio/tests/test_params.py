@@ -1,7 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import ParamSetTimeout, NoDrone
+from .helpers import ParamSetTimeout, ParamRefreshTimeout, NoDrone
 from typing import List, Any
 
 
@@ -17,7 +17,7 @@ def send_and_receive_params(
         args(dict | None | str): The arguments to pass to the endpoint
 
     Returns:
-         The data received from the client (name and arguments of the socket.emit)
+        The data received from the client (name and arguments of the socket.emit)
     """
     client.emit(endpoint, args) if args is not None else client.emit(endpoint)
     return client.get_received()[0]
@@ -265,7 +265,7 @@ def test_refreshParams_timeout(
 
     # Set the timeout to 30 seconds to avoid waiting ages
     droneStatus.drone.paramsController.setRequestAllParamsTimeout(30)
-    with ParamSetTimeout():
+    with ParamRefreshTimeout():
         socketio_client.emit("refresh_params")
         while True:
             if (recieved := socketio_client.get_received()) and recieved[-1][

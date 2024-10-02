@@ -61,5 +61,3 @@ class RcController:
                 channel_params["option"] = option_param.param_value
 
             self.params[f"RC_{channel_number}"] = channel_params
-
-        print(self.params)

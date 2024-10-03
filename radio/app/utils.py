@@ -1,13 +1,10 @@
 import sys
-import time
-from typing import Any, List, TypeVar, Generic, Callable
+from typing import Any, List
 
 from pymavlink import mavutil
 from serial.tools import list_ports
-from threading import Lock
 
 from . import socketio
-from app import logger
 
 
 def getComPort() -> str:
@@ -184,59 +181,3 @@ def sendMessage(msg: Any) -> None:
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
     socketio.emit("incoming_msg", data)
-
-
-T = TypeVar("T")
-
-
-class MessageBuffer(Generic[T]):
-    """Last-in First-out message buffer for mavlink messages"""
-
-    def __init__(self) -> None:
-        self.buffer: list[T] = []
-        self.buffer_lock = Lock()
-
-    def getMessages(self, expected: int, timeout: int) -> list[T]:
-        timeoutEpoch = time.time() + timeout
-        while len(self.buffer) < expected and time.time() < timeoutEpoch:
-            time.sleep(0.2)
-
-        if len(self.buffer) != expected:
-            logger.warning(f"Expected {expected} messages, recieved {len(self.buffer)}")
-
-        breakpoint = max(len(self.buffer) - expected, 0)
-        with self.buffer_lock:
-            buf, self.buffer = self.buffer[breakpoint:], self.buffer[:breakpoint]
-        return buf
-
-    def mapMessages(self, expected: int, timeout: int, callback: Callable) -> List[T]:
-        timeoutEpoch = time.time() + timeout
-        results = []
-        for _ in range(expected):
-            # Double check timeout
-            if time.time() > timeoutEpoch:
-                logger.warning(f"Timed out while mapping {callback} to message buffer.")
-            # If no messages recieved then sleep and go back
-            if not self.buffer:
-                time.sleep(0.2)
-            else:
-                results.append(callback(self.buffer.pop(0)) or True)
-        return results
-
-    def findFirst(self, key: Callable, timeout: int) -> T | None:
-        timeoutEpoch = time.time() + timeout
-        while time.time() < timeoutEpoch:
-            if not self.buffer:
-                time.sleep(0.2)
-            with self.buffer_lock:
-                if key(msg := self.buffer.pop(-1)):
-                    return msg
-        return None
-
-    def addMessage(self, message: T) -> None:
-        # logger.info(f"ADDED {message}, buffer: {len(self.buffer)}")
-        with self.buffer_lock:
-            self.buffer.append(message)
-
-    def clearBuffer(self) -> None:
-        self.buffer = []

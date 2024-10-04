@@ -47,7 +47,7 @@ class FlightModesController:
             if flight_mode.get("success"):
                 flight_mode_data = flight_mode.get("data")
                 if flight_mode_data:
-                    self.flight_modes.append(flight_mode_data.param_value)
+                    self.flight_modes.append(flight_mode_data["param_value"])
             else:
                 self.drone.logger.error(flight_mode.get("message"))
                 self.flight_modes.append("UNKNOWN")
@@ -61,7 +61,7 @@ class FlightModesController:
         if flight_mode_channel.get("success"):
             flight_mode_channel_data = flight_mode_channel.get("data")
             if flight_mode_channel_data:
-                self.flight_mode_channel = flight_mode_channel_data.param_value
+                self.flight_mode_channel = flight_mode_channel_data["param_value"]
         else:
             self.drone.logger.error(flight_mode_channel.get("message"))
 

@@ -26,7 +26,7 @@ class FrameController:
         if frame_type_result.get("success"):
             frame_type_data = frame_type_result.get("data")
             if frame_type_data:
-                self.frame_type = frame_type_data.param_value
+                self.frame_type = frame_type_data["param_value"]
         else:
             self.drone.logger.error(frame_type_result.get("message"))
 
@@ -39,6 +39,6 @@ class FrameController:
         if frame_class_result.get("success"):
             frame_class_data = frame_class_result.get("data")
             if frame_class_data:
-                self.frame_class = frame_class_data.param_value
+                self.frame_class = frame_class_data["param_value"]
         else:
             self.drone.logger.error(frame_class_result.get("message"))

@@ -69,7 +69,7 @@ class GripperController:
 
         gripper_enabled_response_data = gripper_enabled_response.get("data")
         if gripper_enabled_response_data:
-            return bool(gripper_enabled_response_data.param_value)
+            return bool(gripper_enabled_response_data["param_value"])
 
         return False
 

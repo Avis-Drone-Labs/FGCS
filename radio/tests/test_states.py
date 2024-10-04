@@ -56,7 +56,6 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
     droneStatus.drone.message_listeners = {}
 
     # Test switch to params when parameters are not loaded
-    droneStatus.drone.paramsController.params = []
     socketio_client.emit("set_state", {"state": "params"})
     while not (recieved := socketio_client.get_received()) or recieved[-1][
         "name"

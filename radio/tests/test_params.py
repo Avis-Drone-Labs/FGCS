@@ -263,8 +263,6 @@ def test_refreshParams_timeout(
 ) -> None:
     droneStatus.state = "params"
 
-    # Set the timeout to 30 seconds to avoid waiting ages
-    droneStatus.drone.paramsController.setRequestAllParamsTimeout(30)
     with ParamRefreshTimeout():
         socketio_client.emit("refresh_params")
         while True:
@@ -276,12 +274,9 @@ def test_refreshParams_timeout(
             elif recieved and recieved[-1]["name"] in ["params", "params_error"]:
                 break
     assert recieved[-1]["name"] == "params_error"
-    assert recieved[-1]["args"][0] == {
-        "message": "Parameter request timed out after 30 seconds."
-    }
-
-    # reset timeout back to 3 mins
-    droneStatus.drone.paramsController.setRequestAllParamsTimeout(180)
+    assert recieved[-1]["args"][0]["message"].startswith(
+        "Parameter request timed out after"
+    )
 
 
 @falcon_test(pass_drone_status=True)

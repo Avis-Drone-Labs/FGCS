@@ -60,15 +60,15 @@ class ParamSetTimeout:
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
             self.old_findFirst = (
-                droneStatus.drone.paramsController.param_message_buffer.findFirst
+                droneStatus.drone.paramsController.getModifiedParamOrTimeout
             )
-            droneStatus.drone.paramsController.param_message_buffer.findFirst = (
+            droneStatus.drone.paramsController.getModifiedParamOrTimeout = (
                 ParamSetTimeout.findFirst
             )
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.paramsController.param_message_buffer.findFirst = (
+            droneStatus.drone.paramsController.getModifiedParamOrTimeout = (
                 self.old_findFirst
             )
 
@@ -79,21 +79,21 @@ class ParamRefreshTimeout:
     """
 
     @staticmethod
-    def getMessages(expected, timeout) -> list:
+    def getMessages(t, u, f, s) -> list:
         return []
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
             self.old_getMessages = (
-                droneStatus.drone.paramsController.param_message_buffer.getMessages
+                droneStatus.drone.paramsController.getRefreshedParamsOrTimeout
             )
-            droneStatus.drone.paramsController.param_message_buffer.getMessages = (
+            droneStatus.drone.paramsController.getRefreshedParamsOrTimeout = (
                 ParamRefreshTimeout.getMessages
             )
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.paramsController.param_message_buffer.getMessages = (
+            droneStatus.drone.paramsController.getRefreshedParamsOrTimeout = (
                 self.old_getMessages
             )
 

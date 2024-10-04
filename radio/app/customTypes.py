@@ -11,6 +11,14 @@ class IncomingParam(TypedDict):
     param_type: NotRequired[int]
 
 
+class StoredParam(TypedDict):
+    param_id: str
+    param_value: Number | str
+    param_type: NotRequired[int]
+    param_index: int
+    last_set: float
+
+
 class Response(TypedDict):
     success: bool
     message: NotRequired[str]

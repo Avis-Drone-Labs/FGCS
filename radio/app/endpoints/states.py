@@ -70,7 +70,7 @@ def set_state(data: SetStateType) -> None:
 
         if (
             len(droneStatus.drone.paramsController.params)
-            == droneStatus.drone.paramsController.total_number_of_params
+            == droneStatus.drone.paramsController.totalNumberOfParams
         ):
             socketio.emit("params", droneStatus.drone.paramsController.params)
             return

@@ -5,6 +5,7 @@ from app import logger, socketio
 
 from app.utils import notConnectedError
 
+
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list: List[Any]) -> None:
     """
@@ -49,9 +50,6 @@ def refresh_params() -> None:
 
     if not droneStatus.drone:
         return notConnectedError("get parameter values")
-
-    # Reset params to guarantee full refresh
-    droneStatus.drone.paramsController.params = []
 
     droneStatus.drone.paramsController.getAllParams(
         timeoutCb=lambda t: socketio.emit(

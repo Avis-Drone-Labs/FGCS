@@ -166,7 +166,8 @@ class Drone:
         self.is_listening = True
         self.startThread()
 
-        self.paramsController = ParamsController(self)
+        self.paramsController = ParamsController(self.master)
+        self.addMessageListener("PARAM_VALUE", self.paramsController.saveParam)
         self.sendConnectionStatusUpdate("Setup parameters controller")
 
         self.armController = ArmController(self)
@@ -641,7 +642,8 @@ class Drone:
     def close(self) -> None:
         """Close the connection to the drone."""
         self.logger.info(f"Cleaning up resources for drone at {self}")
-        for message_id in copy.deepcopy(self.message_listeners):
+        self.logger.debug(f"Cleaning up {self.message_listeners}")
+        for message_id in list(self.message_listeners.keys()):
             self.removeMessageListener(message_id)
 
         self.stopAllDataStreams()

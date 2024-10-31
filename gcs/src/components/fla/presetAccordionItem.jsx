@@ -23,7 +23,7 @@ export default function PresetAccordionItem({
               return null
             }
             return (
-              <Tooltip label={<p className='text-center text-wrap line-clamp-3 max-w-96'>{filter.name}</p>} withArrow position='bottom' arrowSize={10} arrowOffset={15}>
+              <Tooltip label={<p className='text-center text-wrap line-clamp-3 max-w-96'>{filter.name}</p>} withArrow position='right' arrowSize={10} arrowOffset={15}>
                 <Button
                   key={idx}
                   onClick={() => selectPresetFunc(filter)}

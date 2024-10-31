@@ -17,57 +17,64 @@ import tailwindConfig from '../../../tailwind.config'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+// Utility function to convert a string to title case
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g, (txt) => {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+}
+
 export default function PresetAccordionItem({
   category,
   selectPresetFunc,
   aircraftType,
   deleteCustomPreset,
 }) {
+  
+  // Filter out filters that don't match the current aircraft type
+  const filteredFilters = category.filters.filter(filter => 
+    filter.aircraftType === undefined || 
+    filter.aircraftType.includes(aircraftType)
+  );
+
+  const isCustomPreset = category.name === 'Custom Presets';
+
   return (
     <Accordion.Item value={category.name}>
       <Accordion.Control>{category.name}</Accordion.Control>
       <Accordion.Panel>
         <div className='flex flex-col gap-2'>
-          {category.filters.length === 0 ? (
-            <div className='flex justify-center items-center p-4'>
+          {filteredFilters.length === 0 ? (
+            <div className='flex justify-center items-center py-4'>
               <IconInfoCircle size={20} />
-              <p className='ml-2'>No Saved Custom Preset</p>
+              <p className='ml-2'>
+                No Saved {aircraftType ? toTitleCase(aircraftType) : ''} {isCustomPreset ? 'Custom Preset' : 'Preset'}
+              </p>
             </div>
           ) : (
-            category.filters.map((filter, idx) => {
-              if (
-                filter.aircraftType !== undefined &&
-                !filter.aircraftType.includes(aircraftType)
-              ) {
-                return null
-              }
+            filteredFilters.map((filter, idx) => (
+              <div key={idx} className='flex items-center gap-2'>
+                <Button
+                  onClick={() => selectPresetFunc(filter)}
+                  className='flex-1'
+                >
+                  {filter.name}
+                </Button>
 
-              const isCustomPreset = category.name === 'Custom Presets'
-
-              return (
-                <div key={idx} className='flex items-center gap-2'>
-                  <Button
-                    onClick={() => selectPresetFunc(filter)}
-                    className='flex-1'
-                  >
-                    {filter.name}
-                  </Button>
-
-                  {/* Add delete button if isCustomPreset */}
-                  {isCustomPreset && (
-                    <MantineTooltip label='Delete Preset'>
-                      <ActionIcon
-                        variant='light'
-                        color={tailwindColors.red[500]}
-                        onClick={() => deleteCustomPreset(filter.name)}
-                      >
-                        <IconTrash size={18} />
-                      </ActionIcon>
-                    </MantineTooltip>
-                  )}
-                </div>
-              )
-            })
+                {/* Add delete button if isCustomPreset */}
+                {isCustomPreset && (
+                  <MantineTooltip label='Delete Preset'>
+                    <ActionIcon
+                      variant='light'
+                      color={tailwindColors.red[500]}
+                      onClick={() => deleteCustomPreset(filter.name)}
+                    >
+                      <IconTrash size={18} />
+                    </ActionIcon>
+                  </MantineTooltip>
+                )}
+              </div>
+            ))
           )}
         </div>
       </Accordion.Panel>

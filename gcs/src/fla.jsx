@@ -18,6 +18,7 @@ import {
   ScrollArea,
   Tooltip,
 } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { useSelector, useDispatch } from 'react-redux'
 import _ from 'lodash'
 
@@ -33,7 +34,7 @@ import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
 import { logEventIds } from './components/fla/logEventIds.js'
 import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
 import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
-import { presetCategories } from './components/fla/presetCategories.js'
+import { usePresetCategories } from './components/fla/presetCategories.js'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
@@ -53,7 +54,9 @@ import {
   setCustomColors,
   setColorIndex,
   setAircraftType,
+  setCanSavePreset,
 } from './redux/logAnalyserSlice.js'
+import SavePresetModal from './components/fla/savePresetModal.jsx'
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -103,6 +106,8 @@ const colorInputSwatch = [
 ]
 
 export default function FLA() {
+  const { presetCategories, saveCustomPreset, deleteCustomPreset, findExistingPreset } = usePresetCategories();
+
   const dispatch = useDispatch()
   const {
     file,
@@ -118,9 +123,11 @@ export default function FLA() {
     customColors,
     colorIndex,
     aircraftType,
+    canSavePreset,
   } = useSelector((state) => state.logAnalyser)
 
-  // Create dispatch functions for each state variable
+  // Redux dispatch functions for updating various parts of the application state,
+  // ensuring state persistence across sessions.
   const updateFile = (newFile) => dispatch(setFile(newFile))
   const updateUnits = (newUnits) => dispatch(setUnits(newUnits))
   const updateFormatMessages = (newFormatMessages) =>
@@ -140,26 +147,27 @@ export default function FLA() {
     dispatch(setCustomColors(newCustomColors))
   const updateColorIndex = (newColorIndex) =>
     dispatch(setColorIndex(newColorIndex))
-  const updateAircraftType = (newAircraftType) => dispatch(setAircraftType(newAircraftType))
+  const updateAircraftType = (newAircraftType) =>
+    dispatch(setAircraftType(newAircraftType))
+  const updateCanSavePreset = (newCanSavePreset) =>
+    dispatch(setCanSavePreset(newCanSavePreset))
 
-  // States in react frontend
+  // States in react frontend that don't need to be persisted across sessions
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
-
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [opened, { open, close }] = useDisclosure(false)
 
-  // Load file, if set, and show the graph
+  // Load file and show the graph
   async function loadFile() {
-    // if log messages have already been loaded from prev session, don't load again
+    // If log messages have already been set from prev session, don't load again
     if (file != null && logMessages === null) {
       setLoadingFile(true)
-
       const result = await window.ipcRenderer.loadFile(file.path)
 
       if (result.success) {
         // Load messages into states
         setLoadingFile(false)
-
         const loadedLogMessages = result.messages
 
         if (loadedLogMessages === null) {
@@ -178,9 +186,8 @@ export default function FLA() {
         if (result.logType === 'dataflash') {
           updateFlightModeMessages(loadedLogMessages.MODE)
         } else if (result.logType === 'fgcs_telemetry') {
-          const modeMessages = []
-
           // Get the heartbeat messages only where index is the first or last or the mode changes
+          const modeMessages = []
           for (let i = 0; i < loadedLogMessages.HEARTBEAT.length; i++) {
             const msg = loadedLogMessages.HEARTBEAT[i]
             if (
@@ -351,6 +358,7 @@ export default function FLA() {
     updateMessageFilters(newFilters)
     updateCustomColors({})
     updateColorIndex(0)
+    updateCanSavePreset(false)
   }
 
   // Turn off only one filter at a time
@@ -369,6 +377,10 @@ export default function FLA() {
     updateCustomColors(newColors)
 
     updateMessageFilters(newFilters)
+
+    if(Object.keys(newColors).length === 0) {
+      updateCanSavePreset(false)
+    }
   }
 
   // Get a list of the recent FGCS telemetry logs
@@ -384,16 +396,19 @@ export default function FLA() {
 
   // Close file
   function closeLogFile() {
-    updateFile(null)
     setLoadingFileProgress(0)
+    setMeanValues(null)
+
+    updateFile(null)
     updateLogMessages(null)
     updateChartData({ datasets: [] })
     updateMessageFilters(null)
     updateCustomColors({})
     updateColorIndex(0)
-    setMeanValues(null)
     updateLogEvents(null)
     updateLogType('dataflash')
+    updateCanSavePreset(false)
+    
     getFgcsLogs()
   }
 
@@ -411,13 +426,8 @@ export default function FLA() {
 
   // Color changer
   function changeColor(label, color) {
-    // Create a deep copy of customColors
     let newColors = _.cloneDeep(customColors)
-
-    // Modify the deep copy
     newColors[label] = color
-
-    // Update customColors with the modified copy
     updateCustomColors(newColors)
   }
 
@@ -453,11 +463,9 @@ export default function FLA() {
           // Update the color index
           updateColorIndex(Object.keys(newColors).length)
         })
+      } else {
+        showErrorNotification(`Your log file does not include ${categoryName}`)
       }
-      else {
-        showErrorNotification(
-          `Your log file does not include ${categoryName}`,
-        )}
     })
 
     // Update customColors with the newColors
@@ -478,6 +486,11 @@ export default function FLA() {
 
       // Update customColors with the modified copy
       updateCustomColors(newColors)
+
+      // Disable the save preset button if no filters are selected
+      if(Object.keys(newColors).length === 0) {
+        updateCanSavePreset(false)
+      }
     }
     // Else assign a color
     else {
@@ -489,9 +502,45 @@ export default function FLA() {
 
       // Update customColors with the modified copy
       updateCustomColors(newColors)
+      // Enable the save preset button if at least one filter is selected
+      updateCanSavePreset(true)
     }
-
     updateMessageFilters(newFilters)
+  }
+
+  // Function to handle saving a custom preset
+  function handleSaveCustomPreset(presetName) {
+    if(!presetName) return;
+
+    if (presetName) {
+      const currentFilters = Object.entries(messageFilters).reduce((acc, [category, fields]) => {
+        acc[category] = Object.keys(fields).filter(field => fields[field]);
+        return acc;
+      }, {});
+  
+      const newPreset = {
+        name: presetName,
+        filters: currentFilters,
+        aircraftType: aircraftType ? [aircraftType] : undefined // Only save the aircraft type if it exists
+      };
+
+      const existingPreset = findExistingPreset(newPreset, logType);
+
+      if (!existingPreset) {
+        saveCustomPreset(newPreset, logType)
+        showSuccessNotification(`Custom preset "${presetName}" saved successfully`);
+      }
+      else {
+        showErrorNotification(`Custom preset "${presetName}" already exists as "${existingPreset.name}".`);
+      }
+      close();
+      updateCanSavePreset(false)
+    }
+  }
+
+  function handleDeleteCustomPreset(presetName) {
+    deleteCustomPreset(presetName, logType);
+    showSuccessNotification(`Custom preset "${presetName}" deleted successfully`);
   }
 
   function getUnit(messageName, fieldName) {
@@ -642,6 +691,21 @@ export default function FLA() {
                     <Accordion.Control>Presets</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
+                        {/* Custom Presets */}
+                        {presetCategories['custom_' + logType]?.map((category) => {
+                          return (
+                            <Fragment key={category.name}>
+                              <PresetAccordionItem
+                                key={category.name}
+                                category={category}
+                                selectPresetFunc={selectPreset}
+                                aircraftType={aircraftType}
+                                deleteCustomPreset={handleDeleteCustomPreset}
+                              />
+                            </Fragment>
+                          )
+                        })}
+                        {/* Default Presets */}
                         {presetCategories[logType]?.map((category) => {
                           return (
                             <Fragment key={category.name}>
@@ -707,6 +771,16 @@ export default function FLA() {
                     >
                       Clear graph
                     </Button>
+                    {canSavePreset && (
+                      <Button
+                        className='ml-6'
+                        size='xs'
+                        color={tailwindColors.green[600]}
+                        onClick={() => { open() }}
+                      >
+                        Save Preset
+                      </Button>
+                    )}
                   </div>
                   {chartData.datasets.map((item) => (
                     <Fragment key={item.label}>
@@ -724,6 +798,11 @@ export default function FLA() {
                     </Fragment>
                   ))}
                 </div>
+                <SavePresetModal
+                  opened={opened}
+                  close={close}
+                  onSave={handleSaveCustomPreset}
+                />
               </div>
             </div>
           </div>

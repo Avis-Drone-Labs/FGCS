@@ -672,7 +672,11 @@ export default function Dashboard() {
 
                 <Tabs.Panel value='actions'>
                   {/* Arming/Flight Modes */}
-                  {connected && (
+                  {!connected ? (
+                    <div className='flex flex-col items-center justify-center h-full'>
+                      <p className='text-white-800 p-6 text-center'>No actions are available right now. Connect a drone to begin</p> 
+                    </div>
+                  ) : (  
                     <div className='flex flex-col flex-wrap gap-4'>
                       <div className='flex flex-row space-x-14'>
                         <Button

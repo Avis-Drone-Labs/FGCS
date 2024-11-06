@@ -3,7 +3,7 @@
 */
 
 // 3rd Party Imports
-import { Accordion, Button } from '@mantine/core'
+import { Accordion, Button, Tooltip } from '@mantine/core'
 
 export default function PresetAccordionItem({
   category,
@@ -22,11 +22,17 @@ export default function PresetAccordionItem({
             ) {
               return null
             }
-
             return (
-              <Button key={idx} onClick={() => selectPresetFunc(filter)}>
-                {filter.name}
-              </Button>
+              <Tooltip label={<p className='text-center text-wrap line-clamp-3 max-w-96'>{filter.name}</p>} withArrow position='right' arrowSize={10} arrowOffset={15}>
+                <Button
+                  key={idx}
+                  onClick={() => selectPresetFunc(filter)}
+                >
+                  <p className='text-wrap line-clamp-1'>
+                    {filter.name}
+                  </p>
+                </Button>
+              </Tooltip>
             )
           })}
         </div>

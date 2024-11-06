@@ -659,7 +659,7 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages'>
+                  <Accordion.Item key='messages' value='messages' class="w-96">
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>

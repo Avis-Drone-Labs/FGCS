@@ -14,7 +14,7 @@ export default function PresetAccordionItem({
     <Accordion.Item value={category.name}>
       <Accordion.Control>{category.name}</Accordion.Control>
       <Accordion.Panel>
-        <div className='flex flex-col gap-2 w-96'>
+        <div className='flex flex-col gap-2'>
           {category.filters.map((filter, idx) => {
             if (
               filter.aircraftType !== undefined &&

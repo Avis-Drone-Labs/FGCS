@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 import struct
 from threading import Thread
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 
 from pymavlink import mavutil
 from pymavlink.dialects.v20.common import MAVLink_param_value_message
@@ -27,7 +27,7 @@ class ParamsController:
         self.getAllParamsThread: Optional[Thread] = None
         self.totalNumberOfParams = 1400
 
-    def getSingleParam(self, param_name: str, timeout: Optional[float] = 2) -> Response:
+    def getSingleParam(self, param_name: str, timeout: float = 2) -> Response:
         """
         Gets a specific parameter value.
 
@@ -217,7 +217,7 @@ class ParamsController:
         return True
 
     def getModifiedParamOrTimeout(
-        self, param_name: str, timeout: int, sentTime: float = 0
+        self, param_name: str, timeout: float, sentTime: float = 0
     ) -> Optional[StoredParam]:
         """Return the given parameter's value, if it was recieved later than the time
         that the read_param command was issues to `self.master`
@@ -226,7 +226,7 @@ class ParamsController:
 
         Args:
             param_name (str): The name of the parameter to fetch the value of
-            timeout (int): The timeout in seconds to keep watching the param value
+            timeout (float): The timeout in seconds to keep watching the param value
             sentTime (float): The time which the command was sent, by default `time.time()`
 
         Returns:
@@ -268,7 +268,7 @@ class ParamsController:
         updateCb: Callable,
         updateFreq: float = 1,
         sentTime: float | None = None,
-    ) -> Optional[list]:
+    ) -> List:
         logger.info("Loading all parameters")
         sentTime = sentTime or time.time()
         timeoutEpoch = sentTime + timeout

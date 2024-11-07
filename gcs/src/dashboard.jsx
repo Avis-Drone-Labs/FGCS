@@ -444,16 +444,6 @@ export default function Dashboard() {
     }
   }
 
-  function resizingTelemAndHeading(){
-    if (telemetryPanelSize.width > 700)
-    {
-        return "row"
-    }
-    else{
-      return "column"
-    }
-  }
-
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full overflow-hidden'>
@@ -488,7 +478,7 @@ export default function Dashboard() {
             }}
             className='h-full'
           >
-            <div className='flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto'>
+            <div className='@container flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}
@@ -513,9 +503,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className='flex items-center justify-center justify-evenly' style={{
-                      "flex-direction": `${resizingTelemAndHeading()}`,
-                  }}>
+                <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
                   {/* Attitude Indicator */}
                   <div className='flex flex-row items-center justify-center' style={{
                       "paddingTop": `${calcIndicatorPadding()}px`,

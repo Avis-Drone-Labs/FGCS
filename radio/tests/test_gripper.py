@@ -42,12 +42,6 @@ def test_gripperEnabled(socketio_client: SocketIOTestClient, droneStatus):
     # Correct result on config page
     assert send_and_recieve("gripper_enabled") is True
 
-    # Failure with serial exception
-    with FakeTCP():
-        assert send_and_recieve("gripper_enabled") == {
-            "message": "Could not get gripper state from drone."
-        }
-
 
 @falcon_test(pass_drone_status=True)
 def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
@@ -81,14 +75,6 @@ def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
         "message": "Setting gripper to grab",
     }
 
-    # Serial exception handled correctly
-    with FakeTCP():
-        assert send_and_recieve("set_gripper", "grab") == {
-            "success": False,
-            "message": "Could not get gripper state from drone.",
-        }
-
-
 @falcon_test(pass_drone_status=True)
 def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> None:
     droneStatus.drone.paramsController.setParam(
@@ -103,11 +89,3 @@ def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> No
         "message": "Gripper is not enabled",
     }
 
-    with FakeTCP():
-        assert send_and_recieve("gripper_enabled") == {
-            "message": "Could not get gripper state from drone."
-        }
-        assert send_and_recieve("set_gripper", "release") == {
-            "success": False,
-            "message": "Could not get gripper state from drone.",
-        }

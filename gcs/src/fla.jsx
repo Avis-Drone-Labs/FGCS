@@ -621,20 +621,26 @@ export default function FLA() {
           <div className='flex gap-4 h-full overflow-x-auto py-4 px-2'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
-              <div className=''>
+              <div className='flex flex-row justify-between ml-4'>
+                <Tooltip label={file.path}>
+                  <p className='text-xl p-3 font-semibold text-gray-200 bg-falcongrey-900 rounded truncate max-w-[400px] inline-block'>
+                    File Name:
+                    <span className='ml-3 underline'>
+                      {file.name}
+                    </span>
+                  </p>
+                </Tooltip>
                 <Button
-                  className='mx-4 my-2'
-                  size='xs'
+                  className='mt-1 mr-4'
+                  size='md'
                   color={tailwindColors.red[500]}
                   onClick={closeLogFile}
                 >
                   Close file
                 </Button>
-                <Tooltip label={file.path}>
-                  <p className='mx-4 my-2'>{file.name}</p>
-                </Tooltip>
-                <p className='mx-4 my-2'>Aircraft Type: {aircraftType}</p>
               </div>
+              <p className="mx-4 my-5 text-lg font-semibold text-gray-200 bg-falcongrey-900 px-4 py-3 rounded"> Aircraft Type: <span className="text-white float-right">{aircraftType ? aircraftType : "No Aircraft Type"}</span></p>
+              
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
                   {/* Presets */}

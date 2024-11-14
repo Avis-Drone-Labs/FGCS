@@ -24,6 +24,7 @@ function toTitleCase(str) {
   });
 }
 
+
 export default function PresetAccordionItem({
   category,
   selectPresetFunc,

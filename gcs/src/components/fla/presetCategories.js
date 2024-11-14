@@ -242,13 +242,41 @@ export function usePresetCategories(){
   }
 
   function findExistingPreset(preset, logType) {
-    const categoryKey = logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry';
-    return presetCategories[categoryKey][0].filters.find(existingPreset => 
+    const customCategoryKey = logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry';
+  
+    // Check in custom presets
+    const customPreset = presetCategories[customCategoryKey][0].filters.find(existingPreset => 
       existingPreset.name === preset.name || areFiltersEqual(existingPreset.filters, preset.filters)
     );
+  
+    if (customPreset) {
+      return customPreset;
+    }
+  
+    // Check in standard presets
+    const standardCategories = presetCategories[logType] || [];
+    for (const category of standardCategories) {
+      // Make sure category.filters exists and is an array
+      if (!Array.isArray(category.filters)) {
+        continue;
+      }
+      
+      // Check each filter in the category
+      for (const existingPreset of category.filters) {
+        if (existingPreset.name === preset.name || areFiltersEqual(existingPreset.filters, preset.filters)) {
+          return existingPreset;
+        }
+      }
+    }
+
+    return null;
   }
 
   function areFiltersEqual(filters1, filters2) {
+    // Handle null or undefined filters
+    if (!filters1 || !filters2) {
+      return filters1 === filters2;
+    }
     const keys1 = Object.keys(filters1);
     const keys2 = Object.keys(filters2);
     

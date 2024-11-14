@@ -54,12 +54,16 @@ export default function PresetAccordionItem({
           ) : (
             filteredFilters.map((filter, idx) => (
               <div key={idx} className='flex items-center gap-2'>
-                <Button
-                  onClick={() => selectPresetFunc(filter)}
-                  className='flex-1'
-                >
-                  {filter.name}
-                </Button>
+                <MantineTooltip label={<p className='text-center text-wrap line-clamp-3 max-w-96'>{filter.name}</p>} withArrow position='right' arrowSize={10} arrowOffset={15}>
+                  <Button
+                    onClick={() => selectPresetFunc(filter)}
+                    className='flex-1'
+                  >
+                    <p className='text-wrap line-clamp-1'>
+                      {filter.name}
+                    </p>
+                  </Button>
+                </MantineTooltip>
 
                 {/* Add delete button if isCustomPreset */}
                 {isCustomPreset && (

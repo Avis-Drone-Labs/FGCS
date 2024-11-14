@@ -106,8 +106,13 @@ const colorInputSwatch = [
 ]
 
 export default function FLA() {
+  // ====================================================
+  // 1. Custom Hooks and State Management
+  // ====================================================
+
   const { presetCategories, saveCustomPreset, deleteCustomPreset, findExistingPreset } = usePresetCategories();
 
+  // Redux state
   const dispatch = useDispatch()
   const {
     file,
@@ -126,8 +131,13 @@ export default function FLA() {
     canSavePreset,
   } = useSelector((state) => state.logAnalyser)
 
-  // Redux dispatch functions for updating various parts of the application state,
-  // ensuring state persistence across sessions.
+  // Local states
+  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
+  const [loadingFile, setLoadingFile] = useState(false)
+  const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [opened, { open, close }] = useDisclosure(false)
+
+  // Redux dispatch functions
   const updateFile = (newFile) => dispatch(setFile(newFile))
   const updateUnits = (newUnits) => dispatch(setUnits(newUnits))
   const updateFormatMessages = (newFormatMessages) =>
@@ -151,14 +161,12 @@ export default function FLA() {
     dispatch(setAircraftType(newAircraftType))
   const updateCanSavePreset = (newCanSavePreset) =>
     dispatch(setCanSavePreset(newCanSavePreset))
+  
 
-  // States in react frontend that don't need to be persisted across sessions
-  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
-  const [loadingFile, setLoadingFile] = useState(false)
-  const [loadingFileProgress, setLoadingFileProgress] = useState(0)
-  const [opened, { open, close }] = useDisclosure(false)
+  // ====================================================
+  // 2. File Management Functions
+  // ====================================================
 
-  // Load file and show the graph
   async function loadFile() {
     // If log messages have already been set from prev session, don't load again
     if (file != null && logMessages === null) {
@@ -267,7 +275,7 @@ export default function FLA() {
           }, {})
 
         updateMessageFilters(sortedLogMessageFilterState)
-        setMeanValues(loadedLogMessages)
+        calculateMeanValues(loadedLogMessages)
 
         // Set event logs for the event lines on graph
         if ('EV' in loadedLogMessages) {
@@ -281,16 +289,50 @@ export default function FLA() {
 
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
-      } else if (result === null || !result.success) {
-        // Error
+      } else {
         showErrorNotification('Error loading file, file not found. Reload.')
         setLoadingFile(false)
       }
     }
   }
 
-  // Loop over all fields and precalculate min, max, mean
-  function setMeanValues(loadedLogMessages) {
+  // Get a list of the recent FGCS telemetry logs
+  async function getFgcsLogs() {
+    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+  }
+
+  // Clear the list of recent FGCS telemetry logs
+  async function clearFgcsLogs() {
+    await window.ipcRenderer.clearRecentLogs()
+    getFgcsLogs()
+  }
+
+  // Close file
+  function closeLogFile() {
+    setLoadingFileProgress(0)
+    resetState()
+    getFgcsLogs()
+  }
+
+  function resetState() {
+    updateFile(null)
+    updateLogMessages(null)
+    updateChartData({ datasets: [] })
+    updateMessageFilters(null)
+    updateCustomColors({})
+    updateColorIndex(0)
+    updateLogEvents(null)
+    updateLogType('dataflash')
+    updateCanSavePreset(false)
+  }
+
+
+  // ====================================================
+  // 3. Data Processing Functions
+  // ====================================================
+
+  function calculateMeanValues(loadedLogMessages) {
+    // Loop over all fields and precalculate min, max, mean
     let rawValues = {}
     if (loadedLogMessages !== null) {
       // Putting all raw data into a list
@@ -346,6 +388,10 @@ export default function FLA() {
     }
   }
 
+  // ====================================================
+  // 4. Filter and Preset Management
+  // ====================================================
+
   // Turn on/off all filters
   function clearFilters() {
     let newFilters = _.cloneDeep(messageFilters)
@@ -371,64 +417,48 @@ export default function FLA() {
     ) {
       newFilters[categoryName][fieldName] = false
     }
-
     let newColors = _.cloneDeep(customColors)
     delete newColors[label]
     updateCustomColors(newColors)
-
     updateMessageFilters(newFilters)
-
     if(Object.keys(newColors).length === 0) {
       updateCanSavePreset(false)
     }
   }
 
-  // Get a list of the recent FGCS telemetry logs
-  async function getFgcsLogs() {
-    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
-  }
+  function matchesExistingPreset() {
+    // Get currently selected filters
+    const currentSelection = Object.entries(messageFilters).reduce((acc, [category, fields]) => {
+      const selectedFields = Object.entries(fields)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([fieldName]) => fieldName);
+      
+      if (selectedFields.length > 0) {
+        acc[category] = selectedFields;
+      }
+      return acc;
+    }, {});
 
-  // Clear the list of recent FGCS telemetry logs
-  async function clearFgcsLogs() {
-    await window.ipcRenderer.clearRecentLogs()
-    getFgcsLogs()
-  }
-
-  // Close file
-  function closeLogFile() {
-    setLoadingFileProgress(0)
-    setMeanValues(null)
-
-    updateFile(null)
-    updateLogMessages(null)
-    updateChartData({ datasets: [] })
-    updateMessageFilters(null)
-    updateCustomColors({})
-    updateColorIndex(0)
-    updateLogEvents(null)
-    updateLogType('dataflash')
-    updateCanSavePreset(false)
-    
-    getFgcsLogs()
-  }
-
-  // Set IPC renderer for log messages
-  useEffect(() => {
-    window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
-      setLoadingFileProgress(message.percent)
-    })
-    getFgcsLogs()
-
-    return () => {
-      window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
+    // If no filters are selected, return false
+    if (Object.keys(currentSelection).length === 0) {
+      return false;
     }
-  }, [])
 
-  // Color changer
-  function changeColor(label, color) {
-    let newColors = _.cloneDeep(customColors)
-    newColors[label] = color
-    updateCustomColors(newColors)
+    // Check against existing custom presets
+    const customPresets = presetCategories['custom_' + logType] || [];
+    return customPresets.some(category => 
+      category.filters.some(preset => {
+        // Deep compare the filters
+        const presetFilters = preset.filters;
+        return Object.keys(currentSelection).length === Object.keys(presetFilters).length &&
+          Object.keys(currentSelection).every(category => {
+            const currentFields = new Set(currentSelection[category]);
+            const presetFields = new Set(presetFilters[category]);
+            return currentFields.size === presetFields.size &&
+              [...currentFields].every(field => presetFields.has(field));
+          });
+      })
+    );
   }
 
   // Preset selection
@@ -471,6 +501,8 @@ export default function FLA() {
     // Update customColors with the newColors
     updateCustomColors(newColors)
     updateMessageFilters(newFilters)
+    // Don't allow saving if we just selected an existing preset
+    updateCanSavePreset(false);
   }
 
   function selectMessageFilter(event, messageName, fieldName) {
@@ -486,11 +518,6 @@ export default function FLA() {
 
       // Update customColors with the modified copy
       updateCustomColors(newColors)
-
-      // Disable the save preset button if no filters are selected
-      if(Object.keys(newColors).length === 0) {
-        updateCanSavePreset(false)
-      }
     }
     // Else assign a color
     else {
@@ -502,10 +529,16 @@ export default function FLA() {
 
       // Update customColors with the modified copy
       updateCustomColors(newColors)
-      // Enable the save preset button if at least one filter is selected
-      updateCanSavePreset(true)
     }
     updateMessageFilters(newFilters)
+
+    // Then check if we should allow saving preset
+    // Only enable save if there are selected filters and they don't match existing presets
+    const hasSelectedFilters = Object.values(newFilters).some(category => 
+      Object.values(category).some(isSelected => isSelected)
+    );
+    
+    updateCanSavePreset(hasSelectedFilters && !matchesExistingPreset());
   }
 
   // Function to handle saving a custom preset
@@ -540,8 +573,28 @@ export default function FLA() {
 
   function handleDeleteCustomPreset(presetName) {
     deleteCustomPreset(presetName, logType);
+    const hasSelectedFilters = Object.values(messageFilters).some(category => 
+      Object.values(category).some(isSelected => isSelected)
+    );
+    updateCanSavePreset(hasSelectedFilters && !matchesExistingPreset());
     showSuccessNotification(`Custom preset "${presetName}" deleted successfully`);
   }
+
+
+  // ====================================================
+  // 5. Color Management
+  // ====================================================
+
+  function changeColor(label, color) {
+    let newColors = _.cloneDeep(customColors)
+    newColors[label] = color
+    updateCustomColors(newColors)
+  }
+
+
+  // ====================================================
+  // 6. Utility Functions
+  // ====================================================
 
   function getUnit(messageName, fieldName) {
     if (messageName.includes('ESC')) {
@@ -561,12 +614,29 @@ export default function FLA() {
     return 'UNKNOWN'
   }
 
+
+  // ====================================================
+  // 7. Effect Hooks
+  // ====================================================
+  
   // Ensure file is loaded when selected
   useEffect(() => {
     if (file !== null) {
       loadFile()
     }
   }, [file])
+
+  // Set IPC renderer for log messages
+  useEffect(() => {
+    window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
+      setLoadingFileProgress(message.percent)
+    })
+    getFgcsLogs()
+
+    return () => {
+      window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
+    }
+  }, [])
 
   // Update datasets based on the message filters constantly
   useEffect(() => {
@@ -594,9 +664,13 @@ export default function FLA() {
         }
       })
     })
-
     updateChartData({ datasets: datasets })
   }, [messageFilters, customColors])
+  
+
+  // ======================================================
+  // 8. Render
+  // ======================================================
 
   return (
     <Layout currentPage='fla'>
@@ -723,7 +797,7 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages'>
+                  <Accordion.Item key='messages' value='messages' class="w-96">
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>

@@ -38,7 +38,7 @@ import { usePresetCategories } from './components/fla/presetCategories.js'
 import Layout from './components/layout.jsx'
 import {
   showErrorNotification,
-  showSuccessNotification
+  showSuccessNotification,
 } from './helpers/notification.js'
 import {
   setFile,
@@ -110,7 +110,12 @@ export default function FLA() {
   // 1. Custom Hooks and State Management
   // ====================================================
 
-  const { presetCategories, saveCustomPreset, deleteCustomPreset, findExistingPreset } = usePresetCategories();
+  const {
+    presetCategories,
+    saveCustomPreset,
+    deleteCustomPreset,
+    findExistingPreset,
+  } = usePresetCategories()
 
   // Redux state
   const dispatch = useDispatch()
@@ -161,7 +166,6 @@ export default function FLA() {
     dispatch(setAircraftType(newAircraftType))
   const updateCanSavePreset = (newCanSavePreset) =>
     dispatch(setCanSavePreset(newCanSavePreset))
-  
 
   // ====================================================
   // 2. File Management Functions
@@ -326,7 +330,6 @@ export default function FLA() {
     updateCanSavePreset(false)
   }
 
-
   // ====================================================
   // 3. Data Processing Functions
   // ====================================================
@@ -421,44 +424,52 @@ export default function FLA() {
     delete newColors[label]
     updateCustomColors(newColors)
     updateMessageFilters(newFilters)
-    if(Object.keys(newColors).length === 0) {
+    if (Object.keys(newColors).length === 0) {
       updateCanSavePreset(false)
     }
   }
 
   function matchesExistingPreset() {
     // Get currently selected filters
-    const currentSelection = Object.entries(messageFilters).reduce((acc, [category, fields]) => {
-      const selectedFields = Object.entries(fields)
-        .filter(([_, isSelected]) => isSelected)
-        .map(([fieldName]) => fieldName);
-      
-      if (selectedFields.length > 0) {
-        acc[category] = selectedFields;
-      }
-      return acc;
-    }, {});
+    const currentSelection = Object.entries(messageFilters).reduce(
+      (acc, [category, fields]) => {
+        const selectedFields = Object.entries(fields)
+          .filter(([_, isSelected]) => isSelected)
+          .map(([fieldName]) => fieldName)
+
+        if (selectedFields.length > 0) {
+          acc[category] = selectedFields
+        }
+        return acc
+      },
+      {},
+    )
 
     // If no filters are selected, return false
     if (Object.keys(currentSelection).length === 0) {
-      return false;
+      return false
     }
 
     // Check against existing custom presets
-    const customPresets = presetCategories['custom_' + logType] || [];
-    return customPresets.some(category => 
-      category.filters.some(preset => {
+    const customPresets = presetCategories['custom_' + logType] || []
+    return customPresets.some((category) =>
+      category.filters.some((preset) => {
         // Deep compare the filters
-        const presetFilters = preset.filters;
-        return Object.keys(currentSelection).length === Object.keys(presetFilters).length &&
-          Object.keys(currentSelection).every(category => {
-            const currentFields = new Set(currentSelection[category]);
-            const presetFields = new Set(presetFilters[category]);
-            return currentFields.size === presetFields.size &&
-              [...currentFields].every(field => presetFields.has(field));
-          });
-      })
-    );
+        const presetFilters = preset.filters
+        return (
+          Object.keys(currentSelection).length ===
+            Object.keys(presetFilters).length &&
+          Object.keys(currentSelection).every((category) => {
+            const currentFields = new Set(currentSelection[category])
+            const presetFields = new Set(presetFilters[category])
+            return (
+              currentFields.size === presetFields.size &&
+              [...currentFields].every((field) => presetFields.has(field))
+            )
+          })
+        )
+      }),
+    )
   }
 
   // Preset selection
@@ -502,7 +513,7 @@ export default function FLA() {
     updateCustomColors(newColors)
     updateMessageFilters(newFilters)
     // Don't allow saving if we just selected an existing preset
-    updateCanSavePreset(false);
+    updateCanSavePreset(false)
   }
 
   function selectMessageFilter(event, messageName, fieldName) {
@@ -534,52 +545,59 @@ export default function FLA() {
 
     // Then check if we should allow saving preset
     // Only enable save if there are selected filters and they don't match existing presets
-    const hasSelectedFilters = Object.values(newFilters).some(category => 
-      Object.values(category).some(isSelected => isSelected)
-    );
-    
-    updateCanSavePreset(hasSelectedFilters && !matchesExistingPreset());
+    const hasSelectedFilters = Object.values(newFilters).some((category) =>
+      Object.values(category).some((isSelected) => isSelected),
+    )
+
+    updateCanSavePreset(hasSelectedFilters && !matchesExistingPreset())
   }
 
   // Function to handle saving a custom preset
   function handleSaveCustomPreset(presetName) {
-    if(!presetName) return;
+    if (!presetName) return
 
     if (presetName) {
-      const currentFilters = Object.entries(messageFilters).reduce((acc, [category, fields]) => {
-        acc[category] = Object.keys(fields).filter(field => fields[field]);
-        return acc;
-      }, {});
-  
+      const currentFilters = Object.entries(messageFilters).reduce(
+        (acc, [category, fields]) => {
+          acc[category] = Object.keys(fields).filter((field) => fields[field])
+          return acc
+        },
+        {},
+      )
+
       const newPreset = {
         name: presetName,
         filters: currentFilters,
-        aircraftType: aircraftType ? [aircraftType] : undefined // Only save the aircraft type if it exists
-      };
+        aircraftType: aircraftType ? [aircraftType] : undefined, // Only save the aircraft type if it exists
+      }
 
-      const existingPreset = findExistingPreset(newPreset, logType);
+      const existingPreset = findExistingPreset(newPreset, logType)
 
       if (!existingPreset) {
         saveCustomPreset(newPreset, logType)
-        showSuccessNotification(`Custom preset "${presetName}" saved successfully`);
+        showSuccessNotification(
+          `Custom preset "${presetName}" saved successfully`,
+        )
+      } else {
+        showErrorNotification(
+          `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
+        )
       }
-      else {
-        showErrorNotification(`Custom preset "${presetName}" already exists as "${existingPreset.name}".`);
-      }
-      close();
+      close()
       updateCanSavePreset(false)
     }
   }
 
   function handleDeleteCustomPreset(presetName) {
-    deleteCustomPreset(presetName, logType);
-    const hasSelectedFilters = Object.values(messageFilters).some(category => 
-      Object.values(category).some(isSelected => isSelected)
-    );
-    updateCanSavePreset(hasSelectedFilters && !matchesExistingPreset());
-    showSuccessNotification(`Custom preset "${presetName}" deleted successfully`);
+    deleteCustomPreset(presetName, logType)
+    const hasSelectedFilters = Object.values(messageFilters).some((category) =>
+      Object.values(category).some((isSelected) => isSelected),
+    )
+    updateCanSavePreset(hasSelectedFilters && !matchesExistingPreset())
+    showSuccessNotification(
+      `Custom preset "${presetName}" deleted successfully`,
+    )
   }
-
 
   // ====================================================
   // 5. Color Management
@@ -590,7 +608,6 @@ export default function FLA() {
     newColors[label] = color
     updateCustomColors(newColors)
   }
-
 
   // ====================================================
   // 6. Utility Functions
@@ -614,11 +631,10 @@ export default function FLA() {
     return 'UNKNOWN'
   }
 
-
   // ====================================================
   // 7. Effect Hooks
   // ====================================================
-  
+
   // Ensure file is loaded when selected
   useEffect(() => {
     if (file !== null) {
@@ -666,7 +682,6 @@ export default function FLA() {
     })
     updateChartData({ datasets: datasets })
   }, [messageFilters, customColors])
-  
 
   // ======================================================
   // 8. Render
@@ -766,19 +781,21 @@ export default function FLA() {
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {/* Custom Presets */}
-                        {presetCategories['custom_' + logType]?.map((category) => {
-                          return (
-                            <Fragment key={category.name}>
-                              <PresetAccordionItem
-                                key={category.name}
-                                category={category}
-                                selectPresetFunc={selectPreset}
-                                aircraftType={aircraftType}
-                                deleteCustomPreset={handleDeleteCustomPreset}
-                              />
-                            </Fragment>
-                          )
-                        })}
+                        {presetCategories['custom_' + logType]?.map(
+                          (category) => {
+                            return (
+                              <Fragment key={category.name}>
+                                <PresetAccordionItem
+                                  key={category.name}
+                                  category={category}
+                                  selectPresetFunc={selectPreset}
+                                  aircraftType={aircraftType}
+                                  deleteCustomPreset={handleDeleteCustomPreset}
+                                />
+                              </Fragment>
+                            )
+                          },
+                        )}
                         {/* Default Presets */}
                         {presetCategories[logType]?.map((category) => {
                           return (
@@ -797,7 +814,7 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages' class="w-96">
+                  <Accordion.Item key='messages' value='messages' class='w-96'>
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
@@ -850,7 +867,9 @@ export default function FLA() {
                         className='ml-6'
                         size='xs'
                         color={tailwindColors.green[600]}
-                        onClick={() => { open() }}
+                        onClick={() => {
+                          open()
+                        }}
                       >
                         Save Preset
                       </Button>

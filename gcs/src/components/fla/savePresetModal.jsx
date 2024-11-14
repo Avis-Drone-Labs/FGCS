@@ -1,16 +1,12 @@
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig';
-import tailwindConfig from '../../../tailwind.config.js';
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../../tailwind.config.js'
 // Third party imports
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import { Modal, TextInput, Button, Group } from '@mantine/core'
-export default function SavePresetModal({
-  opened,
-  close,
-  onSave,
-}) {
-  const [presetName, setPresetName] = useState('');
-  const tailwindColors = resolveConfig(tailwindConfig).theme.colors;
+export default function SavePresetModal({ opened, close, onSave }) {
+  const [presetName, setPresetName] = useState('')
+  const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
   return (
     <Modal

@@ -2,7 +2,7 @@
  * Contains preset filter configurations for Flight Log Analyzer (FLA) based on log file type.
  * Manages both built-in and custom presets for dataflash and FGCS telemetry logs.
  * Includes hooks and utilities for saving, loading, and managing custom presets in localStorage.
- * 
+ *
  * @module
  * @returns {Object} Hook functions and data:
  *   - presetCategories: Object containing all preset categories
@@ -10,7 +10,7 @@
  *   - deleteCustomPreset: Function to remove a custom preset
  *   - findExistingPreset: Function to check for duplicate presets
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const dataflashPresetCategories = [
   {
@@ -168,133 +168,171 @@ const fgcsTelemetryPresetCategories = [
 const initialPresetCategories = {
   dataflash: dataflashPresetCategories,
   fgcs_telemetry: fgcsTelemetryPresetCategories,
-  custom_dataflash: [{
-    name: 'Custom Presets',
-    filters: [],
-  },], // New category for custom dataflash presets
-  custom_fgcs_telemetry: [{
-    name: 'Custom Presets',
-    filters: [],
-  },] // New category for custom FGCS telemetry presets
+  custom_dataflash: [
+    {
+      name: 'Custom Presets',
+      filters: [],
+    },
+  ], // New category for custom dataflash presets
+  custom_fgcs_telemetry: [
+    {
+      name: 'Custom Presets',
+      filters: [],
+    },
+  ], // New category for custom FGCS telemetry presets
 }
 
-export function usePresetCategories(){
-  const [presetCategories, setPresetCategories] = useState(initialPresetCategories);
+export function usePresetCategories() {
+  const [presetCategories, setPresetCategories] = useState(
+    initialPresetCategories,
+  )
 
   useEffect(() => {
     // Load custom presets from localStorage on component mount... if they exist
-    const savedCustomDataflashPresets = localStorage.getItem('customDataflashPresets');
-    const savedCustomFgcsTelemetryPresets = localStorage.getItem('customFgcsTelemetryPresets');
-    
+    const savedCustomDataflashPresets = localStorage.getItem(
+      'customDataflashPresets',
+    )
+    const savedCustomFgcsTelemetryPresets = localStorage.getItem(
+      'customFgcsTelemetryPresets',
+    )
+
     if (savedCustomDataflashPresets) {
-      setPresetCategories(prevCategories => ({
+      setPresetCategories((prevCategories) => ({
         ...prevCategories,
-        custom_dataflash: [{
-          name: 'Custom Presets',
-          filters: JSON.parse(savedCustomDataflashPresets)
-        }]
-      }));
+        custom_dataflash: [
+          {
+            name: 'Custom Presets',
+            filters: JSON.parse(savedCustomDataflashPresets),
+          },
+        ],
+      }))
     }
-    
+
     if (savedCustomFgcsTelemetryPresets) {
-      setPresetCategories(prevCategories => ({
+      setPresetCategories((prevCategories) => ({
         ...prevCategories,
-        custom_fgcs_telemetry: [{
-          name: 'Custom Presets',
-          filters: JSON.parse(savedCustomFgcsTelemetryPresets)
-        }]
-      }));
+        custom_fgcs_telemetry: [
+          {
+            name: 'Custom Presets',
+            filters: JSON.parse(savedCustomFgcsTelemetryPresets),
+          },
+        ],
+      }))
     }
-  }, []);
+  }, [])
 
   function saveCustomPreset(preset, logType) {
-    const categoryKey = logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry';
-    const storageKey = logType === 'dataflash' ? 'customDataflashPresets' : 'customFgcsTelemetryPresets';
+    const categoryKey =
+      logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry'
+    const storageKey =
+      logType === 'dataflash'
+        ? 'customDataflashPresets'
+        : 'customFgcsTelemetryPresets'
 
-    setPresetCategories(prevCategories => {
-      const updatedCustomPresets = [...prevCategories[categoryKey][0].filters, preset];
-      localStorage.setItem(storageKey, JSON.stringify(updatedCustomPresets));
+    setPresetCategories((prevCategories) => {
+      const updatedCustomPresets = [
+        ...prevCategories[categoryKey][0].filters,
+        preset,
+      ]
+      localStorage.setItem(storageKey, JSON.stringify(updatedCustomPresets))
       return {
         ...prevCategories,
-        [categoryKey]: [{
-          name: 'Custom Presets',
-          filters: updatedCustomPresets
-        }]
-      };
-    });
+        [categoryKey]: [
+          {
+            name: 'Custom Presets',
+            filters: updatedCustomPresets,
+          },
+        ],
+      }
+    })
   }
 
   function deleteCustomPreset(presetName, logType) {
-    const categoryKey = logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry';
-    const storageKey = logType === 'dataflash' ? 'customDataflashPresets' : 'customFgcsTelemetryPresets';
+    const categoryKey =
+      logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry'
+    const storageKey =
+      logType === 'dataflash'
+        ? 'customDataflashPresets'
+        : 'customFgcsTelemetryPresets'
 
-    setPresetCategories(prevCategories => {
-      const updatedCustomPresets = prevCategories[categoryKey][0].filters.filter(preset => preset.name !== presetName);
-      localStorage.setItem(storageKey, JSON.stringify(updatedCustomPresets));
+    setPresetCategories((prevCategories) => {
+      const updatedCustomPresets = prevCategories[
+        categoryKey
+      ][0].filters.filter((preset) => preset.name !== presetName)
+      localStorage.setItem(storageKey, JSON.stringify(updatedCustomPresets))
       return {
         ...prevCategories,
-        [categoryKey]: [{
-          name: 'Custom Presets',
-          filters: updatedCustomPresets
-        }]
-      };
-    });
+        [categoryKey]: [
+          {
+            name: 'Custom Presets',
+            filters: updatedCustomPresets,
+          },
+        ],
+      }
+    })
   }
 
   function findExistingPreset(preset, logType) {
-    const customCategoryKey = logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry';
-  
+    const customCategoryKey =
+      logType === 'dataflash' ? 'custom_dataflash' : 'custom_fgcs_telemetry'
+
     // Check in custom presets
-    const customPreset = presetCategories[customCategoryKey][0].filters.find(existingPreset => 
-      existingPreset.name === preset.name || areFiltersEqual(existingPreset.filters, preset.filters)
-    );
-  
+    const customPreset = presetCategories[customCategoryKey][0].filters.find(
+      (existingPreset) =>
+        existingPreset.name === preset.name ||
+        areFiltersEqual(existingPreset.filters, preset.filters),
+    )
+
     if (customPreset) {
-      return customPreset;
+      return customPreset
     }
-  
+
     // Check in standard presets
-    const standardCategories = presetCategories[logType] || [];
+    const standardCategories = presetCategories[logType] || []
     for (const category of standardCategories) {
       // Make sure category.filters exists and is an array
       if (!Array.isArray(category.filters)) {
-        continue;
+        continue
       }
-      
+
       // Check each filter in the category
       for (const existingPreset of category.filters) {
-        if (existingPreset.name === preset.name || areFiltersEqual(existingPreset.filters, preset.filters)) {
-          return existingPreset;
+        if (
+          existingPreset.name === preset.name ||
+          areFiltersEqual(existingPreset.filters, preset.filters)
+        ) {
+          return existingPreset
         }
       }
     }
 
-    return null;
+    return null
   }
 
   function areFiltersEqual(filters1, filters2) {
     // Handle null or undefined filters
     if (!filters1 || !filters2) {
-      return filters1 === filters2;
+      return filters1 === filters2
     }
-    const keys1 = Object.keys(filters1);
-    const keys2 = Object.keys(filters2);
-    
-    if (keys1.length !== keys2.length) return false;
-    
+    const keys1 = Object.keys(filters1)
+    const keys2 = Object.keys(filters2)
+
+    if (keys1.length !== keys2.length) return false
+
     for (let key of keys1) {
-      if (!filters2.hasOwnProperty(key)) return false;
-      if (filters1[key].length !== filters2[key].length) return false;
-      if (!filters1[key].every(item => filters2[key].includes(item))) return false;
+      if (!filters2.hasOwnProperty(key)) return false
+      if (filters1[key].length !== filters2[key].length) return false
+      if (!filters1[key].every((item) => filters2[key].includes(item)))
+        return false
     }
-    
-    return true;
+
+    return true
   }
 
   return {
     presetCategories,
     saveCustomPreset,
     deleteCustomPreset,
-    findExistingPreset
-  };
+    findExistingPreset,
+  }
 }

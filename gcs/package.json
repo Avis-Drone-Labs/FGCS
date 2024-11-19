@@ -6,7 +6,7 @@
     "name": "Avis-Drone-Labs"
   },
   "private": true,
-  "version": "0.1.7-alpha",
+  "version": "0.1.8-alpha",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
   "bugs": {
@@ -32,6 +32,7 @@
     "@reduxjs/toolkit": "^2.2.7",
     "@robloche/chartjs-plugin-streaming": "^3.1.0",
     "@tabler/icons-react": "^2.44.0",
+    "@tailwindcss/container-queries": "^0.1.1",
     "@tremor/react": "^3.12.1",
     "chart.js": "^4.4.2",
     "chartjs-adapter-moment": "^1.0.1",

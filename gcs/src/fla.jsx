@@ -623,23 +623,26 @@ export default function FLA() {
             <div className='w-1/4 pb-6'>
               <div className='flex flex-row justify-between ml-4'>
                 <Tooltip label={file.path}>
-                  <p className='text-xl p-3 font-semibold text-gray-200 bg-falcongrey-900 rounded truncate max-w-[400px] inline-block'>
+                  <p className='text-xs p-2 text-gray-200 bg-falcongrey-900 rounded truncate max-w-[400px] inline-block'>
                     File Name:
-                    <span className='ml-3 underline'>
+                    <span className='ml-3 text-white '>
                       {file.name}
                     </span>
                   </p>
                 </Tooltip>
                 <Button
-                  className='mt-1 mr-4'
-                  size='md'
+                  className='mr-4 ml-2 p-2'
+                  size='xs'
                   color={tailwindColors.red[500]}
                   onClick={closeLogFile}
                 >
                   Close file
                 </Button>
               </div>
-              <p className="mx-4 my-5 text-lg font-semibold text-gray-200 bg-falcongrey-900 px-4 py-3 rounded"> Aircraft Type: <span className="text-white float-right">{aircraftType ? aircraftType : "No Aircraft Type"}</span></p>
+              <p className="flex justify-between mx-4 my-1 text-xs p-2 text-gray-200 bg-falcongrey-900 rounded">
+                <span className="whitespace-nowrap">Aircraft Type:</span>
+                <span className="text-white ml-auto truncate max-w-[200px]">{aircraftType ? aircraftType : "No Aircraft Type"}</span>
+              </p>
               
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>

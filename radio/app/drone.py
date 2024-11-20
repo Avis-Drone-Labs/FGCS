@@ -206,7 +206,7 @@ class Drone:
         return baud in VALID_BAUDRATES
 
     @staticmethod
-    def getValidBaudrates() -> list[int]:
+    def getValidBaudrates() -> List[int]:
         return VALID_BAUDRATES
 
     def cleanTempLogs(self) -> None:

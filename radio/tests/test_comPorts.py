@@ -1,6 +1,8 @@
 import sys
 import pytest
 
+from typing import Union
+
 from serial.tools import list_ports
 from serial.tools.list_ports_common import ListPortInfo
 
@@ -10,7 +12,7 @@ from . import socketio_client
 from .conftest import setupDrone
 from .helpers import send_and_recieve
 
-VALID_DRONE_PORT: str | ListPortInfo
+VALID_DRONE_PORT: Union[str, ListPortInfo]
 
 
 @pytest.fixture(scope="module", autouse=True)

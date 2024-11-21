@@ -11,8 +11,21 @@ on:
       - release-*
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    name: Python ${{ matrix.py }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        py:
+          - 3.8
+          - 3.9
+          - 3.11
+          - 3.12
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
     services:
       service-name-1:
         image: kushmakkapati/ardupilot_sitl:latest
@@ -21,10 +34,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.py }}
 
       - name: Install dependencies
         working-directory: radio

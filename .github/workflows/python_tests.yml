@@ -27,7 +27,7 @@ jobs:
 
       - name: Set up docker
         run: |
-          brew install docker
+          brew install docker colima
           colima start
           docker pull kushmakkapati/ardupilot_sitl
           docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
@@ -47,37 +47,37 @@ jobs:
       - name: Test with pytest
         working-directory: radio
         run: pytest --log-cli-level=DEBUG
-  test-linux:
-    name: Python ${{ matrix.py }} on ubuntu-latest
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        py:
-          - 3.8
-          - 3.9
-          - 3.11
-          - 3.12
-    services:
-      service-name-1:
-        image: kushmakkapati/ardupilot_sitl:latest
-        ports:
-          - 5760:5760
-    steps:
-      - uses: actions/checkout@v3
+  # test-linux:
+  #   name: Python ${{ matrix.py }} on ubuntu-latest
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       py:
+  #         - 3.8
+  #         - 3.9
+  #         - 3.11
+  #         - 3.12
+  #   services:
+  #     service-name-1:
+  #       image: kushmakkapati/ardupilot_sitl:latest
+  #       ports:
+  #         - 5760:5760
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.py }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.py }}
+  #     - name: Set up Python ${{ matrix.py }}
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: ${{ matrix.py }}
 
-      - name: Install dependencies
-        working-directory: radio
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pytest
-          python -m pip install -r requirements.txt
+  #     - name: Install dependencies
+  #       working-directory: radio
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         python -m pip install pytest
+  #         python -m pip install -r requirements.txt
 
-      - name: Test with pytest
-        working-directory: radio
-        run: pytest --log-cli-level=DEBUG
+  #     - name: Test with pytest
+  #       working-directory: radio
+  #       run: pytest --log-cli-level=DEBUG

@@ -29,6 +29,9 @@ jobs:
         run: |
           brew install --cask docker
           open /Applications/Docker.app
+          while ! docker info >/dev/null 2>&1; do
+            echo "Waiting for Docker to start..."
+            sleep 2
           docker pull kushmakkapati/ardupilot_sitl
           docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
 

@@ -28,7 +28,8 @@ jobs:
       - name: Set up docker
       # based on https://github.com/ddev/ddev/blob/fe1b8ddbfeb322e4966b31c5654362f6a0b022be/.circleci/macos_circle_vm_setup.sh#L11-L13
         run: |
-          brew install --cask docker colima
+          brew install --cask docker
+          brew install colima
           colima start
           docker ps -a
           sudo /Applications/Docker.app/Contents/Resources/bin/docker pull kushmakkapati/ardupilot_sitl

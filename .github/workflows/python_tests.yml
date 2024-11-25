@@ -28,8 +28,9 @@ jobs:
       - name: Set up docker
         run: |
           brew install --cask docker
-          open /Applications/Docker.app
-          while ! docker info >/dev/null 2>&1; do
+          sudo /Applications/Docker.app/Contents/MacOS/Docker --quit-after-install --unattended
+          nohup /Applications/Docker.app/Contents/MacOS/Docker --unattended &open /Applications/Docker.app
+          while ! docker ps >/dev/null ; do
             echo "Waiting for Docker to start..."
             sleep 2
           done

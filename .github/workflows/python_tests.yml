@@ -27,8 +27,7 @@ jobs:
 
       - name: Set up docker
         run: |
-          brew install docker colima
-          colima start
+          brew install --cask docker
           docker pull kushmakkapati/ardupilot_sitl
           docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
 

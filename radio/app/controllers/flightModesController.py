@@ -98,8 +98,18 @@ class FlightModesController:
         )
 
         if self.drone.aircraft_type == 1:
+            if (flight_mode < 0) or (flight_mode > 24):
+                return {
+                    "success": False,
+                    "message": f"Invalid plane flight mode, must be between 0 and 24 inclusive, got {flight_mode}",
+                }
             mode_name = mavutil.mavlink.enums["PLANE_MODE"][flight_mode].name
         else:
+            if (flight_mode < 0) or (flight_mode > 27):
+                return {
+                    "success": False,
+                    "message": f"Invalid copter flight mode, must be between 0 and 27 inclusive, got {flight_mode}",
+                }
             mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
 
         if param_set_success:

@@ -764,7 +764,7 @@ export default function FLA() {
                   <Tooltip label={file.path}>
                     <div className='px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
                       File Name:
-                      <span className='text-white ml-2' onClick={() => {window.ipcRenderer.send('openFileInExplorer', []); console.log("hello!")}}>
+                      <span className='text-white underline ml-2 cursor-pointer' onClick={() => {window.ipcRenderer.send('openFileInExplorer', file.path);}}>
                         {file.name}
                       </span>
                     </div>

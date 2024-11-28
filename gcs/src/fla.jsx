@@ -762,16 +762,16 @@ export default function FLA() {
               <div className="flex flex-col mb-2 text-sm gap-y-2">
                 <div className='flex flex-row justify-between'>
                   <Tooltip label={file.path}>
-                    <p className='p-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
+                    <div className='px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
                       File Name:
-                      <span className='ml-3 text-white' onClick={() => {window.ipcRenderer.send('openFileInExplorer', []); console.log("hello!")}}>
+                      <span className='text-white ml-2' onClick={() => {window.ipcRenderer.send('openFileInExplorer', []); console.log("hello!")}}>
                         {file.name}
                       </span>
-                    </p>
+                    </div>
                   </Tooltip>
                   <Button
-                    className='p-2 ml-2'
-                    size='xs'
+                    className='ml-2'
+                    size='sm'
                     color={tailwindColors.red[500]}
                     onClick={closeLogFile}
                   >
@@ -825,7 +825,7 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages' className='w-96'>
+                  <Accordion.Item key='messages' value='messages'>
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>

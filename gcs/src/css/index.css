@@ -16,8 +16,8 @@
   @apply bg-falcongrey-800 text-neutral-50 h-full max-h-full min-h-screen;
 }
 
-:root[data-mantine-color-scheme="dark"] {
-  --mantine-color-body: #1C2021 !important;  /* Falcon grey default */
+:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-body: #1c2021 !important; /* Falcon grey default */
 }
 
 html,
@@ -32,12 +32,20 @@ body {
   height: 100%;
 }
 
-.allow-drag { 
+.allow-drag {
   -webkit-app-region: drag;
 }
 
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+.accordion {
+  background-color: red !important;
+}
+
+.accordion::hover {
+  background-color: aqua !important;
 }
 
 /* width */

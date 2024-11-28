@@ -52,6 +52,7 @@ ipcMain.on("zoom_out", () => {
   let window = getWindow()?.webContents;
   window?.setZoomFactor(window?.getZoomFactor() - 0.1)
 })
+ipcMain.on("openFileInExplorer", () => {shell.openExternal("https://google.com"); shell.showItemInFolder('"C:\\Users\\user\\Downloads\\test.py"')})
 
 function createWindow() {
   win = new BrowserWindow({

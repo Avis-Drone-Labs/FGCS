@@ -692,7 +692,7 @@ export default function FLA() {
       {logMessages === null ? (
         // Open flight logs section
         <div className='flex flex-col items-center justify-center h-full mx-auto'>
-          <div className='flex flex-row gap-8 items-center justify-center'>
+          <div className='flex flex-row items-center justify-center gap-8'>
             <div className='flex flex-col gap-4'>
               <FileButton
                 color={tailwindColors.blue[600]}
@@ -716,25 +716,25 @@ export default function FLA() {
               <LoadingOverlay
                 visible={recentFgcsLogs === null || loadingFile}
               />
-              <div className='flex flex-col gap-2 items-center'>
+              <div className='flex flex-col items-center gap-2'>
                 <p className='font-bold'>Recent FGCS telemetry logs</p>
                 <ScrollArea h={250} offsetScrollbars>
                   {recentFgcsLogs !== null &&
                     recentFgcsLogs.map((log, idx) => (
                       <div
                         key={idx}
-                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
+                        className='flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
                         onClick={() => updateFile(log)}
                       >
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
-                          <p className='text-gray-400 text-sm'>
+                          <p className='text-sm text-gray-400'>
                             {moment(
                               log.timestamp.toISOString(),
                               'YYYY-MM-DD_HH-mm-ss',
                             ).fromNow()}
                           </p>
-                          <p className='text-gray-400 text-sm'>
+                          <p className='text-sm text-gray-400'>
                             {Math.round(log.size / 1024)}KB
                           </p>
                         </div>
@@ -756,31 +756,33 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className='flex gap-4 h-full overflow-x-auto py-4 px-2'>
+          <div className='flex h-full gap-4 px-2 py-4 overflow-x-auto'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
-              <div className='flex flex-row justify-between ml-4'>
-                <Tooltip label={file.path}>
-                  <p className='text-xs p-2 text-gray-200 bg-falcongrey-900 rounded truncate max-w-[400px] inline-block'>
-                    File Name:
-                    <span className='ml-3 text-white '>
-                      {file.name}
-                    </span>
-                  </p>
-                </Tooltip>
-                <Button
-                  className='mr-4 ml-2 p-2'
-                  size='xs'
-                  color={tailwindColors.red[500]}
-                  onClick={closeLogFile}
-                >
-                  Close file
-                </Button>
+              <div className="flex flex-col mb-2 text-sm gap-y-2">
+                <div className='flex flex-row justify-between'>
+                  <Tooltip label={file.path}>
+                    <p className='p-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
+                      File Name:
+                      <span className='ml-3 text-white' onClick={() => {window.ipcRenderer.send('openFileInExplorer', []); console.log("hello!")}}>
+                        {file.name}
+                      </span>
+                    </p>
+                  </Tooltip>
+                  <Button
+                    className='p-2 ml-2'
+                    size='xs'
+                    color={tailwindColors.red[500]}
+                    onClick={closeLogFile}
+                  >
+                    Close file
+                  </Button>
+                </div>
+                <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
+                  <div className="whitespace-nowrap">Aircraft Type:</div>
+                  <div className="text-white ml-auto truncate max-w-[200px]">{aircraftType ? aircraftType : "No Aircraft Type"}</div>
+                </div>
               </div>
-              <p className="flex justify-between mx-4 my-1 text-xs p-2 text-gray-200 bg-falcongrey-900 rounded">
-                <span className="whitespace-nowrap">Aircraft Type:</span>
-                <span className="text-white ml-auto truncate max-w-[200px]">{aircraftType ? aircraftType : "No Aircraft Type"}</span>
-              </p>
               
               <ScrollArea className='h-full max-h-max'>
                 <Accordion multiple={true}>
@@ -823,7 +825,7 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages' class='w-96'>
+                  <Accordion.Item key='messages' value='messages' className='w-96'>
                     <Accordion.Control>Messages</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>

@@ -43,7 +43,7 @@ export default function SingleRunWrapper({ children }) {
       // it to the current version.
 
       const nodeEnv = await window.ipcRenderer.getNodeEnv()
-      //if (nodeEnv !== 'production') return
+      if (nodeEnv !== 'production') return
 
       const currentVersion = await window.ipcRenderer.getVersion()
 
@@ -60,9 +60,7 @@ export default function SingleRunWrapper({ children }) {
       )
 
       if (latestGithubRelease.status === 200) {
-        //const latestVersion = latestGithubRelease.data.tag_name
-        const latestVersion = "v1.1.6";
-        const currentVersion = "1.1.5";
+        const latestVersion = latestGithubRelease.data.tag_name
         if (semverGt(latestVersion, currentVersion)) {
           setFgcsOutOfDateInfo({
             currentVersion,

@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 
 // 3rd part libraries
 import { Button, Modal } from '@mantine/core'
-import { useDisclosure, useSessionStorage } from '@mantine/hooks'
+import { useDisclosure, useSessionStorage, useLocalStorage } from '@mantine/hooks'
 import { Octokit } from 'octokit'
 import semverGt from 'semver/functions/gt'
 
@@ -30,6 +30,10 @@ export default function SingleRunWrapper({ children }) {
   const [outOfDate, setOutOfDate] = useSessionStorage({
     key: 'outOfDate',
     defaultValue: false,
+  })
+
+  const [isUpdateDismissed, setUpdateDismissed] = useLocalStorage({
+    key: 'isUpdateDismissed', 
   })
 
   useEffect(() => {
@@ -73,11 +77,17 @@ export default function SingleRunWrapper({ children }) {
     checkIfOutOfDate()
   }, [])
 
+  //Checks there is an update that the user has not already dismissed
   useEffect(() => {
-    if (fgcsOutOfDateInfo !== null) {
+    if (fgcsOutOfDateInfo !== null && isUpdateDismissed !== `${fgcsOutOfDateInfo?.latestVersion}`) {
       open()
     }
-  }, [fgcsOutOfDateInfo])
+  }, [fgcsOutOfDateInfo, isUpdateDismissed])
+
+  const closeForever = () => {
+    close()
+    setUpdateDismissed(fgcsOutOfDateInfo?.latestVersion)
+  };
 
   return (
     <>
@@ -112,6 +122,16 @@ export default function SingleRunWrapper({ children }) {
           color={tailwindColors.blue[600]}
         >
           Update
+        </Button>
+        <Button
+          component='a'
+          onClick={closeForever}
+          target='_blank'
+          className='mt-2'
+          fullWidth
+          color={tailwindColors.red[600]}
+        >
+          Don't show again
         </Button>
       </Modal>
       {children}

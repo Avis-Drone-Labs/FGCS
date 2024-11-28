@@ -43,7 +43,7 @@ export default function SingleRunWrapper({ children }) {
       // it to the current version.
 
       const nodeEnv = await window.ipcRenderer.getNodeEnv()
-      if (nodeEnv !== 'production') return
+      //if (nodeEnv !== 'production') return
 
       const currentVersion = await window.ipcRenderer.getVersion()
 
@@ -60,7 +60,9 @@ export default function SingleRunWrapper({ children }) {
       )
 
       if (latestGithubRelease.status === 200) {
-        const latestVersion = latestGithubRelease.data.tag_name
+        //const latestVersion = latestGithubRelease.data.tag_name
+        const latestVersion = "v1.1.6";
+        const currentVersion = "1.1.5";
         if (semverGt(latestVersion, currentVersion)) {
           setFgcsOutOfDateInfo({
             currentVersion,
@@ -113,26 +115,28 @@ export default function SingleRunWrapper({ children }) {
           . Please update FGCS to get the latest features, improvements and bug
           fixes.
         </p>
-        <Button
-          component='a'
-          href='https://github.com/Avis-Drone-Labs/FGCS/releases'
-          target='_blank'
-          className='mt-6'
-          fullWidth
-          color={tailwindColors.blue[600]}
-        >
-          Update
-        </Button>
-        <Button
-          component='a'
-          onClick={closeForever}
-          target='_blank'
-          className='mt-2'
-          fullWidth
-          color={tailwindColors.red[600]}
-        >
-          Don't show again
-        </Button>
+        <div className='flex gap-x-2 mt-5'>
+          <Button
+            component='a'
+            onClick={closeForever}
+            target='_blank'
+            className=''
+            fullWidth
+            color={tailwindColors.red[600]}
+          >
+              Do not show again
+          </Button>
+          <Button
+            component='a'
+            href='https://github.com/Avis-Drone-Labs/FGCS/releases'
+            target='_blank'
+            className=''
+            fullWidth
+            color={tailwindColors.blue[600]}
+          >
+            Update
+          </Button>
+        </div>
       </Modal>
       {children}
     </>

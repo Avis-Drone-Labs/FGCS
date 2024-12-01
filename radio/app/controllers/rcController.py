@@ -17,47 +17,32 @@ class RcController:
         self.drone = drone
         self.params = {}
 
-        pitch_map = self.drone.paramsController.getSingleParam("RCMAP_PITCH").get(
-            "data"
-        )
-        roll_map = self.drone.paramsController.getSingleParam("RCMAP_ROLL").get("data")
-        throttle_map = self.drone.paramsController.getSingleParam("RCMAP_THROTTLE").get(
-            "data"
-        )
-        yaw_map = self.drone.paramsController.getSingleParam("RCMAP_YAW").get("data")
-
-        if pitch_map:
-            self.params["pitch"] = pitch_map.param_value
-        if roll_map:
-            self.params["roll"] = roll_map.param_value
-        if throttle_map:
-            self.params["throttle"] = throttle_map.param_value
-        if yaw_map:
-            self.params["yaw"] = yaw_map.param_value
+        self.getAndSetParam(self.params, "pitch", "RCMAP_PITCH")
+        self.getAndSetParam(self.params, "roll", "RCMAP_ROLL")
+        self.getAndSetParam(self.params, "throttle", "RCMAP_THROTTLE")
+        self.getAndSetParam(self.params, "yaw", "RCMAP_YAW")
 
         for channel_number in range(1, 17):
             channel_params = {}
 
-            min_param = self.drone.paramsController.getSingleParam(
-                f"RC{channel_number}_MIN"
-            ).get("data")
-            max_param = self.drone.paramsController.getSingleParam(
-                f"RC{channel_number}_MAX"
-            ).get("data")
-            reversed_param = self.drone.paramsController.getSingleParam(
-                f"RC{channel_number}_REVERSED"
-            ).get("data")
-            option_param = self.drone.paramsController.getSingleParam(
-                f"RC{channel_number}_OPTION"
-            ).get("data")
-
-            if min_param:
-                channel_params["min"] = min_param.param_value
-            if max_param:
-                channel_params["max"] = max_param.param_value
-            if reversed_param:
-                channel_params["reversed"] = reversed_param.param_value
-            if option_param:
-                channel_params["option"] = option_param.param_value
+            self.getAndSetParam(channel_params, "min", f"RC{channel_number}_MIN")
+            self.getAndSetParam(channel_params, "max", f"RC{channel_number}_MAX")
+            self.getAndSetParam(
+                channel_params, "reversed", f"RC{channel_number}_REVERSED"
+            )
+            self.getAndSetParam(channel_params, "option", f"RC{channel_number}_OPTION")
 
             self.params[f"RC_{channel_number}"] = channel_params
+
+    def getAndSetParam(self, params_dict: dict, param_key: str, param_name: str):
+        """
+        Gets and set the value of a parameter inside a dictionary.
+
+        Args:
+            params_dict (dict): The dictionary to store the parameters
+            param_key (str): The key for the parameter within the dictionary
+            param_name (str): The name of the parameter
+        """
+        param = self.drone.paramsController.getSingleParam(param_name).get("data")
+        if param:
+            params_dict[param_key] = param.param_value

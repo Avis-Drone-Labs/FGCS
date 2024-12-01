@@ -15,7 +15,7 @@ class RcController:
             drone (Drone): The main drone object
         """
         self.drone = drone
-        self.params = {}
+        self.params: dict = {}
 
         self.getAndSetParam(self.params, "pitch", "RCMAP_PITCH")
         self.getAndSetParam(self.params, "roll", "RCMAP_ROLL")
@@ -23,7 +23,7 @@ class RcController:
         self.getAndSetParam(self.params, "yaw", "RCMAP_YAW")
 
         for channel_number in range(1, 17):
-            channel_params = {}
+            channel_params: dict = {}
 
             self.getAndSetParam(channel_params, "min", f"RC{channel_number}_MIN")
             self.getAndSetParam(channel_params, "max", f"RC{channel_number}_MAX")

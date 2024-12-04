@@ -42,11 +42,11 @@ export default function PresetAccordionItem({
 
   return (
     <Accordion.Item value={category.name}>
-      <Accordion.Control>{category.name}</Accordion.Control>
+      <Accordion.Control className="rounded-md">{category.name}</Accordion.Control>
       <Accordion.Panel>
         <div className='flex flex-col gap-2'>
           {filteredFilters.length === 0 ? (
-            <div className='flex justify-center items-center py-4'>
+            <div className='flex items-center justify-center py-4'>
               <IconInfoCircle size={20} />
               <p className='ml-2'>
                 No Saved {aircraftType ? toTitleCase(aircraftType) : ''} {isCustomPreset ? 'Custom Preset' : 'Preset'}

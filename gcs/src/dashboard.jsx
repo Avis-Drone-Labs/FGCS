@@ -478,7 +478,7 @@ export default function Dashboard() {
             }}
             className='h-full'
           >
-            <div className='flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto'>
+            <div className='@container flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto'>
               {/* Telemetry Information */}
               <div>
                 {/* Information above indicators */}
@@ -503,97 +503,99 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Attitude Indicator */}
-                <div className='flex flex-row items-center justify-center' style={{
-                    "paddingTop": `${calcIndicatorPadding()}px`,
-                    "paddingBottom": `${calcIndicatorPadding()}px`
-                }}>
-                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-                    <p className='text-sm text-center'>ms&#8315;&#185;</p>
-                    <TelemetryValueDisplay
-                      title='AS'
-                      value={(telemetryData.airspeed
-                        ? telemetryData.airspeed
-                        : 0
-                      ).toFixed(2)}
-                      fs={telemtryFontSize}
+                <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
+                  {/* Attitude Indicator */}
+                  <div className='flex flex-row items-center justify-center' style={{
+                      "paddingTop": `${calcIndicatorPadding()}px`,
+                      "paddingBottom": `${calcIndicatorPadding()}px`
+                  }}>
+                    <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                      <p className='text-sm text-center'>ms&#8315;&#185;</p>
+                      <TelemetryValueDisplay
+                        title='AS'
+                        value={(telemetryData.airspeed
+                          ? telemetryData.airspeed
+                          : 0
+                        ).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                      <TelemetryValueDisplay
+                        title='GS'
+                        value={(telemetryData.groundspeed
+                          ? telemetryData.groundspeed
+                          : 0
+                        ).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                    </div>
+                    <AttitudeIndicator
+                      roll={attitudeData.roll * (180 / Math.PI)}
+                      pitch={attitudeData.pitch * (180 / Math.PI)}
+                      size={`${calcIndicatorSize()}px`}
                     />
-                    <TelemetryValueDisplay
-                      title='GS'
-                      value={(telemetryData.groundspeed
-                        ? telemetryData.groundspeed
-                        : 0
-                      ).toFixed(2)}
-                      fs={telemtryFontSize}
-                    />
+                    <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                      <p className='text-sm text-center'>m</p>
+                      <TelemetryValueDisplay
+                        title='AMSL'
+                        value={(gpsData.alt
+                          ? gpsData.alt / 1000
+                          : 0
+                        ).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                      <TelemetryValueDisplay
+                        title='AREL'
+                        value={(gpsData.relative_alt
+                          ? gpsData.relative_alt / 1000
+                          : 0
+                        ).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                    </div>
                   </div>
-                  <AttitudeIndicator
-                    roll={attitudeData.roll * (180 / Math.PI)}
-                    pitch={attitudeData.pitch * (180 / Math.PI)}
-                    size={`${calcIndicatorSize()}px`}
-                  />
-                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-                    <p className='text-sm text-center'>m</p>
-                    <TelemetryValueDisplay
-                      title='AMSL'
-                      value={(gpsData.alt
-                        ? gpsData.alt / 1000
-                        : 0
-                      ).toFixed(2)}
-                      fs={telemtryFontSize}
-                    />
-                    <TelemetryValueDisplay
-                      title='AREL'
-                      value={(gpsData.relative_alt
-                        ? gpsData.relative_alt / 1000
-                        : 0
-                      ).toFixed(2)}
-                      fs={telemtryFontSize}
-                    />
-                  </div>
-                </div>
 
-                {/* Heading Indicator */}
-                <div className='flex flex-row items-center justify-center' style={{
-                    "paddingTop": `${calcIndicatorPadding()}px`,
-                    "paddingBottom": `${calcIndicatorPadding()}px`
-                }}>
-                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-                    <p className='text-sm text-center'>deg &#176;</p>
-                    <TelemetryValueDisplay
-                      title='HDG'
-                      value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-                      fs={telemtryFontSize}
+                  {/* Heading Indicator */}
+                  <div className='flex flex-row items-center justify-center' style={{
+                      "paddingTop": `${calcIndicatorPadding()}px`,
+                      "paddingBottom": `${calcIndicatorPadding()}px`
+                  }}>
+                    <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+                      <p className='text-sm text-center'>deg &#176;</p>
+                      <TelemetryValueDisplay
+                        title='HDG'
+                        value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                      <TelemetryValueDisplay
+                        title='YAW'
+                        value={(attitudeData.yaw
+                          ? attitudeData.yaw * (180 / Math.PI)
+                          : 0
+                        ).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                    </div>
+                    <HeadingIndicator
+                      heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+                      size={`${calcIndicatorSize()}px`}
                     />
-                    <TelemetryValueDisplay
-                      title='YAW'
-                      value={(attitudeData.yaw
-                        ? attitudeData.yaw * (180 / Math.PI)
-                        : 0
-                      ).toFixed(2)}
-                      fs={telemtryFontSize}
-                    />
-                  </div>
-                  <HeadingIndicator
-                    heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-                    size={`${calcIndicatorSize()}px`}
-                  />
-                  <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14' ref={sideBarRef}>
-                    <p className='text-sm'>m</p>
-                    <TelemetryValueDisplay
-                      title='WP'
-                      value={(navControllerOutputData.wp_dist
-                        ? navControllerOutputData.wp_dist
-                        : 0
-                      ).toFixed(2)}
-                      fs={telemtryFontSize}
-                    />
-                    {/* TOOD: Implement distance to home */}
-                    <TelemetryValueDisplay
-                      title='HOME'
-                      value={(0).toFixed(2)}
-                      fs={telemtryFontSize}
-                    />
+                    <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14' ref={sideBarRef}>
+                      <p className='text-sm'>m</p>
+                      <TelemetryValueDisplay
+                        title='WP'
+                        value={(navControllerOutputData.wp_dist
+                          ? navControllerOutputData.wp_dist
+                          : 0
+                        ).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                      {/* TOOD: Implement distance to home */}
+                      <TelemetryValueDisplay
+                        title='HOME'
+                        value={(0).toFixed(2)}
+                        fs={telemtryFontSize}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -670,7 +672,11 @@ export default function Dashboard() {
 
                 <Tabs.Panel value='actions'>
                   {/* Arming/Flight Modes */}
-                  {connected && (
+                  {!connected ? (
+                    <div className='flex flex-col items-center justify-center h-full'>
+                      <p className='text-white-800 p-6 text-center'>No actions are available right now. Connect a drone to begin</p> 
+                    </div>
+                  ) : (  
                     <div className='flex flex-col flex-wrap gap-4'>
                       <div className='flex flex-row space-x-14'>
                         <Button

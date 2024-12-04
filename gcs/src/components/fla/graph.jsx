@@ -8,7 +8,7 @@ as graph annotations to show events or different flight modes.
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd party imports
-import { ActionIcon, Tooltip as MantineTooltip } from '@mantine/core'
+import { ActionIcon, Tooltip as MantineTooltip, Button } from '@mantine/core'
 import { useToggle } from '@mantine/hooks'
 import {
   IconCapture,
@@ -76,7 +76,7 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, events, flightModes, graphConfig }) {
+export default function Graph({ data, events, flightModes, graphConfig, clearFilters, canSavePreset, openPresetModal }) {
   const [config, setConfig] = useState({ ...graphConfig })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
@@ -319,7 +319,7 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
   return (
     <div>
       <Line ref={chartRef} options={config} data={data} />
-      <div className='flex flex-row gap-2'>
+      <div className='flex flex-row gap-2 pt-2'>
         <MantineTooltip label='Zoom in'>
           <ActionIcon
             variant='filled'
@@ -360,6 +360,28 @@ export default function Graph({ data, events, flightModes, graphConfig }) {
             )}
           </ActionIcon>
         </MantineTooltip>
+        <MantineTooltip label="Clear Filters">
+          <Button
+            size='xs'
+            color={tailwindColors.red[500]}
+            onClick={clearFilters}
+          >
+            Clear Filters
+          </Button>
+        </MantineTooltip>
+        {canSavePreset && (
+          <MantineTooltip label="Save Preset">
+            <Button
+              size='xs'
+              color={tailwindColors.green[600]}
+              onClick={() => {
+                openPresetModal()
+              }}
+            >
+              Save Preset
+            </Button>
+          </MantineTooltip>
+        )}
       </div>
     </div>
   )

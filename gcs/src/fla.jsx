@@ -784,7 +784,7 @@ export default function FLA() {
                 </div>
               </div>
               
-              <ScrollArea className="max-h-full rounded-md h-min">
+              <ScrollArea className="h-full max-h-[90%]">
                 <Accordion multiple={true}>
                   {/* Presets */}
                   <Accordion.Item key='presets' value='presets'>
@@ -826,7 +826,7 @@ export default function FLA() {
 
                   {/* All messages */}
                   <Accordion.Item key='messages' value='messages' styles={{ item: { borderBottom: "none" } }}>
-                    <Accordion.Control>Messages</Accordion.Control>
+                    <Accordion.Control className="rounded-md">Messages</Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {Object.keys(messageFilters).map((messageName, idx) => {

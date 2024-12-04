@@ -52,6 +52,7 @@ ipcMain.on("zoom_out", () => {
   let window = getWindow()?.webContents;
   window?.setZoomFactor(window?.getZoomFactor() - 0.1)
 })
+ipcMain.on("openFileInExplorer", (_event, filePath) => {shell.showItemInFolder(filePath)})
 
 function createWindow() {
   win = new BrowserWindow({

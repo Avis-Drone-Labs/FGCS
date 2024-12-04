@@ -16,6 +16,7 @@ const logAnalyserSlice = createSlice({
     customColors: {},
     colorIndex: 0,
     aircraftType: null,
+    canSavePreset: false,
   },
   reducers: {
     setFile: (state, action) => {
@@ -57,6 +58,9 @@ const logAnalyserSlice = createSlice({
     setAircraftType: (state, action) => {
       state.aircraftType = action.payload
     },
+    setCanSavePreset: (state, action) => {
+      state.canSavePreset = action.payload
+    },
   },
 })
 
@@ -74,6 +78,7 @@ export const {
   setCustomColors,
   setColorIndex,
   setAircraftType,
+  setCanSavePreset,
 } = logAnalyserSlice.actions
 
 export default logAnalyserSlice.reducer

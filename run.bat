@@ -7,7 +7,7 @@ IF NOT "%venv%"=="" (
     ECHO Starting venv...
     "./%venv%/Scripts/activate"
 
-    @REM Update all packkages, only triggered with second parameter
+    @REM Update all packages, only triggered with second parameter
     IF NOT "%update%"=="" (
         ECHO Making sure packages are up to date
         pip install -r radio/requirements.txt

@@ -857,35 +857,13 @@ export default function FLA() {
                 graphConfig={
                   logType === 'dataflash' ? dataflashOptions : fgcsOptions
                 }
+                clearFilters={clearFilters}
+                canSavePreset={canSavePreset}
+                openPresetModal={open}
               />
 
               {/* Plots Setup */}
-              <div className='flex gap-4 pt-6 flex-cols'>
-                <div>
-                  <div className='flex flex-row items-center mb-2'>
-                    <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
-                    {/* Clear Filters */}
-                    <Button
-                      className='ml-6'
-                      size='xs'
-                      color={tailwindColors.red[500]}
-                      onClick={clearFilters}
-                    >
-                      Clear graph
-                    </Button>
-                    {canSavePreset && (
-                      <Button
-                        className='ml-6'
-                        size='xs'
-                        color={tailwindColors.green[600]}
-                        onClick={() => {
-                          open()
-                        }}
-                      >
-                        Save Preset
-                      </Button>
-                    )}
-                  </div>
+              <div className='grid grid-cols-5 gap-4 pt-4'>
                   {chartData.datasets.map((item) => (
                     <Fragment key={item.label}>
                       <ChartDataCard
@@ -901,13 +879,13 @@ export default function FLA() {
                       />
                     </Fragment>
                   ))}
-                </div>
-                <SavePresetModal
-                  opened={opened}
-                  close={close}
-                  onSave={handleSaveCustomPreset}
-                />
               </div>
+
+              <SavePresetModal
+                opened={opened}
+                close={close}
+                onSave={handleSaveCustomPreset}
+              />
             </div>
           </div>
         </>

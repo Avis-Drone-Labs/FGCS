@@ -324,6 +324,7 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
           <ActionIcon
             variant='filled'
             onClick={() => chartRef?.current?.zoom(1.5)}
+            size={32}
           >
             <IconZoomIn size={18} />
           </ActionIcon>
@@ -332,27 +333,28 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
           <ActionIcon
             variant='filled'
             onClick={() => chartRef?.current?.zoom(0)}
+            size={32}
           >
             <IconZoomOut size={18} />
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label='Zoom reset'>
-          <ActionIcon variant='filled' onClick={chartRef?.current?.resetZoom}>
+          <ActionIcon size={32} variant='filled' onClick={chartRef?.current?.resetZoom}>
             <IconZoomReset size={18} />
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label='Save graph as image'>
-          <ActionIcon variant='filled' onClick={downloadGraphAsImage}>
+          <ActionIcon size={32} variant='filled' onClick={downloadGraphAsImage}>
             <IconCapture size={18} />
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label='Copy graph'>
-          <ActionIcon variant='filled' onClick={copyGraphToClipboard}>
+          <ActionIcon size={32} variant='filled' onClick={copyGraphToClipboard}>
             <IconCopy size={18} />
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label={showEvents ? 'Hide events' : 'Show events'}>
-          <ActionIcon variant='filled' onClick={toggleShowEvents}>
+          <ActionIcon size={32} variant='filled' onClick={toggleShowEvents}>
             {showEvents ? (
               <IconTimelineEventX size={18} />
             ) : (
@@ -362,7 +364,7 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
         </MantineTooltip>
         <MantineTooltip label="Clear Filters">
           <Button
-            size='xs'
+            className="min-h-8 max-h-8"
             color={tailwindColors.red[500]}
             onClick={clearFilters}
           >
@@ -372,7 +374,7 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
         {canSavePreset && (
           <MantineTooltip label="Save Preset">
             <Button
-              size='xs'
+              className="min-h-8 max-h-8"
               color={tailwindColors.green[600]}
               onClick={() => {
                 openPresetModal()

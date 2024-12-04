@@ -10,6 +10,7 @@ from . import gripper as gripper
 from . import mission as mission
 from . import motors as motors
 from . import params as params
+from . import rc as rc
 from . import states as states
 
 endpoints = Blueprint("endpoints", __name__)

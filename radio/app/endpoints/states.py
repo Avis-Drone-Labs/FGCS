@@ -76,7 +76,7 @@ def set_state(data: SetStateType) -> None:
 
         droneStatus.drone.paramsController.getAllParams()
 
-        timeout = time.time() + 60 * 3  # 3 minutes from now
+        timeout = time.time() + 20
         last_index_sent = -1
 
         while (

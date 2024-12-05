@@ -11,6 +11,7 @@
  *   - findExistingPreset: Function to check for duplicate presets
  */
 import { useState, useEffect } from 'react'
+import _ from 'lodash'
 
 const dataflashPresetCategories = [
   {
@@ -280,7 +281,7 @@ export function usePresetCategories() {
     const customPreset = presetCategories[customCategoryKey][0].filters.find(
       (existingPreset) =>
         existingPreset.name === preset.name ||
-        areFiltersEqual(existingPreset.filters, preset.filters),
+      _.isEqual(existingPreset.filters, preset.filters),
     )
 
     if (customPreset) {
@@ -289,6 +290,9 @@ export function usePresetCategories() {
 
     // Check in standard presets
     const standardCategories = presetCategories[logType] || []
+    const reducedFilters = Object.fromEntries(
+      Object.entries(preset.filters).filter(([key, value]) => value.length > 0)
+    );
     for (const category of standardCategories) {
       // Make sure category.filters exists and is an array
       if (!Array.isArray(category.filters)) {
@@ -299,7 +303,7 @@ export function usePresetCategories() {
       for (const existingPreset of category.filters) {
         if (
           existingPreset.name === preset.name ||
-          areFiltersEqual(existingPreset.filters, preset.filters)
+          _.isEqual(existingPreset.filters, reducedFilters)
         ) {
           return existingPreset
         }
@@ -307,26 +311,6 @@ export function usePresetCategories() {
     }
 
     return null
-  }
-
-  function areFiltersEqual(filters1, filters2) {
-    // Handle null or undefined filters
-    if (!filters1 || !filters2) {
-      return filters1 === filters2
-    }
-    const keys1 = Object.keys(filters1)
-    const keys2 = Object.keys(filters2)
-
-    if (keys1.length !== keys2.length) return false
-
-    for (let key of keys1) {
-      if (!filters2.hasOwnProperty(key)) return false
-      if (filters1[key].length !== filters2[key].length) return false
-      if (!filters1[key].every((item) => filters2[key].includes(item)))
-        return false
-    }
-
-    return true
   }
 
   return {

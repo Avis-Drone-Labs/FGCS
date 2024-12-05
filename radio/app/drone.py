@@ -20,6 +20,7 @@ from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
 from app.controllers.paramsController import ParamsController
+from app.controllers.rcController import RcController
 from app.customTypes import Response
 from app.utils import commandAccepted
 
@@ -184,6 +185,9 @@ class Drone:
 
         self.frameController = FrameController(self)
         self.sendConnectionStatusUpdate("Setup frame controller")
+
+        self.rcController = RcController(self)
+        self.sendConnectionStatusUpdate("Setup RC controller")
 
         self.stopAllDataStreams()
 

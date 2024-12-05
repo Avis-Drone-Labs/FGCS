@@ -98,7 +98,7 @@ class ParamsController:
         """
         The thread function to get all parameters from the drone.
         """
-        timeout = time.time() + 60 * 3  # 3 minutes from now
+        timeout = time.time() + 20 # 20 seconds from now
 
         while True:
             try:

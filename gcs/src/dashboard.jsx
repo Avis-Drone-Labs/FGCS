@@ -133,17 +133,19 @@ export default function Dashboard() {
     key: 'telemetryPanelSize',
     defaultValue: { width: 400, height: Infinity },
     deserialize: (value) => {
-      const parsed = JSON.parse(value);
-      if(parsed === null || parsed === undefined)
+      const parsed = JSON.parse(value)
+      if (parsed === null || parsed === undefined)
         return { width: 400, height: Infinity }
-      return {...parsed, width: Math.max(parsed['width'], 275)}
-    }
+      return { ...parsed, width: Math.max(parsed['width'], 275) }
+    },
   })
-  const [telemtryFontSize, setTelemetryFontSize] = useState(calcBigTextFontSize())
-  const sideBarRef = useRef();
+  const [telemtryFontSize, setTelemetryFontSize] = useState(
+    calcBigTextFontSize(),
+  )
+  const sideBarRef = useRef()
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
     key: 'messagesPanelSize',
-    defaultValue: { width: 600, height: 150 }
+    defaultValue: { width: 600, height: 150 },
   })
 
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()
@@ -185,7 +187,9 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
-  var outsideVisibilityColor = outsideVisibility ? tailwindColors.falcongrey["900"] : tailwindColors.falcongrey["TRANSLUCENT"]
+  var outsideVisibilityColor = outsideVisibility
+    ? tailwindColors.falcongrey['900']
+    : tailwindColors.falcongrey['TRANSLUCENT']
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -416,22 +420,23 @@ export default function Dashboard() {
     })
   }
 
-  function calcBigTextFontSize(){
+  function calcBigTextFontSize() {
     let w = telemetryPanelSize.width
-    const BREAKPOINT_SM = 350.0;
-    if (w < BREAKPOINT_SM)
-        return (1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM)
-    return 1.0;
+    const BREAKPOINT_SM = 350.0
+    if (w < BREAKPOINT_SM) return 1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM
+    return 1.0
   }
 
-  function calcIndicatorSize(){
-    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56;
-    return Math.min(telemetryPanelSize.width - (sideBarWidth + 24)*2, 190)
+  function calcIndicatorSize() {
+    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56
+    return Math.min(telemetryPanelSize.width - (sideBarWidth + 24) * 2, 190)
   }
 
-  function calcIndicatorPadding(){
-    let sideBarHeight = sideBarRef.current ? sideBarRef.current.clientHeight  : 164;
-    return (190 - Math.max(calcIndicatorSize(), sideBarHeight))/2
+  function calcIndicatorPadding() {
+    let sideBarHeight = sideBarRef.current
+      ? sideBarRef.current.clientHeight
+      : 164
+    return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
 
   function centerMapOnFirstMissionItem() {
@@ -459,7 +464,7 @@ export default function Dashboard() {
 
         <div
           className='absolute top-0 left-0 h-full z-10'
-          style={{backgroundColor: outsideVisibilityColor}}
+          style={{ backgroundColor: outsideVisibilityColor }}
         >
           <ResizableBox
             height={telemetryPanelSize.height}
@@ -473,8 +478,8 @@ export default function Dashboard() {
             handleSize={[32, 32]}
             axis='x'
             onResize={(_, { size }) => {
-              setTelemetryPanelSize({ width: size.width, height: size.height });
-              setTelemetryFontSize(calcBigTextFontSize());
+              setTelemetryPanelSize({ width: size.width, height: size.height })
+              setTelemetryFontSize(calcBigTextFontSize())
             }}
             className='h-full'
           >
@@ -505,10 +510,13 @@ export default function Dashboard() {
 
                 <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
                   {/* Attitude Indicator */}
-                  <div className='flex flex-row items-center justify-center' style={{
-                      "paddingTop": `${calcIndicatorPadding()}px`,
-                      "paddingBottom": `${calcIndicatorPadding()}px`
-                  }}>
+                  <div
+                    className='flex flex-row items-center justify-center'
+                    style={{
+                      paddingTop: `${calcIndicatorPadding()}px`,
+                      paddingBottom: `${calcIndicatorPadding()}px`,
+                    }}
+                  >
                     <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                       <p className='text-sm text-center'>ms&#8315;&#185;</p>
                       <TelemetryValueDisplay
@@ -537,10 +545,9 @@ export default function Dashboard() {
                       <p className='text-sm text-center'>m</p>
                       <TelemetryValueDisplay
                         title='AMSL'
-                        value={(gpsData.alt
-                          ? gpsData.alt / 1000
-                          : 0
-                        ).toFixed(2)}
+                        value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(
+                          2,
+                        )}
                         fs={telemtryFontSize}
                       />
                       <TelemetryValueDisplay
@@ -555,10 +562,13 @@ export default function Dashboard() {
                   </div>
 
                   {/* Heading Indicator */}
-                  <div className='flex flex-row items-center justify-center' style={{
-                      "paddingTop": `${calcIndicatorPadding()}px`,
-                      "paddingBottom": `${calcIndicatorPadding()}px`
-                  }}>
+                  <div
+                    className='flex flex-row items-center justify-center'
+                    style={{
+                      paddingTop: `${calcIndicatorPadding()}px`,
+                      paddingBottom: `${calcIndicatorPadding()}px`,
+                    }}
+                  >
                     <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                       <p className='text-sm text-center'>deg &#176;</p>
                       <TelemetryValueDisplay
@@ -579,7 +589,10 @@ export default function Dashboard() {
                       heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
                       size={`${calcIndicatorSize()}px`}
                     />
-                    <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14' ref={sideBarRef}>
+                    <div
+                      className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'
+                      ref={sideBarRef}
+                    >
                       <p className='text-sm'>m</p>
                       <TelemetryValueDisplay
                         title='WP'
@@ -674,9 +687,12 @@ export default function Dashboard() {
                   {/* Arming/Flight Modes */}
                   {!connected ? (
                     <div className='flex flex-col items-center justify-center h-full'>
-                      <p className='text-white-800 p-6 text-center'>No actions are available right now. Connect a drone to begin</p> 
+                      <p className='text-white-800 p-6 text-center'>
+                        No actions are available right now. Connect a drone to
+                        begin
+                      </p>
                     </div>
-                  ) : (  
+                  ) : (
                     <div className='flex flex-col flex-wrap gap-4'>
                       <div className='flex flex-row space-x-14'>
                         <Button
@@ -742,7 +758,10 @@ export default function Dashboard() {
         </div>
 
         {/* Status Bar */}
-        <StatusBar className='absolute top-0 right-0' outsideVisibilityColor={outsideVisibilityColor}>
+        <StatusBar
+          className='absolute top-0 right-0'
+          outsideVisibilityColor={outsideVisibilityColor}
+        >
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
@@ -777,7 +796,10 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30' style={{backgroundColor: outsideVisibilityColor}}>
+        <div
+          className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'
+          style={{ backgroundColor: outsideVisibilityColor }}
+        >
           {/* Follow Drone */}
           <Tooltip
             label={

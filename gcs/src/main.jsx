@@ -23,7 +23,7 @@ import Graphs from './graphs.jsx'
 import Params from './params.jsx'
 
 // Provider Imports
-import {store} from './redux/store'
+import { store } from './redux/store'
 
 // Component imports
 import { CustomMantineTheme } from './components/customMantineTheme.jsx'

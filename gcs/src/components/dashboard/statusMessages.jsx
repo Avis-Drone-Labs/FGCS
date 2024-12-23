@@ -44,12 +44,12 @@ export default function StatusMessages(props) {
 
   function getScrollAreaOutsideVisibilityClassNames() {
     let base = 'h-full w-full p-4'
-    return `${base} ${props.outsideVisibility ? "bg-falcongrey-950" : "bg-falcongrey-TRANSLUCENT"}`
+    return `${base} ${props.outsideVisibility ? 'bg-falcongrey-950' : 'bg-falcongrey-TRANSLUCENT'}`
   }
 
   function getMessageOutsideVisibilityClassNames() {
     let base = 'flex flex-row space-x-2'
-    return `${base} ${props.outsideVisibility ? "font-bold !text-2xl" : ""}`
+    return `${base} ${props.outsideVisibility ? 'font-bold !text-2xl' : ''}`
   }
 
   return (
@@ -61,7 +61,10 @@ export default function StatusMessages(props) {
       >
         {props.messages.map((message, index) => {
           return (
-            <div key={index} className={getMessageOutsideVisibilityClassNames()}>
+            <div
+              key={index}
+              className={getMessageOutsideVisibilityClassNames()}
+            >
               <p className='text-gray-400'>
                 {moment.unix(message.timestamp).format('HH:mm:ss')}
               </p>

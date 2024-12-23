@@ -434,7 +434,7 @@ export default function FLA() {
     const currentSelection = Object.entries(messageFilters).reduce(
       (acc, [category, fields]) => {
         const selectedFields = Object.entries(fields)
-          .filter(([_, isSelected]) => isSelected)
+          .filter(([, isSelected]) => isSelected)
           .map(([fieldName]) => fieldName)
 
         if (selectedFields.length > 0) {
@@ -759,12 +759,20 @@ export default function FLA() {
           <div className='flex h-full gap-4 px-2 py-4 mb-4 overflow-x-auto'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
-              <div className="flex flex-col mb-2 text-sm gap-y-2">
+              <div className='flex flex-col mb-2 text-sm gap-y-2'>
                 <div className='flex flex-row justify-between'>
                   <Tooltip label={file.path}>
                     <div className='px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
                       File Name:
-                      <span className='ml-2 text-white underline cursor-pointer' onClick={() => {window.ipcRenderer.send('openFileInExplorer', file.path);}}>
+                      <span
+                        className='ml-2 text-white underline cursor-pointer'
+                        onClick={() => {
+                          window.ipcRenderer.send(
+                            'openFileInExplorer',
+                            file.path,
+                          )
+                        }}
+                      >
                         {file.name}
                       </span>
                     </div>
@@ -778,17 +786,21 @@ export default function FLA() {
                     Close file
                   </Button>
                 </div>
-                <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
-                  <div className="whitespace-nowrap">Aircraft Type:</div>
-                  <div className="text-white ml-auto truncate max-w-[200px]">{aircraftType ? aircraftType : "No Aircraft Type"}</div>
+                <div className='flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700'>
+                  <div className='whitespace-nowrap'>Aircraft Type:</div>
+                  <div className='text-white ml-auto truncate max-w-[200px]'>
+                    {aircraftType ? aircraftType : 'No Aircraft Type'}
+                  </div>
                 </div>
               </div>
-              
-              <ScrollArea className="h-full max-h-[90%]">
+
+              <ScrollArea className='h-full max-h-[90%]'>
                 <Accordion multiple={true}>
                   {/* Presets */}
                   <Accordion.Item key='presets' value='presets'>
-                    <Accordion.Control className="rounded-md">Presets</Accordion.Control>
+                    <Accordion.Control className='rounded-md'>
+                      Presets
+                    </Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {/* Custom Presets */}
@@ -825,8 +837,14 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages' styles={{ item: { borderBottom: "none" } }}>
-                    <Accordion.Control className="rounded-md">Messages</Accordion.Control>
+                  <Accordion.Item
+                    key='messages'
+                    value='messages'
+                    styles={{ item: { borderBottom: 'none' } }}
+                  >
+                    <Accordion.Control className='rounded-md'>
+                      Messages
+                    </Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {Object.keys(messageFilters).map((messageName, idx) => {
@@ -864,21 +882,21 @@ export default function FLA() {
 
               {/* Plots Setup */}
               <div className='grid grid-cols-5 gap-4 pt-4'>
-                  {chartData.datasets.map((item) => (
-                    <Fragment key={item.label}>
-                      <ChartDataCard
-                        item={item}
-                        unit={getUnit(
-                          item.label.split('/')[0],
-                          item.label.split('/')[1],
-                        )}
-                        messageMeans={messageMeans}
-                        colorInputSwatch={colorInputSwatch}
-                        changeColorFunc={changeColor}
-                        removeDatasetFunc={removeDataset}
-                      />
-                    </Fragment>
-                  ))}
+                {chartData.datasets.map((item) => (
+                  <Fragment key={item.label}>
+                    <ChartDataCard
+                      item={item}
+                      unit={getUnit(
+                        item.label.split('/')[0],
+                        item.label.split('/')[1],
+                      )}
+                      messageMeans={messageMeans}
+                      colorInputSwatch={colorInputSwatch}
+                      changeColorFunc={changeColor}
+                      removeDatasetFunc={removeDataset}
+                    />
+                  </Fragment>
+                ))}
               </div>
 
               <SavePresetModal

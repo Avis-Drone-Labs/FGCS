@@ -353,7 +353,7 @@ export default function Navbar({ currentPage }) {
             color={tailwindColors.green[600]}
             onClick={() => connectToDrone(connectionType)}
             data-autofocus
-            disabled={!connectedToSocket || selectedComPort === null}
+            disabled={!connectedToSocket || (connectionType == ConnectionType.Serial && selectedComPort === null)}
             loading={connecting}
           >
             Connect

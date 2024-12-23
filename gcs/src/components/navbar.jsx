@@ -78,7 +78,12 @@ export default function Navbar({ currentPage }) {
     defaultValue: 0,
   })
 
-  const [connectionType, setConnectionType] = useState('serial')
+  const ConnectionType = {
+    Serial: 'serial',
+    Network: 'network',
+  }
+
+  const [connectionType, setConnectionType] = useState(ConnectionType.Serial)
 
   // Com Ports
   const [comPorts, setComPorts] = useState([])
@@ -192,14 +197,14 @@ export default function Navbar({ currentPage }) {
   }, [])
 
   function connectToDrone(type) {
-    if (type === 'serial') {
+    if (type === ConnectionType.Serial) {
       socket.emit('connect_to_drone', {
         port: selectedComPort,
         baud: parseInt(selectedBaudRate),
         wireless: wireless,
-        connectionType: 'serial',
+        connectionType: type,
       })
-    } else if (type === 'network') {
+    } else if (type === ConnectionType.Network) {
       if (ip === '' || port === '') {
         showErrorNotification('IP Address and Port cannot be empty')
         return
@@ -209,7 +214,7 @@ export default function Navbar({ currentPage }) {
         port: networkString,
         baud: 115200,
         wireless: true,
-        connectionType: 'network',
+        connectionType: type,
       })
     } else {
       return
@@ -248,10 +253,10 @@ export default function Navbar({ currentPage }) {
       >
         <Tabs value={connectionType} onChange={setConnectionType}>
           <Tabs.List grow>
-            <Tabs.Tab value='serial'>Serial Connection</Tabs.Tab>
-            <Tabs.Tab value='network'>Network Connection</Tabs.Tab>
+            <Tabs.Tab value={ConnectionType.Serial}>Serial Connection</Tabs.Tab>
+            <Tabs.Tab value={ConnectionType.Network}>Network Connection</Tabs.Tab>
           </Tabs.List>
-          <Tabs.Panel value='serial' className='py-4'>
+          <Tabs.Panel value={ConnectionType.Serial} className='py-4'>
             <LoadingOverlay visible={fetchingComPorts} />
             <div className='flex flex-col space-y-4'>
               <Select
@@ -302,7 +307,7 @@ export default function Navbar({ currentPage }) {
               </div>
             </div>
           </Tabs.Panel>
-          <Tabs.Panel value='network' className='py-4'>
+          <Tabs.Panel value={ConnectionType.Network} className='py-4'>
             <div className='flex flex-col space-y-4'>
               <SegmentedControl
                 label='Network Connection type'
@@ -419,9 +424,10 @@ export default function Navbar({ currentPage }) {
         <p>
           {connected && (
             <>
-              {connectionType === 'serial'
-                ? selectedComPort
-                : `${networkType}:${ip}:${port}`}
+              {{
+                [ConnectionType.Serial]: selectedComPort,
+                [ConnectionType.Network]: `${networkType}:${ip}:${port}`,
+              }[connectionType]}
             </>
           )}
         </p>

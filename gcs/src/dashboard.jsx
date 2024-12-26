@@ -447,6 +447,7 @@ export default function Dashboard() {
         center: [lon, lat],
       })
     }
+    setFollowDrone(false)
   }
 
   return (

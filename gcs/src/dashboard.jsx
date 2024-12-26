@@ -775,7 +775,7 @@ export default function Dashboard() {
             icon={<IconGps />}
             value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
               gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
-            })`}
+              })`}
             tooltip='GPS (lat, lon)'
           />
           <StatusSection
@@ -817,7 +817,18 @@ export default function Dashboard() {
             <ActionIcon
               disabled={!gpsData.lon && !gpsData.lat}
               onClick={() => {
-                setFollowDrone(!followDrone)
+                setFollowDrone(followDrone ? false : (() => {
+                  if (
+                    mapRef.current &&
+                    gpsData?.lon !== 0 &&
+                    gpsData?.lat !== 0
+                  ) {
+                    let lat = parseFloat(gpsData.lat * 1e-7)
+                    let lon = parseFloat(gpsData.lon * 1e-7)
+                    mapRef.current.setCenter({ lng: lon, lat: lat })
+                  }
+                  return true
+                })())
               }}
             >
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}

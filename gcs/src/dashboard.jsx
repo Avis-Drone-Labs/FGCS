@@ -460,6 +460,9 @@ export default function Dashboard() {
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
             desiredBearing={navControllerOutputData.nav_bearing}
             missionItems={missionItems}
+            onDragstart={() => {
+              setFollowDrone(false)
+            }}
           />
         </div>
 

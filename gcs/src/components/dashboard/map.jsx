@@ -62,6 +62,7 @@ export default function MapSection({
   heading,
   desiredBearing,
   missionItems,
+  onDragstart,
 }) {
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -108,6 +109,7 @@ export default function MapSection({
             zoom: newViewState.viewState.zoom,
           })
         }
+        onDragStart={onDragstart}
       >
         {/* Show marker on map if the position is set */}
         {position !== null &&

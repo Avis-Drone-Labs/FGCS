@@ -37,6 +37,10 @@ class NavController:
                 "message": f"Altitude cannot be negative, got {alt}",
             }
 
+        guidedModeSetResult = self.drone.flightModesController.setGuidedMode()
+        if not guidedModeSetResult["success"]:
+            return guidedModeSetResult
+
         self.drone.is_listening = False
 
         self.drone.sendCommand(mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, param7=alt)

@@ -24,6 +24,8 @@ RUN ./waf copter
 RUN ./waf plane
 
 EXPOSE 5760/tcp
+EXPOSE 5762/tcp
+EXPOSE 5763/tcp
 
 WORKDIR /
 

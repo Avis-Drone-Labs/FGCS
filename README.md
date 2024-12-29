@@ -95,7 +95,7 @@ For running Python tests, first make sure you're in the `radio` directory. By de
 
 To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`). You can also open up port 5763 for running other scripts on the simulator whilst a GCS is connected.
 
-By default the vehicle type will be ArduCopter, however you can tell the SITL to use a custom vehicle by providing it as an argument at the end of the run command, e.g. `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl ArduPlane`.
+By default the vehicle type will be ArduCopter, however you can tell the SITL to use a custom vehicle by providing it as a named argument at the end of the run command, e.g. `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane`. You can also set the starting LAT, LON, ALT and DIR using the named arguments.
 
 Note: Steps to push an updated image to docker hub:
 

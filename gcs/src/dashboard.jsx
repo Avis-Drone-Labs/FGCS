@@ -778,6 +778,14 @@ export default function Dashboard() {
                           Waypoint: {currentMissionData.seq}/
                           {currentMissionData.total}
                         </p>
+                        <p>
+                          Distance to WP:{' '}
+                          {(navControllerOutputData.wp_dist
+                            ? navControllerOutputData.wp_dist
+                            : 0
+                          ).toFixed(2)}
+                          m
+                        </p>
                       </div>
                       <div className='flex flex-row space-x-14'>
                         <Button

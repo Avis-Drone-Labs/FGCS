@@ -304,3 +304,12 @@ export const MOTOR_LETTER_LABELS = [
   'K',
   'L',
 ]
+
+export const MISSION_STATES = {
+  0: 'UNKNOWN',
+  1: 'NO MISSION',
+  2: 'NOT STARTED',
+  3: 'ACTIVE',
+  4: 'PAUSED',
+  5: 'COMPLETED',
+}

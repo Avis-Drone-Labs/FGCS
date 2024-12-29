@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, List
 
 import serial
 from app.customTypes import Response
+from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -163,4 +164,62 @@ class MissionController:
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",
+            }
+
+    def startMission(self) -> Response:
+        self.drone.is_listening = False
+
+        self.drone.sendCommand(
+            mavutil.mavlink.MAV_CMD_MISSION_START,
+        )
+
+        try:
+            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            self.drone.is_listening = True
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_MISSION_START):
+                return {
+                    "success": True,
+                    "message": "Starting mission",
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to start mission",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": "Failed to start mission, serial exception",
+            }
+
+    def restartMission(self) -> Response:
+        self.drone.is_listening = False
+
+        self.drone.sendCommand(mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT, param2=1)
+
+        try:
+            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+
+            self.drone.is_listening = True
+
+            if commandAccepted(
+                response, mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT
+            ):
+                return {
+                    "success": True,
+                    "message": "Restarting mission",
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to restart mission",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": "Failed to restart mission, serial exception",
             }

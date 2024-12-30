@@ -1,3 +1,4 @@
+import os.path
 import time
 
 from pymavlink import mavutil, mavwp
@@ -91,4 +92,7 @@ def uploadMission(aFileName):
     print("SENT ALL WAYPOINTS. YOU CAN NOW CONNECT")
 
 
-uploadMission("/sitl_setup/mission.txt")
+if os.path.isfile("/sitl_setup/custom/mission.txt"):
+    uploadMission("/sitl_setup/custom/mission.txt")
+else:
+    uploadMission("/sitl_setup/mission.txt")

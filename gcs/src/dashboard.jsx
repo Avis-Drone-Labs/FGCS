@@ -51,6 +51,7 @@ import {
   GPS_FIX_TYPES,
   MAV_AUTOPILOT_INVALID,
   MAV_STATE,
+  MISSION_STATES,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from './helpers/mavlinkConstants'
 import {
@@ -173,6 +174,11 @@ export default function Dashboard() {
     fix_type: 0,
     satellites_visible: 0,
   })
+  const [currentMissionData, setCurrentMissionData] = useState({
+    mission_state: 0,
+    seq: 0,
+    total: 0,
+  })
 
   // Mission
   const [missionItems, setMissionItems] = useState({
@@ -256,6 +262,7 @@ export default function Dashboard() {
     SYS_STATUS: (msg) => setSysStatusData(msg),
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
+    MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
   }
 
   const handleDevices = useCallback(
@@ -343,12 +350,21 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('mission_control_result', (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
       socket.off('current_mission')
       socket.off('set_current_flight_mode_result')
       socket.off('nav_result')
+      socket.off('mission_control_result')
     }
   }, [connected])
 
@@ -426,6 +442,10 @@ export default function Dashboard() {
       return
     }
     socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
+  }
+
+  function controlMission(action) {
+    socket.emit('control_mission', { action })
   }
 
   function centerMapOnDrone() {
@@ -674,6 +694,7 @@ export default function Dashboard() {
                 <Tabs.List grow>
                   <Tabs.Tab value='data'>Data</Tabs.Tab>
                   <Tabs.Tab value='actions'>Actions</Tabs.Tab>
+                  <Tabs.Tab value='mission'>Mission</Tabs.Tab>
                   <Tabs.Tab value='camera'>Camera</Tabs.Tab>
                 </Tabs.List>
 
@@ -721,7 +742,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                   ) : (
-                    <div className='flex flex-col flex-wrap gap-4'>
+                    <div className='flex flex-col flex-wrap gap-4 mt-4'>
                       <div className='flex flex-row space-x-14'>
                         <Button
                           onClick={() => {
@@ -799,8 +820,73 @@ export default function Dashboard() {
                   )}
                 </Tabs.Panel>
 
+                <Tabs.Panel value='mission'>
+                  {!connected ? (
+                    <div className='flex flex-col items-center justify-center h-full'>
+                      <p className='text-white-800 p-6 text-center'>
+                        No mission actions are available right now. Connect a
+                        drone to begin
+                      </p>
+                    </div>
+                  ) : (
+                    <div className='flex flex-col flex-wrap gap-4 mt-4'>
+                      <div className='flex flex-col text-xl'>
+                        <p>
+                          Mission state:{' '}
+                          {MISSION_STATES[currentMissionData.mission_state]}
+                        </p>
+                        <p>
+                          Waypoint: {currentMissionData.seq}/
+                          {currentMissionData.total}
+                        </p>
+                        <p>
+                          Distance to WP:{' '}
+                          {(navControllerOutputData.wp_dist
+                            ? navControllerOutputData.wp_dist
+                            : 0
+                          ).toFixed(2)}
+                          m
+                        </p>
+                      </div>
+                      <div className='flex flex-row space-x-14'>
+                        <Button
+                          onClick={() => {
+                            setNewFlightMode(
+                              parseInt(
+                                Object.keys(getFlightModeMap()).find(
+                                  (key) => getFlightModeMap()[key] === 'Auto',
+                                ),
+                              ),
+                            )
+                          }}
+                        >
+                          Auto mode
+                        </Button>
+                      </div>
+                      <div className='flex flex-row space-x-14'>
+                        <Button
+                          onClick={() => {
+                            controlMission('start')
+                          }}
+                        >
+                          Start mission
+                        </Button>
+                      </div>
+                      <div className='flex flex-row space-x-14'>
+                        <Button
+                          onClick={() => {
+                            controlMission('restart')
+                          }}
+                        >
+                          Restart mission
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Tabs.Panel>
+
                 <Tabs.Panel value='camera'>
-                  <div className='flex flex-col gap-4 p-2'>
+                  <div className='flex flex-col gap-4 mt-2'>
                     <Select
                       label='Select camera input'
                       data={devices.map((device) => {

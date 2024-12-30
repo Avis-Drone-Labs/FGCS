@@ -15,6 +15,8 @@ import {
   Button,
   Divider,
   Grid,
+  NumberInput,
+  Popover,
   Select,
   Tabs,
   Tooltip,
@@ -49,6 +51,7 @@ import {
   GPS_FIX_TYPES,
   MAV_AUTOPILOT_INVALID,
   MAV_STATE,
+  MISSION_STATES,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from './helpers/mavlinkConstants'
 import {
@@ -133,17 +136,19 @@ export default function Dashboard() {
     key: 'telemetryPanelSize',
     defaultValue: { width: 400, height: Infinity },
     deserialize: (value) => {
-      const parsed = JSON.parse(value);
-      if(parsed === null || parsed === undefined)
+      const parsed = JSON.parse(value)
+      if (parsed === null || parsed === undefined)
         return { width: 400, height: Infinity }
-      return {...parsed, width: Math.max(parsed['width'], 275)}
-    }
+      return { ...parsed, width: Math.max(parsed['width'], 275) }
+    },
   })
-  const [telemtryFontSize, setTelemetryFontSize] = useState(calcBigTextFontSize())
-  const sideBarRef = useRef();
+  const [telemtryFontSize, setTelemetryFontSize] = useState(
+    calcBigTextFontSize(),
+  )
+  const sideBarRef = useRef()
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
     key: 'messagesPanelSize',
-    defaultValue: { width: 600, height: 150 }
+    defaultValue: { width: 600, height: 150 },
   })
 
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()
@@ -169,6 +174,11 @@ export default function Dashboard() {
     fix_type: 0,
     satellites_visible: 0,
   })
+  const [currentMissionData, setCurrentMissionData] = useState({
+    mission_state: 0,
+    seq: 0,
+    total: 0,
+  })
 
   // Mission
   const [missionItems, setMissionItems] = useState({
@@ -185,7 +195,9 @@ export default function Dashboard() {
   // Map and messages
   const mapRef = useRef()
   const [outsideVisibility, setOutsideVisibility] = useState(false)
-  var outsideVisibilityColor = outsideVisibility ? tailwindColors.falcongrey["900"] : tailwindColors.falcongrey["TRANSLUCENT"]
+  var outsideVisibilityColor = outsideVisibility
+    ? tailwindColors.falcongrey['900']
+    : tailwindColors.falcongrey['TRANSLUCENT']
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -206,6 +218,11 @@ export default function Dashboard() {
     defaultValue: defaultDataMessages,
   })
   const [selectedBox, setSelectedBox] = useState(null)
+
+  const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
+    key: 'takeoffAltitude',
+    defaultValue: 10,
+  })
 
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
@@ -245,6 +262,7 @@ export default function Dashboard() {
     SYS_STATUS: (msg) => setSysStatusData(msg),
     GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
+    MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
   }
 
   const handleDevices = useCallback(
@@ -324,11 +342,29 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('nav_result', (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
+    socket.on('mission_control_result', (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
       socket.off('current_mission')
       socket.off('set_current_flight_mode_result')
+      socket.off('nav_result')
+      socket.off('mission_control_result')
     }
   }, [connected])
 
@@ -408,6 +444,10 @@ export default function Dashboard() {
     socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
   }
 
+  function controlMission(action) {
+    socket.emit('control_mission', { action })
+  }
+
   function centerMapOnDrone() {
     let lat = parseFloat(gpsData.lat * 1e-7)
     let lon = parseFloat(gpsData.lon * 1e-7)
@@ -416,22 +456,23 @@ export default function Dashboard() {
     })
   }
 
-  function calcBigTextFontSize(){
+  function calcBigTextFontSize() {
     let w = telemetryPanelSize.width
-    const BREAKPOINT_SM = 350.0;
-    if (w < BREAKPOINT_SM)
-        return (1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM)
-    return 1.0;
+    const BREAKPOINT_SM = 350.0
+    if (w < BREAKPOINT_SM) return 1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM
+    return 1.0
   }
 
-  function calcIndicatorSize(){
-    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56;
-    return Math.min(telemetryPanelSize.width - (sideBarWidth + 24)*2, 190)
+  function calcIndicatorSize() {
+    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56
+    return Math.min(telemetryPanelSize.width - (sideBarWidth + 24) * 2, 190)
   }
 
-  function calcIndicatorPadding(){
-    let sideBarHeight = sideBarRef.current ? sideBarRef.current.clientHeight  : 164;
-    return (190 - Math.max(calcIndicatorSize(), sideBarHeight))/2
+  function calcIndicatorPadding() {
+    let sideBarHeight = sideBarRef.current
+      ? sideBarRef.current.clientHeight
+      : 164
+    return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
 
   function centerMapOnFirstMissionItem() {
@@ -442,6 +483,15 @@ export default function Dashboard() {
         center: [lon, lat],
       })
     }
+    setFollowDrone(false)
+  }
+
+  function takeoff() {
+    socket.emit('takeoff', { alt: takeoffAltitude })
+  }
+
+  function land() {
+    socket.emit('land')
   }
 
   return (
@@ -454,12 +504,15 @@ export default function Dashboard() {
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
             desiredBearing={navControllerOutputData.nav_bearing}
             missionItems={missionItems}
+            onDragstart={() => {
+              setFollowDrone(false)
+            }}
           />
         </div>
 
         <div
           className='absolute top-0 left-0 h-full z-10'
-          style={{backgroundColor: outsideVisibilityColor}}
+          style={{ backgroundColor: outsideVisibilityColor }}
         >
           <ResizableBox
             height={telemetryPanelSize.height}
@@ -473,8 +526,8 @@ export default function Dashboard() {
             handleSize={[32, 32]}
             axis='x'
             onResize={(_, { size }) => {
-              setTelemetryPanelSize({ width: size.width, height: size.height });
-              setTelemetryFontSize(calcBigTextFontSize());
+              setTelemetryPanelSize({ width: size.width, height: size.height })
+              setTelemetryFontSize(calcBigTextFontSize())
             }}
             className='h-full'
           >
@@ -505,10 +558,13 @@ export default function Dashboard() {
 
                 <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
                   {/* Attitude Indicator */}
-                  <div className='flex flex-row items-center justify-center' style={{
-                      "paddingTop": `${calcIndicatorPadding()}px`,
-                      "paddingBottom": `${calcIndicatorPadding()}px`
-                  }}>
+                  <div
+                    className='flex flex-row items-center justify-center'
+                    style={{
+                      paddingTop: `${calcIndicatorPadding()}px`,
+                      paddingBottom: `${calcIndicatorPadding()}px`,
+                    }}
+                  >
                     <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                       <p className='text-sm text-center'>ms&#8315;&#185;</p>
                       <TelemetryValueDisplay
@@ -537,10 +593,9 @@ export default function Dashboard() {
                       <p className='text-sm text-center'>m</p>
                       <TelemetryValueDisplay
                         title='AMSL'
-                        value={(gpsData.alt
-                          ? gpsData.alt / 1000
-                          : 0
-                        ).toFixed(2)}
+                        value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(
+                          2,
+                        )}
                         fs={telemtryFontSize}
                       />
                       <TelemetryValueDisplay
@@ -555,10 +610,13 @@ export default function Dashboard() {
                   </div>
 
                   {/* Heading Indicator */}
-                  <div className='flex flex-row items-center justify-center' style={{
-                      "paddingTop": `${calcIndicatorPadding()}px`,
-                      "paddingBottom": `${calcIndicatorPadding()}px`
-                  }}>
+                  <div
+                    className='flex flex-row items-center justify-center'
+                    style={{
+                      paddingTop: `${calcIndicatorPadding()}px`,
+                      paddingBottom: `${calcIndicatorPadding()}px`,
+                    }}
+                  >
                     <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
                       <p className='text-sm text-center'>deg &#176;</p>
                       <TelemetryValueDisplay
@@ -579,7 +637,10 @@ export default function Dashboard() {
                       heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
                       size={`${calcIndicatorSize()}px`}
                     />
-                    <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14' ref={sideBarRef}>
+                    <div
+                      className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'
+                      ref={sideBarRef}
+                    >
                       <p className='text-sm'>m</p>
                       <TelemetryValueDisplay
                         title='WP'
@@ -633,6 +694,7 @@ export default function Dashboard() {
                 <Tabs.List grow>
                   <Tabs.Tab value='data'>Data</Tabs.Tab>
                   <Tabs.Tab value='actions'>Actions</Tabs.Tab>
+                  <Tabs.Tab value='mission'>Mission</Tabs.Tab>
                   <Tabs.Tab value='camera'>Camera</Tabs.Tab>
                 </Tabs.List>
 
@@ -674,10 +736,13 @@ export default function Dashboard() {
                   {/* Arming/Flight Modes */}
                   {!connected ? (
                     <div className='flex flex-col items-center justify-center h-full'>
-                      <p className='text-white-800 p-6 text-center'>No actions are available right now. Connect a drone to begin</p> 
+                      <p className='text-white-800 p-6 text-center'>
+                        No actions are available right now. Connect a drone to
+                        begin
+                      </p>
                     </div>
-                  ) : (  
-                    <div className='flex flex-col flex-wrap gap-4'>
+                  ) : (
+                    <div className='flex flex-col flex-wrap gap-4 mt-4'>
                       <div className='flex flex-row space-x-14'>
                         <Button
                           onClick={() => {
@@ -714,12 +779,114 @@ export default function Dashboard() {
                           </>
                         )}
                       </div>
+                      <div className='flex flex-row space-x-2'>
+                        <Popover
+                          width={200}
+                          position='bottom'
+                          withArrow
+                          shadow='md'
+                        >
+                          <Popover.Target>
+                            <Button>Takeoff</Button>
+                          </Popover.Target>
+                          <Popover.Dropdown className='flex flex-col space-y-2'>
+                            <NumberInput
+                              label='Takeoff altitude (m)'
+                              placeholder='Takeoff altitude (m)'
+                              value={takeoffAltitude}
+                              onChange={setTakeoffAltitude}
+                              min={0}
+                              allowNegative={false}
+                              hideControls
+                            />
+                            <Button
+                              onClick={() => {
+                                takeoff()
+                              }}
+                            >
+                              Takeoff
+                            </Button>
+                          </Popover.Dropdown>
+                        </Popover>
+                        <Button
+                          onClick={() => {
+                            land()
+                          }}
+                        >
+                          Land
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Tabs.Panel>
+
+                <Tabs.Panel value='mission'>
+                  {!connected ? (
+                    <div className='flex flex-col items-center justify-center h-full'>
+                      <p className='text-white-800 p-6 text-center'>
+                        No mission actions are available right now. Connect a
+                        drone to begin
+                      </p>
+                    </div>
+                  ) : (
+                    <div className='flex flex-col flex-wrap gap-4 mt-4'>
+                      <div className='flex flex-col text-xl'>
+                        <p>
+                          Mission state:{' '}
+                          {MISSION_STATES[currentMissionData.mission_state]}
+                        </p>
+                        <p>
+                          Waypoint: {currentMissionData.seq}/
+                          {currentMissionData.total}
+                        </p>
+                        <p>
+                          Distance to WP:{' '}
+                          {(navControllerOutputData.wp_dist
+                            ? navControllerOutputData.wp_dist
+                            : 0
+                          ).toFixed(2)}
+                          m
+                        </p>
+                      </div>
+                      <div className='flex flex-row space-x-14'>
+                        <Button
+                          onClick={() => {
+                            setNewFlightMode(
+                              parseInt(
+                                Object.keys(getFlightModeMap()).find(
+                                  (key) => getFlightModeMap()[key] === 'Auto',
+                                ),
+                              ),
+                            )
+                          }}
+                        >
+                          Auto mode
+                        </Button>
+                      </div>
+                      <div className='flex flex-row space-x-14'>
+                        <Button
+                          onClick={() => {
+                            controlMission('start')
+                          }}
+                        >
+                          Start mission
+                        </Button>
+                      </div>
+                      <div className='flex flex-row space-x-14'>
+                        <Button
+                          onClick={() => {
+                            controlMission('restart')
+                          }}
+                        >
+                          Restart mission
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </Tabs.Panel>
 
                 <Tabs.Panel value='camera'>
-                  <div className='flex flex-col gap-4 p-2'>
+                  <div className='flex flex-col gap-4 mt-2'>
                     <Select
                       label='Select camera input'
                       data={devices.map((device) => {
@@ -742,7 +909,10 @@ export default function Dashboard() {
         </div>
 
         {/* Status Bar */}
-        <StatusBar className='absolute top-0 right-0' outsideVisibilityColor={outsideVisibilityColor}>
+        <StatusBar
+          className='absolute top-0 right-0'
+          outsideVisibilityColor={outsideVisibilityColor}
+        >
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
@@ -777,7 +947,10 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30' style={{backgroundColor: outsideVisibilityColor}}>
+        <div
+          className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'
+          style={{ backgroundColor: outsideVisibilityColor }}
+        >
           {/* Follow Drone */}
           <Tooltip
             label={
@@ -791,7 +964,22 @@ export default function Dashboard() {
             <ActionIcon
               disabled={!gpsData.lon && !gpsData.lat}
               onClick={() => {
-                setFollowDrone(!followDrone)
+                setFollowDrone(
+                  followDrone
+                    ? false
+                    : (() => {
+                        if (
+                          mapRef.current &&
+                          gpsData?.lon !== 0 &&
+                          gpsData?.lat !== 0
+                        ) {
+                          let lat = parseFloat(gpsData.lat * 1e-7)
+                          let lon = parseFloat(gpsData.lon * 1e-7)
+                          mapRef.current.setCenter({ lng: lon, lat: lat })
+                        }
+                        return true
+                      })(),
+                )
               }}
             >
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}

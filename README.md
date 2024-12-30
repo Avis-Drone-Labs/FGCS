@@ -79,7 +79,7 @@ We currently don't have instructions or releases for mac or linux, we will in fu
 - GUI
   - Electron + Vite + React (JavaScript)
 - Backend
-  - Flask (Python)
+  - Flask + Pymavlink (Python)
 
 </details>
 
@@ -93,7 +93,11 @@ For running Python tests, first make sure you're in the `radio` directory. By de
 
 <details><summary>SITL with Docker</summary>
 
-To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`).
+To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`). You can also open up port 5763 for running other scripts on the simulator whilst a GCS is connected.
+
+By default the vehicle type will be ArduCopter, however you can tell the SITL to use a custom vehicle by providing it as a named argument at the end of the run command, e.g. `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane`. You can also set the starting LAT, LON, ALT and DIR using the named arguments.
+
+If you want to upload a custom parameter file or custom mission waypoint to the simulator then you must have a `custom_params.parm` or `mission.txt` file in your current working directory. These can then be uploaded to the simulator on run by specifying a bind mount with `-v .:/sitl_setup/custom` (note that the destination path must be `sitl_setup/custom`). E.g. `docker run -it --rm -p 5760:5760 -p 5763:5763 -v .:/sitl_setup/custom ardupilot_sitl VEHICLE=ArduPlane`.
 
 Note: Steps to push an updated image to docker hub:
 

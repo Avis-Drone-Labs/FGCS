@@ -167,6 +167,12 @@ class MissionController:
             }
 
     def startMission(self) -> Response:
+        """
+        Start the mission on the drone.
+
+        Returns:
+            Dict: The response of the mission start request
+        """
         self.drone.is_listening = False
 
         self.drone.sendCommand(
@@ -196,6 +202,12 @@ class MissionController:
             }
 
     def restartMission(self) -> Response:
+        """
+        Restarts the mission on the drone.
+
+        Returns:
+            Dict: The response of the mission restart request
+        """
         self.drone.is_listening = False
 
         self.drone.sendCommand(mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT, param2=1)

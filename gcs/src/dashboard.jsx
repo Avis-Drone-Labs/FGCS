@@ -15,6 +15,8 @@ import {
   Button,
   Divider,
   Grid,
+  NumberInput,
+  Popover,
   Select,
   Tabs,
   Tooltip,
@@ -217,6 +219,11 @@ export default function Dashboard() {
   })
   const [selectedBox, setSelectedBox] = useState(null)
 
+  const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
+    key: 'takeoffAltitude',
+    defaultValue: 10,
+  })
+
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
     if (isChecked) {
@@ -335,6 +342,14 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('nav_result', (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     socket.on('mission_control_result', (data) => {
       if (data.success) {
         showSuccessNotification(data.message)
@@ -348,6 +363,7 @@ export default function Dashboard() {
       socket.off('arm_disarm')
       socket.off('current_mission')
       socket.off('set_current_flight_mode_result')
+      socket.off('nav_result')
       socket.off('mission_control_result')
     }
   }, [connected])
@@ -468,6 +484,14 @@ export default function Dashboard() {
       })
     }
     setFollowDrone(false)
+  }
+
+  function takeoff() {
+    socket.emit('takeoff', { alt: takeoffAltitude })
+  }
+
+  function land() {
+    socket.emit('land')
   }
 
   return (
@@ -754,6 +778,43 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
+                      </div>
+                      <div className='flex flex-row space-x-2'>
+                        <Popover
+                          width={200}
+                          position='bottom'
+                          withArrow
+                          shadow='md'
+                        >
+                          <Popover.Target>
+                            <Button>Takeoff</Button>
+                          </Popover.Target>
+                          <Popover.Dropdown className='flex flex-col space-y-2'>
+                            <NumberInput
+                              label='Takeoff altitude (m)'
+                              placeholder='Takeoff altitude (m)'
+                              value={takeoffAltitude}
+                              onChange={setTakeoffAltitude}
+                              min={0}
+                              allowNegative={false}
+                              hideControls
+                            />
+                            <Button
+                              onClick={() => {
+                                takeoff()
+                              }}
+                            >
+                              Takeoff
+                            </Button>
+                          </Popover.Dropdown>
+                        </Popover>
+                        <Button
+                          onClick={() => {
+                            land()
+                          }}
+                        >
+                          Land
+                        </Button>
                       </div>
                     </div>
                   )}

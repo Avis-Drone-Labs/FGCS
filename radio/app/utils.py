@@ -4,10 +4,7 @@ from typing import Any, List
 from pymavlink import mavutil
 from serial.tools import list_ports
 
-from . import socketio, logger
-
-from serial.tools.list_ports_common import ListPortInfo
-import socket
+from . import socketio
 
 
 def getComPort() -> str:
@@ -140,6 +137,7 @@ def droneConnectStatusCb(msg: Any) -> None:
     """
     socketio.emit("drone_connect_status", {"message": msg})
 
+
 def notConnectedError(action: str | None = None) -> None:
     """
     Send error to the socket indicating that drone connection must be established to complete this action
@@ -171,6 +169,7 @@ def missingParameterError(endpoint: str, params: str | list[str]) -> None:
             + "."
         },
     )
+
 
 def sendMessage(msg: Any) -> None:
     """

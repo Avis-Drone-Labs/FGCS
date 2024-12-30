@@ -1,7 +1,5 @@
 import time
 
-import serial
-
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone

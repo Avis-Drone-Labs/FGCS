@@ -1,0 +1,59 @@
+from typing_extensions import TypedDict
+
+import app.droneStatus as droneStatus
+from app import logger, socketio
+from app.utils import notConnectedError
+
+
+class TakeoffDataType(TypedDict):
+    alt: int
+
+
+@socketio.on("takeoff")
+def takeoff(data: TakeoffDataType) -> None:
+    """
+    Commands the drone to takeoff, only works when the dashboard page is loaded.
+    """
+    if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the dashboard screen to takeoff."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="takeoff")
+
+    alt = data.get("alt", None)
+    if alt is None or alt < 0:
+        socketio.emit(
+            "params_error",
+            {"message": f"Takeoff altitude must be a positive number, got {alt}."},
+        )
+        return
+
+    result = droneStatus.drone.navController.takeoff(alt)
+
+    socketio.emit("nav_result", result)
+
+
+@socketio.on("land")
+def land() -> None:
+    """
+    Commands the drone to land, only works when the dashboard page is loaded.
+    """
+    if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the dashboard screen to land."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="land")
+
+    result = droneStatus.drone.navController.land()
+
+    socketio.emit("nav_result", result)

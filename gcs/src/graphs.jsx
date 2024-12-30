@@ -55,15 +55,15 @@ export default function Graphs() {
     },
     // modify the deserialization process to set values containing '/' to null
     deserialize: (strValue) => {
-      const parsedValue = JSON.parse(strValue);
+      const parsedValue = JSON.parse(strValue)
       for (const key in parsedValue) {
         if (parsedValue[key] && parsedValue[key].includes('/')) {
-          parsedValue[key] = null;
+          parsedValue[key] = null
         }
       }
-      return parsedValue;
+      return parsedValue
     },
-  });
+  })
 
   const previousSelectValues = usePrevious(selectValues)
 
@@ -125,7 +125,9 @@ export default function Graphs() {
         // Applying Data Formatters
         let formatted_value = msg[valueName]
         if (messageKey in dataFormatters) {
-          formatted_value = dataFormatters[messageKey](msg[valueName].toFixed(3));
+          formatted_value = dataFormatters[messageKey](
+            msg[valueName].toFixed(3),
+          )
         }
 
         returnDataArray.push({

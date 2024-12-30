@@ -1,10 +1,10 @@
 import time
-import pytest
 
+import pytest
 from flask_socketio import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import send_and_recieve, NoDrone
+from .helpers import NoDrone, send_and_recieve
 
 
 def stream_is_active(msg):
@@ -28,7 +28,7 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Success on changing state to dashboard
     socketio_client.emit("set_state", {"state": "dashboard"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 12
+    assert len(droneStatus.drone.message_listeners) == 13
 
     droneStatus.drone.message_listeners = {}
 
@@ -44,7 +44,7 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
 
     droneStatus.drone.message_listeners = {}
 
-    socketio_client.emit("set_state", {"state": "config.rc_calibration"})
+    socketio_client.emit("set_state", {"state": "config.rc"})
     assert len(socketio_client.get_received()) == 0
     assert len(droneStatus.drone.message_listeners) == 0
 

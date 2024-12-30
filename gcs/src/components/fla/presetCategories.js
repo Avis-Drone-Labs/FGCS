@@ -320,7 +320,7 @@ export function usePresetCategories() {
     if (keys1.length !== keys2.length) return false
 
     for (let key of keys1) {
-      if (!filters2.hasOwnProperty(key)) return false
+      if (!Object.hasOwn(filters2, key)) return false
       if (filters1[key].length !== filters2[key].length) return false
       if (!filters1[key].every((item) => filters2[key].includes(item)))
         return false

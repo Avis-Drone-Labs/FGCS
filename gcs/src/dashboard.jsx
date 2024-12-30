@@ -15,6 +15,8 @@ import {
   Button,
   Divider,
   Grid,
+  NumberInput,
+  Popover,
   Select,
   Tabs,
   Tooltip,
@@ -211,6 +213,11 @@ export default function Dashboard() {
   })
   const [selectedBox, setSelectedBox] = useState(null)
 
+  const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
+    key: 'takeoffAltitude',
+    defaultValue: 10,
+  })
+
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
     if (isChecked) {
@@ -328,11 +335,20 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('nav_result', (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
       socket.off('current_mission')
       socket.off('set_current_flight_mode_result')
+      socket.off('nav_result')
     }
   }, [connected])
 
@@ -448,6 +464,14 @@ export default function Dashboard() {
       })
     }
     setFollowDrone(false)
+  }
+
+  function takeoff() {
+    socket.emit('takeoff', { alt: takeoffAltitude })
+  }
+
+  function land() {
+    socket.emit('land')
   }
 
   return (
@@ -734,6 +758,43 @@ export default function Dashboard() {
                           </>
                         )}
                       </div>
+                      <div className='flex flex-row space-x-2'>
+                        <Popover
+                          width={200}
+                          position='bottom'
+                          withArrow
+                          shadow='md'
+                        >
+                          <Popover.Target>
+                            <Button>Takeoff</Button>
+                          </Popover.Target>
+                          <Popover.Dropdown className='flex flex-col space-y-2'>
+                            <NumberInput
+                              label='Takeoff altitude (m)'
+                              placeholder='Takeoff altitude (m)'
+                              value={takeoffAltitude}
+                              onChange={setTakeoffAltitude}
+                              min={0}
+                              allowNegative={false}
+                              hideControls
+                            />
+                            <Button
+                              onClick={() => {
+                                takeoff()
+                              }}
+                            >
+                              Takeoff
+                            </Button>
+                          </Popover.Dropdown>
+                        </Popover>
+                        <Button
+                          onClick={() => {
+                            land()
+                          }}
+                        >
+                          Land
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </Tabs.Panel>
@@ -775,7 +836,7 @@ export default function Dashboard() {
             icon={<IconGps />}
             value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
               gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
-              })`}
+            })`}
             tooltip='GPS (lat, lon)'
           />
           <StatusSection
@@ -817,18 +878,22 @@ export default function Dashboard() {
             <ActionIcon
               disabled={!gpsData.lon && !gpsData.lat}
               onClick={() => {
-                setFollowDrone(followDrone ? false : (() => {
-                  if (
-                    mapRef.current &&
-                    gpsData?.lon !== 0 &&
-                    gpsData?.lat !== 0
-                  ) {
-                    let lat = parseFloat(gpsData.lat * 1e-7)
-                    let lon = parseFloat(gpsData.lon * 1e-7)
-                    mapRef.current.setCenter({ lng: lon, lat: lat })
-                  }
-                  return true
-                })())
+                setFollowDrone(
+                  followDrone
+                    ? false
+                    : (() => {
+                        if (
+                          mapRef.current &&
+                          gpsData?.lon !== 0 &&
+                          gpsData?.lat !== 0
+                        ) {
+                          let lat = parseFloat(gpsData.lat * 1e-7)
+                          let lon = parseFloat(gpsData.lon * 1e-7)
+                          mapRef.current.setCenter({ lng: lon, lat: lat })
+                        }
+                        return true
+                      })(),
+                )
               }}
             >
               {followDrone ? <IconAnchorOff /> : <IconAnchor />}

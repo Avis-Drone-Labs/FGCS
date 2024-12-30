@@ -9,6 +9,7 @@ from . import frames as frames
 from . import gripper as gripper
 from . import mission as mission
 from . import motors as motors
+from . import nav as nav
 from . import params as params
 from . import rc as rc
 from . import states as states

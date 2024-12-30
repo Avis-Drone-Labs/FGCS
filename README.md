@@ -97,6 +97,8 @@ To run the SITL simulator within Docker, first pull the docker image with `docke
 
 By default the vehicle type will be ArduCopter, however you can tell the SITL to use a custom vehicle by providing it as a named argument at the end of the run command, e.g. `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane`. You can also set the starting LAT, LON, ALT and DIR using the named arguments.
 
+If you want to upload a custom parameter file or custom mission waypoint to the simulator then you must have a `custom_params.parm` or `mission.txt` file in your current working directory. These can then be uploaded to the simulator on run by specifying a bind mount with `-v .:/sitl_setup/custom` (note that the destination path must be `sitl_setup/custom`). E.g. `docker run -it --rm -p 5760:5760 -p 5763:5763 -v .:/sitl_setup/custom ardupilot_sitl VEHICLE=ArduPlane`.
+
 Note: Steps to push an updated image to docker hub:
 
 ```plaintext

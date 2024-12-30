@@ -7,6 +7,12 @@ ALT=0
 DIR=270
 VEHICLE="ArduCopter"
 
+PARAM_PATH="/sitl_setup/custom_params.parm"
+
+if test -f "/sitl_setup/custom/custom_params.parm"; then
+    PARAM_PATH="/sitl_setup/custom/custom_params.parm"
+fi
+
 for ARGUMENT in "$@"
 do
    KEY=$(echo $ARGUMENT | cut -f1 -d=)
@@ -18,4 +24,4 @@ do
 done
 
 exec python /sitl_setup/mission_upload.py &
-exec python /ardupilot/Tools/autotest/sim_vehicle.py -v $VEHICLE --custom-location=$LAT,$LON,$ALT,$DIR --no-mavproxy --add-param-file=/sitl_setup/custom_params.parm
+exec python /ardupilot/Tools/autotest/sim_vehicle.py -v $VEHICLE --custom-location=$LAT,$LON,$ALT,$DIR --no-mavproxy --add-param-file=$PARAM_PATH

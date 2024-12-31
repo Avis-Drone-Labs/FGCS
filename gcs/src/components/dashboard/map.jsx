@@ -62,6 +62,7 @@ export default function MapSection({
   heading,
   desiredBearing,
   missionItems,
+  homePosition,
   onDragstart,
 }) {
   const [position, setPosition] = useState(null)
@@ -196,6 +197,70 @@ export default function MapSection({
               </Source>
             </>
           )}
+
+        {/* Show home position */}
+        {homePosition !== null && (
+          <>
+            <Marker
+              longitude={intToCoord(homePosition.lon)}
+              latitude={intToCoord(homePosition.lat)}
+            >
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 48'
+                fill={tailwindColors.green[400]}
+                stroke='currentColor'
+                strokeWidth='1'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+              >
+                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+                <text textAnchor='middle' x='12' y='14' className='text-black'>
+                  H
+                </text>
+              </svg>
+            </Marker>
+            {missionItems.mission_items.length > 0 && (
+              <Source
+                type='geojson'
+                data={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: [
+                      [
+                        intToCoord(homePosition.lon),
+                        intToCoord(homePosition.lat),
+                      ],
+                      [
+                        intToCoord(missionItems.mission_items[0].y),
+                        intToCoord(missionItems.mission_items[0].x),
+                      ],
+                    ],
+                  },
+                }}
+              >
+                <Layer
+                  {...{
+                    type: 'line',
+                    layout: {
+                      'line-join': 'round',
+                      'line-cap': 'round',
+                    },
+                    paint: {
+                      'line-color': tailwindColors.yellow[400],
+                      'line-width': 1,
+                    },
+                  }}
+                />
+              </Source>
+            )}
+          </>
+        )}
 
         {/* Show mission item LABELS */}
         {missionItems.mission_items.map((item, index) => {

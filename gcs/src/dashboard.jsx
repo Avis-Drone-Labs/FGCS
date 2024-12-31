@@ -186,6 +186,7 @@ export default function Dashboard() {
     fence_items: [],
     rally_items: [],
   })
+  const [homePosition, setHomePosition] = useState(null)
 
   // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
@@ -294,6 +295,7 @@ export default function Dashboard() {
       return
     } else {
       socket.emit('set_state', { state: 'dashboard' })
+      socket.emit('get_home_position')
       socket.emit('get_current_mission')
     }
 
@@ -358,6 +360,14 @@ export default function Dashboard() {
       }
     })
 
+    socket.on('home_position_result', (data) => {
+      if (data.success) {
+        setHomePosition(data.data)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off('incoming_msg')
       socket.off('arm_disarm')
@@ -365,6 +375,7 @@ export default function Dashboard() {
       socket.off('set_current_flight_mode_result')
       socket.off('nav_result')
       socket.off('mission_control_result')
+      socket.off('home_position_result')
     }
   }, [connected])
 
@@ -504,6 +515,7 @@ export default function Dashboard() {
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
             desiredBearing={navControllerOutputData.nav_bearing}
             missionItems={missionItems}
+            homePosition={homePosition}
             onDragstart={() => {
               setFollowDrone(false)
             }}

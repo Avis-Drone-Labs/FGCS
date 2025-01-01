@@ -9,6 +9,29 @@ class TakeoffDataType(TypedDict):
     alt: int
 
 
+@socketio.on("get_home_position")
+def getHomePosition() -> None:
+    """
+    Gets the home position of the drone, only works when the dashboard page is loaded.
+    """
+    if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the dashboard screen to get the home position."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="get home position")
+
+    result = droneStatus.drone.navController.getHomePosition()
+
+    socketio.emit("home_position_result", result)
+
+
 @socketio.on("takeoff")
 def takeoff(data: TakeoffDataType) -> None:
     """

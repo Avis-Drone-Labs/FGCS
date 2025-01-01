@@ -21,6 +21,45 @@ class NavController:
         """
         self.drone = drone
 
+    def getHomePosition(self) -> Response:
+        self.drone.is_listening = False
+        self.drone.sendCommand(
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+            param1=mavutil.mavlink.MAVLINK_MSG_ID_HOME_POSITION,
+        )
+
+        try:
+            response = self.drone.master.recv_match(
+                type="HOME_POSITION", blocking=True, timeout=3
+            )
+            self.drone.is_listening = True
+
+            if response:
+                self.drone.logger.info("Home position received")
+
+                home_position = {
+                    "lat": response.latitude,
+                    "lon": response.longitude,
+                    "alt": response.altitude,
+                }
+
+                return {
+                    "success": True,
+                    "message": "Home position received",
+                    "data": home_position,
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Could not get home position",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": "Could not get home position, serial exception",
+            }
+
     def takeoff(self, alt: float) -> Response:
         """
         Tells the drone to takeoff to a specified altitude.

@@ -48,7 +48,7 @@ Create a new Python virtual environment using `python -m venv venv`. This can th
 2. `yarn` (to install dependencies)
 3. Create a `.env` file and add these two entries or rename `.env_sample` and populate the values:
    - `VITE_MAPTILER_API_KEY=` + Your maptiler API key (can be generated [on maptilers website](https://cloud.maptiler.com/account/keys))
-   - `VITE_BACKEND_URL=http://127.0.0.1:4723` (if you want to change the port and host see: [Configuration > Changing Ports](#Configuration))
+   - `VITE_BACKEND_URL=http://127.0.0.1:4237` (if you want to change the port and host see: [Configuration > Changing Ports](#Configuration))
 5. `yarn dev`
 
 ### Backend

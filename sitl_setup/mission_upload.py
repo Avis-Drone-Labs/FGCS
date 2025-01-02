@@ -3,9 +3,21 @@ import time
 
 from pymavlink import mavutil, mavwp
 
-master = mavutil.mavlink_connection("tcp:127.0.0.1:5760", retries=60)
+connection_refused_retries = 0
+while True:
+    try:
+        master = mavutil.mavlink_connection("tcp:127.0.0.1:5760", retries=60)
 
-master.wait_heartbeat()
+        master.wait_heartbeat()
+        break
+    except ConnectionRefusedError:
+        print("Failed to connect to SITL")
+        connection_refused_retries += 1
+        if connection_refused_retries > 20:
+            print("Failed to connect to SITL after 20 retries")
+            exit(1)
+        else:
+            time.sleep(1)
 
 wp = mavwp.MAVWPLoader()
 

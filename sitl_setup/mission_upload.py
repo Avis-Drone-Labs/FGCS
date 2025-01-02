@@ -3,9 +3,7 @@ import time
 
 from pymavlink import mavutil, mavwp
 
-time.sleep(5)
-
-master = mavutil.mavlink_connection("tcp:127.0.0.1:5760", retries=10)
+master = mavutil.mavlink_connection("tcp:127.0.0.1:5760", retries=60)
 
 master.wait_heartbeat()
 

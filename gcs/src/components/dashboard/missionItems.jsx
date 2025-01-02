@@ -1,3 +1,10 @@
+/*
+  The MissionItems component returns the markers and lines connecting the
+  markers together on the dashboard map to display. It also filters out any
+  items which should not be displayed on the map as markers or not have lines
+  connecting them.
+*/
+
 import { filterMissionItems, intToCoord } from './map'
 
 import { Tooltip } from '@mantine/core'

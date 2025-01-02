@@ -37,15 +37,10 @@ def getCurrentMission() -> None:
         item.to_dict() for item in droneStatus.drone.missionController.rally_items
     ]
 
-    # Filter out specific mission items, e.g. takeoff command
-    mission_items_filtered = list(
-        filter(lambda item: item.get("command") != 22, mission_items)
-    )
-
     socketio.emit(
         "current_mission",
         {
-            "mission_items": mission_items_filtered,
+            "mission_items": mission_items,
             "fence_items": fence_items,
             "rally_items": rally_items,
         },

@@ -83,7 +83,10 @@ export default function Navbar({ currentPage }) {
     Network: 'network',
   }
 
-  const [connectionType, setConnectionType] = useState(ConnectionType.Serial)
+  const [connectionType, setConnectionType] = useLocalStorage({
+    key: 'connectionType',
+    defaultValue: ConnectionType.Serial,
+  })
 
   // Com Ports
   const [comPorts, setComPorts] = useState([])
@@ -91,15 +94,15 @@ export default function Navbar({ currentPage }) {
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
 
   // Network Connection
-  const [networkType, setNetworkType] = useSessionStorage({
+  const [networkType, setNetworkType] = useLocalStorage({
     key: 'networkType',
     defaultValue: 'tcp',
   })
-  const [ip, setIp] = useSessionStorage({
+  const [ip, setIp] = useLocalStorage({
     key: 'ip',
     defaultValue: '127.0.0.1',
   })
-  const [port, setPort] = useSessionStorage({
+  const [port, setPort] = useLocalStorage({
     key: 'port',
     defaultValue: '5760',
   })
@@ -254,7 +257,9 @@ export default function Navbar({ currentPage }) {
         <Tabs value={connectionType} onChange={setConnectionType}>
           <Tabs.List grow>
             <Tabs.Tab value={ConnectionType.Serial}>Serial Connection</Tabs.Tab>
-            <Tabs.Tab value={ConnectionType.Network}>Network Connection</Tabs.Tab>
+            <Tabs.Tab value={ConnectionType.Network}>
+              Network Connection
+            </Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value={ConnectionType.Serial} className='py-4'>
             <LoadingOverlay visible={fetchingComPorts} />
@@ -353,7 +358,11 @@ export default function Navbar({ currentPage }) {
             color={tailwindColors.green[600]}
             onClick={() => connectToDrone(connectionType)}
             data-autofocus
-            disabled={!connectedToSocket || (connectionType == ConnectionType.Serial && selectedComPort === null)}
+            disabled={
+              !connectedToSocket ||
+              (connectionType == ConnectionType.Serial &&
+                selectedComPort === null)
+            }
             loading={connecting}
           >
             Connect
@@ -424,10 +433,12 @@ export default function Navbar({ currentPage }) {
         <p>
           {connected && (
             <>
-              {{
-                [ConnectionType.Serial]: selectedComPort,
-                [ConnectionType.Network]: `${networkType}:${ip}:${port}`,
-              }[connectionType]}
+              {
+                {
+                  [ConnectionType.Serial]: selectedComPort,
+                  [ConnectionType.Network]: `${networkType}:${ip}:${port}`,
+                }[connectionType]
+              }
             </>
           )}
         </p>

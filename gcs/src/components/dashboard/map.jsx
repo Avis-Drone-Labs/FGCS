@@ -20,10 +20,12 @@ import arrow from '../../assets/arrow.svg'
 // Tailwind styling
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config'
+import { FILTER_MISSION_ITEM_COMMANDS_LIST } from '../../helpers/mavlinkConstants'
+import MissionItems from './missionItems'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Convert coordinates from mavlink into gps coordinates
-function intToCoord(val) {
+export function intToCoord(val) {
   return val * 1e-7
 }
 
@@ -56,6 +58,15 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
   return [radToDeg(lat2), radToDeg(lon2)]
 }
 
+export function filterMissionItems(missionItems) {
+  return missionItems.filter(
+    (missionItem) =>
+      !Object.values(FILTER_MISSION_ITEM_COMMANDS_LIST).includes(
+        missionItem.command,
+      ),
+  )
+}
+
 export default function MapSection({
   passedRef,
   data,
@@ -72,6 +83,7 @@ export default function MapSection({
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
+  const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   useEffect(() => {
     // Check latest data point is valid
@@ -91,6 +103,10 @@ export default function MapSection({
       setFirstCenteredToDrone(true)
     }
   }, [data])
+
+  useEffect(() => {
+    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+  }, [missionItems])
 
   return (
     <div className='w-initial h-full' id='map'>
@@ -223,7 +239,7 @@ export default function MapSection({
                 </text>
               </svg>
             </Marker>
-            {missionItems.mission_items.length > 0 && (
+            {filteredMissionItems.length > 0 && (
               <Source
                 type='geojson'
                 data={{
@@ -237,8 +253,8 @@ export default function MapSection({
                         intToCoord(homePosition.lat),
                       ],
                       [
-                        intToCoord(missionItems.mission_items[0].y),
-                        intToCoord(missionItems.mission_items[0].x),
+                        intToCoord(filteredMissionItems[0].y),
+                        intToCoord(filteredMissionItems[0].x),
                       ],
                     ],
                   },
@@ -262,79 +278,7 @@ export default function MapSection({
           </>
         )}
 
-        {/* Show mission item LABELS */}
-        {missionItems.mission_items.map((item, index) => {
-          return (
-            <Marker
-              key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <Tooltip label={`Alt: ${item.z}`}>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 48'
-                  fill={tailwindColors.yellow[400]}
-                  stroke='currentColor'
-                  strokeWidth='1'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
-                >
-                  <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-                  <text
-                    textAnchor='middle'
-                    x='12'
-                    y='14'
-                    className='text-black'
-                  >
-                    {item.seq}
-                  </text>
-                </svg>
-              </Tooltip>
-            </Marker>
-          )
-        })}
-
-        {/* Show mission item outlines */}
-        {missionItems.mission_items.length > 0 && (
-          <Source
-            type='geojson'
-            data={{
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: [
-                  ...missionItems.mission_items.map((item) => [
-                    intToCoord(item.y),
-                    intToCoord(item.x),
-                  ]),
-                  [
-                    intToCoord(missionItems.mission_items[0].y),
-                    intToCoord(missionItems.mission_items[0].x),
-                  ],
-                ],
-              },
-            }}
-          >
-            <Layer
-              {...{
-                type: 'line',
-                layout: {
-                  'line-join': 'round',
-                  'line-cap': 'round',
-                },
-                paint: {
-                  'line-color': tailwindColors.yellow[400],
-                  'line-width': 1,
-                },
-              }}
-            />
-          </Source>
-        )}
+        <MissionItems missionItems={missionItems.mission_items} />
 
         {/* Show mission geo-fence MARKERS */}
         {missionItems.fence_items.map((item, index) => {

@@ -50,24 +50,22 @@ class ParamsController:
         )
 
         try:
-            while True:
-                response = self.drone.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=timeout
-                )
+            response = self.drone.master.recv_match(
+                type="PARAM_VALUE", blocking=True, timeout=timeout
+            )
 
-                if response and response.param_id == param_name:
-                    self.drone.is_listening = True
-                    return {
-                        "success": True,
-                        "data": response,
-                    }
-                else:
-                    self.drone.is_listening = True
-                    return {
-                        "success": False,
-                        "message": f"{failure_message}, timed out",
-                    }
-
+            if response and response.param_id == param_name:
+                self.drone.is_listening = True
+                return {
+                    "success": True,
+                    "data": response,
+                }
+            else:
+                self.drone.is_listening = True
+                return {
+                    "success": False,
+                    "message": f"{failure_message}, timed out",
+                }
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
             return {

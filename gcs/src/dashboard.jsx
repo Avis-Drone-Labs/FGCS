@@ -124,6 +124,10 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
+  const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
+    key: "outsideVisibility",
+    defaultValue: false
+  })
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -189,7 +193,6 @@ export default function Dashboard() {
 
   // Map and messages
   const mapRef = useRef()
-  const [outsideVisibility, setOutsideVisibility] = useState(false)
   var outsideVisibilityColor = outsideVisibility
     ? tailwindColors.falcongrey['900']
     : tailwindColors.falcongrey['TRANSLUCENT']
@@ -953,7 +956,9 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <FloatingToolbar />
+        <FloatingToolbar 
+          outsideVisibilityColor={outsideVisibilityColor}
+        />
 
         {statustextMessages.length !== 0 && (
           <div className='absolute bottom-0 right-0 z-20'>

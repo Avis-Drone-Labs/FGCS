@@ -3,7 +3,8 @@
 */
 
 // 3rd Party Imports
-import { ActionIcon, Tooltip, } from "@mantine/core"
+import { ActionIcon, Tooltip } from "@mantine/core"
+import { useLocalStorage } from "@mantine/hooks"
 import { IconAnchor, IconAnchorOff, IconCrosshair, IconMapPins, IconSun, IconSunOff } from "@tabler/icons-react"
 
 // Tailwind styling
@@ -12,14 +13,14 @@ import tailwindConfig from '../../../tailwind.config'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 
-export default function FloatingToolbar({}) {
+export default function FloatingToolbar({outsideVisibilityColor}) {
   // Delete these
-  var outsideVisibility = true
   var followDrone = true
 
-  var outsideVisibilityColor = outsideVisibility
-    ? tailwindColors.falcongrey['900']
-    : tailwindColors.falcongrey['TRANSLUCENT']
+  const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
+    key: "outsideVisibility",
+    defaultValue: false
+  })
 
   return (
     <div
@@ -98,9 +99,9 @@ export default function FloatingToolbar({}) {
         }
       >
         <ActionIcon
-          // onClick={() => {
-          //   setOutsideVisibility(!outsideVisibility)
-          // }}
+          onClick={() => {
+            setOutsideVisibility(!outsideVisibility)
+          }}
         >
           {outsideVisibility ? <IconSun /> : <IconSunOff />}
         </ActionIcon>

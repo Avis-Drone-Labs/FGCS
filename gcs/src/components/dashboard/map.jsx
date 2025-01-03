@@ -7,11 +7,11 @@
 */
 
 // Base imports
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Maplibre and mantine imports
-import { Tooltip } from '@mantine/core'
-import { useLocalStorage } from '@mantine/hooks'
+import { Divider, Tooltip } from '@mantine/core'
+import { useClipboard, useLocalStorage } from '@mantine/hooks'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
 
@@ -21,7 +21,10 @@ import arrow from '../../assets/arrow.svg'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config'
 import { FILTER_MISSION_ITEM_COMMANDS_LIST } from '../../helpers/mavlinkConstants'
+import { showNotification } from '../../helpers/notification'
+import ContextMenuItem from './contextMenuItem'
 import MissionItems from './missionItems'
+import useContextMenu from './useContextMenu'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Convert coordinates from mavlink into gps coordinates
@@ -85,6 +88,16 @@ export default function MapSection({
   })
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
+  const contextMenuRef = useRef()
+  const { clicked, setClicked, points, setPoints } = useContextMenu()
+  const [
+    contextMenuPositionCalculationInfo,
+    setContextMenuPositionCalculationInfo,
+  ] = useState()
+  const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
+
+  const clipboard = useClipboard({ timeout: 500 })
+
   useEffect(() => {
     // Check latest data point is valid
     if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
@@ -108,6 +121,35 @@ export default function MapSection({
     setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
   }, [missionItems])
 
+  useEffect(() => {
+    if (contextMenuRef.current) {
+      const contextMenuWidth = Math.round(
+        contextMenuRef.current.getBoundingClientRect().width,
+      )
+      const contextMenuHeight = Math.round(
+        contextMenuRef.current.getBoundingClientRect().height,
+      )
+      let x = contextMenuPositionCalculationInfo.clickedPoint.x
+      let y = contextMenuPositionCalculationInfo.clickedPoint.y
+
+      if (
+        contextMenuWidth + contextMenuPositionCalculationInfo.clickedPoint.x >
+        contextMenuPositionCalculationInfo.canvasSize.width
+      ) {
+        x = contextMenuPositionCalculationInfo.clickedPoint.x - contextMenuWidth
+      }
+      if (
+        contextMenuHeight + contextMenuPositionCalculationInfo.clickedPoint.y >
+        contextMenuPositionCalculationInfo.canvasSize.height
+      ) {
+        y =
+          contextMenuPositionCalculationInfo.clickedPoint.y - contextMenuHeight
+      }
+
+      setPoints({ x, y })
+    }
+  }, [contextMenuPositionCalculationInfo])
+
   return (
     <div className='w-initial h-full' id='map'>
       <Map
@@ -127,6 +169,18 @@ export default function MapSection({
           })
         }
         onDragStart={onDragstart}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setClicked(true)
+          setClickedGpsCoords(e.lngLat)
+          setContextMenuPositionCalculationInfo({
+            clickedPoint: e.point,
+            canvasSize: {
+              height: e.originalEvent.target.clientHeight,
+              width: e.originalEvent.target.clientWidth,
+            },
+          })
+        }}
       >
         {/* Show marker on map if the position is set */}
         {position !== null &&
@@ -372,6 +426,29 @@ export default function MapSection({
             </Marker>
           )
         })}
+
+        {clicked && (
+          <div
+            ref={contextMenuRef}
+            className='absolute bg-falcongrey-700'
+            style={{ top: points.y, left: points.x }}
+          >
+            <ContextMenuItem
+              text='Fly to here'
+              onClick={() => console.log(clickedGpsCoords)}
+            />
+            <Divider className='my-1' />
+            <ContextMenuItem
+              text='Copy coords'
+              onClick={() => {
+                clipboard.copy(
+                  `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
+                )
+                showNotification('Copied to clipboard')
+              }}
+            />
+          </div>
+        )}
       </Map>
     </div>
   )

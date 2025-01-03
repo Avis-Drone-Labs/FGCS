@@ -56,6 +56,7 @@ import { socket } from './helpers/socket'
 
 // Custom component
 import useSound from 'use-sound'
+import FloatingToolbar from './components/dashboard/floatingToolbar'
 import {
   AttitudeIndicator,
   HeadingIndicator,
@@ -64,7 +65,6 @@ import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import DashboardDataModal from './components/dashboardDataModal'
-import FloatingToolbar from './components/dashboard/floatingToolbar'
 import Layout from './components/layout'
 
 // Tailwind styling

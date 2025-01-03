@@ -16,7 +16,6 @@ export default function FloatingToolbar({
   centerMapOnDrone,
   gpsData,
   followDrone,
-  updateFollowDroneAction,
   setFollowDrone,
   mapRef
 }) {
@@ -25,6 +24,25 @@ export default function FloatingToolbar({
     key: "outsideVisibility",
     defaultValue: false
   })
+
+  function updateFollowDroneAction() {
+    setFollowDrone(
+      followDrone
+        ? false
+        : (() => {
+            if (
+              mapRef.current &&
+              gpsData?.lon !== 0 &&
+              gpsData?.lat !== 0
+            ) {
+              let lat = parseFloat(gpsData.lat * 1e-7)
+              let lon = parseFloat(gpsData.lon * 1e-7)
+              mapRef.current.setCenter({ lng: lon, lat: lat })
+            }
+            return true
+          })(),
+    )
+  }
 
   function centerMapOnFirstMissionItem() {
     if (filteredMissionItems.length > 0) {
@@ -54,7 +72,7 @@ export default function FloatingToolbar({
       >
         <ActionIcon
           disabled={!gpsData.lon && !gpsData.lat}
-          onClick={() => {updateFollowDroneAction}}
+          onClick={() => {updateFollowDroneAction()}}
         >
           {followDrone ? <IconAnchorOff /> : <IconAnchor />}
         </ActionIcon>

@@ -11,7 +11,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
 import {
-  ActionIcon,
   Button,
   Divider,
   Grid,
@@ -30,21 +29,16 @@ import {
   useViewportSize,
 } from '@mantine/hooks'
 import {
-  IconAnchor,
-  IconAnchorOff,
   IconAntenna,
   IconBattery2,
-  IconCrosshair,
   IconGps,
   IconInfoCircle,
-  IconMapPins,
   IconRadar,
   IconSatellite,
-  IconSun,
-  IconSunOff,
 } from '@tabler/icons-react'
 import { ResizableBox } from 'react-resizable'
 import Webcam from 'react-webcam'
+
 // Helper javascript files
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
@@ -70,6 +64,7 @@ import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
 import DashboardDataModal from './components/dashboardDataModal'
+import FloatingToolbar from './components/dashboard/floatingToolbar'
 import Layout from './components/layout'
 
 // Tailwind styling
@@ -129,6 +124,10 @@ export default function Dashboard() {
   })
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
+  })
+  const [outsideVisibility] = useLocalStorage({
+    key: 'outsideVisibility',
+    defaultValue: false,
   })
 
   // Telemetry panel sizing
@@ -195,7 +194,6 @@ export default function Dashboard() {
 
   // Map and messages
   const mapRef = useRef()
-  const [outsideVisibility, setOutsideVisibility] = useState(false)
   var outsideVisibilityColor = outsideVisibility
     ? tailwindColors.falcongrey['900']
     : tailwindColors.falcongrey['TRANSLUCENT']
@@ -484,17 +482,6 @@ export default function Dashboard() {
       ? sideBarRef.current.clientHeight
       : 164
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
-  }
-
-  function centerMapOnFirstMissionItem() {
-    if (missionItems.mission_items.length > 0) {
-      let lat = parseFloat(missionItems.mission_items[0].x * 1e-7)
-      let lon = parseFloat(missionItems.mission_items[0].y * 1e-7)
-      mapRef.current.getMap().flyTo({
-        center: [lon, lat],
-      })
-    }
-    setFollowDrone(false)
   }
 
   function takeoff() {
@@ -959,92 +946,15 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <div
-          className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'
-          style={{ backgroundColor: outsideVisibilityColor }}
-        >
-          {/* Follow Drone */}
-          <Tooltip
-            label={
-              !gpsData.lon && !gpsData.lat
-                ? 'No GPS data'
-                : followDrone
-                  ? 'Stop following'
-                  : 'Follow drone'
-            }
-          >
-            <ActionIcon
-              disabled={!gpsData.lon && !gpsData.lat}
-              onClick={() => {
-                setFollowDrone(
-                  followDrone
-                    ? false
-                    : (() => {
-                        if (
-                          mapRef.current &&
-                          gpsData?.lon !== 0 &&
-                          gpsData?.lat !== 0
-                        ) {
-                          let lat = parseFloat(gpsData.lat * 1e-7)
-                          let lon = parseFloat(gpsData.lon * 1e-7)
-                          mapRef.current.setCenter({ lng: lon, lat: lat })
-                        }
-                        return true
-                      })(),
-                )
-              }}
-            >
-              {followDrone ? <IconAnchorOff /> : <IconAnchor />}
-            </ActionIcon>
-          </Tooltip>
-
-          {/* Center Map on Drone */}
-          <Tooltip
-            label={
-              !gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'
-            }
-          >
-            <ActionIcon
-              disabled={!gpsData.lon && !gpsData.lat}
-              onClick={centerMapOnDrone}
-            >
-              <IconCrosshair />
-            </ActionIcon>
-          </Tooltip>
-
-          {/* Center Map on first mission item */}
-          <Tooltip
-            label={
-              !missionItems.mission_items.length > 0
-                ? 'No mission'
-                : 'Center on mission'
-            }
-          >
-            <ActionIcon
-              disabled={missionItems.mission_items.length <= 0}
-              onClick={centerMapOnFirstMissionItem}
-            >
-              <IconMapPins />
-            </ActionIcon>
-          </Tooltip>
-
-          {/* Set outside visibility */}
-          <Tooltip
-            label={
-              outsideVisibility
-                ? 'Turn off outside text mode'
-                : 'Turn on outside text mode'
-            }
-          >
-            <ActionIcon
-              onClick={() => {
-                setOutsideVisibility(!outsideVisibility)
-              }}
-            >
-              {outsideVisibility ? <IconSun /> : <IconSunOff />}
-            </ActionIcon>
-          </Tooltip>
-        </div>
+        <FloatingToolbar
+          outsideVisibilityColor={outsideVisibilityColor}
+          missionItems={missionItems}
+          centerMapOnDrone={centerMapOnDrone}
+          gpsData={gpsData}
+          followDrone={followDrone}
+          setFollowDrone={setFollowDrone}
+          mapRef={mapRef}
+        />
 
         {statustextMessages.length !== 0 && (
           <div className='absolute bottom-0 right-0 z-20'>

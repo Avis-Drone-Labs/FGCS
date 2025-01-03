@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 // 3rd Party Imports
 import {
   Divider,
+  Tooltip,
 } from '@mantine/core'
 import {
   useListState,
@@ -137,7 +138,6 @@ export default function Dashboard() {
   // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
-  const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
   // Map and messages
   const mapRef = useRef()
@@ -404,12 +404,13 @@ export default function Dashboard() {
           {/* Actions */}
           <TabsSection
             connected={connected}
+            aircraftType={aircraftType}
             getIsArmed={getIsArmed}
             currentFlightModeNumber={currentFlightModeNumber}
-            newFlightModeNumber={newFlightModeNumber}
-            setNewFlightModeNumber={setNewFlightModeNumber}
             currentMissionData={currentMissionData}
             navControllerOutputData={navControllerOutputData}
+            displayedData={displayedData}
+            setDisplayedData={setDisplayedData}
           />
         </ResizableInfoBox>
 

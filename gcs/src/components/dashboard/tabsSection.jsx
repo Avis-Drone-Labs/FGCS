@@ -16,46 +16,27 @@ import Webcam from 'react-webcam'
 import DashboardDataModal from '../dashboardDataModal'
 
 // Helper Javascript Files
-import { dataFormatters } from '../../helpers/dataFormatters'
-import { defaultDataMessages } from '../../helpers/dashboardDefaultDataMessages'
+import { socket } from '../../helpers/socket'
+import { DataMessage } from "../../helpers/dataDisplay"
 import { MISSION_STATES, COPTER_MODES_FLIGHT_MODE_MAP } from "../../helpers/mavlinkConstants"
 
 export default function TabsSection({
   connected,
+  aircraftType,
   getIsArmed,
   currentFlightModeNumber,
-  newFlightModeNumber,
-  setNewFlightModeNumber,
   currentMissionData,
-  navControllerOutputData
+  navControllerOutputData,
+  displayedData,
+  setDisplayedData
 }) {
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
-
-  // Color Palette for telemetry data
-  const colorPalette = [
-    '#36a2eb',
-    '#ff6383',
-    '#fe9e40',
-    '#4ade80',
-    '#ffcd57',
-    '#4cbfc0',
-    '#9966ff',
-    '#c8cbce',
-  ]
-
-  const [displayedData, setDisplayedData] = useLocalStorage({
-    key: 'dashboardDataMessages',
-    defaultValue: defaultDataMessages,
-  })
+  const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: 'takeoffAltitude',
     defaultValue: 10,
-  })
-
-  const [aircraftType] = useLocalStorage({
-    key: 'aircraftType',
   })
 
   const handleDoubleClick = (box) => {
@@ -97,32 +78,6 @@ export default function TabsSection({
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then(handleDevices)
   }, [handleDevices])
-
-  function DataMessage({ label, value, currentlySelected, id }) {
-    let color = colorPalette[id % colorPalette.length]
-  
-    var formattedValue = to2dp(value)
-  
-    if (currentlySelected in dataFormatters) {
-      formattedValue = to2dp(dataFormatters[currentlySelected](value))
-    }
-  
-    return (
-      <Tooltip label={currentlySelected}>
-        <div className='flex flex-col items-center justify-center'>
-          <p className='text-sm text-center'>{label}</p>
-          <p className='text-5xl' style={{ color: color }}>
-            {formattedValue}
-          </p>
-        </div>
-      </Tooltip>
-    )
-  }
-
-  function to2dp(num) {
-    // https://stackoverflow.com/questions/4187146/truncate-number-to-two-decimal-places-without-rounding
-    return num.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0]
-  }
 
   function getFlightModeMap() {
     if (aircraftType === 1) {
@@ -173,9 +128,9 @@ export default function TabsSection({
             {displayedData.length > 0 ? (
               displayedData.map((data) => (
                 <Grid.Col
-                  span={6}
-                  key={data.boxId}
-                  onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
+                span={6}
+                key={data.boxId}
+                onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
                 >
                   <DataMessage
                     label={data.display_name}

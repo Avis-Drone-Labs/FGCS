@@ -125,9 +125,9 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
-  const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
-    key: "outsideVisibility",
-    defaultValue: false
+  const [outsideVisibility] = useLocalStorage({
+    key: 'outsideVisibility',
+    defaultValue: false,
   })
 
   // Telemetry panel sizing
@@ -946,7 +946,7 @@ export default function Dashboard() {
         </StatusBar>
 
         {/* Right side floating toolbar */}
-        <FloatingToolbar 
+        <FloatingToolbar
           outsideVisibilityColor={outsideVisibilityColor}
           missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}

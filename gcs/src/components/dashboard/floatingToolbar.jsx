@@ -3,12 +3,19 @@
 */
 
 // Helper Functions
-import { filterMissionItems } from "./map"
+import { filterMissionItems } from './map'
 
 // 3rd Party Imports
-import { ActionIcon, Tooltip } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
-import { IconAnchor, IconAnchorOff, IconCrosshair, IconMapPins, IconSun, IconSunOff } from "@tabler/icons-react"
+import { ActionIcon, Tooltip } from '@mantine/core'
+import { useLocalStorage } from '@mantine/hooks'
+import {
+  IconAnchor,
+  IconAnchorOff,
+  IconCrosshair,
+  IconMapPins,
+  IconSun,
+  IconSunOff,
+} from '@tabler/icons-react'
 
 export default function FloatingToolbar({
   outsideVisibilityColor,
@@ -17,12 +24,12 @@ export default function FloatingToolbar({
   gpsData,
   followDrone,
   setFollowDrone,
-  mapRef
+  mapRef,
 }) {
   const filteredMissionItems = filterMissionItems(missionItems.mission_items)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
-    key: "outsideVisibility",
-    defaultValue: false
+    key: 'outsideVisibility',
+    defaultValue: false,
   })
 
   function updateFollowDroneAction() {
@@ -30,11 +37,7 @@ export default function FloatingToolbar({
       followDrone
         ? false
         : (() => {
-            if (
-              mapRef.current &&
-              gpsData?.lon !== 0 &&
-              gpsData?.lat !== 0
-            ) {
+            if (mapRef.current && gpsData?.lon !== 0 && gpsData?.lat !== 0) {
               let lat = parseFloat(gpsData.lat * 1e-7)
               let lon = parseFloat(gpsData.lon * 1e-7)
               mapRef.current.setCenter({ lng: lon, lat: lat })
@@ -72,7 +75,9 @@ export default function FloatingToolbar({
       >
         <ActionIcon
           disabled={!gpsData.lon && !gpsData.lat}
-          onClick={() => {updateFollowDroneAction()}}
+          onClick={() => {
+            updateFollowDroneAction()
+          }}
         >
           {followDrone ? <IconAnchorOff /> : <IconAnchor />}
         </ActionIcon>
@@ -93,9 +98,7 @@ export default function FloatingToolbar({
       {/* Center Map on first mission item */}
       <Tooltip
         label={
-          !filteredMissionItems.length > 0
-            ? 'No mission'
-            : 'Center on mission'
+          !filteredMissionItems.length > 0 ? 'No mission' : 'Center on mission'
         }
       >
         <ActionIcon

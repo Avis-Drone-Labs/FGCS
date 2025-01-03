@@ -11,7 +11,12 @@ import { useEffect, useRef, useState } from 'react'
 
 // Maplibre and mantine imports
 import { Button, Divider, Modal, NumberInput, Tooltip } from '@mantine/core'
-import { useClipboard, useDisclosure, useLocalStorage } from '@mantine/hooks'
+import {
+  useClipboard,
+  useDisclosure,
+  useLocalStorage,
+  useSessionStorage,
+} from '@mantine/hooks'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
 
@@ -21,7 +26,11 @@ import arrow from '../../assets/arrow.svg'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config'
 import { FILTER_MISSION_ITEM_COMMANDS_LIST } from '../../helpers/mavlinkConstants'
-import { showNotification } from '../../helpers/notification'
+import {
+  showErrorNotification,
+  showNotification,
+  showSuccessNotification,
+} from '../../helpers/notification'
 import { socket } from '../../helpers/socket'
 import ContextMenuItem from './contextMenuItem'
 import MissionItems from './missionItems'
@@ -79,7 +88,13 @@ export default function MapSection({
   missionItems,
   homePosition,
   onDragstart,
+  getFlightMode,
 }) {
+  const [connected] = useLocalStorage({
+    key: 'connectedToDrone',
+    defaultValue: false,
+  })
+
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const [initialViewState, setInitialViewState] = useLocalStorage({
@@ -100,7 +115,29 @@ export default function MapSection({
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  const [repositionAltitude, setRepositionAltitude] = useState()
+  const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
+    key: 'repositionAltitude',
+    defaultValue: 30,
+  })
+  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
+    key: 'guidedModePinData',
+    defaultValue: null,
+  })
+
+  useEffect(() => {
+    socket.on('nav_reposition_result', (msg) => {
+      if (!msg.success) {
+        showErrorNotification(msg.message)
+      } else {
+        showSuccessNotification(msg.message)
+        setGuidedModePinData(msg.data)
+      }
+    })
+
+    return () => {
+      socket.off('nav_reposition_result')
+    }
+  }, [connected])
 
   useEffect(() => {
     // Check latest data point is valid
@@ -439,6 +476,30 @@ export default function MapSection({
             </Marker>
           )
         })}
+
+        {getFlightMode() === 'Guided' && guidedModePinData !== null && (
+          <Marker
+            longitude={guidedModePinData.lon}
+            latitude={guidedModePinData.lat}
+          >
+            <Tooltip label={`Alt: ${guidedModePinData.alt}`}>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 48'
+                fill={tailwindColors.pink[500]}
+                stroke='currentColor'
+                strokeWidth='1'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+              >
+                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+              </svg>
+            </Tooltip>
+          </Marker>
+        )}
 
         <Modal opened={opened} onClose={close} title='Enter altitude' centered>
           <div className='flex flex-col space-y-2'>

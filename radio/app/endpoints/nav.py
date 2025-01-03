@@ -124,4 +124,4 @@ def reposition(data: RepositionDataType) -> None:
 
     result = droneStatus.drone.navController.reposition(lat, lon, alt)
 
-    socketio.emit("nav_result", result)
+    socketio.emit("nav_reposition_result", result)

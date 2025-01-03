@@ -506,6 +506,7 @@ export default function Dashboard() {
             onDragstart={() => {
               setFollowDrone(false)
             }}
+            getFlightMode={getFlightMode}
           />
         </div>
 

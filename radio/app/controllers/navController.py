@@ -166,6 +166,11 @@ class NavController:
                 return {
                     "success": True,
                     "message": "Reposition command sent successfully",
+                    "data": {
+                        "lat": lat,
+                        "lon": lon,
+                        "alt": alt,
+                    },
                 }
             else:
                 return {

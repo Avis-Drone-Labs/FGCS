@@ -4,10 +4,7 @@
 */
 
 // Custom Components
-import {
-  AttitudeIndicator,
-  HeadingIndicator,
-} from './indicator'
+import { AttitudeIndicator, HeadingIndicator } from './indicator'
 import TelemetryValueDisplay from './telemetryValueDisplay'
 
 export default function TelemetrySection({
@@ -47,6 +44,7 @@ export default function TelemetrySection({
         </div>
       </div>
 
+      {/* Indicators */}
       <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
         {/* Attitude Indicator */}
         <div
@@ -168,10 +166,7 @@ export default function TelemetrySection({
             A
           </p>
           <p className='font-bold text-xl'>
-            {batteryData.battery_remaining
-              ? batteryData.battery_remaining
-              : 0}
-            %
+            {batteryData.battery_remaining ? batteryData.battery_remaining : 0}%
           </p>
         </div>
       </div>

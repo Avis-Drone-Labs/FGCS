@@ -515,7 +515,7 @@ export default function Dashboard() {
           calcBigTextFontSize={calcBigTextFontSize}
         >
           {/* Telemetry Information */}
-          <TelemetrySection 
+          <TelemetrySection
             getIsArmed={getIsArmed}
             prearmEnabled={prearmEnabled}
             calcIndicatorSize={calcIndicatorSize}
@@ -533,6 +533,7 @@ export default function Dashboard() {
 
           <Divider className='my-2' />
 
+          {/* Actions */}
           <Tabs defaultValue='data'>
             <Tabs.List grow>
               <Tabs.Tab value='data'>Data</Tabs.Tab>

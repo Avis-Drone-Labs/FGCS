@@ -442,9 +442,6 @@ export default function Dashboard() {
             }
             tooltip='Battery remaining'
           />
-          <div onClick={() => {showSuccessNotification("Test")}}>Success</div>
-          <div onClick={() => {showErrorNotification("Test")}}>Error</div>
-          <div onClick={() => {showNotification("Test", "Test 2")}}>Info</div>
         </StatusBar>
 
         {/* Right side floating toolbar */}

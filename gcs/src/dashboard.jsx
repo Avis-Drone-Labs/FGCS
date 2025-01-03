@@ -37,6 +37,7 @@ import {
   IconSatellite,
 } from '@tabler/icons-react'
 import Webcam from 'react-webcam'
+import { ResizableBox } from 'react-resizable'
 
 // Helper javascript files
 import {

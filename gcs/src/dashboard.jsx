@@ -141,7 +141,7 @@ export default function Dashboard() {
       return { ...parsed, width: Math.max(parsed['width'], 275) }
     },
   })
-  const [telemtryFontSize, setTelemetryFontSize] = useState(
+  const [telemetryFontSize, setTelemetryFontSize] = useState(
     calcBigTextFontSize(),
   )
   const sideBarRef = useRef()
@@ -572,7 +572,7 @@ export default function Dashboard() {
                           ? telemetryData.airspeed
                           : 0
                         ).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                       <TelemetryValueDisplay
                         title='GS'
@@ -580,7 +580,7 @@ export default function Dashboard() {
                           ? telemetryData.groundspeed
                           : 0
                         ).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                     </div>
                     <AttitudeIndicator
@@ -595,7 +595,7 @@ export default function Dashboard() {
                         value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(
                           2,
                         )}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                       <TelemetryValueDisplay
                         title='AREL'
@@ -603,7 +603,7 @@ export default function Dashboard() {
                           ? gpsData.relative_alt / 1000
                           : 0
                         ).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                     </div>
                   </div>
@@ -621,7 +621,7 @@ export default function Dashboard() {
                       <TelemetryValueDisplay
                         title='HDG'
                         value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                       <TelemetryValueDisplay
                         title='YAW'
@@ -629,7 +629,7 @@ export default function Dashboard() {
                           ? attitudeData.yaw * (180 / Math.PI)
                           : 0
                         ).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                     </div>
                     <HeadingIndicator
@@ -647,13 +647,13 @@ export default function Dashboard() {
                           ? navControllerOutputData.wp_dist
                           : 0
                         ).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                       {/* TOOD: Implement distance to home */}
                       <TelemetryValueDisplay
                         title='HOME'
                         value={(0).toFixed(2)}
-                        fs={telemtryFontSize}
+                        fs={telemetryFontSize}
                       />
                     </div>
                   </div>

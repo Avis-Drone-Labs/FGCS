@@ -2,9 +2,6 @@
   Right hand side floating toolbar. This holds toggles like outside visibility mode and anchoring.
 */
 
-// Helper Functions
-import { filterMissionItems } from './map'
-
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
@@ -16,6 +13,10 @@ import {
   IconSun,
   IconSunOff,
 } from '@tabler/icons-react'
+
+// Helper Functions
+import { filterMissionItems } from './map'
+import getOutsideVisibilityColor from '../../helpers/outsideVisibility'
 
 export default function FloatingToolbar({
   outsideVisibilityColor,
@@ -61,7 +62,7 @@ export default function FloatingToolbar({
   return (
     <div
       className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'
-      style={{ backgroundColor: outsideVisibilityColor }}
+      style={{ backgroundColor: getOutsideVisibilityColor() }}
     >
       {/* Follow Drone */}
       <Tooltip

@@ -7,11 +7,14 @@
 // 3rd Party Imports
 import { ResizableBox } from 'react-resizable'
 
+// Helpers
+import getOutsideVisibilityColor from '../../helpers/outsideVisibility'
+
 export default function ResizableInfoBox(props) {
   return (
     <div
       className='absolute top-0 left-0 h-full z-10'
-      style={{ backgroundColor: props.outsideVisibilityColor }}
+      style={{ backgroundColor: getOutsideVisibilityColor() }}
     >
       <ResizableBox
         height={props.telemetryPanelSize.height}

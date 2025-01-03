@@ -36,6 +36,7 @@ import {
 } from './helpers/mavlinkConstants'
 import {
   showErrorNotification,
+  showNotification,
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
@@ -69,10 +70,6 @@ export default function Dashboard() {
   })
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
-  })
-  const [outsideVisibility] = useLocalStorage({
-    key: 'outsideVisibility',
-    defaultValue: false,
   })
 
   // Telemetry panel sizing
@@ -138,9 +135,10 @@ export default function Dashboard() {
 
   // Map and messages
   const mapRef = useRef()
-  var outsideVisibilityColor = outsideVisibility
-    ? tailwindColors.falcongrey['900']
-    : tailwindColors.falcongrey['TRANSLUCENT']
+  const [outsideVisibility] = useLocalStorage({
+    key: 'outsideVisibility',
+    defaultValue: false,
+  })
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -371,7 +369,6 @@ export default function Dashboard() {
         </div>
 
         <ResizableInfoBox
-          outsideVisibilityColor={outsideVisibilityColor}
           telemetryPanelSize={telemetryPanelSize}
           viewportWidth={viewportWidth}
           setTelemetryPanelSize={setTelemetryPanelSize}
@@ -413,7 +410,6 @@ export default function Dashboard() {
         {/* Status Bar */}
         <StatusBar
           className='absolute top-0 right-0'
-          outsideVisibilityColor={outsideVisibilityColor}
         >
           <StatusSection
             icon={<IconRadar />}
@@ -446,11 +442,13 @@ export default function Dashboard() {
             }
             tooltip='Battery remaining'
           />
+          <div onClick={() => {showSuccessNotification("Test")}}>Success</div>
+          <div onClick={() => {showErrorNotification("Test")}}>Error</div>
+          <div onClick={() => {showNotification("Test", "Test 2")}}>Info</div>
         </StatusBar>
 
         {/* Right side floating toolbar */}
         <FloatingToolbar
-          outsideVisibilityColor={outsideVisibilityColor}
           missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
           gpsData={gpsData}
@@ -477,7 +475,6 @@ export default function Dashboard() {
             >
               <StatusMessages
                 messages={statustextMessages}
-                outsideVisibility={outsideVisibility}
                 className={`bg-[${tailwindColors.falcongrey['TRANSLUCENT']}] h-full lucent max-w-1/2 object-fill text-xl`}
               />
             </ResizableBox>

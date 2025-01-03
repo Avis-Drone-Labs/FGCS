@@ -22,7 +22,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
-from app.customTypes import Response
+from app.customTypes import Number, Response
 from app.utils import commandAccepted
 
 # Constants
@@ -621,7 +621,10 @@ class Drone:
         param6: float = 0,
         param7: float = 0,
     ) -> None:
-        """Send a command to the drone.
+        """Send a command long to the drone. COMMAND_LONG must be used for
+        sending MAV_CMD commands that send float properties in parameters
+        5 and 6, as these values would be truncated tointegers if sent in
+        COMMAND_INT.
 
         Args:
             message (float): The message to send
@@ -647,6 +650,62 @@ class Drone:
             param7,  # param 7
         )
         self.master.mav.send(message)
+
+    def sendCommandInt(
+        self,
+        message: int,
+        frame: int = 0,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        x: Number = 0,
+        y: Number = 0,
+        z: float = 0,
+    ):
+        """
+        Send a command int to the drone. COMMAND_INT should be used when sending
+        commands that contain positional or navigation information. This is
+        because it allows the co-ordinate frame to be specified for location and
+        altitude values, which may otherwise be "unspecified". In addition
+        latitudes/longitudes can be sent with greater precision in a COMMAND_INT
+        as scaled integers in params 5 and 6 (than when sent in float values in
+        COMMAND_LONG).
+
+        Args:
+            message (float): The message to send
+            frame (float, optional): The coordinate system of the command
+            param1 (float, optional)
+            param2 (float, optional)
+            param3 (float, optional)
+            param4 (float, optional)
+            x (Number, optional)
+            y (Number, optional)
+            z (float, optional)
+        """
+        current = 0
+        autocontinue = 0
+
+        if isinstance(x, float):
+            x = int(x * 1e7)
+        if isinstance(y, float):
+            y = int(y * 1e7)
+
+        self.master.mav.command_int_send(
+            self.target_system,
+            self.target_component,
+            frame,
+            message,
+            current,
+            autocontinue,
+            param1,
+            param2,
+            param3,
+            param4,
+            x,
+            y,
+            z,
+        )
 
     def close(self) -> None:
         """Close the connection to the drone."""

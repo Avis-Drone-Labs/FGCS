@@ -121,11 +121,9 @@ class NavController:
             self.drone.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_NAV_LAND):
-                self.drone.is_listening = True
                 self.drone.logger.info("Land command send successfully")
                 return {"success": True, "message": "Land command sent successfully"}
             else:
-                self.drone.is_listening = True
                 return {
                     "success": False,
                     "message": "Could not land",
@@ -135,4 +133,48 @@ class NavController:
             return {
                 "success": False,
                 "message": "Could not land, serial exception",
+            }
+
+    def reposition(self, lat: float, lon: float, alt: float) -> Response:
+        """
+        Tells the drone to reposition to the specified GPS coordinates.
+
+        Args:
+            lat (float): The latitude to go to.
+            lon (float): The longitude to go to.
+            alt (float): The altitude to go to.
+
+        Returns:
+            Response: The response from the reposition command
+        """
+        self.drone.is_listening = False
+
+        self.drone.sendCommandInt(
+            message=mavutil.mavlink.MAV_CMD_DO_REPOSITION,
+            param2=1,  # Change to Guided mode immediately
+            x=lat,
+            y=lon,
+            z=alt,
+        )
+
+        try:
+            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.drone.is_listening = True
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_REPOSITION):
+                self.drone.logger.info("Reposition command send successfully")
+                return {
+                    "success": True,
+                    "message": "Reposition command sent successfully",
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Could not reposition",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            return {
+                "success": False,
+                "message": "Could not reposition, serial exception",
             }

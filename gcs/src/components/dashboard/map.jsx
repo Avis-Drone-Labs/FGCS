@@ -10,8 +10,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Maplibre and mantine imports
-import { Divider, Tooltip } from '@mantine/core'
-import { useClipboard, useLocalStorage } from '@mantine/hooks'
+import { Button, Divider, Modal, NumberInput, Tooltip } from '@mantine/core'
+import { useClipboard, useDisclosure, useLocalStorage } from '@mantine/hooks'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
 
@@ -22,6 +22,7 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../../tailwind.config'
 import { FILTER_MISSION_ITEM_COMMANDS_LIST } from '../../helpers/mavlinkConstants'
 import { showNotification } from '../../helpers/notification'
+import { socket } from '../../helpers/socket'
 import ContextMenuItem from './contextMenuItem'
 import MissionItems from './missionItems'
 import useContextMenu from './useContextMenu'
@@ -96,7 +97,10 @@ export default function MapSection({
   ] = useState()
   const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
+  const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
+
+  const [repositionAltitude, setRepositionAltitude] = useState()
 
   useEffect(() => {
     // Check latest data point is valid
@@ -150,6 +154,14 @@ export default function MapSection({
     }
   }, [contextMenuPositionCalculationInfo])
 
+  function reposition() {
+    socket.emit('reposition', {
+      lat: clickedGpsCoords.lat,
+      lon: clickedGpsCoords.lng,
+      alt: repositionAltitude,
+    })
+  }
+
   return (
     <div className='w-initial h-full' id='map'>
       <Map
@@ -181,6 +193,7 @@ export default function MapSection({
             },
           })
         }}
+        cursor='default'
       >
         {/* Show marker on map if the position is set */}
         {position !== null &&
@@ -427,16 +440,36 @@ export default function MapSection({
           )
         })}
 
+        <Modal opened={opened} onClose={close} title='Enter altitude' centered>
+          <div className='flex flex-col space-y-2'>
+            <NumberInput
+              placeholder='Altitude (m)'
+              value={repositionAltitude}
+              onChange={setRepositionAltitude}
+              min={0}
+              allowNegative={false}
+              hideControls
+              data-autofocus
+            />
+            <Button
+              fullWidth
+              onClick={() => {
+                reposition()
+                close()
+              }}
+            >
+              Reposition
+            </Button>
+          </div>
+        </Modal>
+
         {clicked && (
           <div
             ref={contextMenuRef}
             className='absolute bg-falcongrey-700'
             style={{ top: points.y, left: points.x }}
           >
-            <ContextMenuItem
-              text='Fly to here'
-              onClick={() => console.log(clickedGpsCoords)}
-            />
+            <ContextMenuItem text='Fly to here' onClick={open} />
             <Divider className='my-1' />
             <ContextMenuItem
               text='Copy coords'

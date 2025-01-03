@@ -7,37 +7,24 @@
 */
 
 // Base imports
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
+import { Divider } from '@mantine/core'
+import { ResizableBox } from 'react-resizable'
 import {
-  Button,
-  Divider,
-  Grid,
-  NumberInput,
-  Popover,
-  Select,
-  Tabs,
-  Tooltip,
-} from '@mantine/core'
-import {
-  useDisclosure,
   useListState,
   useLocalStorage,
   usePrevious,
-  useSessionStorage,
   useViewportSize,
 } from '@mantine/hooks'
 import {
   IconAntenna,
   IconBattery2,
   IconGps,
-  IconInfoCircle,
   IconRadar,
   IconSatellite,
 } from '@tabler/icons-react'
-import Webcam from 'react-webcam'
-import { ResizableBox } from 'react-resizable'
 
 // Helper javascript files
 import {
@@ -45,7 +32,6 @@ import {
   GPS_FIX_TYPES,
   MAV_AUTOPILOT_INVALID,
   MAV_STATE,
-  MISSION_STATES,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from './helpers/mavlinkConstants'
 import {
@@ -53,19 +39,17 @@ import {
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
+import { defaultDataMessages } from './helpers/dashboardDefaultDataMessages'
 
 // Custom component
 import useSound from 'use-sound'
-import {
-  AttitudeIndicator,
-  HeadingIndicator,
-} from './components/dashboard/indicator'
 import MapSection from './components/dashboard/map'
 import StatusBar, { StatusSection } from './components/dashboard/statusBar'
 import StatusMessages from './components/dashboard/statusMessages'
-import DashboardDataModal from './components/dashboardDataModal'
 import FloatingToolbar from './components/dashboard/floatingToolbar'
 import ResizableInfoBox from './components/dashboard/resizableInfoBox'
+import TelemetrySection from './components/dashboard/telemetry'
+import TabsSection from './components/dashboard/tabsSection'
 import Layout from './components/layout'
 
 // Tailwind styling
@@ -76,46 +60,6 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from './assets/sounds/armed.mp3'
 import disarmSound from './assets/sounds/disarmed.mp3'
-import TelemetryValueDisplay from './components/dashboard/telemetryValueDisplay'
-import { defaultDataMessages } from './helpers/dashboardDefaultDataMessages'
-import { dataFormatters } from './helpers/dataFormatters'
-
-function to2dp(num) {
-  // https://stackoverflow.com/questions/4187146/truncate-number-to-two-decimal-places-without-rounding
-  return num.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0]
-}
-
-const colorPalette = [
-  '#36a2eb',
-  '#ff6383',
-  '#fe9e40',
-  '#4ade80',
-  '#ffcd57',
-  '#4cbfc0',
-  '#9966ff',
-  '#c8cbce',
-]
-
-function DataMessage({ label, value, currentlySelected, id }) {
-  let color = colorPalette[id % colorPalette.length]
-
-  var formattedValue = to2dp(value)
-
-  if (currentlySelected in dataFormatters) {
-    formattedValue = to2dp(dataFormatters[currentlySelected](value))
-  }
-
-  return (
-    <Tooltip label={currentlySelected}>
-      <div className='flex flex-col items-center justify-center'>
-        <p className='text-sm text-center'>{label}</p>
-        <p className='text-5xl' style={{ color: color }}>
-          {formattedValue}
-        </p>
-      </div>
-    </Tooltip>
-  )
-}
 
 export default function Dashboard() {
   // Local Storage
@@ -191,7 +135,6 @@ export default function Dashboard() {
   // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
-  const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
   // Map and messages
   const mapRef = useRef()
@@ -203,49 +146,10 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
-  // Camera devices
-  const [deviceId, setDeviceId] = useSessionStorage({
-    key: 'deviceId',
-    defaultValue: null,
-  })
-  const [devices, setDevices] = useState([])
-
-  // Data Modal Functions
-  const [opened, { open, close }] = useDisclosure(false)
-
   const [displayedData, setDisplayedData] = useLocalStorage({
     key: 'dashboardDataMessages',
     defaultValue: defaultDataMessages,
   })
-  const [selectedBox, setSelectedBox] = useState(null)
-
-  const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
-    key: 'takeoffAltitude',
-    defaultValue: 10,
-  })
-
-  const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
-    // Update wantedData on checkbox change
-    if (isChecked) {
-      const newDisplay = displayedData.map((item, index) => {
-        if (index === boxId) {
-          return {
-            ...item,
-            currently_selected: `${key}.${subkey}`,
-            display_name: subvalue,
-          }
-        }
-        return item
-      })
-      setDisplayedData(newDisplay)
-      close()
-    }
-  }
-
-  const handleDoubleClick = (box) => {
-    setSelectedBox(box)
-    open()
-  }
 
   const incomingMessageHandler = {
     VFR_HUD: (msg) => setTelemetryData(msg),
@@ -264,16 +168,6 @@ export default function Dashboard() {
     RC_CHANNELS: (msg) => setRCChannelsData(msg),
     MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
   }
-
-  const handleDevices = useCallback(
-    (mediaDevices) =>
-      setDevices(mediaDevices.filter(({ kind }) => kind === 'videoinput')),
-    [setDevices],
-  )
-
-  useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then(handleDevices)
-  }, [handleDevices])
 
   useEffect(() => {
     // Use localStorage.getItem as useLocalStorage hook updates slower
@@ -422,16 +316,6 @@ export default function Dashboard() {
     return 'UNKNOWN'
   }
 
-  function getFlightModeMap() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP
-    }
-
-    return {}
-  }
-
   function getIsArmed() {
     return heartbeatData.base_mode & 128
   }
@@ -440,22 +324,6 @@ export default function Dashboard() {
     // Checks if prearm check is enabled, if yes then not armable
     // TOOD: test if this returns true if all checks pass
     return Boolean(sysStatusData.onboard_control_sensors_enabled & 268435456)
-  }
-
-  function armDisarm(arm, force = false) {
-    // TODO: Add force arm ability
-    socket.emit('arm_disarm', { arm: arm, force: force })
-  }
-
-  function setNewFlightMode(modeNumber) {
-    if (modeNumber === null || modeNumber === currentFlightModeNumber) {
-      return
-    }
-    socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
-  }
-
-  function controlMission(action) {
-    socket.emit('control_mission', { action })
   }
 
   function centerMapOnDrone() {
@@ -485,14 +353,6 @@ export default function Dashboard() {
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
 
-  function takeoff() {
-    socket.emit('takeoff', { alt: takeoffAltitude })
-  }
-
-  function land() {
-    socket.emit('land')
-  }
-
   return (
     <Layout currentPage='dashboard'>
       <div className='relative flex flex-auto w-full h-full overflow-hidden'>
@@ -519,368 +379,35 @@ export default function Dashboard() {
           calcBigTextFontSize={calcBigTextFontSize}
         >
           {/* Telemetry Information */}
-          <div>
-            {/* Information above indicators */}
-            <div className='flex flex-col items-center space-y-2'>
-              {getIsArmed() ? (
-                <p className='font-bold text-falconred'>ARMED</p>
-              ) : (
-                <>
-                  <p className='font-bold'>DISARMED</p>
-                  {prearmEnabled() ? (
-                    <p className='text-green-500'>Prearm: Enabled</p>
-                  ) : (
-                    <p className='font-bold text-falconred'>Prearm: Disabled</p>
-                  )}
-                </>
-              )}
-              <div className='flex flex-row space-x-6'>
-                <p>{MAV_STATE[heartbeatData.system_status]}</p>
-                <p>{getFlightMode()}</p>
-              </div>
-            </div>
-
-            <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
-              {/* Attitude Indicator */}
-              <div
-                className='flex flex-row items-center justify-center'
-                style={{
-                  paddingTop: `${calcIndicatorPadding()}px`,
-                  paddingBottom: `${calcIndicatorPadding()}px`,
-                }}
-              >
-                <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-                  <p className='text-sm text-center'>ms&#8315;&#185;</p>
-                  <TelemetryValueDisplay
-                    title='AS'
-                    value={(telemetryData.airspeed
-                      ? telemetryData.airspeed
-                      : 0
-                    ).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                  <TelemetryValueDisplay
-                    title='GS'
-                    value={(telemetryData.groundspeed
-                      ? telemetryData.groundspeed
-                      : 0
-                    ).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                </div>
-                <AttitudeIndicator
-                  roll={attitudeData.roll * (180 / Math.PI)}
-                  pitch={attitudeData.pitch * (180 / Math.PI)}
-                  size={`${calcIndicatorSize()}px`}
-                />
-                <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-                  <p className='text-sm text-center'>m</p>
-                  <TelemetryValueDisplay
-                    title='AMSL'
-                    value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                  <TelemetryValueDisplay
-                    title='AREL'
-                    value={(gpsData.relative_alt
-                      ? gpsData.relative_alt / 1000
-                      : 0
-                    ).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                </div>
-              </div>
-
-              {/* Heading Indicator */}
-              <div
-                className='flex flex-row items-center justify-center'
-                style={{
-                  paddingTop: `${calcIndicatorPadding()}px`,
-                  paddingBottom: `${calcIndicatorPadding()}px`,
-                }}
-              >
-                <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-                  <p className='text-sm text-center'>deg &#176;</p>
-                  <TelemetryValueDisplay
-                    title='HDG'
-                    value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                  <TelemetryValueDisplay
-                    title='YAW'
-                    value={(attitudeData.yaw
-                      ? attitudeData.yaw * (180 / Math.PI)
-                      : 0
-                    ).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                </div>
-                <HeadingIndicator
-                  heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-                  size={`${calcIndicatorSize()}px`}
-                />
-                <div
-                  className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'
-                  ref={sideBarRef}
-                >
-                  <p className='text-sm'>m</p>
-                  <TelemetryValueDisplay
-                    title='WP'
-                    value={(navControllerOutputData.wp_dist
-                      ? navControllerOutputData.wp_dist
-                      : 0
-                    ).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                  {/* TOOD: Implement distance to home */}
-                  <TelemetryValueDisplay
-                    title='HOME'
-                    value={(0).toFixed(2)}
-                    fs={telemetryFontSize}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Batter information */}
-            <div className='flex flex-col items-center'>
-              <p>BATTERY</p>
-              <div className='flex flex-row space-x-4'>
-                <p className='font-bold text-xl'>
-                  {(batteryData.voltages
-                    ? batteryData.voltages[0] / 1000
-                    : 0
-                  ).toFixed(2)}
-                  V
-                </p>
-                <p className='font-bold text-xl'>
-                  {(batteryData.current_battery
-                    ? batteryData.current_battery / 100
-                    : 0
-                  ).toFixed(2)}
-                  A
-                </p>
-                <p className='font-bold text-xl'>
-                  {batteryData.battery_remaining
-                    ? batteryData.battery_remaining
-                    : 0}
-                  %
-                </p>
-              </div>
-            </div>
-          </div>
+          <TelemetrySection
+            getIsArmed={getIsArmed}
+            prearmEnabled={prearmEnabled}
+            calcIndicatorSize={calcIndicatorSize}
+            calcIndicatorPadding={calcIndicatorPadding}
+            getFlightMode={getFlightMode}
+            telemetryData={telemetryData}
+            telemetryFontSize={telemetryFontSize}
+            attitudeData={attitudeData}
+            gpsData={gpsData}
+            sideBarRef={sideBarRef}
+            navControllerOutputData={navControllerOutputData}
+            batteryData={batteryData}
+            systemStatus={MAV_STATE[heartbeatData.system_status]}
+          />
 
           <Divider className='my-2' />
 
-          <Tabs defaultValue='data'>
-            <Tabs.List grow>
-              <Tabs.Tab value='data'>Data</Tabs.Tab>
-              <Tabs.Tab value='actions'>Actions</Tabs.Tab>
-              <Tabs.Tab value='mission'>Mission</Tabs.Tab>
-              <Tabs.Tab value='camera'>Camera</Tabs.Tab>
-            </Tabs.List>
-
-            <Tabs.Panel value='data'>
-              <>
-                <Grid className='cursor-pointer select-none mt-2'>
-                  {displayedData.length > 0 ? (
-                    displayedData.map((data) => (
-                      <Grid.Col
-                        span={6}
-                        key={data.boxId}
-                        onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
-                      >
-                        <DataMessage
-                          label={data.display_name}
-                          value={data.value}
-                          currentlySelected={data.currently_selected}
-                          id={data.boxId}
-                        />
-                      </Grid.Col>
-                    ))
-                  ) : (
-                    <div className='flex justify-center items-center p-4'>
-                      <IconInfoCircle size={20} />
-                      <p className='ml-2'>Double Click to select data</p>
-                    </div>
-                  )}
-                </Grid>
-                <DashboardDataModal
-                  opened={opened}
-                  close={close}
-                  selectedBox={selectedBox}
-                  handleCheckboxChange={handleCheckboxChange}
-                />
-              </>
-            </Tabs.Panel>
-
-            <Tabs.Panel value='actions'>
-              {/* Arming/Flight Modes */}
-              {!connected ? (
-                <div className='flex flex-col items-center justify-center h-full'>
-                  <p className='text-white-800 p-6 text-center'>
-                    No actions are available right now. Connect a drone to begin
-                  </p>
-                </div>
-              ) : (
-                <div className='flex flex-col flex-wrap gap-4 mt-4'>
-                  <div className='flex flex-row space-x-14'>
-                    <Button
-                      onClick={() => {
-                        armDisarm(!getIsArmed())
-                      }}
-                    >
-                      {getIsArmed() ? 'Disarm' : 'Arm'}
-                    </Button>
-                  </div>
-                  <div className='flex flex-row space-x-2'>
-                    {currentFlightModeNumber !== null && (
-                      <>
-                        <Select
-                          value={newFlightModeNumber.toString()}
-                          onChange={(value) => {
-                            setNewFlightModeNumber(parseInt(value))
-                          }}
-                          data={Object.keys(getFlightModeMap()).map((key) => {
-                            return {
-                              value: key,
-                              label: getFlightModeMap()[key],
-                            }
-                          })}
-                        />
-                        <Button
-                          onClick={() => setNewFlightMode(newFlightModeNumber)}
-                        >
-                          Set flight mode
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                  <div className='flex flex-row space-x-2'>
-                    <Popover
-                      width={200}
-                      position='bottom'
-                      withArrow
-                      shadow='md'
-                    >
-                      <Popover.Target>
-                        <Button>Takeoff</Button>
-                      </Popover.Target>
-                      <Popover.Dropdown className='flex flex-col space-y-2'>
-                        <NumberInput
-                          label='Takeoff altitude (m)'
-                          placeholder='Takeoff altitude (m)'
-                          value={takeoffAltitude}
-                          onChange={setTakeoffAltitude}
-                          min={0}
-                          allowNegative={false}
-                          hideControls
-                        />
-                        <Button
-                          onClick={() => {
-                            takeoff()
-                          }}
-                        >
-                          Takeoff
-                        </Button>
-                      </Popover.Dropdown>
-                    </Popover>
-                    <Button
-                      onClick={() => {
-                        land()
-                      }}
-                    >
-                      Land
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Tabs.Panel>
-
-            <Tabs.Panel value='mission'>
-              {!connected ? (
-                <div className='flex flex-col items-center justify-center h-full'>
-                  <p className='text-white-800 p-6 text-center'>
-                    No mission actions are available right now. Connect a drone
-                    to begin
-                  </p>
-                </div>
-              ) : (
-                <div className='flex flex-col flex-wrap gap-4 mt-4'>
-                  <div className='flex flex-col text-xl'>
-                    <p>
-                      Mission state:{' '}
-                      {MISSION_STATES[currentMissionData.mission_state]}
-                    </p>
-                    <p>
-                      Waypoint: {currentMissionData.seq}/
-                      {currentMissionData.total}
-                    </p>
-                    <p>
-                      Distance to WP:{' '}
-                      {(navControllerOutputData.wp_dist
-                        ? navControllerOutputData.wp_dist
-                        : 0
-                      ).toFixed(2)}
-                      m
-                    </p>
-                  </div>
-                  <div className='flex flex-row space-x-14'>
-                    <Button
-                      onClick={() => {
-                        setNewFlightMode(
-                          parseInt(
-                            Object.keys(getFlightModeMap()).find(
-                              (key) => getFlightModeMap()[key] === 'Auto',
-                            ),
-                          ),
-                        )
-                      }}
-                    >
-                      Auto mode
-                    </Button>
-                  </div>
-                  <div className='flex flex-row space-x-14'>
-                    <Button
-                      onClick={() => {
-                        controlMission('start')
-                      }}
-                    >
-                      Start mission
-                    </Button>
-                  </div>
-                  <div className='flex flex-row space-x-14'>
-                    <Button
-                      onClick={() => {
-                        controlMission('restart')
-                      }}
-                    >
-                      Restart mission
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Tabs.Panel>
-
-            <Tabs.Panel value='camera'>
-              <div className='flex flex-col gap-4 mt-2'>
-                <Select
-                  label='Select camera input'
-                  data={devices.map((device) => {
-                    return { value: device.deviceId, label: device.label }
-                  })}
-                  value={deviceId}
-                  onChange={setDeviceId}
-                />
-                {deviceId !== null && (
-                  <Webcam
-                    audio={false}
-                    videoConstraints={{ deviceId: deviceId }}
-                  />
-                )}
-              </div>
-            </Tabs.Panel>
-          </Tabs>
+          {/* Actions */}
+          <TabsSection
+            connected={connected}
+            aircraftType={aircraftType}
+            getIsArmed={getIsArmed}
+            currentFlightModeNumber={currentFlightModeNumber}
+            currentMissionData={currentMissionData}
+            navControllerOutputData={navControllerOutputData}
+            displayedData={displayedData}
+            setDisplayedData={setDisplayedData}
+          />
         </ResizableInfoBox>
 
         {/* Status Bar */}

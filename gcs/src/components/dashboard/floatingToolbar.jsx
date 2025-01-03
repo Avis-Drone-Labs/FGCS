@@ -1,5 +1,5 @@
 /*
-  Right hand side floating toolbar. This holds toggles like dark mode and anchoring.
+  Right hand side floating toolbar. This holds toggles like outside visibility mode and anchoring.
 */
 
 // Helper Functions

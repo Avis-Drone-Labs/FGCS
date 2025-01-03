@@ -15,7 +15,7 @@ const notificationTheme = {
   style: {
     backgroundColor: tailwindColors.falcongrey[800],
   },
-  radius: "md"
+  radius: 'md',
 }
 
 export function showErrorNotification(message) {
@@ -23,7 +23,7 @@ export function showErrorNotification(message) {
     title: 'Error',
     message: message,
     color: tailwindColors.red[600],
-    ...notificationTheme
+    ...notificationTheme,
   })
 }
 
@@ -32,7 +32,7 @@ export function showSuccessNotification(message) {
     title: 'Success',
     message: message,
     color: tailwindColors.green[600],
-    ...notificationTheme
+    ...notificationTheme,
   })
 }
 
@@ -41,6 +41,6 @@ export function showNotification(title, message) {
     title: title,
     message: message,
     color: tailwindColors.blue[600],
-    ...notificationTheme
+    ...notificationTheme,
   })
 }

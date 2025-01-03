@@ -16,10 +16,9 @@ import {
 
 // Helper Functions
 import { filterMissionItems } from './map'
-import getOutsideVisibilityColor from '../../helpers/outsideVisibility'
+import GetOutsideVisibilityColor from '../../helpers/outsideVisibility'
 
 export default function FloatingToolbar({
-  outsideVisibilityColor,
   missionItems,
   centerMapOnDrone,
   gpsData,
@@ -62,7 +61,7 @@ export default function FloatingToolbar({
   return (
     <div
       className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'
-      style={{ backgroundColor: getOutsideVisibilityColor() }}
+      style={{ backgroundColor: GetOutsideVisibilityColor() }}
     >
       {/* Follow Drone */}
       <Tooltip

@@ -12,7 +12,7 @@ import { ScrollArea } from '@mantine/core'
 import { useLocalStorage } from '@mantine/hooks'
 
 // Helpers Scripts
-import getOutsideVisibilityColor from '../../helpers/outsideVisibility'
+import GetOutsideVisibilityColor from '../../helpers/outsideVisibility'
 
 export default function StatusMessages(props) {
   const viewport = useRef(null)
@@ -60,7 +60,7 @@ export default function StatusMessages(props) {
     <div className={props.className}>
       <ScrollArea
         className='h-full w-full p-4'
-        style={{ backgroundColor: getOutsideVisibilityColor() }}
+        style={{ backgroundColor: GetOutsideVisibilityColor() }}
         viewportRef={viewport}
         onScrollPositionChange={onScrollPositionChange}
       >

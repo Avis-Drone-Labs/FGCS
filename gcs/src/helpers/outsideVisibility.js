@@ -10,12 +10,12 @@ import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '../../tailwind.config'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function getOutsideVisibilityColor() {
+export default function GetOutsideVisibilityColor() {
   const [outsideVisibility] = useLocalStorage({
     key: 'outsideVisibility',
     defaultValue: false,
   })
-  
+
   return getOutsideVisibilityColorManually(outsideVisibility)
 }
 

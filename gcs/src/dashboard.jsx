@@ -36,7 +36,6 @@ import {
 } from './helpers/mavlinkConstants'
 import {
   showErrorNotification,
-  showNotification,
   showSuccessNotification,
 } from './helpers/notification'
 import { socket } from './helpers/socket'
@@ -135,10 +134,6 @@ export default function Dashboard() {
 
   // Map and messages
   const mapRef = useRef()
-  const [outsideVisibility] = useLocalStorage({
-    key: 'outsideVisibility',
-    defaultValue: false,
-  })
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -408,9 +403,7 @@ export default function Dashboard() {
         </ResizableInfoBox>
 
         {/* Status Bar */}
-        <StatusBar
-          className='absolute top-0 right-0'
-        >
+        <StatusBar className='absolute top-0 right-0'>
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}

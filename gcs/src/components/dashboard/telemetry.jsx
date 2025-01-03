@@ -55,6 +55,7 @@ export default function TelemetrySection({
           }}
         >
           <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+            {/* AS and GS values */}
             <p className='text-sm text-center'>ms&#8315;&#185;</p>
             <TelemetryValueDisplay
               title='AS'
@@ -73,11 +74,15 @@ export default function TelemetrySection({
               fs={telemetryFontSize}
             />
           </div>
+
+          {/* Attitude indicator image */}
           <AttitudeIndicator
             roll={attitudeData.roll * (180 / Math.PI)}
             pitch={attitudeData.pitch * (180 / Math.PI)}
             size={`${calcIndicatorSize()}px`}
           />
+
+          {/* AMSL and AREL values */}
           <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
             <p className='text-sm text-center'>m</p>
             <TelemetryValueDisplay
@@ -105,6 +110,7 @@ export default function TelemetrySection({
           }}
         >
           <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+            {/* HDG and WP values */}
             <p className='text-sm text-center'>deg &#176;</p>
             <TelemetryValueDisplay
               title='HDG'
@@ -120,10 +126,14 @@ export default function TelemetrySection({
               fs={telemetryFontSize}
             />
           </div>
+
+          {/* Heading indicator image */}
           <HeadingIndicator
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
             size={`${calcIndicatorSize()}px`}
           />
+
+          {/* YAW and HOME values */}
           <div
             className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'
             ref={sideBarRef}
@@ -137,7 +147,6 @@ export default function TelemetrySection({
               ).toFixed(2)}
               fs={telemetryFontSize}
             />
-            {/* TOOD: Implement distance to home */}
             <TelemetryValueDisplay
               title='HOME'
               value={(0).toFixed(2)}
@@ -150,6 +159,7 @@ export default function TelemetrySection({
       {/* Batter information */}
       <div className='flex flex-col items-center'>
         <p>BATTERY</p>
+
         <div className='flex flex-row space-x-4'>
           <p className='font-bold text-xl'>
             {(batteryData.voltages

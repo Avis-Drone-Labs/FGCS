@@ -10,10 +10,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import {
-  Divider,
-  Tooltip,
-} from '@mantine/core'
+import { Divider } from '@mantine/core'
+import { ResizableBox } from 'react-resizable'
 import {
   useListState,
   useLocalStorage,
@@ -27,7 +25,6 @@ import {
   IconRadar,
   IconSatellite,
 } from '@tabler/icons-react'
-import { ResizableBox } from 'react-resizable'
 
 // Helper javascript files
 import {
@@ -318,7 +315,6 @@ export default function Dashboard() {
 
     return 'UNKNOWN'
   }
-
 
   function getIsArmed() {
     return heartbeatData.base_mode & 128

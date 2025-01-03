@@ -4,7 +4,7 @@
 */
 
 // 3rd Party Imports
-import { Tooltip } from "@mantine/core"
+import { Tooltip } from '@mantine/core'
 
 // Helper Functions
 import { dataFormatters } from './dataFormatters'

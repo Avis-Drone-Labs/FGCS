@@ -4,12 +4,16 @@
 */
 
 // Native Imports
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect } from 'react'
 
 // 3rd Party Imports
-import { Tooltip, Tabs, Button, Grid, NumberInput, Popover, Select } from "@mantine/core"
-import { useDisclosure, useLocalStorage, useSessionStorage } from "@mantine/hooks"
-import { IconInfoCircle } from "@tabler/icons-react"
+import { Tabs, Button, Grid, NumberInput, Popover, Select } from '@mantine/core'
+import {
+  useDisclosure,
+  useLocalStorage,
+  useSessionStorage,
+} from '@mantine/hooks'
+import { IconInfoCircle } from '@tabler/icons-react'
 import Webcam from 'react-webcam'
 
 // Custom Components
@@ -17,8 +21,12 @@ import DashboardDataModal from '../dashboardDataModal'
 
 // Helper Javascript Files
 import { socket } from '../../helpers/socket'
-import { DataMessage } from "../../helpers/dataDisplay"
-import { MISSION_STATES, COPTER_MODES_FLIGHT_MODE_MAP } from "../../helpers/mavlinkConstants"
+import { DataMessage } from '../../helpers/dataDisplay'
+import {
+  MISSION_STATES,
+  COPTER_MODES_FLIGHT_MODE_MAP,
+  PLANE_MODES_FLIGHT_MODE_MAP,
+} from '../../helpers/mavlinkConstants'
 
 export default function TabsSection({
   connected,
@@ -28,7 +36,7 @@ export default function TabsSection({
   currentMissionData,
   navControllerOutputData,
   displayedData,
-  setDisplayedData
+  setDisplayedData,
 }) {
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
@@ -112,7 +120,7 @@ export default function TabsSection({
   function land() {
     socket.emit('land')
   }
-  
+
   return (
     <Tabs defaultValue='data'>
       <Tabs.List grow>
@@ -128,9 +136,9 @@ export default function TabsSection({
             {displayedData.length > 0 ? (
               displayedData.map((data) => (
                 <Grid.Col
-                span={6}
-                key={data.boxId}
-                onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
+                  span={6}
+                  key={data.boxId}
+                  onDoubleClick={() => handleDoubleClick(data)} // Pass boxId to the function
                 >
                   <DataMessage
                     label={data.display_name}
@@ -190,21 +198,14 @@ export default function TabsSection({
                       }
                     })}
                   />
-                  <Button
-                    onClick={() => setNewFlightMode(newFlightModeNumber)}
-                  >
+                  <Button onClick={() => setNewFlightMode(newFlightModeNumber)}>
                     Set flight mode
                   </Button>
                 </>
               )}
             </div>
             <div className='flex flex-row space-x-2'>
-              <Popover
-                width={200}
-                position='bottom'
-                withArrow
-                shadow='md'
-              >
+              <Popover width={200} position='bottom' withArrow shadow='md'>
                 <Popover.Target>
                   <Button>Takeoff</Button>
                 </Popover.Target>
@@ -243,8 +244,8 @@ export default function TabsSection({
         {!connected ? (
           <div className='flex flex-col items-center justify-center h-full'>
             <p className='text-white-800 p-6 text-center'>
-              No mission actions are available right now. Connect a drone
-              to begin
+              No mission actions are available right now. Connect a drone to
+              begin
             </p>
           </div>
         ) : (
@@ -255,8 +256,7 @@ export default function TabsSection({
                 {MISSION_STATES[currentMissionData.mission_state]}
               </p>
               <p>
-                Waypoint: {currentMissionData.seq}/
-                {currentMissionData.total}
+                Waypoint: {currentMissionData.seq}/{currentMissionData.total}
               </p>
               <p>
                 Distance to WP:{' '}
@@ -315,10 +315,7 @@ export default function TabsSection({
             onChange={setDeviceId}
           />
           {deviceId !== null && (
-            <Webcam
-              audio={false}
-              videoConstraints={{ deviceId: deviceId }}
-            />
+            <Webcam audio={false} videoConstraints={{ deviceId: deviceId }} />
           )}
         </div>
       </Tabs.Panel>

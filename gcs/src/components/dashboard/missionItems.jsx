@@ -62,7 +62,7 @@ export default function MissionItems({ missionItems }) {
   return (
     <>
       {/* Show mission item LABELS */}
-      {missionItems.map((item, index) => {
+      {filteredMissionItems.map((item, index) => {
         return (
           <Marker
             key={index}

@@ -7,16 +7,15 @@ import { ActionIcon, Tooltip } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 import { IconAnchor, IconAnchorOff, IconCrosshair, IconMapPins, IconSun, IconSunOff } from "@tabler/icons-react"
 
-// Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-
-export default function FloatingToolbar({outsideVisibilityColor}) {
-  // Delete these
-  var followDrone = true
-
+export default function FloatingToolbar({
+  outsideVisibilityColor,
+  centerMapOnFirstMissionItem,
+  missionItems,
+  centerMapOnDrone,
+  gpsData,
+  followDrone,
+  updateFollowDroneAction
+}) {
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false
@@ -29,34 +28,17 @@ export default function FloatingToolbar({outsideVisibilityColor}) {
     >
       {/* Follow Drone */}
       <Tooltip
-        // label={
-        //   !gpsData.lon && !gpsData.lat
-        //     ? 'No GPS data'
-        //     : followDrone
-        //       ? 'Stop following'
-        //       : 'Follow drone'
-        // }
+        label={
+          !gpsData.lon && !gpsData.lat
+            ? 'No GPS data'
+            : followDrone
+              ? 'Stop following'
+              : 'Follow drone'
+        }
       >
         <ActionIcon
-          // disabled={!gpsData.lon && !gpsData.lat}
-          // onClick={() => {
-          //   setFollowDrone(
-          //     followDrone
-          //       ? false
-          //       : (() => {
-          //           if (
-          //             mapRef.current &&
-          //             gpsData?.lon !== 0 &&
-          //             gpsData?.lat !== 0
-          //           ) {
-          //             let lat = parseFloat(gpsData.lat * 1e-7)
-          //             let lon = parseFloat(gpsData.lon * 1e-7)
-          //             mapRef.current.setCenter({ lng: lon, lat: lat })
-          //           }
-          //           return true
-          //         })(),
-          //   )
-          // }}
+          disabled={!gpsData.lon && !gpsData.lat}
+          onClick={() => {updateFollowDroneAction}}
         >
           {followDrone ? <IconAnchorOff /> : <IconAnchor />}
         </ActionIcon>
@@ -64,11 +46,11 @@ export default function FloatingToolbar({outsideVisibilityColor}) {
 
       {/* Center Map on Drone */}
       <Tooltip
-        // label={!gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'}
+        label={!gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'}
       >
         <ActionIcon
-          // disabled={!gpsData.lon && !gpsData.lat}
-          // onClick={centerMapOnDrone}
+          disabled={!gpsData.lon && !gpsData.lat}
+          onClick={centerMapOnDrone}
         >
           <IconCrosshair />
         </ActionIcon>
@@ -76,15 +58,15 @@ export default function FloatingToolbar({outsideVisibilityColor}) {
 
       {/* Center Map on first mission item */}
       <Tooltip
-        // label={
-        //   !missionItems.mission_items.length > 0
-        //     ? 'No mission'
-        //     : 'Center on mission'
-        // }
+        label={
+          !missionItems.mission_items.length > 0
+            ? 'No mission'
+            : 'Center on mission'
+        }
       >
         <ActionIcon
-          // disabled={missionItems.mission_items.length <= 0}
-          // onClick={centerMapOnFirstMissionItem}
+          disabled={missionItems.mission_items.length <= 0}
+          onClick={centerMapOnFirstMissionItem}
         >
           <IconMapPins />
         </ActionIcon>

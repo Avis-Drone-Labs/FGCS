@@ -494,6 +494,25 @@ export default function Dashboard() {
     setFollowDrone(false)
   }
 
+  function updateFollowDroneAction() {
+    setFollowDrone(
+      followDrone
+        ? false
+        : (() => {
+            if (
+              mapRef.current &&
+              gpsData?.lon !== 0 &&
+              gpsData?.lat !== 0
+            ) {
+              let lat = parseFloat(gpsData.lat * 1e-7)
+              let lon = parseFloat(gpsData.lon * 1e-7)
+              mapRef.current.setCenter({ lng: lon, lat: lat })
+            }
+            return true
+          })(),
+    )
+  }
+
   function takeoff() {
     socket.emit('takeoff', { alt: takeoffAltitude })
   }
@@ -958,6 +977,12 @@ export default function Dashboard() {
         {/* Right side floating toolbar */}
         <FloatingToolbar 
           outsideVisibilityColor={outsideVisibilityColor}
+          centerMapOnFirstMissionItem={centerMapOnFirstMissionItem}
+          missionItems={missionItems}
+          centerMapOnDrone={centerMapOnDrone}
+          gpsData={gpsData}
+          followDrone={followDrone}
+          updateFollowDroneAction={updateFollowDroneAction}
         />
 
         {statustextMessages.length !== 0 && (

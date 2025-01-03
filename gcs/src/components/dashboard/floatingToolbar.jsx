@@ -2,6 +2,9 @@
   Right hand side floating toolbar. This holds toggles like dark mode and anchoring.
 */
 
+// Helper Functions
+import { filterMissionItems } from "./map"
+
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
@@ -9,17 +12,30 @@ import { IconAnchor, IconAnchorOff, IconCrosshair, IconMapPins, IconSun, IconSun
 
 export default function FloatingToolbar({
   outsideVisibilityColor,
-  centerMapOnFirstMissionItem,
   missionItems,
   centerMapOnDrone,
   gpsData,
   followDrone,
-  updateFollowDroneAction
+  updateFollowDroneAction,
+  setFollowDrone,
+  mapRef
 }) {
+  const filteredMissionItems = filterMissionItems(missionItems.mission_items)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false
   })
+
+  function centerMapOnFirstMissionItem() {
+    if (filteredMissionItems.length > 0) {
+      let lat = parseFloat(filteredMissionItems[0].x * 1e-7)
+      let lon = parseFloat(filteredMissionItems[0].y * 1e-7)
+      mapRef.current.getMap().flyTo({
+        center: [lon, lat],
+      })
+    }
+    setFollowDrone(false)
+  }
 
   return (
     <div
@@ -59,13 +75,13 @@ export default function FloatingToolbar({
       {/* Center Map on first mission item */}
       <Tooltip
         label={
-          !missionItems.mission_items.length > 0
+          !filteredMissionItems.length > 0
             ? 'No mission'
             : 'Center on mission'
         }
       >
         <ActionIcon
-          disabled={missionItems.mission_items.length <= 0}
+          disabled={filteredMissionItems.length <= 0}
           onClick={centerMapOnFirstMissionItem}
         >
           <IconMapPins />

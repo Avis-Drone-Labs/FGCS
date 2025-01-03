@@ -38,6 +38,7 @@ import {
 } from '@tabler/icons-react'
 import { ResizableBox } from 'react-resizable'
 import Webcam from 'react-webcam'
+
 // Helper javascript files
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
@@ -481,17 +482,6 @@ export default function Dashboard() {
       ? sideBarRef.current.clientHeight
       : 164
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
-  }
-
-  function centerMapOnFirstMissionItem() {
-    if (missionItems.mission_items.length > 0) {
-      let lat = parseFloat(missionItems.mission_items[0].x * 1e-7)
-      let lon = parseFloat(missionItems.mission_items[0].y * 1e-7)
-      mapRef.current.getMap().flyTo({
-        center: [lon, lat],
-      })
-    }
-    setFollowDrone(false)
   }
 
   function updateFollowDroneAction() {
@@ -977,12 +967,13 @@ export default function Dashboard() {
         {/* Right side floating toolbar */}
         <FloatingToolbar 
           outsideVisibilityColor={outsideVisibilityColor}
-          centerMapOnFirstMissionItem={centerMapOnFirstMissionItem}
           missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
           gpsData={gpsData}
           followDrone={followDrone}
           updateFollowDroneAction={updateFollowDroneAction}
+          setFollowDrone={setFollowDrone}
+          mapRef={mapRef}
         />
 
         {statustextMessages.length !== 0 && (

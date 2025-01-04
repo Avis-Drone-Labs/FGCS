@@ -70,10 +70,6 @@ export default function Dashboard() {
   const [aircraftType] = useLocalStorage({
     key: 'aircraftType',
   })
-  const [outsideVisibility] = useLocalStorage({
-    key: 'outsideVisibility',
-    defaultValue: false,
-  })
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -138,9 +134,6 @@ export default function Dashboard() {
 
   // Map and messages
   const mapRef = useRef()
-  var outsideVisibilityColor = outsideVisibility
-    ? tailwindColors.falcongrey['900']
-    : tailwindColors.falcongrey['TRANSLUCENT']
 
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
@@ -372,7 +365,6 @@ export default function Dashboard() {
         </div>
 
         <ResizableInfoBox
-          outsideVisibilityColor={outsideVisibilityColor}
           telemetryPanelSize={telemetryPanelSize}
           viewportWidth={viewportWidth}
           setTelemetryPanelSize={setTelemetryPanelSize}
@@ -412,10 +404,7 @@ export default function Dashboard() {
         </ResizableInfoBox>
 
         {/* Status Bar */}
-        <StatusBar
-          className='absolute top-0 right-0'
-          outsideVisibilityColor={outsideVisibilityColor}
-        >
+        <StatusBar className='absolute top-0 right-0'>
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
@@ -451,7 +440,6 @@ export default function Dashboard() {
 
         {/* Right side floating toolbar */}
         <FloatingToolbar
-          outsideVisibilityColor={outsideVisibilityColor}
           missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
           gpsData={gpsData}
@@ -478,7 +466,6 @@ export default function Dashboard() {
             >
               <StatusMessages
                 messages={statustextMessages}
-                outsideVisibility={outsideVisibility}
                 className={`bg-[${tailwindColors.falcongrey['TRANSLUCENT']}] h-full lucent max-w-1/2 object-fill text-xl`}
               />
             </ResizableBox>

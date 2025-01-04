@@ -20,11 +20,10 @@ import {
 import 'maplibre-gl/dist/maplibre-gl.css'
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
 
+// Assets
 import arrow from '../../assets/arrow.svg'
 
-// Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
+// Helper scripts
 import { FILTER_MISSION_ITEM_COMMANDS_LIST } from '../../helpers/mavlinkConstants'
 import {
   showErrorNotification,
@@ -32,9 +31,15 @@ import {
   showSuccessNotification,
 } from '../../helpers/notification'
 import { socket } from '../../helpers/socket'
+
+// Other dashboard imports
 import ContextMenuItem from './contextMenuItem'
 import MissionItems from './missionItems'
 import useContextMenu from './useContextMenu'
+
+// Tailwind styling
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../../tailwind.config'
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Convert coordinates from mavlink into gps coordinates

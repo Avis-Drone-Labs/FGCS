@@ -9,10 +9,19 @@ import moment from 'moment'
 
 // Third party imports
 import { ScrollArea } from '@mantine/core'
+import { useLocalStorage } from '@mantine/hooks'
+
+// Helpers Scripts
+import GetOutsideVisibilityColor from '../../helpers/outsideVisibility'
 
 export default function StatusMessages(props) {
   const viewport = useRef(null)
   const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
+
+  const [outsideVisibility] = useLocalStorage({
+    key: 'outsideVisibility',
+    defaultValue: false,
+  })
 
   // Pushes new messages to bottom
   useEffect(() => {
@@ -42,20 +51,16 @@ export default function StatusMessages(props) {
     }
   }
 
-  function getScrollAreaOutsideVisibilityClassNames() {
-    let base = 'h-full w-full p-4'
-    return `${base} ${props.outsideVisibility ? 'bg-falcongrey-950' : 'bg-falcongrey-TRANSLUCENT'}`
-  }
-
   function getMessageOutsideVisibilityClassNames() {
     let base = 'flex flex-row space-x-2'
-    return `${base} ${props.outsideVisibility ? 'font-bold !text-2xl' : ''}`
+    return `${base} ${outsideVisibility ? 'font-bold !text-2xl' : ''}`
   }
 
   return (
     <div className={props.className}>
       <ScrollArea
-        className={getScrollAreaOutsideVisibilityClassNames()}
+        className='h-full w-full p-4'
+        style={{ backgroundColor: GetOutsideVisibilityColor() }}
         viewportRef={viewport}
         onScrollPositionChange={onScrollPositionChange}
       >

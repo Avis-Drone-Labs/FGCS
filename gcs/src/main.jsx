@@ -13,7 +13,6 @@ import { Provider } from 'react-redux'
 
 // Mantine imports
 import { MantineProvider } from '@mantine/core'
-import { Notifications } from '@mantine/notifications'
 
 // Route imports
 import Config from './config.jsx'
@@ -33,7 +32,6 @@ import Toolbar from './components/toolbar/toolbar.jsx'
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <MantineProvider defaultColorScheme='dark'>
   <MantineProvider defaultColorScheme='dark' theme={CustomMantineTheme}>
-    <Notifications />
     <HashRouter>
       <SingleRunWrapper>
         <Toolbar />

@@ -1,3 +1,7 @@
+/*
+  Use Context Menu. A handler for the right click context menu on the map.
+*/
+
 import { useEffect, useState } from 'react'
 
 export default function useContextMenu() {

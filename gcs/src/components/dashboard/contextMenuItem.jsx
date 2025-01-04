@@ -1,7 +1,7 @@
 export default function ContextMenuItem({ text, onClick }) {
   return (
     <div
-      className='hover:bg-falcongrey-500 hover:cursor-pointer p-2 px-6'
+      className='hover:bg-falcongrey-800 hover:cursor-pointer py-1 px-6 rounded'
       onClick={onClick}
     >
       {text}

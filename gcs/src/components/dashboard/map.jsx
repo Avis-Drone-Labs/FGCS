@@ -527,7 +527,7 @@ export default function MapSection({
         {clicked && (
           <div
             ref={contextMenuRef}
-            className='absolute bg-falcongrey-700'
+            className='absolute bg-falcongrey-700 rounded-md p-1'
             style={{ top: points.y, left: points.x }}
           >
             <ContextMenuItem text='Fly to here' onClick={open} />

@@ -8,7 +8,11 @@ import { useEffect, useState } from 'react'
 
 // 3rd part libraries
 import { Button, Modal } from '@mantine/core'
-import { useDisclosure, useSessionStorage, useLocalStorage } from '@mantine/hooks'
+import {
+  useDisclosure,
+  useLocalStorage,
+  useSessionStorage,
+} from '@mantine/hooks'
 import { Octokit } from 'octokit'
 import semverGt from 'semver/functions/gt'
 
@@ -33,7 +37,7 @@ export default function SingleRunWrapper({ children }) {
   })
 
   const [isUpdateDismissed, setUpdateDismissed] = useLocalStorage({
-    key: 'isUpdateDismissed', 
+    key: 'isUpdateDismissed',
   })
 
   useEffect(() => {
@@ -77,9 +81,12 @@ export default function SingleRunWrapper({ children }) {
     checkIfOutOfDate()
   }, [])
 
-  //Checks there is an update that the user has not already dismissed
+  // Checks there is an update that the user has not already dismissed
   useEffect(() => {
-    if (fgcsOutOfDateInfo !== null && isUpdateDismissed !== `${fgcsOutOfDateInfo?.latestVersion}`) {
+    if (
+      fgcsOutOfDateInfo !== null &&
+      isUpdateDismissed !== `${fgcsOutOfDateInfo?.latestVersion}`
+    ) {
       open()
     }
   }, [fgcsOutOfDateInfo, isUpdateDismissed])
@@ -87,7 +94,7 @@ export default function SingleRunWrapper({ children }) {
   const closeForever = () => {
     close()
     setUpdateDismissed(fgcsOutOfDateInfo?.latestVersion)
-  };
+  }
 
   return (
     <>
@@ -117,18 +124,15 @@ export default function SingleRunWrapper({ children }) {
           <Button
             component='a'
             onClick={closeForever}
-            target='_blank'
-            className=''
             fullWidth
             color={tailwindColors.red[600]}
           >
-              Do not show again
+            Skip update
           </Button>
           <Button
             component='a'
             href='https://github.com/Avis-Drone-Labs/FGCS/releases'
             target='_blank'
-            className=''
             fullWidth
             color={tailwindColors.blue[600]}
           >

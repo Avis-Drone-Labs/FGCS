@@ -1,9 +1,10 @@
 import time
+
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import RecvMsgReturnsFalse, FakeTCP, SetAircraftType, ParamSetTimeout
+from .helpers import FakeTCP, ParamSetTimeout, RecvMsgReturnsFalse, SetAircraftType
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -25,6 +26,12 @@ def run_once_after_all_tests():
 
 
 @falcon_test(pass_drone_status=True)
+def test_getFlightModeChannel_success(client: SocketIOTestClient, droneStatus):
+    droneStatus.drone.flightModesController.getFlightModeChannel()
+    assert droneStatus.drone.flightModesController.flight_mode_channel != "UNKNOWN"
+
+
+@falcon_test(pass_drone_status=True)
 def test_getFlightModes_success(client: SocketIOTestClient, droneStatus):
     droneStatus.drone.flightModesController.getFlightModes()
     assert len(droneStatus.drone.flightModesController.flight_modes) == 6
@@ -39,12 +46,6 @@ def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
         assert len(droneStatus.drone.flightModesController.flight_modes) == 6
         for items in droneStatus.drone.flightModesController.flight_modes:
             assert items == "UNKNOWN"
-
-
-@falcon_test(pass_drone_status=True)
-def test_getFlightModeChannel_success(client: SocketIOTestClient, droneStatus):
-    droneStatus.drone.flightModesController.getFlightModeChannel()
-    assert droneStatus.drone.flightModesController.flight_mode_channel != "UNKNOWN"
 
 
 @falcon_test(pass_drone_status=True)

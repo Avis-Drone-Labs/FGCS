@@ -434,7 +434,7 @@ export default function FLA() {
     const currentSelection = Object.entries(messageFilters).reduce(
       (acc, [category, fields]) => {
         const selectedFields = Object.entries(fields)
-          .filter(([_, isSelected]) => isSelected)
+          .filter(([, isSelected]) => isSelected)
           .map(([fieldName]) => fieldName)
 
         if (selectedFields.length > 0) {
@@ -692,7 +692,7 @@ export default function FLA() {
       {logMessages === null ? (
         // Open flight logs section
         <div className='flex flex-col items-center justify-center h-full mx-auto'>
-          <div className='flex flex-row gap-8 items-center justify-center'>
+          <div className='flex flex-row items-center justify-center gap-8'>
             <div className='flex flex-col gap-4'>
               <FileButton
                 color={tailwindColors.blue[600]}
@@ -716,25 +716,25 @@ export default function FLA() {
               <LoadingOverlay
                 visible={recentFgcsLogs === null || loadingFile}
               />
-              <div className='flex flex-col gap-2 items-center'>
+              <div className='flex flex-col items-center gap-2'>
                 <p className='font-bold'>Recent FGCS telemetry logs</p>
                 <ScrollArea h={250} offsetScrollbars>
                   {recentFgcsLogs !== null &&
                     recentFgcsLogs.map((log, idx) => (
                       <div
                         key={idx}
-                        className='flex flex-col py-2 px-4 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
+                        className='flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
                         onClick={() => updateFile(log)}
                       >
                         <p>{log.name} </p>
                         <div className='flex flex-row gap-2'>
-                          <p className='text-gray-400 text-sm'>
+                          <p className='text-sm text-gray-400'>
                             {moment(
                               log.timestamp.toISOString(),
                               'YYYY-MM-DD_HH-mm-ss',
                             ).fromNow()}
                           </p>
-                          <p className='text-gray-400 text-sm'>
+                          <p className='text-sm text-gray-400'>
                             {Math.round(log.size / 1024)}KB
                           </p>
                         </div>
@@ -756,28 +756,51 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className='flex gap-4 h-full overflow-x-auto py-4 px-2'>
+          <div className='flex h-full gap-4 px-2 py-4 mb-4 overflow-x-auto'>
             {/* Message selection column */}
             <div className='w-1/4 pb-6'>
-              <div className=''>
-                <Button
-                  className='mx-4 my-2'
-                  size='xs'
-                  color={tailwindColors.red[500]}
-                  onClick={closeLogFile}
-                >
-                  Close file
-                </Button>
-                <Tooltip label={file.path}>
-                  <p className='mx-4 my-2'>{file.name}</p>
-                </Tooltip>
-                <p className='mx-4 my-2'>Aircraft Type: {aircraftType}</p>
+              <div className='flex flex-col mb-2 text-sm gap-y-2'>
+                <div className='flex flex-row justify-between'>
+                  <Tooltip label={file.path}>
+                    <div className='px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
+                      File Name:
+                      <span
+                        className='ml-2 text-white underline cursor-pointer'
+                        onClick={() => {
+                          window.ipcRenderer.send(
+                            'openFileInExplorer',
+                            file.path,
+                          )
+                        }}
+                      >
+                        {file.name}
+                      </span>
+                    </div>
+                  </Tooltip>
+                  <Button
+                    className='ml-2'
+                    size='sm'
+                    color={tailwindColors.red[500]}
+                    onClick={closeLogFile}
+                  >
+                    Close file
+                  </Button>
+                </div>
+                <div className='flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700'>
+                  <div className='whitespace-nowrap'>Aircraft Type:</div>
+                  <div className='text-white ml-auto truncate max-w-[200px]'>
+                    {aircraftType ? aircraftType : 'No Aircraft Type'}
+                  </div>
+                </div>
               </div>
-              <ScrollArea className='h-full max-h-max'>
+
+              <ScrollArea className='h-full max-h-[90%]'>
                 <Accordion multiple={true}>
                   {/* Presets */}
                   <Accordion.Item key='presets' value='presets'>
-                    <Accordion.Control>Presets</Accordion.Control>
+                    <Accordion.Control className='rounded-md'>
+                      Presets
+                    </Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {/* Custom Presets */}
@@ -814,8 +837,14 @@ export default function FLA() {
                   </Accordion.Item>
 
                   {/* All messages */}
-                  <Accordion.Item key='messages' value='messages' class='w-96'>
-                    <Accordion.Control>Messages</Accordion.Control>
+                  <Accordion.Item
+                    key='messages'
+                    value='messages'
+                    styles={{ item: { borderBottom: 'none' } }}
+                  >
+                    <Accordion.Control className='rounded-md'>
+                      Messages
+                    </Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {Object.keys(messageFilters).map((messageName, idx) => {
@@ -846,57 +875,35 @@ export default function FLA() {
                 graphConfig={
                   logType === 'dataflash' ? dataflashOptions : fgcsOptions
                 }
+                clearFilters={clearFilters}
+                canSavePreset={canSavePreset}
+                openPresetModal={open}
               />
 
               {/* Plots Setup */}
-              <div className='flex gap-4 pt-6 flex-cols'>
-                <div>
-                  <div className='flex flex-row items-center mb-2'>
-                    <h3 className='mt-2 mb-2 text-xl'>Graph setup</h3>
-                    {/* Clear Filters */}
-                    <Button
-                      className='ml-6'
-                      size='xs'
-                      color={tailwindColors.red[500]}
-                      onClick={clearFilters}
-                    >
-                      Clear graph
-                    </Button>
-                    {canSavePreset && (
-                      <Button
-                        className='ml-6'
-                        size='xs'
-                        color={tailwindColors.green[600]}
-                        onClick={() => {
-                          open()
-                        }}
-                      >
-                        Save Preset
-                      </Button>
-                    )}
-                  </div>
-                  {chartData.datasets.map((item) => (
-                    <Fragment key={item.label}>
-                      <ChartDataCard
-                        item={item}
-                        unit={getUnit(
-                          item.label.split('/')[0],
-                          item.label.split('/')[1],
-                        )}
-                        messageMeans={messageMeans}
-                        colorInputSwatch={colorInputSwatch}
-                        changeColorFunc={changeColor}
-                        removeDatasetFunc={removeDataset}
-                      />
-                    </Fragment>
-                  ))}
-                </div>
-                <SavePresetModal
-                  opened={opened}
-                  close={close}
-                  onSave={handleSaveCustomPreset}
-                />
+              <div className='grid grid-cols-5 gap-4 pt-4'>
+                {chartData.datasets.map((item) => (
+                  <Fragment key={item.label}>
+                    <ChartDataCard
+                      item={item}
+                      unit={getUnit(
+                        item.label.split('/')[0],
+                        item.label.split('/')[1],
+                      )}
+                      messageMeans={messageMeans}
+                      colorInputSwatch={colorInputSwatch}
+                      changeColorFunc={changeColor}
+                      removeDatasetFunc={removeDataset}
+                    />
+                  </Fragment>
+                ))}
               </div>
+
+              <SavePresetModal
+                opened={opened}
+                close={close}
+                onSave={handleSaveCustomPreset}
+              />
             </div>
           </div>
         </>

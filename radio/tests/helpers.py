@@ -97,6 +97,28 @@ class ParamRefreshTimeout:
             )
 
 
+class NoAcknowledgementMessage:
+    """Context manager that replaces the mavlink recv_match function in drone.master with a function that returns False
+    causing no acknowledgement messages to be received when used in the MotorTestController tests
+    """
+
+    @staticmethod
+    def recv_msg_false_value(
+        condition=None, type=None, blocking=False, timeout=None
+    ) -> bool:
+        return False
+
+    def __enter__(self) -> None:
+        if droneStatus.drone is not None:
+            self.old_recv = droneStatus.drone.master.recv_match
+            droneStatus.drone.master.recv_match = (
+                NoAcknowledgementMessage.recv_msg_false_value
+            )
+
+    def __exit__(self, type, value, traceback) -> None:
+        if droneStatus.drone is not None:
+            droneStatus.drone.master.recv_match = self.old_recv
+
 class RecvMsgReturnsFalse:
     @staticmethod
     def recv_match_false(
@@ -113,7 +135,6 @@ class RecvMsgReturnsFalse:
         if droneStatus.drone is not None:
             droneStatus.drone.master.recv_match = self.old_recv
 
-
 class SetAircraftType:
     def __init__(self, aircraftType: int):
         self.aircraftType = aircraftType
@@ -126,7 +147,6 @@ class SetAircraftType:
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
             droneStatus.drone.aircraft_type = self.old_aircraftType
-
 
 def send_and_recieve(endpoint: str, args: dict | None | str = None) -> dict:
     """Sends a request to the socketio test client and returns the response

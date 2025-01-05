@@ -170,3 +170,17 @@ class FlightModesController:
                 "success": False,
                 "message": "Could not set flight mode, serial exception",
             }
+
+    def setGuidedMode(self) -> Response:
+        """
+        Set the drone's flight mode to Guided mode.
+        Returns:
+            A message to show if the drone recieved the message and succesfully set the new mode
+        """
+
+        mode = mavutil.mavlink.COPTER_MODE_GUIDED
+
+        if self.drone.aircraft_type == 1:
+            mode = mavutil.mavlink.PLANE_MODE_GUIDED
+
+        return self.setCurrentFlightMode(mode)

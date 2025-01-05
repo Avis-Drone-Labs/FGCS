@@ -78,7 +78,15 @@ export default function Navbar({ currentPage }) {
     defaultValue: 0,
   })
 
-  const [connectionType, setConnectionType] = useState('serial')
+  const ConnectionType = {
+    Serial: 'serial',
+    Network: 'network',
+  }
+
+  const [connectionType, setConnectionType] = useLocalStorage({
+    key: 'connectionType',
+    defaultValue: ConnectionType.Serial,
+  })
 
   // Com Ports
   const [comPorts, setComPorts] = useState([])
@@ -86,15 +94,15 @@ export default function Navbar({ currentPage }) {
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
 
   // Network Connection
-  const [networkType, setNetworkType] = useSessionStorage({
+  const [networkType, setNetworkType] = useLocalStorage({
     key: 'networkType',
     defaultValue: 'tcp',
   })
-  const [ip, setIp] = useSessionStorage({
+  const [ip, setIp] = useLocalStorage({
     key: 'ip',
     defaultValue: '127.0.0.1',
   })
-  const [port, setPort] = useSessionStorage({
+  const [port, setPort] = useLocalStorage({
     key: 'port',
     defaultValue: '5760',
   })
@@ -192,14 +200,14 @@ export default function Navbar({ currentPage }) {
   }, [])
 
   function connectToDrone(type) {
-    if (type === 'serial') {
+    if (type === ConnectionType.Serial) {
       socket.emit('connect_to_drone', {
         port: selectedComPort,
         baud: parseInt(selectedBaudRate),
         wireless: wireless,
-        connectionType: 'serial',
+        connectionType: type,
       })
-    } else if (type === 'network') {
+    } else if (type === ConnectionType.Network) {
       if (ip === '' || port === '') {
         showErrorNotification('IP Address and Port cannot be empty')
         return
@@ -209,7 +217,7 @@ export default function Navbar({ currentPage }) {
         port: networkString,
         baud: 115200,
         wireless: true,
-        connectionType: 'network',
+        connectionType: type,
       })
     } else {
       return
@@ -246,114 +254,127 @@ export default function Navbar({ currentPage }) {
           },
         }}
       >
-        <Tabs value={connectionType} onChange={setConnectionType}>
-          <Tabs.List grow>
-            <Tabs.Tab value='serial'>Serial Connection</Tabs.Tab>
-            <Tabs.Tab value='network'>Network Connection</Tabs.Tab>
-          </Tabs.List>
-          <Tabs.Panel value='serial' className='py-4'>
-            <LoadingOverlay visible={fetchingComPorts} />
-            <div className='flex flex-col space-y-4'>
-              <Select
-                label='COM Port'
-                description='Select a COM Port from the ones available'
-                placeholder={
-                  comPorts.length ? 'Select a COM port' : 'No COM ports found'
-                }
-                data={comPorts}
-                value={selectedComPort}
-                onChange={setSelectedComPort}
-                rightSectionPointerEvents='all'
-                rightSection={<IconRefresh />}
-                rightSectionProps={{
-                  onClick: getComPorts,
-                  className: 'hover:cursor-pointer hover:bg-transparent/50',
-                }}
-              />
-              <Select
-                label='Baud Rate'
-                description='Select a baud rate for the specified COM Port'
-                data={[
-                  '300',
-                  '1200',
-                  '4800',
-                  '9600',
-                  '19200',
-                  '13400',
-                  '38400',
-                  '57600',
-                  '74880',
-                  '115200',
-                  '230400',
-                  '250000',
-                ]}
-                value={selectedBaudRate}
-                onChange={setSelectedBaudRate}
-              />
-              <div className='flex flex-row gap-2'>
-                <Checkbox
-                  label='Wireless Connection'
-                  checked={wireless}
-                  onChange={(event) => setWireless(event.currentTarget.checked)}
+        <form>
+          <Tabs value={connectionType} onChange={setConnectionType}>
+            <Tabs.List grow>
+              <Tabs.Tab value={ConnectionType.Serial}>
+                Serial Connection
+              </Tabs.Tab>
+              <Tabs.Tab value={ConnectionType.Network}>
+                Network Connection
+              </Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Panel value={ConnectionType.Serial} className='py-4'>
+              <LoadingOverlay visible={fetchingComPorts} />
+              <div className='flex flex-col space-y-4'>
+                <Select
+                  label='COM Port'
+                  description='Select a COM Port from the ones available'
+                  placeholder={
+                    comPorts.length ? 'Select a COM port' : 'No COM ports found'
+                  }
+                  data={comPorts}
+                  value={selectedComPort}
+                  onChange={setSelectedComPort}
+                  rightSectionPointerEvents='all'
+                  rightSection={<IconRefresh />}
+                  rightSectionProps={{
+                    onClick: getComPorts,
+                    className: 'hover:cursor-pointer hover:bg-transparent/50',
+                  }}
                 />
-                <Tooltip label='Wireless connection mode reduces the telemetry data rates to save bandwidth'>
-                  <IconInfoCircle size={20} />
-                </Tooltip>
+                <Select
+                  label='Baud Rate'
+                  description='Select a baud rate for the specified COM Port'
+                  data={[
+                    '300',
+                    '1200',
+                    '4800',
+                    '9600',
+                    '19200',
+                    '13400',
+                    '38400',
+                    '57600',
+                    '74880',
+                    '115200',
+                    '230400',
+                    '250000',
+                  ]}
+                  value={selectedBaudRate}
+                  onChange={setSelectedBaudRate}
+                />
+                <div className='flex flex-row gap-2'>
+                  <Checkbox
+                    label='Wireless Connection'
+                    checked={wireless}
+                    onChange={(event) =>
+                      setWireless(event.currentTarget.checked)
+                    }
+                  />
+                  <Tooltip label='Wireless connection mode reduces the telemetry data rates to save bandwidth'>
+                    <IconInfoCircle size={20} />
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-          </Tabs.Panel>
-          <Tabs.Panel value='network' className='py-4'>
-            <div className='flex flex-col space-y-4'>
-              <SegmentedControl
-                label='Network Connection type'
-                description='Select a network connection type'
-                value={networkType}
-                onChange={setNetworkType}
-                data={[
-                  { value: 'tcp', label: 'TCP' },
-                  { value: 'udp', label: 'UDP' },
-                ]}
-              />
-              <TextInput
-                label='IP Address'
-                description='Enter the IP Address'
-                placeholder='127.0.0.1'
-                value={ip}
-                onChange={(event) => setIp(event.currentTarget.value)}
-              />
-              <TextInput
-                label='Port'
-                description='Enter the port number'
-                placeholder='5760'
-                value={port}
-                onChange={(event) => setPort(event.currentTarget.value)}
-              />
-            </div>
-          </Tabs.Panel>
-        </Tabs>
+            </Tabs.Panel>
+            <Tabs.Panel value={ConnectionType.Network} className='py-4'>
+              <div className='flex flex-col space-y-4'>
+                <SegmentedControl
+                  label='Network Connection type'
+                  description='Select a network connection type'
+                  value={networkType}
+                  onChange={setNetworkType}
+                  data={[
+                    { value: 'tcp', label: 'TCP' },
+                    { value: 'udp', label: 'UDP' },
+                  ]}
+                />
+                <TextInput
+                  label='IP Address'
+                  description='Enter the IP Address'
+                  placeholder='127.0.0.1'
+                  value={ip}
+                  onChange={(event) => setIp(event.currentTarget.value)}
+                  data-autofocus
+                />
+                <TextInput
+                  label='Port'
+                  description='Enter the port number'
+                  placeholder='5760'
+                  value={port}
+                  onChange={(event) => setPort(event.currentTarget.value)}
+                />
+              </div>
+            </Tabs.Panel>
+          </Tabs>
 
-        <Group justify='space-between' className='pt-4'>
-          <Button
-            variant='filled'
-            color={tailwindColors.red[600]}
-            onClick={() => {
-              close()
-              setConnecting(false)
-            }}
-          >
-            Close
-          </Button>
-          <Button
-            variant='filled'
-            color={tailwindColors.green[600]}
-            onClick={() => connectToDrone(connectionType)}
-            data-autofocus
-            disabled={!connectedToSocket || selectedComPort === null}
-            loading={connecting}
-          >
-            Connect
-          </Button>
-        </Group>
+          <Group justify='space-between' className='pt-4'>
+            <Button
+              variant='filled'
+              color={tailwindColors.red[600]}
+              onClick={() => {
+                close()
+                setConnecting(false)
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              variant='filled'
+              type='submit'
+              color={tailwindColors.green[600]}
+              onClick={() => connectToDrone(connectionType)}
+              disabled={
+                !connectedToSocket ||
+                (connectionType == ConnectionType.Serial &&
+                  selectedComPort === null)
+              }
+              loading={connecting}
+            >
+              Connect
+            </Button>
+          </Group>
+        </form>
 
         {connecting && droneConnectionStatusMessage !== null && (
           <p className='text-center mt-4'>{droneConnectionStatusMessage}</p>
@@ -419,9 +440,15 @@ export default function Navbar({ currentPage }) {
         <p>
           {connected && (
             <>
-              {connectionType === 'serial'
-                ? selectedComPort
-                : `${networkType}:${ip}:${port}`}
+              Connected to
+              <p className='inline font-bold'>
+                {
+                  {
+                    [ConnectionType.Serial]: ` ${selectedComPort}`,
+                    [ConnectionType.Network]: ` ${networkType}:${ip}:${port}`,
+                  }[connectionType]
+                }
+              </p>
             </>
           )}
         </p>

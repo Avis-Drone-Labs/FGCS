@@ -8,7 +8,11 @@ import { useEffect, useState } from 'react'
 
 // 3rd part libraries
 import { Button, Modal } from '@mantine/core'
-import { useDisclosure, useSessionStorage } from '@mantine/hooks'
+import {
+  useDisclosure,
+  useLocalStorage,
+  useSessionStorage,
+} from '@mantine/hooks'
 import { Octokit } from 'octokit'
 import semverGt from 'semver/functions/gt'
 
@@ -30,6 +34,10 @@ export default function SingleRunWrapper({ children }) {
   const [outOfDate, setOutOfDate] = useSessionStorage({
     key: 'outOfDate',
     defaultValue: false,
+  })
+
+  const [isUpdateDismissed, setUpdateDismissed] = useLocalStorage({
+    key: 'isUpdateDismissed',
   })
 
   useEffect(() => {
@@ -73,11 +81,20 @@ export default function SingleRunWrapper({ children }) {
     checkIfOutOfDate()
   }, [])
 
+  // Checks there is an update that the user has not already dismissed
   useEffect(() => {
-    if (fgcsOutOfDateInfo !== null) {
+    if (
+      fgcsOutOfDateInfo !== null &&
+      isUpdateDismissed !== `${fgcsOutOfDateInfo?.latestVersion}`
+    ) {
       open()
     }
-  }, [fgcsOutOfDateInfo])
+  }, [fgcsOutOfDateInfo, isUpdateDismissed])
+
+  const closeForever = () => {
+    close()
+    setUpdateDismissed(fgcsOutOfDateInfo?.latestVersion)
+  }
 
   return (
     <>
@@ -103,16 +120,25 @@ export default function SingleRunWrapper({ children }) {
           . Please update FGCS to get the latest features, improvements and bug
           fixes.
         </p>
-        <Button
-          component='a'
-          href='https://github.com/Avis-Drone-Labs/FGCS/releases'
-          target='_blank'
-          className='mt-6'
-          fullWidth
-          color={tailwindColors.blue[600]}
-        >
-          Update
-        </Button>
+        <div className='flex gap-x-2 mt-5'>
+          <Button
+            component='a'
+            onClick={closeForever}
+            fullWidth
+            color={tailwindColors.red[600]}
+          >
+            Skip update
+          </Button>
+          <Button
+            component='a'
+            href='https://github.com/Avis-Drone-Labs/FGCS/releases'
+            target='_blank'
+            fullWidth
+            color={tailwindColors.blue[600]}
+          >
+            Update
+          </Button>
+        </div>
       </Modal>
       {children}
     </>

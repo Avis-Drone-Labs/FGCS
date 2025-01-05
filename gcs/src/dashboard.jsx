@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // 3rd Party Imports
-import { Divider, Tooltip } from '@mantine/core'
+import { Divider } from '@mantine/core'
 import { ResizableBox } from 'react-resizable'
 import {
   useListState,

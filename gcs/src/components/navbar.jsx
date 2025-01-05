@@ -433,7 +433,7 @@ export default function Navbar({ currentPage }) {
         <p>
           {connected && (
             <>
-              Connected to 
+              Connected to
               <p className='inline font-bold'>
                 {
                   {

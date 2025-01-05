@@ -40,14 +40,6 @@ body {
   -webkit-app-region: no-drag;
 }
 
-.accordion {
-  background-color: red !important;
-}
-
-.accordion::hover {
-  background-color: aqua !important;
-}
-
 /* width */
 ::-webkit-scrollbar {
   width: 5px;

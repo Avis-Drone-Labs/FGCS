@@ -5,6 +5,9 @@
 // Base imports
 import { useEffect } from 'react'
 
+// 3rd Party Imports
+import { Notifications } from '@mantine/notifications'
+
 // Helpers and custom component imports
 import { showErrorNotification } from '../helpers/notification'
 import { socket } from '../helpers/socket'
@@ -24,7 +27,8 @@ export default function Layout({ children, currentPage }) {
 
   return (
     <>
-      <Navbar currentPage={currentPage} className="no-drag" />
+      <Navbar currentPage={currentPage} className='no-drag' />
+      <Notifications limit={5} position='bottom-center' />
       {children}
     </>
   )

@@ -137,6 +137,7 @@ def droneConnectStatusCb(msg: Any) -> None:
     """
     socketio.emit("drone_connect_status", {"message": msg})
 
+
 def notConnectedError(action: str | None = None) -> None:
     """
     Send error to the socket indicating that drone connection must be established to complete this action
@@ -168,6 +169,7 @@ def missingParameterError(endpoint: str, params: str | list[str]) -> None:
             + "."
         },
     )
+
 
 def sendMessage(msg: Any) -> None:
     """

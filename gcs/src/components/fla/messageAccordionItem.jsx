@@ -16,7 +16,7 @@ export default function MessageAccordionItem({
 }) {
   return (
     <Accordion.Item value={messageName}>
-      <Accordion.Control className="rounded-md">
+      <Accordion.Control className='rounded-md'>
         <p>{messageName}</p>
         <p className='text-sm italic text-gray-500'>
           {logMessageDescriptions[messageName]}

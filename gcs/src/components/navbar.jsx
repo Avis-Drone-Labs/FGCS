@@ -335,6 +335,7 @@ export default function Navbar({ currentPage }) {
                   placeholder='127.0.0.1'
                   value={ip}
                   onChange={(event) => setIp(event.currentTarget.value)}
+                  data-autofocus
                 />
                 <TextInput
                   label='Port'
@@ -350,7 +351,6 @@ export default function Navbar({ currentPage }) {
           <Group justify='space-between' className='pt-4'>
             <Button
               variant='filled'
-              type='submit'
               color={tailwindColors.red[600]}
               onClick={() => {
                 close()
@@ -361,9 +361,9 @@ export default function Navbar({ currentPage }) {
             </Button>
             <Button
               variant='filled'
+              type='submit'
               color={tailwindColors.green[600]}
               onClick={() => connectToDrone(connectionType)}
-              data-autofocus
               disabled={
                 !connectedToSocket ||
                 (connectionType == ConnectionType.Serial &&

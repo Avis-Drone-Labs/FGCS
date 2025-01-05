@@ -22,35 +22,38 @@ export default function SavePresetModal({ opened, close, onSave }) {
         blur: 3,
       }}
     >
-      {/* Add character limit */}
-      <TextInput
-        label='Preset Name'
-        placeholder='Enter preset name'
-        onChange={(event) => setPresetName(event.currentTarget.value)}
-        required
-        maxLength={30}
-      />
-      <Group justify='space-between' className='pt-4'>
-        <Button
-          variant='filled'
-          color={tailwindColors.red[500]}
-          onClick={() => {
-            setPresetName('')
-            close()
-          }}
-        >
-          Close
-        </Button>
-        <Button
-          variant='filled'
-          color={tailwindColors.green[600]}
-          onClick={() => onSave(presetName.trim())}
+      <form>
+        {/* Add character limit */}
+        <TextInput
+          label='Preset Name'
+          placeholder='Enter preset name'
+          onChange={(event) => setPresetName(event.currentTarget.value)}
+          required
           data-autofocus
-          disabled={!presetName.trim()}
-        >
-          Save
-        </Button>
-      </Group>
+          maxLength={30}
+        />
+        <Group justify='space-between' className='pt-4'>
+          <Button
+            variant='filled'
+            color={tailwindColors.red[500]}
+            onClick={() => {
+              setPresetName('')
+              close()
+            }}
+          >
+            Close
+          </Button>
+          <Button
+            variant='filled'
+            type='submit'
+            color={tailwindColors.green[600]}
+            onClick={() => onSave(presetName.trim())}
+            disabled={!presetName.trim()}
+          >
+            Save
+          </Button>
+        </Group>
+      </form>
     </Modal>
   )
 }

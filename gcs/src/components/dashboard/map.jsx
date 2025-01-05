@@ -507,7 +507,7 @@ export default function MapSection({
         )}
 
         <Modal opened={opened} onClose={close} title='Enter altitude' centered>
-          <div className='flex flex-col space-y-2'>
+          <form className='flex flex-col space-y-2'>
             <NumberInput
               placeholder='Altitude (m)'
               value={repositionAltitude}
@@ -519,6 +519,7 @@ export default function MapSection({
             />
             <Button
               fullWidth
+              type='submit'
               onClick={() => {
                 reposition()
                 close()
@@ -526,7 +527,7 @@ export default function MapSection({
             >
               Reposition
             </Button>
-          </div>
+          </form>
         </Modal>
 
         {clicked && (

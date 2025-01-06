@@ -40,14 +40,14 @@ class MotorTestController:
         """
         # self.drone.logger.info(f"Testing drone values: {data}")
         throttle = data.get("throttle", -1)
-        if not (0 <= throttle <= 100):
+        if throttle is None or (not (0 <= throttle <= 100)):
             self.drone.logger.error(
                 f"Invalid value for motor test throttle, got {throttle}"
             )
             return 0, 0, "Invalid value for throttle"
 
         duration = data.get("duration", -1)
-        if duration < 0:
+        if duration is None or duration < 0:
             self.drone.logger.error(
                 f"Invalid value for motor test duration, got {duration}"
             )
@@ -94,6 +94,8 @@ class MotorTestController:
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
+            self.drone.is_listening = True
+
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 self.drone.logger.info(f"Motor test started for motor {motor_instance}")
                 return {
@@ -109,6 +111,8 @@ class MotorTestController:
                     "message": f"Motor test for motor {motor_letter} not started",
                 }
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+
             self.drone.logger.error(
                 f"Motor test for motor {motor_instance} not started, serial exception"
             )
@@ -153,6 +157,8 @@ class MotorTestController:
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
+            self.drone.is_listening = True
+
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 self.drone.logger.info("Motor sequence test started")
                 return {"success": True, "message": "Motor sequence test started"}
@@ -160,6 +166,8 @@ class MotorTestController:
                 self.drone.logger.error("Motor sequence test not started")
                 return {"success": False, "message": "Motor sequence test not started"}
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+
             self.drone.logger.error("Motor sequence test not started, serial exception")
             return {
                 "success": False,
@@ -215,11 +223,15 @@ class MotorTestController:
                 if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                     successful_responses += 1
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+
             self.drone.logger.error("All motor test not started, serial exception")
             return {
                 "success": False,
                 "message": "All motor test not started, serial exception",
             }
+
+        self.drone.is_listening = True
 
         # Return data based on the number of successful command acknowledgements
         if successful_responses == num_motors:
@@ -233,7 +245,7 @@ class MotorTestController:
                 "success": False,
                 "message": f"All motor test successfully started {successful_responses} / {num_motors} motors",
             }
-        else:
+        else:  # pragma: no cover
             # We should never reach this (since we should only ever have successful_responses <= num_motors)
             self.drone.logger.info(
                 f"All motor test potentially started, but received {successful_responses} responses with {num_motors} motors"

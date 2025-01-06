@@ -14,6 +14,7 @@ import { IconClock, IconNetwork, IconNetworkOff } from '@tabler/icons-react'
 
 // Helper imports
 import { socket } from '../../helpers/socket'
+import GetOutsideVisibilityColor from '../../helpers/outsideVisibility'
 
 export function StatusSection({ icon, value, tooltip }) {
   return (
@@ -38,7 +39,10 @@ export default function StatusBar(props) {
 
   return (
     <div className={`${props.className} flex flex-col items-end`}>
-      <div className='flex flex-row space-x-3 p-1' style={{backgroundColor: props.outsideVisibilityColor}}>
+      <div
+        className='flex flex-row space-x-3 p-1'
+        style={{ backgroundColor: GetOutsideVisibilityColor() }}
+      >
         {props.children}
         <StatusSection
           icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
@@ -55,7 +59,10 @@ export default function StatusBar(props) {
           tooltip='Local time'
         />
       </div>
-      <div className='flex flex-row space-x-3 p-1' style={{backgroundColor: props.outsideVisibilityColor}}>
+      <div
+        className='flex flex-row space-x-3 p-1'
+        style={{ backgroundColor: GetOutsideVisibilityColor() }}
+      >
         <p className='text-sm text-blue-200'>Current heading</p>
         <p className='text-sm text-red-200'>Desired heading</p>
       </div>

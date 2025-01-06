@@ -76,7 +76,15 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, events, flightModes, graphConfig, clearFilters, canSavePreset, openPresetModal }) {
+export default function Graph({
+  data,
+  events,
+  flightModes,
+  graphConfig,
+  clearFilters,
+  canSavePreset,
+  openPresetModal,
+}) {
   const [config, setConfig] = useState({ ...graphConfig })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
@@ -339,7 +347,11 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label='Zoom reset'>
-          <ActionIcon size={32} variant='filled' onClick={chartRef?.current?.resetZoom}>
+          <ActionIcon
+            size={32}
+            variant='filled'
+            onClick={chartRef?.current?.resetZoom}
+          >
             <IconZoomReset size={18} />
           </ActionIcon>
         </MantineTooltip>
@@ -362,9 +374,9 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
             )}
           </ActionIcon>
         </MantineTooltip>
-        <MantineTooltip label="Clear Filters">
+        <MantineTooltip label='Clear Filters'>
           <Button
-            className="min-h-8 max-h-8"
+            className='min-h-8 max-h-8'
             color={tailwindColors.red[500]}
             onClick={clearFilters}
           >
@@ -372,9 +384,9 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
           </Button>
         </MantineTooltip>
         {canSavePreset && (
-          <MantineTooltip label="Save Preset">
+          <MantineTooltip label='Save Preset'>
             <Button
-              className="min-h-8 max-h-8"
+              className='min-h-8 max-h-8'
               color={tailwindColors.green[600]}
               onClick={() => {
                 openPresetModal()

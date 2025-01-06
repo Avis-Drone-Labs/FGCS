@@ -291,7 +291,7 @@ export function usePresetCategories() {
     // Check in standard presets
     const standardCategories = presetCategories[logType] || []
     const reducedFilters = Object.fromEntries(
-      Object.entries(preset.filters).filter(([_, value]) => value.length > 0)
+      Object.entries(preset.filters).filter(([, value]) => value.length > 0)
     );
     for (const category of standardCategories) {
       // Make sure category.filters exists and is an array

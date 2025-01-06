@@ -556,24 +556,25 @@ export default function FLA() {
   }
 
   function handleDeleteCustomPreset(presetName) {
-    // are there filters on screen?
+    // Are there filters on screen?
     const hasSelectedFilters = Object.values(messageFilters).some((category) =>
       Object.values(category).some((isSelected) => isSelected),
     )
 
-    if(hasSelectedFilters){
-      // if so, check if they match the filters of the preset to be deleted
+    // If so, check if they match the filters of the preset to be deleted
+    if (hasSelectedFilters) {
       const filtersOfPresetToBeDeleted = presetCategories['custom_' + logType][0].filters.find(filter => filter.name === presetName).filters
-      const currentFilters = Object.entries(messageFilters).reduce(
-        (acc, [category, fields]) => {
-          acc[category] = Object.keys(fields).filter((field) => fields[field])
-          return acc
+      
+      const activeMessageFields = Object.entries(messageFilters).reduce(
+        (filteredCategories, [categoryName, fields]) => {
+          filteredCategories[categoryName] = Object.keys(fields).filter((fieldName) => fields[fieldName])
+          return filteredCategories
         },
         {},
       )
-      const matchesSelectedPresets = _.isEqual(filtersOfPresetToBeDeleted, currentFilters)
-      // if so, turn on the save preset button
-      if(matchesSelectedPresets){
+      const matchesSelectedPresets = _.isEqual(filtersOfPresetToBeDeleted, activeMessageFields)
+
+      if (matchesSelectedPresets) {
         updateCanSavePreset(true)
       }
     }

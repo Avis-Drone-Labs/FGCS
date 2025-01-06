@@ -281,7 +281,7 @@ export function usePresetCategories() {
     const customPreset = presetCategories[customCategoryKey][0].filters.find(
       (existingPreset) =>
         existingPreset.name === preset.name ||
-      _.isEqual(existingPreset.filters, preset.filters),
+        _.isEqual(existingPreset.filters, preset.filters),
     )
 
     if (customPreset) {

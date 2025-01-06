@@ -41,7 +41,7 @@ export default function TabsSection({
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
-  const tabPadding = "pt-6"
+  const tabPadding = 'pt-6'
 
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: 'takeoffAltitude',
@@ -190,9 +190,12 @@ export default function TabsSection({
                         label: getFlightModeMap()[key],
                       }
                     })}
-                    className="grow"
+                    className='grow'
                   />
-                  <Button onClick={() => setNewFlightMode(newFlightModeNumber)} className="grow">
+                  <Button
+                    onClick={() => setNewFlightMode(newFlightModeNumber)}
+                    className='grow'
+                  >
                     Set flight mode
                   </Button>
                 </div>
@@ -204,7 +207,7 @@ export default function TabsSection({
                   onClick={() => {
                     armDisarm(!getIsArmed())
                   }}
-                  className="grow"
+                  className='grow'
                 >
                   {getIsArmed() ? 'Disarm' : 'Arm'}
                 </Button>
@@ -212,7 +215,7 @@ export default function TabsSection({
                 {/* Take off button with popover */}
                 <Popover width={200} position='bottom' withArrow shadow='md'>
                   <Popover.Target>
-                    <Button className="grow">Takeoff</Button>
+                    <Button className='grow'>Takeoff</Button>
                   </Popover.Target>
                   <Popover.Dropdown className='flex flex-col space-y-2'>
                     <NumberInput
@@ -239,7 +242,7 @@ export default function TabsSection({
                   onClick={() => {
                     land()
                   }}
-                  className="grow"
+                  className='grow'
                 >
                   Land
                 </Button>
@@ -263,25 +266,25 @@ export default function TabsSection({
               {/* Mission Information Text */}
               <div className='text-lg'>
                 <p>
-                  <span className="font-bold">Mission state:{' '}</span>
+                  <span className='font-bold'>Mission state: </span>
                   {MISSION_STATES[currentMissionData.mission_state]}
                 </p>
                 <p>
-                  <span className="font-bold">Waypoint: </span>
+                  <span className='font-bold'>Waypoint: </span>
                   {currentMissionData.seq}/{currentMissionData.total}
                 </p>
                 <p>
-                  <span className="font-bold">Distance to WP:{' '}</span>
-                    {(navControllerOutputData.wp_dist
-                      ? navControllerOutputData.wp_dist
-                      : 0
-                    ).toFixed(2)}
-                    m
+                  <span className='font-bold'>Distance to WP: </span>
+                  {(navControllerOutputData.wp_dist
+                    ? navControllerOutputData.wp_dist
+                    : 0
+                  ).toFixed(2)}
+                  m
                 </p>
               </div>
 
               {/* Auto mode, start, and restart buttons */}
-              <div className="flex flex-wrap flex-cols gap-2">
+              <div className='flex flex-wrap flex-cols gap-2'>
                 <Button
                   onClick={() => {
                     setNewFlightMode(
@@ -292,25 +295,25 @@ export default function TabsSection({
                       ),
                     )
                   }}
-                  className="grow"
+                  className='grow'
                 >
                   Auto mode
                 </Button>
-                
+
                 <Button
                   onClick={() => {
                     controlMission('start')
                   }}
-                  className="grow"
+                  className='grow'
                 >
                   Start mission
                 </Button>
-            
+
                 <Button
                   onClick={() => {
                     controlMission('restart')
                   }}
-                  className="grow"
+                  className='grow'
                 >
                   Restart mission
                 </Button>
@@ -323,7 +326,7 @@ export default function TabsSection({
       <Tabs.Panel value='camera'>
         <div className={`flex flex-col gap-4 text-xl ${tabPadding}`}>
           <Select
-            placeholder="Select camera input"
+            placeholder='Select camera input'
             data={devices.map((device) => {
               return { value: device.deviceId, label: device.label }
             })}

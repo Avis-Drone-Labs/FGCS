@@ -4,23 +4,23 @@
 */
 
 // 3rd Party Imports
-import { notifications } from '@mantine/notifications'
+import { notifications } from "@mantine/notifications"
 
 // Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config.js'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const notificationTheme = {
   style: {
     backgroundColor: tailwindColors.falcongrey[800],
   },
-  radius: 'md',
+  radius: "md",
 }
 
 export function showErrorNotification(message) {
   notifications.show({
-    title: 'Error',
+    title: "Error",
     message: message,
     color: tailwindColors.red[600],
     ...notificationTheme,
@@ -29,7 +29,7 @@ export function showErrorNotification(message) {
 
 export function showSuccessNotification(message) {
   notifications.show({
-    title: 'Success',
+    title: "Success",
     message: message,
     color: tailwindColors.green[600],
     ...notificationTheme,

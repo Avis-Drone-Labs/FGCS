@@ -3,16 +3,16 @@
 */
 
 // 3rd Party imports
-import { createTheme } from '@mantine/core'
+import { createTheme } from "@mantine/core"
 
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config.js'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../tailwind.config.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export const CustomMantineTheme = createTheme({
-  fontFamily: 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;',
-  lineHeights: '1.5',
+  fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;",
+  lineHeights: "1.5",
   colors: {
     dark: [
       tailwindColors.falcongrey[100],

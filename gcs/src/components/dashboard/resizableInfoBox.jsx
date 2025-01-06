@@ -5,15 +5,15 @@
 */
 
 // 3rd Party Imports
-import { ResizableBox } from 'react-resizable'
+import { ResizableBox } from "react-resizable"
 
 // Helpers
-import GetOutsideVisibilityColor from '../../helpers/outsideVisibility'
+import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 
 export default function ResizableInfoBox(props) {
   return (
     <div
-      className='absolute top-0 left-0 h-full z-10'
+      className="absolute top-0 left-0 h-full z-10"
       style={{ backgroundColor: GetOutsideVisibilityColor() }}
     >
       <ResizableBox
@@ -21,10 +21,10 @@ export default function ResizableInfoBox(props) {
         width={props.telemetryPanelSize.width}
         minConstraints={[275, Infinity]}
         maxConstraints={[props.viewportWidth - 200, Infinity]}
-        resizeHandles={['e']}
-        handle={(_, ref) => <span className={`custom-handle-e`} ref={ref} />}
+        resizeHandles={["e"]}
+        handle={(_, ref) => <span className={"custom-handle-e"} ref={ref} />}
         handleSize={[32, 32]}
-        axis='x'
+        axis="x"
         onResize={(_, { size }) => {
           props.setTelemetryPanelSize({
             width: size.width,
@@ -32,9 +32,9 @@ export default function ResizableInfoBox(props) {
           })
           props.setTelemetryFontSize(props.calcBigTextFontSize())
         }}
-        className='h-full'
+        className="h-full"
       >
-        <div className='@container flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto'>
+        <div className="@container flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto">
           {props.children}
         </div>
       </ResizableBox>

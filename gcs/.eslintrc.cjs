@@ -9,7 +9,7 @@ module.exports = {
   ],
   ignorePatterns: ['dist', '.eslintrc.cjs'],
   parser: '@typescript-eslint/parser',
-  plugins: ['react-refresh'],
+  plugins: ['react-refresh', '@stylistic/js'],
   rules: {
     'react-refresh/only-export-components': [
       'warn',
@@ -19,5 +19,7 @@ module.exports = {
     'react/prop-types': 'off',
     'react-hooks/exhaustive-deps': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
+    '@stylistic/js/quotes': ["error", "double"],
+    '@stylistic/js/jsx-quotes': ["error", "prefer-double"]
   },
 }

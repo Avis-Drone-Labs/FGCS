@@ -4,8 +4,8 @@
 */
 
 // Custom Components
-import { AttitudeIndicator, HeadingIndicator } from './indicator'
-import TelemetryValueDisplay from './telemetryValueDisplay'
+import { AttitudeIndicator, HeadingIndicator } from "./indicator"
+import TelemetryValueDisplay from "./telemetryValueDisplay"
 
 export default function TelemetrySection({
   getIsArmed,
@@ -25,40 +25,40 @@ export default function TelemetrySection({
   return (
     <div>
       {/* Information above indicators */}
-      <div className='flex flex-col items-center space-y-2'>
+      <div className="flex flex-col items-center space-y-2">
         {getIsArmed() ? (
-          <p className='font-bold text-falconred'>ARMED</p>
+          <p className="font-bold text-falconred">ARMED</p>
         ) : (
           <>
-            <p className='font-bold'>DISARMED</p>
+            <p className="font-bold">DISARMED</p>
             {prearmEnabled() ? (
-              <p className='text-green-500'>Prearm: Enabled</p>
+              <p className="text-green-500">Prearm: Enabled</p>
             ) : (
-              <p className='font-bold text-falconred'>Prearm: Disabled</p>
+              <p className="font-bold text-falconred">Prearm: Disabled</p>
             )}
           </>
         )}
-        <div className='flex flex-row space-x-6'>
+        <div className="flex flex-row space-x-6">
           <p>{systemStatus}</p>
           <p>{getFlightMode()}</p>
         </div>
       </div>
 
       {/* Indicators */}
-      <div className='flex items-center flex-col justify-center justify-evenly @xl:flex-row'>
+      <div className="flex items-center flex-col justify-center justify-evenly @xl:flex-row">
         {/* Attitude Indicator */}
         <div
-          className='flex flex-row items-center justify-center'
+          className="flex flex-row items-center justify-center"
           style={{
             paddingTop: `${calcIndicatorPadding()}px`,
             paddingBottom: `${calcIndicatorPadding()}px`,
           }}
         >
-          <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+          <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
             {/* AS and GS values */}
-            <p className='text-sm text-center'>ms&#8315;&#185;</p>
+            <p className="text-sm text-center">ms&#8315;&#185;</p>
             <TelemetryValueDisplay
-              title='AS'
+              title="AS"
               value={(telemetryData.airspeed
                 ? telemetryData.airspeed
                 : 0
@@ -66,7 +66,7 @@ export default function TelemetrySection({
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay
-              title='GS'
+              title="GS"
               value={(telemetryData.groundspeed
                 ? telemetryData.groundspeed
                 : 0
@@ -83,15 +83,15 @@ export default function TelemetrySection({
           />
 
           {/* AMSL and AREL values */}
-          <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
-            <p className='text-sm text-center'>m</p>
+          <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
+            <p className="text-sm text-center">m</p>
             <TelemetryValueDisplay
-              title='AMSL'
+              title="AMSL"
               value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay
-              title='AREL'
+              title="AREL"
               value={(gpsData.relative_alt
                 ? gpsData.relative_alt / 1000
                 : 0
@@ -103,22 +103,22 @@ export default function TelemetrySection({
 
         {/* Heading Indicator */}
         <div
-          className='flex flex-row items-center justify-center'
+          className="flex flex-row items-center justify-center"
           style={{
             paddingTop: `${calcIndicatorPadding()}px`,
             paddingBottom: `${calcIndicatorPadding()}px`,
           }}
         >
-          <div className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'>
+          <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
             {/* HDG and WP values */}
-            <p className='text-sm text-center'>deg &#176;</p>
+            <p className="text-sm text-center">deg &#176;</p>
             <TelemetryValueDisplay
-              title='HDG'
+              title="HDG"
               value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay
-              title='YAW'
+              title="YAW"
               value={(attitudeData.yaw
                 ? attitudeData.yaw * (180 / Math.PI)
                 : 0
@@ -135,12 +135,12 @@ export default function TelemetrySection({
 
           {/* YAW and HOME values */}
           <div
-            className='flex flex-col items-center justify-center space-y-4 text-center min-w-14'
+            className="flex flex-col items-center justify-center space-y-4 text-center min-w-14"
             ref={sideBarRef}
           >
-            <p className='text-sm'>m</p>
+            <p className="text-sm">m</p>
             <TelemetryValueDisplay
-              title='WP'
+              title="WP"
               value={(navControllerOutputData.wp_dist
                 ? navControllerOutputData.wp_dist
                 : 0
@@ -148,7 +148,7 @@ export default function TelemetrySection({
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay
-              title='HOME'
+              title="HOME"
               value={(0).toFixed(2)}
               fs={telemetryFontSize}
             />
@@ -157,25 +157,25 @@ export default function TelemetrySection({
       </div>
 
       {/* Batter information */}
-      <div className='flex flex-col items-center'>
+      <div className="flex flex-col items-center">
         <p>BATTERY</p>
 
-        <div className='flex flex-row space-x-4'>
-          <p className='font-bold text-xl'>
+        <div className="flex flex-row space-x-4">
+          <p className="font-bold text-xl">
             {(batteryData.voltages
               ? batteryData.voltages[0] / 1000
               : 0
             ).toFixed(2)}
             V
           </p>
-          <p className='font-bold text-xl'>
+          <p className="font-bold text-xl">
             {(batteryData.current_battery
               ? batteryData.current_battery / 100
               : 0
             ).toFixed(2)}
             A
           </p>
-          <p className='font-bold text-xl'>
+          <p className="font-bold text-xl">
             {batteryData.battery_remaining ? batteryData.battery_remaining : 0}%
           </p>
         </div>

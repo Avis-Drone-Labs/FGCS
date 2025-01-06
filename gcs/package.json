@@ -31,6 +31,7 @@
     "@mantine/notifications": "^7.4.0",
     "@reduxjs/toolkit": "^2.2.7",
     "@robloche/chartjs-plugin-streaming": "^3.1.0",
+    "@stylistic/eslint-plugin-js": "^2.12.1",
     "@tabler/icons-react": "^2.44.0",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tremor/react": "^3.12.1",

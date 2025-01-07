@@ -4,10 +4,10 @@
 */
 
 // 3rd Party Imports
-import { Accordion, Checkbox } from '@mantine/core'
+import { Accordion, Checkbox } from "@mantine/core"
 
 // Helper imports
-import { logMessageDescriptions } from '../../helpers/logMessageDescriptions.js'
+import { logMessageDescriptions } from "../../helpers/logMessageDescriptions.js"
 
 export default function MessageAccordionItem({
   messageName,
@@ -16,14 +16,14 @@ export default function MessageAccordionItem({
 }) {
   return (
     <Accordion.Item value={messageName}>
-      <Accordion.Control className='rounded-md'>
+      <Accordion.Control className="rounded-md">
         <p>{messageName}</p>
-        <p className='text-sm italic text-gray-500'>
+        <p className="text-sm italic text-gray-500">
           {logMessageDescriptions[messageName]}
         </p>
       </Accordion.Control>
       <Accordion.Panel>
-        <div className='flex flex-col gap-1'>
+        <div className="flex flex-col gap-1">
           {Object.keys(messageFilters[messageName]).map((fieldName, idx) => {
             return (
               <Checkbox

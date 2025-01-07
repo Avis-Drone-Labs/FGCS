@@ -7,39 +7,39 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import { Button, Divider, Modal, NumberInput, Tooltip } from '@mantine/core'
+import { Button, Divider, Modal, NumberInput, Tooltip } from "@mantine/core"
 import {
   useClipboard,
   useDisclosure,
   useLocalStorage,
   useSessionStorage,
-} from '@mantine/hooks'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
+} from "@mantine/hooks"
+import "maplibre-gl/dist/maplibre-gl.css"
+import Map, { Layer, Marker, Source } from "react-map-gl/maplibre"
 
 // Assets
-import arrow from '../../assets/arrow.svg'
+import arrow from "../../assets/arrow.svg"
 
 // Helper scripts
-import { FILTER_MISSION_ITEM_COMMANDS_LIST } from '../../helpers/mavlinkConstants'
+import { FILTER_MISSION_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showNotification,
   showSuccessNotification,
-} from '../../helpers/notification'
-import { socket } from '../../helpers/socket'
+} from "../../helpers/notification"
+import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
-import ContextMenuItem from './contextMenuItem'
-import MissionItems from './missionItems'
-import useContextMenu from './useContextMenu'
+import ContextMenuItem from "./contextMenuItem"
+import MissionItems from "./missionItems"
+import useContextMenu from "./useContextMenu"
 
 // Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Convert coordinates from mavlink into gps coordinates
@@ -96,14 +96,14 @@ export default function MapSection({
   getFlightMode,
 }) {
   const [connected] = useLocalStorage({
-    key: 'connectedToDrone',
+    key: "connectedToDrone",
     defaultValue: false,
   })
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const [initialViewState, setInitialViewState] = useLocalStorage({
-    key: 'initialViewState',
+    key: "initialViewState",
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
@@ -121,16 +121,16 @@ export default function MapSection({
   const clipboard = useClipboard({ timeout: 500 })
 
   const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
-    key: 'repositionAltitude',
+    key: "repositionAltitude",
     defaultValue: 30,
   })
   const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
-    key: 'guidedModePinData',
+    key: "guidedModePinData",
     defaultValue: null,
   })
 
   useEffect(() => {
-    socket.on('nav_reposition_result', (msg) => {
+    socket.on("nav_reposition_result", (msg) => {
       if (!msg.success) {
         showErrorNotification(msg.message)
       } else {
@@ -140,7 +140,7 @@ export default function MapSection({
     })
 
     return () => {
-      socket.off('nav_reposition_result')
+      socket.off("nav_reposition_result")
     }
   }, [connected])
 
@@ -197,7 +197,7 @@ export default function MapSection({
   }, [contextMenuPositionCalculationInfo])
 
   function reposition() {
-    socket.emit('reposition', {
+    socket.emit("reposition", {
       lat: clickedGpsCoords.lat,
       lon: clickedGpsCoords.lng,
       alt: repositionAltitude,
@@ -205,7 +205,7 @@ export default function MapSection({
   }
 
   return (
-    <div className='w-initial h-full' id='map'>
+    <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
         mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
@@ -235,7 +235,7 @@ export default function MapSection({
             },
           })
         }}
-        cursor='default'
+        cursor="default"
       >
         {/* Show marker on map if the position is set */}
         {position !== null &&
@@ -249,18 +249,18 @@ export default function MapSection({
               >
                 <img
                   src={arrow}
-                  className='w-6 h-6'
+                  className="w-6 h-6"
                   style={{ transform: `rotate(${heading ?? 0}deg)` }}
                 />
               </Marker>
 
               <Source
-                type='geojson'
+                type="geojson"
                 data={{
-                  type: 'Feature',
+                  type: "Feature",
                   properties: {},
                   geometry: {
-                    type: 'LineString',
+                    type: "LineString",
                     coordinates: [
                       [position.longitude, position.latitude],
                       getPointAtDistance(
@@ -275,25 +275,25 @@ export default function MapSection({
               >
                 <Layer
                   {...{
-                    type: 'line',
+                    type: "line",
                     layout: {
-                      'line-join': 'round',
-                      'line-cap': 'round',
+                      "line-join": "round",
+                      "line-cap": "round",
                     },
                     paint: {
-                      'line-color': tailwindColors.red[200],
-                      'line-width': 3,
+                      "line-color": tailwindColors.red[200],
+                      "line-width": 3,
                     },
                   }}
                 />
               </Source>
               <Source
-                type='geojson'
+                type="geojson"
                 data={{
-                  type: 'Feature',
+                  type: "Feature",
                   properties: {},
                   geometry: {
-                    type: 'LineString',
+                    type: "LineString",
                     coordinates: [
                       [position.longitude, position.latitude],
                       getPointAtDistance(
@@ -308,14 +308,14 @@ export default function MapSection({
               >
                 <Layer
                   {...{
-                    type: 'line',
+                    type: "line",
                     layout: {
-                      'line-join': 'round',
-                      'line-cap': 'round',
+                      "line-join": "round",
+                      "line-cap": "round",
                     },
                     paint: {
-                      'line-color': tailwindColors.blue[200],
-                      'line-width': 3,
+                      "line-color": tailwindColors.blue[200],
+                      "line-width": 3,
                     },
                   }}
                 />
@@ -331,31 +331,31 @@ export default function MapSection({
               latitude={intToCoord(homePosition.lat)}
             >
               <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 48'
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 48"
                 fill={tailwindColors.green[400]}
-                stroke='currentColor'
-                strokeWidth='1'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
               >
-                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-                <text textAnchor='middle' x='12' y='14' className='text-black'>
+                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
+                <text textAnchor="middle" x="12" y="14" className="text-black">
                   H
                 </text>
               </svg>
             </Marker>
             {filteredMissionItems.length > 0 && (
               <Source
-                type='geojson'
+                type="geojson"
                 data={{
-                  type: 'Feature',
+                  type: "Feature",
                   properties: {},
                   geometry: {
-                    type: 'LineString',
+                    type: "LineString",
                     coordinates: [
                       [
                         intToCoord(homePosition.lon),
@@ -371,14 +371,14 @@ export default function MapSection({
               >
                 <Layer
                   {...{
-                    type: 'line',
+                    type: "line",
                     layout: {
-                      'line-join': 'round',
-                      'line-cap': 'round',
+                      "line-join": "round",
+                      "line-cap": "round",
                     },
                     paint: {
-                      'line-color': tailwindColors.yellow[400],
-                      'line-width': 1,
+                      "line-color": tailwindColors.yellow[400],
+                      "line-width": 1,
                     },
                   }}
                 />
@@ -398,18 +398,18 @@ export default function MapSection({
               latitude={intToCoord(item.x)}
             >
               <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 48'
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 48"
                 fill={tailwindColors.blue[400]}
-                stroke='currentColor'
-                strokeWidth='1'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
               >
-                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
               </svg>
             </Marker>
           )
@@ -418,12 +418,12 @@ export default function MapSection({
         {/* Show geo-fence outlines */}
         {missionItems.fence_items.length > 0 && (
           <Source
-            type='geojson'
+            type="geojson"
             data={{
-              type: 'Feature',
+              type: "Feature",
               properties: {},
               geometry: {
-                type: 'LineString',
+                type: "LineString",
                 coordinates: [
                   ...missionItems.fence_items.map((item) => [
                     intToCoord(item.y),
@@ -439,15 +439,15 @@ export default function MapSection({
           >
             <Layer
               {...{
-                type: 'line',
+                type: "line",
                 layout: {
-                  'line-join': 'round',
-                  'line-cap': 'round',
+                  "line-join": "round",
+                  "line-cap": "round",
                 },
                 paint: {
-                  'line-color': tailwindColors.blue[200],
-                  'line-width': 1,
-                  'line-dasharray': [2, 2],
+                  "line-color": tailwindColors.blue[200],
+                  "line-width": 1,
+                  "line-dasharray": [2, 2],
                 },
               }}
             />
@@ -464,52 +464,52 @@ export default function MapSection({
             >
               <Tooltip label={`Alt: ${item.z}`}>
                 <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 48'
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 48"
                   fill={tailwindColors.purple[400]}
-                  stroke='currentColor'
-                  strokeWidth='1'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
                 >
-                  <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+                  <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
                 </svg>
               </Tooltip>
             </Marker>
           )
         })}
 
-        {getFlightMode() === 'Guided' && guidedModePinData !== null && (
+        {getFlightMode() === "Guided" && guidedModePinData !== null && (
           <Marker
             longitude={guidedModePinData.lon}
             latitude={guidedModePinData.lat}
           >
             <Tooltip label={`Alt: ${guidedModePinData.alt}`}>
               <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 48'
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 48"
                 fill={tailwindColors.pink[500]}
-                stroke='currentColor'
-                strokeWidth='1'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
               >
-                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
+                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
               </svg>
             </Tooltip>
           </Marker>
         )}
 
-        <Modal opened={opened} onClose={close} title='Enter altitude' centered>
-          <form className='flex flex-col space-y-2'>
+        <Modal opened={opened} onClose={close} title="Enter altitude" centered>
+          <form className="flex flex-col space-y-2">
             <NumberInput
-              placeholder='Altitude (m)'
+              placeholder="Altitude (m)"
               value={repositionAltitude}
               onChange={setRepositionAltitude}
               min={0}
@@ -519,7 +519,7 @@ export default function MapSection({
             />
             <Button
               fullWidth
-              type='submit'
+              type="submit"
               onClick={() => {
                 reposition()
                 close()
@@ -533,18 +533,18 @@ export default function MapSection({
         {clicked && (
           <div
             ref={contextMenuRef}
-            className='absolute bg-falcongrey-700 rounded-md p-1'
+            className="absolute bg-falcongrey-700 rounded-md p-1"
             style={{ top: points.y, left: points.x }}
           >
-            <ContextMenuItem text='Fly to here' onClick={open} />
-            <Divider className='my-1' />
+            <ContextMenuItem text="Fly to here" onClick={open} />
+            <Divider className="my-1" />
             <ContextMenuItem
-              text='Copy coords'
+              text="Copy coords"
               onClick={() => {
                 clipboard.copy(
                   `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
                 )
-                showNotification('Copied to clipboard')
+                showNotification("Copied to clipboard")
               }}
             />
           </div>

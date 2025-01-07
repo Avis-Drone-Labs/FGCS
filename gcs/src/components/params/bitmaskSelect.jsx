@@ -3,11 +3,11 @@
 */
 
 // Base imports
-import { useEffect } from 'react'
+import { useEffect } from "react"
 
 // 3rd party imports
-import { useListState } from '@mantine/hooks'
-import { MultiSelect, ScrollArea } from '@mantine/core'
+import { useListState } from "@mantine/hooks"
+import { MultiSelect, ScrollArea } from "@mantine/core"
 
 export default function BitmaskSelect({
   className,
@@ -28,10 +28,10 @@ export default function BitmaskSelect({
     const selectedArray = []
 
     binaryString
-      .split('')
+      .split("")
       .reverse()
       .map((bit, index) => {
-        if (bit === '1') {
+        if (bit === "1") {
           selectedArray.push(`${index}`)
         }
       })

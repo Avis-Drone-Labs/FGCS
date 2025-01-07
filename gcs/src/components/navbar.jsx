@@ -7,8 +7,8 @@
 */
 
 // Base imports
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 
 // Third party imports
 import {
@@ -22,24 +22,24 @@ import {
   Tabs,
   TextInput,
   Tooltip,
-} from '@mantine/core'
+} from "@mantine/core"
 import {
   useDisclosure,
   useInterval,
   useLocalStorage,
   useSessionStorage,
-} from '@mantine/hooks'
-import { IconInfoCircle, IconRefresh } from '@tabler/icons-react'
+} from "@mantine/hooks"
+import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Styling imports
-import { twMerge } from 'tailwind-merge'
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config.js'
+import { twMerge } from "tailwind-merge"
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../tailwind.config.js"
 
 // Helper imports
-import { IconAlertTriangle } from '@tabler/icons-react'
-import { showErrorNotification } from '../helpers/notification.js'
-import { socket } from '../helpers/socket'
+import { IconAlertTriangle } from "@tabler/icons-react"
+import { showErrorNotification } from "../helpers/notification.js"
+import { socket } from "../helpers/socket"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -47,20 +47,20 @@ export default function Navbar({ currentPage }) {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
 
-  const [outOfDate] = useSessionStorage({ key: 'outOfDate' })
+  const [outOfDate] = useSessionStorage({ key: "outOfDate" })
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useLocalStorage({
-    key: 'connectedToDrone',
+    key: "connectedToDrone",
     defaultValue: false,
   })
   const [wireless, setWireless] = useLocalStorage({
-    key: 'wirelessConnection',
+    key: "wirelessConnection",
     defaultValue: true,
   })
   const [connectedToSocket, setConnectedToSocket] = useSessionStorage({
-    key: 'socketConnection',
+    key: "socketConnection",
     defaultValue: false,
   })
   const checkIfConnectedToSocket = useInterval(
@@ -68,23 +68,23 @@ export default function Navbar({ currentPage }) {
     3000,
   )
   const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
-    key: 'baudrate',
-    defaultValue: '9600',
+    key: "baudrate",
+    defaultValue: "9600",
   })
 
   // eslint-disable-next-line no-unused-vars
   const [aircraftType, setAircraftType] = useLocalStorage({
-    key: 'aircraftType',
+    key: "aircraftType",
     defaultValue: 0,
   })
 
   const ConnectionType = {
-    Serial: 'serial',
-    Network: 'network',
+    Serial: "serial",
+    Network: "network",
   }
 
   const [connectionType, setConnectionType] = useLocalStorage({
-    key: 'connectionType',
+    key: "connectionType",
     defaultValue: ConnectionType.Serial,
   })
 
@@ -95,16 +95,16 @@ export default function Navbar({ currentPage }) {
 
   // Network Connection
   const [networkType, setNetworkType] = useLocalStorage({
-    key: 'networkType',
-    defaultValue: 'tcp',
+    key: "networkType",
+    defaultValue: "tcp",
   })
   const [ip, setIp] = useLocalStorage({
-    key: 'ip',
-    defaultValue: '127.0.0.1',
+    key: "ip",
+    defaultValue: "127.0.0.1",
   })
   const [port, setPort] = useLocalStorage({
-    key: 'port',
-    defaultValue: '5760',
+    key: "port",
+    defaultValue: "5760",
   })
 
   const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
@@ -112,7 +112,7 @@ export default function Navbar({ currentPage }) {
 
   function getComPorts() {
     if (!connectedToSocket) return
-    socket.emit('get_com_ports')
+    socket.emit("get_com_ports")
     setFetchingComPorts(true)
   }
 
@@ -121,11 +121,11 @@ export default function Navbar({ currentPage }) {
     checkIfConnectedToSocket.start()
 
     if (selectedComPort === null) {
-      socket.emit('is_connected_to_drone')
+      socket.emit("is_connected_to_drone")
     }
 
     // Flag connected/not connected, if not fetch ports
-    socket.on('is_connected_to_drone', (msg) => {
+    socket.on("is_connected_to_drone", (msg) => {
       if (msg) {
         setConnected(true)
       } else {
@@ -136,13 +136,13 @@ export default function Navbar({ currentPage }) {
     })
 
     // Fetch com ports and list them
-    socket.on('list_com_ports', (msg) => {
+    socket.on("list_com_ports", (msg) => {
       setFetchingComPorts(false)
       setComPorts(msg)
       const possibleComPort = msg.find(
         (port) =>
-          port.toLowerCase().includes('mavlink') ||
-          port.toLowerCase().includes('ardupilot'),
+          port.toLowerCase().includes("mavlink") ||
+          port.toLowerCase().includes("ardupilot"),
       )
       if (possibleComPort !== undefined) {
         setSelectedComPort(possibleComPort)
@@ -152,10 +152,10 @@ export default function Navbar({ currentPage }) {
     })
 
     // Flags that the drone is connected
-    socket.on('connected_to_drone', (data) => {
+    socket.on("connected_to_drone", (data) => {
       setAircraftType(data.aircraft_type)
       if (data.aircraft_type != 1 && data.aircraft_type != 2) {
-        showErrorNotification('Aircraft not of type quadcopter or plane')
+        showErrorNotification("Aircraft not of type quadcopter or plane")
       }
       setConnected(true)
       setConnecting(false)
@@ -163,57 +163,57 @@ export default function Navbar({ currentPage }) {
     })
 
     // Flags that the drone is disconnected
-    socket.on('disconnected_from_drone', () => {
-      console.log('disconnected_from_drone')
+    socket.on("disconnected_from_drone", () => {
+      console.log("disconnected_from_drone")
       setConnected(false)
     })
 
     // Handles disconnect trigger
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       setConnected(false)
       setConnecting(false)
     })
 
     // Flags an error with the com port
-    socket.on('connection_error', (msg) => {
+    socket.on("connection_error", (msg) => {
       console.log(msg.message)
       showErrorNotification(msg.message)
       setConnecting(false)
       setConnected(false)
     })
 
-    socket.on('drone_connect_status', (msg) => {
+    socket.on("drone_connect_status", (msg) => {
       setDroneConnectionStatusMessage(msg.message)
     })
 
     return () => {
       checkIfConnectedToSocket.stop()
-      socket.off('is_connected_to_drone')
-      socket.off('list_com_ports')
-      socket.off('connected_to_drone')
-      socket.off('disconnected_from_drone')
-      socket.off('disconnect')
-      socket.off('connection_error')
-      socket.off('drone_connect_status')
+      socket.off("is_connected_to_drone")
+      socket.off("list_com_ports")
+      socket.off("connected_to_drone")
+      socket.off("disconnected_from_drone")
+      socket.off("disconnect")
+      socket.off("connection_error")
+      socket.off("drone_connect_status")
       setConnected(false)
     }
   }, [])
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
-      socket.emit('connect_to_drone', {
+      socket.emit("connect_to_drone", {
         port: selectedComPort,
         baud: parseInt(selectedBaudRate),
         wireless: wireless,
         connectionType: type,
       })
     } else if (type === ConnectionType.Network) {
-      if (ip === '' || port === '') {
-        showErrorNotification('IP Address and Port cannot be empty')
+      if (ip === "" || port === "") {
+        showErrorNotification("IP Address and Port cannot be empty")
         return
       }
       const networkString = `${networkType}:${ip}:${port}`
-      socket.emit('connect_to_drone', {
+      socket.emit("connect_to_drone", {
         port: networkString,
         baud: 115200,
         wireless: true,
@@ -226,22 +226,22 @@ export default function Navbar({ currentPage }) {
   }
 
   function disconnect() {
-    console.log('disconnect')
-    socket.emit('disconnect_from_drone')
+    console.log("disconnect")
+    socket.emit("disconnect_from_drone")
   }
 
   const linkClassName =
-    'text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50'
+    "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
 
   return (
-    <div className='flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900'>
+    <div className="flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900">
       <Modal
         opened={opened}
         onClose={() => {
           close()
           setConnecting(false)
         }}
-        title='Connect to aircraft'
+        title="Connect to aircraft"
         centered
         overlayProps={{
           backgroundOpacity: 0.55,
@@ -250,7 +250,7 @@ export default function Navbar({ currentPage }) {
         withCloseButton={false}
         styles={{
           content: {
-            borderRadius: '0.5rem',
+            borderRadius: "0.5rem",
           },
         }}
       >
@@ -264,83 +264,83 @@ export default function Navbar({ currentPage }) {
                 Network Connection
               </Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value={ConnectionType.Serial} className='py-4'>
+            <Tabs.Panel value={ConnectionType.Serial} className="py-4">
               <LoadingOverlay visible={fetchingComPorts} />
-              <div className='flex flex-col space-y-4'>
+              <div className="flex flex-col space-y-4">
                 <Select
-                  label='COM Port'
-                  description='Select a COM Port from the ones available'
+                  label="COM Port"
+                  description="Select a COM Port from the ones available"
                   placeholder={
-                    comPorts.length ? 'Select a COM port' : 'No COM ports found'
+                    comPorts.length ? "Select a COM port" : "No COM ports found"
                   }
                   data={comPorts}
                   value={selectedComPort}
                   onChange={setSelectedComPort}
-                  rightSectionPointerEvents='all'
+                  rightSectionPointerEvents="all"
                   rightSection={<IconRefresh />}
                   rightSectionProps={{
                     onClick: getComPorts,
-                    className: 'hover:cursor-pointer hover:bg-transparent/50',
+                    className: "hover:cursor-pointer hover:bg-transparent/50",
                   }}
                 />
                 <Select
-                  label='Baud Rate'
-                  description='Select a baud rate for the specified COM Port'
+                  label="Baud Rate"
+                  description="Select a baud rate for the specified COM Port"
                   data={[
-                    '300',
-                    '1200',
-                    '4800',
-                    '9600',
-                    '19200',
-                    '13400',
-                    '38400',
-                    '57600',
-                    '74880',
-                    '115200',
-                    '230400',
-                    '250000',
+                    "300",
+                    "1200",
+                    "4800",
+                    "9600",
+                    "19200",
+                    "13400",
+                    "38400",
+                    "57600",
+                    "74880",
+                    "115200",
+                    "230400",
+                    "250000",
                   ]}
                   value={selectedBaudRate}
                   onChange={setSelectedBaudRate}
                 />
-                <div className='flex flex-row gap-2'>
+                <div className="flex flex-row gap-2">
                   <Checkbox
-                    label='Wireless Connection'
+                    label="Wireless Connection"
                     checked={wireless}
                     onChange={(event) =>
                       setWireless(event.currentTarget.checked)
                     }
                   />
-                  <Tooltip label='Wireless connection mode reduces the telemetry data rates to save bandwidth'>
+                  <Tooltip label="Wireless connection mode reduces the telemetry data rates to save bandwidth">
                     <IconInfoCircle size={20} />
                   </Tooltip>
                 </div>
               </div>
             </Tabs.Panel>
-            <Tabs.Panel value={ConnectionType.Network} className='py-4'>
-              <div className='flex flex-col space-y-4'>
+            <Tabs.Panel value={ConnectionType.Network} className="py-4">
+              <div className="flex flex-col space-y-4">
                 <SegmentedControl
-                  label='Network Connection type'
-                  description='Select a network connection type'
+                  label="Network Connection type"
+                  description="Select a network connection type"
                   value={networkType}
                   onChange={setNetworkType}
                   data={[
-                    { value: 'tcp', label: 'TCP' },
-                    { value: 'udp', label: 'UDP' },
+                    { value: "tcp", label: "TCP" },
+                    { value: "udp", label: "UDP" },
                   ]}
                 />
                 <TextInput
-                  label='IP Address'
-                  description='Enter the IP Address'
-                  placeholder='127.0.0.1'
+                  label="IP Address"
+                  description="Enter the IP Address"
+                  placeholder="127.0.0.1"
                   value={ip}
                   onChange={(event) => setIp(event.currentTarget.value)}
                   data-autofocus
                 />
                 <TextInput
-                  label='Port'
-                  description='Enter the port number'
-                  placeholder='5760'
+                  label="Port"
+                  description="Enter the port number"
+                  placeholder="5760"
                   value={port}
                   onChange={(event) => setPort(event.currentTarget.value)}
                 />
@@ -348,9 +348,9 @@ export default function Navbar({ currentPage }) {
             </Tabs.Panel>
           </Tabs>
 
-          <Group justify='space-between' className='pt-4'>
+          <Group justify="space-between" className="pt-4">
             <Button
-              variant='filled'
+              variant="filled"
               color={tailwindColors.red[600]}
               onClick={() => {
                 close()
@@ -360,8 +360,8 @@ export default function Navbar({ currentPage }) {
               Close
             </Button>
             <Button
-              variant='filled'
-              type='submit'
+              variant="filled"
+              type="submit"
               color={tailwindColors.green[600]}
               onClick={() => connectToDrone(connectionType)}
               disabled={
@@ -377,62 +377,62 @@ export default function Navbar({ currentPage }) {
         </form>
 
         {connecting && droneConnectionStatusMessage !== null && (
-          <p className='text-center mt-4'>{droneConnectionStatusMessage}</p>
+          <p className="text-center mt-4">{droneConnectionStatusMessage}</p>
         )}
       </Modal>
 
       <Link
-        to='/'
+        to="/"
         className={twMerge(
           linkClassName,
-          currentPage === 'dashboard' && 'text-falconred font-bold',
+          currentPage === "dashboard" && "text-falconred font-bold",
         )}
       >
         Dashboard
       </Link>
       <Link
-        to='/graphs'
+        to="/graphs"
         className={twMerge(
           linkClassName,
-          currentPage === 'graphs' && 'text-falconred font-bold',
+          currentPage === "graphs" && "text-falconred font-bold",
         )}
       >
         Graphs
       </Link>
       <Link
-        to='/params'
+        to="/params"
         className={twMerge(
           linkClassName,
-          currentPage === 'params' && 'text-falconred font-bold',
+          currentPage === "params" && "text-falconred font-bold",
         )}
       >
         Params
       </Link>
       <Link
-        to='/config'
+        to="/config"
         className={twMerge(
           linkClassName,
-          currentPage === 'config' && 'text-falconred font-bold',
+          currentPage === "config" && "text-falconred font-bold",
         )}
       >
         Config
       </Link>
       <Link
-        to='/fla'
+        to="/fla"
         className={twMerge(
           linkClassName,
-          currentPage === 'fla' && 'text-falconred font-bold',
+          currentPage === "fla" && "text-falconred font-bold",
         )}
       >
         FLA
       </Link>
 
-      <div className='!ml-auto flex flex-row space-x-4 items-center'>
+      <div className="!ml-auto flex flex-row space-x-4 items-center">
         {outOfDate && (
           <a
-            href='https://github.com/Avis-Drone-Labs/FGCS/releases'
-            target='_blank'
-            className='flex flex-row gap-2 text-red-400 hover:text-red-600'
+            href="https://github.com/Avis-Drone-Labs/FGCS/releases"
+            target="_blank"
+            className="flex flex-row gap-2 text-red-400 hover:text-red-600"
           >
             <IconAlertTriangle /> FGCS out of date
           </a>
@@ -441,7 +441,7 @@ export default function Navbar({ currentPage }) {
           {connected && (
             <>
               Connected to
-              <p className='inline font-bold'>
+              <p className="inline font-bold">
                 {
                   {
                     [ConnectionType.Serial]: ` ${selectedComPort}`,
@@ -466,10 +466,10 @@ export default function Navbar({ currentPage }) {
               connected ? tailwindColors.red[600] : tailwindColors.green[600]
             }
           >
-            {connected ? 'Disconnect' : 'Connect'}
+            {connected ? "Disconnect" : "Connect"}
           </Button>
         ) : (
-          <Tooltip label='Not connected to socket'>
+          <Tooltip label="Not connected to socket">
             <Button data-disabled onClick={(event) => event.preventDefault()}>
               Connect
             </Button>

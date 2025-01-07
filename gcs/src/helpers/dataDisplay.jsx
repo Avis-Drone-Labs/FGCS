@@ -4,20 +4,20 @@
 */
 
 // 3rd Party Imports
-import { Tooltip } from '@mantine/core'
+import { Tooltip } from "@mantine/core"
 
 // Helper Functions
-import { dataFormatters } from './dataFormatters'
+import { dataFormatters } from "./dataFormatters"
 
 const colorPalette = [
-  '#36a2eb',
-  '#ff6383',
-  '#fe9e40',
-  '#4ade80',
-  '#ffcd57',
-  '#4cbfc0',
-  '#9966ff',
-  '#c8cbce',
+  "#36a2eb",
+  "#ff6383",
+  "#fe9e40",
+  "#4ade80",
+  "#ffcd57",
+  "#4cbfc0",
+  "#9966ff",
+  "#c8cbce",
 ]
 
 export function to2dp(num) {
@@ -36,9 +36,9 @@ export function DataMessage({ label, value, currentlySelected, id }) {
 
   return (
     <Tooltip label={currentlySelected}>
-      <div className='flex flex-col items-center justify-center'>
-        <p className='text-sm text-center'>{label}</p>
-        <p className='text-5xl' style={{ color: color }}>
+      <div className="flex flex-col items-center justify-center">
+        <p className="text-sm text-center">{label}</p>
+        <p className="text-5xl" style={{ color: color }}>
           {formattedValue}
         </p>
       </div>

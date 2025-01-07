@@ -1,6 +1,6 @@
-import 'chartjs-adapter-moment'
+import "chartjs-adapter-moment"
 
-import ChartStreaming from '@robloche/chartjs-plugin-streaming'
+import ChartStreaming from "@robloche/chartjs-plugin-streaming"
 import {
   Chart as ChartJS,
   Legend,
@@ -10,9 +10,9 @@ import {
   TimeScale,
   Title,
   Tooltip,
-} from 'chart.js'
-import { forwardRef, useEffect, useState } from 'react'
-import { Scatter } from 'react-chartjs-2'
+} from "chart.js"
+import { forwardRef, useEffect, useState } from "react"
+import { Scatter } from "react-chartjs-2"
 
 ChartJS.register(
   Title,
@@ -25,7 +25,7 @@ ChartJS.register(
   ChartStreaming,
 )
 
-ChartJS.defaults.color = '#fafafa'
+ChartJS.defaults.color = "#fafafa"
 
 // Helper function to convert hex color to rgba
 function hexToRgba(hex, alpha) {
@@ -40,7 +40,7 @@ const options = {
   animation: false,
   plugins: {
     legend: {
-      position: 'top',
+      position: "top",
     },
     streaming: {
       duration: 20000,
@@ -49,7 +49,7 @@ const options = {
   },
   scales: {
     x: {
-      type: 'realtime',
+      type: "realtime",
     },
   },
   elements: {
@@ -81,12 +81,12 @@ const RealtimeGraph = forwardRef(function RealtimeGraph(
   useEffect(() => {
     if (ref.current) {
       ref.current.data.datasets[0].label = datasetLabel
-      ref.current.update('quiet')
+      ref.current.update("quiet")
     }
   }, [datasetLabel])
 
   return (
-    <div className='p-8 rounded-lg w-full h-full'>
+    <div className="p-8 rounded-lg w-full h-full">
       <Scatter ref={ref} options={options} data={chartData} />
     </div>
   )

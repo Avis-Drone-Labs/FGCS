@@ -3,7 +3,7 @@ function radToDeg(val) {
 }
 
 export const dataFormatters = {
-  'ATTITUDE.pitch': radToDeg,
-  'ATTITUDE.roll': radToDeg,
-  'ATTITUDE.yaw': radToDeg,
+  "ATTITUDE.pitch": radToDeg,
+  "ATTITUDE.roll": radToDeg,
+  "ATTITUDE.yaw": radToDeg,
 }

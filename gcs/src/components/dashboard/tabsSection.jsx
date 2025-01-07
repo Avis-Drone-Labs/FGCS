@@ -4,29 +4,29 @@
 */
 
 // Native Imports
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from "react"
 
 // 3rd Party Imports
-import { Tabs, Button, Grid, NumberInput, Popover, Select } from '@mantine/core'
+import { Tabs, Button, Grid, NumberInput, Popover, Select } from "@mantine/core"
 import {
   useDisclosure,
   useLocalStorage,
   useSessionStorage,
-} from '@mantine/hooks'
-import { IconInfoCircle } from '@tabler/icons-react'
-import Webcam from 'react-webcam'
+} from "@mantine/hooks"
+import { IconInfoCircle } from "@tabler/icons-react"
+import Webcam from "react-webcam"
 
 // Custom Components
-import DashboardDataModal from '../dashboardDataModal'
+import DashboardDataModal from "../dashboardDataModal"
 
 // Helper Javascript Files
-import { socket } from '../../helpers/socket'
-import { DataMessage } from '../../helpers/dataDisplay'
+import { socket } from "../../helpers/socket"
+import { DataMessage } from "../../helpers/dataDisplay"
 import {
   MISSION_STATES,
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
-} from '../../helpers/mavlinkConstants'
+} from "../../helpers/mavlinkConstants"
 
 export default function TabsSection({
   connected,
@@ -44,7 +44,7 @@ export default function TabsSection({
   const tabPadding = 'pt-6'
 
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
-    key: 'takeoffAltitude',
+    key: "takeoffAltitude",
     defaultValue: 10,
   })
 
@@ -73,14 +73,14 @@ export default function TabsSection({
 
   // Camera devices
   const [deviceId, setDeviceId] = useSessionStorage({
-    key: 'deviceId',
+    key: "deviceId",
     defaultValue: null,
   })
   const [devices, setDevices] = useState([])
 
   const handleDevices = useCallback(
     (mediaDevices) =>
-      setDevices(mediaDevices.filter(({ kind }) => kind === 'videoinput')),
+      setDevices(mediaDevices.filter(({ kind }) => kind === "videoinput")),
     [setDevices],
   )
 
@@ -100,35 +100,35 @@ export default function TabsSection({
 
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
-    socket.emit('arm_disarm', { arm: arm, force: force })
+    socket.emit("arm_disarm", { arm: arm, force: force })
   }
 
   function setNewFlightMode(modeNumber) {
     if (modeNumber === null || modeNumber === currentFlightModeNumber) {
       return
     }
-    socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
+    socket.emit("set_current_flight_mode", { newFlightMode: modeNumber })
   }
 
   function controlMission(action) {
-    socket.emit('control_mission', { action })
+    socket.emit("control_mission", { action })
   }
 
   function takeoff() {
-    socket.emit('takeoff', { alt: takeoffAltitude })
+    socket.emit("takeoff", { alt: takeoffAltitude })
   }
 
   function land() {
-    socket.emit('land')
+    socket.emit("land")
   }
 
   return (
-    <Tabs defaultValue='data'>
+    <Tabs defaultValue="data">
       <Tabs.List grow>
-        <Tabs.Tab value='data'>Data</Tabs.Tab>
-        <Tabs.Tab value='actions'>Actions</Tabs.Tab>
-        <Tabs.Tab value='mission'>Mission</Tabs.Tab>
-        <Tabs.Tab value='camera'>Camera</Tabs.Tab>
+        <Tabs.Tab value="data">Data</Tabs.Tab>
+        <Tabs.Tab value="actions">Actions</Tabs.Tab>
+        <Tabs.Tab value="mission">Mission</Tabs.Tab>
+        <Tabs.Tab value="camera">Camera</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value='data'>
@@ -150,9 +150,9 @@ export default function TabsSection({
                 </Grid.Col>
               ))
             ) : (
-              <div className='flex justify-center items-center p-4'>
+              <div className="flex justify-center items-center p-4">
                 <IconInfoCircle size={20} />
-                <p className='ml-2'>Double Click to select data</p>
+                <p className="ml-2">Double Click to select data</p>
               </div>
             )}
           </Grid>

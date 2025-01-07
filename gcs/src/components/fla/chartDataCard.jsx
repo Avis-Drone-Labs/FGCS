@@ -4,12 +4,12 @@
 */
 
 // 3rd Party Imports
-import { ActionIcon, Box, ColorInput } from '@mantine/core'
-import { IconPaint, IconTrash } from '@tabler/icons-react'
+import { ActionIcon, Box, ColorInput } from "@mantine/core"
+import { IconPaint, IconTrash } from "@tabler/icons-react"
 
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config.js'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -22,14 +22,14 @@ export default function ChartDataCard({
   removeDatasetFunc,
 }) {
   return (
-    <div className='inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200'>
+    <div className="inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200">
       {/* Title and Delete Button */}
-      <div className='inline-flex items-center content-center justify-between w-full'>
-        <p className='text-md'>
-          {item.label} <span className='text-gray-400'>({unit})</span>
+      <div className="inline-flex items-center content-center justify-between w-full">
+        <p className="text-md">
+          {item.label} <span className="text-gray-400">({unit})</span>
         </p>
         <ActionIcon
-          variant='subtle'
+          variant="subtle"
           color={tailwindColors.red[500]}
           onClick={() => removeDatasetFunc(item.label)}
         >
@@ -39,9 +39,9 @@ export default function ChartDataCard({
 
       {/* Color Selector */}
       <ColorInput
-        className='w-full text-xs'
-        size='xs'
-        format='hex'
+        className="w-full text-xs"
+        size="xs"
+        format="hex"
         swatches={colorInputSwatch}
         closeOnColorSwatchClick
         withEyeDropper={false}
@@ -51,8 +51,8 @@ export default function ChartDataCard({
       />
 
       {/* Min, max, min */}
-      <Box className='w-full text-gray-400'>
-        Min: {messageMeans[item.label]?.min}, Max:{' '}
+      <Box className="w-full text-gray-400">
+        Min: {messageMeans[item.label]?.min}, Max:{" "}
         {messageMeans[item.label]?.max}, Mean: {messageMeans[item.label]?.mean}
       </Box>
     </div>

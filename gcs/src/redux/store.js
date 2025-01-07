@@ -1,5 +1,5 @@
-import { configureStore } from '@reduxjs/toolkit'
-import logAnalyserReducer from './logAnalyserSlice'
+import { configureStore } from "@reduxjs/toolkit"
+import logAnalyserReducer from "./logAnalyserSlice"
 
 export const store = configureStore({
   reducer: {

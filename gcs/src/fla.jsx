@@ -5,7 +5,7 @@
 */
 
 // Base imports
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from "react"
 
 // 3rd Party Imports
 import {
@@ -17,29 +17,29 @@ import {
   Progress,
   ScrollArea,
   Tooltip,
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import { useSelector, useDispatch } from 'react-redux'
-import _ from 'lodash'
+} from "@mantine/core"
+import { useDisclosure } from "@mantine/hooks"
+import { useSelector, useDispatch } from "react-redux"
+import _ from "lodash"
 
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../tailwind.config.js'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config.js"
 
 // Custom components and helpers
-import moment from 'moment'
-import ChartDataCard from './components/fla/chartDataCard.jsx'
-import Graph from './components/fla/graph'
-import { dataflashOptions, fgcsOptions } from './components/fla/graphConfigs.js'
-import { logEventIds } from './components/fla/logEventIds.js'
-import MessageAccordionItem from './components/fla/messageAccordionItem.jsx'
-import PresetAccordionItem from './components/fla/presetAccordionItem.jsx'
-import { usePresetCategories } from './components/fla/presetCategories.js'
-import Layout from './components/layout.jsx'
+import moment from "moment"
+import ChartDataCard from "./components/fla/chartDataCard.jsx"
+import Graph from "./components/fla/graph"
+import { dataflashOptions, fgcsOptions } from "./components/fla/graphConfigs.js"
+import { logEventIds } from "./components/fla/logEventIds.js"
+import MessageAccordionItem from "./components/fla/messageAccordionItem.jsx"
+import PresetAccordionItem from "./components/fla/presetAccordionItem.jsx"
+import { usePresetCategories } from "./components/fla/presetCategories.js"
+import Layout from "./components/layout.jsx"
 import {
   showErrorNotification,
   showSuccessNotification,
-} from './helpers/notification.js'
+} from "./helpers/notification.js"
 import {
   setFile,
   setUnits,
@@ -55,8 +55,8 @@ import {
   setColorIndex,
   setAircraftType,
   setCanSavePreset,
-} from './redux/logAnalyserSlice.js'
-import SavePresetModal from './components/fla/savePresetModal.jsx'
+} from "./redux/logAnalyserSlice.js"
+import SavePresetModal from "./components/fla/savePresetModal.jsx"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -67,42 +67,42 @@ function hexToRgba(hex, alpha) {
 }
 
 const ignoredMessages = [
-  'ERR',
-  'EV',
-  'MSG',
-  'VER',
-  'TIMESYNC',
-  'PARAM_VALUE',
-  'units',
-  'format',
-  'aircraftType',
+  "ERR",
+  "EV",
+  "MSG",
+  "VER",
+  "TIMESYNC",
+  "PARAM_VALUE",
+  "units",
+  "format",
+  "aircraftType",
 ]
-const ignoredKeys = ['TimeUS', 'function', 'source', 'result', 'time_boot_ms']
+const ignoredKeys = ["TimeUS", "function", "source", "result", "time_boot_ms"]
 const colorPalette = [
-  '#36a2eb',
-  '#ff6383',
-  '#fe9e40',
-  '#4ade80',
-  '#ffcd57',
-  '#4cbfc0',
-  '#9966ff',
-  '#c8cbce',
+  "#36a2eb",
+  "#ff6383",
+  "#fe9e40",
+  "#4ade80",
+  "#ffcd57",
+  "#4cbfc0",
+  "#9966ff",
+  "#c8cbce",
 ]
 const colorInputSwatch = [
-  '#f5f5f5',
-  '#868e96',
-  '#fa5252',
-  '#e64980',
-  '#be4bdb',
-  '#7950f2',
-  '#4c6ef5',
-  '#228be6',
-  '#15aabf',
-  '#12b886',
-  '#40c057',
-  '#82c91e',
-  '#fab005',
-  '#fd7e14',
+  "#f5f5f5",
+  "#868e96",
+  "#fa5252",
+  "#e64980",
+  "#be4bdb",
+  "#7950f2",
+  "#4c6ef5",
+  "#228be6",
+  "#15aabf",
+  "#12b886",
+  "#40c057",
+  "#82c91e",
+  "#fab005",
+  "#fd7e14",
 ]
 
 export default function FLA() {
@@ -183,7 +183,7 @@ export default function FLA() {
         const loadedLogMessages = result.messages
 
         if (loadedLogMessages === null) {
-          showErrorNotification('Error loading file, no messages found.')
+          showErrorNotification("Error loading file, no messages found.")
           return
         }
 
@@ -195,9 +195,9 @@ export default function FLA() {
 
         updateLogMessages(loadedLogMessages)
 
-        if (result.logType === 'dataflash') {
+        if (result.logType === "dataflash") {
           updateFlightModeMessages(loadedLogMessages.MODE)
-        } else if (result.logType === 'fgcs_telemetry') {
+        } else if (result.logType === "fgcs_telemetry") {
           // Get the heartbeat messages only where index is the first or last or the mode changes
           const modeMessages = []
           for (let i = 0; i < loadedLogMessages.HEARTBEAT.length; i++) {
@@ -217,17 +217,17 @@ export default function FLA() {
           updateFlightModeMessages(modeMessages)
         }
 
-        if ('units' in loadedLogMessages) {
-          updateUnits(loadedLogMessages['units'])
+        if ("units" in loadedLogMessages) {
+          updateUnits(loadedLogMessages["units"])
         }
 
-        if ('format' in loadedLogMessages) {
-          updateFormatMessages(loadedLogMessages['format'])
+        if ("format" in loadedLogMessages) {
+          updateFormatMessages(loadedLogMessages["format"])
         }
 
         // Set the default state to false for all message filters
         const logMessageFilterDefaultState = {}
-        Object.keys(loadedLogMessages['format'])
+        Object.keys(loadedLogMessages["format"])
           .sort()
           .forEach((key) => {
             if (
@@ -237,7 +237,7 @@ export default function FLA() {
               const fieldsState = {}
 
               // Set all field states to false if they're not ignored
-              loadedLogMessages['format'][key].fields.map((field) => {
+              loadedLogMessages["format"][key].fields.map((field) => {
                 if (!ignoredKeys.includes(field)) {
                   fieldsState[field] = false
                 }
@@ -246,12 +246,12 @@ export default function FLA() {
             }
           })
 
-        if (loadedLogMessages['ESC']) {
+        if (loadedLogMessages["ESC"]) {
           // Load each ESC data into its own array
-          loadedLogMessages['ESC'].map((escData) => {
+          loadedLogMessages["ESC"].map((escData) => {
             const newEscData = {
               ...escData,
-              name: `ESC${escData['Instance'] + 1}`,
+              name: `ESC${escData["Instance"] + 1}`,
             }
             loadedLogMessages[newEscData.name] = (
               loadedLogMessages[newEscData.name] || []
@@ -259,13 +259,13 @@ export default function FLA() {
             // Add filter state for new ESC
             if (!logMessageFilterDefaultState[newEscData.name])
               logMessageFilterDefaultState[newEscData.name] = {
-                ...logMessageFilterDefaultState['ESC'],
+                ...logMessageFilterDefaultState["ESC"],
               }
           })
 
           // Remove old ESC motor data
-          delete loadedLogMessages['ESC']
-          delete logMessageFilterDefaultState['ESC']
+          delete loadedLogMessages["ESC"]
+          delete logMessageFilterDefaultState["ESC"]
         }
 
         // Sort new filters
@@ -282,9 +282,9 @@ export default function FLA() {
         calculateMeanValues(loadedLogMessages)
 
         // Set event logs for the event lines on graph
-        if ('EV' in loadedLogMessages) {
+        if ("EV" in loadedLogMessages) {
           updateLogEvents(
-            loadedLogMessages['EV'].map((event) => ({
+            loadedLogMessages["EV"].map((event) => ({
               time: event.TimeUS,
               message: logEventIds[event.Id],
             })),
@@ -294,7 +294,7 @@ export default function FLA() {
         // Close modal and show success message
         showSuccessNotification(`${file.name} loaded successfully`)
       } else {
-        showErrorNotification('Error loading file, file not found. Reload.')
+        showErrorNotification("Error loading file, file not found. Reload.")
         setLoadingFile(false)
       }
     }
@@ -326,7 +326,7 @@ export default function FLA() {
     updateCustomColors({})
     updateColorIndex(0)
     updateLogEvents(null)
-    updateLogType('dataflash')
+    updateLogType("dataflash")
     updateCanSavePreset(false)
   }
 
@@ -347,7 +347,7 @@ export default function FLA() {
           messageData.map((message) => {
             Object.keys(message).forEach((dataPointKey) => {
               let dataPoint = message[dataPointKey]
-              if (dataPointKey != dataPoint && dataPointKey != 'name') {
+              if (dataPointKey != dataPoint && dataPointKey != "name") {
                 if (messageDataMeans[dataPointKey] == undefined) {
                   messageDataMeans[dataPointKey] = [dataPoint]
                 } else {
@@ -412,7 +412,7 @@ export default function FLA() {
 
   // Turn off only one filter at a time
   function removeDataset(label) {
-    let [categoryName, fieldName] = label.split('/')
+    let [categoryName, fieldName] = label.split("/")
     let newFilters = _.cloneDeep(messageFilters)
     if (
       newFilters[categoryName] &&
@@ -451,7 +451,7 @@ export default function FLA() {
     }
 
     // Check against existing custom presets
-    const customPresets = presetCategories['custom_' + logType] || []
+    const customPresets = presetCategories["custom_" + logType] || []
     return customPresets.some((category) =>
       category.filters.some((preset) => {
         // Deep compare the filters
@@ -614,8 +614,8 @@ export default function FLA() {
   // ====================================================
 
   function getUnit(messageName, fieldName) {
-    if (messageName.includes('ESC')) {
-      messageName = 'ESC'
+    if (messageName.includes("ESC")) {
+      messageName = "ESC"
     }
 
     if (messageName in formatMessages) {
@@ -628,7 +628,7 @@ export default function FLA() {
         }
       }
     }
-    return 'UNKNOWN'
+    return "UNKNOWN"
   }
 
   // ====================================================
@@ -644,13 +644,13 @@ export default function FLA() {
 
   // Set IPC renderer for log messages
   useEffect(() => {
-    window.ipcRenderer.on('fla:log-parse-progress', function (evt, message) {
+    window.ipcRenderer.on("fla:log-parse-progress", function (evt, message) {
       setLoadingFileProgress(message.percent)
     })
     getFgcsLogs()
 
     return () => {
-      window.ipcRenderer.removeAllListeners(['fla:log-parse-progress'])
+      window.ipcRenderer.removeAllListeners(["fla:log-parse-progress"])
     }
   }, [])
 
@@ -688,53 +688,53 @@ export default function FLA() {
   // ======================================================
 
   return (
-    <Layout currentPage='fla'>
+    <Layout currentPage="fla">
       {logMessages === null ? (
         // Open flight logs section
-        <div className='flex flex-col items-center justify-center h-full mx-auto'>
-          <div className='flex flex-row items-center justify-center gap-8'>
-            <div className='flex flex-col gap-4'>
+        <div className="flex flex-col items-center justify-center h-full mx-auto">
+          <div className="flex flex-row items-center justify-center gap-8">
+            <div className="flex flex-col gap-4">
               <FileButton
                 color={tailwindColors.blue[600]}
-                variant='filled'
+                variant="filled"
                 onChange={updateFile}
-                accept={['.log', '.ftlog']}
+                accept={[".log", ".ftlog"]}
                 loading={loadingFile}
               >
                 {(props) => <Button {...props}>Analyse a log</Button>}
               </FileButton>
               <Button
                 color={tailwindColors.red[600]}
-                variant='filled'
+                variant="filled"
                 onClick={clearFgcsLogs}
               >
                 Clear Logs
               </Button>
             </div>
-            <Divider size='sm' orientation='vertical' />
-            <div className='relative'>
+            <Divider size="sm" orientation="vertical" />
+            <div className="relative">
               <LoadingOverlay
                 visible={recentFgcsLogs === null || loadingFile}
               />
-              <div className='flex flex-col items-center gap-2'>
-                <p className='font-bold'>Recent FGCS telemetry logs</p>
+              <div className="flex flex-col items-center gap-2">
+                <p className="font-bold">Recent FGCS telemetry logs</p>
                 <ScrollArea h={250} offsetScrollbars>
                   {recentFgcsLogs !== null &&
                     recentFgcsLogs.map((log, idx) => (
                       <div
                         key={idx}
-                        className='flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80'
+                        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
                         onClick={() => updateFile(log)}
                       >
                         <p>{log.name} </p>
-                        <div className='flex flex-row gap-2'>
-                          <p className='text-sm text-gray-400'>
+                        <div className="flex flex-row gap-2">
+                          <p className="text-sm text-gray-400">
                             {moment(
                               log.timestamp.toISOString(),
-                              'YYYY-MM-DD_HH-mm-ss',
+                              "YYYY-MM-DD_HH-mm-ss",
                             ).fromNow()}
                           </p>
-                          <p className='text-sm text-gray-400'>
+                          <p className="text-sm text-gray-400">
                             {Math.round(log.size / 1024)}KB
                           </p>
                         </div>
@@ -748,7 +748,7 @@ export default function FLA() {
           {loadingFile && (
             <Progress
               value={loadingFileProgress}
-              className='w-full my-4'
+              className="w-full my-4"
               color={tailwindColors.green[500]}
             />
           )}
@@ -756,19 +756,19 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className='flex h-full gap-4 px-2 py-4 mb-4 overflow-x-auto'>
+          <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-x-auto">
             {/* Message selection column */}
-            <div className='w-1/4 pb-6'>
-              <div className='flex flex-col mb-2 text-sm gap-y-2'>
-                <div className='flex flex-row justify-between'>
+            <div className="w-1/4 pb-6">
+              <div className="flex flex-col mb-2 text-sm gap-y-2">
+                <div className="flex flex-row justify-between">
                   <Tooltip label={file.path}>
-                    <div className='px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block'>
+                    <div className="px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block">
                       File Name:
                       <span
-                        className='ml-2 text-white underline cursor-pointer'
+                        className="ml-2 text-white underline cursor-pointer"
                         onClick={() => {
                           window.ipcRenderer.send(
-                            'openFileInExplorer',
+                            "openFileInExplorer",
                             file.path,
                           )
                         }}
@@ -778,33 +778,33 @@ export default function FLA() {
                     </div>
                   </Tooltip>
                   <Button
-                    className='ml-2'
-                    size='sm'
+                    className="ml-2"
+                    size="sm"
                     color={tailwindColors.red[500]}
                     onClick={closeLogFile}
                   >
                     Close file
                   </Button>
                 </div>
-                <div className='flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700'>
-                  <div className='whitespace-nowrap'>Aircraft Type:</div>
-                  <div className='text-white ml-auto truncate max-w-[200px]'>
-                    {aircraftType ? aircraftType : 'No Aircraft Type'}
+                <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
+                  <div className="whitespace-nowrap">Aircraft Type:</div>
+                  <div className="text-white ml-auto truncate max-w-[200px]">
+                    {aircraftType ? aircraftType : "No Aircraft Type"}
                   </div>
                 </div>
               </div>
 
-              <ScrollArea className='h-full max-h-[90%]'>
+              <ScrollArea className="h-full max-h-[90%]">
                 <Accordion multiple={true}>
                   {/* Presets */}
-                  <Accordion.Item key='presets' value='presets'>
-                    <Accordion.Control className='rounded-md'>
+                  <Accordion.Item key="presets" value="presets">
+                    <Accordion.Control className="rounded-md">
                       Presets
                     </Accordion.Control>
                     <Accordion.Panel>
                       <Accordion multiple={true}>
                         {/* Custom Presets */}
-                        {presetCategories['custom_' + logType]?.map(
+                        {presetCategories["custom_" + logType]?.map(
                           (category) => {
                             return (
                               <Fragment key={category.name}>
@@ -838,11 +838,11 @@ export default function FLA() {
 
                   {/* All messages */}
                   <Accordion.Item
-                    key='messages'
-                    value='messages'
-                    styles={{ item: { borderBottom: 'none' } }}
+                    key="messages"
+                    value="messages"
+                    styles={{ item: { borderBottom: "none" } }}
                   >
-                    <Accordion.Control className='rounded-md'>
+                    <Accordion.Control className="rounded-md">
                       Messages
                     </Accordion.Control>
                     <Accordion.Panel>
@@ -867,13 +867,13 @@ export default function FLA() {
             </div>
 
             {/* Graph column */}
-            <div className='w-full h-full pr-4'>
+            <div className="w-full h-full pr-4">
               <Graph
                 data={chartData}
                 events={logEvents}
                 flightModes={flightModeMessages}
                 graphConfig={
-                  logType === 'dataflash' ? dataflashOptions : fgcsOptions
+                  logType === "dataflash" ? dataflashOptions : fgcsOptions
                 }
                 clearFilters={clearFilters}
                 canSavePreset={canSavePreset}
@@ -881,14 +881,14 @@ export default function FLA() {
               />
 
               {/* Plots Setup */}
-              <div className='grid grid-cols-5 gap-4 pt-4'>
+              <div className="grid grid-cols-5 gap-4 pt-4">
                 {chartData.datasets.map((item) => (
                   <Fragment key={item.label}>
                     <ChartDataCard
                       item={item}
                       unit={getUnit(
-                        item.label.split('/')[0],
-                        item.label.split('/')[1],
+                        item.label.split("/")[0],
+                        item.label.split("/")[1],
                       )}
                       messageMeans={messageMeans}
                       colorInputSwatch={colorInputSwatch}

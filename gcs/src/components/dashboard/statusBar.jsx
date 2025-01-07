@@ -37,6 +37,9 @@ export default function StatusBar(props) {
     return updateClock.stop
   }, [])
 
+  const person = { name: 'John' };
+  console.log(person.age);
+
   return (
     <div className={`${props.className} flex flex-col items-end`}>
       <div

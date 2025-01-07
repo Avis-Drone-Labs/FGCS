@@ -26,13 +26,13 @@ export default function Gripper() {
       <div className="flex flex-row gap-2">
         <Button
           onClick={() => setGripper("release")}
-          color={tailwindColors.falconred[700]}
+          color={tailwindColors.falconred[800]}
         >
           Release Gripper
         </Button>
         <Button
           onClick={() => setGripper("grab")}
-          color={tailwindColors.falconred[700]}
+          color={tailwindColors.falconred[800]}
         >
           Grab Gripper
         </Button>

@@ -7,24 +7,24 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { Divider } from '@mantine/core'
-import { ResizableBox } from 'react-resizable'
+import { Divider } from "@mantine/core"
+import { ResizableBox } from "react-resizable"
 import {
   useListState,
   useLocalStorage,
   usePrevious,
   useViewportSize,
-} from '@mantine/hooks'
+} from "@mantine/hooks"
 import {
   IconAntenna,
   IconBattery2,
   IconGps,
   IconRadar,
   IconSatellite,
-} from '@tabler/icons-react'
+} from "@tabler/icons-react"
 
 // Helper javascript files
 import {
@@ -33,53 +33,53 @@ import {
   MAV_AUTOPILOT_INVALID,
   MAV_STATE,
   PLANE_MODES_FLIGHT_MODE_MAP,
-} from './helpers/mavlinkConstants'
+} from "./helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showSuccessNotification,
-} from './helpers/notification'
-import { socket } from './helpers/socket'
-import { defaultDataMessages } from './helpers/dashboardDefaultDataMessages'
+} from "./helpers/notification"
+import { socket } from "./helpers/socket"
+import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
 
 // Custom component
-import useSound from 'use-sound'
-import MapSection from './components/dashboard/map'
-import StatusBar, { StatusSection } from './components/dashboard/statusBar'
-import StatusMessages from './components/dashboard/statusMessages'
-import FloatingToolbar from './components/dashboard/floatingToolbar'
-import ResizableInfoBox from './components/dashboard/resizableInfoBox'
-import TelemetrySection from './components/dashboard/telemetry'
-import TabsSection from './components/dashboard/tabsSection'
-import Layout from './components/layout'
+import useSound from "use-sound"
+import MapSection from "./components/dashboard/map"
+import StatusBar, { StatusSection } from "./components/dashboard/statusBar"
+import StatusMessages from "./components/dashboard/statusMessages"
+import FloatingToolbar from "./components/dashboard/floatingToolbar"
+import ResizableInfoBox from "./components/dashboard/resizableInfoBox"
+import TelemetrySection from "./components/dashboard/telemetry"
+import TabsSection from "./components/dashboard/tabsSection"
+import Layout from "./components/layout"
 
 // Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../tailwind.config'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Sounds
-import armSound from './assets/sounds/armed.mp3'
-import disarmSound from './assets/sounds/disarmed.mp3'
+import armSound from "./assets/sounds/armed.mp3"
+import disarmSound from "./assets/sounds/disarmed.mp3"
 
 export default function Dashboard() {
   // Local Storage
   const [connected] = useLocalStorage({
-    key: 'connectedToDrone',
+    key: "connectedToDrone",
     defaultValue: false,
   })
   const [aircraftType] = useLocalStorage({
-    key: 'aircraftType',
+    key: "aircraftType",
   })
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
-    key: 'telemetryPanelSize',
+    key: "telemetryPanelSize",
     defaultValue: { width: 400, height: Infinity },
     deserialize: (value) => {
       const parsed = JSON.parse(value)
       if (parsed === null || parsed === undefined)
         return { width: 400, height: Infinity }
-      return { ...parsed, width: Math.max(parsed['width'], 275) }
+      return { ...parsed, width: Math.max(parsed["width"], 275) }
     },
   })
   const [telemetryFontSize, setTelemetryFontSize] = useState(
@@ -87,7 +87,7 @@ export default function Dashboard() {
   )
   const sideBarRef = useRef()
   const [messagesPanelSize, setMessagesPanelSize] = useLocalStorage({
-    key: 'messagesPanelSize',
+    key: "messagesPanelSize",
     defaultValue: { width: 600, height: 150 },
   })
 
@@ -140,7 +140,7 @@ export default function Dashboard() {
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
   const [displayedData, setDisplayedData] = useLocalStorage({
-    key: 'dashboardDataMessages',
+    key: "dashboardDataMessages",
     defaultValue: defaultDataMessages,
   })
 
@@ -164,7 +164,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Use localStorage.getItem as useLocalStorage hook updates slower
-    const oldDisplayedData = localStorage.getItem('dashboardDataMessages')
+    const oldDisplayedData = localStorage.getItem("dashboardDataMessages")
 
     if (oldDisplayedData) {
       const resetDisplayedDataValues = Object.keys(
@@ -180,12 +180,12 @@ export default function Dashboard() {
     if (!connected) {
       return
     } else {
-      socket.emit('set_state', { state: 'dashboard' })
-      socket.emit('get_home_position')
-      socket.emit('get_current_mission')
+      socket.emit("set_state", { state: "dashboard" })
+      socket.emit("get_home_position")
+      socket.emit("get_current_mission")
     }
 
-    socket.on('incoming_msg', (msg) => {
+    socket.on("incoming_msg", (msg) => {
       if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
         incomingMessageHandler[msg.mavpackettype](msg)
         // Store packetType that has arrived
@@ -199,7 +199,7 @@ export default function Dashboard() {
           // Iterate over displayedData to find and update the matching item
           updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
             if (dataItem.currently_selected.startsWith(packetType)) {
-              const specificData = dataItem.currently_selected.split('.')[1]
+              const specificData = dataItem.currently_selected.split(".")[1]
               if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
                 return { ...dataItem, value: msg[specificData] }
               }
@@ -212,17 +212,17 @@ export default function Dashboard() {
       }
     })
 
-    socket.on('arm_disarm', (msg) => {
+    socket.on("arm_disarm", (msg) => {
       if (!msg.success) {
         showErrorNotification(msg.message)
       }
     })
 
-    socket.on('current_mission', (msg) => {
+    socket.on("current_mission", (msg) => {
       setMissionItems(msg)
     })
 
-    socket.on('set_current_flight_mode_result', (data) => {
+    socket.on("set_current_flight_mode_result", (data) => {
       if (data.success) {
         showSuccessNotification(data.message)
       } else {
@@ -230,7 +230,7 @@ export default function Dashboard() {
       }
     })
 
-    socket.on('nav_result', (data) => {
+    socket.on("nav_result", (data) => {
       if (data.success) {
         showSuccessNotification(data.message)
       } else {
@@ -238,7 +238,7 @@ export default function Dashboard() {
       }
     })
 
-    socket.on('mission_control_result', (data) => {
+    socket.on("mission_control_result", (data) => {
       if (data.success) {
         showSuccessNotification(data.message)
       } else {
@@ -246,7 +246,7 @@ export default function Dashboard() {
       }
     })
 
-    socket.on('home_position_result', (data) => {
+    socket.on("home_position_result", (data) => {
       if (data.success) {
         setHomePosition(data.data)
       } else {
@@ -255,13 +255,13 @@ export default function Dashboard() {
     })
 
     return () => {
-      socket.off('incoming_msg')
-      socket.off('arm_disarm')
-      socket.off('current_mission')
-      socket.off('set_current_flight_mode_result')
-      socket.off('nav_result')
-      socket.off('mission_control_result')
-      socket.off('home_position_result')
+      socket.off("incoming_msg")
+      socket.off("arm_disarm")
+      socket.off("current_mission")
+      socket.off("set_current_flight_mode_result")
+      socket.off("nav_result")
+      socket.off("mission_control_result")
+      socket.off("home_position_result")
     }
   }, [connected])
 
@@ -306,7 +306,7 @@ export default function Dashboard() {
       return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
     }
 
-    return 'UNKNOWN'
+    return "UNKNOWN"
   }
 
   function getIsArmed() {
@@ -347,9 +347,9 @@ export default function Dashboard() {
   }
 
   return (
-    <Layout currentPage='dashboard'>
-      <div className='relative flex flex-auto w-full h-full overflow-hidden'>
-        <div className='w-full'>
+    <Layout currentPage="dashboard">
+      <div className="relative flex flex-auto w-full h-full overflow-hidden">
+        <div className="w-full">
           <MapSection
             passedRef={mapRef}
             data={gpsData}
@@ -388,7 +388,7 @@ export default function Dashboard() {
             systemStatus={MAV_STATE[heartbeatData.system_status]}
           />
 
-          <Divider className='my-2' />
+          <Divider className="my-2" />
 
           {/* Actions */}
           <TabsSection
@@ -404,37 +404,37 @@ export default function Dashboard() {
         </ResizableInfoBox>
 
         {/* Status Bar */}
-        <StatusBar className='absolute top-0 right-0'>
+        <StatusBar className="absolute top-0 right-0">
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
-            tooltip='GPS fix type'
+            tooltip="GPS fix type"
           />
           <StatusSection
             icon={<IconGps />}
             value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
               gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
             })`}
-            tooltip='GPS (lat, lon)'
+            tooltip="GPS (lat, lon)"
           />
           <StatusSection
             icon={<IconSatellite />}
             value={gpsRawIntData.satellites_visible}
-            tooltip='Satellites visible'
+            tooltip="Satellites visible"
           />
           <StatusSection
             icon={<IconAntenna />}
             value={rcChannelsData.rssi}
-            tooltip='RC RSSI'
+            tooltip="RC RSSI"
           />
           <StatusSection
             icon={<IconBattery2 />}
             value={
               batteryData.battery_remaining
                 ? `${batteryData.battery_remaining}%`
-                : '0%'
+                : "0%"
             }
-            tooltip='Battery remaining'
+            tooltip="Battery remaining"
           />
         </StatusBar>
 
@@ -449,15 +449,15 @@ export default function Dashboard() {
         />
 
         {statustextMessages.length !== 0 && (
-          <div className='absolute bottom-0 right-0 z-20'>
+          <div className="absolute bottom-0 right-0 z-20">
             <ResizableBox
               height={messagesPanelSize.height}
               width={messagesPanelSize.width}
               minConstraints={[600, 150]}
               maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
-              resizeHandles={['nw']}
+              resizeHandles={["nw"]}
               handle={(h, ref) => (
-                <span className={`custom-handle-nw`} ref={ref} />
+                <span className={"custom-handle-nw"} ref={ref} />
               )}
               handleSize={[32, 32]}
               onResize={(_, { size }) => {
@@ -466,7 +466,7 @@ export default function Dashboard() {
             >
               <StatusMessages
                 messages={statustextMessages}
-                className={`bg-[${tailwindColors.falcongrey['TRANSLUCENT']}] h-full lucent max-w-1/2 object-fill text-xl`}
+                className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
               />
             </ResizableBox>
           </div>

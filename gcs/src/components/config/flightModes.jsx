@@ -6,23 +6,23 @@
   each mode.
 */
 // Base imports
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
 
 // 3rd party imports
-import { Button, LoadingOverlay, Select } from '@mantine/core'
-import { useListState, useLocalStorage } from '@mantine/hooks'
+import { Button, LoadingOverlay, Select } from "@mantine/core"
+import { useListState, useLocalStorage } from "@mantine/hooks"
 
 // Helper javascript files
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   MAV_AUTOPILOT_INVALID,
   PLANE_MODES_FLIGHT_MODE_MAP,
-} from '../../helpers/mavlinkConstants'
+} from "../../helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showSuccessNotification,
-} from '../../helpers/notification'
-import { socket } from '../../helpers/socket'
+} from "../../helpers/notification"
+import { socket } from "../../helpers/socket"
 
 const FLIGHT_MODE_PWM_VALUES = [
   [0, 1230],
@@ -35,7 +35,7 @@ const FLIGHT_MODE_PWM_VALUES = [
 
 export default function FlightModes() {
   const [connected] = useLocalStorage({
-    key: 'connectedToDrone',
+    key: "connectedToDrone",
     defaultValue: false,
   })
 
@@ -50,17 +50,17 @@ export default function FlightModes() {
   }
 
   const [flightModes, flightModesHandler] = useListState([
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
-    'UNKNOWN',
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
+    "UNKNOWN",
   ])
-  const [flightModeChannel, setFlightModeChannel] = useState('UNKNOWN')
-  const [currentFlightMode, setCurrentFlightMode] = useState('UNKNOWN')
+  const [flightModeChannel, setFlightModeChannel] = useState("UNKNOWN")
+  const [currentFlightMode, setCurrentFlightMode] = useState("UNKNOWN")
   const [aircraftType] = useLocalStorage({
-    key: 'aircraftType',
+    key: "aircraftType",
   })
   const [currentPwmValue, setCurrentPwmValue] = useState(0)
   const [refreshingFlightModeData, setRefreshingFlightModeData] =
@@ -78,46 +78,46 @@ export default function FlightModes() {
       return
     }
 
-    socket.emit('set_state', { state: 'config.flight_modes' })
-    socket.emit('get_flight_mode_config')
+    socket.emit("set_state", { state: "config.flight_modes" })
+    socket.emit("get_flight_mode_config")
 
-    socket.on('flight_mode_config', (data) => {
+    socket.on("flight_mode_config", (data) => {
       flightModesHandler.setState(data.flight_modes)
       setFlightModeChannel(data.flight_mode_channel)
       setRefreshingFlightModeData(false)
     })
 
-    socket.on('set_flight_mode_result', (data) => {
+    socket.on("set_flight_mode_result", (data) => {
       if (data.success) {
         showSuccessNotification(data.message)
       } else {
         showErrorNotification(data.message)
       }
 
-      socket.emit('get_flight_mode_config')
+      socket.emit("get_flight_mode_config")
     })
 
     return () => {
-      socket.emit('set_state', { state: 'config' })
-      socket.off('flight_mode_config')
-      socket.off('set_flight_mode_result')
+      socket.emit("set_state", { state: "config" })
+      socket.off("flight_mode_config")
+      socket.off("set_flight_mode_result")
     }
   }, [connected])
 
   useEffect(() => {
-    socket.on('incoming_msg', (msg) => {
+    socket.on("incoming_msg", (msg) => {
       if (
-        msg.mavpackettype === 'RC_CHANNELS' &&
-        flightModeChannel !== 'UNKNOWN'
+        msg.mavpackettype === "RC_CHANNELS" &&
+        flightModeChannel !== "UNKNOWN"
       ) {
         setCurrentPwmValue(msg[`chan${flightModeChannel}_raw`])
       } else if (
-        msg.mavpackettype === 'HEARTBEAT' &&
+        msg.mavpackettype === "HEARTBEAT" &&
         msg.autopilot !== MAV_AUTOPILOT_INVALID &&
         msg.type
       ) {
         // Get the current flight mode
-        let mode = 'UNKNOWN'
+        let mode = "UNKNOWN"
         if (msg.type === 1) {
           mode = PLANE_MODES_FLIGHT_MODE_MAP[msg.custom_mode]
         } else if (msg.type === 2) {
@@ -129,7 +129,7 @@ export default function FlightModes() {
     })
 
     return () => {
-      socket.off('incoming_msg')
+      socket.off("incoming_msg")
     }
   }, [flightModeChannel])
 
@@ -149,14 +149,14 @@ export default function FlightModes() {
   }
 
   function changeFlightMode(modeNumber, newFlightMode) {
-    socket.emit('set_flight_mode', {
+    socket.emit("set_flight_mode", {
       mode_number: modeNumber + 1, // Mode number is 1 + indexed value
       flight_mode: parseInt(newFlightMode),
     })
   }
 
   function refreshFlightModeData() {
-    socket.emit('refresh_flight_mode_data')
+    socket.emit("refresh_flight_mode_data")
     setRefreshingFlightModeData(true)
   }
 
@@ -165,35 +165,35 @@ export default function FlightModes() {
       <Button
         onClick={refreshFlightModeData}
         loading={refreshingFlightModeData}
-        className='m-4'
-        size='xs'
+        className="m-4"
+        size="xs"
       >
         Refresh data
       </Button>
-      <div className='relative'>
+      <div className="relative">
         <LoadingOverlay
           visible={refreshingFlightModeData}
           zIndex={1000}
           overlayProps={{ blur: 2 }}
         />
 
-        <div className='mx-4 flex flex-row gap-4 relative'>
-          <div className='flex flex-col gap-2'>
+        <div className="mx-4 flex flex-row gap-4 relative">
+          <div className="flex flex-col gap-2">
             {flightModes.map((flightModeNumber, idx) => (
               <Select
                 key={idx}
                 label={`Flight mode ${idx}`}
-                description={`PWM: ${FLIGHT_MODE_PWM_VALUES[idx][0]}${FLIGHT_MODE_PWM_VALUES[idx][1] === undefined ? '+' : `-${FLIGHT_MODE_PWM_VALUES[idx][1]}`}`}
+                description={`PWM: ${FLIGHT_MODE_PWM_VALUES[idx][0]}${FLIGHT_MODE_PWM_VALUES[idx][1] === undefined ? "+" : `-${FLIGHT_MODE_PWM_VALUES[idx][1]}`}`}
                 value={flightModeNumber.toString()}
                 onChange={(value) => changeFlightMode(idx, value)}
                 data={flightModesSelectValuesMap}
                 classNames={
-                  isFlightModeActive(idx) ? { input: '!text-lime-400' } : {}
+                  isFlightModeActive(idx) ? { input: "!text-lime-400" } : {}
                 }
               />
             ))}
           </div>
-          <div className='mx-4'>
+          <div className="mx-4">
             <p>Current mode: {currentFlightMode}</p>
             <p>Flight mode channel: {flightModeChannel}</p>
             <p>Current PWM: {currentPwmValue}</p>

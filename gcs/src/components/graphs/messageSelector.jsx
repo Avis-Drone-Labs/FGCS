@@ -14,7 +14,7 @@
 */
 
 // 3rd Party Imports
-import { Select } from '@mantine/core'
+import { Select } from "@mantine/core"
 
 export default function MessageSelector({
   graphOptions,
@@ -27,7 +27,7 @@ export default function MessageSelector({
   return (
     <Select
       label={label}
-      classNames={{ option: 'capitalize', label: labelColor }}
+      classNames={{ option: "capitalize", label: labelColor }}
       data={Object.keys(graphOptions).map((messageName) => ({
         group: messageName,
         items: Object.keys(graphOptions[messageName]).map((v) => ({

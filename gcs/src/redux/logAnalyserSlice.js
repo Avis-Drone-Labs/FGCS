@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice } from "@reduxjs/toolkit"
 
 const logAnalyserSlice = createSlice({
-  name: 'logAnalyser',
+  name: "logAnalyser",
   initialState: {
     file: null,
     units: {},
@@ -9,7 +9,7 @@ const logAnalyserSlice = createSlice({
     logMessages: null,
     logEvents: null,
     flightModeMessages: [],
-    logType: 'dataflash',
+    logType: "dataflash",
     messageFilters: null,
     messageMeans: {},
     chartData: { datasets: [] },

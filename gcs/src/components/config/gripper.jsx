@@ -5,33 +5,33 @@
 */
 
 // 3rd Party Imports
-import { Button } from '@mantine/core'
+import { Button } from "@mantine/core"
 
 // Styling Imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
-import { socket } from '../../helpers/socket'
+import { socket } from "../../helpers/socket"
 
 export default function Gripper() {
   // Set gripper config values
   function setGripper(action) {
-    socket.emit('set_gripper', action)
+    socket.emit("set_gripper", action)
   }
 
   return (
-    <div className='m-6 w-1/2'>
-      <div className='flex flex-row gap-2'>
+    <div className="m-6 w-1/2">
+      <div className="flex flex-row gap-2">
         <Button
-          onClick={() => setGripper('release')}
+          onClick={() => setGripper("release")}
           color={tailwindColors.falconred[700]}
         >
           Release Gripper
         </Button>
         <Button
-          onClick={() => setGripper('grab')}
+          onClick={() => setGripper("grab")}
           color={tailwindColors.falconred[700]}
         >
           Grab Gripper

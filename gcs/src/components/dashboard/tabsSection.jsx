@@ -4,29 +4,29 @@
 */
 
 // Native Imports
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from "react"
 
 // 3rd Party Imports
-import { Tabs, Button, Grid, NumberInput, Popover, Select } from '@mantine/core'
+import { Tabs, Button, Grid, NumberInput, Popover, Select } from "@mantine/core"
 import {
   useDisclosure,
   useLocalStorage,
   useSessionStorage,
-} from '@mantine/hooks'
-import { IconInfoCircle } from '@tabler/icons-react'
-import Webcam from 'react-webcam'
+} from "@mantine/hooks"
+import { IconInfoCircle } from "@tabler/icons-react"
+import Webcam from "react-webcam"
 
 // Custom Components
-import DashboardDataModal from '../dashboardDataModal'
+import DashboardDataModal from "../dashboardDataModal"
 
 // Helper Javascript Files
-import { socket } from '../../helpers/socket'
-import { DataMessage } from '../../helpers/dataDisplay'
+import { socket } from "../../helpers/socket"
+import { DataMessage } from "../../helpers/dataDisplay"
 import {
   MISSION_STATES,
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
-} from '../../helpers/mavlinkConstants'
+} from "../../helpers/mavlinkConstants"
 
 export default function TabsSection({
   connected,
@@ -41,9 +41,10 @@ export default function TabsSection({
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
+  const tabPadding = 'pt-6'
 
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
-    key: 'takeoffAltitude',
+    key: "takeoffAltitude",
     defaultValue: 10,
   })
 
@@ -72,14 +73,14 @@ export default function TabsSection({
 
   // Camera devices
   const [deviceId, setDeviceId] = useSessionStorage({
-    key: 'deviceId',
+    key: "deviceId",
     defaultValue: null,
   })
   const [devices, setDevices] = useState([])
 
   const handleDevices = useCallback(
     (mediaDevices) =>
-      setDevices(mediaDevices.filter(({ kind }) => kind === 'videoinput')),
+      setDevices(mediaDevices.filter(({ kind }) => kind === "videoinput")),
     [setDevices],
   )
 
@@ -99,40 +100,40 @@ export default function TabsSection({
 
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
-    socket.emit('arm_disarm', { arm: arm, force: force })
+    socket.emit("arm_disarm", { arm: arm, force: force })
   }
 
   function setNewFlightMode(modeNumber) {
     if (modeNumber === null || modeNumber === currentFlightModeNumber) {
       return
     }
-    socket.emit('set_current_flight_mode', { newFlightMode: modeNumber })
+    socket.emit("set_current_flight_mode", { newFlightMode: modeNumber })
   }
 
   function controlMission(action) {
-    socket.emit('control_mission', { action })
+    socket.emit("control_mission", { action })
   }
 
   function takeoff() {
-    socket.emit('takeoff', { alt: takeoffAltitude })
+    socket.emit("takeoff", { alt: takeoffAltitude })
   }
 
   function land() {
-    socket.emit('land')
+    socket.emit("land")
   }
 
   return (
-    <Tabs defaultValue='data'>
+    <Tabs defaultValue="data">
       <Tabs.List grow>
-        <Tabs.Tab value='data'>Data</Tabs.Tab>
-        <Tabs.Tab value='actions'>Actions</Tabs.Tab>
-        <Tabs.Tab value='mission'>Mission</Tabs.Tab>
-        <Tabs.Tab value='camera'>Camera</Tabs.Tab>
+        <Tabs.Tab value="data">Data</Tabs.Tab>
+        <Tabs.Tab value="actions">Actions</Tabs.Tab>
+        <Tabs.Tab value="mission">Mission</Tabs.Tab>
+        <Tabs.Tab value="camera">Camera</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value='data'>
-        <>
-          <Grid className='cursor-pointer select-none mt-2'>
+        <div className={tabPadding}>
+          <Grid className='cursor-pointer select-none'>
             {displayedData.length > 0 ? (
               displayedData.map((data) => (
                 <Grid.Col
@@ -149,9 +150,9 @@ export default function TabsSection({
                 </Grid.Col>
               ))
             ) : (
-              <div className='flex justify-center items-center p-4'>
+              <div className="flex justify-center items-center p-4">
                 <IconInfoCircle size={20} />
-                <p className='ml-2'>Double Click to select data</p>
+                <p className="ml-2">Double Click to select data</p>
               </div>
             )}
           </Grid>
@@ -161,31 +162,23 @@ export default function TabsSection({
             selectedBox={selectedBox}
             handleCheckboxChange={handleCheckboxChange}
           />
-        </>
+        </div>
       </Tabs.Panel>
 
       <Tabs.Panel value='actions'>
-        {/* Arming/Flight Modes */}
-        {!connected ? (
-          <div className='flex flex-col items-center justify-center h-full'>
-            <p className='text-white-800 p-6 text-center'>
-              No actions are available right now. Connect a drone to begin
-            </p>
-          </div>
-        ) : (
-          <div className='flex flex-col flex-wrap gap-4 mt-4'>
-            <div className='flex flex-row space-x-14'>
-              <Button
-                onClick={() => {
-                  armDisarm(!getIsArmed())
-                }}
-              >
-                {getIsArmed() ? 'Disarm' : 'Arm'}
-              </Button>
+        <div className={tabPadding}>
+          {/* Arming/Flight Modes */}
+          {!connected ? (
+            <div className='flex flex-col items-center justify-center h-full'>
+              <p className='text-white-800 px-6 text-center'>
+                No actions are available right now. Connect a drone to begin
+              </p>
             </div>
-            <div className='flex flex-row space-x-2'>
+          ) : (
+            <div className='flex flex-col gap-y-2'>
+              {/* Flight mode */}
               {currentFlightModeNumber !== null && (
-                <>
+                <div className='flex flex-wrap flex-cols gap-2'>
                   <Select
                     value={newFlightModeNumber.toString()}
                     onChange={(value) => {
@@ -197,117 +190,143 @@ export default function TabsSection({
                         label: getFlightModeMap()[key],
                       }
                     })}
-                  />
-                  <Button onClick={() => setNewFlightMode(newFlightModeNumber)}>
-                    Set flight mode
-                  </Button>
-                </>
-              )}
-            </div>
-            <div className='flex flex-row space-x-2'>
-              <Popover width={200} position='bottom' withArrow shadow='md'>
-                <Popover.Target>
-                  <Button>Takeoff</Button>
-                </Popover.Target>
-                <Popover.Dropdown className='flex flex-col space-y-2'>
-                  <NumberInput
-                    label='Takeoff altitude (m)'
-                    placeholder='Takeoff altitude (m)'
-                    value={takeoffAltitude}
-                    onChange={setTakeoffAltitude}
-                    min={0}
-                    allowNegative={false}
-                    hideControls
+                    className='grow'
                   />
                   <Button
-                    onClick={() => {
-                      takeoff()
-                    }}
+                    onClick={() => setNewFlightMode(newFlightModeNumber)}
+                    className='grow'
                   >
-                    Takeoff
+                    Set flight mode
                   </Button>
-                </Popover.Dropdown>
-              </Popover>
-              <Button
-                onClick={() => {
-                  land()
-                }}
-              >
-                Land
-              </Button>
+                </div>
+              )}
+
+              {/* Arm, Takeoff, Land */}
+              <div className='flex flex-wrap flex-cols gap-2'>
+                <Button
+                  onClick={() => {
+                    armDisarm(!getIsArmed())
+                  }}
+                  className='grow'
+                >
+                  {getIsArmed() ? 'Disarm' : 'Arm'}
+                </Button>
+
+                {/* Take off button with popover */}
+                <Popover width={200} position='bottom' withArrow shadow='md'>
+                  <Popover.Target>
+                    <Button className='grow'>Takeoff</Button>
+                  </Popover.Target>
+                  <Popover.Dropdown className='flex flex-col space-y-2'>
+                    <NumberInput
+                      label='Takeoff altitude (m)'
+                      placeholder='Takeoff altitude (m)'
+                      value={takeoffAltitude}
+                      onChange={setTakeoffAltitude}
+                      min={0}
+                      allowNegative={false}
+                      hideControls
+                    />
+                    <Button
+                      onClick={() => {
+                        takeoff()
+                      }}
+                    >
+                      Takeoff
+                    </Button>
+                  </Popover.Dropdown>
+                </Popover>
+
+                {/* Land Button */}
+                <Button
+                  onClick={() => {
+                    land()
+                  }}
+                  className='grow'
+                >
+                  Land
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </Tabs.Panel>
 
       <Tabs.Panel value='mission'>
-        {!connected ? (
-          <div className='flex flex-col items-center justify-center h-full'>
-            <p className='text-white-800 p-6 text-center'>
-              No mission actions are available right now. Connect a drone to
-              begin
-            </p>
-          </div>
-        ) : (
-          <div className='flex flex-col flex-wrap gap-4 mt-4'>
-            <div className='flex flex-col text-xl'>
-              <p>
-                Mission state:{' '}
-                {MISSION_STATES[currentMissionData.mission_state]}
-              </p>
-              <p>
-                Waypoint: {currentMissionData.seq}/{currentMissionData.total}
-              </p>
-              <p>
-                Distance to WP:{' '}
-                {(navControllerOutputData.wp_dist
-                  ? navControllerOutputData.wp_dist
-                  : 0
-                ).toFixed(2)}
-                m
+        <div className={tabPadding}>
+          {!connected ? (
+            <div className='flex flex-col items-center justify-center h-full'>
+              <p className='text-white-800 px-6 text-center'>
+                No mission actions are available right now. Connect a drone to
+                begin
               </p>
             </div>
-            <div className='flex flex-row space-x-14'>
-              <Button
-                onClick={() => {
-                  setNewFlightMode(
-                    parseInt(
-                      Object.keys(getFlightModeMap()).find(
-                        (key) => getFlightModeMap()[key] === 'Auto',
+          ) : (
+            <div className='flex flex-col gap-4'>
+              {/* Mission Information Text */}
+              <div className='text-lg'>
+                <p>
+                  <span className='font-bold'>Mission state: </span>
+                  {MISSION_STATES[currentMissionData.mission_state]}
+                </p>
+                <p>
+                  <span className='font-bold'>Waypoint: </span>
+                  {currentMissionData.seq}/{currentMissionData.total}
+                </p>
+                <p>
+                  <span className='font-bold'>Distance to WP: </span>
+                  {(navControllerOutputData.wp_dist
+                    ? navControllerOutputData.wp_dist
+                    : 0
+                  ).toFixed(2)}
+                  m
+                </p>
+              </div>
+
+              {/* Auto mode, start, and restart buttons */}
+              <div className='flex flex-wrap flex-cols gap-2'>
+                <Button
+                  onClick={() => {
+                    setNewFlightMode(
+                      parseInt(
+                        Object.keys(getFlightModeMap()).find(
+                          (key) => getFlightModeMap()[key] === 'Auto',
+                        ),
                       ),
-                    ),
-                  )
-                }}
-              >
-                Auto mode
-              </Button>
+                    )
+                  }}
+                  className='grow'
+                >
+                  Auto mode
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    controlMission('start')
+                  }}
+                  className='grow'
+                >
+                  Start mission
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    controlMission('restart')
+                  }}
+                  className='grow'
+                >
+                  Restart mission
+                </Button>
+              </div>
             </div>
-            <div className='flex flex-row space-x-14'>
-              <Button
-                onClick={() => {
-                  controlMission('start')
-                }}
-              >
-                Start mission
-              </Button>
-            </div>
-            <div className='flex flex-row space-x-14'>
-              <Button
-                onClick={() => {
-                  controlMission('restart')
-                }}
-              >
-                Restart mission
-              </Button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </Tabs.Panel>
 
       <Tabs.Panel value='camera'>
-        <div className='flex flex-col gap-4 mt-2'>
+        <div className={`flex flex-col gap-4 text-xl ${tabPadding}`}>
           <Select
-            label='Select camera input'
+            placeholder='Select camera input'
             data={devices.map((device) => {
               return { value: device.deviceId, label: device.label }
             })}

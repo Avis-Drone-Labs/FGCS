@@ -26,18 +26,20 @@ export default function TelemetrySection({
     <div>
       {/* Information above indicators */}
       <div className="flex flex-col items-center space-y-2">
-        {getIsArmed() ? (
-          <p className="font-bold text-falconred">ARMED</p>
-        ) : (
-          <>
-            <p className="font-bold">DISARMED</p>
-            {prearmEnabled() ? (
-              <p className="text-green-500">Prearm: Enabled</p>
-            ) : (
-              <p className="font-bold text-falconred">Prearm: Disabled</p>
-            )}
-          </>
-        )}
+        <div className="flex items-center space-x-3">
+          {getIsArmed() ? (
+            <p className="font-bold text-falconred">ARMED</p>
+          ) : (
+            <>
+              <p className="font-bold">DISARMED</p>
+              {prearmEnabled() ? (
+                <p className="text-green-500">Prearm: Enabled</p>
+              ) : (
+                <p className="font-bold text-falconred">Prearm: Disabled</p>
+              )}
+            </>
+          )}
+        </div>
         <div className="flex flex-row space-x-6">
           <p>{systemStatus}</p>
           <p>{getFlightMode()}</p>

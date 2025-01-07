@@ -5,35 +5,35 @@
 */
 
 // Base imports
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Progress } from '@mantine/core'
+import { Progress } from "@mantine/core"
 import {
   useDebouncedValue,
   useDisclosure,
   useListState,
   useLocalStorage,
   useToggle,
-} from '@mantine/hooks'
-import AutoSizer from 'react-virtualized-auto-sizer'
-import { FixedSizeList } from 'react-window'
+} from "@mantine/hooks"
+import AutoSizer from "react-virtualized-auto-sizer"
+import { FixedSizeList } from "react-window"
 
 // Custom components, helpers, and data
-import Layout from './components/layout.jsx'
-import NoDroneConnected from './components/noDroneConnected.jsx'
-import AutopilotRebootModal from './components/params/autopilotRebootModal.jsx'
-import ParamsToolbar from './components/params/paramsToolbar.jsx'
-import { Row } from './components/params/row.jsx'
+import Layout from "./components/layout.jsx"
+import NoDroneConnected from "./components/noDroneConnected.jsx"
+import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
+import ParamsToolbar from "./components/params/paramsToolbar.jsx"
+import { Row } from "./components/params/row.jsx"
 import {
   showErrorNotification,
   showSuccessNotification,
-} from './helpers/notification.js'
-import { socket } from './helpers/socket.js'
+} from "./helpers/notification.js"
+import { socket } from "./helpers/socket.js"
 
 export default function Params() {
   const [connected] = useLocalStorage({
-    key: 'connectedToDrone',
+    key: "connectedToDrone",
     defaultValue: true,
   })
 
@@ -48,7 +48,7 @@ export default function Params() {
   const [opened, { open, close }] = useDisclosure(false)
 
   // Searchbar states
-  const [searchValue, setSearchValue] = useState('')
+  const [searchValue, setSearchValue] = useState("")
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
 
   // Fetch progress states
@@ -64,7 +64,7 @@ export default function Params() {
     paramsHandler.setState([])
     shownParamsHandler.setState([])
     modifiedParamsHandler.setState([])
-    setSearchValue('')
+    setSearchValue("")
     setRebootData({})
   }
 
@@ -72,7 +72,7 @@ export default function Params() {
    * Sends a request to the drone to reboot the autopilot
    */
   function rebootAutopilot() {
-    socket.emit('reboot_autopilot')
+    socket.emit("reboot_autopilot")
     open()
     resetState()
   }
@@ -83,7 +83,7 @@ export default function Params() {
   function refreshParams() {
     paramsHandler.setState([])
     shownParamsHandler.setState([])
-    socket.emit('refresh_params')
+    socket.emit("refresh_params")
     setFetchingVars(true)
   }
 
@@ -121,7 +121,7 @@ export default function Params() {
    * @returns
    */
   function addToModifiedParams(value, param) {
-    if (value === '') return
+    if (value === "") return
 
     // If param has already been modified since last save then update it
     if (isModified(param)) updateParamValue(modifiedParamsHandler, param, value)
@@ -136,7 +136,7 @@ export default function Params() {
 
   useEffect(() => {
     // Updates the autopilot modal depending on the success of the reboot
-    socket.on('reboot_autopilot', (msg) => {
+    socket.on("reboot_autopilot", (msg) => {
       setRebootData(msg)
       if (msg.success) {
         close()
@@ -151,45 +151,45 @@ export default function Params() {
 
     // Fetch params on connection to drone
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      socket.emit('set_state', { state: 'params' })
+      socket.emit("set_state", { state: "params" })
       setFetchingVars(true)
     }
 
     // Update parameter states when params are receieved from drone
-    socket.on('params', (params) => {
+    socket.on("params", (params) => {
       paramsHandler.setState(params)
       shownParamsHandler.setState(params)
       setFetchingVars(false)
       setFetchingVarsProgress(0)
-      setSearchValue('')
+      setSearchValue("")
     })
 
     // Set fetch progress on update from drone
-    socket.on('param_request_update', (msg) => {
+    socket.on("param_request_update", (msg) => {
       setFetchingVarsProgress(
         (msg.current_param_index / msg.total_number_of_params) * 100,
       )
     })
 
     // Show success on saving modified params
-    socket.on('param_set_success', (msg) => {
+    socket.on("param_set_success", (msg) => {
       showSuccessNotification(msg.message)
       modifiedParamsHandler.setState([])
     })
 
     // Show error message on drone error
-    socket.on('params_error', (err) => {
+    socket.on("params_error", (err) => {
       showErrorNotification(err.message)
       setFetchingVars(false)
     })
 
     //
     return () => {
-      socket.off('params')
-      socket.off('param_request_update')
-      socket.off('param_set_success')
-      socket.off('params_error')
-      socket.off('reboot_autopilot')
+      socket.off("params")
+      socket.off("param_request_update")
+      socket.off("param_set_success")
+      socket.off("params_error")
+      socket.off("reboot_autopilot")
     }
   }, [connected]) // useEffect
 
@@ -208,7 +208,7 @@ export default function Params() {
   }, [debouncedSearchValue, showModifiedParams])
 
   return (
-    <Layout currentPage='params'>
+    <Layout currentPage="params">
       {connected ? (
         <>
           <AutopilotRebootModal
@@ -219,14 +219,14 @@ export default function Params() {
 
           {fetchingVars && (
             <Progress
-              radius='xs'
+              radius="xs"
               value={fetchingVarsProgress}
-              className='w-1/3 mx-auto my-auto'
+              className="w-1/3 mx-auto my-auto"
             />
           )}
 
           {Object.keys(params).length !== 0 && (
-            <div className='w-full h-full contents'>
+            <div className="w-full h-full contents">
               <ParamsToolbar
                 searchValue={searchValue}
                 modifiedParams={modifiedParams}
@@ -237,7 +237,7 @@ export default function Params() {
                 searchCallback={setSearchValue}
               />
 
-              <div className='h-full w-2/3 mx-auto'>
+              <div className="h-full w-2/3 mx-auto">
                 <AutoSizer>
                   {({ height, width }) => (
                     <FixedSizeList

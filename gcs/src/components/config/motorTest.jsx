@@ -4,27 +4,27 @@
   Allows testing the motors individually,in-sequence and simultaneously with throttle and duration parameters for the test. Shows frame type and class of drone
 */
 // Base Imports
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Button, NumberInput } from '@mantine/core'
+import { Button, NumberInput } from "@mantine/core"
 
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
-import { useLocalStorage } from '@mantine/hooks'
+import { useLocalStorage } from "@mantine/hooks"
 import {
   FRAME_CLASS_MAP,
   MOTOR_LETTER_LABELS,
-} from '../../helpers/mavlinkConstants'
-import { socket } from '../../helpers/socket'
+} from "../../helpers/mavlinkConstants"
+import { socket } from "../../helpers/socket"
 
 export default function MotorTestPanel() {
   const [connected] = useLocalStorage({
-    key: 'connectedToDrone',
+    key: "connectedToDrone",
     defaultValue: false,
   })
   const [frameTypeOrder, setFrameTypeOrder] = useState(null)
@@ -37,10 +37,10 @@ export default function MotorTestPanel() {
 
   useEffect(() => {
     if (connected) {
-      socket.emit('set_state', { state: 'config.motor_test' })
-      socket.emit('get_frame_config')
+      socket.emit("set_state", { state: "config.motor_test" })
+      socket.emit("get_frame_config")
     }
-    socket.on('frame_type_config', (data) => {
+    socket.on("frame_type_config", (data) => {
       const currentFrameType = data.frame_type
       const currentFrameClass = data.frame_class
 
@@ -67,13 +67,13 @@ export default function MotorTestPanel() {
     })
 
     return () => {
-      socket.emit('set_state', { state: 'config' })
-      socket.off('frame_type_config')
+      socket.emit("set_state", { state: "config" })
+      socket.off("frame_type_config")
     }
   }, [connected])
   // Test a single motor with the specified throttle and duration
   function testOneMotor(motorInstance) {
-    socket.emit('test_one_motor', {
+    socket.emit("test_one_motor", {
       motorInstance: motorInstance,
       throttle: selectedThrottle,
       duration: selectedDuration,
@@ -82,7 +82,7 @@ export default function MotorTestPanel() {
 
   // Test the motors individually in sequence with the specified throttle and time delay
   function testMotorSequence() {
-    socket.emit('test_motor_sequence', {
+    socket.emit("test_motor_sequence", {
       throttle: selectedThrottle,
       // This is actually the delay between tests since it's a sequence test
       duration: selectedDuration,
@@ -92,7 +92,7 @@ export default function MotorTestPanel() {
 
   // Test all the motors simultaneously with the specified throttle and duration
   function testAllMotors() {
-    socket.emit('test_all_motors', {
+    socket.emit("test_all_motors", {
       throttle: selectedThrottle,
       duration: selectedDuration,
       numOfMotors: numberOfMotors,
@@ -100,30 +100,30 @@ export default function MotorTestPanel() {
   }
 
   return (
-    <div className='flex flex-row gap-16 p-6'>
-      <div className='flex flex-col gap-2'>
+    <div className="flex flex-row gap-16 p-6">
+      <div className="flex flex-col gap-2">
         {/* Input throttle and duration/delay of the test*/}
-        <div className='flex gap-2'>
+        <div className="flex gap-2">
           <NumberInput
-            label='Throttle'
+            label="Throttle"
             value={selectedThrottle}
             onChange={setSelectedThrottle}
-            suffix='%'
+            suffix="%"
             min={0}
             max={100}
-            className='w-full'
+            className="w-full"
           />
           <NumberInput
-            label='Duration'
+            label="Duration"
             value={selectedDuration}
             onChange={setSelectedDuration}
-            suffix='s'
+            suffix="s"
             min={0}
-            className='w-full'
+            className="w-full"
           />
         </div>
 
-        <div className='flex flex-col gap-2 mt-6'>
+        <div className="flex flex-col gap-2 mt-6">
           {/* Individual motor testing buttons */}
           {MOTOR_LETTER_LABELS.slice(0, numberOfMotors).map((motor, index) => (
             <Button
@@ -141,7 +141,7 @@ export default function MotorTestPanel() {
               testMotorSequence()
             }}
             color={tailwindColors.lime[600]}
-            label='x'
+            label="x"
           >
             Test motor sequence
           </Button>
@@ -156,15 +156,15 @@ export default function MotorTestPanel() {
         </div>
         {/* Link for user to check their motor order diagram*/}
         <a
-          className='text-sm text-teal-300 hover:underline'
-          href='https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams'
-          target='_blank'
+          className="text-sm text-teal-300 hover:underline"
+          href="https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams"
+          target="_blank"
         >
           Click here to see your motor numbers and directions
         </a>
       </div>
-      <div className='flex flex-col gap-8'>
-        <div className='mt-6'>
+      <div className="flex flex-col gap-8">
+        <div className="mt-6">
           {frameTypename !== null && (
             <>
               <p>Frame: {frameClass}</p>
@@ -172,15 +172,15 @@ export default function MotorTestPanel() {
             </>
           )}
         </div>
-        <div className='flex flex-col gap-4'>
+        <div className="flex flex-col gap-4">
           {/* Motor Order and direction details */}
           {frameTypeOrder !== null && (
             <>
               {frameTypeOrder.map((mappedMotorNumber, idx) => {
                 return (
                   <p key={idx}>
-                    {' '}
-                    Motor number: {mappedMotorNumber}, {frameTypeDirection[idx]}{' '}
+                    {" "}
+                    Motor number: {mappedMotorNumber}, {frameTypeDirection[idx]}{" "}
                   </p>
                 )
               })}

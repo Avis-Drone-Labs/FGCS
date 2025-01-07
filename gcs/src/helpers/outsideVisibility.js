@@ -3,16 +3,16 @@
 */
 
 // 3rd Party Imports
-import { useLocalStorage } from '@mantine/hooks'
+import { useLocalStorage } from "@mantine/hooks"
 
 // Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../tailwind.config'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function GetOutsideVisibilityColor() {
   const [outsideVisibility] = useLocalStorage({
-    key: 'outsideVisibility',
+    key: "outsideVisibility",
     defaultValue: false,
   })
 
@@ -21,6 +21,6 @@ export default function GetOutsideVisibilityColor() {
 
 export function getOutsideVisibilityColorManually(isOutside) {
   return isOutside
-    ? tailwindColors.falcongrey['900']
-    : tailwindColors.falcongrey['TRANSLUCENT']
+    ? tailwindColors.falcongrey["900"]
+    : tailwindColors.falcongrey["TRANSLUCENT"]
 }

@@ -3,9 +3,9 @@
 */
 
 // Third Party Imports
-import { Button } from '@headlessui/react'
-import { useState, useRef } from 'react'
-import { useOutsideAlerter } from '../../../helpers/outsideAlerter'
+import { Button } from "@headlessui/react"
+import { useState, useRef } from "react"
+import { useOutsideAlerter } from "../../../helpers/outsideAlerter"
 
 export default function MenuTemplate({
   children,
@@ -21,13 +21,13 @@ export default function MenuTemplate({
   })
 
   let menuLinkClasses =
-    'outline-none px-2 rounded-md hover:cursor-pointer group-hover:bg-falcongrey-600'
+    "outline-none px-2 rounded-md hover:cursor-pointer group-hover:bg-falcongrey-600"
   let menuDropdownClasses =
-    'flex flex-col absolute z-50 outline-none px-1 py-1 rounded-md bg-falcongrey-700 '
+    "flex flex-col absolute z-50 outline-none px-1 py-1 rounded-md bg-falcongrey-700 "
 
   return (
     <div
-      className='group'
+      className="group"
       ref={wrapperRef}
       onMouseLeave={() => {
         if (areMenusActive) {
@@ -54,7 +54,7 @@ export default function MenuTemplate({
 
       <div
         className={menuDropdownClasses}
-        style={{ display: dropdownVisibility ? 'block' : 'none' }}
+        style={{ display: dropdownVisibility ? "block" : "none" }}
         onClick={() => {
           if (!areMenusActive) {
             setDropdownVisibility(false)

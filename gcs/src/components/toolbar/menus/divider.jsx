@@ -3,19 +3,19 @@
 */
 
 // Third Party Imports
-import { Divider as MantineDivider } from '@mantine/core'
+import { Divider as MantineDivider } from "@mantine/core"
 
 // Styling Imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../../tailwind.config.js'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Divider() {
   return (
     <MantineDivider
-      className='px-1 my-1'
-      color={tailwindColors['falcongrey'][600]}
-      size='sm'
+      className="px-1 my-1"
+      color={tailwindColors["falcongrey"][600]}
+      size="sm"
     />
   )
 }

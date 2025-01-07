@@ -6,10 +6,10 @@
 */
 
 // 3rd party imports
-import { NumberInput, Select } from '@mantine/core'
+import { NumberInput, Select } from "@mantine/core"
 
 // custom components, helpers and data
-import BitmaskSelect from './bitmaskSelect'
+import BitmaskSelect from "./bitmaskSelect"
 
 export default function ValueInput({ param, paramDef, onChange, className }) {
   if (paramDef?.Values) {
@@ -46,7 +46,7 @@ export default function ValueInput({ param, paramDef, onChange, className }) {
       label={
         paramDef?.Range
           ? `${paramDef?.Range.low} - ${paramDef?.Range.high}`
-          : ``
+          : ""
       }
       value={param.param_value}
       onChange={(value) => onChange(value, param)}

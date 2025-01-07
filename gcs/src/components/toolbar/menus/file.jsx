@@ -3,45 +3,45 @@
 */
 
 // Local Imports
-import Divider from './divider'
-import MenuItem from './menuItem'
-import MenuTemplate from './menuTemplate'
-import packageJson from '../../../../package.json'
+import Divider from "./divider"
+import MenuItem from "./menuItem"
+import MenuTemplate from "./menuTemplate"
+import packageJson from "../../../../package.json"
 
 export default function FileMenu(props) {
   return (
     <MenuTemplate
-      title='File'
+      title="File"
       areMenusActive={props.areMenusActive}
       setMenusActive={props.setMenusActive}
     >
       <MenuItem
-        name='About FGCS'
+        name="About FGCS"
         link={true}
-        href='https://github.com/avis-drone-labs/fgcs'
+        href="https://github.com/avis-drone-labs/fgcs"
       />
-      <MenuItem name='Current Version' shortcut={packageJson.version} />
+      <MenuItem name="Current Version" shortcut={packageJson.version} />
       <Divider />
       <MenuItem
-        name='Report a Bug'
+        name="Report a Bug"
         link={true}
-        href='https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose'
+        href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
       />
       <Divider />
       <MenuItem
-        name='Minimise'
-        shortcut='Alt + Esc'
-        callback={() => window.ipcRenderer.send('minimise')}
+        name="Minimise"
+        shortcut="Alt + Esc"
+        callback={() => window.ipcRenderer.send("minimise")}
       />
       <MenuItem
-        name='Toggle Maximise'
-        shortcut='Win + Down, Win + Up'
-        callback={() => window.ipcRenderer.send('maximise')}
+        name="Toggle Maximise"
+        shortcut="Win + Down, Win + Up"
+        callback={() => window.ipcRenderer.send("maximise")}
       />
       <MenuItem
-        name='Exit'
-        shortcut='Alt + F4'
-        callback={() => window.ipcRenderer.send('close')}
+        name="Exit"
+        shortcut="Alt + F4"
+        callback={() => window.ipcRenderer.send("close")}
       />
     </MenuTemplate>
   )

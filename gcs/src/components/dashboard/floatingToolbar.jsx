@@ -3,8 +3,8 @@
 */
 
 // 3rd Party Imports
-import { ActionIcon, Tooltip } from '@mantine/core'
-import { useLocalStorage } from '@mantine/hooks'
+import { ActionIcon, Tooltip } from "@mantine/core"
+import { useLocalStorage } from "@mantine/hooks"
 import {
   IconAnchor,
   IconAnchorOff,
@@ -12,11 +12,11 @@ import {
   IconMapPins,
   IconSun,
   IconSunOff,
-} from '@tabler/icons-react'
+} from "@tabler/icons-react"
 
 // Helper Functions
-import { filterMissionItems } from './map'
-import GetOutsideVisibilityColor from '../../helpers/outsideVisibility'
+import { filterMissionItems } from "./map"
+import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 
 export default function FloatingToolbar({
   missionItems,
@@ -28,7 +28,7 @@ export default function FloatingToolbar({
 }) {
   const filteredMissionItems = filterMissionItems(missionItems.mission_items)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
-    key: 'outsideVisibility',
+    key: "outsideVisibility",
     defaultValue: false,
   })
 
@@ -60,17 +60,17 @@ export default function FloatingToolbar({
 
   return (
     <div
-      className='absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30'
+      className="absolute right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30"
       style={{ backgroundColor: GetOutsideVisibilityColor() }}
     >
       {/* Follow Drone */}
       <Tooltip
         label={
           !gpsData.lon && !gpsData.lat
-            ? 'No GPS data'
+            ? "No GPS data"
             : followDrone
-              ? 'Stop following'
-              : 'Follow drone'
+              ? "Stop following"
+              : "Follow drone"
         }
       >
         <ActionIcon
@@ -85,7 +85,7 @@ export default function FloatingToolbar({
 
       {/* Center Map on Drone */}
       <Tooltip
-        label={!gpsData.lon && !gpsData.lat ? 'No GPS data' : 'Center on drone'}
+        label={!gpsData.lon && !gpsData.lat ? "No GPS data" : "Center on drone"}
       >
         <ActionIcon
           disabled={!gpsData.lon && !gpsData.lat}
@@ -98,7 +98,7 @@ export default function FloatingToolbar({
       {/* Center Map on first mission item */}
       <Tooltip
         label={
-          !filteredMissionItems.length > 0 ? 'No mission' : 'Center on mission'
+          !filteredMissionItems.length > 0 ? "No mission" : "Center on mission"
         }
       >
         <ActionIcon
@@ -113,8 +113,8 @@ export default function FloatingToolbar({
       <Tooltip
         label={
           outsideVisibility
-            ? 'Turn off outside text mode'
-            : 'Turn on outside text mode'
+            ? "Turn off outside text mode"
+            : "Turn on outside text mode"
         }
       >
         <ActionIcon

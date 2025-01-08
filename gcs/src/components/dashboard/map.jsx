@@ -77,6 +77,18 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
 }
 
 export function filterMissionItems(missionItems) {
+  if (!missionItems || !missionItems.length) return []
+
+  // remove first mission item as it's a home point, for some reason the home
+  // position is denoted MAV_CMD_NAV_WAYPOINT command (why??)
+  if (
+    missionItems[0].command == 16 &&
+    missionItems[0].frame == 0 &&
+    missionItems[0].seq == 0
+  ) {
+    missionItems.shift()
+  }
+
   return missionItems.filter(
     (missionItem) =>
       !Object.values(FILTER_MISSION_ITEM_COMMANDS_LIST).includes(
@@ -507,11 +519,14 @@ export default function MapSection({
         )}
 
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
-          <form className="flex flex-col space-y-2" onSubmit={(e) => {
-            e.preventDefault()
-            reposition()
-            close()
-          }}>
+          <form
+            className="flex flex-col space-y-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              reposition()
+              close()
+            }}
+          >
             <NumberInput
               placeholder="Altitude (m)"
               value={repositionAltitude}
@@ -521,10 +536,7 @@ export default function MapSection({
               hideControls
               data-autofocus
             />
-            <Button
-              fullWidth
-              type="submit"
-            >
+            <Button fullWidth type="submit">
               Reposition
             </Button>
           </form>

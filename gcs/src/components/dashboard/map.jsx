@@ -78,8 +78,9 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
 
 export function filterMissionItems(missionItems) {
   if (!missionItems || !missionItems.length) return []
-  // remove first mission item as it's a home point
 
+  // remove first mission item as it's a home point, for some reason the home
+  // position is denoted MAV_CMD_NAV_WAYPOINT command (why??)
   if (
     missionItems[0].command == 16 &&
     missionItems[0].frame == 0 &&

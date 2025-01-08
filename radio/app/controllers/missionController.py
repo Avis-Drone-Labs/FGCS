@@ -123,19 +123,6 @@ class MissionController:
 
                     item_response_data = item_response.get("data", None)
 
-                    # if (
-                    #     self.drone.autopilot
-                    #     == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
-                    #     and i == 0
-                    #     and mission_type == 0
-                    # ):
-                    #     if (
-                    #         item_response_data
-                    #         and item_response_data.frame == 0
-                    #         and item_response_data.command == 16
-                    #     ):
-                    #         continue
-
                     if item_response_data:
                         loader.add(item_response_data)
 
@@ -434,9 +421,7 @@ class MissionController:
                         "success": False,
                         "message": "Could not upload mission, received mission acknowledgement error",
                     }
-                elif response.mission_type != mission_type:
-                    continue
-                else:
+                elif response.mission_type == mission_type:
                     self.drone.logger.debug(
                         f"Sending mission item {response.seq} out of {loader.count()}"
                     )

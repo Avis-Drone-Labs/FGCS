@@ -278,50 +278,6 @@ class MissionController:
                 "message": "Failed to restart mission, serial exception",
             }
 
-    def setHome(self, lat: float, lon: float, alt: float) -> Response:
-        """
-        Set the home point of the drone.
-
-        Args:
-            lat (float): The latitude of the home point
-            lon (float): The longitude of the home point
-            alt (float): The altitude of the home point
-        """
-
-        self.drone.is_listening = False
-        self.drone.sendCommandInt(
-            mavutil.mavlink.MAV_CMD_DO_SET_HOME, x=lat, y=lon, z=alt
-        )
-
-        try:
-            response = self.drone.master.recv_match(
-                type=[
-                    "COMMAND_ACK",
-                ],
-                blocking=True,
-                timeout=2,
-            )
-            self.drone.is_listening = True
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_HOME):
-                return {
-                    "success": True,
-                    "message": "Home point set successfully",
-                }
-
-            else:
-                return {
-                    "success": False,
-                    "message": "Could not set home point",
-                }
-
-        except serial.serialutil.SerialException:
-            self.drone.is_listening = True
-            return {
-                "success": False,
-                "message": "Could not set home point, serial exception",
-            }
-
     def clearMission(self, mission_type: int) -> Response:
         """
         Clears the specified mission type from the drone.

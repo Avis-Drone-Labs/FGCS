@@ -181,3 +181,29 @@ def sendMessage(msg: Any) -> None:
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
     socketio.emit("incoming_msg", data)
+
+
+def wpToMissionItemInt(
+    wp: mavutil.mavlink.MAVLink_message,
+) -> mavutil.mavlink.MAVLink_message:
+    if wp.get_type() == "MISSION_ITEM_INT":
+        return wp
+
+    wp_int = mavutil.mavlink.MAVLink_mission_item_int_message(
+        wp.target_system,
+        wp.target_component,
+        wp.seq,
+        wp.frame,
+        wp.command,
+        wp.current,
+        wp.autocontinue,
+        wp.param1,
+        wp.param2,
+        wp.param3,
+        wp.param4,
+        int(wp.x * 1e7),
+        int(wp.y * 1e7),
+        wp.z,
+        wp.mission_type,
+    )
+    return wp_int

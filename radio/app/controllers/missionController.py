@@ -122,17 +122,23 @@ class MissionController:
                             "message": item_response.get("message", failure_message),
                         }
 
-                    item_response_data = item_response.get("data")
-                    if (
-                        self.drone.autopilot
-                        == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
-                        and i == 0
-                        and mission_type == 0
-                    ):
-                        if item_response_data and item_response_data.frame == 0:
-                            continue
+                    item_response_data = item_response.get("data", None)
 
-                    loader.add(item_response_data)
+                    # if (
+                    #     self.drone.autopilot
+                    #     == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+                    #     and i == 0
+                    #     and mission_type == 0
+                    # ):
+                    #     if (
+                    #         item_response_data
+                    #         and item_response_data.frame == 0
+                    #         and item_response_data.command == 16
+                    #     ):
+                    #         continue
+
+                    if item_response_data:
+                        loader.add(item_response_data)
 
                 return {
                     "success": True,

@@ -90,7 +90,6 @@ class MissionController:
         else:
             loader = self.rallyLoader
 
-        # TODO: Try send custom mission request list command?
         try:
             self.drone.master.mav.mission_request_list_send(
                 self.drone.target_system,

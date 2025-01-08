@@ -30,6 +30,24 @@ def test_getCurrentMission_correctState(
     assert socketio_result["args"][0] == {
         "mission_items": [
             {
+                "autocontinue": 1,
+                "command": 16,
+                "current": 0,
+                "frame": 0,
+                "mavpackettype": "MISSION_ITEM_INT",
+                "mission_type": 0,
+                "param1": 0.0,
+                "param2": 0.0,
+                "param3": 0.0,
+                "param4": 0.0,
+                "seq": 0,
+                "target_component": 0,
+                "target_system": 255,
+                "x": 527805690,
+                "y": -7079236,
+                "z": 0.09999999403953552,
+            },
+            {
                 "mavpackettype": "MISSION_ITEM_INT",
                 "target_system": 255,
                 "target_component": 0,

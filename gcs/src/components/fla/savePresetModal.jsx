@@ -22,10 +22,12 @@ export default function SavePresetModal({ opened, close, onSave }) {
         blur: 3,
       }}
     >
-      <form onSubmit={(e) => {
-        e.preventDefault()
-        onSave(presetName.trim())
-      }}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSave(presetName.trim())
+        }}
+      >
         {/* Add character limit */}
         <TextInput
           label="Preset Name"

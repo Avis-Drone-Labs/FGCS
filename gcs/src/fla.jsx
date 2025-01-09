@@ -426,9 +426,7 @@ export default function FLA() {
     updateMessageFilters(newFilters)
     if (Object.keys(newColors).length === 0) {
       updateCanSavePreset(false)
-    }
-
-    else {
+    } else {
       updateCanSavePreset(true)
     }
   }
@@ -541,7 +539,7 @@ export default function FLA() {
         close()
         updateCanSavePreset(false)
       } else {
-        if(existingPreset.name === presetName){
+        if (existingPreset.name === presetName) {
           showErrorNotification(
             `The name "${presetName}" is in use. Please choose a different name.`,
           )
@@ -564,16 +562,23 @@ export default function FLA() {
 
     // If so, check if they match the filters of the preset to be deleted
     if (hasSelectedFilters) {
-      const filtersOfPresetToBeDeleted = presetCategories['custom_' + logType][0].filters.find(filter => filter.name === presetName).filters
-      
+      const filtersOfPresetToBeDeleted = presetCategories[
+        "custom_" + logType
+      ][0].filters.find((filter) => filter.name === presetName).filters
+
       const activeMessageFields = Object.entries(messageFilters).reduce(
         (filteredCategories, [categoryName, fields]) => {
-          filteredCategories[categoryName] = Object.keys(fields).filter((fieldName) => fields[fieldName])
+          filteredCategories[categoryName] = Object.keys(fields).filter(
+            (fieldName) => fields[fieldName],
+          )
           return filteredCategories
         },
         {},
       )
-      const matchesSelectedPresets = _.isEqual(filtersOfPresetToBeDeleted, activeMessageFields)
+      const matchesSelectedPresets = _.isEqual(
+        filtersOfPresetToBeDeleted,
+        activeMessageFields,
+      )
 
       if (matchesSelectedPresets) {
         updateCanSavePreset(true)

@@ -51,7 +51,7 @@ export default function Navbar({ currentPage }) {
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)
-  const [connected, setConnected] = useLocalStorage({
+  const [connected, setConnected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

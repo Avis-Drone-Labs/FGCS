@@ -100,7 +100,7 @@ export default function MotorTestPanel() {
   }
 
   return (
-    <div className="flex flex-row gap-16 p-6">
+    <div className="flex flex-row gap-16 px-4">
       <div className="flex flex-col gap-2">
         {/* Input throttle and duration/delay of the test*/}
         <div className="flex gap-2">

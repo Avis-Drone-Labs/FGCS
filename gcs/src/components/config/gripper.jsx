@@ -22,7 +22,7 @@ export default function Gripper() {
   }
 
   return (
-    <div className="m-6 w-1/2">
+    <div className="m-4 w-1/2">
       <div className="flex flex-row gap-2">
         <Button
           onClick={() => setGripper("release")}

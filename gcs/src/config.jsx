@@ -39,6 +39,7 @@ export default function Config() {
   // States in the frontend
   const [activeTab, setActiveTab] = useState(null)
   const [gripperEnabled, setGripperEnabled] = useState(false)
+  const paddingTop = "mt-4"
 
   // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
@@ -106,16 +107,24 @@ export default function Config() {
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
-              <Gripper />
+              <div className={paddingTop}>
+                <Gripper />
+              </div>
             </Tabs.Panel>
             <Tabs.Panel value="motor_test">
-              <Motortestpanel />
+              <div className={paddingTop}>
+                <Motortestpanel />
+              </div>
             </Tabs.Panel>
             <Tabs.Panel value="rc_calibration">
-              <RadioCalibration />
+              <div className={paddingTop}>
+                <RadioCalibration />
+              </div>
             </Tabs.Panel>
             <Tabs.Panel value="flightmodes">
-              <FlightModes />
+              <div className={paddingTop}>
+                <FlightModes />
+              </div>
             </Tabs.Panel>
           </Tabs>
         </div>

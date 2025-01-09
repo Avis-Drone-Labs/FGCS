@@ -26,25 +26,14 @@ const PWM_MIN = 800
 const PWM_MAX = 2200
 
 const colors = [
-  tailwindColors.blue[500],
   tailwindColors.red[500],
-  tailwindColors.green[500],
-  tailwindColors.yellow[500],
-  tailwindColors.purple[500],
-  tailwindColors.indigo[500],
-  tailwindColors.pink[500],
-  tailwindColors.cyan[500],
-  tailwindColors.teal[500],
-  tailwindColors.lime[500],
   tailwindColors.orange[500],
-  tailwindColors.emerald[500],
-  tailwindColors.amber[500],
-  tailwindColors.violet[500],
-  tailwindColors.rose[500],
-  tailwindColors.sky[500],
-  tailwindColors.fuchsia[500],
-  tailwindColors.stone[500],
-  tailwindColors.slate[500],
+  tailwindColors.yellow[500],
+  tailwindColors.green[500],
+  tailwindColors.blue[500],
+  tailwindColors.indigo[500],
+  tailwindColors.purple[500],
+  tailwindColors.pink[500],
 ]
 
 function getPercentageValueFromPWM(pwmValue) {
@@ -132,29 +121,31 @@ export default function RadioCalibration() {
   }, [connected])
   return (
     <div className="m-4 flex flex-row gap-4 relative">
-      <div className="flex flex-col gap-4 w-1/2">
-        <>
+      <table class="table-auto">
+        <tbody>
           {Object.keys(channels).map((channel) => (
-            <div key={channel} className="flex flex-col w-full">
-              <p>
+            <tr key={channel}>
+              <td className="w-fit pb-2 pr-4">
                 <span className="font-bold">{channel} </span>
                 {channelsConfig[channel]?.map ??
                   getReadableRcOption(channelsConfig[channel]?.option)}
-              </p>
-              <Progress.Root size="xl" className="w-full !h-6">
-                <Progress.Section
-                  value={getPercentageValueFromPWM(channels[channel])}
-                  color={colors[channel]}
-                >
-                  <Progress.Label className="!text-lg !font-normal">
-                    {channels[channel]}
-                  </Progress.Label>
-                </Progress.Section>
-              </Progress.Root>
-            </div>
+              </td>
+              <td>
+                <Progress.Root size="xl" className="w-[48rem] !h-6">
+                  <Progress.Section
+                    value={getPercentageValueFromPWM(channels[channel])}
+                    color={colors[(channel - 1) % colors.length]}
+                  >
+                    <Progress.Label className="!text-lg !font-normal">
+                      {channels[channel]}
+                    </Progress.Label>
+                  </Progress.Section>
+                </Progress.Root>
+              </td>
+            </tr>
           ))}
-        </>
-      </div>
+        </tbody>
+      </table>
     </div>
   )
 }

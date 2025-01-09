@@ -254,10 +254,12 @@ export default function Navbar({ currentPage }) {
           },
         }}
       >
-      <form onSubmit={(e) => {
-        e.preventDefault()
-        connectToDrone(connectionType)
-      }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            connectToDrone(connectionType)
+          }}
+        >
           <Tabs value={connectionType} onChange={setConnectionType}>
             <Tabs.List grow>
               <Tabs.Tab value={ConnectionType.Serial}>

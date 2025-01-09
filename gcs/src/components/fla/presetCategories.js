@@ -10,8 +10,8 @@
  *   - deleteCustomPreset: Function to remove a custom preset
  *   - findExistingPreset: Function to check for duplicate presets
  */
-import { useState, useEffect } from 'react'
-import _ from 'lodash'
+import { useState, useEffect } from "react"
+import _ from "lodash"
 
 const dataflashPresetCategories = [
   {
@@ -291,8 +291,8 @@ export function usePresetCategories() {
     // Check in standard presets
     const standardCategories = presetCategories[logType] || []
     const reducedFilters = Object.fromEntries(
-      Object.entries(preset.filters).filter(([, value]) => value.length > 0)
-    );
+      Object.entries(preset.filters).filter(([, value]) => value.length > 0),
+    )
     for (const category of standardCategories) {
       // Make sure category.filters exists and is an array
       if (!Array.isArray(category.filters)) {

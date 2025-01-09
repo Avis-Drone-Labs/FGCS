@@ -131,7 +131,7 @@ export default function RadioCalibration() {
                   getReadableRcOption(channelsConfig[channel]?.option)}
               </td>
               <td>
-                <Progress.Root size="xl" className="w-[48rem] !h-6">
+                <Progress.Root className="w-[48rem] !h-6">
                   <Progress.Section
                     value={getPercentageValueFromPWM(channels[channel])}
                     color={colors[(channel - 1) % colors.length]}

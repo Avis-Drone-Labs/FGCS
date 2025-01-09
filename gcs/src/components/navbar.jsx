@@ -445,14 +445,14 @@ export default function Navbar({ currentPage }) {
           {connected && (
             <>
               Connected to
-              <p className="inline font-bold">
+              <span className="inline font-bold">
                 {
                   {
                     [ConnectionType.Serial]: ` ${selectedComPort}`,
                     [ConnectionType.Network]: ` ${networkType}:${ip}:${port}`,
                   }[connectionType]
                 }
-              </p>
+              </span>
             </>
           )}
         </p>

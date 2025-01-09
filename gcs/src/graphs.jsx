@@ -8,7 +8,7 @@
 import { useEffect, useRef } from "react"
 
 // 3rd Party Imports
-import { useLocalStorage, usePrevious } from "@mantine/hooks"
+import { useLocalStorage, usePrevious, useSessionStorage } from "@mantine/hooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -40,7 +40,7 @@ const graphColors = {
 }
 
 export default function Graphs() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Button, NumberInput } from "@mantine/core"
+import { useSessionStorage } from "@mantine/hooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -15,7 +16,6 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
-import { useLocalStorage } from "@mantine/hooks"
 import {
   FRAME_CLASS_MAP,
   MOTOR_LETTER_LABELS,
@@ -23,7 +23,7 @@ import {
 import { socket } from "../../helpers/socket"
 
 export default function MotorTestPanel() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

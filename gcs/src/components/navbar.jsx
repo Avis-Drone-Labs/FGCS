@@ -463,7 +463,9 @@ export default function Navbar({ currentPage }) {
                   }
             }
             color={
-              connected ? tailwindColors.falconred[800] : tailwindColors.green[600]
+              connected
+                ? tailwindColors.falconred[800]
+                : tailwindColors.green[600]
             }
           >
             {connected ? "Disconnect" : "Connect"}

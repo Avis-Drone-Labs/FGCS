@@ -41,7 +41,7 @@ export default function TabsSection({
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
-  const tabPadding = 'pt-6'
+  const tabPadding = "pt-6"
 
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: "takeoffAltitude",
@@ -131,9 +131,9 @@ export default function TabsSection({
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
       </Tabs.List>
 
-      <Tabs.Panel value='data'>
+      <Tabs.Panel value="data">
         <div className={tabPadding}>
-          <Grid className='cursor-pointer select-none'>
+          <Grid className="cursor-pointer select-none">
             {displayedData.length > 0 ? (
               displayedData.map((data) => (
                 <Grid.Col
@@ -165,20 +165,20 @@ export default function TabsSection({
         </div>
       </Tabs.Panel>
 
-      <Tabs.Panel value='actions'>
+      <Tabs.Panel value="actions">
         <div className={tabPadding}>
           {/* Arming/Flight Modes */}
           {!connected ? (
-            <div className='flex flex-col items-center justify-center h-full'>
-              <p className='text-white-800 px-6 text-center'>
+            <div className="flex flex-col items-center justify-center h-full">
+              <p className="text-white-800 px-6 text-center">
                 No actions are available right now. Connect a drone to begin
               </p>
             </div>
           ) : (
-            <div className='flex flex-col gap-y-2'>
+            <div className="flex flex-col gap-y-2">
               {/* Flight mode */}
               {currentFlightModeNumber !== null && (
-                <div className='flex flex-wrap flex-cols gap-2'>
+                <div className="flex flex-wrap flex-cols gap-2">
                   <Select
                     value={newFlightModeNumber.toString()}
                     onChange={(value) => {
@@ -190,11 +190,11 @@ export default function TabsSection({
                         label: getFlightModeMap()[key],
                       }
                     })}
-                    className='grow'
+                    className="grow"
                   />
                   <Button
                     onClick={() => setNewFlightMode(newFlightModeNumber)}
-                    className='grow'
+                    className="grow"
                   >
                     Set flight mode
                   </Button>
@@ -202,25 +202,25 @@ export default function TabsSection({
               )}
 
               {/* Arm, Takeoff, Land */}
-              <div className='flex flex-wrap flex-cols gap-2'>
+              <div className="flex flex-wrap flex-cols gap-2">
                 <Button
                   onClick={() => {
                     armDisarm(!getIsArmed())
                   }}
-                  className='grow'
+                  className="grow"
                 >
-                  {getIsArmed() ? 'Disarm' : 'Arm'}
+                  {getIsArmed() ? "Disarm" : "Arm"}
                 </Button>
 
                 {/* Take off button with popover */}
-                <Popover width={200} position='bottom' withArrow shadow='md'>
+                <Popover width={200} position="bottom" withArrow shadow="md">
                   <Popover.Target>
-                    <Button className='grow'>Takeoff</Button>
+                    <Button className="grow">Takeoff</Button>
                   </Popover.Target>
-                  <Popover.Dropdown className='flex flex-col space-y-2'>
+                  <Popover.Dropdown className="flex flex-col space-y-2">
                     <NumberInput
-                      label='Takeoff altitude (m)'
-                      placeholder='Takeoff altitude (m)'
+                      label="Takeoff altitude (m)"
+                      placeholder="Takeoff altitude (m)"
                       value={takeoffAltitude}
                       onChange={setTakeoffAltitude}
                       min={0}
@@ -242,7 +242,7 @@ export default function TabsSection({
                   onClick={() => {
                     land()
                   }}
-                  className='grow'
+                  className="grow"
                 >
                   Land
                 </Button>
@@ -252,29 +252,29 @@ export default function TabsSection({
         </div>
       </Tabs.Panel>
 
-      <Tabs.Panel value='mission'>
+      <Tabs.Panel value="mission">
         <div className={tabPadding}>
           {!connected ? (
-            <div className='flex flex-col items-center justify-center h-full'>
-              <p className='text-white-800 px-6 text-center'>
+            <div className="flex flex-col items-center justify-center h-full">
+              <p className="text-white-800 px-6 text-center">
                 No mission actions are available right now. Connect a drone to
                 begin
               </p>
             </div>
           ) : (
-            <div className='flex flex-col gap-4'>
+            <div className="flex flex-col gap-4">
               {/* Mission Information Text */}
-              <div className='text-lg'>
+              <div className="text-lg">
                 <p>
-                  <span className='font-bold'>Mission state: </span>
+                  <span className="font-bold">Mission state: </span>
                   {MISSION_STATES[currentMissionData.mission_state]}
                 </p>
                 <p>
-                  <span className='font-bold'>Waypoint: </span>
+                  <span className="font-bold">Waypoint: </span>
                   {currentMissionData.seq}/{currentMissionData.total}
                 </p>
                 <p>
-                  <span className='font-bold'>Distance to WP: </span>
+                  <span className="font-bold">Distance to WP: </span>
                   {(navControllerOutputData.wp_dist
                     ? navControllerOutputData.wp_dist
                     : 0
@@ -284,36 +284,36 @@ export default function TabsSection({
               </div>
 
               {/* Auto mode, start, and restart buttons */}
-              <div className='flex flex-wrap flex-cols gap-2'>
+              <div className="flex flex-wrap flex-cols gap-2">
                 <Button
                   onClick={() => {
                     setNewFlightMode(
                       parseInt(
                         Object.keys(getFlightModeMap()).find(
-                          (key) => getFlightModeMap()[key] === 'Auto',
+                          (key) => getFlightModeMap()[key] === "Auto",
                         ),
                       ),
                     )
                   }}
-                  className='grow'
+                  className="grow"
                 >
                   Auto mode
                 </Button>
 
                 <Button
                   onClick={() => {
-                    controlMission('start')
+                    controlMission("start")
                   }}
-                  className='grow'
+                  className="grow"
                 >
                   Start mission
                 </Button>
 
                 <Button
                   onClick={() => {
-                    controlMission('restart')
+                    controlMission("restart")
                   }}
-                  className='grow'
+                  className="grow"
                 >
                   Restart mission
                 </Button>
@@ -323,10 +323,10 @@ export default function TabsSection({
         </div>
       </Tabs.Panel>
 
-      <Tabs.Panel value='camera'>
+      <Tabs.Panel value="camera">
         <div className={`flex flex-col gap-4 text-xl ${tabPadding}`}>
           <Select
-            placeholder='Select camera input'
+            placeholder="Select camera input"
             data={devices.map((device) => {
               return { value: device.deviceId, label: device.label }
             })}

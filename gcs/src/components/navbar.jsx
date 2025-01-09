@@ -254,7 +254,10 @@ export default function Navbar({ currentPage }) {
           },
         }}
       >
-        <form>
+      <form onSubmit={(e) => {
+        e.preventDefault()
+        connectToDrone(connectionType)
+      }}>
           <Tabs value={connectionType} onChange={setConnectionType}>
             <Tabs.List grow>
               <Tabs.Tab value={ConnectionType.Serial}>
@@ -363,7 +366,6 @@ export default function Navbar({ currentPage }) {
               variant="filled"
               type="submit"
               color={tailwindColors.green[600]}
-              onClick={() => connectToDrone(connectionType)}
               disabled={
                 !connectedToSocket ||
                 (connectionType == ConnectionType.Serial &&

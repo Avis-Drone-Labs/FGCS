@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM  --platform=${BUILDPLATFORM} ubuntu:22.04 AS base
 USER root
 
 RUN apt-get update -y

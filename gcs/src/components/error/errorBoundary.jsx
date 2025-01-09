@@ -50,15 +50,19 @@ export class ErrorBoundary extends React.Component {
     this.state = { hasError: false };
   }
 
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
   componentDidCatch(error, errorInfo) {
-    logErrorToService(error, errorInfo);
-    this.setState({ hasError: true });
+    console.log(error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      return <ErrorComponent />;
+      return <ErrorComponent></ErrorComponent>;
     }
-    return this.props.children;
+
+    return this.props.children; 
   }
 }

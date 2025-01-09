@@ -9,7 +9,6 @@ import { useEffect } from "react"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
-import {ErrorBoundary, ErrorComponent} from "./error/errorBoundary"
 import { showErrorNotification } from "../helpers/notification"
 import { socket } from "../helpers/socket"
 import Navbar from "./navbar"
@@ -30,10 +29,7 @@ export default function Layout({ children, currentPage }) {
     <>
       <Navbar currentPage={currentPage} className="no-drag" />
       <Notifications limit={5} position="bottom-center" />
-      {/* <ErrorBoundary>
-        {children}
-      </ErrorBoundary> */}
-      <ErrorComponent></ErrorComponent>
+      {children}
     </>
   )
 }

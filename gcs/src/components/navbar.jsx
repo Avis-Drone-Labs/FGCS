@@ -51,7 +51,7 @@ export default function Navbar({ currentPage }) {
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)
-  const [connected, setConnected] = useLocalStorage({
+  const [connected, setConnected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })
@@ -445,14 +445,14 @@ export default function Navbar({ currentPage }) {
           {connected && (
             <>
               Connected to
-              <p className="inline font-bold">
+              <span className="inline font-bold">
                 {
                   {
                     [ConnectionType.Serial]: ` ${selectedComPort}`,
                     [ConnectionType.Network]: ` ${networkType}:${ip}:${port}`,
                   }[connectionType]
                 }
-              </p>
+              </span>
             </>
           )}
         </p>

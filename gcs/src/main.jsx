@@ -28,6 +28,7 @@ import { store } from "./redux/store"
 import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
 import SingleRunWrapper from "./components/SingleRunWrapper.jsx"
 import Toolbar from "./components/toolbar/toolbar.jsx"
+import { ErrorBoundary } from "./components/error/errorBoundary"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
@@ -35,20 +36,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <HashRouter>
       <SingleRunWrapper>
         <Toolbar />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/graphs" element={<Graphs />} />
-          <Route path="/params" element={<Params />} />
-          <Route path="/config" element={<Config />} />
-          <Route
-            path="/fla"
-            element={
-              <Provider store={store}>
-                <FLA />
-              </Provider>
-            }
-          />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/graphs" element={<Graphs />} />
+            <Route path="/params" element={<Params />} />
+            <Route path="/config" element={<Config />} />
+            <Route
+              path="/fla"
+              element={
+                <Provider store={store}>
+                  <FLA />
+                </Provider>
+              }
+            />
+          </Routes>
+        </ErrorBoundary>
       </SingleRunWrapper>
     </HashRouter>
   </MantineProvider>,

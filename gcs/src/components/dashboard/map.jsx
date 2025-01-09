@@ -95,7 +95,7 @@ export default function MapSection({
   onDragstart,
   getFlightMode,
 }) {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

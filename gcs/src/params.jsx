@@ -13,7 +13,7 @@ import {
   useDebouncedValue,
   useDisclosure,
   useListState,
-  useLocalStorage,
+  useSessionStorage,
   useToggle,
 } from "@mantine/hooks"
 import AutoSizer from "react-virtualized-auto-sizer"
@@ -32,7 +32,7 @@ import {
 import { socket } from "./helpers/socket.js"
 
 export default function Params() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: true,
   })

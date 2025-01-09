@@ -9,7 +9,7 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Tabs } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
+import { useSessionStorage } from "@mantine/hooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -31,7 +31,7 @@ import { socket } from "./helpers/socket"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Config() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

@@ -10,7 +10,11 @@ import { useEffect, useState } from "react"
 
 // 3rd party imports
 import { Button, LoadingOverlay, Select } from "@mantine/core"
-import { useListState, useLocalStorage } from "@mantine/hooks"
+import {
+  useListState,
+  useLocalStorage,
+  useSessionStorage,
+} from "@mantine/hooks"
 
 // Helper javascript files
 import {
@@ -34,7 +38,7 @@ const FLIGHT_MODE_PWM_VALUES = [
 ]
 
 export default function FlightModes() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

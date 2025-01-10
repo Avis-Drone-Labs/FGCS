@@ -20,7 +20,7 @@ const colorPalette = [
   "#c8cbce",
 ]
 
-export function to2dp(num) {
+function to2dp(num) {
   // https://stackoverflow.com/questions/4187146/truncate-number-to-two-decimal-places-without-rounding
   return num.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0]
 }

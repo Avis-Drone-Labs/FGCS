@@ -24,13 +24,14 @@ import Map, { Layer, Marker, Source } from "react-map-gl/maplibre"
 import arrow from "../../assets/arrow.svg"
 
 // Helper scripts
-import { FILTER_MISSION_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showNotification,
   showSuccessNotification,
 } from "../../helpers/notification"
 import { socket } from "../../helpers/socket"
+import { intToCoord } from "../../helpers/dataFormatters"
+import { filterMissionItems } from "../../helpers/filterMissions"
 
 // Other dashboard imports
 import ContextMenuItem from "./contextMenuItem"
@@ -41,11 +42,6 @@ import useContextMenu from "./useContextMenu"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-// Convert coordinates from mavlink into gps coordinates
-export function intToCoord(val) {
-  return val * 1e-7
-}
 
 function degToRad(deg) {
   return deg * (Math.PI / 180)
@@ -64,7 +60,7 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
   const lon1Rad = degToRad(lon1)
   const lat2 = Math.asin(
     Math.sin(lat1Rad) * Math.cos(distance / R) +
-      Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
+    Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
   )
   const lon2 =
     lon1Rad +
@@ -74,15 +70,6 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
     )
 
   return [radToDeg(lat2), radToDeg(lon2)]
-}
-
-export function filterMissionItems(missionItems) {
-  return missionItems.filter(
-    (missionItem) =>
-      !Object.values(FILTER_MISSION_ITEM_COMMANDS_LIST).includes(
-        missionItem.command,
-      ),
-  )
 }
 
 export default function MapSection({
@@ -208,9 +195,8 @@ export default function MapSection({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
-          import.meta.env.VITE_MAPTILER_API_KEY
-        }`}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY
+          }`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}

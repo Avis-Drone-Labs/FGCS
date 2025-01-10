@@ -5,7 +5,8 @@
   connecting them.
 */
 
-import { filterMissionItems, intToCoord } from "./map"
+import { intToCoord } from "../../helpers/dataFormatters"
+import { filterMissionItems } from "../../helpers/filterMissions"
 
 import { Tooltip } from "@mantine/core"
 import "maplibre-gl/dist/maplibre-gl.css"

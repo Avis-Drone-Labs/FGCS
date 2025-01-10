@@ -15,7 +15,7 @@ import {
 } from "@tabler/icons-react"
 
 // Helper Functions
-import { filterMissionItems } from "./map"
+import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 
 export default function FloatingToolbar({
@@ -37,13 +37,13 @@ export default function FloatingToolbar({
       followDrone
         ? false
         : (() => {
-            if (mapRef.current && gpsData?.lon !== 0 && gpsData?.lat !== 0) {
-              let lat = parseFloat(gpsData.lat * 1e-7)
-              let lon = parseFloat(gpsData.lon * 1e-7)
-              mapRef.current.setCenter({ lng: lon, lat: lat })
-            }
-            return true
-          })(),
+          if (mapRef.current && gpsData?.lon !== 0 && gpsData?.lat !== 0) {
+            let lat = parseFloat(gpsData.lat * 1e-7)
+            let lon = parseFloat(gpsData.lon * 1e-7)
+            mapRef.current.setCenter({ lng: lon, lat: lat })
+          }
+          return true
+        })(),
     )
   }
 

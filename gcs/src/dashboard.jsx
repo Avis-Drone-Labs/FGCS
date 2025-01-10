@@ -16,6 +16,7 @@ import {
   useListState,
   useLocalStorage,
   usePrevious,
+  useSessionStorage,
   useViewportSize,
 } from "@mantine/hooks"
 import {
@@ -63,7 +64,7 @@ import disarmSound from "./assets/sounds/disarmed.mp3"
 
 export default function Dashboard() {
   // Local Storage
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })

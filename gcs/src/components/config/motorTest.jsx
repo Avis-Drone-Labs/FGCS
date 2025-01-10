@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Button, NumberInput } from "@mantine/core"
+import { useSessionStorage } from "@mantine/hooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -15,7 +16,6 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
-import { useLocalStorage } from "@mantine/hooks"
 import {
   FRAME_CLASS_MAP,
   MOTOR_LETTER_LABELS,
@@ -23,7 +23,7 @@ import {
 import { socket } from "../../helpers/socket"
 
 export default function MotorTestPanel() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })
@@ -100,7 +100,7 @@ export default function MotorTestPanel() {
   }
 
   return (
-    <div className="flex flex-row gap-16 p-6">
+    <div className="flex flex-row gap-16 px-4">
       <div className="flex flex-col gap-2">
         {/* Input throttle and duration/delay of the test*/}
         <div className="flex gap-2">
@@ -131,7 +131,7 @@ export default function MotorTestPanel() {
               onClick={() => {
                 testOneMotor(index + 1)
               }}
-              color={tailwindColors.lime[600]}
+              color={tailwindColors.blue[600]}
             >
               Test motor {motor}
             </Button>
@@ -140,7 +140,7 @@ export default function MotorTestPanel() {
             onClick={() => {
               testMotorSequence()
             }}
-            color={tailwindColors.lime[600]}
+            color={tailwindColors.green[600]}
             label="x"
           >
             Test motor sequence
@@ -149,21 +149,13 @@ export default function MotorTestPanel() {
             onClick={() => {
               testAllMotors()
             }}
-            color={tailwindColors.pink[600]}
+            color={tailwindColors.red[600]}
           >
             Test all motors
           </Button>
         </div>
-        {/* Link for user to check their motor order diagram*/}
-        <a
-          className="text-sm text-teal-300 hover:underline"
-          href="https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams"
-          target="_blank"
-        >
-          Click here to see your motor numbers and directions
-        </a>
       </div>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
         <div className="mt-6">
           {frameTypename !== null && (
             <>
@@ -175,7 +167,7 @@ export default function MotorTestPanel() {
         <div className="flex flex-col gap-4">
           {/* Motor Order and direction details */}
           {frameTypeOrder !== null && (
-            <>
+            <div>
               {frameTypeOrder.map((mappedMotorNumber, idx) => {
                 return (
                   <p key={idx}>
@@ -184,7 +176,16 @@ export default function MotorTestPanel() {
                   </p>
                 )
               })}
-            </>
+
+              {/* Link for user to check their motor order diagram*/}
+              <a
+                className="text-sm text-blue-400 hover:underline"
+                href="https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams"
+                target="_blank"
+              >
+                Click here to see your motor numbers and directions
+              </a>
+            </div>
           )}
         </div>
       </div>

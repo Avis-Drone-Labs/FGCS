@@ -9,7 +9,7 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Tabs } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
+import { useSessionStorage } from "@mantine/hooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -31,7 +31,7 @@ import { socket } from "./helpers/socket"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Config() {
-  const [connected] = useLocalStorage({
+  const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })
@@ -39,6 +39,7 @@ export default function Config() {
   // States in the frontend
   const [activeTab, setActiveTab] = useState(null)
   const [gripperEnabled, setGripperEnabled] = useState(false)
+  const paddingTop = "mt-4"
 
   // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function Config() {
         <div className="w-full h-full">
           <Tabs
             orientation="vertical"
-            color={tailwindColors.falconred[700]}
+            color={tailwindColors.falconred[800]}
             className="h-full"
             keepMounted={false}
             value={activeTab}
@@ -106,16 +107,24 @@ export default function Config() {
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
-              <Gripper />
+              <div className={paddingTop}>
+                <Gripper />
+              </div>
             </Tabs.Panel>
             <Tabs.Panel value="motor_test">
-              <Motortestpanel />
+              <div className={paddingTop}>
+                <Motortestpanel />
+              </div>
             </Tabs.Panel>
             <Tabs.Panel value="rc_calibration">
-              <RadioCalibration />
+              <div className={paddingTop}>
+                <RadioCalibration />
+              </div>
             </Tabs.Panel>
             <Tabs.Panel value="flightmodes">
-              <FlightModes />
+              <div className={paddingTop}>
+                <FlightModes />
+              </div>
             </Tabs.Panel>
           </Tabs>
         </div>

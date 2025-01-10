@@ -32,7 +32,6 @@ export default function TabsSection({
         <Tabs.Tab value="mission">Mission</Tabs.Tab>
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
       </Tabs.List>
-
       {/* Data */}
       <DataTabsSection
         tabPadding={tabPadding}

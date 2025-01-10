@@ -51,7 +51,7 @@ export default function Navbar({ currentPage }) {
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)
-  const [connected, setConnected] = useLocalStorage({
+  const [connected, setConnected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })
@@ -445,14 +445,14 @@ export default function Navbar({ currentPage }) {
           {connected && (
             <>
               Connected to
-              <p className="inline font-bold">
+              <span className="inline font-bold">
                 {
                   {
                     [ConnectionType.Serial]: ` ${selectedComPort}`,
                     [ConnectionType.Network]: ` ${networkType}:${ip}:${port}`,
                   }[connectionType]
                 }
-              </p>
+              </span>
             </>
           )}
         </p>
@@ -467,7 +467,9 @@ export default function Navbar({ currentPage }) {
                   }
             }
             color={
-              connected ? tailwindColors.red[600] : tailwindColors.green[600]
+              connected
+                ? tailwindColors.falconred[800]
+                : tailwindColors.green[600]
             }
           >
             {connected ? "Disconnect" : "Connect"}

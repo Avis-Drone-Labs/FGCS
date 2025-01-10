@@ -1,17 +1,22 @@
-// NATIVE
+/**
+ * DataTabsSection
+ * This file contains all relevant components to display drone data with the data tab in tabsSection.
+ */
+
+// Native
 import { useState } from "react"
 
-// MANTINE
+// Mantine
 import { useDisclosure } from "@mantine/hooks"
 import { Tabs, Grid } from "@mantine/core"
 
-// CUSTOM COMPONENTS
+// Custom Components
 import DashboardDataModal from "../../dashboardDataModal"
 
-// ICONS
+// Icons
 import { IconInfoCircle } from "@tabler/icons-react"
 
-// HELPER
+// Helper
 import { DataMessage } from "../../../helpers/dataDisplay"
 
 export default function DataTabsSection({

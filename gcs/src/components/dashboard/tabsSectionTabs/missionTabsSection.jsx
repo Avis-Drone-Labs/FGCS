@@ -1,14 +1,20 @@
-// MANTINE
+/**
+ * MissionTabsSection
+ * This file contains all relevant components to display and modify mission status and information within the mission section
+ * in tabsSection.
+ */
+
+// Mantine
 import { Button, Tabs } from "@mantine/core"
 
-// MAVLINK
+// Mavlink
 import {
   MISSION_STATES,
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../../helpers/mavlinkConstants"
 
-// HELPER
+// Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
 

@@ -1,11 +1,16 @@
-// NATIVE
+/**
+ * CameraTabsSection
+ * This file contains all relevant components to select and display the drone camera output.
+ */
+
+// Native
 import { useCallback, useState, useEffect } from "react"
 
-// MANTINE
+// Mantine
 import { useSessionStorage } from "@mantine/hooks"
 import { Tabs, Select } from "@mantine/core"
 
-// HELPER
+// Helper
 import Webcam from "react-webcam"
 
 export default function CameraTabsSection({ tabPadding }) {

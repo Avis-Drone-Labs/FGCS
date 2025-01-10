@@ -1,17 +1,22 @@
-// NATIVE
+/**
+ * ActionTabsSection
+ * This file holds all relevant component to perform actions on the drone, within the action tab in tabsSection.
+ */
+
+// Native
 import { useState } from "react"
 
-// MANTINE
+// Mantine
 import { Button, NumberInput, Popover, Tabs, Select } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
-// MAVLINK
+// Mavlink
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../../helpers/mavlinkConstants"
 
-// HELPER
+// Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
 

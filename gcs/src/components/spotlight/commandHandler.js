@@ -66,7 +66,6 @@ export function AddCommand(id, command, shortcut = null) {
 
 export function RunCommand(id) {
   // Search for a command by id
-  console.log(commands)
   console.log("Trying to run command " + id)
   try {
     commands.find((entry) => entry.id == id).command()

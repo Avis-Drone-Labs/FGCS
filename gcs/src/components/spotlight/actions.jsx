@@ -4,6 +4,7 @@
 
 // Local imports
 import kbdBadge, { descriptionBadge } from "./badges"
+import { RunCommand } from "./commandHandler"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -17,35 +18,35 @@ export const actions = [
     id: "dashboard",
     label: "Dashboard",
     type: "page",
-    onClick: () => console.log("Dashboard spotlight button clicked!"),
+    onClick: () => {RunCommand("goto_dashboard")},
     rightSection: kbdBadge("Alt + 1", badgeColor),
   },
   {
     id: "graphs",
     label: "Graphs",
     type: "page",
-    onClick: () => console.log("Graphs spotlight button clicked!"),
+    onClick: () => {RunCommand("goto_graphs")},
     rightSection: kbdBadge("Alt + 2", badgeColor),
   },
   {
     id: "params",
     label: "Params",
     type: "page",
-    onClick: () => console.log("Params spotlight button clicked!"),
+    onClick: () => {RunCommand("goto_params")},
     rightSection: kbdBadge("Alt + 3", badgeColor),
   },
   {
     id: "config",
     label: "Config",
     type: "page",
-    onClick: () => console.log("Config spotlight button clicked!"),
+    onClick: () => {RunCommand("goto_config")},
     rightSection: kbdBadge("Alt + 4", badgeColor),
   },
   {
     id: "fla",
     label: "FLA",
     type: "page",
-    onClick: () => console.log("FLA spotlight button clicked!"),
+    onClick: () => {RunCommand("goto_fla")},
     rightSection: kbdBadge("Alt + 5", badgeColor),
   },
 

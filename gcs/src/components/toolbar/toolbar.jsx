@@ -12,6 +12,7 @@ import { useEffect, useState } from "react"
 import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
+import SpotlightComponent from "../spotlight/spotlight.jsx"
 
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false)
@@ -26,7 +27,7 @@ export default function Toolbar() {
   return (
     <>
       <div
-        className={`flex flex-row items-center justify-between bg-falcongrey-800 h-8 allow-drag ${isMac && "flex-row-reverse pr-2"}`}
+        className={`flex flex-row items-center justify-between bg-falcongrey-800 h-10 allow-drag ${isMac && "flex-row-reverse pr-2"}`}
       >
         {/* Logo and Menu Items */}
         <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
@@ -53,6 +54,11 @@ export default function Toolbar() {
               </div>
             </>
           )}
+        </div>
+
+        {/* Spotlight */}
+        <div className="flex justify-center min-w-64 w-1/3 max-w-96 no-drag py-8">
+          <SpotlightComponent />
         </div>
 
         {/* Window actions (close, minimise, maximise) */}

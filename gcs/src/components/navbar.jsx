@@ -389,7 +389,7 @@ export default function Navbar({ currentPage }) {
         )}
       </Modal>
 
-      <div className="w-full flex justify-between gap-x-4 lg:grid lg:grid-cols-3 lg:gap-0">
+      <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">
         <div className="flex items-center wrap">
           {/* Navigation */}
           <Link
@@ -437,11 +437,6 @@ export default function Navbar({ currentPage }) {
           >
             FLA
           </Link>
-        </div>
-
-        {/* Spotlight */}
-        <div className="flex w-full justify-center">
-          <SpotlightComponent />
         </div>
 
         {/* Right hand side information */}

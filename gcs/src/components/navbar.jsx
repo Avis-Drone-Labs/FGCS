@@ -31,16 +31,18 @@ import {
 } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
-// Styling imports
-import { twMerge } from "tailwind-merge"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../tailwind.config.js"
+// Local imports
+import { AddCommand } from "./spotlight/commandHandler.js"
 
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
 import { showErrorNotification } from "../helpers/notification.js"
 import { socket } from "../helpers/socket"
 
+// Styling imports
+import { twMerge } from "tailwind-merge"
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
@@ -229,6 +231,13 @@ export default function Navbar({ currentPage }) {
     console.log("disconnect")
     socket.emit("disconnect_from_drone")
   }
+
+  function connectToDroneFromButton() {
+    getComPorts()
+    open()
+  }
+  AddCommand("connect_to_drone", connectToDroneFromButton)
+  AddCommand("disconnect_from_drone", disconnect)
 
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
@@ -469,14 +478,7 @@ export default function Navbar({ currentPage }) {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={
-                connected
-                  ? disconnect
-                  : () => {
-                      getComPorts()
-                      open()
-                    }
-              }
+              onClick={connected ? disconnect : connectToDroneFromButton}
               color={
                 connected
                   ? tailwindColors.falconred[800]

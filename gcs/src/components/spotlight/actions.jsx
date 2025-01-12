@@ -3,7 +3,7 @@
 */
 
 // Local imports
-import kbdBadge, { descriptionBadge } from "./badges"
+import kbdBadge from "./badges"
 import { RunCommand } from "./commandHandler"
 
 // Styling imports
@@ -18,35 +18,45 @@ export const actions = [
     id: "dashboard",
     label: "Dashboard",
     type: "page",
-    onClick: () => {RunCommand("goto_dashboard")},
+    command: () => {
+      RunCommand("goto_dashboard")
+    },
     rightSection: kbdBadge("Alt + 1", badgeColor),
   },
   {
     id: "graphs",
     label: "Graphs",
     type: "page",
-    onClick: () => {RunCommand("goto_graphs")},
+    command: () => {
+      RunCommand("goto_graphs")
+    },
     rightSection: kbdBadge("Alt + 2", badgeColor),
   },
   {
     id: "params",
     label: "Params",
     type: "page",
-    onClick: () => {RunCommand("goto_params")},
+    command: () => {
+      RunCommand("goto_params")
+    },
     rightSection: kbdBadge("Alt + 3", badgeColor),
   },
   {
     id: "config",
     label: "Config",
     type: "page",
-    onClick: () => {RunCommand("goto_config")},
+    command: () => {
+      RunCommand("goto_config")
+    },
     rightSection: kbdBadge("Alt + 4", badgeColor),
   },
   {
     id: "fla",
     label: "FLA",
     type: "page",
-    onClick: () => {RunCommand("goto_fla")},
+    command: () => {
+      RunCommand("goto_fla")
+    },
     rightSection: kbdBadge("Alt + 5", badgeColor),
   },
 
@@ -55,12 +65,25 @@ export const actions = [
     id: "refresh",
     label: "Force refresh page",
     type: "command",
+    command: () => {
+      RunCommand("force_refresh")
+    },
     rightSection: kbdBadge("Ctrl + Shift + R", badgeColor),
   },
   {
-    id: "open_fla_file",
-    label: "Open log file",
+    id: "connect_to_drone",
+    label: "Connect to drone",
     type: "command",
-    rightSection: descriptionBadge("FLA"),
+    command: () => {
+      RunCommand("connect_to_drone")
+    },
+  },
+  {
+    id: "disconnect_from_drone",
+    label: "Disconnect from drone",
+    type: "command",
+    command: () => {
+      RunCommand("disconnect_from_drone")
+    },
   },
 ]

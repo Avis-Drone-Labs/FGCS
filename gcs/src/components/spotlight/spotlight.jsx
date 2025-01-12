@@ -45,7 +45,7 @@ export default function SpotlightComponent() {
         <Spotlight.Action
           key={item.id}
           label={item.label}
-          onClick={item.onClick}
+          onClick={item.command}
           rightSection={item.rightSection}
           color="red"
           classNames={{

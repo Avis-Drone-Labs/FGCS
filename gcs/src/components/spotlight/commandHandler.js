@@ -4,50 +4,70 @@
 */
 
 // 3rd Party Imports
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"
 
 let commands = []
 
 export function Commands() {
-  let navigate = useNavigate();
-  
+  let navigate = useNavigate()
+
   commands = [
     {
       id: "goto_dashboard",
-      command: () => {navigate("/")},
-      shortcut: ["alt", "1"]
+      command: () => {
+        navigate("/")
+      },
+      shortcut: ["alt", "1"],
     },
     {
       id: "goto_graphs",
-      command: () => {navigate("/graphs")},
-      shortcut: ["alt", "2"]
+      command: () => {
+        navigate("/graphs")
+      },
+      shortcut: ["alt", "2"],
     },
     {
       id: "goto_params",
-      command: () => {navigate("/params")},
-      shortcut: ["alt", "3"]
+      command: () => {
+        navigate("/params")
+      },
+      shortcut: ["alt", "3"],
     },
     {
       id: "goto_config",
-      command: () => {navigate("/config")},
-      shortcut: ["alt", "4"]
+      command: () => {
+        navigate("/config")
+      },
+      shortcut: ["alt", "4"],
     },
     {
       id: "goto_fla",
-      command: () => {navigate("/fla")},
-      shortcut: ["alt", "5"]
+      command: () => {
+        navigate("/fla")
+      },
+      shortcut: ["alt", "5"],
+    },
+    {
+      id: "force_refresh",
+      command: () => {
+        window.ipcRenderer.send("force_reload")
+      },
+      shortcut: null,
     },
   ]
 }
 
-export function AddCommand(id, command) {
+export function AddCommand(id, command, shortcut = null) {
   // Used to expose a command
-  commands.append({id: id, command: command})
+  if (commands.find((entry) => entry.id == id) == undefined) {
+    commands.push({ id: id, command: command, shortcut: shortcut })
+  }
 }
 
 export function RunCommand(id) {
   // Search for a command by id
   console.log(commands)
+  console.log("Trying to run command " + id)
   try {
     commands.find((entry) => entry.id == id).command()
   } catch {
@@ -55,7 +75,6 @@ export function RunCommand(id) {
   }
 }
 
-export function SearchAndRunHotkey(buttonsPressed) {
-  // Search for a command via hotkey
-  todo()
-}
+// export function SearchAndRunHotkey(buttonsPressed) {
+//   // Search for a command via hotkey
+// }

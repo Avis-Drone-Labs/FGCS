@@ -7,10 +7,10 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import { Button, Divider, Modal, NumberInput, Tooltip } from "@mantine/core"
+import { Button, Divider, Modal, NumberInput } from "@mantine/core"
 import {
   useClipboard,
   useDisclosure,
@@ -18,61 +18,33 @@ import {
   useSessionStorage,
 } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
-import Map, { Layer, Marker, Source } from "react-map-gl/maplibre"
-
-// Assets
-import arrow from "../../assets/arrow.svg"
+import Map from "react-map-gl/maplibre"
 
 // Helper scripts
+import { intToCoord } from "../../helpers/dataFormatters"
+import { filterMissionItems } from "../../helpers/filterMissions"
 import {
   showErrorNotification,
   showNotification,
   showSuccessNotification,
 } from "../../helpers/notification"
 import { socket } from "../../helpers/socket"
-import { intToCoord } from "../../helpers/dataFormatters"
-import { filterMissionItems } from "../../helpers/filterMissions"
 
 // Other dashboard imports
+import MissionItems from "../mapComponents/missionItems"
 import ContextMenuItem from "./contextMenuItem"
-import MissionItems from "./missionItems"
 import useContextMenu from "./useContextMenu"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
+import DroneMarker from "../mapComponents/droneMarker"
+import HomeMarker from "../mapComponents/homeMarker"
+import MarkerPin from "../mapComponents/markerPin"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-function degToRad(deg) {
-  return deg * (Math.PI / 180)
-}
-
-function radToDeg(rad) {
-  return rad * (180 / Math.PI)
-}
-
-function getPointAtDistance(lat1, lon1, distance, bearing) {
-  // https://stackoverflow.com/questions/7222382/get-lat-long-given-current-point-distance-and-bearing
-
-  const R = 6378.14 // Radius of the Earth in km
-  const brng = degToRad(bearing)
-  const lat1Rad = degToRad(lat1)
-  const lon1Rad = degToRad(lon1)
-  const lat2 = Math.asin(
-    Math.sin(lat1Rad) * Math.cos(distance / R) +
-    Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
-  )
-  const lon2 =
-    lon1Rad +
-    Math.atan2(
-      Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat1Rad),
-      Math.cos(distance / R) - Math.sin(lat1Rad) * Math.sin(lat2),
-    )
-
-  return [radToDeg(lat2), radToDeg(lon2)]
-}
-
-export default function MapSection({
+function MapSectionNonMemo({
   passedRef,
   data,
   heading,
@@ -195,8 +167,9 @@ export default function MapSection({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY
-          }`}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
+          import.meta.env.VITE_MAPTILER_API_KEY
+        }`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}
@@ -227,150 +200,28 @@ export default function MapSection({
         {position !== null &&
           !isNaN(position?.latitude) &&
           !isNaN(position?.longitude) && (
-            <>
-              <Marker
-                latitude={position.latitude}
-                longitude={position.longitude}
-                scale={0.1}
-              >
-                <img
-                  src={arrow}
-                  className="w-6 h-6"
-                  style={{ transform: `rotate(${heading ?? 0}deg)` }}
-                />
-              </Marker>
-
-              <Source
-                type="geojson"
-                data={{
-                  type: "Feature",
-                  properties: {},
-                  geometry: {
-                    type: "LineString",
-                    coordinates: [
-                      [position.longitude, position.latitude],
-                      getPointAtDistance(
-                        position.latitude,
-                        position.longitude,
-                        25000 / 2 ** initialViewState.zoom,
-                        desiredBearing ?? 0,
-                      ).reverse(),
-                    ],
-                  },
-                }}
-              >
-                <Layer
-                  {...{
-                    type: "line",
-                    layout: {
-                      "line-join": "round",
-                      "line-cap": "round",
-                    },
-                    paint: {
-                      "line-color": tailwindColors.red[200],
-                      "line-width": 3,
-                    },
-                  }}
-                />
-              </Source>
-              <Source
-                type="geojson"
-                data={{
-                  type: "Feature",
-                  properties: {},
-                  geometry: {
-                    type: "LineString",
-                    coordinates: [
-                      [position.longitude, position.latitude],
-                      getPointAtDistance(
-                        position.latitude,
-                        position.longitude,
-                        25000 / 2 ** initialViewState.zoom,
-                        heading ?? 0,
-                      ).reverse(),
-                    ],
-                  },
-                }}
-              >
-                <Layer
-                  {...{
-                    type: "line",
-                    layout: {
-                      "line-join": "round",
-                      "line-cap": "round",
-                    },
-                    paint: {
-                      "line-color": tailwindColors.blue[200],
-                      "line-width": 3,
-                    },
-                  }}
-                />
-              </Source>
-            </>
+            <DroneMarker
+              lat={position.latitude}
+              lon={position.longitude}
+              heading={heading ?? 0}
+              zoom={initialViewState.zoom}
+              showHeadingLine={true}
+              desiredBearing={desiredBearing ?? 0}
+            />
           )}
 
         {/* Show home position */}
         {homePosition !== null && (
-          <>
-            <Marker
-              longitude={intToCoord(homePosition.lon)}
-              latitude={intToCoord(homePosition.lat)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 48"
-                fill={tailwindColors.green[400]}
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
-              >
-                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-                <text textAnchor="middle" x="12" y="14" className="text-black">
-                  H
-                </text>
-              </svg>
-            </Marker>
-            {filteredMissionItems.length > 0 && (
-              <Source
-                type="geojson"
-                data={{
-                  type: "Feature",
-                  properties: {},
-                  geometry: {
-                    type: "LineString",
-                    coordinates: [
-                      [
-                        intToCoord(homePosition.lon),
-                        intToCoord(homePosition.lat),
-                      ],
-                      [
-                        intToCoord(filteredMissionItems[0].y),
-                        intToCoord(filteredMissionItems[0].x),
-                      ],
-                    ],
-                  },
-                }}
-              >
-                <Layer
-                  {...{
-                    type: "line",
-                    layout: {
-                      "line-join": "round",
-                      "line-cap": "round",
-                    },
-                    paint: {
-                      "line-color": tailwindColors.yellow[400],
-                      "line-width": 1,
-                    },
-                  }}
-                />
-              </Source>
-            )}
-          </>
+          <HomeMarker
+            lat={intToCoord(homePosition.lat)}
+            lon={intToCoord(homePosition.lon)}
+            lineTo={
+              filteredMissionItems.length > 0 && [
+                intToCoord(filteredMissionItems[0].y),
+                intToCoord(filteredMissionItems[0].x),
+              ]
+            }
+          />
         )}
 
         <MissionItems missionItems={missionItems.mission_items} />
@@ -378,118 +229,55 @@ export default function MapSection({
         {/* Show mission geo-fence MARKERS */}
         {missionItems.fence_items.map((item, index) => {
           return (
-            <Marker
+            <MarkerPin
               key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 48"
-                fill={tailwindColors.blue[400]}
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
-              >
-                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-              </svg>
-            </Marker>
+              lat={intToCoord(item.x)}
+              lon={intToCoord(item.y)}
+              colour={tailwindColors.blue[400]}
+            />
           )
         })}
 
         {/* Show geo-fence outlines */}
         {missionItems.fence_items.length > 0 && (
-          <Source
-            type="geojson"
-            data={{
-              type: "Feature",
-              properties: {},
-              geometry: {
-                type: "LineString",
-                coordinates: [
-                  ...missionItems.fence_items.map((item) => [
-                    intToCoord(item.y),
-                    intToCoord(item.x),
-                  ]),
-                  [
-                    intToCoord(missionItems.fence_items[0].y),
-                    intToCoord(missionItems.fence_items[0].x),
-                  ],
-                ],
-              },
-            }}
-          >
-            <Layer
-              {...{
-                type: "line",
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round",
-                },
-                paint: {
-                  "line-color": tailwindColors.blue[200],
-                  "line-width": 1,
-                  "line-dasharray": [2, 2],
-                },
-              }}
-            />
-          </Source>
+          <DrawLineCoordinates
+            coordinates={[
+              ...missionItems.fence_items.map((item) => [
+                intToCoord(item.y),
+                intToCoord(item.x),
+              ]),
+              [
+                intToCoord(missionItems.fence_items[0].y),
+                intToCoord(missionItems.fence_items[0].x),
+              ],
+            ]}
+            colour={tailwindColors.blue[200]}
+            lineProps={{ "line-dasharray": [2, 2] }}
+          />
         )}
 
         {/* Show mission rally point */}
         {missionItems.rally_items.map((item, index) => {
           return (
-            <Marker
+            <MarkerPin
               key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <Tooltip label={`Alt: ${item.z}`}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 48"
-                  fill={tailwindColors.purple[400]}
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
-                >
-                  <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-                </svg>
-              </Tooltip>
-            </Marker>
+              lat={intToCoord(item.x)}
+              lon={intToCoord(item.y)}
+              colour={tailwindColors.purple[400]}
+              tooltipText={item.z ? `Alt: ${item.z}` : null}
+            />
           )
         })}
 
         {getFlightMode() === "Guided" && guidedModePinData !== null && (
-          <Marker
-            longitude={guidedModePinData.lon}
-            latitude={guidedModePinData.lat}
-          >
-            <Tooltip label={`Alt: ${guidedModePinData.alt}`}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 48"
-                fill={tailwindColors.pink[500]}
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
-              >
-                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-              </svg>
-            </Tooltip>
-          </Marker>
+          <MarkerPin
+            lat={guidedModePinData.lat}
+            lon={guidedModePinData.lon}
+            colour={tailwindColors.pink[500]}
+            tooltipText={
+              guidedModePinData.alt ? `Alt: ${guidedModePinData.alt}` : null
+            }
+          />
         )}
 
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
@@ -539,3 +327,9 @@ export default function MapSection({
     </div>
   )
 }
+function propsAreEqual(prev, next) {
+  return JSON.stringify(prev) === JSON.stringify(next)
+}
+const MapSection = React.memo(MapSectionNonMemo, propsAreEqual)
+
+export default MapSection

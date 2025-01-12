@@ -389,8 +389,8 @@ export default function Navbar({ currentPage }) {
         )}
       </Modal>
 
-      <div className="w-full grid grid-cols-3">
-        <div className="flex items-center">
+      <div className="w-full flex justify-between gap-x-4 lg:grid lg:grid-cols-3 lg:gap-0">
+        <div className="flex items-center wrap">
           {/* Navigation */}
           <Link
             to="/"
@@ -490,6 +490,7 @@ export default function Navbar({ currentPage }) {
                   ? tailwindColors.falconred[800]
                   : tailwindColors.green[600]
               }
+              radius="xs"
             >
               {connected ? "Disconnect" : "Connect"}
             </Button>

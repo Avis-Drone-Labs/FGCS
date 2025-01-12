@@ -60,7 +60,7 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
   const lon1Rad = degToRad(lon1)
   const lat2 = Math.asin(
     Math.sin(lat1Rad) * Math.cos(distance / R) +
-    Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
+      Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
   )
   const lon2 =
     lon1Rad +
@@ -195,8 +195,9 @@ export default function MapSection({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY
-          }`}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
+          import.meta.env.VITE_MAPTILER_API_KEY
+        }`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}

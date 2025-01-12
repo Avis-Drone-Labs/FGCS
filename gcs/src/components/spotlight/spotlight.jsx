@@ -2,79 +2,53 @@
   The spotlight component, a way of searching and navigating through FGCS via keyboard
 */
 
+// Native imports
+import { useState } from "react"
+
 // 3rd Party Imports
-import { rem, Button, Badge  } from "@mantine/core"
-import { Spotlight, spotlight } from '@mantine/spotlight';
+import { Button } from "@mantine/core"
+import { Spotlight, spotlight } from "@mantine/spotlight"
 import { IconSearch } from "@tabler/icons-react"
+
+// Local imports
+import { pages } from "./actions"
+import kbdBadge from "./kbdBadge"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-const actions = [
-  {
-    group: "Pages",
-    actions: [
-      {
-        id: 'dashboard',
-        label: 'Dashboard',
-        onClick: () => console.log('Dashboard spotlight button clicked!'),
-      },
-      {
-        id: 'graphs',
-        label: 'Graphs',
-        onClick: () => console.log('Graphs spotlight button clicked!'),
-      },
-      {
-        id: 'params',
-        label: 'Params',
-        onClick: () => console.log('Params spotlight button clicked!'),
-      },
-      {
-        id: 'config',
-        label: 'Config',
-        onClick: () => console.log('Config spotlight button clicked!'),
-      },
-      {
-        id: 'fla',
-        label: 'FLA',
-        onClick: () => console.log('FLA spotlight button clicked!'),
-      },
-    ]
-  },
-  {
-    group: "Actions",
-    actions: [
-      {id: "refresh", label: "Force refresh page"}
-    ]
-  }
-];
-
 export default function SpotlightComponent() {
   const textColorStyle = {
     root: {
-      color: "var(--mantine-text-color)"
-    }
+      color: "var(--mantine-text-color)",
+    },
   }
 
-  function kbdBadge(text, isSmall) {
-    return (
-      <Badge 
-        color={tailwindColors.falcongrey[700]} 
-        radius="xs" 
-        size="xs"
-        styles={textColorStyle}
-      >
-        {text}
-      </Badge >
+  // Spotlight searching
+  const [query, setQuery] = useState("")
+  const items = pages
+    .filter((item) =>
+      item.label.toLowerCase().includes(query.toLowerCase().trim()),
     )
-  }
+    .map((item) => (
+      <Spotlight.Action
+        key={item.id}
+        label={item.label}
+        onClick={item.onClick}
+        rightSection={item.rightSection}
+        color="red"
+        classNames={{
+          action: "data-[selected]:!bg-falcongrey-700 max-h-8",
+        }}
+      />
+    ))
 
   return (
     <>
       {/* Search button */}
-      <Button 
+      <Button
         radius="sm"
         color={tailwindColors.falcongrey[900]}
         rightSection={kbdBadge("Ctrl + K")}
@@ -88,15 +62,19 @@ export default function SpotlightComponent() {
       </Button>
 
       {/* Spotlight popup */}
-      <Spotlight
-        actions={actions}
-        nothingFound="Nothing found..."
-        highlightQuery
-        searchProps={{
-          leftSection: <IconSearch style={{ width: rem(20), height: rem(20) }} stroke={1.5} />,
-          placeholder: 'Search...',
-        }}
-      />
+      <Spotlight.Root query={query} onQueryChange={setQuery}>
+        <Spotlight.Search
+          placeholder="Search..."
+          leftSection={<IconSearch stroke={1.5} />}
+        />
+        <Spotlight.ActionsList>
+          {items.length > 0 ? (
+            items
+          ) : (
+            <Spotlight.Empty>Nothing found...</Spotlight.Empty>
+          )}
+        </Spotlight.ActionsList>
+      </Spotlight.Root>
     </>
   )
 }

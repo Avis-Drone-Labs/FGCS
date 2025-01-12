@@ -31,9 +31,6 @@ import {
 } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
-// Local imports
-import SpotlightComponent from "./spotlight/spotlight.jsx"
-
 // Styling imports
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"

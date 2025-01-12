@@ -11,8 +11,8 @@ import { Spotlight, spotlight } from "@mantine/spotlight"
 import { IconSearch } from "@tabler/icons-react"
 
 // Local imports
-import { pages } from "./actions"
-import kbdBadge from "./kbdBadge"
+import { actions } from "./actions"
+import kbdBadge from "./badges"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -28,21 +28,31 @@ export default function SpotlightComponent() {
 
   // Spotlight searching
   const [query, setQuery] = useState("")
-  const items = pages
+  const items = actions
     .filter((item) =>
       item.label.toLowerCase().includes(query.toLowerCase().trim()),
     )
     .map((item) => (
-      <Spotlight.Action
-        key={item.id}
-        label={item.label}
-        onClick={item.onClick}
-        rightSection={item.rightSection}
-        color="red"
-        classNames={{
-          action: "data-[selected]:!bg-falcongrey-700 max-h-8",
-        }}
-      />
+      <div key={item.id}>
+        {/* Separator that shows up if the last item was of type page and this item is a command */}
+        {actions.indexOf(item) > 0 &&
+          item.type == "command" &&
+          actions[actions.indexOf(item) - 1].type == "page" && (
+            <hr key="separator" className="border-falcongrey-600 m-2" />
+          )}
+
+        {/* Spotlight action */}
+        <Spotlight.Action
+          key={item.id}
+          label={item.label}
+          onClick={item.onClick}
+          rightSection={item.rightSection}
+          color="red"
+          classNames={{
+            action: "data-[selected]:!bg-falcongrey-700 max-h-8",
+          }}
+        />
+      </div>
     ))
 
   return (
@@ -71,7 +81,7 @@ export default function SpotlightComponent() {
           {items.length > 0 ? (
             items
           ) : (
-            <Spotlight.Empty>Nothing found...</Spotlight.Empty>
+            <Spotlight.Empty>No command found...</Spotlight.Empty>
           )}
         </Spotlight.ActionsList>
       </Spotlight.Root>

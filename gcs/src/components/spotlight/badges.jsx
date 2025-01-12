@@ -10,6 +10,10 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+export function descriptionBadge(text) {
+  return <span className="text-falcongrey-400 text-sm">{text}</span>
+}
+
 export default function kbdBadge(
   text,
   color = tailwindColors.falcongrey[700],

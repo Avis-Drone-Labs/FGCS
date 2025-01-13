@@ -12,13 +12,45 @@ export function Commands() {
   let navigate = useNavigate()
   commands = []
 
-  // Default commands 
-  AddCommand("goto_dashboard", () => {navigate("/")}, ["alt", "1"])
-  AddCommand("goto_graphs", () => {navigate("/graphs")}, ["alt", "2"])
-  AddCommand("goto_params", () => {navigate("/params")}, ["alt", "3"])
-  AddCommand("goto_config", () => {navigate("/config")}, ["alt", "4"])
-  AddCommand("goto_fla", () => {navigate("/fla")}, ["alt", "5"])
-  AddCommand("force_refresh", () => {window.ipcRenderer.send("force_reload")})
+  // Default commands
+  AddCommand(
+    "goto_dashboard",
+    () => {
+      navigate("/")
+    },
+    ["alt", "1"],
+  )
+  AddCommand(
+    "goto_graphs",
+    () => {
+      navigate("/graphs")
+    },
+    ["alt", "2"],
+  )
+  AddCommand(
+    "goto_params",
+    () => {
+      navigate("/params")
+    },
+    ["alt", "3"],
+  )
+  AddCommand(
+    "goto_config",
+    () => {
+      navigate("/config")
+    },
+    ["alt", "4"],
+  )
+  AddCommand(
+    "goto_fla",
+    () => {
+      navigate("/fla")
+    },
+    ["alt", "5"],
+  )
+  AddCommand("force_refresh", () => {
+    window.ipcRenderer.send("force_reload")
+  })
 }
 
 export function AddCommand(id, command, shortcut = null) {

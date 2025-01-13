@@ -12,6 +12,7 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const badgeColor = tailwindColors.falcongrey[600]
 
+// Default actions
 export const actions = [
   // Pages
   {

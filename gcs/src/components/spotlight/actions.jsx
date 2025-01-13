@@ -12,79 +12,19 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const badgeColor = tailwindColors.falcongrey[600]
 
-// Default actions
-export const actions = [
-  // Pages
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    type: "page",
-    command: () => {
-      RunCommand("goto_dashboard")
-    },
-    rightSection: kbdBadge("Alt + 1", badgeColor),
-  },
-  {
-    id: "graphs",
-    label: "Graphs",
-    type: "page",
-    command: () => {
-      RunCommand("goto_graphs")
-    },
-    rightSection: kbdBadge("Alt + 2", badgeColor),
-  },
-  {
-    id: "params",
-    label: "Params",
-    type: "page",
-    command: () => {
-      RunCommand("goto_params")
-    },
-    rightSection: kbdBadge("Alt + 3", badgeColor),
-  },
-  {
-    id: "config",
-    label: "Config",
-    type: "page",
-    command: () => {
-      RunCommand("goto_config")
-    },
-    rightSection: kbdBadge("Alt + 4", badgeColor),
-  },
-  {
-    id: "fla",
-    label: "FLA",
-    type: "page",
-    command: () => {
-      RunCommand("goto_fla")
-    },
-    rightSection: kbdBadge("Alt + 5", badgeColor),
-  },
+export let actions = []
+export function AddSpotlightAction(id, label, type, command, rightSection = null) {
+  actions.push({id: id, label: label, type: type, command: command, rightSection: rightSection})
+}
 
-  // Commands
-  {
-    id: "refresh",
-    label: "Force refresh page",
-    type: "command",
-    command: () => {
-      RunCommand("force_refresh")
-    },
-    rightSection: kbdBadge("Ctrl + Shift + R", badgeColor),
-  },
-  {
-    id: "connect_to_drone",
-    label: "Connect to drone",
-    type: "command",
-    command: () => {
-      RunCommand("connect_to_drone")
-    },
-  },
-  {
-    id: "disconnect_from_drone",
-    label: "Disconnect from drone",
-    type: "command",
-    command: () => {
-      RunCommand("disconnect_from_drone")
-    },
-  },
-]
+// Pages
+AddSpotlightAction("dashboard", "Dashboard", "page", () => {RunCommand("goto_dashboard")}, kbdBadge("ALT + 1", badgeColor))
+AddSpotlightAction("graphs", "Graphs", "page", () => {RunCommand("goto_graphs")}, kbdBadge("ALT + 2", badgeColor))
+AddSpotlightAction("params", "Params", "page", () => {RunCommand("goto_params")}, kbdBadge("ALT + 3", badgeColor))
+AddSpotlightAction("config", "Config", "page", () => {RunCommand("goto_config")}, kbdBadge("ALT + 4", badgeColor))
+AddSpotlightAction("fla", "FLA", "page", () => {RunCommand("goto_fla")}, kbdBadge("ALT + 5", badgeColor))
+
+// Commands
+AddSpotlightAction("force_refresh", "Force refresh page", "command", () => {RunCommand("force_refresh")}, kbdBadge("Ctrl + Shift + R", badgeColor))
+AddSpotlightAction("connect_to_drone", "Connect to drone", "command", () => {RunCommand("connect_to_drone")})
+AddSpotlightAction("disconnect_from_drone", "Disconnect from drone", "command", () => {RunCommand("disconnect_from_drone")})

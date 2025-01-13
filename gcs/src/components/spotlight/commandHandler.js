@@ -11,6 +11,7 @@ let commands = []
 export function Commands() {
   let navigate = useNavigate()
 
+  // Default Commands
   commands = [
     {
       id: "goto_dashboard",

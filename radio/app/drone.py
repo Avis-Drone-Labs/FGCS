@@ -165,7 +165,15 @@ class Drone:
 
         self.armed = False
 
+        self.stopAllDataStreams()
+
+        self.is_listening = True
+
+        self.startThread()
+
         self.paramsController = ParamsController(self)
+        self.addMessageListener("PARAM_VALUE", self.paramsController.registerParamValue)
+        self.master.param_fetch_all()
         self.sendConnectionStatusUpdate("Setup parameters controller")
 
         self.armController = ArmController(self)
@@ -189,11 +197,6 @@ class Drone:
         self.rcController = RcController(self)
         self.sendConnectionStatusUpdate("Setup RC controller")
 
-        self.stopAllDataStreams()
-
-        self.is_listening = True
-
-        self.startThread()
 
     def __getNextLogFilePath(self, line: str) -> str:
         return line.split("==NEXT_FILE==")[-1].split("==END==")[0]

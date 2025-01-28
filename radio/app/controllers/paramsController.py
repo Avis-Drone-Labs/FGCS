@@ -6,15 +6,16 @@ from threading import Thread
 from typing import TYPE_CHECKING, Any, List, Optional
 
 import serial
-from app.customTypes import IncomingParam, Number, Response
+from app.customTypes import IncomingParam, Number, Response, StoredParam
 from pymavlink import mavutil
+from pymavlink.dialects.v20.common import MAVLink_param_value_message
 
 if TYPE_CHECKING:
     from app.drone import Drone
 
 
 class ParamsController:
-    def __init__(self, drone: Drone) -> None:
+    def __init__(self, drone: Drone, timeout_fetch_one: float = 2, timeout_fetch_all: float = 20) -> None:
         """
         The Params controller controls all parameter related operations.
 
@@ -22,13 +23,25 @@ class ParamsController:
             drone (Drone): The main drone object
         """
         self.drone = drone
-        self.params: List[Any] = []
-        self.current_param_index = 0
         self.total_number_of_params = 0
-        self.is_requesting_params = False
-        self.getAllParamsThread: Optional[Thread] = None
 
-    def getSingleParam(self, param_name: str, timeout: Optional[float] = 2) -> Response:
+        self.timeout_al = timeout_fetch_all
+        self.timeout_one = timeout_fetch_one
+
+        self.params: dict[str, StoredParam] = {}
+
+        self.getAllParams()
+
+
+    def registerParamValue(self, msg: MAVLink_param_value_message) -> None:
+        """Register a parameter value from a PARAM_VALUE message recieved via mavlink
+
+        Args:
+            msg (MAVLink_param_value_message): The PARAM_VALUE message recieved
+        """
+        self.params[msg.param_id] = {"param_id": msg.param_id, "param_value": msg.param_value, "last_set": time.time(), "param_index": 1396}
+
+    def getSingleParam(self, param_name: str) -> Response:
         """
         Gets a specific parameter value.
 
@@ -42,12 +55,12 @@ class ParamsController:
         self.drone.is_listening = False
         failure_message = f"Failed to get parameter {param_name}"
 
-        self.drone.master.mav.param_request_read_send(
-            self.drone.target_system,
-            self.drone.target_component,
-            param_name.encode(),
-            -1,
-        )
+        requestTime = time.time()
+        self.drone.master.param_fetch_one(param_name.encode())
+
+        timeout = time.time() + self.timeout_one
+
+        while time.time() < requestTime + self.timeout_one and self.params[param_name]["last_set"]
 
         try:
             timeout = time.time() + 5  # 5 seconds

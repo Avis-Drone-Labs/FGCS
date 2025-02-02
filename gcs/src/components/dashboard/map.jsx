@@ -116,6 +116,8 @@ export default function MapSection({
     defaultValue: null,
   })
 
+  const coordsFractionDigits = 7
+
   useEffect(() => {
     socket.on("nav_reposition_result", (msg) => {
       if (!msg.success) {
@@ -522,8 +524,11 @@ export default function MapSection({
             className="absolute bg-falcongrey-700 rounded-md p-1"
             style={{ top: points.y, left: points.x }}
           >
-            <ContextMenuItem text="Fly to here" onClick={open} />
+            <ContextMenuItem
+              text={`${clickedGpsCoords.lat.toFixed(coordsFractionDigits)}, ${clickedGpsCoords.lng.toFixed(coordsFractionDigits)}`}
+            ></ContextMenuItem>
             <Divider className="my-1" />
+            <ContextMenuItem text="Fly to here" onClick={open} />
             <ContextMenuItem
               text="Copy coords"
               onClick={() => {

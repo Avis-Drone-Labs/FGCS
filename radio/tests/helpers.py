@@ -1,4 +1,5 @@
 import pytest
+from typing import Optional, Union
 from serial.serialutil import SerialException
 
 from app import droneStatus, logger
@@ -97,14 +98,14 @@ class ParamRefreshTimeout:
             )
 
 
-def send_and_recieve(endpoint: str, args: dict | None | str = None) -> dict:
+def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 
     Parameters
     ----------
     endpoint : str
         The endpoint to send the request to
-    args : dict | None, optional
+    args : Optional[Union[dict, str]]
         The arguments to pass to the endpoint, by default None
 
     Returns

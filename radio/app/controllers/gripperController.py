@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import serial
 from app.customTypes import Response
@@ -51,12 +51,12 @@ class GripperController:
                 ),
             }
 
-    def getEnabled(self) -> bool | None:
+    def getEnabled(self) -> Optional[bool]:
         """
         Gets the enabled status of the gripper by checking the value of the GRIP_ENABLE param
 
         Returns:
-            bool | None
+          Optional[bool]
         """
         gripper_enabled_response = self.drone.paramsController.getSingleParam(
             param_name="GRIP_ENABLE"

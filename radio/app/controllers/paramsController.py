@@ -137,7 +137,7 @@ class ParamsController:
                 self.drone.logger.error("Serial exception while getting all params")
                 return
 
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
+    def setMultipleParams(self, params_list: List[IncomingParam]) -> bool:
         """
         Sets multiple parameters on the drone.
 

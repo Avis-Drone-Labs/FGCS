@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
@@ -6,7 +6,7 @@ from .helpers import FakeTCP, NoDrone
 
 
 def assert_motorResult(
-    data: dict,
+    data: Dict,
     success: bool,
     motor: Optional[str] = None,
     message: Optional[str] = None,

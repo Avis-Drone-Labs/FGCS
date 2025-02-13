@@ -3,9 +3,8 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional, Callable
+from typing import TYPE_CHECKING, List, Callable
 
-import serial
 from app.customTypes import IncomingParam, Number, Response, StoredParam
 from pymavlink import mavutil
 from pymavlink.dialects.v20.common import MAVLink_param_value_message
@@ -15,7 +14,9 @@ if TYPE_CHECKING:
 
 
 class ParamsController:
-    def __init__(self, drone: Drone, timeout_fetch_one: float = 2, timeout_fetch_all: float = 20) -> None:
+    def __init__(
+        self, drone: Drone, timeout_fetch_one: float = 2, timeout_fetch_all: float = 20
+    ) -> None:
         """
         The Params controller controls all parameter related operations.
 
@@ -31,7 +32,6 @@ class ParamsController:
         self.params: dict[str, StoredParam] = {}
 
         self.getAllParams()
-
 
     def _registerParamValue(self, msg: MAVLink_param_value_message) -> None:
         """Register a parameter value from a PARAM_VALUE message recieved via mavlink
@@ -74,22 +74,30 @@ class ParamsController:
         requestTime = time.time()
         self.drone.master.param_fetch_one(param_name.encode())
 
-        while time.time() < requestTime + self.timeout_one and self.params[param_name]["last_set"] < requestTime:
+        while (
+            time.time() < requestTime + self.timeout_one
+            and self.params[param_name]["last_set"] < requestTime
+        ):
             time.sleep(0.05)
 
         # We got the param value
         success: bool = self.params[param_name]["last_set"] >= requestTime
 
         if not success:
-            self.drone.logger.warning(f"Could not fetch param {param_name} at time {requestTime}")
+            self.drone.logger.warning(
+                f"Could not fetch param {param_name} at time {requestTime}"
+            )
             return {"success": False, "message": failure_message}
 
-        return {
-            "success": True,
-            "data": self.params[param_name]["param_value"]
-        }
+        return {"success": True, "data": self.params[param_name]["param_value"]}
 
-    def getAllParams(self, timeoutCallback: Callable = lambda t: 0, updateCallback: Callable = lambda i, t: 0, completeCallback: Callable = lambda p: 0, updateFrequencySeconds: float = 1.0) -> None:
+    def getAllParams(
+        self,
+        timeoutCallback: Callable = lambda t: 0,
+        updateCallback: Callable = lambda i, t: 0,
+        completeCallback: Callable = lambda p: 0,
+        updateFrequencySeconds: float = 1.0,
+    ) -> None:
         """
         Request all parameters from the drone. Starts a thread which collects all recieved PARAM_VALUE
         messages, and calls the given callbacks at each relevant place:\n
@@ -107,7 +115,14 @@ class ParamsController:
         """
 
         self.getAllParamsThread = Thread(
-            target=self.getAllParamsThreadFunc, daemon=True, args=(timeoutCallback, updateCallback, completeCallback, updateFrequencySeconds)
+            target=self.getAllParamsThreadFunc,
+            daemon=True,
+            args=(
+                timeoutCallback,
+                updateCallback,
+                completeCallback,
+                updateFrequencySeconds,
+            ),
         )
         self.getAllParamsThread.start()
 
@@ -126,7 +141,9 @@ class ParamsController:
         """
         return len([p for p in self.params if self.params[p]["last_set"] >= fromTime])
 
-    def getAllParamsThreadFunc(self, timeoutCallback, updateCallback, completeCallback, updateFrequencySeconds) -> None:
+    def getAllParamsThreadFunc(
+        self, timeoutCallback, updateCallback, completeCallback, updateFrequencySeconds
+    ) -> None:
         """
         The thread function to get all parameters from the drone.
         """
@@ -140,11 +157,11 @@ class ParamsController:
         while (
             changed := self.getChangedSince(requestTime)
         ) < self.numParams and time.time() < timeoutEpoch:
-                if time.time() >= nextUpdate:
-                    self.drone.logger.info(f"Calling update, {changed} / {self.numParams}")
-                    updateCallback(changed, self.numParams)
-                    nextUpdate += updateFrequencySeconds
-                time.sleep(0.05)
+            if time.time() >= nextUpdate:
+                self.drone.logger.info(f"Calling update, {changed} / {self.numParams}")
+                updateCallback(changed, self.numParams)
+                nextUpdate += updateFrequencySeconds
+            time.sleep(0.05)
         changedParams = [
             self.params[p]
             for p in self.params
@@ -207,10 +224,6 @@ class ParamsController:
         Returns:
             bool: True if the parameter was set, False if it failed
         """
-        self.drone.is_listening = False
-        got_ack = False
-        save_timeout = 5
-
         try:
             # Check if value fits inside the param type
             # https://github.com/ArduPilot/pymavlink/blob/4d8c4ff274d41b9bc8da1a411cb172d39786e46b/mavparm.py#L30C10-L30C10
@@ -243,33 +256,20 @@ class ParamsController:
             self.drone.logger.error(
                 f"Could not set parameter {param_name} with value {param_value}: {e}"
             )
-            self.drone.is_listening = True
             return False
 
-        # Keep trying to set the parameter until we get an ack or run out of retries or timeout
-        while retries > 0 and not got_ack:
-            retries -= 1
-            self.drone.master.param_set_send(
-                param_name.upper(), vfloat, parm_type=param_type
-            )
-            tstart = time.time()
-            while time.time() - tstart < save_timeout:
-                ack = self.drone.master.recv_match(type="PARAM_VALUE")
-                if ack is None:
-                    time.sleep(0.1)
-                    continue
-                if str(param_name).upper() == str(ack.param_id).upper():
-                    got_ack = True
-                    self.drone.logger.debug(
-                        f"Got parameter saving ack for {param_name} for value {param_value}"
-                    )
-                    self.saveParam(ack.param_id, ack.param_value, ack.param_type)
-                    break
+        requestTime = time.time()
+        timeoutEpoch = requestTime + self.timeout_one
 
-        if not got_ack:
-            self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
-            self.drone.is_listening = True
-            return False
+        self.drone.master.param_set_send(
+            param_name.upper(), vfloat, parm_type=param_type
+        )
 
-        self.drone.is_listening = True
-        return True
+        # loop until either the param has been updated or timeout is reached
+        while (
+            (param := self.params.get(param_name, None)) is None
+            or param["last_set"] < requestTime
+        ) and time.time() < timeoutEpoch:
+            time.sleep(0.05)
+
+        return not (param is None or param["last_set"] < requestTime)

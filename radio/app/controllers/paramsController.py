@@ -25,7 +25,7 @@ class ParamsController:
         self.drone = drone
         self.total_number_of_params = 0
 
-        self.timeout_al = timeout_fetch_all
+        self.timeout_all = timeout_fetch_all
         self.timeout_one = timeout_fetch_one
 
         self.params: dict[str, StoredParam] = {}
@@ -39,58 +39,37 @@ class ParamsController:
         Args:
             msg (MAVLink_param_value_message): The PARAM_VALUE message recieved
         """
-        self.params[msg.param_id] = {"param_id": msg.param_id, "param_value": msg.param_value, "last_set": time.time(), "param_index": 1396}
+        self.params[msg.param_id] = {"param_id": msg.param_id, "param_value": msg.param_value, "last_set": time.time(), "param_index": msg.param_index}
 
     def getSingleParam(self, param_name: str) -> Response:
         """
-        Gets a specific parameter value.
+        Gets a specific parameter value. To control
 
         Args:
             param_name (str): The name of the parameter to get
-            timeout (float, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
 
         Returns:
             Response: The response from the retrieval of the specific parameter
         """
-        self.drone.is_listening = False
         failure_message = f"Failed to get parameter {param_name}"
 
         requestTime = time.time()
         self.drone.master.param_fetch_one(param_name.encode())
 
-        timeout = time.time() + self.timeout_one
+        while time.time() < requestTime + self.timeout_one and self.params[param_name]["last_set"] < requestTime:
+            time.sleep(0.05)
 
-        while time.time() < requestTime + self.timeout_one and self.params[param_name]["last_set"]
+        # We got the param value
+        success: bool = self.params[param_name]["last_set"] >= requestTime
 
-        try:
-            timeout = time.time() + 5  # 5 seconds
-            while True:
-                response = self.drone.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=timeout
-                )
+        if not success:
+            self.drone.logger.warning(f"Could not fetch param {param_name} at time {requestTime}")
+            return {"success": False, "message": failure_message}
 
-                if response and response.param_id == param_name:
-                    self.drone.is_listening = True
-                    return {
-                        "success": True,
-                        "data": response,
-                    }
-                else:
-                    if time.time() > timeout:
-                        self.drone.is_listening = True
-                        return {
-                            "success": False,
-                            "message": f"{failure_message}, timed out",
-                        }
-                    else:
-                        continue
-
-        except serial.serialutil.SerialException:
-            self.drone.is_listening = True
-            return {
-                "success": False,
-                "message": f"{failure_message}, serial exception",
-            }
+        return {
+            "success": True,
+            "data": self.params[param_name]["param_value"]
+        }
 
     def getAllParams(self) -> None:
         """

@@ -143,6 +143,16 @@ export default function FLA() {
   const [opened, { open, close }] = useDisclosure(false)
 
   // Redux dispatch functions
+  // Variable storing bounds object
+  let restoreBounds = null;
+
+  // Call to update varibale
+  const handleResetGraph = () => {
+    // Call the get bound function in graph.jsx
+    restoreBounds = null //
+  };
+
+  // Create dispatch functions for each state variable
   const updateFile = (newFile) => dispatch(setFile(newFile))
   const updateUnits = (newUnits) => dispatch(setUnits(newUnits))
   const updateFormatMessages = (newFormatMessages) =>
@@ -860,6 +870,7 @@ export default function FLA() {
                 clearFilters={clearFilters}
                 canSavePreset={canSavePreset}
                 openPresetModal={open}
+                restoreBounds={restoreBounds} // Pass the stored bounds
               />
 
               {/* Plots Setup */}

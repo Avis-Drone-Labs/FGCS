@@ -76,10 +76,32 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, events, flightModes, graphConfig, clearFilters, canSavePreset, openPresetModal }) {
+export default function Graph({ data, events, flightModes, graphConfig, clearFilters, canSavePreset, openPresetModal, restoreBounds }) {// restore bounds is the bounds object
   const [config, setConfig] = useState({ ...graphConfig })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
+
+  // Get bounds function - should be called in fla right before
+  function getBounds() {
+    // getZoomedScaleBounds stores the bound object (current min and max of the x and y of the graph)
+    return chartRef?.current?.getZoomedScaleBounds()
+  }
+
+  // set the bounds. (should pass in restoreBounds once at the creation of the object (e.g if colour is changed))
+  function setBounds(bounds) {
+    if (chartRef.current) {
+      const chart = chartRef.current;
+
+      // Directly set the scales' min and max values
+      chart.options.scales.x.min = bounds.x.min;
+      chart.options.scales.x.max = bounds.x.max;
+      chart.options.scales.y.min = bounds.y.min;
+      chart.options.scales.y.max = bounds.y.max;
+
+      // Update the chart to reflect the changes
+      chart.update();
+    }
+  }
 
   function downloadUpscaledImage(originalDataURI, wantedWidth, wantedHeight) {
     // https://stackoverflow.com/questions/20958078/resize-a-base-64-image-in-javascript-without-using-canvas

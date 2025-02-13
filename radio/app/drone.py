@@ -172,8 +172,8 @@ class Drone:
         self.startThread()
 
         self.paramsController = ParamsController(self)
-        self.addMessageListener("PARAM_VALUE", self.paramsController.registerParamValue)
-        self.master.param_fetch_all()
+        self.addMessageListener("PARAM_VALUE", self.paramsController._registerParamValue)
+
         self.sendConnectionStatusUpdate("Setup parameters controller")
 
         self.armController = ArmController(self)

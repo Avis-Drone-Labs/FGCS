@@ -100,7 +100,7 @@ def set_state(data: SetStateType) -> None:
                     "param_request_update",
                     {
                         "current_param_index": droneStatus.drone.paramsController.current_param_index,
-                        "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
+                        "total_number_of_params": droneStatus.drone.paramsController.numParams,
                     },
                 )
                 last_index_sent = droneStatus.drone.paramsController.current_param_index

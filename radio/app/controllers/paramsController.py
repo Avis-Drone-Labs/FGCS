@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Callable
 
 import serial
 from app.customTypes import IncomingParam, Number, Response, StoredParam
@@ -23,7 +23,7 @@ class ParamsController:
             drone (Drone): The main drone object
         """
         self.drone = drone
-        self.total_number_of_params = 0
+        self.numParams = 0
 
         self.timeout_all = timeout_fetch_all
         self.timeout_one = timeout_fetch_one
@@ -33,13 +33,31 @@ class ParamsController:
         self.getAllParams()
 
 
-    def registerParamValue(self, msg: MAVLink_param_value_message) -> None:
+    def _registerParamValue(self, msg: MAVLink_param_value_message) -> None:
         """Register a parameter value from a PARAM_VALUE message recieved via mavlink
 
         Args:
             msg (MAVLink_param_value_message): The PARAM_VALUE message recieved
         """
-        self.params[msg.param_id] = {"param_id": msg.param_id, "param_value": msg.param_value, "last_set": time.time(), "param_index": msg.param_index}
+
+        self.numParams = msg.param_count
+
+        if msg.param_id in self.params:
+            self.params[msg.param_id]["param_value"] = msg.param_value
+            self.params[msg.param_id]["last_set"] = time.time()
+            return
+
+        self.params.update(
+            {
+                msg.param_id: {
+                    "param_id": msg.param_id,
+                    "param_value": msg.param_value,
+                    "param_type": msg.param_type,
+                    "param_index": msg.param_index,
+                    "last_set": time.time(),
+                }
+            }
+        )
 
     def getSingleParam(self, param_name: str) -> Response:
         """
@@ -71,65 +89,80 @@ class ParamsController:
             "data": self.params[param_name]["param_value"]
         }
 
-    def getAllParams(self) -> None:
+    def getAllParams(self, timeoutCallback: Callable = lambda t: 0, updateCallback: Callable = lambda i, t: 0, completeCallback: Callable = lambda p: 0, updateFrequencySeconds: float = 1.0) -> None:
         """
-        Request all parameters from the drone.
+        Request all parameters from the drone. Starts a thread which collects all recieved PARAM_VALUE
+        messages, and calls the given callbacks at each relevant place:\n
+        - timeoutCb should be of type `func(t: int)`, where t is the time in seconds that
+        the process took before timing out\n
+        - completeCb should be of type `func(p: list)`, where p is the list of parameters returned\n
+        - updateCb should be of type `func(i: int, t: int)` where i is the index of the last
+        loaded param and t is the total number of params
+
+        Args:
+            timeoutCb (typing.Callable): The callback to invoke if the thread times out
+            completeCb (typing.Callable): The callback to invoke when the thread completes
+            updateCb (typing.Callable): The callback to invoke at a fixed duration defined by `updateFreq`
+            updateFreq (int): The frequency in seconds that updates should be sent back to the client. Default 1
         """
-        self.drone.stopAllDataStreams()
-        self.drone.is_listening = False
 
         self.getAllParamsThread = Thread(
-            target=self.getAllParamsThreadFunc, daemon=True
+            target=self.getAllParamsThreadFunc, daemon=True, args=(timeoutCallback, updateCallback, completeCallback, updateFrequencySeconds)
         )
         self.getAllParamsThread.start()
 
-        self.drone.master.param_fetch_all()
-        self.is_requesting_params = True
+    def getChangedSince(self, fromTime: float) -> int:
+        """Gets the number of parameters that have had their values changed since
+        the given epoch time
 
-    def getAllParamsThreadFunc(self) -> None:
+        This means all parameters which have had a PARAM_VALUE message emitted
+        since `time`
+
+        Args:
+            fromTime (float): The time from which parameter changes should be counted
+
+        Returns:
+            int: The number of parameters
+        """
+        return len([p for p in self.params if self.params[p]["last_set"] >= fromTime])
+
+    def getAllParamsThreadFunc(self, timeoutCallback, updateCallback, completeCallback, updateFrequencySeconds) -> None:
         """
         The thread function to get all parameters from the drone.
         """
-        timeout = time.time() + 20 # 20 seconds from now
 
-        while True:
-            try:
-                if time.time() > timeout:
-                    self.drone.logger.warning("Get all params thread timed out")
-                    self.is_requesting_params = False
-                    self.current_param_index = 0
-                    self.total_number_of_params = 0
-                    self.params = []
-                    self.drone.is_listening = True
-                    return
+        requestTime = time.time()
+        timeoutEpoch = requestTime + self.timeout_all
+        nextUpdate = requestTime + updateFrequencySeconds
 
-                msg = self.drone.master.recv_msg()
-                if msg and msg.msgname == "PARAM_VALUE":
-                    self.saveParam(msg.param_id, msg.param_value, msg.param_type)
+        self.drone.master.param_fetch_all()
 
-                    self.current_param_index = msg.param_index
+        while (
+            changed := self.getChangedSince(requestTime)
+        ) < self.numParams and time.time() < timeoutEpoch:
+                if time.time() >= nextUpdate:
+                    self.drone.logger.info(f"Calling update, {changed} / {self.numParams}")
+                    updateCallback(changed, self.numParams)
+                    nextUpdate += updateFrequencySeconds
+                time.sleep(0.05)
+        changedParams = [
+            self.params[p]
+            for p in self.params
+            if self.params[p]["last_set"] >= requestTime
+        ]
 
-                    if self.total_number_of_params != msg.param_count:
-                        self.total_number_of_params = msg.param_count
+        if len(changedParams) != self.numParams:
+            # Timed out
+            self.drone.logger.warning(
+                f"Expeceted to recieve {self.numParams} param values, recieved {len(changedParams)}."
+            )
+            timeoutCallback(time.time() - requestTime)
+        else:
+            # Success! :D
+            self.drone.logger.info(f"Succesfully loaded {self.numParams} params.")
+            completeCallback(changedParams)
 
-                    if msg.param_index == msg.param_count - 1:
-                        self.is_requesting_params = False
-                        self.current_param_index = 0
-                        self.total_number_of_params = 0
-                        self.params = sorted(self.params, key=lambda k: k["param_id"])
-                        self.drone.is_listening = True
-                        self.drone.logger.info("Got all params")
-                        return
-            except serial.serialutil.SerialException:
-                self.is_requesting_params = False
-                self.current_param_index = 0
-                self.total_number_of_params = 0
-                self.params = []
-                self.drone.is_listening = True
-                self.drone.logger.error("Serial exception while getting all params")
-                return
-
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
+    def setMultipleParams(self, params_list: List[IncomingParam]) -> bool:
         """
         Sets multiple parameters on the drone.
 
@@ -240,27 +273,3 @@ class ParamsController:
 
         self.drone.is_listening = True
         return True
-
-    def saveParam(self, param_name: str, param_value: Number, param_type: int) -> None:
-        """
-        Save a parameter to the params list.
-
-        Args:
-            param_name (str): The name of the parameter
-            param_value (Number): The value of the parameter
-            param_type (int): The type of the parameter
-        """
-        existing_param_idx = next(
-            (i for i, x in enumerate(self.params) if x["param_id"] == param_name), None
-        )
-
-        if existing_param_idx is not None:
-            self.params[existing_param_idx]["param_value"] = param_value
-        else:
-            self.params.append(
-                {
-                    "param_id": param_name,
-                    "param_value": param_value,
-                    "param_type": param_type,
-                }
-            )

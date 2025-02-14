@@ -57,20 +57,19 @@ const MissionInfo = ({ currentMissionData, navControllerOutputData }) => {
       {/** Mission Information */}
       <div className="text-lg">
         <p>
-          <span className="font-bold"> Mission State:</span>
+          <span className="font-bold"> Mission State:</span>{" "}
           {MISSION_STATES[currentMissionData.mission_state]}
         </p>
         <p>
-          <span className="font-bold"> Waypoint: </span>
+          <span className="font-bold"> Waypoint: </span>{" "}
           {currentMissionData.seq}/{currentMissionData.total}
         </p>
         <p>
-          <span className="font-bold">Distance to WP: </span>
+          <span className="font-bold">Distance to WP: </span>{" "}
           {(navControllerOutputData.wp_dist
             ? navControllerOutputData.wp_dist
             : 0
           ).toFixed(2)}
-          ,
         </p>
       </div>
     </>

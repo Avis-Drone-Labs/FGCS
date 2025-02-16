@@ -2,8 +2,11 @@
   A component to display a marker pin on a map
 */
 
-import { Tooltip } from "@mantine/core"
+// Base imports
 import React from "react"
+
+// Map and mantine imports
+import { Tooltip } from "@mantine/core"
 import { Marker } from "react-map-gl"
 
 const MarkerPin = React.memo(

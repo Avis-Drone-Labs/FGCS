@@ -2,12 +2,19 @@
   The marker to display the drones current position on a map
 */
 
+// Map based imports
 import { destination, point } from "@turf/turf"
 import { Marker } from "react-map-gl"
+
+// Component imports
+import DrawLineCoordinates from "./drawLineCoordinates"
+
+// Asset imports
+import arrow from "../../assets/arrow.svg"
+
+// Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import arrow from "../../assets/arrow.svg"
-import DrawLineCoordinates from "./drawLineCoordinates"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function DroneMarker({

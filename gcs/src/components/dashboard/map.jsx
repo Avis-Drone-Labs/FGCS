@@ -31,6 +31,10 @@ import {
 import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
+import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
+import DroneMarker from "../mapComponents/droneMarker"
+import HomeMarker from "../mapComponents/homeMarker"
+import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import ContextMenuItem from "./contextMenuItem"
 import useContextMenu from "./useContextMenu"
@@ -38,10 +42,7 @@ import useContextMenu from "./useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
-import DroneMarker from "../mapComponents/droneMarker"
-import HomeMarker from "../mapComponents/homeMarker"
-import MarkerPin from "../mapComponents/markerPin"
+
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 function MapSectionNonMemo({

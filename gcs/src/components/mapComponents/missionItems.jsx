@@ -5,14 +5,20 @@
   connecting them.
 */
 
+// Helper imports
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 
+// Styling imports
 import "maplibre-gl/dist/maplibre-gl.css"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
+
+// Component imports
 import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
+
+// Tailing styling
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function MissionItems({ missionItems }) {

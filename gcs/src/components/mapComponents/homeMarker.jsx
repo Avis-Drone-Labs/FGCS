@@ -2,11 +2,13 @@
   The home position marker to display on a map
 */
 
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
+// Component imports
 import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
+// Tailwind styling
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function HomeMarker({ lat, lon, lineTo = null }) {

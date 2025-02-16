@@ -1,5 +1,5 @@
 import sys
-from typing import Any, List
+from typing import Any, List, Optional, Union
 
 from pymavlink import mavutil
 from serial.tools import list_ports
@@ -138,12 +138,12 @@ def droneConnectStatusCb(msg: Any) -> None:
     socketio.emit("drone_connect_status", {"message": msg})
 
 
-def notConnectedError(action: str | None = None) -> None:
+def notConnectedError(action: Optional[str] = None) -> None:
     """
     Send error to the socket indicating that drone connection must be established to complete this action
 
     Args:
-        action (str | None): The action the that requires drone connection. Default `None`.
+        action Optional[str]: The action the that requires drone connection. Default `None`.
     """
     socketio.emit(
         "connection_error",
@@ -153,13 +153,13 @@ def notConnectedError(action: str | None = None) -> None:
     )
 
 
-def missingParameterError(endpoint: str, params: str | list[str]) -> None:
+def missingParameterError(endpoint: str, params: Union[str, List[str]]) -> None:
     """ "
     Send error to the socket indicating that a request made to the server was missing required parameters
 
     Args
         endpoint (str): The endpoint that is missing a parameter
-        params (str | list[str]): The names of the parameter/s that are missing from the request
+        params Union[str, List[str]]: The names of the parameter/s that are missing from the request
     """
     socketio.emit(
         "drone_error",

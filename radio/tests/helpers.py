@@ -120,6 +120,7 @@ class NoAcknowledgementMessage:
         if droneStatus.drone is not None:
             droneStatus.drone.master.recv_match = self.old_recv
 
+
 class RecvMsgReturnsFalse:
     @staticmethod
     def recv_match_false(
@@ -136,6 +137,7 @@ class RecvMsgReturnsFalse:
         if droneStatus.drone is not None:
             droneStatus.drone.master.recv_match = self.old_recv
 
+
 class SetAircraftType:
     def __init__(self, aircraftType: int):
         self.aircraftType = aircraftType
@@ -148,6 +150,7 @@ class SetAircraftType:
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
             droneStatus.drone.aircraft_type = self.old_aircraftType
+
 
 def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
     """Sends a request to the socketio test client and returns the response

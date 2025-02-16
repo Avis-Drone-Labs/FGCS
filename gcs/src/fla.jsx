@@ -748,7 +748,7 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-x-auto">
+          <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-hidden">
             {/* Message selection column */}
             <div className="w-1/4 pb-6">
               <div className="flex flex-col mb-2 text-sm gap-y-2">
@@ -859,7 +859,7 @@ export default function FLA() {
             </div>
 
             {/* Graph column */}
-            <div className="w-full h-full pr-4">
+            <div className="w-full h-full pr-4 min-w-0 flex flex-col">
               <Graph
                 data={chartData}
                 events={logEvents}

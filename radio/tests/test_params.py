@@ -1,4 +1,5 @@
 import pytest
+from typing import Optional, Union
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
@@ -7,7 +8,7 @@ from typing import List, Any
 
 
 def send_and_receive_params(
-    client: SocketIOTestClient, endpoint: str, args: List[Any] | None | str = None
+    client: SocketIOTestClient, endpoint: str, args: Optional[Union[List[Any], str]] = None
 ) -> dict:
     """
     Sends a request to the socketio test client and awaits a response, returning the entire response (name and args)
@@ -15,7 +16,7 @@ def send_and_receive_params(
     Args:
         client: The socketio test client
         endpoint(str): The endpoint to send the request to
-        args(dict | None | str): The arguments to pass to the endpoint
+        args(Optional[Union[List[Any], str]]): The arguments to pass to the endpoint
 
     Returns:
          The data received from the client (name and arguments of the socket.emit)

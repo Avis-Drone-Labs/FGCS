@@ -325,7 +325,7 @@ export default function Graph({
   }, [events, showEvents, flightModes, data])
 
   return (
-    <div>
+    <div className="flex-1 min-h-0 w-full">
       <Line ref={chartRef} options={config} data={data} />
       <div className="flex flex-row gap-2 pt-2">
         <MantineTooltip label="Zoom in">

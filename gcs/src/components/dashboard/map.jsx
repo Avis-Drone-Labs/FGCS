@@ -60,7 +60,7 @@ function getPointAtDistance(lat1, lon1, distance, bearing) {
   const lon1Rad = degToRad(lon1)
   const lat2 = Math.asin(
     Math.sin(lat1Rad) * Math.cos(distance / R) +
-    Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
+      Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
   )
   const lon2 =
     lon1Rad +
@@ -197,8 +197,9 @@ export default function MapSection({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY
-          }`}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
+          import.meta.env.VITE_MAPTILER_API_KEY
+        }`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}
@@ -535,8 +536,22 @@ export default function MapSection({
               }}
             >
               <div className="w-full flex justify-between gap-2">
-                <p>{clickedGpsCoords.lat.toFixed(coordsFractionDigits)}, {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}</p>
-                <svg className="relative -right-1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z" /></svg>
+                <p>
+                  {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
+                  {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
+                </p>
+                <svg
+                  className="relative -right-1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z"
+                  />
+                </svg>
               </div>
             </ContextMenuItem>
           </div>

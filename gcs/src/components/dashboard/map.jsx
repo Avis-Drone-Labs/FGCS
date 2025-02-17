@@ -44,35 +44,6 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-function degToRad(deg) {
-  return deg * (Math.PI / 180)
-}
-
-function radToDeg(rad) {
-  return rad * (180 / Math.PI)
-}
-
-function getPointAtDistance(lat1, lon1, distance, bearing) {
-  // https://stackoverflow.com/questions/7222382/get-lat-long-given-current-point-distance-and-bearing
-
-  const R = 6378.14 // Radius of the Earth in km
-  const brng = degToRad(bearing)
-  const lat1Rad = degToRad(lat1)
-  const lon1Rad = degToRad(lon1)
-  const lat2 = Math.asin(
-    Math.sin(lat1Rad) * Math.cos(distance / R) +
-      Math.cos(lat1Rad) * Math.sin(distance / R) * Math.cos(brng),
-  )
-  const lon2 =
-    lon1Rad +
-    Math.atan2(
-      Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat1Rad),
-      Math.cos(distance / R) - Math.sin(lat1Rad) * Math.sin(lat2),
-    )
-
-  return [radToDeg(lat2), radToDeg(lon2)]
-}
-
 function MapSectionNonMemo({
   passedRef,
   data,

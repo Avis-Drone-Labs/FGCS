@@ -748,7 +748,7 @@ export default function FLA() {
       ) : (
         // Graphs section
         <>
-          <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-hidden">
+          <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-y-auto overflow-x-hidden">
             {/* Message selection column */}
             <div className="w-1/4 pb-6">
               <div className="flex flex-col mb-2 text-sm gap-y-2">

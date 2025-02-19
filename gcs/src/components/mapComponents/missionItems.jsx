@@ -5,12 +5,18 @@
   connecting them.
 */
 
+// Helper imports
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 
-import { Tooltip } from "@mantine/core"
+// Styling imports
 import "maplibre-gl/dist/maplibre-gl.css"
-import { Layer, Marker, Source } from "react-map-gl/maplibre"
+
+// Component imports
+import DrawLineCoordinates from "./drawLineCoordinates"
+import MarkerPin from "./markerPin"
+
+// Tailing styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -65,61 +71,23 @@ export default function MissionItems({ missionItems }) {
       {/* Show mission item LABELS */}
       {filteredMissionItems.map((item, index) => {
         return (
-          <Marker
+          <MarkerPin
             key={index}
-            longitude={intToCoord(item.y)}
-            latitude={intToCoord(item.x)}
-          >
-            <Tooltip label={item.z ? `Alt: ${item.z}` : ""}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 48"
-                fill={tailwindColors.yellow[400]}
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black"
-              >
-                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
-                <text textAnchor="middle" x="12" y="14" className="text-black">
-                  {item.seq}
-                </text>
-              </svg>
-            </Tooltip>
-          </Marker>
+            lat={intToCoord(item.x)}
+            lon={intToCoord(item.y)}
+            colour={tailwindColors.yellow[400]}
+            text={item.seq}
+            tooltipText={item.z ? `Alt: ${item.z}` : null}
+          />
         )
       })}
 
       {/* Show mission item outlines */}
       {missionItems.length > 0 && (
-        <Source
-          type="geojson"
-          data={{
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: getListOfLineCoordinates(),
-            },
-          }}
-        >
-          <Layer
-            {...{
-              type: "line",
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": tailwindColors.yellow[400],
-                "line-width": 1,
-              },
-            }}
-          />
-        </Source>
+        <DrawLineCoordinates
+          coordinates={getListOfLineCoordinates()}
+          colour={tailwindColors.yellow[400]}
+        />
       )}
     </>
   )

@@ -20,7 +20,6 @@ import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
 import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import { socket } from "../../helpers/socket"
 
-
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const PWM_MIN = 800

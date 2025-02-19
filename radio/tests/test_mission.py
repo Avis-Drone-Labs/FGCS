@@ -1,7 +1,5 @@
 from flask_socketio.test_client import SocketIOTestClient
 
-import pytest
-
 from . import falcon_test
 from .helpers import NoDrone
 

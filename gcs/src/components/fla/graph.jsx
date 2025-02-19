@@ -76,32 +76,10 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, events, flightModes, graphConfig, clearFilters, canSavePreset, openPresetModal, restoreBounds }) {// restore bounds is the bounds object
+export default function Graph({ data, events, flightModes, graphConfig, clearFilters, canSavePreset, openPresetModal }) {// restore bounds is the bounds object
   const [config, setConfig] = useState({ ...graphConfig })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
-
-  // Get bounds function - should be called in fla right before
-  function getBounds() {
-    // getZoomedScaleBounds stores the bound object (current min and max of the x and y of the graph)
-    return chartRef?.current?.getZoomedScaleBounds()
-  }
-
-  // set the bounds. (should pass in restoreBounds once at the creation of the object (e.g if colour is changed))
-  function setBounds(bounds) {
-    if (chartRef.current) {
-      const chart = chartRef.current;
-
-      // Directly set the scales' min and max values
-      chart.options.scales.x.min = bounds.x.min;
-      chart.options.scales.x.max = bounds.x.max;
-      chart.options.scales.y.min = bounds.y.min;
-      chart.options.scales.y.max = bounds.y.max;
-
-      // Update the chart to reflect the changes
-      chart.update();
-    }
-  }
 
   function downloadUpscaledImage(originalDataURI, wantedWidth, wantedHeight) {
     // https://stackoverflow.com/questions/20958078/resize-a-base-64-image-in-javascript-without-using-canvas
@@ -299,6 +277,9 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
       ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
     ]
     const scales = {}
+    
+    // Capture current scales if they exist
+    const currentScales = chartRef.current?.scales
 
     if (yAxisIDs.length === 0) {
       scales.y = {
@@ -320,9 +301,18 @@ export default function Graph({ data, events, flightModes, graphConfig, clearFil
           text: yAxisID,
         },
       }
+      // Only add min/max if we have existing scales and they're not undefined
+      if (data.datasets.length > 0 && currentScales[yAxisID]?.min !== undefined) {
+        scales[yAxisID].min = currentScales[yAxisID].min
+        scales[yAxisID].max = currentScales[yAxisID].max
+      }
     })
 
     scales.x = { ...config.scales.x }
+    if (data.datasets.length > 0 && currentScales.x?.min !== undefined) {
+      scales.x.min = currentScales.x.min
+      scales.x.max = currentScales.x.max
+    }
 
     setConfig({
       ...config,

@@ -143,16 +143,6 @@ export default function FLA() {
   const [opened, { open, close }] = useDisclosure(false)
 
   // Redux dispatch functions
-  // Variable storing bounds object
-  let restoreBounds = null;
-
-  // Call to update varibale
-  const handleResetGraph = () => {
-    // Call the get bound function in graph.jsx
-    restoreBounds = null //
-  };
-
-  // Create dispatch functions for each state variable
   const updateFile = (newFile) => dispatch(setFile(newFile))
   const updateUnits = (newUnits) => dispatch(setUnits(newUnits))
   const updateFormatMessages = (newFormatMessages) =>
@@ -667,29 +657,37 @@ export default function FLA() {
   // Update datasets based on the message filters constantly
   useEffect(() => {
     if (!messageFilters || !logMessages) return
-
-    const datasets = []
-    Object.keys(messageFilters).map((categoryName) => {
-      const category = messageFilters[categoryName]
-
-      Object.keys(category).map((fieldName) => {
-        if (category[fieldName]) {
-          const label = `${categoryName}/${fieldName}`
-          const color = customColors[label]
-          const unit = getUnit(categoryName, fieldName)
-          datasets.push({
-            label: label,
-            yAxisID: unit,
-            data: logMessages[categoryName].map((d) => ({
-              x: d.TimeUS,
-              y: d[fieldName],
-            })),
-            borderColor: color,
-            backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
+    
+    // Sort the category and field names to maintain consistent order
+    const datasets = Object.keys(messageFilters)
+      .sort()
+      .reduce((acc, categoryName) => {
+        const category = messageFilters[categoryName]
+        
+        Object.keys(category)
+          .sort()
+          .forEach((fieldName) => {
+            if (category[fieldName]) {
+              const label = `${categoryName}/${fieldName}`
+              const color = customColors[label]
+              const unit = getUnit(categoryName, fieldName)
+              
+              acc.push({
+                label: label,
+                yAxisID: unit,
+                data: logMessages[categoryName].map((d) => ({
+                  x: d.TimeUS,
+                  y: d[fieldName],
+                })),
+                borderColor: color,
+                backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
+              })
+            }
           })
-        }
-      })
-    })
+        
+        return acc
+      }, [])
+  
     updateChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
@@ -870,7 +868,6 @@ export default function FLA() {
                 clearFilters={clearFilters}
                 canSavePreset={canSavePreset}
                 openPresetModal={open}
-                restoreBounds={restoreBounds} // Pass the stored bounds
               />
 
               {/* Plots Setup */}

@@ -313,6 +313,9 @@ export default function Graph({
       if (data.datasets.length > 0 && currentScales[yAxisID]?.min !== undefined) {
         scales[yAxisID].min = currentScales[yAxisID].min
         scales[yAxisID].max = currentScales[yAxisID].max
+      } else {
+        scales[yAxisID].min = undefined
+        scales[yAxisID].max = undefined
       }
     })
 
@@ -320,6 +323,9 @@ export default function Graph({
     if (data.datasets.length > 0 && currentScales.x?.min !== undefined) {
       scales.x.min = currentScales.x.min
       scales.x.max = currentScales.x.max
+    } else {
+      scales.x.min = undefined
+      scales.x.max = undefined
     }
 
     setConfig({

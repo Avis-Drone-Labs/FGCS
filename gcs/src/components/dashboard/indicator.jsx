@@ -3,12 +3,12 @@
 */
 
 // Image imports
-import heading_mechanics from '../img/heading_mechanics.svg'
-import heading_yaw from '../img/heading_yaw.svg'
-import horizon_back from '../img/horizon_back.svg'
-import horizon_ball from '../img/horizon_ball.svg'
-import horizon_circle from '../img/horizon_circle.svg'
-import horizon_mechanics from '../img/horizon_mechanics.svg'
+import heading_mechanics from "../img/heading_mechanics.svg"
+import heading_yaw from "../img/heading_yaw.svg"
+import horizon_back from "../img/horizon_back.svg"
+import horizon_ball from "../img/horizon_ball.svg"
+import horizon_circle from "../img/horizon_circle.svg"
+import horizon_mechanics from "../img/horizon_mechanics.svg"
 
 // File constants
 const constants = {
@@ -16,9 +16,9 @@ const constants = {
 }
 
 const box = {
-  width: '100%',
-  height: '100%',
-  position: 'absolute',
+  width: "100%",
+  height: "100%",
+  position: "absolute",
   top: 0,
   left: 0,
 }
@@ -27,11 +27,11 @@ const box = {
 const Instrument = ({ children, size }) => {
   return (
     <div
-      className='relative inline-block overflow-hidden'
+      className="relative inline-block overflow-hidden"
       style={{
-        height: size ?? '250px',
-        width: size ?? '250px',
-        clipPath: `circle(36.66% at center)`,
+        height: size ?? "250px",
+        width: size ?? "250px",
+        clipPath: "circle(36.66% at center)",
       }}
     >
       {children}
@@ -51,21 +51,21 @@ export const AttitudeIndicator = (params) => {
   return (
     <Instrument {...params}>
       <div
-        className='roll box'
+        className="roll box"
         style={{
           ...box,
-          top: '0%',
+          top: "0%",
           transform: `rotate(${-params.roll ?? 0}deg)`,
         }}
       >
-        <img src={horizon_back} className='box' alt='' style={{ ...box }} />
-        <div className='pitch box' style={{ ...box, top: `${pitch * 0.7}%` }}>
-          <img src={horizon_ball} className='box' style={box} alt='' />
+        <img src={horizon_back} className="box" alt="" style={{ ...box }} />
+        <div className="pitch box" style={{ ...box, top: `${pitch * 0.7}%` }}>
+          <img src={horizon_ball} className="box" style={box} alt="" />
         </div>
-        <img src={horizon_circle} className='box' style={box} alt='' />
+        <img src={horizon_circle} className="box" style={box} alt="" />
       </div>
-      <div className='mechanics box' style={box}>
-        <img src={horizon_mechanics} className='box' style={box} alt='' />
+      <div className="mechanics box" style={box}>
+        <img src={horizon_mechanics} className="box" style={box} alt="" />
       </div>
     </Instrument>
   )
@@ -76,13 +76,13 @@ export const HeadingIndicator = (params) => {
   return (
     <Instrument {...params}>
       <div
-        className='heading box'
+        className="heading box"
         style={{ ...box, transform: `rotate(${-params.heading ?? 0}deg)` }}
       >
-        <img src={heading_yaw} className='box' style={box} alt='' />
+        <img src={heading_yaw} className="box" style={box} alt="" />
       </div>
-      <div className='mechanics box' style={box}>
-        <img src={heading_mechanics} className='box' style={box} alt='' />
+      <div className="mechanics box" style={box}>
+        <img src={heading_mechanics} className="box" style={box} alt="" />
       </div>
     </Instrument>
   )

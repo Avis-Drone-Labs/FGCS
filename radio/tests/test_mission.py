@@ -28,9 +28,27 @@ def test_getCurrentMission_correctState(
 
     assert socketio_result["name"] == "current_mission"  # Correct name emitted
 
-    pytest.skip(reason="Sending mission to simulator is currently bugged and fails sometimes")
+    # pytest.skip(reason="Sending mission to simulator is currently bugged and fails sometimes")
     assert socketio_result["args"][0] == {
         "mission_items": [
+            {
+                "mavpackettype": "MISSION_ITEM_INT",
+                "target_system": 255,
+                "target_component": 0,
+                "seq": 1,
+                "frame": 3,
+                "command": 22,
+                "current": 0,
+                "autocontinue": 1,
+                "param1": 0.0,
+                "param2": 0.0,
+                "param3": 0.0,
+                "param4": 0.0,
+                "x": 0,
+                "y": 0,
+                "z": 30.0,
+                "mission_type": 0,
+            },
             {
                 "mavpackettype": "MISSION_ITEM_INT",
                 "target_system": 255,

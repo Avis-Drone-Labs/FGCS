@@ -649,29 +649,37 @@ export default function FLA() {
   // Update datasets based on the message filters constantly
   useEffect(() => {
     if (!messageFilters || !logMessages) return
-
-    const datasets = []
-    Object.keys(messageFilters).map((categoryName) => {
-      const category = messageFilters[categoryName]
-
-      Object.keys(category).map((fieldName) => {
-        if (category[fieldName]) {
-          const label = `${categoryName}/${fieldName}`
-          const color = customColors[label]
-          const unit = getUnit(categoryName, fieldName)
-          datasets.push({
-            label: label,
-            yAxisID: unit,
-            data: logMessages[categoryName].map((d) => ({
-              x: d.TimeUS,
-              y: d[fieldName],
-            })),
-            borderColor: color,
-            backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
+    
+    // Sort the category and field names to maintain consistent order
+    const datasets = Object.keys(messageFilters)
+      .sort()
+      .reduce((acc, categoryName) => {
+        const category = messageFilters[categoryName]
+        
+        Object.keys(category)
+          .sort()
+          .forEach((fieldName) => {
+            if (category[fieldName]) {
+              const label = `${categoryName}/${fieldName}`
+              const color = customColors[label]
+              const unit = getUnit(categoryName, fieldName)
+              
+              acc.push({
+                label: label,
+                yAxisID: unit,
+                data: logMessages[categoryName].map((d) => ({
+                  x: d.TimeUS,
+                  y: d[fieldName],
+                })),
+                borderColor: color,
+                backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
+              })
+            }
           })
-        }
-      })
-    })
+        
+        return acc
+      }, [])
+  
     updateChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 

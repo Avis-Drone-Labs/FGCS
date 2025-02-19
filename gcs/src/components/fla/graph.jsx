@@ -285,6 +285,9 @@ export default function Graph({
       ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
     ]
     const scales = {}
+    
+    // Capture current scales if they exist
+    const currentScales = chartRef.current?.scales
 
     if (yAxisIDs.length === 0) {
       scales.y = {
@@ -306,9 +309,24 @@ export default function Graph({
           text: yAxisID,
         },
       }
+      // Only add min/max if we have existing scales and they're not undefined
+      if (data.datasets.length > 0 && currentScales[yAxisID]?.min !== undefined) {
+        scales[yAxisID].min = currentScales[yAxisID].min
+        scales[yAxisID].max = currentScales[yAxisID].max
+      } else {
+        scales[yAxisID].min = undefined
+        scales[yAxisID].max = undefined
+      }
     })
 
     scales.x = { ...config.scales.x }
+    if (data.datasets.length > 0 && currentScales.x?.min !== undefined) {
+      scales.x.min = currentScales.x.min
+      scales.x.max = currentScales.x.max
+    } else {
+      scales.x.min = undefined
+      scales.x.max = undefined
+    }
 
     setConfig({
       ...config,
@@ -325,7 +343,7 @@ export default function Graph({
   }, [events, showEvents, flightModes, data])
 
   return (
-    <div className="flex-1 min-h-0 w-full">
+    <div>
       <Line ref={chartRef} options={config} data={data} />
       <div className="flex flex-row gap-2 pt-2">
         <MantineTooltip label="Zoom in">

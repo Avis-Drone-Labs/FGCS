@@ -1,0 +1,26 @@
+{
+    "general": {
+        "autoOpenConnectionModal": {
+            "default": false,
+            "type": "boolean",
+            "display": "Automatically open connection"
+        },
+        "maptilerAPIKey": {
+            "default": "",
+            "type": "string",
+            "display": "Maptiler API Key"
+        },
+        "port": {
+            "default": "",
+            "type": "number",
+            "range": [
+                0,
+                5631
+            ],
+            "display": "Backend Port"
+        }
+    },
+    "params": {},
+    "config": {},
+    "fgcs": {}
+}

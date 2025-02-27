@@ -29,6 +29,7 @@ import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
 import SingleRunWrapper from "./components/SingleRunWrapper.jsx"
 import Toolbar from "./components/toolbar/toolbar.jsx"
 import { ErrorBoundary } from "./components/error/errorBoundary"
+import { SettingsProvider } from "./helpers/settingsProvider.jsx"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
@@ -37,20 +38,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <SingleRunWrapper>
         <Toolbar />
         <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/graphs" element={<Graphs />} />
-            <Route path="/params" element={<Params />} />
-            <Route path="/config" element={<Config />} />
-            <Route
-              path="/fla"
-              element={
-                <Provider store={store}>
-                  <FLA />
-                </Provider>
-              }
-            />
-          </Routes>
+          <SettingsProvider>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/graphs" element={<Graphs />} />
+              <Route path="/params" element={<Params />} />
+              <Route path="/config" element={<Config />} />
+              <Route
+                path="/fla"
+                element={
+                  <Provider store={store}>
+                    <FLA />
+                  </Provider>
+                }
+              />
+            </Routes>
+          </SettingsProvider>
         </ErrorBoundary>
       </SingleRunWrapper>
     </HashRouter>

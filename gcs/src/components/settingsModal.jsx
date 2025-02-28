@@ -4,9 +4,9 @@ import { useSettings } from "../helpers/settings";
 import DefaultSettings from "../../data/default_settings.json"
 import { memo } from "react";
 
-function TextSetting({settingName}){
+function TextSetting({settingName, hidden}){
     const {getSetting, setSetting} = useSettings();
-    return <Input value={getSetting(settingName)} onChange={(e) => setSetting(settingName, e.currentTarget.value)}/>
+    return <Input value={getSetting(settingName)} onChange={(e) => setSetting(settingName, e.currentTarget.value)} type={hidden ? "password" : "text"}/>
 }
 
 function BoolSetting({settingName}){
@@ -35,7 +35,7 @@ function Setting({settingName, df}){
             <div>{df.display}:</div>
             {df.type == "number" ? <NumberSetting settingName={settingName} range={df.range || null}/> :
                 df.type=="boolean" ? <BoolSetting settingName={settingName}/> :
-                df.type=="option" ? <OptionSetting settingName={settingName} options={df.options}/> : <TextSetting settingName={settingName}/>}
+                df.type=="option" ? <OptionSetting settingName={settingName} options={df.options}/> : <TextSetting settingName={settingName} hidden={df.hidden || false}/>}
         </div>
     )
 }

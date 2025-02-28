@@ -3,7 +3,8 @@
         "maptilerAPIKey": {
             "default": "",
             "type": "string",
-            "display": "Maptiler API Key"
+            "display": "Maptiler API Key",
+            "hidden": true
         },
         "port": {
             "default": "4237",

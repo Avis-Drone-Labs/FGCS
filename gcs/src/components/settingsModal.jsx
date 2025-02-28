@@ -56,7 +56,12 @@ function SettingsModal(){
                     })}
                 </Tabs.List>
                 {settingTabs.map((t) => {
-                    return <Tabs.Panel value={t} key={t}>{Object.keys(DefaultSettings[t]).map((s) => {return <Setting settingName={`${t}.${s}`} df={DefaultSettings[t][s]} key={`${t}.${s}`}/>})}</Tabs.Panel>
+                    return <Tabs.Panel value={t} key={t}>
+                        {Object.keys(DefaultSettings[t]).map((s) => {
+                            return <Setting settingName={`${t}.${s}`} df={DefaultSettings[t][s]} key={`${t}.${s}`}/>
+                        })}
+                        {Object.keys(DefaultSettings[t]).length == 0 && <p className="pl-4 pt-2">No settings available right now.</p>}
+                    </Tabs.Panel>
                 })}
             </Tabs>
         </Modal>

@@ -52,7 +52,7 @@ def refresh_params() -> None:
 
     droneStatus.drone.paramsController.getAllParams()
 
-    timeout = time.time() + 60 * 3  # 3 minutes from now
+    timeout = time.time() + 20  # 20 seconds from now yipee
     last_index_sent = -1
 
     while droneStatus.drone and droneStatus.drone.paramsController.is_requesting_params:

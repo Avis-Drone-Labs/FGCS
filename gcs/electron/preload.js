@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import path from 'node:path';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -9,6 +8,8 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   clearRecentLogs: () => ipcRenderer.invoke('fla:clear-recent-logs'),
   getNodeEnv: () => ipcRenderer.invoke('app:get-node-env'),
   getVersion: () => ipcRenderer.invoke('app:get-version'),
+  getSettings: () => ipcRenderer.invoke('getSettings'),
+  saveSettings: (settings) => ipcRenderer.invoke('setSettings', settings)
 })
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.

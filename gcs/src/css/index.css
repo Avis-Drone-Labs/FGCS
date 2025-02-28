@@ -17,7 +17,7 @@
 }
 
 :root[data-mantine-color-scheme="dark"] {
-  --mantine-color-body: #1C2021 !important;  /* Falcon grey default */
+  --mantine-color-body: #1c2021 !important; /* Falcon grey default */
 }
 
 html,
@@ -32,7 +32,7 @@ body {
   height: 100%;
 }
 
-.allow-drag { 
+.allow-drag {
   -webkit-app-region: drag;
 }
 

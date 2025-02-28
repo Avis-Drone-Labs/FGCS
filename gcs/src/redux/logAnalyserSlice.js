@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice } from "@reduxjs/toolkit"
 
 const logAnalyserSlice = createSlice({
-  name: 'logAnalyser',
+  name: "logAnalyser",
   initialState: {
     file: null,
     units: {},
@@ -9,13 +9,14 @@ const logAnalyserSlice = createSlice({
     logMessages: null,
     logEvents: null,
     flightModeMessages: [],
-    logType: 'dataflash',
+    logType: "dataflash",
     messageFilters: null,
     messageMeans: {},
     chartData: { datasets: [] },
     customColors: {},
     colorIndex: 0,
     aircraftType: null,
+    canSavePreset: false,
   },
   reducers: {
     setFile: (state, action) => {
@@ -57,6 +58,9 @@ const logAnalyserSlice = createSlice({
     setAircraftType: (state, action) => {
       state.aircraftType = action.payload
     },
+    setCanSavePreset: (state, action) => {
+      state.canSavePreset = action.payload
+    },
   },
 })
 
@@ -74,6 +78,7 @@ export const {
   setCustomColors,
   setColorIndex,
   setAircraftType,
+  setCanSavePreset,
 } = logAnalyserSlice.actions
 
 export default logAnalyserSlice.reducer

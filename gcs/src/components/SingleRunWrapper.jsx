@@ -22,6 +22,7 @@ import { showErrorNotification } from "../helpers/notification.js"
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
+import { useSettings } from "../helpers/settings.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -40,7 +41,11 @@ export default function SingleRunWrapper({ children }) {
     key: "isUpdateDismissed",
   })
 
+  const {getSetting} = useSettings();
+
   useEffect(() => {
+
+
     async function checkIfOutOfDate() {
       // Check if the current application is out of date if it's running in production,
       // this is done by getting the latest release from the GitHub API and comparing
@@ -78,7 +83,8 @@ export default function SingleRunWrapper({ children }) {
         )
       }
     }
-    checkIfOutOfDate()
+    if (getSetting("General.autoCheckForUpdates"))
+      checkIfOutOfDate()
   }, [])
 
   // Checks there is an update that the user has not already dismissed

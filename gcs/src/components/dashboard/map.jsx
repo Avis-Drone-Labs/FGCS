@@ -42,6 +42,7 @@ import useContextMenu from "./useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { useSettings } from "../../helpers/settings"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 function MapSectionNonMemo({
@@ -78,6 +79,8 @@ function MapSectionNonMemo({
 
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
+
+  const { getSetting } = useSettings()
 
   const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
     key: "repositionAltitude",
@@ -169,9 +172,7 @@ function MapSectionNonMemo({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
-          import.meta.env.VITE_MAPTILER_API_KEY
-        }`}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${getSetting('General.maptilerAPIKey') || import.meta.env.VITE_MAPTILER_API_KEY}`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}

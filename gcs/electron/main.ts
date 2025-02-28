@@ -35,6 +35,69 @@ function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
 
+interface Settings {
+  version: string,
+  settings: object
+}
+
+let userSettings: Settings | null = null
+
+function saveUserConfiguration(settings: Settings){
+  userSettings = settings;
+  fs.writeFileSync(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify(userSettings, null,  2), 'utf-8');
+}
+
+/**
+ * Checks the application version within the loaded user settings and updates if it is outdated
+ * @param configPath The path to the configuration file
+ * @returns
+ */
+function checkAppVersion(configPath: string){
+
+  if (userSettings === null){
+    console.warn("Attempting to check app version when user settings have not been loaded");
+    return;
+  }
+
+  if (userSettings.version == app.getVersion())
+    return;
+
+  userSettings.version = app.getVersion();
+  fs.writeFileSync(configPath, JSON.stringify(userSettings))
+}
+
+/**
+ * Called when the application requests user settings
+ *
+ * @returns
+ */
+function getUserConfiguration(){
+
+  // Return the already loaded user settings if loaded
+  console.log("Fetching user settings!");
+  if (userSettings !== null) return userSettings
+
+
+  // Directories
+  const userDir = app.getPath('userData');
+  const config = path.join(userDir, 'settings.json');
+
+  // Write version and blank settings to user config if doesn't exist
+  if (!fs.existsSync(config)) {
+    console.log("Generating user settings")
+    userSettings = {version: app.getVersion(), settings: {}}
+    fs.writeFileSync(config, JSON.stringify(userSettings))
+  } else{
+    console.log("Reading user settings from config file " + config)
+    userSettings = JSON.parse(fs.readFileSync(config, 'utf-8'))
+    checkAppVersion(config)
+  }
+  return userSettings
+}
+
+ipcMain.handle("getSettings", () => {return getUserConfiguration(); })
+ipcMain.handle("setSettings", (_, settings) => {saveUserConfiguration(settings)})
+
 ipcMain.handle("isMac", () => { return process.platform == "darwin" })
 ipcMain.on('close', () => {closeWithBackend()})
 ipcMain.on('minimise', () => {getWindow()?.minimize()})
@@ -45,11 +108,11 @@ ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTo
 ipcMain.on("actual_size", () => {getWindow()?.webContents.setZoomFactor(1)})
 ipcMain.on("toggle_fullscreen", () => {getWindow()?.isFullScreen() ? getWindow()?.setFullScreen(false) : getWindow()?.setFullScreen(true)})
 ipcMain.on("zoom_in", () => {
-  let window = getWindow()?.webContents;
+  const window = getWindow()?.webContents;
   window?.setZoomFactor(window?.getZoomFactor() + 0.1)
 })
 ipcMain.on("zoom_out", () => {
-  let window = getWindow()?.webContents;
+  const window = getWindow()?.webContents;
   window?.setZoomFactor(window?.getZoomFactor() - 0.1)
 })
 ipcMain.on("openFileInExplorer", (_event, filePath) => {shell.showItemInFolder(filePath)})
@@ -225,7 +288,7 @@ function closeWithBackend() {
     app.quit()
     win = null
   }
-  
+
   console.log('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
@@ -236,7 +299,7 @@ app.on('window-all-closed', () => {
 })
 
 // To ensure that the backend process is killed with Cmd + Q on macOS,
-// listen to the before-quit event. 
+// listen to the before-quit event.
 app.on('before-quit', () => {
   if(process.platform === 'darwin' && pythonBackend){
     console.log('Stopping backend')
@@ -291,5 +354,6 @@ app.whenReady().then(() => {
     startBackend()
   }
 
+  // Load user settings
   createWindow()
 })

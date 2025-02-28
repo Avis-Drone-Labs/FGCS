@@ -3,6 +3,7 @@ import { createContext, useEffect, useState } from "react";
 import { setSettingInSettings, getSettingFromSettings } from "./settings";
 
 import DefaultSettings from "../../data/default_settings.json"
+import { useDisclosure } from "@mantine/hooks";
 
 
 const SettingsContext = createContext({});
@@ -27,11 +28,13 @@ export const GetSetting = (setting, settings) => {
 export const SettingsProvider = ({children}) => {
     const [settings, setSettings] = useState(null);
 
+    const [opened, { open, close }] = useDisclosure(true);
+
     console.log("Initialised settings provider")
 
     useEffect(() => {
         const fetchSettings = async () => {
-            console.log("Loading the settings sk")
+            console.log("Fetching settings from electron")
             const data = await window.ipcRenderer.getSettings();
             setSettings(data);
         }
@@ -43,18 +46,19 @@ export const SettingsProvider = ({children}) => {
         if (settings === null)
             return;
 
-        const newSettings = {version: settings.version, settings: setSettingInSettings(setting, value, settings)}
+        console.log(settings)
+        const newSettings = {version: settings.version, settings: setSettingInSettings(setting, value, settings.settings)}
 
         setSettings(newSettings);
         window.ipcRenderer.saveSettings(newSettings);
     }
 
     const getSetting = (setting, value) => {
-        return getSettingFromSettings(setting, settings.settings, value) || getSettingFromSettings(setting, DefaultSettings, value)
+        return getSettingFromSettings(setting, settings.settings, value) || getSettingFromSettings(setting, DefaultSettings, value).default
     }
 
     return (
-        <SettingsContext.Provider value={{getSetting, setSetting, settings}}>
+        <SettingsContext.Provider value={{getSetting, setSetting, settings, opened, open, close}}>
             {settings !== null ? children : <></>}
         </SettingsContext.Provider>
     )

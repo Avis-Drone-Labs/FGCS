@@ -1,10 +1,5 @@
 {
-    "general": {
-        "autoOpenConnectionModal": {
-            "default": false,
-            "type": "boolean",
-            "display": "Automatically open connection"
-        },
+    "General": {
         "maptilerAPIKey": {
             "default": "",
             "type": "string",
@@ -18,9 +13,19 @@
                 5631
             ],
             "display": "Backend Port"
+        },
+        "updateNotifications": {
+            "default": "always",
+            "type": "option",
+            "display": "Show Notifications About a New Update",
+            "options": ["Always", "Never", "Once per update"]
         }
     },
-    "params": {},
-    "config": {},
-    "fgcs": {}
+    "Params": {},
+    "Config": {},
+    "FGCS": {
+        "defaultLogDirectory" : {
+            "default":
+        }
+    }
 }

@@ -97,3 +97,4 @@ AddSpotlightAction(
     RunCommand("disconnect_from_drone")
   },
 )
+AddSpotlightAction("open_settings", "Open Settings", "command", () => {RunCommand("open_settings")})

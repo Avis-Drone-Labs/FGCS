@@ -5,6 +5,7 @@
 
 // 3rd Party Imports
 import { useNavigate } from "react-router"
+import { useSettings } from "../../helpers/settings"
 
 let commands = []
 
@@ -51,6 +52,10 @@ export function Commands() {
   AddCommand("force_refresh", () => {
     window.ipcRenderer.send("force_reload")
   })
+
+  // Open settings
+  const {open} = useSettings();
+  AddCommand("open_settings", () => {open()})
 }
 
 export function AddCommand(id, command, shortcut = null) {

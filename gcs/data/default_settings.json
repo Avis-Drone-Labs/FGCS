@@ -6,19 +6,24 @@
             "display": "Maptiler API Key"
         },
         "port": {
-            "default": "",
+            "default": "4237",
             "type": "number",
             "range": [
                 0,
-                5631
+                65535
             ],
             "display": "Backend Port"
         },
-        "updateNotifications": {
-            "default": "always",
+        "interfaceLanguage": {
+            "default": "English",
             "type": "option",
-            "display": "Show Notifications About a New Update",
-            "options": ["Always", "Never", "Once per update"]
+            "options": ["English"],
+            "display": "Interface Language"
+        },
+        "autoCheckForUpdates": {
+            "default": true,
+            "type": "boolean",
+            "display": "Automatically Check for Updates"
         }
     },
     "Params": {},

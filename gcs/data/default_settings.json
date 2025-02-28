@@ -24,8 +24,5 @@
     "Params": {},
     "Config": {},
     "FGCS": {
-        "defaultLogDirectory" : {
-            "default":
-        }
     }
 }

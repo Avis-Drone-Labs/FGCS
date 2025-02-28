@@ -18,7 +18,6 @@ export const GetSetting = (setting, settings) => {
     let field = settings;
     const keys = setting.split('.');
     for (let i = 0; i < keys.length - 1; i++){
-        console.log(field);
         field = field[keys[i]];
     }
 
@@ -28,13 +27,10 @@ export const GetSetting = (setting, settings) => {
 export const SettingsProvider = ({children}) => {
     const [settings, setSettings] = useState(null);
 
-    const [opened, { open, close }] = useDisclosure(true);
-
-    console.log("Initialised settings provider")
+    const [opened, { open, close }] = useDisclosure(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
-            console.log("Fetching settings from electron")
             const data = await window.ipcRenderer.getSettings();
             setSettings(data);
         }
@@ -46,15 +42,16 @@ export const SettingsProvider = ({children}) => {
         if (settings === null)
             return;
 
-        console.log(settings)
         const newSettings = {version: settings.version, settings: setSettingInSettings(setting, value, settings.settings)}
 
         setSettings(newSettings);
         window.ipcRenderer.saveSettings(newSettings);
     }
 
-    const getSetting = (setting, value) => {
-        return getSettingFromSettings(setting, settings.settings, value) || getSettingFromSettings(setting, DefaultSettings, value).default
+    const getSetting = (setting) => {
+        const userSetting = getSettingFromSettings(setting, settings.settings)
+
+        return userSetting === null ? getSettingFromSettings(setting, DefaultSettings).default : userSetting
     }
 
     return (

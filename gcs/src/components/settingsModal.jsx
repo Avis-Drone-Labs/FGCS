@@ -19,11 +19,21 @@ function OptionSetting({settingName, options}){
     return <NativeSelect data={options} value={getSetting(settingName)} onChange={(e) => setSetting(settingName, e.currentTarget.value)}/>
 }
 
+function NumberSetting({settingName, range}){
+    const {getSetting, setSetting} = useSettings();
+    const setIfValid = (num) => {
+        if (!num || parseInt(num) && ((range === null) || (range[0] <= num && num <= range[1])))
+            setSetting(settingName, num);
+    }
+
+    return <Input value={getSetting(settingName)} onChange={(e) => setIfValid(e.currentTarget.value)}/>
+}
+
 function Setting({settingName, df}){
     return (
         <div className="flex flex-row justify-between items-center h-[5vh] px-10 ">
             <div>{df.display}:</div>
-            {df.type == "number" ? <TextSetting settingName={settingName}/> :
+            {df.type == "number" ? <NumberSetting settingName={settingName} range={df.range || null}/> :
                 df.type=="boolean" ? <BoolSetting settingName={settingName}/> :
                 df.type=="option" ? <OptionSetting settingName={settingName} options={df.options}/> : <TextSetting settingName={settingName}/>}
         </div>
@@ -46,7 +56,7 @@ function SettingsModal(){
                     })}
                 </Tabs.List>
                 {settingTabs.map((t) => {
-                    return <Tabs.Panel value={t}>{Object.keys(DefaultSettings[t]).map((s) => {return <Setting settingName={`${t}.${s}`} df={DefaultSettings[t][s]} key={`${t}.${s}`}/>})}</Tabs.Panel>
+                    return <Tabs.Panel value={t} key={t}>{Object.keys(DefaultSettings[t]).map((s) => {return <Setting settingName={`${t}.${s}`} df={DefaultSettings[t][s]} key={`${t}.${s}`}/>})}</Tabs.Panel>
                 })}
             </Tabs>
         </Modal>

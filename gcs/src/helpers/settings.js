@@ -26,12 +26,15 @@ export const setSettingInSettings = (setting, value, settings) => {
 
     let field = settings;
     const keys = setting.split(".");
-    for (let i = 0; i < keys.length - 1; i++){
-        if (!Object.hasOwn(field, keys[i]))
-            field[keys[i]] = {}
-        field = field[keys[i]];
+
+    // Prevent prototype pollution
+    const filteredKeys = keys.filter((x) => x !== "__proto__")
+    for (let i = 0; i < filteredKeys.length - 1; i++){
+        if (!Object.hasOwn(field, filteredKeys[i]))
+            field[filteredKeys[i]] = {}
+        field = field[filteredKeys[i]];
     }
-    field[keys[keys.length - 1]] = value;
+    field[filteredKeys[filteredKeys.length - 1]] = value;
 
     return settings;
 }

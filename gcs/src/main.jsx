@@ -4,6 +4,7 @@ import "./css/resizable.css"
 // Style imports
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
+import "@mantine/spotlight/styles.css"
 
 // React imports
 import { HashRouter, Route, Routes } from "react-router-dom"
@@ -30,6 +31,7 @@ import SingleRunWrapper from "./components/SingleRunWrapper.jsx"
 import Toolbar from "./components/toolbar/toolbar.jsx"
 import { ErrorBoundary } from "./components/error/errorBoundary"
 import { SettingsProvider } from "./helpers/settingsProvider.jsx"
+import { Commands } from "./components/spotlight/commandHandler.js"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
@@ -53,6 +55,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 }
               />
             </Routes>
+            <Commands />
           </SettingsProvider>
         </ErrorBoundary>
       </SingleRunWrapper>

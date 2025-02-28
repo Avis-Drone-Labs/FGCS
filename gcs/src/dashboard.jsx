@@ -7,11 +7,10 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
 import { Divider } from "@mantine/core"
-import { ResizableBox } from "react-resizable"
 import {
   useListState,
   useLocalStorage,
@@ -26,8 +25,10 @@ import {
   IconRadar,
   IconSatellite,
 } from "@tabler/icons-react"
+import { ResizableBox } from "react-resizable"
 
 // Helper javascript files
+import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   GPS_FIX_TYPES,
@@ -40,17 +41,16 @@ import {
   showSuccessNotification,
 } from "./helpers/notification"
 import { socket } from "./helpers/socket"
-import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
 
 // Custom component
 import useSound from "use-sound"
+import FloatingToolbar from "./components/dashboard/floatingToolbar"
 import MapSection from "./components/dashboard/map"
+import ResizableInfoBox from "./components/dashboard/resizableInfoBox"
 import StatusBar, { StatusSection } from "./components/dashboard/statusBar"
 import StatusMessages from "./components/dashboard/statusMessages"
-import FloatingToolbar from "./components/dashboard/floatingToolbar"
-import ResizableInfoBox from "./components/dashboard/resizableInfoBox"
-import TelemetrySection from "./components/dashboard/telemetry"
 import TabsSection from "./components/dashboard/tabsSection"
+import TelemetrySection from "./components/dashboard/telemetry"
 import Layout from "./components/layout"
 
 // Tailwind styling
@@ -61,7 +61,6 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
-import { useSettings } from "./helpers/settings"
 import SettingsModal from "./components/settingsModal"
 
 export default function Dashboard() {
@@ -147,23 +146,26 @@ export default function Dashboard() {
     defaultValue: defaultDataMessages,
   })
 
-  const incomingMessageHandler = {
-    VFR_HUD: (msg) => setTelemetryData(msg),
-    BATTERY_STATUS: (msg) => setBatteryData(msg),
-    ATTITUDE: (msg) => setAttitudeData(msg),
-    GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
-    NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-    HEARTBEAT: (msg) => {
-      if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
-        setHeartbeatData(msg)
-      }
-    },
-    STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
-    SYS_STATUS: (msg) => setSysStatusData(msg),
-    GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
-    RC_CHANNELS: (msg) => setRCChannelsData(msg),
-    MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
-  }
+  const incomingMessageHandler = useCallback(
+    () => ({
+      VFR_HUD: (msg) => setTelemetryData(msg),
+      BATTERY_STATUS: (msg) => setBatteryData(msg),
+      ATTITUDE: (msg) => setAttitudeData(msg),
+      GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
+      NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
+      HEARTBEAT: (msg) => {
+        if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
+          setHeartbeatData(msg)
+        }
+      },
+      STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
+      SYS_STATUS: (msg) => setSysStatusData(msg),
+      GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
+      RC_CHANNELS: (msg) => setRCChannelsData(msg),
+      MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
+    }),
+    [],
+  )
 
   useEffect(() => {
     // Use localStorage.getItem as useLocalStorage hook updates slower
@@ -189,8 +191,8 @@ export default function Dashboard() {
     }
 
     socket.on("incoming_msg", (msg) => {
-      if (incomingMessageHandler[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler[msg.mavpackettype](msg)
+      if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
+        incomingMessageHandler()[msg.mavpackettype](msg)
         // Store packetType that has arrived
         const packetType = msg.mavpackettype
 

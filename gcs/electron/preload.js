@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import path from 'node:path';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {

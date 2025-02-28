@@ -47,7 +47,7 @@ function SettingsModal(){
     const { opened, close } = useSettings();
 
     return (
-        <Modal onClose={close} title="User Settings" opened={opened} size={"50%"} styles={{content: {backgroundColor: "rgb(23 26 27)"}, header: {backgroundColor: "rgb(23 26 27)"}}} bg="bg-falcongrey-900" radius="15px" shadow="xs">
+        <Modal centered onClose={close} title="User Settings" opened={opened} size={"50%"} styles={{content: {backgroundColor: "rgb(23 26 27)"}, header: {backgroundColor: "rgb(23 26 27)"}}} bg="bg-falcongrey-900" radius="15px" shadow="xs">
 
             <Tabs defaultValue="General" orientation="vertical" className="bg-falcongrey-900" color="#BA1B0B" h="50vh" styles={{list: {width: "15%"}}}>
                 <Tabs.List>

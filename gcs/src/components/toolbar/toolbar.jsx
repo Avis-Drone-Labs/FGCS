@@ -60,7 +60,8 @@ export default function Toolbar() {
         <div className="flex justify-center min-w-64 w-1/3 max-w-96 no-drag py-8">
           <SpotlightComponent />
         </div>
-
+        {isMac && <div className="w-1"></div>}
+        
         {/* Window actions (close, minimise, maximise) */}
         {!isMac && (
           <div className="flex flex-row items-center h-full">

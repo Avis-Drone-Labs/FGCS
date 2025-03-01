@@ -37,7 +37,6 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_dashboard")
   },
-  kbdBadge("ALT + 1", badgeColor),
 )
 AddSpotlightAction(
   "graphs",
@@ -46,7 +45,6 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_graphs")
   },
-  kbdBadge("ALT + 2", badgeColor),
 )
 AddSpotlightAction(
   "params",
@@ -55,7 +53,6 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_params")
   },
-  kbdBadge("ALT + 3", badgeColor),
 )
 AddSpotlightAction(
   "config",
@@ -64,7 +61,6 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_config")
   },
-  kbdBadge("ALT + 4", badgeColor),
 )
 AddSpotlightAction(
   "fla",
@@ -73,7 +69,6 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_fla")
   },
-  kbdBadge("ALT + 5", badgeColor),
 )
 
 // Commands

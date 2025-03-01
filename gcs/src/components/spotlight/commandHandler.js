@@ -19,35 +19,35 @@ export function Commands() {
     () => {
       navigate("/")
     },
-    ["alt", "1"],
+    [],
   )
   AddCommand(
     "goto_graphs",
     () => {
       navigate("/graphs")
     },
-    ["alt", "2"],
+    [],
   )
   AddCommand(
     "goto_params",
     () => {
       navigate("/params")
     },
-    ["alt", "3"],
+    [],
   )
   AddCommand(
     "goto_config",
     () => {
       navigate("/config")
     },
-    ["alt", "4"],
+    [],
   )
   AddCommand(
     "goto_fla",
     () => {
       navigate("/fla")
     },
-    ["alt", "5"],
+    [],
   )
   AddCommand("force_refresh", () => {
     window.ipcRenderer.send("force_reload")

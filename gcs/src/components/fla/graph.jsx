@@ -285,6 +285,9 @@ export default function Graph({
       ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
     ]
     const scales = {}
+    
+    // Capture current scales if they exist
+    const currentScales = chartRef.current?.scales
 
     // Capture current scales if they exist
     const currentScales = chartRef.current?.scales

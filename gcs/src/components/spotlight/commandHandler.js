@@ -74,6 +74,7 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
       shortcut: shortcut,
       macShortcut: macShortcut,
     })
+
   }
 }
 

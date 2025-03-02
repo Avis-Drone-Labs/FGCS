@@ -44,6 +44,8 @@ export default function SingleRunWrapper({ children }) {
   const { getSetting } = useSettings()
 
   useEffect(() => {
+
+
     async function checkIfOutOfDate() {
       // Check if the current application is out of date if it's running in production,
       // this is done by getting the latest release from the GitHub API and comparing

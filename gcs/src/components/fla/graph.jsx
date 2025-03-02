@@ -285,7 +285,7 @@ export default function Graph({
       ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
     ]
     const scales = {}
-    
+
     // Capture current scales if they exist
     const currentScales = chartRef.current?.scales
 
@@ -310,7 +310,10 @@ export default function Graph({
         },
       }
       // Only add min/max if we have existing scales and they're not undefined
-      if (data.datasets.length > 0 && currentScales[yAxisID]?.min !== undefined) {
+      if (
+        data.datasets.length > 0 &&
+        currentScales[yAxisID]?.min !== undefined
+      ) {
         scales[yAxisID].min = currentScales[yAxisID].min
         scales[yAxisID].max = currentScales[yAxisID].max
       } else {

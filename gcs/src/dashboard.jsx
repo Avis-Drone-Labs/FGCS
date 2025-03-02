@@ -61,7 +61,6 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
-import SettingsModal from "./components/settingsModal"
 
 export default function Dashboard() {
   // Local Storage
@@ -354,7 +353,6 @@ export default function Dashboard() {
   return (
     <Layout currentPage="dashboard">
       <div className="relative flex flex-auto w-full h-full overflow-hidden">
-        <SettingsModal isOpen={true}/>
         <div className="w-full">
           <MapSection
             passedRef={mapRef}

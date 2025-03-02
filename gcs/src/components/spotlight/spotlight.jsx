@@ -3,7 +3,7 @@
 */
 
 // Native imports
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Button } from "@mantine/core"
@@ -25,6 +25,13 @@ export default function SpotlightComponent() {
       color: "var(--mantine-text-color)",
     },
   }
+  const [isMac, setIsMac] = useState(false)
+
+  useEffect(() => {
+    window.ipcRenderer.invoke("isMac").then((result) => {
+      setIsMac(result)
+    })
+  }, [])
 
   // Spotlight searching
   const [query, setQuery] = useState("")
@@ -46,7 +53,11 @@ export default function SpotlightComponent() {
           key={item.id}
           label={item.label}
           onClick={item.command}
-          rightSection={item.rightSection}
+          rightSection={
+            isMac && item.macRightSection
+              ? item.macRightSection
+              : item.rightSection
+          }
           color="red"
           classNames={{
             action: "data-[selected]:!bg-falcongrey-700 max-h-8",
@@ -61,7 +72,7 @@ export default function SpotlightComponent() {
       <Button
         radius="sm"
         color={tailwindColors.falcongrey[900]}
-        rightSection={kbdBadge("Ctrl + K")}
+        rightSection={kbdBadge(isMac ? "⌘ + K" : "Ctrl + K")}
         fullWidth
         justify="space-between"
         styles={textColorStyle}

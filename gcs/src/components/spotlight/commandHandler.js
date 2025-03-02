@@ -6,75 +6,83 @@
 // 3rd Party Imports
 import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
+import { useState, useEffect } from "react"
+import { useHotkeys } from "@mantine/hooks"
 
 let commands = []
 
 export function Commands() {
   let navigate = useNavigate()
-  commands = []
+  const [isMac, setIsMac] = useState(false)
 
-  // Default commands
-  AddCommand(
-    "goto_dashboard",
-    () => {
-      navigate("/")
-    },
-    ["alt", "1"],
-  )
-  AddCommand(
-    "goto_graphs",
-    () => {
-      navigate("/graphs")
-    },
-    ["alt", "2"],
-  )
-  AddCommand(
-    "goto_params",
-    () => {
-      navigate("/params")
-    },
-    ["alt", "3"],
-  )
-  AddCommand(
-    "goto_config",
-    () => {
-      navigate("/config")
-    },
-    ["alt", "4"],
-  )
-  AddCommand(
-    "goto_fla",
-    () => {
-      navigate("/fla")
-    },
-    ["alt", "5"],
-  )
+  useEffect(() => {
+    window.ipcRenderer.invoke("isMac").then((result) => {
+      setIsMac(result)
+    })
+  }, [])
+
+  commands = []
+  const { open } = useSettings()
+
+  // Define commands
+  AddCommand("goto_dashboard", () => {
+    navigate("/")
+  })
+  AddCommand("goto_graphs", () => {
+    navigate("/graphs")
+  })
+  AddCommand("goto_params", () => {
+    navigate("/params")
+  })
+  AddCommand("goto_config", () => {
+    navigate("/config")
+  })
+  AddCommand("goto_fla", () => {
+    navigate("/fla")
+  })
   AddCommand("force_refresh", () => {
     window.ipcRenderer.send("force_reload")
   })
+  AddCommand("open_settings", () => {
+    open()
+  })
+  AddCommand("connect_to_drone", () => {
+    /* connect */
+  })
+  AddCommand("disconnect_from_drone", () => {
+    /* disconnect */
+  })
 
-  // Open settings
-  const {open} = useSettings();
-  AddCommand("open_settings", () => {open()})
+  // Register hotkeys
+  useHotkeys([
+    [isMac ? "meta+1" : "alt+1", () => RunCommand("goto_dashboard")],
+    [isMac ? "meta+2" : "alt+2", () => RunCommand("goto_graphs")],
+    [isMac ? "meta+3" : "alt+3", () => RunCommand("goto_params")],
+    [isMac ? "meta+4" : "alt+4", () => RunCommand("goto_config")],
+    [isMac ? "meta+5" : "alt+5", () => RunCommand("goto_fla")],
+    ["mod+shift+r", () => RunCommand("force_refresh")],
+    ["mod+,", () => RunCommand("open_settings")],
+  ])
 }
 
-export function AddCommand(id, command, shortcut = null) {
+export function AddCommand(id, command, shortcut = null, macShortcut = null) {
   // Used to expose a command
   if (commands.find((entry) => entry.id == id) == undefined) {
-    commands.push({ id: id, command: command, shortcut: shortcut })
+    commands.push({
+      id: id,
+      command: command,
+      shortcut: shortcut,
+      macShortcut: macShortcut,
+    })
   }
 }
 
 export function RunCommand(id) {
   // Search for a command by id
-  console.log("Trying to run command " + id)
+  console.log(`Running command, ${id}`)
   try {
     commands.find((entry) => entry.id == id).command()
   } catch {
     console.log(`Couldn't find command, ${id}, to run`)
   }
 }
-
-// export function SearchAndRunHotkey(buttonsPressed) {
-//   // Search for a command via hotkey
-// }

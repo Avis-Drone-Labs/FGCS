@@ -192,7 +192,8 @@ export default function Graphs() {
           />
         </div>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected message="Not connected to drone. Please connect to view graphs." />
+
       )}
     </Layout>
   )

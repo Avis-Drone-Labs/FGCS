@@ -259,7 +259,8 @@ export default function Params() {
           )}
         </>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected message="Not connected to drone. Please connect to view params." />
+
       )}
     </Layout>
   )

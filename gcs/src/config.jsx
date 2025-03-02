@@ -129,7 +129,8 @@ export default function Config() {
           </Tabs>
         </div>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected message="Not connected to drone. Please connect to view config." />
+
       )}
     </Layout>
   )

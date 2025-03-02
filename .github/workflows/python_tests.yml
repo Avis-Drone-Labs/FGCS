@@ -1,32 +1,38 @@
-name: Run Python Tests with No Flight Controller
+name: Run Python Tests with simulator
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - release-*
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - release-*
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    services:
+      service-name-1:
+        image: kushmakkapati/ardupilot_sitl:latest
+        ports:
+          - 5760:5760
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      working-directory: ./radio
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install pytest
-        python -m pip install -r requirements.txt
+      - name: Install dependencies
+        working-directory: radio
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          python -m pip install -r requirements.txt
 
-    - name: Test with pytest
-      working-directory: ./radio
-      run: |
-        python run_tests.py -nfc
+      - name: Test with pytest
+        working-directory: radio
+        run: pytest --log-cli-level=DEBUG

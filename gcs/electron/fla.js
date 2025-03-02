@@ -3,6 +3,9 @@ This file contains the logic for parsing different types of log files on the mai
 */
 
 import fs from 'fs'
+import createRecentLogsManager from '../settings/recentLogManager'
+
+const recentLogsManager = createRecentLogsManager()
 
 function parseDataflashLogFile(fileData, webContents) {
   // https://ardupilot.org/copter/docs/logmessages.html
@@ -14,6 +17,9 @@ function parseDataflashLogFile(fileData, webContents) {
   const messages = {}
   const units = {}
   const numberOfLines = fileData.length
+
+  let aircraftType = null
+
   for (const [idx, line] of fileData.entries()) {
     const splitLineData = line.split(',').map(function (item) {
       return item.trim()
@@ -60,8 +66,24 @@ function parseDataflashLogFile(fileData, webContents) {
       // Message mapping from single character to numeric multiplier
     } else if (messageName === 'PARM') {
       // Parameter value
+      if (splitLineData[2] === 'Q_ENABLE' && splitLineData[3] === '1') {
+        aircraftType = 'quadplane'
+      }
     } else if (messageName === 'FILE') {
       // File data
+    } else if (messageName === 'MSG') {
+      // MSG data
+      const text = splitLineData[2]
+
+      if (aircraftType !== null) {
+        continue
+      }
+
+      if (text.toLowerCase().indexOf('arduplane') > -1) {
+        aircraftType = 'plane'
+      } else if (text.toLowerCase().indexOf('arducopter') > -1) {
+        aircraftType = 'copter'
+      }
     } else {
       // Message data
       if (Object.keys(formatMessages).includes(messageName)) {
@@ -114,6 +136,7 @@ function parseDataflashLogFile(fileData, webContents) {
   // Add format messages to messages for later digesting and return
   messages['format'] = formatMessages
   messages['units'] = units
+  messages['aircraftType'] = aircraftType
   return messages
 }
 
@@ -230,6 +253,16 @@ function determineLogFileType(filePath, firstLine) {
   }
 }
 
+// New function to get recent files
+export function getRecentFiles() {
+  return recentLogsManager.getRecentLogs()
+}
+
+// New function to clear recent files
+export function clearRecentFiles() {
+  recentLogsManager.clearRecentLogs()
+}
+
 export default function openFile(event, filePath) {
   if (filePath == null) {
     return null
@@ -258,13 +291,16 @@ export default function openFile(event, filePath) {
       return { success: false, error: 'Unknown log file type' }
     }
 
-    return {
-      success: true,
-      messages,
-      logType,
+    if (messages !== null) {
+      // add recent file
+      recentLogsManager.addRecentLog(filePath)
+      return {
+        success: true,
+        messages,
+        logType,
+      }
     }
   } catch (err) {
-    console.error(err)
     return { success: false, error: err }
   }
 }

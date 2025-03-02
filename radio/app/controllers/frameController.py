@@ -14,13 +14,18 @@ class FrameController:
             drone (Drone) : The main drone object
         """
         self.drone = drone
-        self.getFrameType()
-        self.getFrameClass()
+
+        self.frame_type = "UNKNOWN"
+        self.frame_class = 0
+
+        # Plane type doesn't have a frame type or class
+        if self.drone.aircraft_type != 1:
+            self.getFrameType()
+            self.getFrameClass()
 
     def getFrameType(self) -> None:
         """
         Gets the current frame type of the drone."""
-        self.frame_type = "UNKNOWN"
         frame_type_result = self.drone.paramsController.getSingleParam("FRAME_TYPE")
 
         if frame_type_result.get("success"):
@@ -33,7 +38,6 @@ class FrameController:
     def getFrameClass(self) -> None:
         """
         Gets the current frame class of the drone."""
-        self.frame_class = 0
         frame_class_result = self.drone.paramsController.getSingleParam("FRAME_CLASS")
 
         if frame_class_result.get("success"):

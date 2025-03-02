@@ -11,6 +11,7 @@ from typing import Callable, Dict, List, Optional
 
 import serial
 from pymavlink import mavutil
+from serial.serialutil import SerialException
 
 from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
@@ -18,8 +19,10 @@ from app.controllers.frameController import FrameController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
+from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
-from app.customTypes import Response
+from app.controllers.rcController import RcController
+from app.customTypes import Number, Response
 from app.utils import commandAccepted
 
 # Constants
@@ -46,6 +49,21 @@ DATASTREAM_RATES_WIRELESS = {
     mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 1,
 }
 
+VALID_BAUDRATES = [
+    300,
+    1200,
+    4800,
+    9600,
+    19200,
+    13400,
+    38400,
+    57600,
+    75880,
+    115200,
+    230400,
+    250000,
+]
+
 
 class Drone:
     def __init__(
@@ -56,6 +74,7 @@ class Drone:
         logger: Logger = getLogger("fgcs"),
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
+        droneConnectStatusCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -66,24 +85,41 @@ class Drone:
             wireless (bool, optional): Whether the connection is wireless. Defaults to False.
             droneErrorCb (Optional[Callable], optional): Callback function for drone errors. Defaults to None.
             droneDisconnectCb (Optional[Callable], optional): Callback function for drone disconnection. Defaults to None.
+            droneConnectStatusCb (Optional[Callable], optional): Callback function for drone connection providing an update as the drone connects. Defaults to None.
         """
         self.port = port
         self.baud = baud
         self.wireless = wireless
         self.logger = logger
+        self.connectionType = "TCP" if self.port.startswith("tcp") else "SERIAL"
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
+        self.droneConnectStatusCb = droneConnectStatusCb
 
         self.connectionError: Optional[str] = None
 
         self.logger.debug("Trying to setup master")
+
+        if not Drone.checkBaudrateValid(baud):
+            self.connectionError = (
+                f"{baud} is an invalid baudrate. Valid baud rates are {VALID_BAUDRATES}"
+            )
+            return
+
         try:
+            self.sendConnectionStatusUpdate("Connecting to drone")
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.logger.exception(traceback.format_exc())
-            self.master.close()
             self.master = None
-            self.connectionError = str(e)
+            if isinstance(e, SerialException):
+                self.logger.error(str(e))
+                self.connectionError = "Could not connect to drone, invalid port."
+            elif isinstance(e, ConnectionRefusedError):
+                self.logger.error(str(e))
+                self.connectionError = "Could not connect to drone, connection refused."
+            else:
+                self.connectionError = str(e)
             return
 
         initial_heartbeat = self.master.wait_heartbeat(timeout=5)
@@ -93,6 +129,8 @@ class Drone:
             self.master = None
             self.connectionError = "Could not connect to the drone."
             return
+
+        self.sendConnectionStatusUpdate("Received heartbeat")
 
         self.aircraft_type = initial_heartbeat.type
         if self.aircraft_type not in (1, 2):
@@ -121,6 +159,8 @@ class Drone:
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
+        self.sendConnectionStatusUpdate("Cleaned temp logs")
+
         self.is_active = True
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
@@ -128,12 +168,31 @@ class Drone:
         self.armed = False
 
         self.paramsController = ParamsController(self)
+        self.sendConnectionStatusUpdate("Setup parameters controller")
+
         self.armController = ArmController(self)
+        self.sendConnectionStatusUpdate("Setup arm controller")
+
         self.flightModesController = FlightModesController(self)
+        self.sendConnectionStatusUpdate("Setup flight modes controller")
+
         self.motorTestController = MotorTestController(self)
+        self.sendConnectionStatusUpdate("Setup motor controller")
+
         self.gripperController = GripperController(self)
+        self.sendConnectionStatusUpdate("Setup gripper controller")
+
         self.missionController = MissionController(self)
+        self.sendConnectionStatusUpdate("Setup mission controller")
+
         self.frameController = FrameController(self)
+        self.sendConnectionStatusUpdate("Setup frame controller")
+
+        self.rcController = RcController(self)
+        self.sendConnectionStatusUpdate("Setup RC controller")
+
+        self.navController = NavController(self)
+        self.sendConnectionStatusUpdate("Setup nav controller")
 
         self.stopAllDataStreams()
 
@@ -146,6 +205,18 @@ class Drone:
 
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+    def sendConnectionStatusUpdate(self, msg):
+        if self.droneConnectStatusCb:
+            self.droneConnectStatusCb(msg)
+
+    @staticmethod
+    def checkBaudrateValid(baud: int) -> bool:
+        return baud in VALID_BAUDRATES
+
+    @staticmethod
+    def getValidBaudrates() -> list[int]:
+        return VALID_BAUDRATES
 
     def cleanTempLogs(self) -> None:
         """
@@ -550,7 +621,10 @@ class Drone:
         param6: float = 0,
         param7: float = 0,
     ) -> None:
-        """Send a command to the drone.
+        """Send a command long to the drone. COMMAND_LONG must be used for
+        sending MAV_CMD commands that send float properties in parameters
+        5 and 6, as these values would be truncated tointegers if sent in
+        COMMAND_INT.
 
         Args:
             message (float): The message to send
@@ -577,8 +651,65 @@ class Drone:
         )
         self.master.mav.send(message)
 
+    def sendCommandInt(
+        self,
+        message: int,
+        frame: int = 0,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        x: Number = 0,
+        y: Number = 0,
+        z: float = 0,
+    ):
+        """
+        Send a command int to the drone. COMMAND_INT should be used when sending
+        commands that contain positional or navigation information. This is
+        because it allows the co-ordinate frame to be specified for location and
+        altitude values, which may otherwise be "unspecified". In addition
+        latitudes/longitudes can be sent with greater precision in a COMMAND_INT
+        as scaled integers in params 5 and 6 (than when sent in float values in
+        COMMAND_LONG).
+
+        Args:
+            message (float): The message to send
+            frame (float, optional): The coordinate system of the command
+            param1 (float, optional)
+            param2 (float, optional)
+            param3 (float, optional)
+            param4 (float, optional)
+            x (Number, optional)
+            y (Number, optional)
+            z (float, optional)
+        """
+        current = 0
+        autocontinue = 0
+
+        if isinstance(x, float):
+            x = int(x * 1e7)
+        if isinstance(y, float):
+            y = int(y * 1e7)
+
+        self.master.mav.command_int_send(
+            self.target_system,
+            self.target_component,
+            frame,
+            message,
+            current,
+            autocontinue,
+            param1,
+            param2,
+            param3,
+            param4,
+            x,
+            y,
+            z,
+        )
+
     def close(self) -> None:
         """Close the connection to the drone."""
+        self.logger.info(f"Cleaning up resources for drone at {self}")
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 

@@ -1,43 +1,72 @@
-import './css/index.css' // Needs to be at the top of the file
-import './css/resizable.css'
+import "./css/index.css" // Needs to be at the top of the file
+import "./css/resizable.css"
 
-import '@mantine/core/styles.css'
-import '@mantine/notifications/styles.css'
+// Style imports
+import "@mantine/core/styles.css"
+import "@mantine/notifications/styles.css"
+import "@mantine/spotlight/styles.css"
 
-import { HashRouter, Route, Routes } from 'react-router-dom'
+// React imports
+import { HashRouter, Route, Routes } from "react-router-dom"
+import React from "react"
+import ReactDOM from "react-dom/client"
+import { Provider } from "react-redux"
 
-import { MantineProvider } from '@mantine/core'
-import { Notifications } from '@mantine/notifications'
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import SingleRunWrapper from './components/SingleRunWrapper.jsx'
-import Config from './config.jsx'
-import Dashboard from './dashboard.jsx'
-import FLA from './fla.jsx'
-import Graphs from './graphs.jsx'
-import Params from './params.jsx'
+// Mantine imports
+import { MantineProvider } from "@mantine/core"
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <MantineProvider defaultColorScheme='dark'>
-    <Notifications />
+// Route imports
+import Config from "./config.jsx"
+import Dashboard from "./dashboard.jsx"
+import FLA from "./fla.jsx"
+import Graphs from "./graphs.jsx"
+import Params from "./params.jsx"
+
+// Provider Imports
+import { store } from "./redux/store"
+
+// Component imports
+import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
+import SingleRunWrapper from "./components/SingleRunWrapper.jsx"
+import Toolbar from "./components/toolbar/toolbar.jsx"
+import { ErrorBoundary } from "./components/error/errorBoundary"
+import { SettingsProvider } from "./helpers/settingsProvider.jsx"
+import { Commands } from "./components/spotlight/commandHandler.js"
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  // <MantineProvider defaultColorScheme='dark'>
+  <MantineProvider defaultColorScheme="dark" theme={CustomMantineTheme}>
     <HashRouter>
-      <SingleRunWrapper>
-        <Routes>
-          <Route path='/' element={<Dashboard />} />
-          <Route path='/graphs' element={<Graphs />} />
-          <Route path='/params' element={<Params />} />
-          <Route path='/config' element={<Config />} />
-          <Route path='/fla' element={<FLA />} />
-        </Routes>
-      </SingleRunWrapper>
+      <SettingsProvider>
+        <SingleRunWrapper>
+          <Toolbar />
+          <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/graphs" element={<Graphs />} />
+                <Route path="/params" element={<Params />} />
+                <Route path="/config" element={<Config />} />
+                <Route
+                  path="/fla"
+                  element={
+                    <Provider store={store}>
+                      <FLA />
+                    </Provider>
+                  }
+                />
+              </Routes>
+              <Commands />
+          </ErrorBoundary>
+        </SingleRunWrapper>
+      </SettingsProvider>
     </HashRouter>
   </MantineProvider>,
 )
 
 // Remove Preload scripts loading
-postMessage({ payload: 'removeLoading' }, '*')
+postMessage({ payload: "removeLoading" }, "*")
 
 // Use contextBridge
-window.ipcRenderer.on('main-process-message', (_event, message) => {
+window.ipcRenderer.on("main-process-message", (_event, message) => {
   console.log(message)
 })

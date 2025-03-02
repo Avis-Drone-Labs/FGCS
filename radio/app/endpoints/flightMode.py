@@ -3,7 +3,7 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.customTypes import SetFlightModeValueAndNumber
-from app.utils import droneErrorCb
+from app.utils import droneErrorCb, notConnectedError
 
 
 class SetCurrentFlightModeType(TypedDict):
@@ -24,7 +24,7 @@ def getFlightModeConfig() -> None:
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="get the flight mode config")
 
     flight_modes = droneStatus.drone.flightModesController.flight_modes
     flight_mode_channel = droneStatus.drone.flightModesController.flight_mode_channel
@@ -52,7 +52,7 @@ def setFlightMode(data: SetFlightModeValueAndNumber) -> None:
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="set the flight mode")
 
     mode_number = data.get("mode_number", None)
     flight_mode = data.get("flight_mode", None)
@@ -81,7 +81,7 @@ def refreshFlightModeData() -> None:
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="refresh the flight mode data")
 
     droneStatus.drone.flightModesController.refreshData()
 
@@ -103,10 +103,17 @@ def setCurrentFlightMode(data: SetCurrentFlightModeType) -> None:
         data (dict): A dictionary containing the flight mode to be set as an integer
     """
     if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the dashboard screen to set the current flight mode."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
-        return
+        return notConnectedError(action="set the current flight mode")
 
     new_flight_mode = data.get("newFlightMode")
 

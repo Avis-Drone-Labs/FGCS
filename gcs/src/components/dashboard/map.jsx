@@ -7,34 +7,106 @@
 */
 
 // Base imports
-import { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import { Tooltip } from '@mantine/core'
-import { useLocalStorage } from '@mantine/hooks'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre'
+import { Button, Divider, Modal, NumberInput } from "@mantine/core"
+import {
+  useClipboard,
+  useDisclosure,
+  useLocalStorage,
+  useSessionStorage,
+} from "@mantine/hooks"
+import "maplibre-gl/dist/maplibre-gl.css"
+import Map from "react-map-gl/maplibre"
 
-import arrow from '../../assets/arrow.svg'
+// Helper scripts
+import { intToCoord } from "../../helpers/dataFormatters"
+import { filterMissionItems } from "../../helpers/filterMissions"
+import {
+  showErrorNotification,
+  showNotification,
+  showSuccessNotification,
+} from "../../helpers/notification"
+import { socket } from "../../helpers/socket"
+
+// Other dashboard imports
+import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
+import DroneMarker from "../mapComponents/droneMarker"
+import HomeMarker from "../mapComponents/homeMarker"
+import MarkerPin from "../mapComponents/markerPin"
+import MissionItems from "../mapComponents/missionItems"
+import ContextMenuItem from "./contextMenuItem"
+import useContextMenu from "./useContextMenu"
 
 // Tailwind styling
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config"
+import { useSettings } from "../../helpers/settings"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-// Convert coordinates from mavlink into gps coordinates
-function intToCoord(val) {
-  return val * 1e-7
-}
+function MapSectionNonMemo({
+  passedRef,
+  data,
+  heading,
+  desiredBearing,
+  missionItems,
+  homePosition,
+  onDragstart,
+  getFlightMode,
+}) {
+  const [connected] = useSessionStorage({
+    key: "connectedToDrone",
+    defaultValue: false,
+  })
 
-export default function MapSection({ passedRef, data, heading, missionItems }) {
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const [initialViewState, setInitialViewState] = useLocalStorage({
-    key: 'initialViewState',
+    key: "initialViewState",
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
+  const [filteredMissionItems, setFilteredMissionItems] = useState([])
+
+  const contextMenuRef = useRef()
+  const { clicked, setClicked, points, setPoints } = useContextMenu()
+  const [
+    contextMenuPositionCalculationInfo,
+    setContextMenuPositionCalculationInfo,
+  ] = useState()
+  const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
+
+  const [opened, { open, close }] = useDisclosure(false)
+  const clipboard = useClipboard({ timeout: 500 })
+
+  const { getSetting } = useSettings()
+
+  const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
+    key: "repositionAltitude",
+    defaultValue: 30,
+  })
+  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
+    key: "guidedModePinData",
+    defaultValue: null,
+  })
+
+  const coordsFractionDigits = 7
+
+  useEffect(() => {
+    socket.on("nav_reposition_result", (msg) => {
+      if (!msg.success) {
+        showErrorNotification(msg.message)
+      } else {
+        showSuccessNotification(msg.message)
+        setGuidedModePinData(msg.data)
+      }
+    })
+
+    return () => {
+      socket.off("nav_reposition_result")
+    }
+  }, [connected])
 
   useEffect(() => {
     // Check latest data point is valid
@@ -55,13 +127,52 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
     }
   }, [data])
 
+  useEffect(() => {
+    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+  }, [missionItems])
+
+  useEffect(() => {
+    if (contextMenuRef.current) {
+      const contextMenuWidth = Math.round(
+        contextMenuRef.current.getBoundingClientRect().width,
+      )
+      const contextMenuHeight = Math.round(
+        contextMenuRef.current.getBoundingClientRect().height,
+      )
+      let x = contextMenuPositionCalculationInfo.clickedPoint.x
+      let y = contextMenuPositionCalculationInfo.clickedPoint.y
+
+      if (
+        contextMenuWidth + contextMenuPositionCalculationInfo.clickedPoint.x >
+        contextMenuPositionCalculationInfo.canvasSize.width
+      ) {
+        x = contextMenuPositionCalculationInfo.clickedPoint.x - contextMenuWidth
+      }
+      if (
+        contextMenuHeight + contextMenuPositionCalculationInfo.clickedPoint.y >
+        contextMenuPositionCalculationInfo.canvasSize.height
+      ) {
+        y =
+          contextMenuPositionCalculationInfo.clickedPoint.y - contextMenuHeight
+      }
+
+      setPoints({ x, y })
+    }
+  }, [contextMenuPositionCalculationInfo])
+
+  function reposition() {
+    socket.emit("reposition", {
+      lat: clickedGpsCoords.lat,
+      lon: clickedGpsCoords.lng,
+      alt: repositionAltitude,
+    })
+  }
+
   return (
-    <div className='w-initial h-full' id='map'>
+    <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${
-          import.meta.env.VITE_MAPTILER_API_KEY
-        }`}
+        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${getSetting('General.maptilerAPIKey') || import.meta.env.VITE_MAPTILER_API_KEY}`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}
@@ -73,191 +184,173 @@ export default function MapSection({ passedRef, data, heading, missionItems }) {
             zoom: newViewState.viewState.zoom,
           })
         }
+        onDragStart={onDragstart}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          setClicked(true)
+          setClickedGpsCoords(e.lngLat)
+          setContextMenuPositionCalculationInfo({
+            clickedPoint: e.point,
+            canvasSize: {
+              height: e.originalEvent.target.clientHeight,
+              width: e.originalEvent.target.clientWidth,
+            },
+          })
+        }}
+        cursor="default"
       >
         {/* Show marker on map if the position is set */}
         {position !== null &&
           !isNaN(position?.latitude) &&
           !isNaN(position?.longitude) && (
-            <Marker
-              latitude={position.latitude}
-              longitude={position.longitude}
-              scale={0.1}
-            >
-              <img
-                src={arrow}
-                className='w-6 h-6'
-                style={{ transform: `rotate(${heading ?? 0}deg)` }}
-              />
-            </Marker>
+            <DroneMarker
+              lat={position.latitude}
+              lon={position.longitude}
+              heading={heading ?? 0}
+              zoom={initialViewState.zoom}
+              showHeadingLine={true}
+              desiredBearing={desiredBearing ?? 0}
+            />
           )}
 
-        {/* Show mission item LABELS */}
-        {missionItems.mission_items.map((item, index) => {
-          return (
-            <Marker
-              key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <Tooltip label={`Alt: ${item.z}`}>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 48'
-                  fill={tailwindColors.yellow[400]}
-                  stroke='currentColor'
-                  strokeWidth='1'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
-                >
-                  <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-                  <text
-                    textAnchor='middle'
-                    x='12'
-                    y='14'
-                    className='text-black'
-                  >
-                    {item.seq}
-                  </text>
-                </svg>
-              </Tooltip>
-            </Marker>
-          )
-        })}
-
-        {/* Show mission item outlines */}
-        {missionItems.mission_items.length > 0 && (
-          <Source
-            type='geojson'
-            data={{
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: [
-                  ...missionItems.mission_items.map((item) => [
-                    intToCoord(item.y),
-                    intToCoord(item.x),
-                  ]),
-                  [
-                    intToCoord(missionItems.mission_items[0].y),
-                    intToCoord(missionItems.mission_items[0].x),
-                  ],
-                ],
-              },
-            }}
-          >
-            <Layer
-              {...{
-                type: 'line',
-                layout: {
-                  'line-join': 'round',
-                  'line-cap': 'round',
-                },
-                paint: {
-                  'line-color': tailwindColors.yellow[400],
-                  'line-width': 1,
-                },
-              }}
-            />
-          </Source>
+        {/* Show home position */}
+        {homePosition !== null && (
+          <HomeMarker
+            lat={intToCoord(homePosition.lat)}
+            lon={intToCoord(homePosition.lon)}
+            lineTo={
+              filteredMissionItems.length > 0 && [
+                intToCoord(filteredMissionItems[0].y),
+                intToCoord(filteredMissionItems[0].x),
+              ]
+            }
+          />
         )}
+
+        <MissionItems missionItems={missionItems.mission_items} />
 
         {/* Show mission geo-fence MARKERS */}
         {missionItems.fence_items.map((item, index) => {
           return (
-            <Marker
+            <MarkerPin
               key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 48'
-                fill={tailwindColors.blue[400]}
-                stroke='currentColor'
-                strokeWidth='1'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
-              >
-                <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-              </svg>
-            </Marker>
+              lat={intToCoord(item.x)}
+              lon={intToCoord(item.y)}
+              colour={tailwindColors.blue[400]}
+            />
           )
         })}
 
         {/* Show geo-fence outlines */}
         {missionItems.fence_items.length > 0 && (
-          <Source
-            type='geojson'
-            data={{
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: [
-                  ...missionItems.fence_items.map((item) => [
-                    intToCoord(item.y),
-                    intToCoord(item.x),
-                  ]),
-                  [
-                    intToCoord(missionItems.fence_items[0].y),
-                    intToCoord(missionItems.fence_items[0].x),
-                  ],
-                ],
-              },
-            }}
-          >
-            <Layer
-              {...{
-                type: 'line',
-                layout: {
-                  'line-join': 'round',
-                  'line-cap': 'round',
-                },
-                paint: {
-                  'line-color': tailwindColors.blue[200],
-                  'line-width': 1,
-                  'line-dasharray': [2, 2],
-                },
-              }}
-            />
-          </Source>
+          <DrawLineCoordinates
+            coordinates={[
+              ...missionItems.fence_items.map((item) => [
+                intToCoord(item.y),
+                intToCoord(item.x),
+              ]),
+              [
+                intToCoord(missionItems.fence_items[0].y),
+                intToCoord(missionItems.fence_items[0].x),
+              ],
+            ]}
+            colour={tailwindColors.blue[200]}
+            lineProps={{ "line-dasharray": [2, 2] }}
+          />
         )}
 
         {/* Show mission rally point */}
         {missionItems.rally_items.map((item, index) => {
           return (
-            <Marker
+            <MarkerPin
               key={index}
-              longitude={intToCoord(item.y)}
-              latitude={intToCoord(item.x)}
-            >
-              <Tooltip label={`Alt: ${item.z}`}>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 48'
-                  fill={tailwindColors.purple[400]}
-                  stroke='currentColor'
-                  strokeWidth='1'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='icon icon-tabler icons-tabler-outline icon-tabler-map-pin h-16 w-16 text-black'
-                >
-                  <path d='M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z' />
-                </svg>
-              </Tooltip>
-            </Marker>
+              lat={intToCoord(item.x)}
+              lon={intToCoord(item.y)}
+              colour={tailwindColors.purple[400]}
+              tooltipText={item.z ? `Alt: ${item.z}` : null}
+            />
           )
         })}
+
+        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+          <MarkerPin
+            lat={guidedModePinData.lat}
+            lon={guidedModePinData.lon}
+            colour={tailwindColors.pink[500]}
+            tooltipText={
+              guidedModePinData.alt ? `Alt: ${guidedModePinData.alt}` : null
+            }
+          />
+        )}
+
+        <Modal opened={opened} onClose={close} title="Enter altitude" centered>
+          <form
+            className="flex flex-col space-y-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              reposition()
+              close()
+            }}
+          >
+            <NumberInput
+              placeholder="Altitude (m)"
+              value={repositionAltitude}
+              onChange={setRepositionAltitude}
+              min={0}
+              allowNegative={false}
+              hideControls
+              data-autofocus
+            />
+            <Button fullWidth type="submit">
+              Reposition
+            </Button>
+          </form>
+        </Modal>
+
+        {clicked && (
+          <div
+            ref={contextMenuRef}
+            className="absolute bg-falcongrey-700 rounded-md p-1"
+            style={{ top: points.y, left: points.x }}
+          >
+            <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
+            <Divider className="my-1" />
+            <ContextMenuItem
+              onClick={() => {
+                clipboard.copy(
+                  `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
+                )
+                showNotification("Copied to clipboard")
+              }}
+            >
+              <div className="w-full flex justify-between gap-2">
+                <p>
+                  {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
+                  {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
+                </p>
+                <svg
+                  className="relative -right-1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z"
+                  />
+                </svg>
+              </div>
+            </ContextMenuItem>
+          </div>
+        )}
       </Map>
     </div>
   )
 }
+function propsAreEqual(prev, next) {
+  return JSON.stringify(prev) === JSON.stringify(next)
+}
+const MapSection = React.memo(MapSectionNonMemo, propsAreEqual)
+
+export default MapSection

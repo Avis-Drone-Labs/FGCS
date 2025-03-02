@@ -98,8 +98,18 @@ class FlightModesController:
         )
 
         if self.drone.aircraft_type == 1:
+            if (flight_mode < 0) or (flight_mode > 24):
+                return {
+                    "success": False,
+                    "message": f"Invalid plane flight mode, must be between 0 and 24 inclusive, got {flight_mode}",
+                }
             mode_name = mavutil.mavlink.enums["PLANE_MODE"][flight_mode].name
         else:
+            if (flight_mode < 0) or (flight_mode > 27):
+                return {
+                    "success": False,
+                    "message": f"Invalid copter flight mode, must be between 0 and 27 inclusive, got {flight_mode}",
+                }
             mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
 
         if param_set_success:
@@ -160,3 +170,17 @@ class FlightModesController:
                 "success": False,
                 "message": "Could not set flight mode, serial exception",
             }
+
+    def setGuidedMode(self) -> Response:
+        """
+        Set the drone's flight mode to Guided mode.
+        Returns:
+            A message to show if the drone recieved the message and succesfully set the new mode
+        """
+
+        mode = mavutil.mavlink.COPTER_MODE_GUIDED
+
+        if self.drone.aircraft_type == 1:
+            mode = mavutil.mavlink.PLANE_MODE_GUIDED
+
+        return self.setCurrentFlightMode(mode)

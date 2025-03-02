@@ -4,11 +4,11 @@
 */
 
 // 3rd party imports
-import moment from 'moment'
+import moment from "moment"
 
 // Styling imports
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '../../../tailwind.config.js'
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -16,9 +16,9 @@ function microsecondsToDisplayTime(microseconds, roundTo) {
   var seconds = microseconds / 1_000_000
   var mins = Math.floor(seconds / 60)
 
-  return `${String(mins).padStart(2, '0')}:${String(
+  return `${String(mins).padStart(2, "0")}:${String(
     (seconds % 60).toFixed(roundTo),
-  ).padStart(2, '0')}`
+  ).padStart(2, "0")}`
 }
 
 const defaultOptions = {
@@ -29,7 +29,7 @@ const defaultOptions = {
     zoom: {
       pan: {
         enabled: true,
-        mode: 'xy',
+        mode: "xy",
       },
       zoom: {
         wheel: {
@@ -38,13 +38,13 @@ const defaultOptions = {
         pinch: {
           enabled: true,
         },
-        mode: 'xy',
+        mode: "xy",
       },
     },
   },
   scales: {
     x: {
-      type: 'linear',
+      type: "linear",
       grid: { color: tailwindColors.gray[600] },
     },
   },
@@ -80,7 +80,7 @@ export const dataflashOptions = {
       },
       title: {
         display: true,
-        text: 'Time since boot (mm:ss)',
+        text: "Time since boot (mm:ss)",
       },
     },
   },
@@ -93,7 +93,7 @@ export const fgcsOptions = {
     tooltip: {
       callbacks: {
         title: function (context) {
-          return moment(context[0].parsed.x).format('HH:mm:ss')
+          return moment(context[0].parsed.x).format("HH:mm:ss")
         },
       },
     },
@@ -102,11 +102,13 @@ export const fgcsOptions = {
     ...defaultOptions.scales,
     x: {
       ...defaultOptions.scales.x,
-      type: 'time',
+      type: "time",
       time: {
-        unit: 'second',
+        // removed to fix issue #342
+        // correct units are still displayed on the graph
+        //unit: 'second',
         displayFormats: {
-          second: 'HH:mm:ss',
+          second: "HH:mm:ss",
         },
       },
       ticks: {
@@ -114,7 +116,7 @@ export const fgcsOptions = {
       },
       title: {
         display: true,
-        text: 'Time',
+        text: "Time",
       },
     },
   },

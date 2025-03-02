@@ -649,13 +649,13 @@ export default function FLA() {
   // Update datasets based on the message filters constantly
   useEffect(() => {
     if (!messageFilters || !logMessages) return
-    
+
     // Sort the category and field names to maintain consistent order
     const datasets = Object.keys(messageFilters)
       .sort()
       .reduce((acc, categoryName) => {
         const category = messageFilters[categoryName]
-        
+
         Object.keys(category)
           .sort()
           .forEach((fieldName) => {
@@ -663,7 +663,7 @@ export default function FLA() {
               const label = `${categoryName}/${fieldName}`
               const color = customColors[label]
               const unit = getUnit(categoryName, fieldName)
-              
+
               acc.push({
                 label: label,
                 yAxisID: unit,
@@ -676,10 +676,10 @@ export default function FLA() {
               })
             }
           })
-        
+
         return acc
       }, [])
-  
+
     updateChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
@@ -700,7 +700,6 @@ export default function FLA() {
                 onChange={updateFile}
                 accept={[".log", ".ftlog"]}
                 loading={loadingFile}
-
               >
                 {(props) => <Button {...props}>Analyse a log</Button>}
               </FileButton>

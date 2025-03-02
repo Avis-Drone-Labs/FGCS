@@ -41,11 +41,9 @@ export default function SingleRunWrapper({ children }) {
     key: "isUpdateDismissed",
   })
 
-  const {getSetting} = useSettings();
+  const { getSetting } = useSettings()
 
   useEffect(() => {
-
-
     async function checkIfOutOfDate() {
       // Check if the current application is out of date if it's running in production,
       // this is done by getting the latest release from the GitHub API and comparing
@@ -83,8 +81,7 @@ export default function SingleRunWrapper({ children }) {
         )
       }
     }
-    if (getSetting("General.autoCheckForUpdates"))
-      checkIfOutOfDate()
+    if (getSetting("General.autoCheckForUpdates")) checkIfOutOfDate()
   }, [])
 
   // Checks there is an update that the user has not already dismissed

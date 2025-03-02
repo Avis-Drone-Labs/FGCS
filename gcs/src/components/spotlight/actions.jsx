@@ -19,6 +19,7 @@ export function AddSpotlightAction(
   type,
   command,
   rightSection = null,
+  macRightSection = null,
 ) {
   actions.push({
     id: id,
@@ -26,6 +27,7 @@ export function AddSpotlightAction(
     type: type,
     command: command,
     rightSection: rightSection,
+    macRightSection: macRightSection,
   })
 }
 
@@ -38,6 +40,7 @@ AddSpotlightAction(
     RunCommand("goto_dashboard")
   },
   kbdBadge("ALT + 1", badgeColor),
+  kbdBadge("⌘ + 1", badgeColor),
 )
 AddSpotlightAction(
   "graphs",
@@ -47,6 +50,7 @@ AddSpotlightAction(
     RunCommand("goto_graphs")
   },
   kbdBadge("ALT + 2", badgeColor),
+  kbdBadge("⌘ + 2", badgeColor),
 )
 AddSpotlightAction(
   "params",
@@ -56,6 +60,7 @@ AddSpotlightAction(
     RunCommand("goto_params")
   },
   kbdBadge("ALT + 3", badgeColor),
+  kbdBadge("⌘ + 3", badgeColor),
 )
 AddSpotlightAction(
   "config",
@@ -65,6 +70,7 @@ AddSpotlightAction(
     RunCommand("goto_config")
   },
   kbdBadge("ALT + 4", badgeColor),
+  kbdBadge("⌘ + 4", badgeColor),
 )
 AddSpotlightAction(
   "fla",
@@ -74,6 +80,7 @@ AddSpotlightAction(
     RunCommand("goto_fla")
   },
   kbdBadge("ALT + 5", badgeColor),
+  kbdBadge("⌘ + 5", badgeColor),
 )
 
 // Commands
@@ -85,6 +92,7 @@ AddSpotlightAction(
     RunCommand("force_refresh")
   },
   kbdBadge("Ctrl + Shift + R", badgeColor),
+  kbdBadge("⌘ + Shift + R", badgeColor),
 )
 AddSpotlightAction("connect_to_drone", "Connect to drone", "command", () => {
   RunCommand("connect_to_drone")
@@ -97,4 +105,13 @@ AddSpotlightAction(
     RunCommand("disconnect_from_drone")
   },
 )
-AddSpotlightAction("open_settings", "Open Settings", "command", () => {RunCommand("open_settings")})
+AddSpotlightAction(
+  "open_settings",
+  "Open Settings",
+  "command",
+  () => {
+    RunCommand("open_settings")
+  },
+  kbdBadge("Ctrl + ,", badgeColor),
+  kbdBadge("⌘ + ,", badgeColor),
+)

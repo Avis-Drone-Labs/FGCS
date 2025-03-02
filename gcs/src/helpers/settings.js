@@ -5,7 +5,6 @@ export const useSettings = () => {
   return useContext(SettingsContext)
 }
 
-
 /**
  *
  * @param {string} setting

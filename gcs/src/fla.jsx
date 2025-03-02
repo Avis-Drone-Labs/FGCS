@@ -696,7 +696,6 @@ export default function FLA() {
                 onChange={updateFile}
                 accept={[".log", ".ftlog"]}
                 loading={loadingFile}
-
               >
                 {(props) => <Button {...props}>Analyse a log</Button>}
               </FileButton>

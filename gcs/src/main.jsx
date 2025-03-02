@@ -42,22 +42,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <SingleRunWrapper>
           <Toolbar />
           <ErrorBoundary>
-              <SettingsModal/>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/graphs" element={<Graphs />} />
-                <Route path="/params" element={<Params />} />
-                <Route path="/config" element={<Config />} />
-                <Route
-                  path="/fla"
-                  element={
-                    <Provider store={store}>
-                      <FLA />
-                    </Provider>
-                  }
-                />
-              </Routes>
-              <Commands />
+            <SettingsModal />
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/graphs" element={<Graphs />} />
+              <Route path="/params" element={<Params />} />
+              <Route path="/config" element={<Config />} />
+              <Route
+                path="/fla"
+                element={
+                  <Provider store={store}>
+                    <FLA />
+                  </Provider>
+                }
+              />
+            </Routes>
+            <Commands />
           </ErrorBoundary>
         </SingleRunWrapper>
       </SettingsProvider>

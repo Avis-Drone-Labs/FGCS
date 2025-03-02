@@ -61,7 +61,7 @@ export default function Toolbar() {
           <SpotlightComponent />
         </div>
         {isMac && <div className="w-1"></div>}
-        
+
         {/* Window actions (close, minimise, maximise) */}
         {!isMac && (
           <div className="flex flex-row items-center h-full">

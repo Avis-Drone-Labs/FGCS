@@ -94,14 +94,9 @@ AddSpotlightAction(
   kbdBadge("Ctrl + Shift + R", badgeColor),
   kbdBadge("⌘ + Shift + R", badgeColor),
 )
-AddSpotlightAction(
-  "connect_to_drone",
-  "Connect to drone",
-  "command",
-  () => {
-    RunCommand("connect_to_drone")
-  }
-)
+AddSpotlightAction("connect_to_drone", "Connect to drone", "command", () => {
+  RunCommand("connect_to_drone")
+})
 AddSpotlightAction(
   "disconnect_from_drone",
   "Disconnect from drone",

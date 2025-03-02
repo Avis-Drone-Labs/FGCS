@@ -26,7 +26,7 @@ export default function SpotlightComponent() {
     },
   }
   const [isMac, setIsMac] = useState(false)
-  
+
   useEffect(() => {
     window.ipcRenderer.invoke("isMac").then((result) => {
       setIsMac(result)
@@ -53,7 +53,11 @@ export default function SpotlightComponent() {
           key={item.id}
           label={item.label}
           onClick={item.command}
-          rightSection={(isMac && item.macRightSection) ? item.macRightSection : item.rightSection}
+          rightSection={
+            isMac && item.macRightSection
+              ? item.macRightSection
+              : item.rightSection
+          }
           color="red"
           classNames={{
             action: "data-[selected]:!bg-falcongrey-700 max-h-8",

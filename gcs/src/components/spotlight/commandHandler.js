@@ -69,38 +69,3 @@ export function RunCommand(id) {
     console.log(`Couldn't find command, ${id}, to run`)
   }
 }
-
-// export function SearchAndRunHotkey(buttonsPressed) {
-//   // Search for a command via hotkey
-// }
-function logKeyPress(event) {
-  // Get the pressed key
-  const key = event.key;
-  
-  // Check for modifier keys
-  const modifiers = [];
-  if (event.ctrlKey) modifiers.push('Ctrl');
-  if (event.shiftKey) modifiers.push('Shift');
-  if (event.altKey) modifiers.push('Alt');
-  if (event.metaKey) modifiers.push('Meta'); // Command key on Mac
-  
-  // Create a description of the key combination
-  let description = '';
-  if (modifiers.length > 0) {
-    description = modifiers.join('+') + '+' + key;
-  } else {
-    description = key;
-  }
-  
-  // Log the key press information
-  console.log('Key pressed:', description);
-  console.log('Key details:', {
-    key: key,
-    code: event.code,
-    modifiers: modifiers,
-    event: event
-  });
-}
-
-// Add the event listener
-document.addEventListener('keydown', logKeyPress);

@@ -25,7 +25,6 @@ import {
 } from "@mantine/core"
 import {
   useDisclosure,
-  useInterval,
   useLocalStorage,
   useSessionStorage,
 } from "@mantine/hooks"
@@ -65,10 +64,6 @@ export default function Navbar({ currentPage }) {
     key: "socketConnection",
     defaultValue: false,
   })
-  const checkIfConnectedToSocket = useInterval(
-    () => setConnectedToSocket(socket.connected),
-    3000,
-  )
   const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
     key: "baudrate",
     defaultValue: "9600",
@@ -120,11 +115,17 @@ export default function Navbar({ currentPage }) {
 
   // Check if connected to drone
   useEffect(() => {
-    checkIfConnectedToSocket.start()
-
     if (selectedComPort === null) {
       socket.emit("is_connected_to_drone")
     }
+
+    socket.on("connect", () => {
+      setConnectedToSocket(true)
+    })
+
+    socket.on("disconnect", () => {
+      setConnectedToSocket(false)
+    })
 
     // Flag connected/not connected, if not fetch ports
     socket.on("is_connected_to_drone", (msg) => {
@@ -189,7 +190,8 @@ export default function Navbar({ currentPage }) {
     })
 
     return () => {
-      checkIfConnectedToSocket.stop()
+      socket.off("connect")
+      socket.off("disconnect")
       socket.off("is_connected_to_drone")
       socket.off("list_com_ports")
       socket.off("connected_to_drone")

@@ -126,16 +126,8 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
   currentResizeHandler = function(event, newBounds){
     event.preventDefault();
 
-    let newWidth, newHeight;
-
-    if (win?.getBounds().width === newBounds.width){
-      // Scale by height only
-      newHeight = newBounds.height;
-      newWidth = Math.round((newHeight - WEBCAM_TITLEBAR_HEIGHT) * aspect)
-    } else{
-      newWidth = newBounds.width;
-      newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-    }
+    const newWidth = newBounds.width;
+    const newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
 
     webcamPopoutWin?.setBounds({
       x: newBounds.x,
@@ -212,7 +204,6 @@ function createWindow() {
     }
   });
   webcamPopoutWin.loadURL("http://localhost:5173/#/webcam")
-  webcamPopoutWin.on('closed', () => {webcamPopoutWin = null})
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -390,6 +381,7 @@ app.on('before-quit', () => {
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
   }
+  webcamPopoutWin?.close();
 });
 
 app.on('activate', () => {

@@ -123,6 +123,7 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
   if (currentResizeHandler)
     webcamPopoutWin.off("will-resize", currentResizeHandler)
 
+  // Create resize handler to maintain aspect ratio
   currentResizeHandler = function(event, newBounds){
     event.preventDefault();
 
@@ -139,7 +140,9 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
 
   webcamPopoutWin.on('will-resize', currentResizeHandler);
 
-  webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + 28);
+  // Ensure initial size fits the aspect ratio ()
+  webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + WEBCAM_TITLEBAR_HEIGHT);
+
   webcamPopoutWin.setMinimumSize(Math.round(aspect * (MIN_WEBCAM_HEIGHT-28)), MIN_WEBCAM_HEIGHT);
   webcamPopoutWin.show();
 

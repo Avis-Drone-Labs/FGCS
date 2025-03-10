@@ -212,6 +212,7 @@ function createWindow() {
     }
   });
   webcamPopoutWin.loadURL("http://localhost:5173/#/webcam")
+  webcamPopoutWin.on('closed', () => {webcamPopoutWin = null})
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -368,6 +369,8 @@ function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
+    webcamPopoutWin?.close()
+    webcamPopoutWin = null
   }
 
   console.log('Killing backend')

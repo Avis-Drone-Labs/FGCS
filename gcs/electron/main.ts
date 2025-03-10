@@ -117,7 +117,7 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
   if (webcamPopoutWin === null) return;
 
   webcamPopoutWin.loadURL("http://localhost:5173/#/webcam?deviceId=" + videoStreamId + "&deviceName=" + name);
-  webcamPopoutWin.setAlwaysOnTop(true)
+  webcamPopoutWin.setTitle(name);
 
   // Remove previous resize handler
   if (currentResizeHandler)
@@ -198,6 +198,7 @@ function createWindow() {
     height: 300,
     frame: false,
     alwaysOnTop: false,
+    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     show: false,
     title: "Webcam",
     webPreferences: {

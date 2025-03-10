@@ -12,7 +12,7 @@ import { Tabs, Select } from "@mantine/core"
 
 // Helper
 import Webcam from "react-webcam"
-import { IconExternalLink } from "@tabler/icons-react"
+import { IconExternalLink, IconVideoOff } from "@tabler/icons-react"
 
 export default function CameraTabsSection({ tabPadding }) {
   // Camera devices
@@ -27,8 +27,9 @@ export default function CameraTabsSection({ tabPadding }) {
   const videoRef = useRef(null);
   const [devices, setDevices] = useState([])
 
-  const [pictureInPicture, setPictureInPicture] = useState(false);
   const [streamLoaded, setStreamLoaded] = useState(false);
+  const [invalidStream, setInvalidStream] = useState(false);
+  const [pictureInPicture, setPictureInPicture] = useState(false);
 
   const handleDevices = useCallback(
     (mediaDevices) =>
@@ -49,8 +50,8 @@ export default function CameraTabsSection({ tabPadding }) {
   }
 
   function onStreamLoaded(){
+    setInvalidStream(false);
     setStreamLoaded(true);
-    console.log(videoRef.current.video.srcObject.getTracks()[0])
   }
 
   return (
@@ -67,11 +68,26 @@ export default function CameraTabsSection({ tabPadding }) {
         />
         {deviceId !== null && (
           <div className="relative">
-            <Webcam onUserMedia={() => onStreamLoaded()} ref={videoRef} audio={false} videoConstraints={{ deviceId: deviceId }} className="max-w-[350px] w-[100%] @xl:max-w-[640px]"/>
+            <Webcam
+              onUserMedia={() => onStreamLoaded()}
+              ref={videoRef}
+              audio={false}
+              videoConstraints={{ deviceId: deviceId }}
+              className="max-w-[350px] w-[100%] @xl:max-w-[640px]"
+              onUserMediaError={() => setInvalidStream(true)}
+            />
             {/* Overlay black background instead of conditionally rendering webcam to prevent reloading stream */}
             {pictureInPicture && <div className="absolute top-0 right-0 w-[100%] h-[100%] bg-black"/>}
-            {streamLoaded && <button className="absolute top-1 right-1" onClick={() => toggleWebcamPopout()}>
-              <IconExternalLink stroke={1.25} size="20px" className="bg-falcongrey-700 opacity-80"/>
+
+            {/* Overlay invalid stream message if video stream failed to be created */}
+            {invalidStream && <div className="flex justify-center items-center absolute top-0 right-0 w-[100%] h-[100%] bg-falcongrey-700">
+                                <div className="flex flex-col items-center h-[75%] justify-center">
+                                  <IconVideoOff size={"50%"}/>
+                                  <p className="">No video stream available</p>
+                                </div>
+                              </div>}
+            {streamLoaded && !pictureInPicture && !invalidStream && <button className="absolute top-1 right-1 bg-falcongrey-900 opacity-80" onClick={() => toggleWebcamPopout()}>
+              <IconExternalLink stroke={2} size="20px" className="stroke-slate-400"/>
             </button>}
           </div>
         )}

@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Event, Menu, MenuItemConstructorOptions, MessageBoxOptions, Rectangle, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -106,6 +106,12 @@ ipcMain.handle("setSettings", (_, settings) => {saveUserConfiguration(settings)}
 const MIN_WEBCAM_HEIGHT: number = 100
 const WEBCAM_TITLEBAR_HEIGHT: number = 28
 
+// Disable unused vars because they are needed for TS function type
+// eslint-disable-next-line no-unused-vars
+type ResizeCallback = (event: Event, arg1: Rectangle) => void;
+
+let currentResizeHandler: ResizeCallback | null = null
+
 function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
 
   if (webcamPopoutWin === null) return;
@@ -113,9 +119,11 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
   webcamPopoutWin.loadURL("http://localhost:5173/#/webcam?deviceId=" + videoStreamId + "&deviceName=" + name);
   webcamPopoutWin.setAlwaysOnTop(true)
 
+  // Remove previous resize handler
+  if (currentResizeHandler)
+    webcamPopoutWin.off("will-resize", currentResizeHandler)
 
-  webcamPopoutWin.on('will-resize', (event, newBounds) => {
-
+  currentResizeHandler = function(event, newBounds){
     event.preventDefault();
 
     let newWidth, newHeight;
@@ -135,7 +143,9 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
       width: newWidth,
       height: newHeight
     });
-  })
+  }
+
+  webcamPopoutWin.on('will-resize', currentResizeHandler);
 
   webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + 28);
   webcamPopoutWin.setMinimumSize(Math.round(aspect * (MIN_WEBCAM_HEIGHT-28)), MIN_WEBCAM_HEIGHT);

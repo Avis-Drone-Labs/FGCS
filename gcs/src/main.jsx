@@ -18,6 +18,7 @@ import { MantineProvider } from "@mantine/core"
 // Route imports
 import Config from "./config.jsx"
 import Dashboard from "./dashboard.jsx"
+import Missions from "./missions.jsx"
 import FLA from "./fla.jsx"
 import Graphs from "./graphs.jsx"
 import Params from "./params.jsx"
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <SettingsModal />
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/missions" element={<Missions />} />
               <Route path="/graphs" element={<Graphs />} />
               <Route path="/params" element={<Params />} />
               <Route path="/config" element={<Config />} />

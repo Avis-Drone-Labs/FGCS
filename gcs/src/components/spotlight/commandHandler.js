@@ -28,6 +28,9 @@ export function Commands() {
   AddCommand("goto_dashboard", () => {
     navigate("/")
   })
+  AddCommand("goto_missions", () => {
+    navigate("/missions")
+  })
   AddCommand("goto_graphs", () => {
     navigate("/graphs")
   })
@@ -56,10 +59,11 @@ export function Commands() {
   // Register hotkeys
   useHotkeys([
     [isMac ? "meta+1" : "alt+1", () => RunCommand("goto_dashboard")],
-    [isMac ? "meta+2" : "alt+2", () => RunCommand("goto_graphs")],
-    [isMac ? "meta+3" : "alt+3", () => RunCommand("goto_params")],
-    [isMac ? "meta+4" : "alt+4", () => RunCommand("goto_config")],
-    [isMac ? "meta+5" : "alt+5", () => RunCommand("goto_fla")],
+    [isMac ? "meta+2" : "alt+2", () => RunCommand("goto_missions")],
+    [isMac ? "meta+3" : "alt+3", () => RunCommand("goto_graphs")],
+    [isMac ? "meta+4" : "alt+4", () => RunCommand("goto_params")],
+    [isMac ? "meta+5" : "alt+5", () => RunCommand("goto_config")],
+    [isMac ? "meta+6" : "alt+6", () => RunCommand("goto_fla")],
     ["mod+shift+r", () => RunCommand("force_refresh")],
     ["mod+,", () => RunCommand("open_settings")],
   ])

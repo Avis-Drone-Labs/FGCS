@@ -3,12 +3,12 @@
 */
 
 // Local Imports
-import React, { useState } from "react"
+import React from "react"
 
 // 3rd Party Imports
 import { Button, Code } from "@mantine/core"
 
-export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
+export default function ErrorBoundaryFallback({ error }) {
   return (
     <div className="flex flex-col w-full h-full items-center justify-center text-center text-xl gap-y-2">
       <h1 className="font-bold text-4xl text-falconred-700">
@@ -28,9 +28,24 @@ export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
           so we can fix it as soon as possible!
         </p>
         <p>To get back to what you were doing, refresh or click below.</p>
-        
-        <p className="pt-2 text-sm underline text-falconred-700 hover:cursor-pointer" onClick={() => {document.getElementById("stack-error").hidden = !document.getElementById("stack-error").hidden }}>Show stack log</p>
-        <Code id="stack-error" hidden={true} block className="!mt-4 !bg-falcongrey-900 !rounded-lg !text-center">{error.stack}</Code>
+
+        <p
+          className="pt-2 text-sm underline text-falconred-700 hover:cursor-pointer"
+          onClick={() => {
+            document.getElementById("stack-error").hidden =
+              !document.getElementById("stack-error").hidden
+          }}
+        >
+          Show stack log
+        </p>
+        <Code
+          id="stack-error"
+          hidden={true}
+          block
+          className="!mt-4 !bg-falcongrey-900 !rounded-lg !text-center"
+        >
+          {error.stack}
+        </Code>
       </div>
 
       <Button
@@ -65,7 +80,7 @@ export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
 
 //     return this.props.children
 //   }
-  
+
 //   render(error = "") {
 //     if (this.state.hasError) {
 //       return (
@@ -73,7 +88,7 @@ export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
 //           <h1 className="font-bold text-4xl text-falconred-700">
 //             We've ran into an issue!
 //           </h1>
-    
+
 //           <div>
 //             <p>
 //               Please report this{" "}
@@ -87,10 +102,10 @@ export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
 //               so we can fix it as soon as possible!
 //             </p>
 //             <p>To get back to what you were doing, refresh or click below.</p>
-            
+
 //             <Code block>{error}</Code>
 //           </div>
-    
+
 //           <Button
 //             size="lg"
 //             variant="light"

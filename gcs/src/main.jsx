@@ -14,7 +14,7 @@ import { Provider } from "react-redux"
 
 // 3rd Party Imports
 import { MantineProvider } from "@mantine/core"
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary"
 
 // Route imports
 import Config from "./config.jsx"

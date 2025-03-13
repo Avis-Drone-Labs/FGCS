@@ -6,7 +6,8 @@
 import React from "react"
 
 // 3rd Party Imports
-import { Button, Code } from "@mantine/core"
+import { Button } from "@mantine/core"
+import { CodeHighlight } from '@mantine/code-highlight'
 
 export default function ErrorBoundaryFallback({ error }) {
   return (
@@ -38,14 +39,16 @@ export default function ErrorBoundaryFallback({ error }) {
         >
           Show stack log
         </p>
-        <Code
+        <CodeHighlight
           id="stack-error"
           hidden={true}
           block
           className="!mt-4 !bg-falcongrey-900 !rounded-lg !text-center"
-        >
-          {error.stack}
-        </Code>
+          language="js"
+          copyLabel="Copy stacktrace"
+          copiedLabel="Copied!"
+          code={error.stack}
+        />
       </div>
 
       <Button

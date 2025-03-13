@@ -5,6 +5,7 @@ import "./css/resizable.css"
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
 import "@mantine/spotlight/styles.css"
+import '@mantine/code-highlight/styles.css'
 
 // React imports
 import { HashRouter, Route, Routes } from "react-router-dom"

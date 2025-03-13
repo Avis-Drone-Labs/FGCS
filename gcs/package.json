@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@headlessui/react": "2.1.4",
+    "@mantine/code-highlight": "^7.17.1",
     "@mantine/core": "^7.3.2",
     "@mantine/hooks": "^7.3.2",
     "@mantine/notifications": "^7.4.0",

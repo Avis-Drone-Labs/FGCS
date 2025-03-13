@@ -191,8 +191,6 @@ function createWindow() {
     minHeight: 500,
     titleBarStyle: 'hidden',
     frame: false,
-    fullscreen: false,
-    fullscreenable: false,
   })
 
   // Create webcam window keep it hidden to avoid delay between popping out windows
@@ -208,7 +206,9 @@ function createWindow() {
       nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true
-    }
+    },
+    fullscreen: false,
+    fullscreenable: false,
   });
   webcamPopoutWin.loadURL("http://localhost:5173/#/webcam")
 

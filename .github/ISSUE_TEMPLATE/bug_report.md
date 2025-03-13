@@ -31,7 +31,7 @@ If applicable, add screenshots to help explain your problem.
    - What version of ArduPilot is running on the flight controller?
 
 **Error Log**
-If you have got the error message within FGCS then please click "Show stack log" then copy and paste it here with the button in the top right. If not then please share the error's found in the console tab of inspect element (found by doing `ctrl + shift + i` and clicking the `console` tab). Either a screenshot or a copy paste of the error would suffice. If there is no error found in the console tab you can leave this blank. If you are struggling to find the console tab click [here](../../help/how_to_find_error_console.png).
+If you received an error message within FGCS, please click on 'Show stack log,' then copy and paste it here using the button in the top right. If you didn't see the stack log, please share the errors found in the console tab of inspect element (found by doing `ctrl + shift + i` and clicking the `console` tab). Either a screenshot or a copy paste of the error would suffice. If there is no error found in the console tab you can leave this blank. If you are struggling to find the console tab click [here](../../help/how_to_find_error_console.png).
 
 **Additional context**
 Add any other context about the problem here.

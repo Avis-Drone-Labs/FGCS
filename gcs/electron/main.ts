@@ -150,6 +150,7 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
 
 function closeWebcamPopout(){
   webcamPopoutWin?.hide()
+  webcamPopoutWin?.loadURL("http://localhost:5173/#/webcam")
   win?.webContents.send("webcam-closed");
 }
 
@@ -197,7 +198,7 @@ function createWindow() {
     width: 400,
     height: 300,
     frame: false,
-    alwaysOnTop: false,
+    alwaysOnTop: true,
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     show: false,
     title: "Webcam",

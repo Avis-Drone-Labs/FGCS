@@ -9,6 +9,7 @@ export default function CameraWindow(){
     const [searchParams] = useSearchParams();
 
     const videoRef = useRef(null);
+    const deviceId = searchParams.get("deviceId", null)
 
 
     return (
@@ -23,7 +24,7 @@ export default function CameraWindow(){
                 </button>
 
             </div>
-            <Webcam audio={false} ref={videoRef} videoConstraints={{ deviceId: searchParams.get("deviceId")}} width={"100%"}/>
+            {deviceId !== null && <Webcam audio={false} ref={videoRef} videoConstraints={{ deviceId: searchParams.get("deviceId", null)}} width={"100%"}/>}
         </div>
     )
 }

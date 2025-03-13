@@ -191,6 +191,8 @@ function createWindow() {
     minHeight: 500,
     titleBarStyle: 'hidden',
     frame: false,
+    fullscreen: false,
+    fullscreenable: false,
   })
 
   // Create webcam window keep it hidden to avoid delay between popping out windows

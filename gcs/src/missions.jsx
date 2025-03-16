@@ -23,27 +23,27 @@ export default function Missions() {
     key: "aircraftType",
   })
   // Mission
-  const [missionItems, _setMissionItems] = useState({
+  const missionItems = {
     mission_items: [],
     fence_items: [],
     rally_items: [],
-  })
-  const [homePosition, _setHomePosition] = useState(null)
+  }
+  const homePosition = null
 
   // Heartbeat data
-  const [heartbeatData, _setHeartbeatData] = useState({ system_status: 0 })
+  const heartbeatData = { system_status: 0 }
 
   // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
 
   // GPS and Telemetry
-  const [gpsData, _setGpsData] = useState({})
+  const gpsData = {}
 
   // Map and messages
   const mapRef = useRef()
 
   // System data
-  const [navControllerOutputData, _setNavControllerOutputData] = useState({})
+  const navControllerOutputData = {}
 
   // Following drone logic
   useEffect(() => {

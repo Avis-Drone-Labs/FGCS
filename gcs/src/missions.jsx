@@ -3,61 +3,93 @@
 */
 
 // Base imports
-import { useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { useLocalStorage } from "@mantine/hooks"
+import { useLocalStorage, useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 
 // Custom component and helpers
 import Layout from "./components/layout"
-import MapSection from "./components/dashboard/map"
+import MissionsMapSection from "./components/missions/missionsMap"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
+  MAV_AUTOPILOT_INVALID,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
+import { socket } from "./helpers/socket"
 
 export default function Missions() {
   // Local Storage
+  const [connected] = useSessionStorage({
+    key: "connectedToDrone",
+    defaultValue: false,
+  })
   const [aircraftType] = useLocalStorage({
     key: "aircraftType",
   })
+
   // Mission
   const missionItems = {
     mission_items: [],
     fence_items: [],
     rally_items: [],
   }
-  const homePosition = null
+  const [homePosition, setHomePosition] = useState(null)
 
   // Heartbeat data
-  const heartbeatData = { system_status: 0 }
-
-  // Following Drone
-  const [followDrone, setFollowDrone] = useState(false)
+  const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
 
   // GPS and Telemetry
-  const gpsData = {}
+  const [gpsData, setGpsData] = useState({})
 
   // Map and messages
   const mapRef = useRef()
 
   // System data
-  const navControllerOutputData = {}
+  const [navControllerOutputData, setNavControllerOutputData] = useState({})
 
-  // Following drone logic
+  const incomingMessageHandler = useCallback(
+    () => ({
+      GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
+      NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
+      HEARTBEAT: (msg) => {
+        if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
+          setHeartbeatData(msg)
+        }
+      },
+    }),
+    [],
+  )
+
   useEffect(() => {
-    if (
-      mapRef.current &&
-      gpsData?.lon !== 0 &&
-      gpsData?.lat !== 0 &&
-      followDrone
-    ) {
-      let lat = parseFloat(gpsData.lat * 1e-7)
-      let lon = parseFloat(gpsData.lon * 1e-7)
-      mapRef.current.setCenter({ lng: lon, lat: lat })
+    if (!connected) {
+      return
+    } else {
+      socket.emit("set_state", { state: "missions" })
+      socket.emit("get_home_position")
     }
-  }, [gpsData])
+
+    socket.on("incoming_msg", (msg) => {
+      if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
+        incomingMessageHandler()[msg.mavpackettype](msg)
+      }
+      console.log(msg)
+    })
+
+    socket.on("home_position_result", (data) => {
+      if (data.success) {
+        setHomePosition(data.data)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
+    return () => {
+      socket.off("incoming_msg")
+      socket.off("home_position_result")
+    }
+  }, [connected])
 
   function getFlightMode() {
     if (aircraftType === 1) {
@@ -108,16 +140,13 @@ export default function Missions() {
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Map area */}
             <div className="flex-1 relative">
-              <MapSection
+              <MissionsMapSection
                 passedRef={mapRef}
                 data={gpsData}
                 heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
                 desiredBearing={navControllerOutputData.nav_bearing}
                 missionItems={missionItems}
                 homePosition={homePosition}
-                onDragstart={() => {
-                  setFollowDrone(false)
-                }}
                 getFlightMode={getFlightMode}
                 mapId="missions"
               />

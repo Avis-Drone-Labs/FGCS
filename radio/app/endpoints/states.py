@@ -49,6 +49,7 @@ def set_state(data: SetStateType) -> None:
             "ESC_TELEMETRY_5_TO_8",
             "MISSION_CURRENT",
         ],
+        "missions": ["GLOBAL_POSITION_INT", "NAV_CONTROLLER_OUTPUT", "HEARTBEAT"],
         "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],
         "config.flight_modes": ["RC_CHANNELS", "HEARTBEAT"],
     }
@@ -56,6 +57,16 @@ def set_state(data: SetStateType) -> None:
     if droneStatus.state == "dashboard":
         droneStatus.drone.setupDataStreams()
         for message in message_listeners["dashboard"]:
+            droneStatus.drone.addMessageListener(message, sendMessage)
+    if droneStatus.state == "missions":
+        droneStatus.drone.stopAllDataStreams()
+        droneStatus.drone.setupSingleDataStream(
+            mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS
+        )
+        droneStatus.drone.setupSingleDataStream(
+            mavutil.mavlink.MAV_DATA_STREAM_POSITION
+        )
+        for message in message_listeners["missions"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
     elif droneStatus.state == "graphs":
         droneStatus.drone.stopAllDataStreams()

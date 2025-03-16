@@ -54,6 +54,7 @@ function MapSectionNonMemo({
   homePosition,
   onDragstart,
   getFlightMode,
+  mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
@@ -62,11 +63,26 @@ function MapSectionNonMemo({
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
+  const { getSetting } = useSettings()
+
+  // Check if maps should be synchronized (from settings)
+  const syncMaps = getSetting("General.syncMapViews") || false
+  
+  // Use either a shared key or a unique key based on the setting
+  const viewStateKey = syncMaps ? "initialViewState" : `initialViewState_${mapId}`
+  const altitudeKey = syncMaps ? "repositionAltitude" : `repositionAltitude_${mapId}`
+
   const [initialViewState, setInitialViewState] = useLocalStorage({
-    key: "initialViewState",
+    key: viewStateKey,
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
+
+  const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
+    key: altitudeKey,
+    defaultValue: 30,
+  })
+
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
@@ -80,12 +96,6 @@ function MapSectionNonMemo({
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  const { getSetting } = useSettings()
-
-  const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
-    key: "repositionAltitude",
-    defaultValue: 30,
-  })
   const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
     key: "guidedModePinData",
     defaultValue: null,

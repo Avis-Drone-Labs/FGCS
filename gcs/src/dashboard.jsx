@@ -365,6 +365,7 @@ export default function Dashboard() {
               setFollowDrone(false)
             }}
             getFlightMode={getFlightMode}
+            mapId="dashboard"
           />
         </div>
 

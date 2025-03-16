@@ -16,12 +16,6 @@ import tailwindConfig from "../tailwind.config"
 
 // Custom component and helpers
 import Layout from "./components/layout"
-import NoDroneConnected from "./components/noDroneConnected"
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification"
-import { socket } from "./helpers/socket"
 import MapSection from "./components/dashboard/map"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -128,6 +122,7 @@ export default function Missions() {
                 setFollowDrone(false);
               }}
               getFlightMode={getFlightMode}
+              mapId="missions"
             />
           </div>
 
@@ -144,7 +139,7 @@ export default function Missions() {
           >
             <div className="p-4 mt-2">
               <h2 className="text-xl font-bold mb-2">Set Waypoints</h2>
-              
+
             </div>
           </ResizableBox>
         </div>

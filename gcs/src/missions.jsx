@@ -13,8 +13,8 @@ import { ResizableBox } from "react-resizable"
 import Layout from "./components/layout"
 import MapSection from "./components/dashboard/map"
 import {
-    COPTER_MODES_FLIGHT_MODE_MAP,
-    PLANE_MODES_FLIGHT_MODE_MAP,
+  COPTER_MODES_FLIGHT_MODE_MAP,
+  PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
 
 export default function Missions() {

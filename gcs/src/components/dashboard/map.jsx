@@ -67,10 +67,14 @@ function MapSectionNonMemo({
 
   // Check if maps should be synchronized (from settings)
   const syncMaps = getSetting("General.syncMapViews") || false
-  
+
   // Use either a shared key or a unique key based on the setting
-  const viewStateKey = syncMaps ? "initialViewState" : `initialViewState_${mapId}`
-  const altitudeKey = syncMaps ? "repositionAltitude" : `repositionAltitude_${mapId}`
+  const viewStateKey = syncMaps
+    ? "initialViewState"
+    : `initialViewState_${mapId}`
+  const altitudeKey = syncMaps
+    ? "repositionAltitude"
+    : `repositionAltitude_${mapId}`
 
   const [initialViewState, setInitialViewState] = useLocalStorage({
     key: viewStateKey,

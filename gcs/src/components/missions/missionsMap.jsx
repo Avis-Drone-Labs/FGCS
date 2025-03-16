@@ -1,7 +1,7 @@
 /*
-  The dashboard map.
+  The missions map.
 
-  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet
+  This uses maplibre to load the map, currently (as of 16/03/2025) this needs an internet
   connection to load but this will be addressed in later versions of FGCS. Please check
   docs/changelogs if this description has not been updated.
 */
@@ -10,10 +10,8 @@
 import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import { Button, Divider, Modal, NumberInput } from "@mantine/core"
 import {
   useClipboard,
-  useDisclosure,
   useLocalStorage,
   useSessionStorage,
 } from "@mantine/hooks"
@@ -23,13 +21,8 @@ import Map from "react-map-gl/maplibre"
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
-import {
-  showErrorNotification,
-  showNotification,
-  showSuccessNotification,
-} from "../../helpers/notification"
+import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
-import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
@@ -62,9 +55,12 @@ function MapSectionNonMemo({
     key: "connectedToDrone",
     defaultValue: false,
   })
+  const [guidedModePinData] = useSessionStorage({
+    key: "guidedModePinData",
+    defaultValue: null,
+  })
 
   const [position, setPosition] = useState(null)
-  const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const { getSetting } = useSettings()
 
   // Check if maps should be synchronized (from settings)
@@ -81,11 +77,6 @@ function MapSectionNonMemo({
     getInitialValueInEffect: false,
   })
 
-  const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
-    key: "repositionAltitude",
-    defaultValue: 30,
-  })
-
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
@@ -96,27 +87,10 @@ function MapSectionNonMemo({
   ] = useState()
   const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
-  const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
-
   useEffect(() => {
-    socket.on("nav_reposition_result", (msg) => {
-      if (!msg.success) {
-        showErrorNotification(msg.message)
-      } else {
-        showSuccessNotification(msg.message)
-        setGuidedModePinData(msg.data)
-      }
-    })
-
-    return () => {
-      socket.off("nav_reposition_result")
-    }
+    return () => {}
   }, [connected])
 
   useEffect(() => {
@@ -128,14 +102,6 @@ function MapSectionNonMemo({
     let lat = intToCoord(data.lat)
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
-
-    if (!firstCenteredToDrone) {
-      passedRef.current.getMap().flyTo({
-        center: [lon, lat],
-        zoom: initialViewState.zoom,
-      })
-      setFirstCenteredToDrone(true)
-    }
   }, [data])
 
   useEffect(() => {
@@ -170,14 +136,6 @@ function MapSectionNonMemo({
       setPoints({ x, y })
     }
   }, [contextMenuPositionCalculationInfo])
-
-  function reposition() {
-    socket.emit("reposition", {
-      lat: clickedGpsCoords.lat,
-      lon: clickedGpsCoords.lng,
-      alt: repositionAltitude,
-    })
-  }
 
   return (
     <div className="w-initial h-full" id="map">
@@ -294,38 +252,12 @@ function MapSectionNonMemo({
           />
         )}
 
-        <Modal opened={opened} onClose={close} title="Enter altitude" centered>
-          <form
-            className="flex flex-col space-y-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              reposition()
-              close()
-            }}
-          >
-            <NumberInput
-              placeholder="Altitude (m)"
-              value={repositionAltitude}
-              onChange={setRepositionAltitude}
-              min={0}
-              allowNegative={false}
-              hideControls
-              data-autofocus
-            />
-            <Button fullWidth type="submit">
-              Reposition
-            </Button>
-          </form>
-        </Modal>
-
         {clicked && (
           <div
             ref={contextMenuRef}
             className="absolute bg-falcongrey-700 rounded-md p-1"
             style={{ top: points.y, left: points.x }}
           >
-            <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
-            <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {
                 clipboard.copy(
@@ -362,6 +294,6 @@ function MapSectionNonMemo({
 function propsAreEqual(prev, next) {
   return JSON.stringify(prev) === JSON.stringify(next)
 }
-const MapSection = React.memo(MapSectionNonMemo, propsAreEqual)
+const MissionsMapSection = React.memo(MapSectionNonMemo, propsAreEqual)
 
-export default MapSection
+export default MissionsMapSection

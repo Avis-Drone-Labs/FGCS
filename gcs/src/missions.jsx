@@ -9,15 +9,13 @@ import { useEffect, useState, useRef } from "react"
 import { useLocalStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config"
-
 // Custom component and helpers
 import Layout from "./components/layout"
 import MapSection from "./components/dashboard/map"
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+import {
+    COPTER_MODES_FLIGHT_MODE_MAP,
+    PLANE_MODES_FLIGHT_MODE_MAP,
+} from "./helpers/mavlinkConstants"
 
 export default function Missions() {
   // Local Storage
@@ -25,27 +23,27 @@ export default function Missions() {
     key: "aircraftType",
   })
   // Mission
-  const [missionItems, setMissionItems] = useState({
+  const [missionItems, _setMissionItems] = useState({
     mission_items: [],
     fence_items: [],
     rally_items: [],
   })
-  const [homePosition, setHomePosition] = useState(null)
+  const [homePosition, _setHomePosition] = useState(null)
 
   // Heartbeat data
-  const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
+  const [heartbeatData, _setHeartbeatData] = useState({ system_status: 0 })
 
   // Following Drone
   const [followDrone, setFollowDrone] = useState(false)
 
   // GPS and Telemetry
-  const [gpsData, setGpsData] = useState({})
+  const [gpsData, _setGpsData] = useState({})
 
   // Map and messages
   const mapRef = useRef()
 
   // System data
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
+  const [navControllerOutputData, _setNavControllerOutputData] = useState({})
 
   // Following drone logic
   useEffect(() => {

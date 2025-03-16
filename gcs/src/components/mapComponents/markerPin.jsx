@@ -10,9 +10,16 @@ import { Tooltip } from "@mantine/core"
 import { Marker } from "react-map-gl"
 
 const MarkerPin = React.memo(
-  ({ lat, lon, colour, text = null, tooltipText = null }) => {
+  ({
+    lat,
+    lon,
+    colour,
+    text = null,
+    tooltipText = null,
+    showOnTop = false,
+  }) => {
     return (
-      <Marker latitude={lat} longitude={lon}>
+      <Marker latitude={lat} longitude={lon} className={showOnTop && "z-10"}>
         <Tooltip disabled={tooltipText === null} label={tooltipText}>
           <svg
             xmlns="http://www.w3.org/2000/svg"

@@ -12,13 +12,13 @@ class ControlMissionType(TypedDict):
 @socketio.on("get_current_mission")
 def getCurrentMission() -> None:
     """
-    Sends the current mission to the frontend, only works if dashboard screen is loaded.
+    Sends the current mission to the frontend, only works if dashboard or missions screen is loaded.
     """
-    if droneStatus.state != "dashboard":
+    if droneStatus.state not in ["dashboard", "missions"]:
         socketio.emit(
             "params_error",
             {
-                "message": "You must be on the dashboard screen to get the current mission."
+                "message": "You must be on the dashboard or missions screen to get the current mission."
             },
         )
         logger.debug(f"Current state: {droneStatus.state}")

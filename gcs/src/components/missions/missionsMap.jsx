@@ -13,6 +13,7 @@ import React, { useEffect, useRef, useState } from "react"
 import {
   useClipboard,
   useLocalStorage,
+  usePrevious,
   useSessionStorage,
 } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -76,6 +77,7 @@ function MapSectionNonMemo({
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
+  const previousHomePositionValue = usePrevious(homePosition)
 
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
@@ -137,6 +139,26 @@ function MapSectionNonMemo({
     }
   }, [contextMenuPositionCalculationInfo])
 
+  useEffect(() => {
+    // center map on home point only on first instance of home point being
+    // received from the drone
+    if (
+      passedRef.current &&
+      homePosition !== null &&
+      previousHomePositionValue === null
+    ) {
+      setInitialViewState({
+        latitude: intToCoord(homePosition.lat),
+        longitude: intToCoord(homePosition.lon),
+        zoom: initialViewState.zoom,
+      })
+      passedRef.current.getMap().flyTo({
+        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        zoom: initialViewState.zoom,
+      })
+    }
+  }, [homePosition])
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -181,20 +203,6 @@ function MapSectionNonMemo({
               desiredBearing={desiredBearing ?? 0}
             />
           )}
-
-        {/* Show home position */}
-        {homePosition !== null && (
-          <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
-          />
-        )}
 
         <MissionItems missionItems={missionItems.mission_items} />
 
@@ -248,6 +256,20 @@ function MapSectionNonMemo({
             colour={tailwindColors.pink[500]}
             tooltipText={
               guidedModePinData.alt ? `Alt: ${guidedModePinData.alt}` : null
+            }
+          />
+        )}
+
+        {/* Show home position */}
+        {homePosition !== null && (
+          <HomeMarker
+            lat={intToCoord(homePosition.lat)}
+            lon={intToCoord(homePosition.lon)}
+            lineTo={
+              filteredMissionItems.length > 0 && [
+                intToCoord(filteredMissionItems[0].y),
+                intToCoord(filteredMissionItems[0].x),
+              ]
             }
           />
         )}

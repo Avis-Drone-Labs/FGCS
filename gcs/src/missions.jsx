@@ -10,6 +10,7 @@ import { useLocalStorage, useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 
 // Custom component and helpers
+import { Button } from "@mantine/core"
 import Layout from "./components/layout"
 import MissionsMapSection from "./components/missions/missionsMap"
 import {
@@ -31,12 +32,22 @@ export default function Missions() {
   })
 
   // Mission
-  const missionItems = {
-    mission_items: [],
-    fence_items: [],
-    rally_items: [],
-  }
-  const [homePosition, setHomePosition] = useState(null)
+  const [missionItems, setMissionItems] = useSessionStorage({
+    key: "missionItems",
+    defaultValue: [],
+  })
+  const [fenceItems, setFenceItems] = useSessionStorage({
+    key: "fenceItems",
+    defaultValue: [],
+  })
+  const [rallyItems, setRallyItems] = useSessionStorage({
+    key: "rallyItems",
+    defaultValue: [],
+  })
+  const [homePosition, setHomePosition] = useSessionStorage({
+    key: "homePosition",
+    defaultValue: null,
+  })
 
   // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
@@ -75,10 +86,10 @@ export default function Missions() {
       if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
         incomingMessageHandler()[msg.mavpackettype](msg)
       }
-      console.log(msg)
     })
 
     socket.on("home_position_result", (data) => {
+      console.log(data)
       if (data.success) {
         setHomePosition(data.data)
       } else {
@@ -86,9 +97,17 @@ export default function Missions() {
       }
     })
 
+    socket.on("current_mission", (data) => {
+      console.log(data)
+      setMissionItems(data.mission_items)
+      setFenceItems(data.fence_items)
+      setRallyItems(data.rally_items)
+    })
+
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
+      socket.off("current_mission")
     }
   }, [connected])
 
@@ -100,6 +119,22 @@ export default function Missions() {
     }
 
     return "UNKNOWN"
+  }
+
+  function readMissionFromDrone() {
+    socket.emit("get_current_mission")
+  }
+
+  function writeMissionToDrone() {
+    return
+  }
+
+  function importMissionFromFile() {
+    return
+  }
+
+  function saveMissionToFile() {
+    return
   }
 
   return (
@@ -119,20 +154,44 @@ export default function Missions() {
             }
             className="relative bg-falcongrey-800 overflow-y-auto"
           >
-            <div className="p-4">
-              <h2 className="text-xl font-bold mb-4">Mission Control</h2>
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Current Mission</h3>
-                <p>Mission Type: Idk man</p>
-                <p>Status: Random Stuff</p>
+            <div className="flex flex-col gap-8 p-4">
+              <div className="flex flex-col gap-4">
+                <Button
+                  onClick={() => {
+                    readMissionFromDrone()
+                  }}
+                  disabled={!connected}
+                  className="grow"
+                >
+                  Read
+                </Button>
+                <Button
+                  onClick={() => {
+                    writeMissionToDrone()
+                  }}
+                  disabled={!connected}
+                  className="grow"
+                >
+                  Write
+                </Button>
               </div>
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Waypoints</h3>
-                <ul className="list-disc pl-4">
-                  <li>Waypoint 1: Takeoff</li>
-                  <li>Waypoint 2: Navigate to target</li>
-                  <li>Waypoint 3: Return home</li>
-                </ul>
+              <div className="flex flex-col gap-4">
+                <Button
+                  onClick={() => {
+                    importMissionFromFile()
+                  }}
+                  className="grow"
+                >
+                  Import from file
+                </Button>
+                <Button
+                  onClick={() => {
+                    saveMissionToFile()
+                  }}
+                  className="grow"
+                >
+                  Save to file
+                </Button>
               </div>
             </div>
           </ResizableBox>
@@ -146,7 +205,11 @@ export default function Missions() {
                 data={gpsData}
                 heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
                 desiredBearing={navControllerOutputData.nav_bearing}
-                missionItems={missionItems}
+                missionItems={{
+                  mission_items: missionItems,
+                  fence_items: fenceItems,
+                  rally_items: rallyItems,
+                }}
                 homePosition={homePosition}
                 getFlightMode={getFlightMode}
                 mapId="missions"

@@ -19,6 +19,7 @@ export default function HomeMarker({ lat, lon, lineTo = null }) {
         lon={lon}
         colour={tailwindColors.green[400]}
         text={"H"}
+        showOnTop={true}
       />
       {lineTo !== null && (
         <DrawLineCoordinates

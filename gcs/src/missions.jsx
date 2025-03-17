@@ -10,9 +10,10 @@ import { useLocalStorage, useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 
 // Custom component and helpers
-import { Button } from "@mantine/core"
+import { Button, Divider, Tabs } from "@mantine/core"
 import Layout from "./components/layout"
 import MissionsMapSection from "./components/missions/missionsMap"
+import { intToCoord } from "./helpers/dataFormatters"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   MAV_AUTOPILOT_INVALID,
@@ -20,6 +21,8 @@ import {
 } from "./helpers/mavlinkConstants"
 import { showErrorNotification } from "./helpers/notification"
 import { socket } from "./helpers/socket"
+
+const coordsFractionDigits = 7
 
 export default function Missions() {
   // Local Storage
@@ -175,6 +178,9 @@ export default function Missions() {
                   Write
                 </Button>
               </div>
+
+              <Divider className="my-1" />
+
               <div className="flex flex-col gap-4">
                 <Button
                   onClick={() => {
@@ -192,6 +198,20 @@ export default function Missions() {
                 >
                   Save to file
                 </Button>
+              </div>
+
+              <Divider className="my-1" />
+
+              <div className="flex flex-col gap-2">
+                <p className="font-bold">Home location</p>
+                <p>
+                  Lat:{" "}
+                  {intToCoord(homePosition?.lat).toFixed(coordsFractionDigits)}
+                </p>
+                <p>
+                  Lon:{" "}
+                  {intToCoord(homePosition?.lon).toFixed(coordsFractionDigits)}
+                </p>
               </div>
             </div>
           </ResizableBox>
@@ -229,9 +249,38 @@ export default function Missions() {
               }
               className="relative bg-falcongrey-800 overflow-y-auto"
             >
-              <div className="p-4 mt-2">
-                <h2 className="text-xl font-bold mb-2">Set Waypoints</h2>
-              </div>
+              <Tabs defaultValue="mission" className="mt-2">
+                <Tabs.List grow>
+                  <Tabs.Tab value="mission">Mission</Tabs.Tab>
+                  <Tabs.Tab value="fence">Fence</Tabs.Tab>
+                  <Tabs.Tab value="rally">Rally</Tabs.Tab>
+                </Tabs.List>
+
+                <Tabs.Panel value="mission">
+                  {missionItems.map((missionItem) => {
+                    return (
+                      <div key={missionItem.seq} className="flex gap-2">
+                        <p>Seq: {missionItem.seq}</p>
+                        <p>
+                          Latitude:{" "}
+                          {intToCoord(missionItem.x).toFixed(
+                            coordsFractionDigits,
+                          )}
+                        </p>
+                        <p>
+                          Longitude:{" "}
+                          {intToCoord(missionItem.y).toFixed(
+                            coordsFractionDigits,
+                          )}
+                        </p>
+                        <p>Altitude: {missionItem.z} m</p>
+                        <p>Command: {missionItem.command}</p>
+                        <p>Frame: {missionItem.frame}</p>
+                      </div>
+                    )
+                  })}
+                </Tabs.Panel>
+              </Tabs>
             </ResizableBox>
           </div>
         </div>

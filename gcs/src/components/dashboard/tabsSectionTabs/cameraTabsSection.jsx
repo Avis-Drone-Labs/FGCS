@@ -86,9 +86,11 @@ export default function CameraTabsSection({ tabPadding }) {
                                   <p className="">No video stream available</p>
                                 </div>
                               </div>}
-            {streamLoaded && !pictureInPicture && !invalidStream && <button className="absolute top-1 right-1 bg-falcongrey-900 opacity-80" onClick={() => toggleWebcamPopout()}>
-              <IconExternalLink stroke={2} size="20px" className="stroke-slate-400"/>
-            </button>}
+            {streamLoaded && !pictureInPicture && !invalidStream && 
+              <button className="absolute top-2 right-2 bg-falcongrey-900/60 p-1 rounded-[0.2em]" onClick={() => toggleWebcamPopout()}>
+               <IconExternalLink stroke={2} className="stroke-slate-200 size-5"/>
+              </button>
+            }
           </div>
         )}
       </div>

@@ -14,7 +14,7 @@ import FLA from "../fla";
 import Graphs from "../graphs";
 import Params from "../params";
 import Config from "../config";
-import CameraWindow from "../webcam";
+import CameraWindow from "./dashboard/webcam/webcam";
 import Dashboard from "../dashboard";
 
 // Redux

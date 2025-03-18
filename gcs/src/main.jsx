@@ -5,6 +5,7 @@ import "./css/resizable.css"
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
 import "@mantine/spotlight/styles.css"
+import '@mantine/code-highlight/styles.css'
 
 // React imports
 import { HashRouter, Route, Routes } from "react-router-dom"
@@ -12,8 +13,9 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import { Provider } from "react-redux"
 
-// Mantine imports
+// 3rd Party Imports
 import { MantineProvider } from "@mantine/core"
+import { ErrorBoundary } from "react-error-boundary"
 
 // Route imports
 import Config from "./config.jsx"
@@ -30,10 +32,10 @@ import { store } from "./redux/store"
 import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
 import SingleRunWrapper from "./components/SingleRunWrapper.jsx"
 import Toolbar from "./components/toolbar/toolbar.jsx"
-import { ErrorBoundary } from "./components/error/errorBoundary"
 import { SettingsProvider } from "./helpers/settingsProvider.jsx"
 import SettingsModal from "./components/settingsModal"
 import { Commands } from "./components/spotlight/commandHandler.js"
+import ErrorBoundaryFallback from "./components/error/errorBoundary.jsx"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
@@ -42,7 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <SettingsProvider>
         <SingleRunWrapper>
           <Toolbar />
-          <ErrorBoundary>
+          <ErrorBoundary fallbackRender={ErrorBoundaryFallback}>
             <SettingsModal />
             <Routes>
               <Route path="/" element={<Dashboard />} />

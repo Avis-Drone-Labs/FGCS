@@ -13,7 +13,6 @@ import ReactDOM from "react-dom/client"
 // Mantine imports
 import { MantineProvider } from "@mantine/core"
 
-
 // Component imports
 import AppContent from "./components/mainContent.jsx"
 import { CustomMantineTheme } from "./components/customMantineTheme.jsx"

@@ -6,7 +6,7 @@ import { Commands } from "./spotlight/commandHandler"
 
 // Wrappers
 import SingleRunWrapper from "./SingleRunWrapper"
-import { ErrorBoundary } from "./error/errorBoundary"
+import ErrorBoundaryFallback, { ErrorBoundary } from "./error/errorBoundary"
 import { SettingsProvider } from "../helpers/settingsProvider"
 
 // Routes
@@ -29,7 +29,7 @@ export default function AppContent() {
     <SettingsProvider>
       <SingleRunWrapper>
         {renderUI && <Toolbar />}
-        <ErrorBoundary>
+        <ErrorBoundary fallbackRender={ErrorBoundaryFallback}>
           <SettingsModal />
           <Routes>
             <Route path="/" element={<Dashboard />} />

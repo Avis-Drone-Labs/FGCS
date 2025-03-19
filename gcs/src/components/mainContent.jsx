@@ -6,7 +6,6 @@ import { Commands } from "./spotlight/commandHandler"
 
 // Wrappers
 import SingleRunWrapper from "./SingleRunWrapper"
-import ErrorBoundaryFallback, { ErrorBoundary } from "./error/errorBoundary"
 import { SettingsProvider } from "../helpers/settingsProvider"
 
 // Routes
@@ -20,6 +19,8 @@ import Dashboard from "../dashboard"
 // Redux
 import { store } from "../redux/store"
 import { Provider } from "react-redux"
+import { ErrorBoundary } from "react-error-boundary"
+import ErrorBoundaryFallback from "./error/errorBoundary"
 
 export default function AppContent() {
   // Conditionally render UI so the webcam route is literally just a webcam

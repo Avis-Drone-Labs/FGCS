@@ -25,6 +25,11 @@
             "default": true,
             "type": "boolean",
             "display": "Automatically Check for Updates"
+        },
+        "syncMapViews": {
+            "default": false,
+            "type": "boolean",
+            "display": "Sync Dashboard and Missions Map Viewstate"
         }
     },
     "Params": {},

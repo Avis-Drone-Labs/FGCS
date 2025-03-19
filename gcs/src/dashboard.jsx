@@ -130,7 +130,10 @@ export default function Dashboard() {
   const [homePosition, setHomePosition] = useState(null)
 
   // Following Drone
-  const [followDrone, setFollowDrone] = useState(false)
+  const [followDrone, setFollowDrone] = useSessionStorage({
+    key: "followDroneBool",
+    defaultValue: false,
+  })
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
 
   // Map and messages
@@ -365,6 +368,7 @@ export default function Dashboard() {
               setFollowDrone(false)
             }}
             getFlightMode={getFlightMode}
+            mapId="dashboard"
           />
         </div>
 

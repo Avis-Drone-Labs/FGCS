@@ -31,7 +31,7 @@ export default function MissionItemsTable({ missionItems, aircraftType }) {
     return commandName
   }
   return (
-    <Table>
+    <Table striped withTableBorder withColumnBorders>
       <Table.Thead>
         <Table.Tr>
           <Table.Th></Table.Th>

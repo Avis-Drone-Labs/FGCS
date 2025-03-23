@@ -36,6 +36,8 @@ export default function Missions() {
     key: "aircraftType",
   })
 
+  const [activeTab, setActiveTab] = useState("mission")
+
   // Mission
   const [missionItems, setMissionItems] = useSessionStorage({
     key: "missionItems",
@@ -188,7 +190,16 @@ export default function Missions() {
                   disabled={!connected}
                   className="grow"
                 >
-                  Write
+                  Write {activeTab}
+                </Button>
+                <Button
+                  onClick={() => {
+                    writeMissionToDrone()
+                  }}
+                  disabled={!connected}
+                  className="grow"
+                >
+                  Write all
                 </Button>
               </div>
 
@@ -262,7 +273,7 @@ export default function Missions() {
               }
               className="relative bg-falcongrey-800 overflow-y-auto"
             >
-              <Tabs defaultValue="mission" className="mt-2">
+              <Tabs value={activeTab} onChange={setActiveTab} className="mt-2">
                 <Tabs.List grow>
                   <Tabs.Tab value="mission">Mission</Tabs.Tab>
                   <Tabs.Tab value="fence">Fence</Tabs.Tab>

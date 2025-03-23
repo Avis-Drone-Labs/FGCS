@@ -99,7 +99,6 @@ export default function Missions() {
     })
 
     socket.on("home_position_result", (data) => {
-      console.log(data)
       if (data.success) {
         setHomePosition(data.data)
       } else {
@@ -135,10 +134,6 @@ export default function Missions() {
     }
   }, [connected])
 
-  useEffect(() => {
-    console.log(missionItems)
-  }, [missionItems])
-
   function getFlightMode() {
     if (aircraftType === 1) {
       return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
@@ -157,7 +152,6 @@ export default function Missions() {
   }
 
   function updateMissionItem(updatedMissionItem) {
-    console.log(updatedMissionItem)
     setMissionItems((prevItems) =>
       prevItems.map((item) =>
         item.id === updatedMissionItem.id

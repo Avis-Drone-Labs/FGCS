@@ -9,9 +9,12 @@ export function filterMissionItems(missionItems) {
         missionItem.command,
       ) &&
       !(
-        [17, 18, 19].includes(missionItem.command) &&
-        missionItem.x === 0 &&
-        missionItem.y === 0
+        // If loiter command and no coordinates then filter out
+        (
+          [17, 18, 19].includes(missionItem.command) &&
+          missionItem.x === 0 &&
+          missionItem.y === 0
+        )
       )
     ) {
       filteredMissionItems.push(missionItem)

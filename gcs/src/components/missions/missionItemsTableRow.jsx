@@ -1,6 +1,6 @@
-import { Select, TableTd, TableTr } from "@mantine/core"
+import { NumberInput, Select, TableTd, TableTr } from "@mantine/core"
 import { useEffect, useState } from "react"
-import { intToCoord } from "../../helpers/dataFormatters"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
   COPTER_MISSION_ITEM_COMMANDS_LIST,
   MAV_FRAME_LIST,
@@ -43,18 +43,6 @@ export default function MissionItemsTableRow({
     }))
   }
 
-  function getCommandName(commandId) {
-    var commandName = "UNKNOWN"
-
-    if (aircraftType === 1) {
-      commandName = PLANE_MISSION_ITEM_COMMANDS_LIST[commandId]
-    } else if (aircraftType === 2) {
-      commandName = COPTER_MISSION_ITEM_COMMANDS_LIST[commandId]
-    }
-
-    return getDisplayCommandName(commandName)
-  }
-
   function getFrameName(frameId) {
     var frameName = MAV_FRAME_LIST[frameId]
 
@@ -65,10 +53,10 @@ export default function MissionItemsTableRow({
     return frameName || "UNKNOWN"
   }
 
-  function updateCommand(newCommand) {
+  function updateMissionItemData(key, newVal) {
     setMissionItemData({
       ...missionItemData,
-      command: parseInt(newCommand),
+      [key]: newVal,
     })
   }
 
@@ -79,20 +67,60 @@ export default function MissionItemsTableRow({
         <Select
           data={getAvailableCommands()}
           value={missionItemData.command.toString()}
-          onChange={(value) => updateCommand(value)}
+          onChange={(value) =>
+            updateMissionItemData("command", parseInt(value))
+          }
         />
       </TableTd>
-      <TableTd>{missionItemData.param1}</TableTd>
-      <TableTd>{missionItemData.param2}</TableTd>
-      <TableTd>{missionItemData.param3}</TableTd>
-      <TableTd>{missionItemData.param4}</TableTd>
       <TableTd>
-        {intToCoord(missionItemData.x).toFixed(coordsFractionDigits)}
+        <NumberInput
+          value={missionItemData.param1}
+          onChange={(val) => updateMissionItemData("param1", val)}
+          hideControls
+        />
       </TableTd>
       <TableTd>
-        {intToCoord(missionItemData.y).toFixed(coordsFractionDigits)}
+        <NumberInput
+          value={missionItemData.param3}
+          onChange={(val) => updateMissionItemData("param3", val)}
+          hideControls
+        />
       </TableTd>
-      <TableTd>{missionItemData.z}</TableTd>
+      <TableTd>
+        <NumberInput
+          value={missionItemData.param3}
+          onChange={(val) => updateMissionItemData("param3", val)}
+          hideControls
+        />
+      </TableTd>
+      <TableTd>
+        <NumberInput
+          value={missionItemData.param4}
+          onChange={(val) => updateMissionItemData("param4", val)}
+          hideControls
+        />
+      </TableTd>
+      <TableTd>
+        <NumberInput
+          value={intToCoord(missionItemData.x).toFixed(coordsFractionDigits)}
+          onChange={(val) => updateMissionItemData("x", coordToInt(val))}
+          hideControls
+        />
+      </TableTd>
+      <TableTd>
+        <NumberInput
+          value={intToCoord(missionItemData.y).toFixed(coordsFractionDigits)}
+          onChange={(val) => updateMissionItemData("y", coordToInt(val))}
+          hideControls
+        />
+      </TableTd>
+      <TableTd>
+        <NumberInput
+          value={missionItemData.z}
+          onChange={(val) => updateMissionItemData("z", val)}
+          hideControls
+        />
+      </TableTd>
       <TableTd>{getFrameName(missionItemData.frame)}</TableTd>
     </TableTr>
   )

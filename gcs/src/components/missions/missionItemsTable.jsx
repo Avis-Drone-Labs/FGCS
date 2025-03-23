@@ -7,7 +7,6 @@ function MissionItemsTableNonMemo({
   aircraftType,
   updateMissionItem,
 }) {
-  console.log("render")
   return (
     <Table striped withTableBorder withColumnBorders>
       <Table.Thead>

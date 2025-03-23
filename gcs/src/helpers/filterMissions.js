@@ -1,10 +1,22 @@
 import { FILTER_MISSION_ITEM_COMMANDS_LIST } from "./mavlinkConstants"
 
 export function filterMissionItems(missionItems) {
-  return missionItems.filter(
-    (missionItem) =>
+  const filteredMissionItems = []
+
+  for (const missionItem of missionItems) {
+    if (
       !Object.values(FILTER_MISSION_ITEM_COMMANDS_LIST).includes(
         missionItem.command,
-      ),
-  )
+      ) &&
+      !(
+        [17, 18, 19].includes(missionItem.command) &&
+        missionItem.x === 0 &&
+        missionItem.y === 0
+      )
+    ) {
+      filteredMissionItems.push(missionItem)
+    }
+  }
+
+  return filteredMissionItems
 }

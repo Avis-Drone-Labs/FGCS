@@ -21,7 +21,10 @@ import {
   MAV_AUTOPILOT_INVALID,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
-import { showErrorNotification } from "./helpers/notification"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "./helpers/notification"
 import { socket } from "./helpers/socket"
 
 const coordsFractionDigits = 7
@@ -105,13 +108,24 @@ export default function Missions() {
     })
 
     socket.on("current_mission", (data) => {
-      const missionItemsWithIds = []
-      for (let missionItem of data.mission_items) {
-        missionItemsWithIds.push(addIdToMissionItem(missionItem))
+      if (!data.success) {
+        showErrorNotification(data.message)
+        return
       }
-      setMissionItems(missionItemsWithIds)
-      setFenceItems(data.fence_items)
-      setRallyItems(data.rally_items)
+
+      if (data.mission_type === "mission") {
+        const missionItemsWithIds = []
+        for (let missionItem of data.items) {
+          missionItemsWithIds.push(addIdToMissionItem(missionItem))
+        }
+        setMissionItems(missionItemsWithIds)
+      } else if (data.mission_type === "fence") {
+        setFenceItems(data.items)
+      } else if (data.mission_type === "rally") {
+        setRallyItems(data.items)
+      }
+
+      showSuccessNotification(`${data.mission_type} read successfully`)
     })
 
     return () => {
@@ -120,6 +134,10 @@ export default function Missions() {
       socket.off("current_mission")
     }
   }, [connected])
+
+  useEffect(() => {
+    console.log(missionItems)
+  }, [missionItems])
 
   function getFlightMode() {
     if (aircraftType === 1) {
@@ -138,9 +156,20 @@ export default function Missions() {
     return missionItem
   }
 
+  function updateMissionItem(updatedMissionItem) {
+    console.log(updatedMissionItem)
+    setMissionItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === updatedMissionItem.id
+          ? { ...item, ...updatedMissionItem }
+          : item,
+      ),
+    )
+  }
+
   function readMissionFromDrone() {
     setMissionItems([])
-    socket.emit("get_current_mission")
+    socket.emit("get_current_mission", { type: activeTab })
   }
 
   function writeMissionToDrone() {
@@ -181,7 +210,7 @@ export default function Missions() {
                   disabled={!connected}
                   className="grow"
                 >
-                  Read
+                  Read {activeTab}
                 </Button>
                 <Button
                   onClick={() => {
@@ -191,15 +220,6 @@ export default function Missions() {
                   className="grow"
                 >
                   Write {activeTab}
-                </Button>
-                <Button
-                  onClick={() => {
-                    writeMissionToDrone()
-                  }}
-                  disabled={!connected}
-                  className="grow"
-                >
-                  Write all
                 </Button>
               </div>
 
@@ -284,6 +304,7 @@ export default function Missions() {
                   <MissionItemsTable
                     missionItems={missionItems}
                     aircraftType={aircraftType}
+                    updateMissionItem={updateMissionItem}
                   />
                 </Tabs.Panel>
               </Tabs>

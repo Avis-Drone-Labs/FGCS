@@ -46,9 +46,37 @@ class MissionController:
             }
         return {"success": True}
 
-    def getCurrentMission(self) -> Response:
+    def getCurrentMission(self, mission_type: int) -> Response:
         """
-        Get the current mission from the drone.
+        Get the current mission of a specific type from the drone.
+        """
+        mission_type_check = self._checkMissionType(mission_type)
+        if not mission_type_check.get("success"):
+            return mission_type_check
+
+        failure_message = "Could not get current mission"
+
+        try:
+            mission_items = self.getMissionItems(mission_type=mission_type)
+            if not mission_items.get("success"):
+                return {
+                    "success": False,
+                    "message": mission_items.get("message", failure_message),
+                }
+
+            return {
+                "success": True,
+                "data": [item.to_dict() for item in mission_items.get("data", [])],
+            }
+        except serial.serialutil.SerialException:
+            return {
+                "success": False,
+                "message": f"{failure_message}, serial exception",
+            }
+
+    def getCurrentMissionAll(self) -> Response:
+        """
+        Get the current mission, fence and rally from the drone.
         """
         mission_items: List[Any] = []
         fence_items: List[Any] = []

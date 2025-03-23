@@ -189,7 +189,7 @@ export default function Dashboard() {
     } else {
       socket.emit("set_state", { state: "dashboard" })
       socket.emit("get_home_position")
-      socket.emit("get_current_mission")
+      socket.emit("get_current_mission_all")
     }
 
     socket.on("incoming_msg", (msg) => {
@@ -225,7 +225,7 @@ export default function Dashboard() {
       }
     })
 
-    socket.on("current_mission", (msg) => {
+    socket.on("current_mission_all", (msg) => {
       setMissionItems(msg)
     })
 

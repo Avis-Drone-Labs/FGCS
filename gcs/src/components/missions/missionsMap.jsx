@@ -313,6 +313,7 @@ function MapSectionNonMemo({
     </div>
   )
 }
+
 function propsAreEqual(prev, next) {
   return JSON.stringify(prev) === JSON.stringify(next)
 }

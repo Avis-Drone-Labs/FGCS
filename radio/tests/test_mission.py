@@ -7,7 +7,7 @@ from .helpers import NoDrone
 @falcon_test(pass_drone_status=True)
 def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "params"
-    socketio_client.emit("get_current_mission")
+    socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
     assert socketio_result["name"] == "params_error"  # Correct name emitted
@@ -21,7 +21,7 @@ def test_getCurrentMission_correctState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "dashboard"
-    socketio_client.emit("get_current_mission")
+    socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
     assert socketio_result["name"] == "current_mission"  # Correct name emitted
@@ -186,7 +186,7 @@ def test_getCurrentMission_noDroneConnection(
     droneStatus.state = "dashboard"
 
     with NoDrone():
-        socketio_client.emit("get_current_mission")
+        socketio_client.emit("get_current_mission_all")
         socketio_result = socketio_client.get_received()[0]
 
         assert socketio_result["name"] == "connection_error"  # Correct name emitted

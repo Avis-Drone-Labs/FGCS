@@ -13,13 +13,12 @@ import { v4 as uuidv4 } from "uuid"
 // Custom component and helpers
 import { Button, Divider, Tabs } from "@mantine/core"
 import Layout from "./components/layout"
+import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
 import { intToCoord } from "./helpers/dataFormatters"
 import {
-  COPTER_MISSION_ITEM_COMMANDS_LIST,
   COPTER_MODES_FLIGHT_MODE_MAP,
   MAV_AUTOPILOT_INVALID,
-  PLANE_MISSION_ITEM_COMMANDS_LIST,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
 import { showErrorNotification } from "./helpers/notification"
@@ -128,28 +127,6 @@ export default function Missions() {
     }
 
     return "UNKNOWN"
-  }
-
-  function getCommandName(commandId) {
-    function getKeyByValue(object, value) {
-      return Object.keys(object).find((key) => object[key] === value)
-    }
-
-    var commandName = "UNKNOWN"
-
-    if (aircraftType === 1) {
-      commandName = getKeyByValue(PLANE_MISSION_ITEM_COMMANDS_LIST, commandId)
-    } else if (aircraftType === 2) {
-      commandName = getKeyByValue(COPTER_MISSION_ITEM_COMMANDS_LIST, commandId)
-    }
-
-    if (commandName.startsWith("MAV_CMD_NAV_")) {
-      commandName = commandName.replace("MAV_CMD_NAV_", "")
-    } else if (commandName.startsWith("MAV_CMD_")) {
-      commandName = commandName.replace("MAV_CMD_", "")
-    }
-
-    return commandName
   }
 
   function addIdToMissionItem(missionItem) {
@@ -275,7 +252,7 @@ export default function Missions() {
             {/* Resizable Bottom Bar */}
             <ResizableBox
               width={Infinity}
-              height={200}
+              height={300}
               minConstraints={[Infinity, 100]}
               maxConstraints={[Infinity, 400]}
               resizeHandles={["n"]}
@@ -293,37 +270,10 @@ export default function Missions() {
                 </Tabs.List>
 
                 <Tabs.Panel value="mission">
-                  {missionItems.map((missionItem, idx) => {
-                    // Skip home location
-                    if (
-                      missionItem.command === 16 &&
-                      missionItem.frame === 0 &&
-                      missionItem.mission_type === 0
-                    ) {
-                      return null
-                    }
-
-                    return (
-                      <div key={missionItem.id} className="flex gap-2">
-                        <p>{idx}</p>
-                        <p>
-                          Latitude:{" "}
-                          {intToCoord(missionItem.x).toFixed(
-                            coordsFractionDigits,
-                          )}
-                        </p>
-                        <p>
-                          Longitude:{" "}
-                          {intToCoord(missionItem.y).toFixed(
-                            coordsFractionDigits,
-                          )}
-                        </p>
-                        <p>Altitude: {missionItem.z} m</p>
-                        <p>Command: {getCommandName(missionItem.command)}</p>
-                        <p>Frame: {missionItem.frame}</p>
-                      </div>
-                    )
-                  })}
+                  <MissionItemsTable
+                    missionItems={missionItems}
+                    aircraftType={aircraftType}
+                  />
                 </Tabs.Panel>
               </Tabs>
             </ResizableBox>

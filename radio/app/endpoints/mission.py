@@ -27,22 +27,14 @@ def getCurrentMission() -> None:
     if not droneStatus.drone:
         return notConnectedError(action="get current mission")
 
-    mission_items = [
-        item.to_dict() for item in droneStatus.drone.missionController.mission_items
-    ]
-    fence_items = [
-        item.to_dict() for item in droneStatus.drone.missionController.fence_items
-    ]
-    rally_items = [
-        item.to_dict() for item in droneStatus.drone.missionController.rally_items
-    ]
+    result = droneStatus.drone.missionController.getCurrentMission()
 
     socketio.emit(
         "current_mission",
         {
-            "mission_items": mission_items,
-            "fence_items": fence_items,
-            "rally_items": rally_items,
+            "mission_items": result.get("data").get("mission_items"),
+            "fence_items": result.get("data").get("fence_items"),
+            "rally_items": result.get("data").get("rally_items"),
         },
     )
 

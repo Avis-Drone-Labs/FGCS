@@ -28,9 +28,6 @@ class MissionController:
 
         self.drone = drone
 
-        self.mission_items: List[Any] = []
-        self.fence_items: List[Any] = []
-        self.rally_items: List[Any] = []
         self.missionLoader = mavwp.MAVWPLoader(
             target_system=drone.target_system, target_component=drone.target_component
         )
@@ -41,27 +38,6 @@ class MissionController:
             target_system=drone.target_system, target_component=drone.target_component
         )
 
-        mission_items = self.getMissionItems(mission_type=TYPE_MISSION)
-        if not mission_items.get("success"):
-            self.drone.logger.warning(mission_items.get("message"))
-            return
-        else:
-            self.mission_items = mission_items.get("data", [])
-
-        fence_items = self.getMissionItems(mission_type=TYPE_FENCE)
-        if not fence_items.get("success"):
-            self.drone.logger.warning(fence_items.get("message"))
-            return
-        else:
-            self.fence_items = fence_items.get("data", [])
-
-        rally_items = self.getMissionItems(mission_type=TYPE_RALLY)
-        if not rally_items.get("success"):
-            self.drone.logger.warning(rally_items.get("message"))
-            return
-        else:
-            self.rally_items = rally_items.get("data", [])
-
     def _checkMissionType(self, mission_type: int) -> Response:
         if mission_type not in MISSION_TYPES:
             return {
@@ -69,6 +45,41 @@ class MissionController:
                 "message": f"Invalid mission type {mission_type}. Must be one of {MISSION_TYPES}",
             }
         return {"success": True}
+
+    def getCurrentMission(self) -> Response:
+        """
+        Get the current mission from the drone.
+        """
+        mission_items: List[Any] = []
+        fence_items: List[Any] = []
+        rally_items: List[Any] = []
+
+        _mission_items = self.getMissionItems(mission_type=TYPE_MISSION)
+        if not _mission_items.get("success"):
+            self.drone.logger.warning(_mission_items.get("message"))
+        else:
+            mission_items = _mission_items.get("data", [])
+
+        _fence_items = self.getMissionItems(mission_type=TYPE_FENCE)
+        if not _fence_items.get("success"):
+            self.drone.logger.warning(_fence_items.get("message"))
+        else:
+            fence_items = _fence_items.get("data", [])
+
+        _rally_items = self.getMissionItems(mission_type=TYPE_RALLY)
+        if not _rally_items.get("success"):
+            self.drone.logger.warning(_rally_items.get("message"))
+        else:
+            rally_items = _rally_items.get("data", [])
+
+        return {
+            "success": True,
+            "data": {
+                "mission_items": [item.to_dict() for item in mission_items],
+                "fence_items": [item.to_dict() for item in fence_items],
+                "rally_items": [item.to_dict() for item in rally_items],
+            },
+        }
 
     def getMissionItems(self, mission_type: int) -> Response:
         """
@@ -90,6 +101,8 @@ class MissionController:
         else:
             loader = self.rallyLoader
 
+        self.drone.is_listening = False
+
         try:
             self.drone.master.mav.mission_request_list_send(
                 self.drone.target_system,
@@ -97,6 +110,7 @@ class MissionController:
                 mission_type=mission_type,
             )
         except TypeError:
+            self.drone.is_listening = True
             # TypeError is raised if mavlink V1 is used where the mission_request_list_send
             # function does not have a mission_type parameter
             return {
@@ -113,6 +127,8 @@ class MissionController:
                 timeout=1.5,
             )
             if response:
+                loader.clear()
+                self.drone.is_listening = True
                 for i in range(0, response.count):
                     item_response = self.getItemDetails(i, mission_type=mission_type)
                     if not item_response.get("success"):
@@ -132,12 +148,14 @@ class MissionController:
                 }
 
             else:
+                self.drone.is_listening = True
                 return {
                     "success": False,
                     "message": failure_message,
                 }
 
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",
@@ -162,6 +180,8 @@ class MissionController:
             f"Failed to get mission item {item_number} for mission type {mission_type}"
         )
 
+        self.drone.is_listening = False
+
         self.drone.master.mav.mission_request_int_send(
             self.drone.target_system,
             mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
@@ -176,6 +196,8 @@ class MissionController:
                 timeout=1.5,
             )
 
+            self.drone.is_listening = True
+
             if response:
                 return {
                     "success": True,
@@ -189,6 +211,7 @@ class MissionController:
                 }
 
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",

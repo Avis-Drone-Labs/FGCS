@@ -192,7 +192,7 @@ export default function Graphs() {
           />
         </div>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected tab="graphs" />
       )}
     </Layout>
   )

@@ -192,7 +192,7 @@ export default function Graphs() {
           />
         </div>
       ) : (
-        <NoDroneConnected pageName={"graphs"} />
+        <NoDroneConnected />
       )}
     </Layout>
   )

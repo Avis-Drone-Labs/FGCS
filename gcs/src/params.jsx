@@ -259,7 +259,7 @@ export default function Params() {
           )}
         </>
       ) : (
-        <NoDroneConnected pageName={"params"} />
+        <NoDroneConnected />
       )}
     </Layout>
   )

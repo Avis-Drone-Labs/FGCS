@@ -129,7 +129,7 @@ export default function Config() {
           </Tabs>
         </div>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected tab="config" />
       )}
     </Layout>
   )

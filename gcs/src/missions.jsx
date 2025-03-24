@@ -270,6 +270,7 @@ export default function Missions() {
                 }}
                 homePosition={homePosition}
                 getFlightMode={getFlightMode}
+                markerDragEndCallback={updateMissionItem}
                 mapId="missions"
               />
             </div>

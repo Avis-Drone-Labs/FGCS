@@ -50,7 +50,6 @@ function MissionItemsTableNonMemo({
 }
 
 function propsAreEqual(prev, next) {
-  // console.log(prev, next)
   return JSON.stringify(prev) === JSON.stringify(next)
 }
 const MissionItemsTable = React.memo(MissionItemsTableNonMemo, propsAreEqual)

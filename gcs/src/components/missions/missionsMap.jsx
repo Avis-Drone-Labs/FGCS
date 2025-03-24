@@ -50,6 +50,7 @@ function MapSectionNonMemo({
   homePosition,
   onDragstart,
   getFlightMode,
+  markerDragEndCallback,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -79,6 +80,9 @@ function MapSectionNonMemo({
   })
   const previousHomePositionValue = usePrevious(homePosition)
 
+  const [missionItemsList, setMissionItemsList] = useState(
+    missionItems.mission_items,
+  )
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
@@ -107,7 +111,11 @@ function MapSectionNonMemo({
   }, [data])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItemsList))
+  }, [missionItemsList])
+
+  useEffect(() => {
+    setMissionItemsList(missionItems.mission_items)
   }, [missionItems])
 
   useEffect(() => {
@@ -204,7 +212,11 @@ function MapSectionNonMemo({
             />
           )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems
+          missionItems={missionItemsList}
+          editable={true}
+          dragEndCallback={markerDragEndCallback}
+        />
 
         {/* Show mission geo-fence MARKERS */}
         {missionItems.fence_items.map((item, index) => {

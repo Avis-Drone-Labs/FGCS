@@ -18,6 +18,10 @@ export default function MissionItemsTableRow({
   const [missionItemData, setMissionItemData] = useState(missionItem)
 
   useEffect(() => {
+    setMissionItemData(missionItem)
+  }, [missionItem])
+
+  useEffect(() => {
     updateMissionItem(missionItemData)
   }, [missionItemData])
 

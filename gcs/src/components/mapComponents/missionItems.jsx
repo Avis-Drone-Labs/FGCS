@@ -17,15 +17,32 @@ import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
 // Tailing styling
+import { useEffect, useState } from "react"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function MissionItems({ missionItems }) {
-  const filteredMissionItems = filterMissionItems(missionItems)
-  const filteredMissionItemsCount = filteredMissionItems.length
+export default function MissionItems({
+  missionItems,
+  editable = false,
+  dragEndCallback = () => {},
+}) {
+  const [filteredMissionItems, setFilteredMissionItems] = useState(
+    filterMissionItems(missionItems),
+  )
+  const [listOfLineCoords, setListOfLineCoords] = useState([])
 
-  function getListOfLineCoordinates() {
+  useEffect(() => {
+    setFilteredMissionItems(filterMissionItems(missionItems))
+  }, [missionItems])
+
+  useEffect(() => {
+    setListOfLineCoords(getListOfLineCoordinates(filteredMissionItems))
+  }, [filteredMissionItems])
+
+  function getListOfLineCoordinates(filteredMissionItems) {
+    if (filteredMissionItems.length === 0) return []
+
     const lineCoordsList = []
 
     filteredMissionItems.forEach((item) => {
@@ -35,7 +52,7 @@ export default function MissionItems({ missionItems }) {
     // Join the last item to first item if aircraft does not land
     if (
       ![21, 189].includes(
-        filteredMissionItems[filteredMissionItemsCount - 1].command,
+        filteredMissionItems[filteredMissionItems.length - 1].command,
       )
     ) {
       lineCoordsList.push([
@@ -73,22 +90,23 @@ export default function MissionItems({ missionItems }) {
         return (
           <MarkerPin
             key={index}
+            id={item.id}
             lat={intToCoord(item.x)}
             lon={intToCoord(item.y)}
             colour={tailwindColors.yellow[400]}
             text={item.seq}
             tooltipText={item.z ? `Alt: ${item.z}` : null}
+            draggable={editable}
+            dragEndCallback={dragEndCallback}
           />
         )
       })}
 
       {/* Show mission item outlines */}
-      {missionItems.length > 0 && (
-        <DrawLineCoordinates
-          coordinates={getListOfLineCoordinates()}
-          colour={tailwindColors.yellow[400]}
-        />
-      )}
+      <DrawLineCoordinates
+        coordinates={listOfLineCoords}
+        colour={tailwindColors.yellow[400]}
+      />
     </>
   )
 }

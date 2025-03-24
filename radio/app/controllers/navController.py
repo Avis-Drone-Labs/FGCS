@@ -38,7 +38,7 @@ class NavController:
             self.drone.is_listening = True
 
             if response:
-                self.drone.logger.info("Home position received")
+                self.drone.logger.info(f"Home position received, {response}")
 
                 home_position = {
                     "lat": response.latitude,
@@ -52,12 +52,14 @@ class NavController:
                     "data": home_position,
                 }
             else:
+                self.drone.logger.warning("Could not get home position")
                 return {
                     "success": False,
                     "message": "Could not get home position",
                 }
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
+            self.drone.logger.warning("Could not get home position, serial exception")
             return {
                 "success": False,
                 "message": "Could not get home position, serial exception",

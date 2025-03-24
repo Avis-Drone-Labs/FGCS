@@ -141,9 +141,12 @@ class MissionController:
             self.drone.is_listening = True
             # TypeError is raised if mavlink V1 is used where the mission_request_list_send
             # function does not have a mission_type parameter
+            self.drone.logger.error(
+                "Failed to request mission list from autopilot, got type error"
+            )
             return {
                 "success": False,
-                "message": failure_message,
+                "message": "Failed to request mission list from autopilot, got type error",
             }
 
         try:
@@ -152,31 +155,59 @@ class MissionController:
                     "MISSION_COUNT",
                 ],
                 blocking=True,
-                timeout=1.5,
+                timeout=2,
             )
             if response:
+                if response.mission_type != mission_type:
+                    self.drone.logger.error(
+                        f"Received response with wrong mission type {response.mission_type}, expected {mission_type}"
+                    )
+                    return {
+                        "success": False,
+                        "message": f"Received response with wrong mission type {response.mission_type}, expected {mission_type}",
+                    }
+                self.drone.logger.debug(
+                    f"Got response for mission count of {response.count} for mission type {response.mission_type}"
+                )
                 loader.clear()
                 self.drone.is_listening = True
                 for i in range(0, response.count):
-                    item_response = self.getItemDetails(i, mission_type=mission_type)
-                    if not item_response.get("success"):
+                    retry_count = 0
+                    while retry_count < 3:
+                        item_response = self.getItemDetails(
+                            i, mission_type, response.count
+                        )
+                        if not item_response.get("success"):
+                            retry_count += 1
+                            self.drone.logger.warning(
+                                f"Failed to get item details for mission item {i} for mission type {mission_type}, retry count {retry_count}/3"
+                            )
+                            continue
+
+                        item_response_data = item_response.get("data", None)
+
+                        if item_response_data:
+                            loader.add(item_response_data)
+                            break
+                        else:
+                            self.drone.logger.warning(
+                                f"Failed to get item details for mission item {i} for mission type {mission_type}"
+                            )
+                            continue
+                    else:
                         return {
                             "success": False,
                             "message": item_response.get("message", failure_message),
                         }
-
-                    item_response_data = item_response.get("data", None)
-
-                    if item_response_data:
-                        loader.add(item_response_data)
-
                 return {
                     "success": True,
                     "data": loader.wpoints,
                 }
-
             else:
                 self.drone.is_listening = True
+                self.drone.logger.error(
+                    f"No response received for mission count for mission type {mission_type}."
+                )
                 return {
                     "success": False,
                     "message": failure_message,
@@ -189,13 +220,16 @@ class MissionController:
                 "message": f"{failure_message}, serial exception",
             }
 
-    def getItemDetails(self, item_number: int, mission_type: int) -> Response:
+    def getItemDetails(
+        self, item_number: int, mission_type: int, mission_count: int
+    ) -> Response:
         """
         Get the details of a specific mission item.
 
         Args:
             item_number (int): The number of the mission item to get
-            mission_type (int): The type of mission to get. 0=Mission,1=Fence,2=Rally.
+            mission_type (int): The type of mission to get. 0=Mission,1=Fence,2=Rally
+            mission_count (int): The total count of mission items for the mission type, used just for logging
 
         Returns:
             Dict: The details of the mission item
@@ -204,9 +238,7 @@ class MissionController:
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        failure_message = (
-            f"Failed to get mission item {item_number} for mission type {mission_type}"
-        )
+        failure_message = f"Failed to get mission item {item_number}/{mission_count} for mission type {mission_type}"
 
         self.drone.is_listening = False
 
@@ -227,12 +259,18 @@ class MissionController:
             self.drone.is_listening = True
 
             if response:
+                self.drone.logger.debug(
+                    f"Got response for mission item {item_number}/{mission_count} for mission type {mission_type}"
+                )
                 return {
                     "success": True,
                     "data": response,
                 }
 
             else:
+                self.drone.logger.error(
+                    f"Got no response for mission item {item_number}/{mission_count} for mission type {mission_type}"
+                )
                 return {
                     "success": False,
                     "message": failure_message,
@@ -240,6 +278,9 @@ class MissionController:
 
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
+            self.drone.logger.error(
+                f"Got no response for mission item {item_number}/{mission_count}, serial exception"
+            )
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",

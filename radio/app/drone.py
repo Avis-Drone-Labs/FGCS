@@ -133,14 +133,16 @@ class Drone:
         self.sendConnectionStatusUpdate("Received heartbeat")
 
         self.aircraft_type = initial_heartbeat.type
-        if self.aircraft_type not in (1, 2):
-            self.logger.error("Aircraft not plane or quadcopter")
+        if self.aircraft_type not in (1, 2, 27):
+            self.logger.error(
+                f"Aircraft not plane or quadcopter, got type {self.aircraft_type}"
+            )
             self.master.close()
             self.master = None
-            self.connectionError = (
-                "Could not connect to the drone. Aircraft not plane or quadcopter."
-            )
+            self.connectionError = f"Could not connect to the drone. Aircraft not plane or quadcopter, got type {self.aircraft_type}"
             return
+
+        self.logger.info(f"Connected to aircraft of type {self.aircraft_type}")
 
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system

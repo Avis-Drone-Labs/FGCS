@@ -19,9 +19,9 @@ import GraphPanel from "./components/graphs/graphPanel.jsx"
 import MessageSelector from "./components/graphs/messageSelector.jsx"
 import Layout from "./components/layout"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
-import { socket } from "./helpers/socket"
-import { graphOptions } from "./helpers/realTimeGraphOptions.js"
 import { dataFormatters } from "./helpers/dataFormatters.js"
+import { graphOptions } from "./helpers/realTimeGraphOptions.js"
+import { socket } from "./helpers/socket"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -192,7 +192,7 @@ export default function Graphs() {
           />
         </div>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected pageName={"graphs"} />
       )}
     </Layout>
   )

@@ -233,7 +233,6 @@ export default function Navbar({ currentPage }) {
   }
 
   function disconnect() {
-    console.log("disconnect")
     socket.emit("disconnect_from_drone")
   }
 

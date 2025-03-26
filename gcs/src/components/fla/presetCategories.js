@@ -59,7 +59,7 @@ const dataflashPresetCategories = [
     filters: [
       {
         name: "Battery Voltage vs Current",
-        filters: { BATT: ["Volt", "Curr"] },
+        filters: { BAT: ["Volt", "Curr"] },
         aircraftType: ["copter", "plane", "quadplane"],
       },
     ],

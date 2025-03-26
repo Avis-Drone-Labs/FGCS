@@ -5,6 +5,7 @@
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
+import { centerOfMass, polygon } from "@turf/turf"
 import {
   IconAnchor,
   IconAnchorOff,
@@ -12,6 +13,7 @@ import {
   IconMapPins,
   IconSun,
   IconSunOff,
+  IconHome,
 } from "@tabler/icons-react"
 
 // Helper Functions
@@ -58,6 +60,24 @@ export default function FloatingToolbar({
     setFollowDrone(false)
   }
 
+  function centerMapOnMission() {
+    if (filteredMissionItems.length > 0) {
+      let points = filteredMissionItems.map((item) => [
+        item.x * 1e-7,
+        item.y * 1e-7,
+      ])
+      points.push(points[0]) // Close the polygon
+      let geo = polygon([points])
+      let center = centerOfMass(geo).geometry.coordinates
+      let lat = parseFloat(center[0])
+      let lon = parseFloat(center[1])
+      mapRef.current.getMap().flyTo({
+        center: [lon, lat],
+      })
+    }
+    setFollowDrone(false)
+  }
+
   return (
     <div
       className="absolute -translate-y-1/2 right-0 top-1/2 py-4 px-2 rounded-tl-md rounded-bl-md flex flex-col gap-2 z-30"
@@ -95,7 +115,7 @@ export default function FloatingToolbar({
         </ActionIcon>
       </Tooltip>
 
-      {/* Center Map on first mission item */}
+      {/* Center Map on mission */}
       <Tooltip
         label={
           !filteredMissionItems.length > 0 ? "No mission" : "Center on mission"
@@ -103,7 +123,7 @@ export default function FloatingToolbar({
       >
         <ActionIcon
           disabled={filteredMissionItems.length <= 0}
-          onClick={centerMapOnFirstMissionItem}
+          onClick={centerMapOnMission}
         >
           <IconMapPins />
         </ActionIcon>

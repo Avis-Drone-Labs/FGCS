@@ -7,8 +7,9 @@ import React from "react"
 
 // 3rd Party Imports
 import { Button } from "@mantine/core"
+import { CodeHighlight } from '@mantine/code-highlight'
 
-export function ErrorComponent() {
+export default function ErrorBoundaryFallback({ error }) {
   return (
     <div className="flex flex-col w-full h-full items-center justify-center text-center text-xl gap-y-2">
       <h1 className="font-bold text-4xl text-falconred-700">
@@ -28,6 +29,26 @@ export function ErrorComponent() {
           so we can fix it as soon as possible!
         </p>
         <p>To get back to what you were doing, refresh or click below.</p>
+
+        <p
+          className="pt-2 text-sm underline text-falconred-700 hover:cursor-pointer"
+          onClick={() => {
+            document.getElementById("stack-error").hidden =
+              !document.getElementById("stack-error").hidden
+          }}
+        >
+          Show stack log
+        </p>
+        <CodeHighlight
+          id="stack-error"
+          hidden={true}
+          block
+          className="!mt-4 !bg-falcongrey-900 !rounded-lg !text-center"
+          language="js"
+          copyLabel="Copy stacktrace"
+          copiedLabel="Copied!"
+          code={error.stack}
+        />
       </div>
 
       <Button
@@ -41,27 +62,4 @@ export function ErrorComponent() {
       </Button>
     </div>
   )
-}
-
-export class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.log(error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <ErrorComponent></ErrorComponent>
-    }
-
-    return this.props.children
-  }
 }

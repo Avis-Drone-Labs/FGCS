@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Event, Menu, MenuItemConstructorOptions, MessageBoxOptions, Rectangle, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -26,6 +26,7 @@ app.commandLine.appendSwitch('force-device-scale-factor', '1')
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
+let webcamPopoutWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -34,6 +35,8 @@ let pythonBackend: ChildProcessWithoutNullStreams | null = null
 function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
+
+// Settings logic
 
 interface Settings {
   version: string,
@@ -98,10 +101,68 @@ function getUserConfiguration(){
 ipcMain.handle("getSettings", () => {return getUserConfiguration(); })
 ipcMain.handle("setSettings", (_, settings) => {saveUserConfiguration(settings)})
 
+// Webcam popout window
+
+const MIN_WEBCAM_HEIGHT: number = 100
+const WEBCAM_TITLEBAR_HEIGHT: number = 28
+
+// Disable unused vars because they are needed for TS function type
+// eslint-disable-next-line no-unused-vars
+type ResizeCallback = (event: Event, arg1: Rectangle) => void;
+
+let currentResizeHandler: ResizeCallback | null = null
+
+function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
+
+  if (webcamPopoutWin === null) return;
+
+  webcamPopoutWin.loadURL("http://localhost:5173/#/webcam?deviceId=" + videoStreamId + "&deviceName=" + name);
+  webcamPopoutWin.setTitle(name);
+
+  // Remove previous resize handler
+  if (currentResizeHandler)
+    webcamPopoutWin.off("will-resize", currentResizeHandler)
+
+  // Create resize handler to maintain aspect ratio
+  currentResizeHandler = function(event, newBounds){
+    event.preventDefault();
+
+    const newWidth = newBounds.width;
+    const newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
+
+    webcamPopoutWin?.setBounds({
+      x: newBounds.x,
+      y: newBounds.y,
+      width: newWidth,
+      height: newHeight
+    });
+  }
+
+  webcamPopoutWin.on('will-resize', currentResizeHandler);
+
+  // Ensure initial size fits the aspect ratio ()
+  webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + WEBCAM_TITLEBAR_HEIGHT);
+
+  webcamPopoutWin.setMinimumSize(Math.round(aspect * (MIN_WEBCAM_HEIGHT-28)), MIN_WEBCAM_HEIGHT);
+  webcamPopoutWin.show();
+
+}
+
+function closeWebcamPopout(){
+  webcamPopoutWin?.hide()
+  webcamPopoutWin?.loadURL("http://localhost:5173/#/webcam")
+  win?.webContents.send("webcam-closed");
+}
+
+ipcMain.handle("openWebcamWindow", (_, videoStreamId, name, aspect) => {openWebcamPopout(videoStreamId, name, aspect)})
+ipcMain.handle("closeWebcamWindow", () => closeWebcamPopout())
+
+
 ipcMain.handle("isMac", () => { return process.platform == "darwin" })
 ipcMain.on('close', () => {closeWithBackend()})
 ipcMain.on('minimise', () => {getWindow()?.minimize()})
 ipcMain.on('maximise', () => {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
+
 ipcMain.on("reload", () => {getWindow()?.reload()})
 ipcMain.on("force_reload", () => {getWindow()?.webContents.reloadIgnoringCache()})
 ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTools()})
@@ -131,6 +192,25 @@ function createWindow() {
     titleBarStyle: 'hidden',
     frame: false,
   })
+
+  // Create webcam window keep it hidden to avoid delay between popping out windows
+  webcamPopoutWin = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    alwaysOnTop: true,
+    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
+    show: false,
+    title: "Webcam",
+    webPreferences: {
+      nodeIntegration: true,
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true
+    },
+    fullscreen: false,
+    fullscreenable: false,
+  });
+  webcamPopoutWin.loadURL("http://localhost:5173/#/webcam")
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -287,6 +367,8 @@ function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
+    webcamPopoutWin?.close()
+    webcamPopoutWin = null
   }
 
   console.log('Killing backend')
@@ -306,6 +388,7 @@ app.on('before-quit', () => {
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
   }
+  webcamPopoutWin?.close();
 });
 
 app.on('activate', () => {

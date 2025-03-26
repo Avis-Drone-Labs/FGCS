@@ -13,7 +13,6 @@ import {
   IconMapPins,
   IconSun,
   IconSunOff,
-  IconHome,
 } from "@tabler/icons-react"
 
 // Helper Functions
@@ -115,7 +114,7 @@ export default function FloatingToolbar({
         </ActionIcon>
       </Tooltip>
 
-      {/* Center Map on mission */}
+      {/* Center Map on full mission */}
       <Tooltip
         label={
           !filteredMissionItems.length > 0 ? "No mission" : "Center on mission"

@@ -1,10 +1,12 @@
 import os
+import time
+import sys
 import app.droneStatus as droneStatus
 from app import create_app, socketio
 from pathlib import Path
 from dotenv import load_dotenv
 
-app = create_app(debug=True)
+app = create_app(debug=False)
 
 if __name__ == "__main__":
     print("Loading dotenv.")

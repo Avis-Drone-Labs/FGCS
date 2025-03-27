@@ -727,7 +727,7 @@ class Drone:
             self.logger.debug("No logs to save")
         else:
             final_log_file = self.log_directory.joinpath(
-                f"{self.__getCurrentDateTimeStr()}.ftlog"
+                f"FGCS_DRONE_{self.__getCurrentDateTimeStr()}.ftlog"
             )
 
             try:
@@ -747,5 +747,5 @@ class Drone:
                 self.logger.error("Failed to save drone logs")
                 self.logger.error(e, exc_info=True)
 
-            self.logger.info(f"Saved drone logs to: {final_log_file}")
-        self.logger.debug("Closed connection to drone")
+            print(f"Saved drone logs to: {final_log_file}")
+        print("Closed connection to drone")

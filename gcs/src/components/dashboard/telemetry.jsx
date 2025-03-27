@@ -175,21 +175,25 @@ export default function TelemetrySection({
             {batteryData.map(battery => (
               <tr className="w-full" key={battery.id}>
                 <td className="px-4">BATTERY{battery.id}</td>
-                <td className="font-bold px-2 text-xl">
-                  {(battery.voltages
-                    ? battery.voltages[0] / 1000
-                    : 0
-                  ).toFixed(2)}
+                <td className="px-2 text-xl text-right">
+                  <span className="font-bold">
+                    {(battery.voltages
+                      ? battery.voltages[0] / 1000
+                      : 0
+                    ).toFixed(2)}
+                  </span>
                   V
                 </td>
-                <td className="font-bold px-2 text-xl">
-                  {(battery.current_battery
-                    ? battery.current_battery / 100
-                    : 0
-                  ).toFixed(2)}
+                <td className="px-2 text-xl text-right">
+                  <span className="font-bold">
+                    {(battery.current_battery
+                      ? battery.current_battery / 100
+                      : 0
+                    ).toFixed(2)}
+                  </span>
                   A
                 </td>
-                <td className="font-bold px-2 text-xl">
+                <td className="font-bold px-2 text-xl text-right">
                   {battery.battery_remaining ? battery.battery_remaining : 0}%
                 </td>
               </tr>

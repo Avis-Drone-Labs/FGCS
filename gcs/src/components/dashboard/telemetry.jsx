@@ -162,25 +162,30 @@ export default function TelemetrySection({
       <div className="flex flex-col items-center">
         <p>BATTERY</p>
 
-        <div className="flex flex-row space-x-4">
-          <p className="font-bold text-xl">
-            {(batteryData.voltages
-              ? batteryData.voltages[0] / 1000
-              : 0
-            ).toFixed(2)}
-            V
-          </p>
-          <p className="font-bold text-xl">
-            {(batteryData.current_battery
-              ? batteryData.current_battery / 100
-              : 0
-            ).toFixed(2)}
-            A
-          </p>
-          <p className="font-bold text-xl">
-            {batteryData.battery_remaining ? batteryData.battery_remaining : 0}%
-          </p>
-        </div>
+        {batteryData.map(battery => (
+          <div className="flex flex-row items-center justify-center gap-8 w-full" key={battery.id}>
+            <p>BATTERY{battery.id}</p>
+            <div className="flex flex-row space-x-4">
+              <p className="font-bold text-xl">
+                {(battery.voltages
+                  ? battery.voltages[0] / 1000
+                  : 0
+                ).toFixed(2)}
+                V
+              </p>
+              <p className="font-bold text-xl">
+                {(battery.current_battery
+                  ? battery.current_battery / 100
+                  : 0
+                ).toFixed(2)}
+                A
+              </p>
+              <p className="font-bold text-xl">
+                {battery.battery_remaining ? battery.battery_remaining : 0}%
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

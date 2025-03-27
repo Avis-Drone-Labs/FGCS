@@ -162,30 +162,40 @@ export default function TelemetrySection({
       <div className="flex flex-col items-center">
         <p>BATTERY</p>
 
-        {batteryData.map(battery => (
-          <div className="flex flex-row items-center justify-center gap-8 w-full" key={battery.id}>
-            <p>BATTERY{battery.id}</p>
-            <div className="flex flex-row space-x-4">
-              <p className="font-bold text-xl">
-                {(battery.voltages
-                  ? battery.voltages[0] / 1000
-                  : 0
-                ).toFixed(2)}
-                V
-              </p>
-              <p className="font-bold text-xl">
-                {(battery.current_battery
-                  ? battery.current_battery / 100
-                  : 0
-                ).toFixed(2)}
-                A
-              </p>
-              <p className="font-bold text-xl">
-                {battery.battery_remaining ? battery.battery_remaining : 0}%
-              </p>
-            </div>
-          </div>
-        ))}
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {batteryData.map(battery => (
+              <tr className="w-full" key={battery.id}>
+                <td className="px-4">BATTERY{battery.id}</td>
+                <td className="font-bold px-2 text-xl">
+                  {(battery.voltages
+                    ? battery.voltages[0] / 1000
+                    : 0
+                  ).toFixed(2)}
+                  V
+                </td>
+                <td className="font-bold px-2 text-xl">
+                  {(battery.current_battery
+                    ? battery.current_battery / 100
+                    : 0
+                  ).toFixed(2)}
+                  A
+                </td>
+                <td className="font-bold px-2 text-xl">
+                  {battery.battery_remaining ? battery.battery_remaining : 0}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

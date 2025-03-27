@@ -47,7 +47,7 @@ export default function TelemetrySection({
       </div>
 
       {/* Indicators */}
-      <div className="flex items-center flex-col justify-center justify-evenly @xl:flex-row">
+      <div className="flex items-center flex-col justify-evenly @xl:flex-row">
         {/* Attitude Indicator */}
         <div
           className="flex flex-row items-center justify-center"
@@ -158,7 +158,7 @@ export default function TelemetrySection({
         </div>
       </div>
 
-      {/* Batter information */}
+      {/* Battery information */}
       <div className="flex flex-col items-center">
         <p>BATTERY</p>
 

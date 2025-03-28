@@ -48,17 +48,6 @@ export default function FloatingToolbar({
     )
   }
 
-  // function centerMapOnFirstMissionItem() {
-  //   if (filteredMissionItems.length > 0) {
-  //     let lat = parseFloat(filteredMissionItems[0].x * 1e-7)
-  //     let lon = parseFloat(filteredMissionItems[0].y * 1e-7)
-  //     mapRef.current.getMap().flyTo({
-  //       center: [lon, lat],
-  //     })
-  //   }
-  //   setFollowDrone(false)
-  // }
-
   function centerMapOnMission() {
     if (filteredMissionItems.length > 0) {
       let points = filteredMissionItems.map((item) => [

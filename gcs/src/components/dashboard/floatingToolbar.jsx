@@ -131,7 +131,7 @@ export default function FloatingToolbar({
       </Tooltip>
 
       {/* Preflight checklist */}
-      <Tooltip
+      {/* <Tooltip
         label="Preflight Checklist"
       >
         <ActionIcon
@@ -139,7 +139,7 @@ export default function FloatingToolbar({
           <IconChecklist onClick={() => setPreflightModal(true)} />
         </ActionIcon>
       </Tooltip>
-      <PreFlightChecklist showModal={preflightModal} setShowModal={setPreflightModal} />
+      <PreFlightChecklist showModal={preflightModal} setShowModal={setPreflightModal} /> */}
     </div>
   )
 }

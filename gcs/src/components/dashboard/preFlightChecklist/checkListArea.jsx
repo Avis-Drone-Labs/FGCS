@@ -2,7 +2,7 @@
   The Checklist area, this can be edited.
 */
 
-import { Button, Checkbox, Textarea} from "@mantine/core"
+import { Button, Checkbox, Modal, Textarea, TextInput} from "@mantine/core"
 import { useEffect, useState } from "react"
 
 // Styling imports
@@ -10,8 +10,10 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function CheckListArea({items, saveItems}) {
+export default function CheckListArea({name, items, saveItems, deleteChecklist}) {
   const [editMode, setEditMode] = useState(false)
+  const [showDeleteModal, setDeleteModal] = useState(false)
+  const [checkListName, setChecklistName] = useState(name);
   const [checkBoxList, setCheckboxList] = useState(items)
   const [checkBoxListString, setCheckboxListString] = useState(generateCheckboxListString())
   const [mappedItems, setMappedItems] = useState(generateMappedItems())
@@ -74,16 +76,31 @@ export default function CheckListArea({items, saveItems}) {
         {mappedItems}
 
         <div className="flex w-full justify-between pt-2">
-          <a className="text-xs text-falcongrey-400 hover:underline hover:cursor-pointer" onClick={() => generateCheckboxList()}>Reset all checked</a>
-          <a className="text-xs text-falcongrey-400 hover:underline hover:cursor-pointer" onClick={() => setEditMode(true)}>Edit this checklist</a>
+          <a className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer" onClick={() => generateCheckboxList()}>Uncheck all</a>
+        </div>
+        <div className="flex w-full justify-between flex-row-reverse">
+          <a className="text-xs text-falconred-400 hover:underline hover:cursor-pointer" onClick={() => setDeleteModal(true)}>Delete this checklist</a>
+          <a className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer" onClick={() => setEditMode(true)}>Edit this checklist</a>
         </div>
       </div>
       
       {/* Edit mode */}
       <div className={`flex flex-col gap-2 ${editMode ? "" : "hidden"}`}>
-        <Textarea value={checkBoxListString} onChange={(e) => setCheckboxListString(e.currentTarget.value)}/>
+        {/* Inputs */}
+        <TextInput
+          label="Checklist Name"
+          value={checkListName}
+          onChange={(event) => setChecklistName(event.currentTarget.value)}
+        />
+        <TextInput 
+          label="Values"
+          description="The checklist items in a comma separated list"
+          value={checkBoxListString} 
+          onChange={(e) => setCheckboxListString(e.currentTarget.value)}
+        />
 
-        <div className="w-full flex justify-between">
+        {/* Controls */}
+        <div className="w-full flex justify-between pt-2">
           <Button 
             onClick={() => {setEditMode(false); generateCheckboxListString(true)}} 
             variant="filled"
@@ -102,6 +119,25 @@ export default function CheckListArea({items, saveItems}) {
           </Button>
         </div>
       </div>
+
+      {/* Generic "are you sure" modal */}
+      <Modal
+        opened={showDeleteModal}
+        onClose={() => setDeleteModal(false)}
+        title="Are you sure you want to delete this checklist?"
+        centered
+        styles={{
+          content: {
+            borderRadius: "0.5rem",
+          },
+        }}
+        withCloseButton={false}
+      >
+        <div className="flex w-full justify-between pt-4">
+          <Button color={tailwindColors.red[600]} onClick={() => setDeleteModal(false)}>No, cancel</Button>
+          <Button color={tailwindColors.green[600]} onClick={() => deleteChecklist()}>Yes, Continue</Button>
+        </div>
+      </Modal>
     </>
   )
 }

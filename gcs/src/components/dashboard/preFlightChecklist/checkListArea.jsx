@@ -8,10 +8,9 @@ import { useEffect, useState } from "react"
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
-import { elements } from "chart.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function CheckListArea({items}) {
+export default function CheckListArea({items, saveItems}) {
   const [editMode, setEditMode] = useState(false)
   const [checkBoxList, setCheckboxList] = useState(items)
   const [checkBoxListString, setCheckboxListString] = useState(generateCheckboxListString())
@@ -65,6 +64,7 @@ export default function CheckListArea({items}) {
 
   useEffect(() => {
     setMappedItems(generateMappedItems())
+    saveItems(checkBoxList)
   }, [checkBoxList])
 
   return (

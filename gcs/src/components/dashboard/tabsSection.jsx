@@ -4,7 +4,7 @@
 */
 
 // 3rd Party Imports
-import { Tabs } from "@mantine/core"
+import { ScrollArea, Tabs } from "@mantine/core"
 
 // Tab Componenents
 import CameraTabsSection from "./tabsSectionTabs/CameraTabsSection"
@@ -34,6 +34,7 @@ export default function TabsSection({
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
         <Tabs.Tab value="preFlightChecklist">Pre-Flight Checklist</Tabs.Tab>
       </Tabs.List>
+
       {/* Data */}
       <DataTabsSection
         tabPadding={tabPadding}

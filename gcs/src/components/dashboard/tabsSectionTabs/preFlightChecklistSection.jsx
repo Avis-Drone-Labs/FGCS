@@ -3,7 +3,7 @@
  * Contains the preflight checklist
  */
 
-import { Tabs, Accordion, Button, Modal, TextInput } from "@mantine/core";
+import { Tabs, Accordion, Button, Modal, TextInput, ScrollArea } from "@mantine/core";
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx";
 import { useLocalStorage } from "@mantine/hooks";
 
@@ -69,6 +69,8 @@ export default function PreFlightChecklistTab({tabPadding}) {
         </Accordion>
         {/* Controls */}
         <Button className="!w-full !mt-4" onClick={() => setNewChecklistModal(true)}>Add a new Checklist</Button>
+
+        {/* New checklist modal */}
         <Modal
           opened={showNewChecklistModal}
           onClose={() => setNewChecklistModal(false)}

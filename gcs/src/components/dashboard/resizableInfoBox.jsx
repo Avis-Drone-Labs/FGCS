@@ -34,7 +34,7 @@ export default function ResizableInfoBox(props) {
         }}
         className="h-full"
       >
-        <div className="@container flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto">
+        <div className="@container flex flex-col px-6 py-2 h-full gap-2 overflow-x-hidden overflow-y-auto pr-8">
           {props.children}
         </div>
       </ResizableBox>

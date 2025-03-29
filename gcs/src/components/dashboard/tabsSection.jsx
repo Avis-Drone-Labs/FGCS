@@ -27,12 +27,12 @@ export default function TabsSection({
 
   return (
     <Tabs defaultValue="data">
-      <Tabs.List grow>
+      <Tabs.List className="!overflow-x-scroll !flex-nowrap">
         <Tabs.Tab value="data">Data</Tabs.Tab>
         <Tabs.Tab value="actions">Actions</Tabs.Tab>
         <Tabs.Tab value="mission">Mission</Tabs.Tab>
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
-        <Tabs.Tab value="preFlightChecklist">Checklist</Tabs.Tab>
+        <Tabs.Tab value="preFlightChecklist">Pre-Flight Checklist</Tabs.Tab>
       </Tabs.List>
       {/* Data */}
       <DataTabsSection

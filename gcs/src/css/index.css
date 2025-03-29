@@ -48,15 +48,15 @@ body {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #1c2021;
+  background: #1C2021;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #d36565;
+  background: #727C7E;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #b43e31;
+  background: #535D5F;
 }

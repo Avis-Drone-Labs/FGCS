@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
+import { elements } from "chart.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function CheckListArea({items}) {
@@ -41,13 +42,23 @@ export default function CheckListArea({items}) {
       })
     })
     setCheckboxList(final)
-    console.log(final)
+  }
+
+  function setChecked(name, value) {
+    var final = []
+    checkBoxListString.split(/,\s|,/).map((element) => {
+      final.push({
+        "checked": element.trimStart() == name ? value : checkBoxList.find((e) => e.name == element.trimStart()).checked,
+        "name": element.trimStart()
+      })
+    })
+    setCheckboxList(final)
   }
 
   function generateMappedItems() {
     return (
       checkBoxList.map((element) => {
-        return <Checkbox defaultChecked={element.checked} key={element.name} label={element.name} />
+        return <Checkbox checked={element.checked} key={element.name} label={element.name} onChange={() => setChecked(element.name, !element.checked)}/>
       })
     )
   }

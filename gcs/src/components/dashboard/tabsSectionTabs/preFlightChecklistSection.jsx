@@ -49,7 +49,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
         value: [
           {
             checked: false,
-            name: "Click 'Edit this checklist' to add new values",
+            name: "Your first item, press edit to add more!",
           },
         ],
       })

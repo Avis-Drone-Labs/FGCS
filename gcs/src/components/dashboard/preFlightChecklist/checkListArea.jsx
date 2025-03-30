@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Button, Checkbox, Modal } from "@mantine/core"
+import { ActionIcon, Button, Checkbox, Modal, Tooltip } from "@mantine/core"
 
 // Local Imports
 import EditCheckList from "./checkListEdit.jsx"
@@ -14,6 +14,7 @@ import EditCheckList from "./checkListEdit.jsx"
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
+import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function CheckListArea({
@@ -31,6 +32,7 @@ export default function CheckListArea({
     generateCheckboxListString(),
   )
   const [mappedItems, setMappedItems] = useState(generateMappedItems())
+  const [lastToggleCheck, setLastToggleCheck] = useState(false);  // false = uncheck, true = check
 
   function generateCheckboxListString(set = false) {
     // Go from list to string, returns0
@@ -47,7 +49,7 @@ export default function CheckListArea({
     return final
   }
 
-  function generateCheckboxList() {
+  function generateCheckboxList(defaultCheck = false) {
     // Go from string to list, does not return
     console.log(checkBoxListString)
     var final = []
@@ -55,12 +57,20 @@ export default function CheckListArea({
       .split("<li><p>")
       .splice(1)
       .map((element) => {
-        final.push({
-          checked: false,
-          name: element.split("</p>")[0].trim(),
-        })
+        var text = element.split("</p>")[0].trim()
+        if (text !== "") {
+          final.push({
+            checked: defaultCheck,
+            name: element.split("</p>")[0].trim(),
+          })
+        }
       })
     setCheckboxList(final)
+  }
+
+  function toggleCheck() {
+    generateCheckboxList(lastToggleCheck)
+    setLastToggleCheck(!lastToggleCheck)
   }
 
   function setChecked(name, value) {
@@ -103,31 +113,30 @@ export default function CheckListArea({
     <>
       {/* Checkbox area */}
       <div className="flex flex-col gap-2">
-        {mappedItems}
+        <div className="flex w-full justify-between pb-2">
+          <div className="flex gap-1">
+            <Tooltip label="Toggle all checked/unchecked">
+              <ActionIcon variant="light" radius="md" onClick={() => toggleCheck()}>
+                <IconCheckbox style={{ width: '70%', height: '70%' }} stroke={1.5} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Edit list">
+              <ActionIcon variant="light" radius="md" onClick={() => setEditCheckListModal(true)}>
+                <IconEdit style={{ width: '70%', height: '70%' }} stroke={1.5} />
+              </ActionIcon>
+            </Tooltip>
+          </div>
 
-        <div className="flex w-full justify-between pt-2">
-          <a
-            className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer"
-            onClick={() => generateCheckboxList()}
-          >
-            Uncheck all
-          </a>
+          <Tooltip label="Delete list">
+            <ActionIcon variant="light" color="red" radius="md" onClick={() => setDeleteModal(true)}>
+              <IconTrashX style={{ width: '70%', height: '70%' }} stroke={1.5} />
+            </ActionIcon>
+          </Tooltip>
         </div>
-        <div className="flex w-full justify-between flex-row-reverse">
-          <a
-            className="text-xs text-falconred-400 hover:underline hover:cursor-pointer"
-            onClick={() => setDeleteModal(true)}
-          >
-            Delete this checklist
-          </a>
-          <a
-            className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer"
-            onClick={() => setEditCheckListModal(true)}
-          >
-            Edit this checklist
-          </a>
-        </div>
+
+        {mappedItems}
       </div>
+
 
       {/* Edit mode */}
       <EditCheckList

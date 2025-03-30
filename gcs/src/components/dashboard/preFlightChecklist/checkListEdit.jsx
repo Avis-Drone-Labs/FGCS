@@ -5,8 +5,10 @@
 // 3rd Party Imports
 import { Button, Modal, TextInput } from "@mantine/core"
 import { useEditor } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
+import BulletList from "@tiptap/extension-bullet-list"
+import ListItem from '@tiptap/extension-list-item'
 import { RichTextEditor } from "@mantine/tiptap"
+import { Node } from '@tiptap/core'
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -24,8 +26,31 @@ export default function EditCheckList({
   const [name, setName, finaliseName] = nameSet // Finalise changes it in the selected accordion (ik annoying...)
   const [checkboxList, setCheckboxList] = checkListSet
 
+  const Document = Node.create({
+    name: 'doc',
+    topNode: true,
+    content: 'list+',
+  })
+
+  const Paragraph = Node.create({
+    name: 'paragraph',
+    group: 'block',
+    content: 'inline*',
+    parseHTML() {
+      return [{ tag: 'p' }]
+    },
+    renderHTML({ HTMLAttributes }) {
+      return ['p', HTMLAttributes, 0]
+    },
+  })
+
+  const Text = Node.create({
+    name: 'text',
+    group: 'inline',
+  })
+
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [Document, Text, Paragraph, BulletList, ListItem],
     content: checkboxList,
     onUpdate: ({ editor }) => {
       setCheckboxList(editor.getHTML())
@@ -60,11 +85,14 @@ export default function EditCheckList({
           </h2>
         </div>
         <RichTextEditor editor={editor} classNames={{ content: "!list-disc" }}>
-          <RichTextEditor.Toolbar sticky stickyOffset={60}>
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.BulletList />
-            </RichTextEditor.ControlsGroup>
-          </RichTextEditor.Toolbar>
+          {/* 
+            Going to keep this for future use with code blocks, no need to delete.
+            <RichTextEditor.Toolbar sticky stickyOffset={60}>
+              <RichTextEditor.ControlsGroup>
+                <RichTextEditor.BulletList />
+              </RichTextEditor.ControlsGroup>
+            </RichTextEditor.Toolbar>
+          */}
 
           <RichTextEditor.Content />
         </RichTextEditor>

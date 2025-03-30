@@ -34,7 +34,7 @@ export default function PreFlightChecklistTab({tabPadding}) {
 
   function createNewChecklist() {
     if (newChecklistName !== "") {
-      preFlightChecklistItems.push({ "name": newChecklistName, "value": [ {"checked": false, "name": "Click 'Edit this checklist' to add new values"} ] })
+      preFlightChecklistItems.push({ "name": newChecklistName, "value": [ {"checked": false, "name": "<ul><li><p>Click 'Edit this checklist' to add new values</p></li></ul>"} ] })
       setPreFlightChecklistItems(preFlightChecklistItems)
       setOpenChecklist(newChecklistName)
       setNewChecklistModal(false)
@@ -55,6 +55,7 @@ export default function PreFlightChecklistTab({tabPadding}) {
           saveItems={(e) => { item.value = e; setPreFlightChecklistItems(preFlightChecklistItems) }} 
           deleteChecklist={() => deleteChecklist(item)}
           name={item.name}
+          setName={(e) => { item.name = e; setOpenChecklist(e) }}
         />
       </Accordion.Panel>
     </Accordion.Item>
@@ -63,7 +64,7 @@ export default function PreFlightChecklistTab({tabPadding}) {
   return (
     <Tabs.Panel value="preFlightChecklist">
       <div className={tabPadding}>
-        {/* List */}
+        {/* List, known issue of not opening the same list if name was changed but it's not worth it */}
         <Accordion variant="separated" defaultValue={openChecklist}>
           {items}
         </Accordion>

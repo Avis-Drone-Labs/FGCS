@@ -11,7 +11,7 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function CheckListArea({name, items, saveItems, deleteChecklist}) {
+export default function CheckListArea({name, items, saveItems, deleteChecklist, setName}) {
   const [showDeleteModal, setDeleteModal] = useState(false)
   const [editCheckListModal, setEditCheckListModal] = useState(false)
   const [checkListName, setChecklistName] = useState(name);
@@ -21,12 +21,12 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist})
 
   function generateCheckboxListString(set = false) {
     // Go from list to string, returns0
-    var final = ""
+    var final = "<ul>"
     checkBoxList.map((element) => {
-      final += element.name + ", "
+      final += "<li><p>" + element.name + "</p></li>"
     })
 
-    final = final.substring(0, final.length - 2)
+    final += "</ul>"
     if (set) {
       setCheckboxListString(final)
     }
@@ -38,10 +38,10 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist})
     // Go from string to list, does not return
     console.log(checkBoxListString)
     var final = []
-    checkBoxListString.split(/,\s|,/).map((element) => {
+    checkBoxListString.split("<li><p>").splice(1).map((element) => {
       final.push({
         "checked": false,
-        "name": element.trimStart()
+        "name": element.split("</p>")[0].trim()
       })
     })
     setCheckboxList(final)
@@ -49,10 +49,11 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist})
 
   function setChecked(name, value) {
     var final = []
-    checkBoxListString.split(/,\s|,/).map((element) => {
+    checkBoxListString.split("<li><p>").splice(1).map((element) => {
+      var elementName = element.split("</p>")[0].trim()
       final.push({
-        "checked": element.trimStart() == name ? value : checkBoxList.find((e) => e.name == element.trimStart()).checked,
-        "name": element.trimStart()
+        "checked": elementName == name ? value : checkBoxList.find((e) => e.name == elementName).checked,
+        "name": elementName
       })
     })
     setCheckboxList(final)
@@ -90,7 +91,7 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist})
       <EditCheckList 
         opened={editCheckListModal} 
         close={() => setEditCheckListModal(false)} 
-        nameSet={[checkListName, setChecklistName]} 
+        nameSet={[checkListName, setChecklistName, (e) => setName(e)]} 
         checkListSet={[checkBoxListString, setCheckboxListString]}
         generateCheckboxListString={generateCheckboxListString}
         generateCheckboxList={generateCheckboxList}

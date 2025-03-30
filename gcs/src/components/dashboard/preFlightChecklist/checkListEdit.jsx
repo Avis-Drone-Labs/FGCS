@@ -14,7 +14,7 @@ import tailwindConfig from "../../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function EditCheckList({opened, close, nameSet, checkListSet, generateCheckboxListString, generateCheckboxList}) {
-  const [name, setName] = nameSet
+  const [name, setName, finaliseName] = nameSet  // Finalise changes it in the selected accordion (ik annoying...)
   const [checkboxList, setCheckboxList] = checkListSet
 
   const editor = useEditor({
@@ -45,12 +45,6 @@ export default function EditCheckList({opened, close, nameSet, checkListSet, gen
           value={name}
           onChange={(event) => setName(event.currentTarget.value)}
         />
-        {/* <TextInput 
-          label="Values"
-          description="The checklist items in a comma separated list"
-          value={checkboxList} 
-          onChange={(e) => setCheckboxLate(e.currentTarget.value)}
-        /> */}
 
         <div>
           <h1>Items</h1>
@@ -71,15 +65,13 @@ export default function EditCheckList({opened, close, nameSet, checkListSet, gen
           <Button 
             onClick={() => {close(); generateCheckboxListString(true)}} 
             variant="filled"
-            type="submit"
             color={tailwindColors.red[600]}
           >
             Cancel
           </Button>
           <Button 
-            onClick={() => {close(); generateCheckboxList()}} 
+            onClick={() => {finaliseName(name); generateCheckboxList(); close()}} 
             variant="filled"
-            type="submit"
             color={tailwindColors.green[600]}
           >
             Save

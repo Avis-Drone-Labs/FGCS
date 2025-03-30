@@ -34,7 +34,7 @@ export default function PreFlightChecklistTab({tabPadding}) {
 
   function createNewChecklist() {
     if (newChecklistName !== "") {
-      preFlightChecklistItems.push({ "name": newChecklistName, "value": [ {"checked": false, "name": "<ul><li><p>Click 'Edit this checklist' to add new values</p></li></ul>"} ] })
+      preFlightChecklistItems.push({ "name": newChecklistName, "value": [ {"checked": false, "name": "Click 'Edit this checklist' to add new values"} ] })
       setPreFlightChecklistItems(preFlightChecklistItems)
       setOpenChecklist(newChecklistName)
       setNewChecklistModal(false)

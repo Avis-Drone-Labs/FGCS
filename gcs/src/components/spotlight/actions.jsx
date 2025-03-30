@@ -131,5 +131,5 @@ AddSpotlightAction(
   "command",
   () => {
     RunCommand("new_preflight_checklist")
-  }
+  },
 )

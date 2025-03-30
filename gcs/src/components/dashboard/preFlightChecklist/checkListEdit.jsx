@@ -55,7 +55,7 @@ export default function EditCheckList({
     onUpdate: ({ editor }) => {
       setCheckboxList(editor.getHTML())
     },
-    autofocus: "end"
+    autofocus: "end",
   })
 
   return (
@@ -93,7 +93,10 @@ export default function EditCheckList({
               Bullet point list of items
             </h2>
           </div>
-          <RichTextEditor editor={editor} classNames={{ content: "!list-disc" }}>
+          <RichTextEditor
+            editor={editor}
+            classNames={{ content: "!list-disc" }}
+          >
             {/* 
               Going to keep this for future use with code blocks, no need to delete.
               <RichTextEditor.Toolbar sticky stickyOffset={60}>

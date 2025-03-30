@@ -1,6 +1,7 @@
 import sys
 from typing import Any, List
 
+from customTypes import VehicleType
 from pymavlink import mavutil
 from serial.tools import list_ports
 
@@ -207,3 +208,33 @@ def wpToMissionItemInt(
         wp.mission_type,
     )
     return wp_int
+
+
+FIXED_WING_TYPES = [
+    mavutil.mavlink.MAV_TYPE_FIXED_WING,
+    mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER_DUOROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER_QUADROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_FIXEDROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER,
+    mavutil.mavlink.MAV_TYPE_VTOL_TILTWING,
+]
+
+MULTIROTOR_TYPES = [
+    mavutil.mavlink.MAV_TYPE_QUADROTOR,
+    mavutil.mavlink.MAV_TYPE_HEXAROTOR,
+    mavutil.mavlink.MAV_TYPE_OCTOROTOR,
+    mavutil.mavlink.MAV_TYPE_TRICOPTER,
+    mavutil.mavlink.MAV_TYPE_DODECAROTOR,
+    mavutil.mavlink.MAV_TYPE_ADSB,  # For cube orange (?)
+    mavutil.mavlink.MAV_TYPE_GENERIC_MULTIROTOR,
+]
+
+
+def getVehicleType(typeId: int) -> VehicleType:
+    if typeId in FIXED_WING_TYPES:
+        return VehicleType.FIXED_WING
+    elif typeId in MULTIROTOR_TYPES:
+        return VehicleType.MULTIROTOR
+    else:
+        return VehicleType.UNKNOWN

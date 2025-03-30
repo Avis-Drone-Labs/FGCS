@@ -2,8 +2,13 @@
   The Checklist area, this can be edited.
 */
 
-import { Button, Checkbox, Modal, Textarea, TextInput} from "@mantine/core"
+// Native imports
 import { useEffect, useState } from "react"
+
+// 3rd Party Imports
+import { Button, Checkbox, Modal } from "@mantine/core"
+
+// Local Imports
 import EditCheckList from "./checkListEdit.jsx"
 
 // Styling imports
@@ -11,12 +16,20 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function CheckListArea({name, items, saveItems, deleteChecklist, setName}) {
+export default function CheckListArea({
+  name,
+  items,
+  saveItems,
+  deleteChecklist,
+  setName,
+}) {
   const [showDeleteModal, setDeleteModal] = useState(false)
   const [editCheckListModal, setEditCheckListModal] = useState(false)
-  const [checkListName, setChecklistName] = useState(name);
+  const [checkListName, setChecklistName] = useState(name)
   const [checkBoxList, setCheckboxList] = useState(items)
-  const [checkBoxListString, setCheckboxListString] = useState(generateCheckboxListString())
+  const [checkBoxListString, setCheckboxListString] = useState(
+    generateCheckboxListString(),
+  )
   const [mappedItems, setMappedItems] = useState(generateMappedItems())
 
   function generateCheckboxListString(set = false) {
@@ -38,33 +51,47 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist, 
     // Go from string to list, does not return
     console.log(checkBoxListString)
     var final = []
-    checkBoxListString.split("<li><p>").splice(1).map((element) => {
-      final.push({
-        "checked": false,
-        "name": element.split("</p>")[0].trim()
+    checkBoxListString
+      .split("<li><p>")
+      .splice(1)
+      .map((element) => {
+        final.push({
+          checked: false,
+          name: element.split("</p>")[0].trim(),
+        })
       })
-    })
     setCheckboxList(final)
   }
 
   function setChecked(name, value) {
     var final = []
-    checkBoxListString.split("<li><p>").splice(1).map((element) => {
-      var elementName = element.split("</p>")[0].trim()
-      final.push({
-        "checked": elementName == name ? value : checkBoxList.find((e) => e.name == elementName).checked,
-        "name": elementName
+    checkBoxListString
+      .split("<li><p>")
+      .splice(1)
+      .map((element) => {
+        var elementName = element.split("</p>")[0].trim()
+        final.push({
+          checked:
+            elementName == name
+              ? value
+              : checkBoxList.find((e) => e.name == elementName).checked,
+          name: elementName,
+        })
       })
-    })
     setCheckboxList(final)
   }
 
   function generateMappedItems() {
-    return (
-      checkBoxList.map((element) => {
-        return <Checkbox checked={element.checked} key={element.name} label={element.name} onChange={() => setChecked(element.name, !element.checked)}/>
-      })
-    )
+    return checkBoxList.map((element) => {
+      return (
+        <Checkbox
+          checked={element.checked}
+          key={element.name}
+          label={element.name}
+          onChange={() => setChecked(element.name, !element.checked)}
+        />
+      )
+    })
   }
 
   useEffect(() => {
@@ -79,19 +106,34 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist, 
         {mappedItems}
 
         <div className="flex w-full justify-between pt-2">
-          <a className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer" onClick={() => generateCheckboxList()}>Uncheck all</a>
+          <a
+            className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer"
+            onClick={() => generateCheckboxList()}
+          >
+            Uncheck all
+          </a>
         </div>
         <div className="flex w-full justify-between flex-row-reverse">
-          <a className="text-xs text-falconred-400 hover:underline hover:cursor-pointer" onClick={() => setDeleteModal(true)}>Delete this checklist</a>
-          <a className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer" onClick={() => setEditCheckListModal(true)}>Edit this checklist</a>
+          <a
+            className="text-xs text-falconred-400 hover:underline hover:cursor-pointer"
+            onClick={() => setDeleteModal(true)}
+          >
+            Delete this checklist
+          </a>
+          <a
+            className="text-xs text-falcongrey-200 hover:underline hover:cursor-pointer"
+            onClick={() => setEditCheckListModal(true)}
+          >
+            Edit this checklist
+          </a>
         </div>
       </div>
-      
+
       {/* Edit mode */}
-      <EditCheckList 
-        opened={editCheckListModal} 
-        close={() => setEditCheckListModal(false)} 
-        nameSet={[checkListName, setChecklistName, (e) => setName(e)]} 
+      <EditCheckList
+        opened={editCheckListModal}
+        close={() => setEditCheckListModal(false)}
+        nameSet={[checkListName, setChecklistName, (e) => setName(e)]}
         checkListSet={[checkBoxListString, setCheckboxListString]}
         generateCheckboxListString={generateCheckboxListString}
         generateCheckboxList={generateCheckboxList}
@@ -111,8 +153,18 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist, 
         withCloseButton={false}
       >
         <div className="flex w-full justify-between pt-4">
-          <Button color={tailwindColors.red[600]} onClick={() => setDeleteModal(false)}>No, cancel</Button>
-          <Button color={tailwindColors.green[600]} onClick={() => deleteChecklist()}>Yes, Continue</Button>
+          <Button
+            color={tailwindColors.red[600]}
+            onClick={() => setDeleteModal(false)}
+          >
+            No, cancel
+          </Button>
+          <Button
+            color={tailwindColors.green[600]}
+            onClick={() => deleteChecklist()}
+          >
+            Yes, Continue
+          </Button>
         </div>
       </Modal>
     </>

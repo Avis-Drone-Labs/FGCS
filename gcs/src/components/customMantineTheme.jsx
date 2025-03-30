@@ -27,5 +27,5 @@ export const CustomMantineTheme = createTheme({
       tailwindColors.falcongrey[950],
     ],
   },
-  cursorType: 'pointer'
+  cursorType: "pointer",
 })

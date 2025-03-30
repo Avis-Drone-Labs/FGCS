@@ -8,7 +8,6 @@ import { useLocalStorage } from "@mantine/hooks"
 import {
   IconAnchor,
   IconAnchorOff,
-  IconChecklist,
   IconCrosshair,
   IconMapPins,
   IconSun,
@@ -18,8 +17,6 @@ import {
 // Helper Functions
 import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import { useState } from "react"
-import PreFlightChecklist from "./preFlightChecklist/preFlightChecklist"
 
 export default function FloatingToolbar({
   missionItems,
@@ -34,7 +31,6 @@ export default function FloatingToolbar({
     key: "outsideVisibility",
     defaultValue: false,
   })
-  const [preflightModal, setPreflightModal] = useState(false);
 
   function updateFollowDroneAction() {
     setFollowDrone(
@@ -129,17 +125,6 @@ export default function FloatingToolbar({
           {outsideVisibility ? <IconSun /> : <IconSunOff />}
         </ActionIcon>
       </Tooltip>
-
-      {/* Preflight checklist */}
-      {/* <Tooltip
-        label="Preflight Checklist"
-      >
-        <ActionIcon
-        >
-          <IconChecklist onClick={() => setPreflightModal(true)} />
-        </ActionIcon>
-      </Tooltip>
-      <PreFlightChecklist showModal={preflightModal} setShowModal={setPreflightModal} /> */}
     </div>
   )
 }

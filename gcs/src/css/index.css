@@ -15,7 +15,8 @@
 
   @apply bg-falcongrey-800 text-neutral-50 h-full max-h-full min-h-screen;
 
-  ul, ol {
+  ul,
+  ol {
     list-style: revert;
   }
 }
@@ -52,15 +53,15 @@ body {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #1C2021;
+  background: #1c2021;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #727C7E;
+  background: #727c7e;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #535D5F;
+  background: #535d5f;
 }

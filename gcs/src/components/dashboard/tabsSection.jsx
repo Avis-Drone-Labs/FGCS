@@ -4,7 +4,7 @@
 */
 
 // 3rd Party Imports
-import { ScrollArea, Tabs } from "@mantine/core"
+import { Tabs } from "@mantine/core"
 
 // Tab Componenents
 import CameraTabsSection from "./tabsSectionTabs/CameraTabsSection"

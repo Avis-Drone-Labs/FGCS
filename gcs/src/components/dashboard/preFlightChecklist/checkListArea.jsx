@@ -192,6 +192,7 @@ export default function CheckListArea({
           <Button
             color={tailwindColors.green[600]}
             onClick={() => deleteChecklist()}
+            data-autofocus
           >
             Yes, Continue
           </Button>

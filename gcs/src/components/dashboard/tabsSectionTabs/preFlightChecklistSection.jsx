@@ -17,6 +17,7 @@ import { showErrorNotification } from "../../../helpers/notification.js"
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
+import { AddCommand } from "../../spotlight/commandHandler.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function PreFlightChecklistTab({ tabPadding }) {
@@ -63,6 +64,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     // Show error message
     showErrorNotification("Name cannot be empty")
   }
+
+  // Add create new checklist as a spotlight command
+  AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
 
   const items = preFlightChecklistItems.map((item) => (
     <Accordion.Item
@@ -116,31 +120,39 @@ export default function PreFlightChecklistTab({ tabPadding }) {
             },
           }}
         >
-          <div className="flex flex-col gap-2">
-            <TextInput
-              label="Checklist Name"
-              description="The name of the checklist, you can add values afterwards"
-              value={newChecklistName}
-              onChange={(event) =>
-                setNewChecklistName(event.currentTarget.value)
-              }
-            />
-          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              createNewChecklist()
+            }}
+          >
+            <div className="flex flex-col gap-2">
+              <TextInput
+                label="Checklist Name"
+                description="The name of the checklist, you can add values afterwards"
+                value={newChecklistName}
+                onChange={(event) =>
+                  setNewChecklistName(event.currentTarget.value)
+                }
+                data-autofocus
+              />
+            </div>
 
-          <div className="flex w-full justify-between pt-6">
-            <Button
-              color={tailwindColors.red[600]}
-              onClick={() => setNewChecklistModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              color={tailwindColors.green[600]}
-              onClick={() => createNewChecklist()}
-            >
-              Create
-            </Button>
-          </div>
+            <div className="flex w-full justify-between pt-6">
+              <Button
+                color={tailwindColors.red[600]}
+                onClick={() => setNewChecklistModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                color={tailwindColors.green[600]}
+                onClick={() => createNewChecklist()}
+              >
+                Create
+              </Button>
+            </div>
+          </form>
         </Modal>
       </div>
     </Tabs.Panel>

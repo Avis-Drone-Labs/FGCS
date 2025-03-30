@@ -55,6 +55,7 @@ export default function EditCheckList({
     onUpdate: ({ editor }) => {
       setCheckboxList(editor.getHTML())
     },
+    autofocus: "end"
   })
 
   return (
@@ -70,58 +71,63 @@ export default function EditCheckList({
       size={"xl"}
       centered
     >
-      <div className="flex flex-col gap-2">
-        {/* Inputs */}
-        <h1>Name</h1>
-        <TextInput
-          value={name}
-          onChange={(event) => setName(event.currentTarget.value)}
-        />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          finaliseName(name)
+          generateCheckboxList()
+          close()
+        }}
+      >
+        <div className="flex flex-col gap-2">
+          {/* Inputs */}
+          <h1>Name</h1>
+          <TextInput
+            value={name}
+            onChange={(event) => setName(event.currentTarget.value)}
+          />
 
-        <div>
-          <h1>Items</h1>
-          <h2 className="text-falcongrey-300 text-sm">
-            Bullet point list of items
-          </h2>
+          <div>
+            <h1>Items</h1>
+            <h2 className="text-falcongrey-300 text-sm">
+              Bullet point list of items
+            </h2>
+          </div>
+          <RichTextEditor editor={editor} classNames={{ content: "!list-disc" }}>
+            {/* 
+              Going to keep this for future use with code blocks, no need to delete.
+              <RichTextEditor.Toolbar sticky stickyOffset={60}>
+                <RichTextEditor.ControlsGroup>
+                  <RichTextEditor.BulletList />
+                </RichTextEditor.ControlsGroup>
+              </RichTextEditor.Toolbar>
+            */}
+
+            <RichTextEditor.Content />
+          </RichTextEditor>
+
+          {/* Controls */}
+          <div className="w-full flex justify-between pt-2">
+            <Button
+              onClick={() => {
+                close()
+                generateCheckboxListString(true)
+              }}
+              variant="filled"
+              color={tailwindColors.red[600]}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="filled"
+              color={tailwindColors.green[600]}
+            >
+              Save
+            </Button>
+          </div>
         </div>
-        <RichTextEditor editor={editor} classNames={{ content: "!list-disc" }}>
-          {/* 
-            Going to keep this for future use with code blocks, no need to delete.
-            <RichTextEditor.Toolbar sticky stickyOffset={60}>
-              <RichTextEditor.ControlsGroup>
-                <RichTextEditor.BulletList />
-              </RichTextEditor.ControlsGroup>
-            </RichTextEditor.Toolbar>
-          */}
-
-          <RichTextEditor.Content />
-        </RichTextEditor>
-
-        {/* Controls */}
-        <div className="w-full flex justify-between pt-2">
-          <Button
-            onClick={() => {
-              close()
-              generateCheckboxListString(true)
-            }}
-            variant="filled"
-            color={tailwindColors.red[600]}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              finaliseName(name)
-              generateCheckboxList()
-              close()
-            }}
-            variant="filled"
-            color={tailwindColors.green[600]}
-          >
-            Save
-          </Button>
-        </div>
-      </div>
+      </form>
     </Modal>
   )
 }

@@ -20,7 +20,7 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist})
   const [mappedItems, setMappedItems] = useState(generateMappedItems())
 
   function generateCheckboxListString(set = false) {
-    // Go from list to string, returns
+    // Go from list to string, returns0
     var final = ""
     checkBoxList.map((element) => {
       final += element.name + ", "
@@ -36,6 +36,7 @@ export default function CheckListArea({name, items, saveItems, deleteChecklist})
 
   function generateCheckboxList() {
     // Go from string to list, does not return
+    console.log(checkBoxListString)
     var final = []
     checkBoxListString.split(/,\s|,/).map((element) => {
       final.push({

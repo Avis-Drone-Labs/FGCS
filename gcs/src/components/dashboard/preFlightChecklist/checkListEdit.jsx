@@ -6,9 +6,9 @@
 import { Button, Modal, TextInput } from "@mantine/core"
 import { useEditor } from "@tiptap/react"
 import BulletList from "@tiptap/extension-bullet-list"
-import ListItem from '@tiptap/extension-list-item'
+import ListItem from "@tiptap/extension-list-item"
 import { RichTextEditor } from "@mantine/tiptap"
-import { Node } from '@tiptap/core'
+import { Node } from "@tiptap/core"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -27,26 +27,26 @@ export default function EditCheckList({
   const [checkboxList, setCheckboxList] = checkListSet
 
   const Document = Node.create({
-    name: 'doc',
+    name: "doc",
     topNode: true,
-    content: 'list+',
+    content: "list+",
   })
 
   const Paragraph = Node.create({
-    name: 'paragraph',
-    group: 'block',
-    content: 'inline*',
+    name: "paragraph",
+    group: "block",
+    content: "inline*",
     parseHTML() {
-      return [{ tag: 'p' }]
+      return [{ tag: "p" }]
     },
     renderHTML({ HTMLAttributes }) {
-      return ['p', HTMLAttributes, 0]
+      return ["p", HTMLAttributes, 0]
     },
   })
 
   const Text = Node.create({
-    name: 'text',
-    group: 'inline',
+    name: "text",
+    group: "inline",
   })
 
   const editor = useEditor({

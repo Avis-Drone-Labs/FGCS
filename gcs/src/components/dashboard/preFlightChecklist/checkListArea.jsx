@@ -32,7 +32,7 @@ export default function CheckListArea({
     generateCheckboxListString(),
   )
   const [mappedItems, setMappedItems] = useState(generateMappedItems())
-  const [lastToggleCheck, setLastToggleCheck] = useState(false);  // false = uncheck, true = check
+  const [lastToggleCheck, setLastToggleCheck] = useState(false) // false = uncheck, true = check
 
   function generateCheckboxListString(set = false) {
     // Go from list to string, returns0
@@ -116,27 +116,48 @@ export default function CheckListArea({
         <div className="flex w-full justify-between pb-2">
           <div className="flex gap-1">
             <Tooltip label="Toggle all checked/unchecked">
-              <ActionIcon variant="light" radius="md" onClick={() => toggleCheck()}>
-                <IconCheckbox style={{ width: '70%', height: '70%' }} stroke={1.5} />
+              <ActionIcon
+                variant="light"
+                radius="md"
+                onClick={() => toggleCheck()}
+              >
+                <IconCheckbox
+                  style={{ width: "70%", height: "70%" }}
+                  stroke={1.5}
+                />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Edit list">
-              <ActionIcon variant="light" radius="md" onClick={() => setEditCheckListModal(true)}>
-                <IconEdit style={{ width: '70%', height: '70%' }} stroke={1.5} />
+              <ActionIcon
+                variant="light"
+                radius="md"
+                onClick={() => setEditCheckListModal(true)}
+              >
+                <IconEdit
+                  style={{ width: "70%", height: "70%" }}
+                  stroke={1.5}
+                />
               </ActionIcon>
             </Tooltip>
           </div>
 
           <Tooltip label="Delete list">
-            <ActionIcon variant="light" color="red" radius="md" onClick={() => setDeleteModal(true)}>
-              <IconTrashX style={{ width: '70%', height: '70%' }} stroke={1.5} />
+            <ActionIcon
+              variant="light"
+              color="red"
+              radius="md"
+              onClick={() => setDeleteModal(true)}
+            >
+              <IconTrashX
+                style={{ width: "70%", height: "70%" }}
+                stroke={1.5}
+              />
             </ActionIcon>
           </Tooltip>
         </div>
 
         {mappedItems}
       </div>
-
 
       {/* Edit mode */}
       <EditCheckList

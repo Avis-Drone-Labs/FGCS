@@ -5,6 +5,7 @@
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
+import { centerOfMass, polygon } from "@turf/turf"
 import {
   IconAnchor,
   IconAnchorOff,
@@ -47,10 +48,17 @@ export default function FloatingToolbar({
     )
   }
 
-  function centerMapOnFirstMissionItem() {
+  function centerMapOnMission() {
     if (filteredMissionItems.length > 0) {
-      let lat = parseFloat(filteredMissionItems[0].x * 1e-7)
-      let lon = parseFloat(filteredMissionItems[0].y * 1e-7)
+      let points = filteredMissionItems.map((item) => [
+        item.x * 1e-7,
+        item.y * 1e-7,
+      ])
+      points.push(points[0]) // Close the polygon
+      let geo = polygon([points])
+      let center = centerOfMass(geo).geometry.coordinates
+      let lat = parseFloat(center[0])
+      let lon = parseFloat(center[1])
       mapRef.current.getMap().flyTo({
         center: [lon, lat],
       })
@@ -95,7 +103,7 @@ export default function FloatingToolbar({
         </ActionIcon>
       </Tooltip>
 
-      {/* Center Map on first mission item */}
+      {/* Center Map on full mission */}
       <Tooltip
         label={
           !filteredMissionItems.length > 0 ? "No mission" : "Center on mission"
@@ -103,7 +111,7 @@ export default function FloatingToolbar({
       >
         <ActionIcon
           disabled={filteredMissionItems.length <= 0}
-          onClick={centerMapOnFirstMissionItem}
+          onClick={centerMapOnMission}
         >
           <IconMapPins />
         </ActionIcon>

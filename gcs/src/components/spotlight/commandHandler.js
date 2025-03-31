@@ -83,7 +83,6 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
 
 export function RunCommand(id) {
   // Search for a command by id
-  console.log(`Running command, ${id}`)
   try {
     commands.find((entry) => entry.id == id).command()
   } catch {

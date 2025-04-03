@@ -1,4 +1,7 @@
 import os
+
+os.environ["MAVLINK20"] = "1"
+
 import app.droneStatus as droneStatus
 from app import create_app, socketio
 from pathlib import Path

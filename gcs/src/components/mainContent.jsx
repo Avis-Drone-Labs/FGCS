@@ -21,6 +21,7 @@ import Dashboard from "../dashboard"
 import { store } from "../redux/store"
 import { Provider } from "react-redux"
 import { ErrorBoundary } from "react-error-boundary"
+import AlertProvider from "./dashboard/alertProvider"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 
 export default function AppContent() {
@@ -34,7 +35,11 @@ export default function AppContent() {
         <ErrorBoundary fallbackRender={ErrorBoundaryFallback}>
           <SettingsModal />
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={
+              <AlertProvider>
+                <Dashboard />
+              </AlertProvider>
+            } />
             <Route path="/missions" element={<Missions />} />
             <Route path="/graphs" element={<Graphs />} />
             <Route path="/params" element={<Params />} />

@@ -18,7 +18,6 @@ export default function TabsSection({
   getIsArmed,
   currentFlightModeNumber,
   currentMissionData,
-  navControllerOutputData,
   displayedData,
   setDisplayedData,
 }) {
@@ -53,7 +52,6 @@ export default function TabsSection({
         connected={connected}
         tabPadding={tabPadding}
         currentMissionData={currentMissionData}
-        navControllerOutputData={navControllerOutputData}
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}
       />

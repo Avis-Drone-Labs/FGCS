@@ -17,12 +17,13 @@ import {
 // Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
+import { useSelector } from "react-redux"
+import { selectNavController } from "../../../redux/slices/droneInfoSlice"
 
 export default function MissionTabsSection({
   connected,
   tabPadding,
   currentMissionData,
-  navControllerOutputData,
   currentFlightModeNumber,
   aircraftType,
 }) {
@@ -36,7 +37,6 @@ export default function MissionTabsSection({
             {/** Mission Information */}
             <MissionInfo
               currentMissionData={currentMissionData}
-              navControllerOutputData={navControllerOutputData}
             />
 
             {/** Auto, Start and Restart Mission */}
@@ -51,7 +51,10 @@ export default function MissionTabsSection({
   )
 }
 
-const MissionInfo = ({ currentMissionData, navControllerOutputData }) => {
+const MissionInfo = ({ currentMissionData }) => {
+
+  const {wpDist} = useSelector(selectNavController);
+
   return (
     <>
       {/** Mission Information */}
@@ -66,10 +69,7 @@ const MissionInfo = ({ currentMissionData, navControllerOutputData }) => {
         </p>
         <p>
           <span className="font-bold">Distance to WP: </span>{" "}
-          {(navControllerOutputData.wp_dist
-            ? navControllerOutputData.wp_dist
-            : 0
-          ).toFixed(2)}
+          {wpDist.toFixed(2)}
         </p>
       </div>
     </>

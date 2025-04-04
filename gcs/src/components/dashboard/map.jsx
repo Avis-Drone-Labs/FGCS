@@ -43,6 +43,8 @@ import useContextMenu from "../mapComponents/useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { useSelector } from "react-redux"
+import { selectNavController } from "../../redux/slices/droneInfoSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -51,13 +53,15 @@ function MapSectionNonMemo({
   passedRef,
   data,
   heading,
-  desiredBearing,
   missionItems,
   homePosition,
   onDragstart,
   getFlightMode,
   mapId = "dashboard",
 }) {
+
+  const {navBearing} = useSelector(selectNavController);
+
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
@@ -220,7 +224,7 @@ function MapSectionNonMemo({
               heading={heading ?? 0}
               zoom={initialViewState.zoom}
               showHeadingLine={true}
-              desiredBearing={desiredBearing ?? 0}
+              desiredBearing={navBearing ?? 0}
             />
           )}
 

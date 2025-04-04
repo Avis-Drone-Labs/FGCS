@@ -31,7 +31,6 @@ import { ResizableBox } from "react-resizable"
 import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
-  GPS_FIX_TYPES,
   MAV_AUTOPILOT_INVALID,
   MAV_STATE,
   PLANE_MODES_FLIGHT_MODE_MAP,
@@ -61,8 +60,13 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
+import { useSelector } from "react-redux"
+import { selectGPSRawInt, selectRSSI } from "./redux/slices/droneInfoSlice"
 
 export default function Dashboard() {
+
+  const {fixType, satellitesVisible} = useSelector(selectGPSRawInt);
+
   // Local Storage
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
@@ -100,21 +104,12 @@ export default function Dashboard() {
 
   // System data
   const [batteryData, setBatteryData] = useState([])
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [statustextMessages, statustextMessagesHandler] = useListState([])
-  const [sysStatusData, setSysStatusData] = useState({
-    onboard_control_sensors_enabled: 0,
-  })
-  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
 
   // GPS and Telemetry
   const [gpsData, setGpsData] = useState({})
   const [telemetryData, setTelemetryData] = useState({})
   const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
-  const [gpsRawIntData, setGpsRawIntData] = useState({
-    fix_type: 0,
-    satellites_visible: 0,
-  })
   const [currentMissionData, setCurrentMissionData] = useState({
     mission_state: 0,
     seq: 0,
@@ -150,7 +145,7 @@ export default function Dashboard() {
 
   const incomingMessageHandler = useCallback(
     () => ({
-      VFR_HUD: (msg) => setTelemetryData(msg),
+      VFR_HUD: (msg) => setTelemetryData(msg), // Done
       BATTERY_STATUS: (msg) => {
         const battery = localBatteryData.filter(battery => battery.id == msg.id)[0]
         if (battery) {
@@ -161,18 +156,14 @@ export default function Dashboard() {
         localBatteryData.sort((b1, b2) => b1.id - b2.id)
         setBatteryData(localBatteryData)
       },
-      ATTITUDE: (msg) => setAttitudeData(msg),
-      GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
-      NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
+      ATTITUDE: (msg) => setAttitudeData(msg), // Done
+      GLOBAL_POSITION_INT: (msg) => setGpsData(msg), // Done
       HEARTBEAT: (msg) => {
         if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
           setHeartbeatData(msg)
         }
-      },
+      }, // Done
       STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
-      SYS_STATUS: (msg) => setSysStatusData(msg),
-      GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
-      RC_CHANNELS: (msg) => setRCChannelsData(msg),
       MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
     }),
     [],
@@ -280,7 +271,7 @@ export default function Dashboard() {
       socket.off("home_position_result")
     }
   }, [connected])
-
+  
   // Following drone logic
   useEffect(() => {
     if (
@@ -329,12 +320,6 @@ export default function Dashboard() {
     return heartbeatData.base_mode & 128
   }
 
-  function prearmEnabled() {
-    // Checks if prearm check is enabled, if yes then not armable
-    // TOOD: test if this returns true if all checks pass
-    return Boolean(sysStatusData.onboard_control_sensors_enabled & 268435456)
-  }
-
   function centerMapOnDrone() {
     let lat = parseFloat(gpsData.lat * 1e-7)
     let lon = parseFloat(gpsData.lon * 1e-7)
@@ -372,7 +357,6 @@ export default function Dashboard() {
             passedRef={mapRef}
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            desiredBearing={navControllerOutputData.nav_bearing}
             missionItems={missionItems}
             homePosition={homePosition}
             onDragstart={() => {
@@ -393,7 +377,6 @@ export default function Dashboard() {
           {/* Telemetry Information */}
           <TelemetrySection
             getIsArmed={getIsArmed}
-            prearmEnabled={prearmEnabled}
             calcIndicatorSize={calcIndicatorSize}
             calcIndicatorPadding={calcIndicatorPadding}
             getFlightMode={getFlightMode}
@@ -402,7 +385,6 @@ export default function Dashboard() {
             attitudeData={attitudeData}
             gpsData={gpsData}
             sideBarRef={sideBarRef}
-            navControllerOutputData={navControllerOutputData}
             batteryData={batteryData}
             systemStatus={MAV_STATE[heartbeatData.system_status]}
           />
@@ -416,7 +398,6 @@ export default function Dashboard() {
             getIsArmed={getIsArmed}
             currentFlightModeNumber={currentFlightModeNumber}
             currentMissionData={currentMissionData}
-            navControllerOutputData={navControllerOutputData}
             displayedData={displayedData}
             setDisplayedData={setDisplayedData}
           />
@@ -426,7 +407,7 @@ export default function Dashboard() {
         <StatusBar className="absolute top-0 right-0">
           <StatusSection
             icon={<IconRadar />}
-            value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
+            value={fixType}
             tooltip="GPS fix type"
           />
           <StatusSection
@@ -438,12 +419,12 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconSatellite />}
-            value={gpsRawIntData.satellites_visible}
+            value={satellitesVisible}
             tooltip="Satellites visible"
           />
           <StatusSection
             icon={<IconAntenna />}
-            value={rcChannelsData.rssi}
+            value={useSelector(selectRSSI)}
             tooltip="RC RSSI"
           />
           <StatusSection

@@ -4,12 +4,13 @@
 */
 
 // Custom Components
+import { useSelector } from "react-redux"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
+import { selectNavController, selectPrearmEnabled } from "../../redux/slices/droneInfoSlice"
 
 export default function TelemetrySection({
   getIsArmed,
-  prearmEnabled,
   calcIndicatorSize,
   calcIndicatorPadding,
   getFlightMode,
@@ -18,10 +19,13 @@ export default function TelemetrySection({
   attitudeData,
   gpsData,
   sideBarRef,
-  navControllerOutputData,
   batteryData,
   systemStatus,
 }) {
+
+  const { wpDist } = useSelector(selectNavController);
+  const prearmEnabled = useSelector(selectPrearmEnabled);
+
   return (
     <div>
       {/* Information above indicators */}
@@ -32,7 +36,7 @@ export default function TelemetrySection({
           ) : (
             <>
               <p className="font-bold">DISARMED</p>
-              {prearmEnabled() ? (
+              {prearmEnabled? (
                 <p className="text-green-500">Prearm: Enabled</p>
               ) : (
                 <p className="font-bold text-falconred">Prearm: Disabled</p>
@@ -143,10 +147,7 @@ export default function TelemetrySection({
             <p className="text-sm">m</p>
             <TelemetryValueDisplay
               title="WP"
-              value={(navControllerOutputData.wp_dist
-                ? navControllerOutputData.wp_dist
-                : 0
-              ).toFixed(2)}
+              value={wpDist.toFixed(2)}
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay

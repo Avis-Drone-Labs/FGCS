@@ -5,9 +5,10 @@ import {
     initSocket,
     socketConnected,
     socketDisconnected
- } from "../slices/socketSlice";
+} from "../slices/socketSlice";
 
-import { showErrorNotification } from "../../helpers/notification";
+// drone actions
+import { emitIsConnectedToDrone } from "../slices/droneConnectionSlice";
 
 // socket factory
 import SocketFactory from "../../helpers/socket";
@@ -37,7 +38,7 @@ const socketMiddleware = (store) => {
                 socket.socket.on(SocketEvents.Connect, () => {
                     // DISPATCH ALL ACTIONS HERE
                     // SINCE ITS MIDDLWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
-                    console.log(`Connected to socket, ${socket.socket.id}`)
+                    console.log(`Connected to socket from redux, ${socket.socket.id}`)
                     store.dispatch(socketConnected());
                 })
 
@@ -46,15 +47,16 @@ const socketMiddleware = (store) => {
                     store.dispatch(socketDisconnected());    
                 })
                 
+                socket.socket.on("is_connected_to_drone", (msg) => {
+                    console.log(msg)  // Test
+                })
             }
-            
         }
+
         // these actions handle emitting based on UI events
         // for each action type, emit socket and pass onto reducer
         if (socket) {
-
-            // example
-            if (getComPorts.match(action)) socket.socket.emit(SocketEvents.getComPorts) 
+            if (emitIsConnectedToDrone.match(action)) { socket.socket.emit("is_connected_to_drone") };
         }
         
         next(action);

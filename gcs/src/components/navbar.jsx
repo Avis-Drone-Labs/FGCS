@@ -30,6 +30,10 @@ import {
 } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
+// Redux
+import { useDispatch } from "react-redux"
+import { emitIsConnectedToDrone } from "../redux/slices/droneConnectionSlice.js"
+
 // Local imports
 import { AddCommand } from "./spotlight/commandHandler.js"
 
@@ -42,11 +46,15 @@ import { socket } from "../helpers/socket"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
+import { initSocket } from "../redux/slices/socketSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
+  const dispatchRedux = useDispatch();
+  dispatchRedux(initSocket())
+  dispatchRedux(emitIsConnectedToDrone())
 
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
 

@@ -20,7 +20,6 @@ import Map from "react-map-gl/maplibre"
 
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
-import { filterMissionItems } from "../../helpers/filterMissions"
 import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
 
@@ -36,17 +35,15 @@ import useContextMenu from "../mapComponents/useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { useSelector } from "react-redux"
+import { selectDroneCoords } from "../../redux/slices/droneInfoSlice"
+import { selectCurrentMissionItems, selectFilteredMissionItems, selectHomePosition } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  data,
-  heading,
-  desiredBearing,
-  missionItems,
-  homePosition,
   onDragstart,
   getFlightMode,
   mapId = "dashboard",
@@ -60,7 +57,11 @@ function MapSectionNonMemo({
     defaultValue: null,
   })
 
-  const [position, setPosition] = useState(null)
+  const droneCoords = useSelector(selectDroneCoords)
+  const homePosition = useSelector(selectHomePosition)
+  const { missionItems } = useSelector(selectCurrentMissionItems)
+  const filteredMissionItems = useSelector(selectFilteredMissionItems)
+
   const { getSetting } = useSettings()
 
   // Check if maps should be synchronized (from settings)
@@ -77,8 +78,6 @@ function MapSectionNonMemo({
     getInitialValueInEffect: false,
   })
 
-  const [filteredMissionItems, setFilteredMissionItems] = useState([])
-
   const contextMenuRef = useRef()
   const { clicked, setClicked, points, setPoints } = useContextMenu()
   const [
@@ -93,20 +92,6 @@ function MapSectionNonMemo({
     return () => {}
   }, [connected])
 
-  useEffect(() => {
-    // Check latest data point is valid
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
-      return
-
-    // Move drone icon on map
-    let lat = intToCoord(data.lat)
-    let lon = intToCoord(data.lon)
-    setPosition({ latitude: lat, longitude: lon })
-  }, [data])
-
-  useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
-  }, [missionItems])
 
   useEffect(() => {
     if (contextMenuRef.current) {
@@ -169,16 +154,13 @@ function MapSectionNonMemo({
         cursor="default"
       >
         {/* Show marker on map if the position is set */}
-        {position !== null &&
-          !isNaN(position?.latitude) &&
-          !isNaN(position?.longitude) && (
+        {droneCoords !== null &&
+          !isNaN(droneCoords.lat) &&
+          !isNaN(droneCoords.lon) && (
             <DroneMarker
-              lat={position.latitude}
-              lon={position.longitude}
-              heading={heading ?? 0}
+              
               zoom={initialViewState.zoom}
               showHeadingLine={true}
-              desiredBearing={desiredBearing ?? 0}
             />
           )}
 

@@ -15,16 +15,20 @@ import arrow from "../../assets/arrow.svg"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { useSelector } from "react-redux"
+import { selectHeading, selectNavController } from "../../redux/slices/droneInfoSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function DroneMarker({
   lat,
   lon,
-  heading,
   zoom = null,
   showHeadingLine = false,
-  desiredBearing = null,
 }) {
+
+  const heading = useSelector(selectHeading)
+  const {navBearing} = useSelector(selectNavController)
+
   return (
     <>
       <Marker latitude={lat} longitude={lon} scale={0.1}>
@@ -50,14 +54,14 @@ export default function DroneMarker({
         />
       )}
 
-      {desiredBearing !== null && (
+      {navBearing !== null && (
         <DrawLineCoordinates
           coordinates={[
             [lon, lat],
             destination(
               point([lon, lat]),
               zoom ? 25000 / 2 ** zoom : 1,
-              desiredBearing,
+              navBearing,
             ).geometry.coordinates,
           ]}
           colour={tailwindColors.red[200]}

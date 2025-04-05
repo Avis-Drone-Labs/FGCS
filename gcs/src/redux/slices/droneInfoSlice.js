@@ -1,6 +1,7 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { COPTER_MODES_FLIGHT_MODE_MAP, MAV_STATE, PLANE_MODES_FLIGHT_MODE_MAP } from "../../helpers/mavlinkConstants";
 import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages";
+import { setAircraftType } from "../logAnalyserSlice";
 
 const droneInfoSlice = createSlice({
     name: "droneInfo",
@@ -37,11 +38,11 @@ const droneInfoSlice = createSlice({
         },
         rssi: 0.0,
         notificationSound: "",
-        aircraftType: 1, // TODO: This should be in local storage but I have no idea how :D,
+        aircraftType: 0, // TODO: This should be in local storage but I have no idea how :D,
         batteryData: [],
         extraDroneData: [
             ...defaultDataMessages // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
-        ]
+        ],
     },
     reducers: {
         setHeartbeatData: (state, action) => {
@@ -63,6 +64,11 @@ const droneInfoSlice = createSlice({
         },
         changeExtraData: (state, action) => {
             state.extraDroneData[action.payload.index] = {...state.extraDroneData[action.payload.index], ...action.payload.data}
+        },
+        setDroneAircraftType: (state, action) => {
+            if (action.payload !== state.aircraftType) {
+                state.aircraftType = action.payload
+            }
         }
     },
     selectors: {
@@ -92,7 +98,7 @@ const droneInfoSlice = createSlice({
     }
 })
 
-export const {setHeartbeatData, soundPlayed, changeExtraData} = droneInfoSlice.actions;
+export const {setHeartbeatData, soundPlayed, changeExtraData, setDroneAircraftType} = droneInfoSlice.actions;
 
 // Memoized selectors because redux is a bitch
 export const selectDroneCoords = createSelector([droneInfoSlice.selectors.selectGPS], ({lat, lon}) =>  {return {lat: lat * 1e-7, lon: lon * 1e-7}})

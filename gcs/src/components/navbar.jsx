@@ -31,8 +31,10 @@ import {
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Redux
-import { useDispatch } from "react-redux"
-import { emitIsConnectedToDrone } from "../redux/slices/droneConnectionSlice.js"
+import { useDispatch, useSelector } from "react-redux"
+import { emitIsConnectedToDrone, selectBaudrate, selectConnected, selectConnecting, selectConnectionType, setBaudrate, setConnected, setConnecting, setConnectionType } from "../redux/slices/droneConnectionSlice.js"
+import { initSocket, socketConnected } from "../redux/slices/socketSlice.js"
+import { setDroneAircraftType } from "../redux/slices/droneInfoSlice.js"
 
 // Local imports
 import { AddCommand } from "./spotlight/commandHandler.js"
@@ -46,52 +48,38 @@ import { socket } from "../helpers/socket"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { initSocket } from "../redux/slices/socketSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
-  const dispatchRedux = useDispatch();
-  dispatchRedux(initSocket())
-  dispatchRedux(emitIsConnectedToDrone())
+  const dispatch = useDispatch();
 
+  // NOTE: Sockets won't work till this runs
+  dispatch(initSocket())
+  dispatch(emitIsConnectedToDrone())
+
+  
+  // Non redux storage
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
-
-  // Connection to drone
-  const [connecting, setConnecting] = useState(false)
-  const [connected, setConnected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
   const [wireless, setWireless] = useLocalStorage({
     key: "wirelessConnection",
     defaultValue: true,
   })
-  const [connectedToSocket, setConnectedToSocket] = useSessionStorage({
-    key: "socketConnection",
-    defaultValue: false,
-  })
-  const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
-    key: "baudrate",
-    defaultValue: "9600",
-  })
 
-  // eslint-disable-next-line no-unused-vars
-  const [aircraftType, setAircraftType] = useLocalStorage({
-    key: "aircraftType",
-    defaultValue: 0,
-  })
+  
+  // Redux selectors
+  const connecting = useSelector(selectConnecting)
+  const connected = useSelector(selectConnected)
+  const connectedToSocket = useSelector(socketConnected)
+  const selectedBaudRate = useSelector(selectBaudrate)
+  const connectionType = useSelector(selectConnectionType)
+
 
   const ConnectionType = {
     Serial: "serial",
     Network: "network",
   }
-
-  const [connectionType, setConnectionType] = useLocalStorage({
-    key: "connectionType",
-    defaultValue: ConnectionType.Serial,
-  })
 
   // Com Ports
   const [comPorts, setComPorts] = useState([])
@@ -127,25 +115,6 @@ export default function Navbar({ currentPage }) {
       socket.emit("is_connected_to_drone")
     }
 
-    socket.on("connect", () => {
-      setConnectedToSocket(true)
-    })
-
-    socket.on("disconnect", () => {
-      setConnectedToSocket(false)
-    })
-
-    // Flag connected/not connected, if not fetch ports
-    socket.on("is_connected_to_drone", (msg) => {
-      if (msg) {
-        setConnected(true)
-      } else {
-        setConnected(false)
-        setConnecting(false)
-        getComPorts()
-      }
-    })
-
     // Fetch com ports and list them
     socket.on("list_com_ports", (msg) => {
       setFetchingComPorts(false)
@@ -164,33 +133,33 @@ export default function Navbar({ currentPage }) {
 
     // Flags that the drone is connected
     socket.on("connected_to_drone", (data) => {
-      setAircraftType(data.aircraft_type)
+      dispatch(setDroneAircraftType(data.aircraft_type))  // There are two aircraftTypes, make sure to not use FLA one haha :D
       if (data.aircraft_type != 1 && data.aircraft_type != 2) {
         showErrorNotification("Aircraft not of type quadcopter or plane")
       }
-      setConnected(true)
-      setConnecting(false)
+      dispatch(setConnected(true))
+      dispatch(setConnecting(false))
       close()
     })
 
     // Flags that the drone is disconnected
     socket.on("disconnected_from_drone", () => {
       console.log("disconnected_from_drone")
-      setConnected(false)
+      dispatch(setConnected(false))
     })
 
     // Handles disconnect trigger
     socket.on("disconnect", () => {
-      setConnected(false)
-      setConnecting(false)
+      dispatch(setConnected(false))
+      dispatch(setConnecting(false))
     })
 
     // Flags an error with the com port
     socket.on("connection_error", (msg) => {
       console.log(msg.message)
       showErrorNotification(msg.message)
-      setConnecting(false)
-      setConnected(false)
+      dispatch(setConnecting(false))
+      dispatch(setConnected(false))
     })
 
     socket.on("drone_connect_status", (msg) => {
@@ -207,7 +176,7 @@ export default function Navbar({ currentPage }) {
       socket.off("disconnect")
       socket.off("connection_error")
       socket.off("drone_connect_status")
-      setConnected(false)
+      dispatch(setConnected(false))
     }
   }, [])
 
@@ -234,7 +203,7 @@ export default function Navbar({ currentPage }) {
     } else {
       return
     }
-    setConnecting(true)
+    dispatch(setConnecting(true))
   }
 
   function disconnect() {
@@ -259,7 +228,7 @@ export default function Navbar({ currentPage }) {
         opened={opened}
         onClose={() => {
           close()
-          setConnecting(false)
+          dispatch(setConnecting(false))
         }}
         title="Connect to aircraft"
         centered
@@ -280,7 +249,7 @@ export default function Navbar({ currentPage }) {
             connectToDrone(connectionType)
           }}
         >
-          <Tabs value={connectionType} onChange={setConnectionType}>
+          <Tabs value={connectionType} onChange={(e) => {dispatch(setConnectionType(e))}}>
             <Tabs.List grow>
               <Tabs.Tab value={ConnectionType.Serial}>
                 Serial Connection
@@ -326,7 +295,7 @@ export default function Navbar({ currentPage }) {
                     "250000",
                   ]}
                   value={selectedBaudRate}
-                  onChange={setSelectedBaudRate}
+                  onChange={(e) => dispatch(setBaudrate(e))}
                 />
                 <div className="flex flex-row gap-2">
                   <Checkbox
@@ -379,7 +348,7 @@ export default function Navbar({ currentPage }) {
               color={tailwindColors.red[600]}
               onClick={() => {
                 close()
-                setConnecting(false)
+                dispatch(setConnecting(false))
               }}
             >
               Close

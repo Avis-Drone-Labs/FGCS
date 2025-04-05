@@ -8,7 +8,7 @@ import {
 } from "../slices/socketSlice";
 
 // drone actions
-import { emitIsConnectedToDrone, setConnected } from "../slices/droneConnectionSlice";
+import { emitIsConnectedToDrone, setConnected, setConnecting } from "../slices/droneConnectionSlice";
 
 // socket factory
 import SocketFactory from "../../helpers/socket";
@@ -58,7 +58,13 @@ const socketMiddleware = (store) => {
                 })
 
                 socket.socket.on("is_connected_to_drone", (msg) => {
-                    console.log(msg)  // Test
+                    if (msg) {
+                        setConnected(true)
+                    } else {
+                        setConnected(false)
+                        setConnecting(false)
+                        // Get com ports?
+                    }
                 })
             }
         }

@@ -26,7 +26,7 @@ const initialState = {
     // network parameters
     network_type: "tcp", // local
     ip: "127.0.0.1", // local
-    port: "5760", //local
+    port: "5760", // local
 }
 
 const droneConnectionSlice = createSlice({
@@ -35,72 +35,77 @@ const droneConnectionSlice = createSlice({
         reducers: {
             // Setters
             setConnecting: (state, action) => {
-                if (action.connecting !== state.connecting) {
-                    state.connecting = action.connecting
+                if (action.payload !== state.connecting) {
+                    state.connecting = action.payload
                 }
             },
             setConnected: (state, action) => {
-                if (action.connected !== state.connected) {
-                    state.connecting = action.connecting
-                }
-            },
-            setAircraftType: (state, action) => {
-                if (action.aircraft_type !== state.aircraft_type) {
-                    state.aircraft_type = action.aircraft_type
+                if (action.payload !== state.connected) {
+                    state.connecting = action.payload
                 }
             },
             setBaudrate: (state, action) => {
-                if (action.baudrate !== state.baudrate) {
-                    state.baudrate = action.baudrate
+                if (action.payload !== state.baudrate) {
+                    state.baudrate = action.payload
                 }
             },
             setConnectionType: (state, action) => {
-                if (action.connection_type !== state.connection_type) {
-                    state.connection_type = action.connection_type
+                if (action.payload !== state.connection_type) {
+                    state.connection_type = action.payload
                 }
             },
             setFetchingComPorts: (state, action) => {
-                if (action.fetching_com_ports !== state.fetching_com_ports) {
-                    state.fetching_com_ports = action.fetching_com_ports
+                if (action.payload !== state.fetching_com_ports) {
+                    state.fetching_com_ports = action.payload
                 }
             },
             setComPorts: (state, action) => {
-                if (action.com_ports !== state.com_ports) {
-                    state.com_ports = action.com_ports
+                if (action.payload !== state.com_ports) {
+                    state.com_ports = action.payload
                 }
             },
             setSelectedComPorts: (state, action) => {
-                if (action.selected_com_ports !== state.selected_com_ports) {
-                    state.selected_com_ports = action.selected_com_ports
+                if (action.payload !== state.selected_com_ports) {
+                    state.selected_com_ports = action.payload
                 }
             },
             setNetworkType: (state, action) => {
-                if (action.network_type !== state.network_type) {
-                    state.network_type = action.network_type
+                if (action.payload !== state.network_type) {
+                    state.network_type = action.payload
                 }
             },
             setIp: (state, action) => {
-                if (action.ip !== state.ip) {
-                    state.ip = action.ip
+                if (action.payload !== state.ip) {
+                    state.ip = action.payload
                 }
             },
             setPort: (state, action) => {
-                if (action.port !== state.port) {
-                    state.port = action.port
+                if (action.payload !== state.port) {
+                    state.port = action.payload
                 }
             },
 
             // Emits
             emitIsConnectedToDrone: () => {}
         },
-        selectors: {}
+        selectors: {
+            selectConnecting: (state) => state.connecting,
+            selectConnected: (state) => state.connected,
+            selectBaudrate: (state) => state.baudrate,
+            selectConnectionType: (state) => state.connection_type,
+            selectFetchingComPorts: (state) => state.fetching_com_ports,
+            selectComPorts: (state) => state.com_ports,
+            selectSelectedComPorts: (state) => state.selected_com_ports,
+            selectNetworkType: (state) => state.network_type,
+            selectIp: (state) => state.ip,
+            selectPort: (state) => state.port
+        }
 });
 
 export const {
     // Setters
     setConnecting,
     setConnected,
-    setAircraftType,
     setBaudrate,
     setConnectionType,
     setFetchingComPorts,
@@ -113,5 +118,18 @@ export const {
     // Emitters
     emitIsConnectedToDrone
 } = droneConnectionSlice.actions;
+export const {
+    selectConnecting,
+    selectConnected,
+    selectBaudrate,
+    selectConnectionType,
+    selectFetchingComPorts,
+    selectComPorts,
+    selectSelectedComPorts,
+    selectNetworkType,
+    selectIp,
+selectPort
+} = droneConnectionSlice.selectors;
+
 
 export default droneConnectionSlice

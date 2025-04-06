@@ -12,7 +12,7 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const badgeColor = tailwindColors.falcongrey[600]
 
-export let actions = []
+let actions = []
 function AddSpotlightAction(
   id,
   label,

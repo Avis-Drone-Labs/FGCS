@@ -30,6 +30,21 @@
             "default": false,
             "type": "boolean",
             "display": "Sync Dashboard and Missions Map Viewstate"
+        },
+        "logDirectory": {
+            "default": "",
+            "type": "string",
+            "display": "Directory to store log files in. Defaults to ~/FGCS/Logs"
+        },
+        "onlyKeepLastLog": {
+            "default": false,
+            "type": "boolean",
+            "display": "Only keep the most recent log file"
+        },
+        "combineLogs": {
+            "default": false,
+            "type": "boolean",
+            "display": "Combine frontend and backend log files"
         }
     },
     "Params": {},

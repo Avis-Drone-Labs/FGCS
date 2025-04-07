@@ -9,14 +9,14 @@ const socketSlice = createSlice({
         initSocket: (state) => {
             return;
         },
-        droneConnected: (state) => {
+        socketConnected: (state) => {
             state.isConnected = true;
         },
-        droneDisconnected: (state) => {
+        socketDisconnected: (state) => {
             state.isConnected = false;
         }
     }
 })
 
-export const { initSocket, droneConnected, droneDisconnected } = droneSocketSlice.actions;
-export default droneSocketSlice.reducer;
+export const { initSocket, socketConnected, socketDisconnected } = socketSlice.actions;
+export default socketSlice.reducer;

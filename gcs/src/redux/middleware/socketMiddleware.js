@@ -3,21 +3,9 @@
 // socket actions
 import { 
     initSocket,
-    droneConnected,
-    droneDisconnected
- } from "../socketSlice";
-
-// drone state actions
-import { 
-    setHeartbeat, 
-} from "../droneSlice";
-
-// drone connection
-import { emitIsConnectedToDrone, 
-    isConnectedToDrone,
-    getComPorts,
-    listComPorts
-} from "../slices/droneConnectionSlice";
+    socketConnected,
+    socketDisconnected
+ } from "../slices/socketSlice";
 
 import { showErrorNotification } from "../../helpers/notification";
 
@@ -50,7 +38,12 @@ const socketMiddleware = (store) => {
                     // DISPATCH ALL ACTIONS HERE
                     // SINCE ITS MIDDLWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
                     console.log(`Connected to socket, ${socket.socket.id}`)
-                    store.dispatch(droneConnected());
+                    store.dispatch(socketConnected());
+                })
+
+                socket.socket.on(SocketEvents.Disconnect, () => {
+                    console.log(`Disconnected from socket, ${socket.socket.id}`)
+                    store.dispatch(socketDisconnected());    
                 })
                 
             }

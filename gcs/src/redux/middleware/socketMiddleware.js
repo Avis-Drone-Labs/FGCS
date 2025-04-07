@@ -48,7 +48,6 @@ const socketMiddleware = (store) => {
                 
             }
             
-            
         }
         // these actions handle emitting based on UI events
         // for each action type, emit socket and pass onto reducer

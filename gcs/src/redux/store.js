@@ -7,6 +7,7 @@ import socketMiddleware from "./middleware/socketMiddleware"
 export const store = configureStore({
   reducer: {
     logAnalyser: logAnalyserReducer,
+    socket: socketSlice,
   },
   middleware: (getDefaultMiddleware) =>{
     return getDefaultMiddleware({

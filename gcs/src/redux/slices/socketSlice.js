@@ -14,7 +14,7 @@ const socketSlice = createSlice({
         },
         socketDisconnected: (state) => {
             state.isConnected = false;
-        }
+            get_com_ports }
     }
 })
 

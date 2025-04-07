@@ -18,7 +18,7 @@ const SocketEvents = Object.freeze({
     Disconnect: "disconnect",
 
     // droneConnectionSlice
-    getComPorts: "get_com_ports",
+    // getComPorts: "get_com_ports",
     isConnectedToDrone: "is_connected_to_drone",
     listComPorts: "list_com_ports",
 })

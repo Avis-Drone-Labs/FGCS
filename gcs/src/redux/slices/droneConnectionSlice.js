@@ -31,6 +31,7 @@ const droneConnectionSlice = createSlice({
     name: "droneConnection",
         initialState,
         reducers: {
+            // Setters
             setConnecting: (state, action) => {
                 if (action.connecting !== state.connecting) { 
                     state.connecting = action.connecting
@@ -86,11 +87,15 @@ const droneConnectionSlice = createSlice({
                     state.port = action.port
                 }
             },
+
+            // Emits
+            emitIsConnectedToDrone: () => {}
         },
         selectors: {}
 });
 
 export const {
+    // Setters
     setConnecting,
     setConnected,
     setAircraftType,
@@ -101,6 +106,9 @@ export const {
     setSelectedComPorts,
     setNetworkType,
     setIp,
-    setPort
+    setPort,
+
+    // Emitters
+    emitIsConnectedToDrone
 } = droneConnectionSlice.actions;
 export default droneConnectionSlice.reducer;

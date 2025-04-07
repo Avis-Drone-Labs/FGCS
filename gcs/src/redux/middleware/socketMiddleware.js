@@ -5,19 +5,7 @@ import {
     initSocket,
     droneConnected,
     droneDisconnected
- } from "../socketSlice";
-
-// drone state actions
-import { 
-    setHeartbeat, 
-} from "../droneSlice";
-
-// drone connection
-import { emitIsConnectedToDrone, 
-    isConnectedToDrone,
-    getComPorts,
-    listComPorts
-} from "../slices/droneConnectionSlice";
+ } from "../slices/socketSlice";
 
 import { showErrorNotification } from "../../helpers/notification";
 
@@ -30,7 +18,7 @@ const SocketEvents = Object.freeze({
     Disconnect: "disconnect",
 
     // droneConnectionSlice
-    getComPorts: "get_com_ports",
+    // getComPorts: "get_com_ports",
     isConnectedToDrone: "is_connected_to_drone",
     listComPorts: "list_com_ports",
 })

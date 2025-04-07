@@ -14,9 +14,9 @@ const socketSlice = createSlice({
         },
         droneDisconnected: (state) => {
             state.isConnected = false;
-        }
+            get_com_ports }
     }
 })
 
-export const { initSocket, droneConnected, droneDisconnected } = droneSocketSlice.actions;
-export default droneSocketSlice.reducer;
+export const { initSocket, droneConnected, droneDisconnected } = socketSlice.actions;
+export default socketSlice.reducer;

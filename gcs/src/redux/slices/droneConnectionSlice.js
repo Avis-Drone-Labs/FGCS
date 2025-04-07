@@ -1,3 +1,5 @@
+import { createSlice } from "@reduxjs/toolkit";
+
 export const ConnectionType = {
     Serial: "serial",
     Network: "network",

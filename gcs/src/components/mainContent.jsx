@@ -18,8 +18,6 @@ import CameraWindow from "./dashboard/webcam/webcam"
 import Dashboard from "../dashboard"
 
 // Redux
-import { store } from "../redux/store"
-import { Provider } from "react-redux"
 import { ErrorBoundary } from "react-error-boundary"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 
@@ -43,9 +41,7 @@ export default function AppContent() {
             <Route
               path="/fla"
               element={
-                <Provider store={store}>
                   <FLA />
-                </Provider>
               }
             />
           </Routes>

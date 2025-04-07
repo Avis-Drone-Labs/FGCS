@@ -46,12 +46,14 @@ import { socket } from "../helpers/socket"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
+import { initSocket } from "../redux/slices/socketSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
   const dispatchRedux = useDispatch();
+  dispatchRedux(initSocket())
   dispatchRedux(emitIsConnectedToDrone())
 
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })

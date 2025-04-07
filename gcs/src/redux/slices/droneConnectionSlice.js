@@ -90,7 +90,17 @@ const droneConnectionSlice = createSlice({
         selectors: {}
 });
 
-export {
-    // REDUCERS
+export const {
+    setConnecting,
+    setConnected,
+    setAircraftType,
+    setBaudrate,
+    setConnectionType,
+    setFetchingComPorts,
+    setComPorts,
+    setSelectedComPorts,
+    setNetworkType,
+    setIp,
+    setPort
 } = droneConnectionSlice.actions;
 export default droneConnectionSlice.reducer;

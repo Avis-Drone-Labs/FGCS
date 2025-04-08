@@ -32,7 +32,7 @@ import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitIsConnectedToDrone, selectBaudrate, selectComPorts, selectConnected, selectConnecting, selectConnectionType, setBaudrate, setComPorts, setConnected, setConnecting, setConnectionType } from "../redux/slices/droneConnectionSlice.js"
+import { emitIsConnectedToDrone, selectBaudrate, selectComPorts, selectConnected, selectConnecting, selectConnectionType, selectFetchingComPorts, selectIp, selectNetworkType, selectPort, selectSelectedComPorts, setBaudrate, setComPorts, setConnected, setConnecting, setConnectionType, setFetchingComPorts, setIp, setNetworkType, setPort, setSelectedComPorts } from "../redux/slices/droneConnectionSlice.js"
 import { initSocket, selectIsConnectedToSocket, socketConnected } from "../redux/slices/socketSlice.js"
 import { setDroneAircraftType } from "../redux/slices/droneInfoSlice.js"
 
@@ -51,19 +51,19 @@ import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
-  // Panel is open/closed
-  const [opened, { open, close }] = useDisclosure(false)
-  const dispatch = useDispatch();
-
   // NOTE: Sockets won't work till this runs
+  const dispatch = useDispatch();
   dispatch(initSocket())
   
   // Non redux storage
+  const [opened, { open, close }] = useDisclosure(false)
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
   const [wireless, setWireless] = useLocalStorage({
     key: "wirelessConnection",
     defaultValue: true,
   })
+  const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
+    useState(null)
 
   
   // Drones redux selectors
@@ -80,30 +80,20 @@ export default function Navbar({ currentPage }) {
 
   // Com ports redux selectors
   const comPorts = useSelector(selectComPorts);
-  const [selectedComPort, setSelectedComPort] = useState(null)
-  const [fetchingComPorts, setFetchingComPorts] = useState(false)
+  const selectedComPort = useSelector(selectSelectedComPorts)
+  const fetchingComPorts = useSelector(selectFetchingComPorts)
 
-  // Network Connection
-  const [networkType, setNetworkType] = useLocalStorage({
-    key: "networkType",
-    defaultValue: "tcp",
-  })
-  const [ip, setIp] = useLocalStorage({
-    key: "ip",
-    defaultValue: "127.0.0.1",
-  })
-  const [port, setPort] = useLocalStorage({
-    key: "port",
-    defaultValue: "5760",
-  })
+  // Network connection redux selectors
+  const networkType = useSelector(selectNetworkType)
+  const ip = useSelector(selectIp)
+  const port = useSelector(selectPort)
 
-  const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
-    useState(null)
 
+  // Functions!
   function getComPorts() {
     if (!connectedToSocket) return
     socket.emit("get_com_ports")
-    setFetchingComPorts(true)
+    dispatch(setFetchingComPorts(true))
   }
 
   // Check if connected to drone
@@ -114,7 +104,7 @@ export default function Navbar({ currentPage }) {
 
     // Fetch com ports and list them
     socket.on("list_com_ports", (msg) => {
-      setFetchingComPorts(false)
+      dispatch(setFetchingComPorts(false))
       dispatch(setComPorts(msg))
       const possibleComPort = msg.find(
         (port) =>
@@ -122,9 +112,9 @@ export default function Navbar({ currentPage }) {
           port.toLowerCase().includes("ardupilot"),
       )
       if (possibleComPort !== undefined) {
-        setSelectedComPort(possibleComPort)
+        dispatch(setSelectedComPorts(possibleComPort))
       } else if (msg.length > 0) {
-        setSelectedComPort(msg[0])
+        dispatch(setSelectedComPorts(msg[0]))
       }
     })
 
@@ -266,7 +256,7 @@ export default function Navbar({ currentPage }) {
                   }
                   data={comPorts}
                   value={selectedComPort}
-                  onChange={setSelectedComPort}
+                  onChange={(e) => dispatch(setSelectedComPorts(e))}
                   rightSectionPointerEvents="all"
                   rightSection={<IconRefresh />}
                   rightSectionProps={{
@@ -314,7 +304,7 @@ export default function Navbar({ currentPage }) {
                   label="Network Connection type"
                   description="Select a network connection type"
                   value={networkType}
-                  onChange={setNetworkType}
+                  onChange={(e) => {dispatch(setNetworkType(e))}}
                   data={[
                     { value: "tcp", label: "TCP" },
                     { value: "udp", label: "UDP" },
@@ -325,7 +315,7 @@ export default function Navbar({ currentPage }) {
                   description="Enter the IP Address"
                   placeholder="127.0.0.1"
                   value={ip}
-                  onChange={(event) => setIp(event.currentTarget.value)}
+                  onChange={(event) => dispatch(setIp(event.currentTarget.value))}
                   data-autofocus
                 />
                 <TextInput
@@ -333,7 +323,7 @@ export default function Navbar({ currentPage }) {
                   description="Enter the port number"
                   placeholder="5760"
                   value={port}
-                  onChange={(event) => setPort(event.currentTarget.value)}
+                  onChange={(event) => dispatch(setPort(event.currentTarget.value))}
                 />
               </div>
             </Tabs.Panel>

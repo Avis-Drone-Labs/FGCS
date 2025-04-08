@@ -57,8 +57,7 @@ export default function Navbar({ currentPage }) {
 
   // NOTE: Sockets won't work till this runs
   dispatch(initSocket())
-  dispatch(emitIsConnectedToDrone())
-
+  // dispatch(emitIsConnectedToDrone())
   
   // Non redux storage
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
@@ -68,20 +67,19 @@ export default function Navbar({ currentPage }) {
   })
 
   
-  // Redux selectors
+  // Drones redux selectors
   const connecting = useSelector(selectConnecting)
   const connected = useSelector(selectConnected)
   const connectedToSocket = useSelector(socketConnected)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
 
-
   const ConnectionType = {
     Serial: "serial",
     Network: "network",
   }
 
-  // Com Ports
+  // Com ports redux selectors
   const [comPorts, setComPorts] = useState([])
   const [selectedComPort, setSelectedComPort] = useState(null)
   const [fetchingComPorts, setFetchingComPorts] = useState(false)

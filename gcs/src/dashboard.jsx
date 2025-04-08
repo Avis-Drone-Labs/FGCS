@@ -14,7 +14,6 @@ import { Divider } from "@mantine/core"
 import {
   useListState,
   useLocalStorage,
-  usePrevious,
   useSessionStorage,
   useViewportSize,
 } from "@mantine/hooks"
@@ -29,12 +28,6 @@ import { ResizableBox } from "react-resizable"
 
 // Helper javascript files
 import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
-import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
-  MAV_AUTOPILOT_INVALID,
-  MAV_STATE,
-  PLANE_MODES_FLIGHT_MODE_MAP,
-} from "./helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -60,20 +53,21 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
-import { useSelector } from "react-redux"
-import { selectGPSRawInt, selectRSSI } from "./redux/slices/droneInfoSlice"
+import { useDispatch, useSelector } from "react-redux"
+import { selectGPS, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
 
 export default function Dashboard() {
 
+  const dispatch = useDispatch();
+
+  const {lat, lon} = useSelector(selectGPS);
+  const armedNotification = useSelector(selectNotificationSound);
   const {fixType, satellitesVisible} = useSelector(selectGPSRawInt);
 
   // Local Storage
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
-  })
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
   })
 
   // Telemetry panel sizing
@@ -98,18 +92,12 @@ export default function Dashboard() {
 
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()
 
-  // Heartbeat data
-  const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-  const previousHeartbeatData = usePrevious(heartbeatData)
 
   // System data
   const [batteryData, setBatteryData] = useState([])
   const [statustextMessages, statustextMessagesHandler] = useListState([])
 
   // GPS and Telemetry
-  const [gpsData, setGpsData] = useState({})
-  const [telemetryData, setTelemetryData] = useState({})
-  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
   const [currentMissionData, setCurrentMissionData] = useState({
     mission_state: 0,
     seq: 0,
@@ -129,7 +117,6 @@ export default function Dashboard() {
     key: "followDroneBool",
     defaultValue: false,
   })
-  const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
 
   // Map and messages
   const mapRef = useRef()
@@ -145,7 +132,6 @@ export default function Dashboard() {
 
   const incomingMessageHandler = useCallback(
     () => ({
-      VFR_HUD: (msg) => setTelemetryData(msg), // Done
       BATTERY_STATUS: (msg) => {
         const battery = localBatteryData.filter(battery => battery.id == msg.id)[0]
         if (battery) {
@@ -156,13 +142,6 @@ export default function Dashboard() {
         localBatteryData.sort((b1, b2) => b1.id - b2.id)
         setBatteryData(localBatteryData)
       },
-      ATTITUDE: (msg) => setAttitudeData(msg), // Done
-      GLOBAL_POSITION_INT: (msg) => setGpsData(msg), // Done
-      HEARTBEAT: (msg) => {
-        if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
-          setHeartbeatData(msg)
-        }
-      }, // Done
       STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
       MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
     }),
@@ -182,6 +161,11 @@ export default function Dashboard() {
       setDisplayedData(resetDisplayedDataValues)
     }
   }, [])
+
+  if (armedNotification !== "") {
+    armedNotification === "armed" ? playArmed() : playDisarmed()
+    dispatch(soundPlayed());
+  }
 
   useEffect(() => {
     if (!connected) {
@@ -271,60 +255,17 @@ export default function Dashboard() {
       socket.off("home_position_result")
     }
   }, [connected])
-  
+
   // Following drone logic
-  useEffect(() => {
-    if (
-      mapRef.current &&
-      gpsData?.lon !== 0 &&
-      gpsData?.lat !== 0 &&
-      followDrone
-    ) {
-      let lat = parseFloat(gpsData.lat * 1e-7)
-      let lon = parseFloat(gpsData.lon * 1e-7)
-      mapRef.current.setCenter({ lng: lon, lat: lat })
-    }
-  }, [gpsData])
-
-  useEffect(() => {
-    if (!previousHeartbeatData?.base_mode || !heartbeatData?.base_mode) return
-
-    if (
-      heartbeatData.base_mode & 128 &&
-      !(previousHeartbeatData.base_mode & 128)
-    ) {
-      playArmed()
-    } else if (
-      !(heartbeatData.base_mode & 128) &&
-      previousHeartbeatData.base_mode & 128
-    ) {
-      playDisarmed()
-    }
-
-    if (currentFlightModeNumber !== heartbeatData.custom_mode) {
-      setCurrentFlightModeNumber(heartbeatData.custom_mode)
-    }
-  }, [heartbeatData])
-
-  function getFlightMode() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
-    }
-
-    return "UNKNOWN"
-  }
-
-  function getIsArmed() {
-    return heartbeatData.base_mode & 128
+  if (mapRef.current && followDrone && lon !== 0 && lat !== 0){
+    mapRef.current.setCenter({ lng: lon * 1e-7, lat: lat * 1e-7 })
   }
 
   function centerMapOnDrone() {
-    let lat = parseFloat(gpsData.lat * 1e-7)
-    let lon = parseFloat(gpsData.lon * 1e-7)
+    let parseLat = parseFloat(lat * 1e-7)
+    let parseLon = parseFloat(lon * 1e-7)
     mapRef.current.getMap().flyTo({
-      center: [lon, lat],
+      center: [parseLat, parseLon],
     })
   }
 
@@ -355,14 +296,11 @@ export default function Dashboard() {
         <div className="w-full">
           <MapSection
             passedRef={mapRef}
-            data={gpsData}
-            heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
             missionItems={missionItems}
             homePosition={homePosition}
             onDragstart={() => {
               setFollowDrone(false)
             }}
-            getFlightMode={getFlightMode}
             mapId="dashboard"
           />
         </div>
@@ -376,17 +314,11 @@ export default function Dashboard() {
         >
           {/* Telemetry Information */}
           <TelemetrySection
-            getIsArmed={getIsArmed}
             calcIndicatorSize={calcIndicatorSize}
             calcIndicatorPadding={calcIndicatorPadding}
-            getFlightMode={getFlightMode}
-            telemetryData={telemetryData}
             telemetryFontSize={telemetryFontSize}
-            attitudeData={attitudeData}
-            gpsData={gpsData}
             sideBarRef={sideBarRef}
             batteryData={batteryData}
-            systemStatus={MAV_STATE[heartbeatData.system_status]}
           />
 
           <Divider className="my-2" />
@@ -394,9 +326,6 @@ export default function Dashboard() {
           {/* Actions */}
           <TabsSection
             connected={connected}
-            aircraftType={aircraftType}
-            getIsArmed={getIsArmed}
-            currentFlightModeNumber={currentFlightModeNumber}
             currentMissionData={currentMissionData}
             displayedData={displayedData}
             setDisplayedData={setDisplayedData}
@@ -412,9 +341,7 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
-              gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
-            })`}
+            value={`(${(lat * 1e-7).toFixed(6)}, ${(lon * 1e-7).toFixed(6)})`}
             tooltip="GPS (lat, lon)"
           />
           <StatusSection
@@ -442,7 +369,6 @@ export default function Dashboard() {
         <FloatingToolbar
           missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
-          gpsData={gpsData}
           followDrone={followDrone}
           setFollowDrone={setFollowDrone}
           mapRef={mapRef}

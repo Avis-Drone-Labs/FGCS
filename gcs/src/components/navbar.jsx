@@ -53,7 +53,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export default function Navbar({ currentPage }) {
   // NOTE: Sockets won't work till this runs
   const dispatch = useDispatch();
-  dispatch(initSocket())
+  useEffect(() => {
+    dispatch(initSocket())
+  }, [])
   
   // Non redux storage
   const [opened, { open, close }] = useDisclosure(false)

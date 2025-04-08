@@ -44,11 +44,6 @@ const droneConnectionSlice = createSlice({
                     state.connecting = action.payload
                 }
             },
-            setAircraftType: (state, action) => {
-                if (action.payload !== state.aircraft_type) {
-                    state.aircraft_type = action.payload
-                }
-            },
             setBaudrate: (state, action) => {
                 if (action.payload !== state.baudrate) {
                     state.baudrate = action.payload
@@ -96,7 +91,6 @@ const droneConnectionSlice = createSlice({
         selectors: {
             selectConnecting: (state) => state.connecting,
             selectConnected: (state) => state.connected,
-            selectAircraftType: (state) => state.aircraft_type,
             selectBaudrate: (state) => state.baudrate,
             selectConnectionType: (state) => state.connection_type,
             selectFetchingComPorts: (state) => state.fetching_com_ports,
@@ -112,7 +106,6 @@ export const {
     // Setters
     setConnecting,
     setConnected,
-    setAircraftType,
     setBaudrate,
     setConnectionType,
     setFetchingComPorts,
@@ -128,7 +121,6 @@ export const {
 export const {
     selectConnecting,
     selectConnected,
-    selectAircraftType,
     selectBaudrate,
     selectConnectionType,
     selectFetchingComPorts,

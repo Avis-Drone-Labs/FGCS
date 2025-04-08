@@ -18,14 +18,12 @@ import {
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
 import { useSelector } from "react-redux"
-import { selectNavController } from "../../../redux/slices/droneInfoSlice"
+import { selectAircraftType, selectFlightMode, selectNavController } from "../../../redux/slices/droneInfoSlice"
 
 export default function MissionTabsSection({
   connected,
   tabPadding,
   currentMissionData,
-  currentFlightModeNumber,
-  aircraftType,
 }) {
   return (
     <Tabs.Panel value="mission">
@@ -41,8 +39,6 @@ export default function MissionTabsSection({
 
             {/** Auto, Start and Restart Mission */}
             <AutoStartRestartMission
-              aircraftType={aircraftType}
-              currentFlightModeNumber={currentFlightModeNumber}
             />
           </div>
         )}
@@ -76,10 +72,14 @@ const MissionInfo = ({ currentMissionData }) => {
   )
 }
 
-const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
+const AutoStartRestartMission = () => {
   // this is repeated code, will be updated after socket functionality is changed
+
+  const flightMode = useSelector(selectFlightMode);
+  const aircraftType = useSelector(selectAircraftType);
+
   function setNewFlightMode(modeNumber) {
-    if (modeNumber === null || modeNumber === currentFlightModeNumber) {
+    if (modeNumber === null || modeNumber === flightMode) {
       return
     }
     socket.emit("set_current_flight_mode", { newFlightMode: modeNumber })

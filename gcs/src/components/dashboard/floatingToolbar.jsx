@@ -18,11 +18,12 @@ import {
 // Helper Functions
 import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
+import { useSelector } from "react-redux"
+import { selectDroneCoords } from "../../redux/slices/droneInfoSlice"
 
 export default function FloatingToolbar({
   missionItems,
   centerMapOnDrone,
-  gpsData,
   followDrone,
   setFollowDrone,
   mapRef,
@@ -33,14 +34,14 @@ export default function FloatingToolbar({
     defaultValue: false,
   })
 
+  const {lat, lon} = useSelector(selectDroneCoords)
+
   function updateFollowDroneAction() {
     setFollowDrone(
       followDrone
         ? false
         : (() => {
-            if (mapRef.current && gpsData?.lon !== 0 && gpsData?.lat !== 0) {
-              let lat = parseFloat(gpsData.lat * 1e-7)
-              let lon = parseFloat(gpsData.lon * 1e-7)
+            if (mapRef.current && lon !== 0 && lat !== 0) {
               mapRef.current.setCenter({ lng: lon, lat: lat })
             }
             return true
@@ -74,7 +75,7 @@ export default function FloatingToolbar({
       {/* Follow Drone */}
       <Tooltip
         label={
-          !gpsData.lon && !gpsData.lat
+          !lon && !lat
             ? "No GPS data"
             : followDrone
               ? "Stop following"
@@ -82,7 +83,7 @@ export default function FloatingToolbar({
         }
       >
         <ActionIcon
-          disabled={!gpsData.lon && !gpsData.lat}
+          disabled={!lon && !lat}
           onClick={() => {
             updateFollowDroneAction()
           }}
@@ -93,10 +94,10 @@ export default function FloatingToolbar({
 
       {/* Center Map on Drone */}
       <Tooltip
-        label={!gpsData.lon && !gpsData.lat ? "No GPS data" : "Center on drone"}
+        label={!lon && !lat ? "No GPS data" : "Center on drone"}
       >
         <ActionIcon
-          disabled={!gpsData.lon && !gpsData.lat}
+          disabled={!lon && !lat}
           onClick={centerMapOnDrone}
         >
           <IconCrosshair />

@@ -19,13 +19,12 @@ import {
 // Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
+import { useSelector } from "react-redux"
+import { selectAircraftType, selectArmed, selectFlightMode } from "../../../redux/slices/droneInfoSlice"
 
 export default function ActionTabsSection({
   connected,
   tabPadding,
-  currentFlightModeNumber,
-  aircraftType,
-  getIsArmed,
 }) {
   return (
     <Tabs.Panel value="actions">
@@ -36,11 +35,9 @@ export default function ActionTabsSection({
           <div className="flex flex-col gap-y-2">
             {/** Flight Mode */}
             <FlightModeAction
-              aircraftType={aircraftType}
-              currentFlightModeNumber={currentFlightModeNumber}
             />
             {/** Arm / Takeoff / Landing */}
-            <ArmTakeoffLandAction getIsArmed={getIsArmed} />
+            <ArmTakeoffLandAction/>
           </div>
         )}
       </div>
@@ -48,12 +45,15 @@ export default function ActionTabsSection({
   )
 }
 
-const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
+const FlightModeAction = () => {
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
+
+  const aircraftType = useSelector(selectAircraftType);
+  const currentFlightMode = useSelector(selectFlightMode);
 
   // flight mode handling
   function setNewFlightMode(modeNumber) {
-    if (modeNumber === null || modeNumber === currentFlightModeNumber) {
+    if (modeNumber === null || modeNumber === currentFlightMode) {
       return
     }
     socket.emit("set_current_flight_mode", { newFlightMode: modeNumber })
@@ -71,7 +71,7 @@ const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
 
   return (
     <>
-      {currentFlightModeNumber !== null && (
+      {currentFlightMode !== null && (
         <div className="flex flex-wrap flex-cols gap-2">
           <Select
             value={newFlightModeNumber.toString()}
@@ -99,7 +99,10 @@ const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
   )
 }
 
-const ArmTakeoffLandAction = ({ getIsArmed }) => {
+const ArmTakeoffLandAction = () => {
+
+  const isArmed = useSelector(selectArmed);
+
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: "takeoffAltitude",
     defaultValue: 10,
@@ -123,11 +126,11 @@ const ArmTakeoffLandAction = ({ getIsArmed }) => {
       <div className="flex flex-wrap flex-cols gap-2">
         <Button
           onClick={() => {
-            armDisarm(!getIsArmed())
+            armDisarm(!isArmed)
           }}
           className="grow"
         >
-          {getIsArmed() ? "Disarm" : "Arm"}
+          {isArmed ? "Disarm" : "Arm"}
         </Button>
 
         {/** Takeoff button with popover */}

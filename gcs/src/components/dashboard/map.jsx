@@ -44,23 +44,23 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { useSelector } from "react-redux"
-import { selectNavController } from "../../redux/slices/droneInfoSlice"
+import { selectDroneCoords, selectFlightMode, selectHeading, selectNavController } from "../../redux/slices/droneInfoSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  data,
-  heading,
   missionItems,
   homePosition,
   onDragstart,
-  getFlightMode,
   mapId = "dashboard",
 }) {
 
+  const heading = useSelector(selectHeading);
+  const {lat, lon} = useSelector(selectDroneCoords);
   const {navBearing} = useSelector(selectNavController);
+  const flightMode = useSelector(selectFlightMode);
 
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
@@ -123,14 +123,8 @@ function MapSectionNonMemo({
     }
   }, [connected])
 
-  useEffect(() => {
-    // Check latest data point is valid
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
-      return
-
-    // Move drone icon on map
-    let lat = intToCoord(data.lat)
-    let lon = intToCoord(data.lon)
+  // Move the drone icon
+  if (lon !== 0 && lat !== 0){
     setPosition({ latitude: lat, longitude: lon })
 
     if (!firstCenteredToDrone) {
@@ -140,7 +134,8 @@ function MapSectionNonMemo({
       })
       setFirstCenteredToDrone(true)
     }
-  }, [data])
+  }
+
 
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
@@ -287,7 +282,7 @@ function MapSectionNonMemo({
           )
         })}
 
-        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+        {flightMode === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}

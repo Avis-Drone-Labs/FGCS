@@ -1,4 +1,4 @@
-/* 
+/*
   Tabs section. This will be a part of the resizable info box located in the bottom half. This
   contains tabs like data, action, missions, and camera.
 */
@@ -14,9 +14,6 @@ import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 
 export default function TabsSection({
   connected,
-  aircraftType,
-  getIsArmed,
-  currentFlightModeNumber,
   currentMissionData,
   displayedData,
   setDisplayedData,
@@ -42,9 +39,6 @@ export default function TabsSection({
       <ActionTabsSection
         connected={connected}
         tabPadding={tabPadding}
-        currentFlightModeNumber={currentFlightModeNumber}
-        aircraftType={aircraftType}
-        getIsArmed={getIsArmed}
       ></ActionTabsSection>
 
       {/* Mission */}
@@ -52,8 +46,6 @@ export default function TabsSection({
         connected={connected}
         tabPadding={tabPadding}
         currentMissionData={currentMissionData}
-        currentFlightModeNumber={currentFlightModeNumber}
-        aircraftType={aircraftType}
       />
 
       {/* Camera */}

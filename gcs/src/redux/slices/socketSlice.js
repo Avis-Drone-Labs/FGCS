@@ -19,4 +19,4 @@ const socketSlice = createSlice({
 })
 
 export const { initSocket, socketConnected, socketDisconnected } = socketSlice.actions;
-export default socketSlice.reducer;
+export default socketSlice

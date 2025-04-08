@@ -33,7 +33,7 @@ export default function FloatingToolbar({
   })
 
   const {lat, lon} = useSelector(selectDroneCoords)
-  const {filteredMissionItems} = useSelector(selectFilteredMissionItems)
+  const filteredMissionItems = useSelector(selectFilteredMissionItems)
 
   function updateFollowDroneAction() {
     setFollowDrone(

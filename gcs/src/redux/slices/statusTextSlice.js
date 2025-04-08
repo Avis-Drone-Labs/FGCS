@@ -18,4 +18,4 @@ const statusTextSlice = createSlice({
 export const {pushMessage} = statusTextSlice.actions;
 export const {selectMessages} = statusTextSlice.selectors;
 
-export default statusTextSlice.reducer;
+export default statusTextSlice

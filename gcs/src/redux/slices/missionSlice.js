@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { FILTER_MISSION_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants";
 
 const missionInfoSlice = createSlice({
@@ -27,19 +27,20 @@ const missionInfoSlice = createSlice({
     selectors: {
         selectCurrentMission: (state) => state.currentMission,
         selectCurrentMissionItems: (state) => state.currentMissionItems,
-
-        selectFilteredMissionItems: (state) => {
-            return state.currentMissionItems.missionItems.filter((missionItem) =>
-                !Object.values(FILTER_MISSION_ITEM_COMMANDS_LIST).includes(
-                    missionItem.command,
-                ),
-            )
-        }
-
     }
 })
 
-export const {selectCurrentMission, selectCurrentMissionItems, selectFilteredMissionItems} = missionInfoSlice.selectors;
+// Memoization because redux doesn't like me
+export const selectFilteredMissionItems = createSelector([missionInfoSlice.selectors.selectCurrentMissionItems], ({missionItems}) => {
+
+    return missionItems.filter((missionItem) =>
+        !Object.values(FILTER_MISSION_ITEM_COMMANDS_LIST).includes(
+            missionItem.command,
+        ),
+    )
+})
+
+export const {selectCurrentMission, selectCurrentMissionItems} = missionInfoSlice.selectors;
 export const {setCurrentMission} = missionInfoSlice.actions
 
-export default missionInfoSlice.reducer;
+export default missionInfoSlice

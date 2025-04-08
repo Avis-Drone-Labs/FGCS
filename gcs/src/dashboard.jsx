@@ -54,6 +54,7 @@ import disarmSound from "./assets/sounds/disarmed.mp3"
 import { useDispatch, useSelector } from "react-redux"
 import { selectBatteryData, selectDroneCoords, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
+import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
 
 export default function Dashboard() {
 
@@ -241,7 +242,7 @@ export default function Dashboard() {
 
         {/* Status Bar */}
         <StatusBar className="absolute top-0 right-0">
-          <StatusSection icon={<IconRadar />} value={fixType} tooltip="GPS fix type"/>
+          <StatusSection icon={<IconRadar />} value={GPS_FIX_TYPES[fixType]} tooltip="GPS fix type"/>
           <StatusSection icon={<IconGps />} value={`(${lat.toFixed(6)}, ${lon.toFixed(6)})`} tooltip="GPS (lat, lon)"/>
           <StatusSection icon={<IconSatellite />} value={satellitesVisible} tooltip="Satellites visible"/>
           <StatusSection icon={<IconAntenna />} value={useSelector(selectRSSI)} tooltip="RC RSSI"/>

@@ -31,8 +31,8 @@ import {
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Redux
-import { useDispatch } from "react-redux"
-import { emitIsConnectedToDrone } from "../redux/slices/droneConnectionSlice.js"
+import { useDispatch, useSelector } from "react-redux"
+import { emitIsConnectedToDrone, selectConnecting, setConnecting } from "../redux/slices/droneConnectionSlice.js"
 
 // Local imports
 import { AddCommand } from "./spotlight/commandHandler.js"
@@ -52,14 +52,17 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export default function Navbar({ currentPage }) {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
-  const dispatchRedux = useDispatch();
-  dispatchRedux(initSocket())
-  dispatchRedux(emitIsConnectedToDrone())
+  const dispatch = useDispatch();
+
+  // NOTE: Sockets won't work till this runs
+  dispatch(initSocket())
+  dispatch(emitIsConnectedToDrone())
 
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
 
   // Connection to drone
-  const [connecting, setConnecting] = useState(false)
+  const connecting = useSelector(selectConnecting)
+  // const [connecting, setConnecting] = useState(false)
   const [connected, setConnected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
@@ -141,7 +144,7 @@ export default function Navbar({ currentPage }) {
         setConnected(true)
       } else {
         setConnected(false)
-        setConnecting(false)
+        // dispatch(setConnecting(false))
         getComPorts()
       }
     })
@@ -169,7 +172,7 @@ export default function Navbar({ currentPage }) {
         showErrorNotification("Aircraft not of type quadcopter or plane")
       }
       setConnected(true)
-      setConnecting(false)
+      dispatch(setConnecting(false))
       close()
     })
 
@@ -182,14 +185,14 @@ export default function Navbar({ currentPage }) {
     // Handles disconnect trigger
     socket.on("disconnect", () => {
       setConnected(false)
-      setConnecting(false)
+      dispatch(setConnecting(false))
     })
 
     // Flags an error with the com port
     socket.on("connection_error", (msg) => {
       console.log(msg.message)
       showErrorNotification(msg.message)
-      setConnecting(false)
+      dispatch(setConnecting(false))
       setConnected(false)
     })
 
@@ -234,7 +237,7 @@ export default function Navbar({ currentPage }) {
     } else {
       return
     }
-    setConnecting(true)
+    dispatch(setConnecting(true))
   }
 
   function disconnect() {
@@ -259,7 +262,7 @@ export default function Navbar({ currentPage }) {
         opened={opened}
         onClose={() => {
           close()
-          setConnecting(false)
+          dispatch(setConnecting(false))
         }}
         title="Connect to aircraft"
         centered
@@ -379,7 +382,7 @@ export default function Navbar({ currentPage }) {
               color={tailwindColors.red[600]}
               onClick={() => {
                 close()
-                setConnecting(false)
+                dispatch(setConnecting(false))
               }}
             >
               Close

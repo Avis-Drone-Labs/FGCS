@@ -58,6 +58,7 @@ const socketMiddleware = (store) => {
                 })
 
                 socket.socket.on("is_connected_to_drone", (msg) => {
+                    console.log(msg)
                     if (msg) {
                         setConnected(true)
                     } else {

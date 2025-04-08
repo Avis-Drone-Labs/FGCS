@@ -32,8 +32,8 @@ import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitIsConnectedToDrone, selectBaudrate, selectConnected, selectConnecting, selectConnectionType, setBaudrate, setConnected, setConnecting, setConnectionType } from "../redux/slices/droneConnectionSlice.js"
-import { initSocket, socketConnected } from "../redux/slices/socketSlice.js"
+import { emitIsConnectedToDrone, selectBaudrate, selectComPorts, selectConnected, selectConnecting, selectConnectionType, setBaudrate, setComPorts, setConnected, setConnecting, setConnectionType } from "../redux/slices/droneConnectionSlice.js"
+import { initSocket, selectIsConnectedToSocket, socketConnected } from "../redux/slices/socketSlice.js"
 import { setDroneAircraftType } from "../redux/slices/droneInfoSlice.js"
 
 // Local imports
@@ -57,7 +57,6 @@ export default function Navbar({ currentPage }) {
 
   // NOTE: Sockets won't work till this runs
   dispatch(initSocket())
-  // dispatch(emitIsConnectedToDrone())
   
   // Non redux storage
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
@@ -68,9 +67,9 @@ export default function Navbar({ currentPage }) {
 
   
   // Drones redux selectors
+  const connectedToSocket = useSelector(selectIsConnectedToSocket)
   const connecting = useSelector(selectConnecting)
   const connected = useSelector(selectConnected)
-  const connectedToSocket = useSelector(socketConnected)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
 
@@ -80,7 +79,7 @@ export default function Navbar({ currentPage }) {
   }
 
   // Com ports redux selectors
-  const [comPorts, setComPorts] = useState([])
+  const comPorts = useSelector(selectComPorts);
   const [selectedComPort, setSelectedComPort] = useState(null)
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
 
@@ -110,13 +109,13 @@ export default function Navbar({ currentPage }) {
   // Check if connected to drone
   useEffect(() => {
     if (selectedComPort === null) {
-      socket.emit("is_connected_to_drone")
+      dispatch(emitIsConnectedToDrone())
     }
 
     // Fetch com ports and list them
     socket.on("list_com_ports", (msg) => {
       setFetchingComPorts(false)
-      setComPorts(msg)
+      dispatch(setComPorts(msg))
       const possibleComPort = msg.find(
         (port) =>
           port.toLowerCase().includes("mavlink") ||

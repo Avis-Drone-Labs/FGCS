@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { socket } from "../../helpers/socket";
 
 const socketSlice = createSlice({
     name: "socketConnection",
@@ -14,9 +15,13 @@ const socketSlice = createSlice({
         },
         socketDisconnected: (state) => {
             state.isConnected = false;
-            get_com_ports }
+        }
+    },
+    selectors: {
+        selectIsConnectedToSocket: (state) => state.isConnected
     }
 })
 
+export const { selectIsConnectedToSocket } = socketSlice.selectors;
 export const { initSocket, socketConnected, socketDisconnected } = socketSlice.actions;
 export default socketSlice

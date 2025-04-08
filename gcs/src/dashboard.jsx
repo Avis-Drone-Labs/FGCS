@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 
 // 3rd Party Imports
 import { Divider } from "@mantine/core"
@@ -30,7 +30,6 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "./helpers/notification"
-import { socket } from "./helpers/socket"
 
 // Custom component
 import useSound from "use-sound"
@@ -55,6 +54,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { selectBatteryData, selectDroneCoords, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
+import { selectNotificationQueue } from "./redux/slices/notificationSlice"
 
 export default function Dashboard() {
 
@@ -64,6 +64,7 @@ export default function Dashboard() {
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
+  const notificationQueue = useSelector(selectNotificationQueue)
   const {fixType, satellitesVisible} = useSelector(selectGPSRawInt)
 
   // Local Storage
@@ -94,10 +95,6 @@ export default function Dashboard() {
 
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()
 
-
-  // System data
-  const [homePosition, setHomePosition] = useState(null)
-
   // Following Drone
   const [followDrone, setFollowDrone] = useSessionStorage({
     key: "followDroneBool",
@@ -111,68 +108,17 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
+  // Play queued arming sounds
   if (armedNotification !== "") {
     armedNotification === "armed" ? playArmed() : playDisarmed()
     dispatch(soundPlayed());
   }
 
-  useEffect(() => {
-    if (!connected) {
-      return
-    } else {
-      socket.emit("set_state", { state: "dashboard" })
-      socket.emit("get_home_position")
-      socket.emit("get_current_mission")
-    }
-
-    socket.on("arm_disarm", (msg) => {
-      if (!msg.success) {
-        showErrorNotification(msg.message)
-      }
-    })
-
-    socket.on("set_current_flight_mode_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("nav_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("mission_control_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("home_position_result", (data) => {
-      if (data.success) {
-        setHomePosition(data.data)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    return () => {
-      socket.off("incoming_msg")
-      socket.off("arm_disarm")
-      socket.off("current_mission")
-      socket.off("set_current_flight_mode_result")
-      socket.off("nav_result")
-      socket.off("mission_control_result")
-      socket.off("home_position_result")
-    }
-  }, [connected])
+  // Show queued notifications
+  if (notificationQueue.length !== 0){
+    const notification = notificationQueue[0]
+    (notification.type == 'error' ? showErrorNotification : showSuccessNotification)(notification.message)
+  }
 
   // Following drone logic
   if (mapRef.current && followDrone && lon !== 0 && lat !== 0){
@@ -210,7 +156,6 @@ export default function Dashboard() {
         <div className="w-full">
           <MapSection
             passedRef={mapRef}
-            homePosition={homePosition}
             onDragstart={() => {
               setFollowDrone(false)
             }}

@@ -62,7 +62,7 @@ const droneInfoSlice = createSlice({
             state.notificationSound = "";
         },
         changeExtraData: (state, action) => {
-            state.extraDroneData[action.payload.index] = action.payload.data
+            state.extraDroneData[action.payload.index] = {...state.extraDroneData[action.payload.index], ...action.payload.data}
         }
     },
     selectors: {

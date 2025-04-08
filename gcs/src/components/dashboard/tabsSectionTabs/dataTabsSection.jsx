@@ -36,7 +36,7 @@ export default function DataTabsSection({tabPadding}) {
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
     if (isChecked) {
-      dispatch(changeExtraData({index: boxId, currently_selected: `${key}.${subkey}`, display_name: subvalue}))
+      dispatch(changeExtraData({index: boxId, data: {currently_selected: `${key}.${subkey}`, display_name: subvalue, value: 0}}))
       close()
     }
   }

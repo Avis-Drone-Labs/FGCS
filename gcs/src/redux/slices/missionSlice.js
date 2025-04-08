@@ -13,20 +13,32 @@ const missionInfoSlice = createSlice({
             missionItems: [],
             fenceItems: [],
             rallyItems: []
+        },
+        homePosition: {
+            lat: 0,
+            lon: 0,
+            alt: 0
         }
     },
     reducers: {
         setCurrentMission: (state, action) => {
+            if (action.payload === state.currentMission) return
             state.currentMission = action.payload;
         },
         // TODO: on socket.on(current_mission)
         setCurrentMissionItems: (state, action) => {
+            if (action.payload === state.currentMissionItems) return
             state.currentMissionItems = action.payload;
+        },
+        setHomePosition: (state, action) => {
+            if (action.payload === state.homePosition) return
+            state.homePosition = action.payload
         }
     },
     selectors: {
         selectCurrentMission: (state) => state.currentMission,
         selectCurrentMissionItems: (state) => state.currentMissionItems,
+        selectHomePosition: (state) => state.homePosition
     }
 })
 
@@ -40,7 +52,7 @@ export const selectFilteredMissionItems = createSelector([missionInfoSlice.selec
     )
 })
 
-export const {selectCurrentMission, selectCurrentMissionItems} = missionInfoSlice.selectors;
-export const {setCurrentMission} = missionInfoSlice.actions
+export const {selectCurrentMission, selectCurrentMissionItems, selectHomePosition} = missionInfoSlice.selectors;
+export const {setCurrentMission, setCurrentMissionItems, setHomePosition} = missionInfoSlice.actions
 
 export default missionInfoSlice

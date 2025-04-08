@@ -44,24 +44,24 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { useSelector } from "react-redux"
 import { selectDroneCoords, selectFlightMode, selectHeading, selectNavController } from "../../redux/slices/droneInfoSlice"
-import { selectCurrentMissionItems, selectFilteredMissionItems } from "../../redux/slices/missionSlice"
+import { selectCurrentMissionItems, selectFilteredMissionItems, selectHomePosition } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  homePosition,
   onDragstart,
   mapId = "dashboard",
 }) {
 
-  const heading = useSelector(selectHeading);
-  const flightMode = useSelector(selectFlightMode);
-  const {lat, lon} = useSelector(selectDroneCoords);
-  const {navBearing} = useSelector(selectNavController);
-  const {filteredMissionItems} = useSelector(selectFilteredMissionItems);
-  const {fenceItems, rallyItems} = useSelector(selectCurrentMissionItems);
+  const heading = useSelector(selectHeading)
+  const flightMode = useSelector(selectFlightMode)
+  const {lat, lon} = useSelector(selectDroneCoords)
+  const homePosition = useSelector(selectHomePosition)
+  const {navBearing} = useSelector(selectNavController)
+  const filteredMissionItems = useSelector(selectFilteredMissionItems)
+  const {fenceItems, rallyItems} = useSelector(selectCurrentMissionItems)
 
   const [connected] = useSessionStorage({
     key: "connectedToDrone",

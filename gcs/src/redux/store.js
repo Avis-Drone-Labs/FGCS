@@ -7,8 +7,9 @@ import socketMiddleware from "./middleware/socketMiddleware"
 import droneConnectionSlice from "./slices/droneConnectionSlice"
 import missionInfoSlice from "./slices/missionSlice"
 import statusTextSlice from "./slices/statusTextSlice"
+import notificationSlice from "./slices/notificationSlice"
 
-const rootReducer = combineSlices(logAnalyserSlice, socketSlice, droneConnectionSlice, droneInfoSlice, missionInfoSlice, statusTextSlice)
+const rootReducer = combineSlices(logAnalyserSlice, socketSlice, droneConnectionSlice, droneInfoSlice, missionInfoSlice, statusTextSlice, notificationSlice)
 
 export const store = configureStore({
   reducer: rootReducer,

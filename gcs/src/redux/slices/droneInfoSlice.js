@@ -39,9 +39,9 @@ const droneInfoSlice = createSlice({
         notificationSound: "",
         aircraftType: 1, // TODO: This should be in local storage but I have no idea how :D,
         batteryData: [],
-        extraDroneData: {
+        extraDroneData: [
             ...defaultDataMessages // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
-        }
+        ]
     },
     reducers: {
         setHeartbeatData: (state, action) => {

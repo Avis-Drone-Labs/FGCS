@@ -19,11 +19,11 @@ import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
 import { useSelector } from "react-redux"
 import { selectAircraftType, selectFlightMode, selectNavController } from "../../../redux/slices/droneInfoSlice"
+import { selectCurrentMission } from "../../../redux/slices/missionSlice"
 
 export default function MissionTabsSection({
   connected,
   tabPadding,
-  currentMissionData,
 }) {
   return (
     <Tabs.Panel value="mission">
@@ -34,7 +34,6 @@ export default function MissionTabsSection({
           <div className="flex flex-col gap-4">
             {/** Mission Information */}
             <MissionInfo
-              currentMissionData={currentMissionData}
             />
 
             {/** Auto, Start and Restart Mission */}
@@ -47,9 +46,10 @@ export default function MissionTabsSection({
   )
 }
 
-const MissionInfo = ({ currentMissionData }) => {
+const MissionInfo = () => {
 
   const {wpDist} = useSelector(selectNavController);
+  const {missionState, seq, total} = useSelector(selectCurrentMission);
 
   return (
     <>
@@ -57,11 +57,11 @@ const MissionInfo = ({ currentMissionData }) => {
       <div className="text-lg">
         <p>
           <span className="font-bold"> Mission State:</span>{" "}
-          {MISSION_STATES[currentMissionData.mission_state]}
+          {MISSION_STATES[missionState]}
         </p>
         <p>
           <span className="font-bold"> Waypoint: </span>{" "}
-          {currentMissionData.seq}/{currentMissionData.total}
+          {seq}/{total}
         </p>
         <p>
           <span className="font-bold">Distance to WP: </span>{" "}

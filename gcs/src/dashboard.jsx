@@ -12,7 +12,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 // 3rd Party Imports
 import { Divider } from "@mantine/core"
 import {
-  useListState,
   useLocalStorage,
   useSessionStorage,
   useViewportSize,
@@ -55,12 +54,14 @@ import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
 import { useDispatch, useSelector } from "react-redux"
 import { selectGPS, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
+import { selectMessages } from "./redux/slices/statusTextSlice"
 
 export default function Dashboard() {
 
   const dispatch = useDispatch();
 
   const {lat, lon} = useSelector(selectGPS);
+  const statustextMessages = useSelector(selectMessages);
   const armedNotification = useSelector(selectNotificationSound);
   const {fixType, satellitesVisible} = useSelector(selectGPSRawInt);
 
@@ -95,21 +96,6 @@ export default function Dashboard() {
 
   // System data
   const [batteryData, setBatteryData] = useState([])
-  const [statustextMessages, statustextMessagesHandler] = useListState([])
-
-  // GPS and Telemetry
-  const [currentMissionData, setCurrentMissionData] = useState({
-    mission_state: 0,
-    seq: 0,
-    total: 0,
-  })
-
-  // Mission
-  const [missionItems, setMissionItems] = useState({
-    mission_items: [],
-    fence_items: [],
-    rally_items: [],
-  })
   const [homePosition, setHomePosition] = useState(null)
 
   // Following Drone
@@ -142,8 +128,6 @@ export default function Dashboard() {
         localBatteryData.sort((b1, b2) => b1.id - b2.id)
         setBatteryData(localBatteryData)
       },
-      STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
-      MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
     }),
     [],
   )
@@ -207,10 +191,6 @@ export default function Dashboard() {
       if (!msg.success) {
         showErrorNotification(msg.message)
       }
-    })
-
-    socket.on("current_mission", (msg) => {
-      setMissionItems(msg)
     })
 
     socket.on("set_current_flight_mode_result", (data) => {
@@ -296,7 +276,6 @@ export default function Dashboard() {
         <div className="w-full">
           <MapSection
             passedRef={mapRef}
-            missionItems={missionItems}
             homePosition={homePosition}
             onDragstart={() => {
               setFollowDrone(false)
@@ -326,7 +305,6 @@ export default function Dashboard() {
           {/* Actions */}
           <TabsSection
             connected={connected}
-            currentMissionData={currentMissionData}
             displayedData={displayedData}
             setDisplayedData={setDisplayedData}
           />
@@ -367,7 +345,6 @@ export default function Dashboard() {
 
         {/* Right side floating toolbar */}
         <FloatingToolbar
-          missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
           followDrone={followDrone}
           setFollowDrone={setFollowDrone}
@@ -391,7 +368,6 @@ export default function Dashboard() {
               }}
             >
               <StatusMessages
-                messages={statustextMessages}
                 className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
               />
             </ResizableBox>

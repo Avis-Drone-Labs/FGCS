@@ -22,7 +22,6 @@ import Map from "react-map-gl/maplibre"
 
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
-import { filterMissionItems } from "../../helpers/filterMissions"
 import {
   showErrorNotification,
   showNotification,
@@ -45,22 +44,24 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { useSelector } from "react-redux"
 import { selectDroneCoords, selectFlightMode, selectHeading, selectNavController } from "../../redux/slices/droneInfoSlice"
+import { selectCurrentMissionItems, selectFilteredMissionItems } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  missionItems,
   homePosition,
   onDragstart,
   mapId = "dashboard",
 }) {
 
   const heading = useSelector(selectHeading);
+  const flightMode = useSelector(selectFlightMode);
   const {lat, lon} = useSelector(selectDroneCoords);
   const {navBearing} = useSelector(selectNavController);
-  const flightMode = useSelector(selectFlightMode);
+  const {filteredMissionItems} = useSelector(selectFilteredMissionItems);
+  const {fenceItems, rallyItems} = useSelector(selectCurrentMissionItems);
 
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
@@ -89,8 +90,6 @@ function MapSectionNonMemo({
     key: "repositionAltitude",
     defaultValue: 30,
   })
-
-  const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
   const { clicked, setClicked, points, setPoints } = useContextMenu()
@@ -135,11 +134,6 @@ function MapSectionNonMemo({
       setFirstCenteredToDrone(true)
     }
   }
-
-
-  useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
-  }, [missionItems])
 
   useEffect(() => {
     if (contextMenuRef.current) {
@@ -237,10 +231,10 @@ function MapSectionNonMemo({
           />
         )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems/>
 
         {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
+        {fenceItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}
@@ -252,16 +246,16 @@ function MapSectionNonMemo({
         })}
 
         {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
+        {fenceItems.length > 0 && (
           <DrawLineCoordinates
             coordinates={[
-              ...missionItems.fence_items.map((item) => [
+              ...fenceItems.map((item) => [
                 intToCoord(item.y),
                 intToCoord(item.x),
               ]),
               [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
+                intToCoord(fenceItems[0].y),
+                intToCoord(fenceItems[0].x),
               ],
             ]}
             colour={tailwindColors.blue[200]}
@@ -270,7 +264,7 @@ function MapSectionNonMemo({
         )}
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}

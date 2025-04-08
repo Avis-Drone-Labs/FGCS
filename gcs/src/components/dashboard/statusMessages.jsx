@@ -4,7 +4,7 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import moment from "moment"
 
 // Third party imports
@@ -13,22 +13,24 @@ import { useLocalStorage } from "@mantine/hooks"
 
 // Helpers Scripts
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
+import { useSelector } from "react-redux"
+import { selectMessages } from "../../redux/slices/statusTextSlice"
 
 export default function StatusMessages(props) {
   const viewport = useRef(null)
   const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
+
+  const messages = useSelector(selectMessages);
 
   const [outsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false,
   })
 
-  // Pushes new messages to bottom
-  useEffect(() => {
-    if (scrollPosition.y < 100) {
-      viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
-    }
-  }, [props.messages])
+  if (scrollPosition.y < 100) {
+    viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
 
   function getSeverityClassNames(severity) {
     switch (severity) {
@@ -64,7 +66,7 @@ export default function StatusMessages(props) {
         viewportRef={viewport}
         onScrollPositionChange={onScrollPositionChange}
       >
-        {props.messages.map((message, index) => {
+        {messages.map((message, index) => {
           return (
             <div
               key={index}

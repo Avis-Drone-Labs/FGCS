@@ -16,25 +16,24 @@ import {
 } from "@tabler/icons-react"
 
 // Helper Functions
-import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { useSelector } from "react-redux"
 import { selectDroneCoords } from "../../redux/slices/droneInfoSlice"
+import { selectFilteredMissionItems } from "../../redux/slices/missionSlice"
 
 export default function FloatingToolbar({
-  missionItems,
   centerMapOnDrone,
   followDrone,
   setFollowDrone,
   mapRef,
 }) {
-  const filteredMissionItems = filterMissionItems(missionItems.mission_items)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false,
   })
 
   const {lat, lon} = useSelector(selectDroneCoords)
+  const {filteredMissionItems} = useSelector(selectFilteredMissionItems)
 
   function updateFollowDroneAction() {
     setFollowDrone(

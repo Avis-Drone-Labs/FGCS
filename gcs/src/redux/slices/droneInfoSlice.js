@@ -3,7 +3,7 @@ import { COPTER_MODES_FLIGHT_MODE_MAP, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES_FLI
 
 const droneInfoSlice = createSlice({
     name: "droneInfo",
-    initalState: {
+    initialState: {
         attitudeData: {
             roll: 0.0,
             pitch: 0.0,

@@ -7,7 +7,6 @@
 
 // Helper imports
 import { intToCoord } from "../../helpers/dataFormatters"
-import { filterMissionItems } from "../../helpers/filterMissions"
 
 // Styling imports
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -19,10 +18,12 @@ import MarkerPin from "./markerPin"
 // Tailing styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { useSelector } from "react-redux"
+import { selectFilteredMissionItems } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function MissionItems({ missionItems }) {
-  const filteredMissionItems = filterMissionItems(missionItems)
+export default function MissionItems() {
+  const filteredMissionItems = useSelector(selectFilteredMissionItems);
   const filteredMissionItemsCount = filteredMissionItems.length
 
   function getListOfLineCoordinates() {
@@ -45,7 +46,7 @@ export default function MissionItems({ missionItems }) {
     }
 
     // Connect jump commands to previously displayed item and jump target item
-    const jumpCommandItems = missionItems.filter((item) => item.command === 177)
+    const jumpCommandItems = filteredMissionItems.filter((item) => item.command === 177)
     jumpCommandItems.forEach((jumpItem) => {
       const nextItem = filteredMissionItems.find((item) => {
         return item.seq === jumpItem.param1
@@ -83,7 +84,7 @@ export default function MissionItems({ missionItems }) {
       })}
 
       {/* Show mission item outlines */}
-      {missionItems.length > 0 && (
+      {filteredMissionItems.length > 0 && (
         <DrawLineCoordinates
           coordinates={getListOfLineCoordinates()}
           colour={tailwindColors.yellow[400]}

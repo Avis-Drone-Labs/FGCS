@@ -14,7 +14,6 @@ import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 
 export default function TabsSection({
   connected,
-  currentMissionData,
   displayedData,
   setDisplayedData,
 }) {
@@ -45,7 +44,6 @@ export default function TabsSection({
       <MissionTabsSection
         connected={connected}
         tabPadding={tabPadding}
-        currentMissionData={currentMissionData}
       />
 
       {/* Camera */}

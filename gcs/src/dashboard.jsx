@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
 import { Divider } from "@mantine/core"
@@ -26,7 +26,6 @@ import {
 import { ResizableBox } from "react-resizable"
 
 // Helper javascript files
-import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -53,17 +52,18 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
 import { useDispatch, useSelector } from "react-redux"
-import { selectGPS, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
+import { selectBatteryData, selectDroneCoords, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
 
 export default function Dashboard() {
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
-  const {lat, lon} = useSelector(selectGPS);
-  const statustextMessages = useSelector(selectMessages);
-  const armedNotification = useSelector(selectNotificationSound);
-  const {fixType, satellitesVisible} = useSelector(selectGPSRawInt);
+  const {lat, lon} = useSelector(selectDroneCoords)
+  const batteryData = useSelector(selectBatteryData)
+  const statustextMessages = useSelector(selectMessages)
+  const armedNotification = useSelector(selectNotificationSound)
+  const {fixType, satellitesVisible} = useSelector(selectGPSRawInt)
 
   // Local Storage
   const [connected] = useSessionStorage({
@@ -95,7 +95,6 @@ export default function Dashboard() {
 
 
   // System data
-  const [batteryData, setBatteryData] = useState([])
   const [homePosition, setHomePosition] = useState(null)
 
   // Following Drone
@@ -111,41 +110,6 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
-  const [displayedData, setDisplayedData] = useLocalStorage({
-    key: "dashboardDataMessages",
-    defaultValue: defaultDataMessages,
-  })
-
-  const incomingMessageHandler = useCallback(
-    () => ({
-      BATTERY_STATUS: (msg) => {
-        const battery = localBatteryData.filter(battery => battery.id == msg.id)[0]
-        if (battery) {
-          Object.assign(battery, msg)
-        } else {
-          localBatteryData.push(msg)
-        }
-        localBatteryData.sort((b1, b2) => b1.id - b2.id)
-        setBatteryData(localBatteryData)
-      },
-    }),
-    [],
-  )
-
-  useEffect(() => {
-    // Use localStorage.getItem as useLocalStorage hook updates slower
-    const oldDisplayedData = localStorage.getItem("dashboardDataMessages")
-
-    if (oldDisplayedData) {
-      const resetDisplayedDataValues = Object.keys(
-        JSON.parse(oldDisplayedData),
-      ).map((key) => {
-        return { ...JSON.parse(oldDisplayedData)[key], value: 0 }
-      })
-      setDisplayedData(resetDisplayedDataValues)
-    }
-  }, [])
-
   if (armedNotification !== "") {
     armedNotification === "armed" ? playArmed() : playDisarmed()
     dispatch(soundPlayed());
@@ -159,33 +123,6 @@ export default function Dashboard() {
       socket.emit("get_home_position")
       socket.emit("get_current_mission")
     }
-
-    socket.on("incoming_msg", (msg) => {
-      if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler()[msg.mavpackettype](msg)
-        // Store packetType that has arrived
-        const packetType = msg.mavpackettype
-
-        // Use functional form of setState to ensure the latest state is used
-        setDisplayedData((prevDisplayedData) => {
-          // Create a copy of displayedData to modify
-          let updatedDisplayedData = [...prevDisplayedData]
-
-          // Iterate over displayedData to find and update the matching item
-          updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
-            if (dataItem.currently_selected.startsWith(packetType)) {
-              const specificData = dataItem.currently_selected.split(".")[1]
-              if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-                return { ...dataItem, value: msg[specificData] }
-              }
-            }
-            return dataItem
-          })
-
-          return updatedDisplayedData
-        })
-      }
-    })
 
     socket.on("arm_disarm", (msg) => {
       if (!msg.success) {
@@ -238,14 +175,12 @@ export default function Dashboard() {
 
   // Following drone logic
   if (mapRef.current && followDrone && lon !== 0 && lat !== 0){
-    mapRef.current.setCenter({ lng: lon * 1e-7, lat: lat * 1e-7 })
+    mapRef.current.setCenter({ lng: lon, lat: lat })
   }
 
   function centerMapOnDrone() {
-    let parseLat = parseFloat(lat * 1e-7)
-    let parseLon = parseFloat(lon * 1e-7)
     mapRef.current.getMap().flyTo({
-      center: [parseLat, parseLon],
+      center: [lat, lon],
     })
   }
 
@@ -267,8 +202,6 @@ export default function Dashboard() {
       : 164
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
-
-  let localBatteryData = []
 
   return (
     <Layout currentPage="dashboard">
@@ -297,41 +230,21 @@ export default function Dashboard() {
             calcIndicatorPadding={calcIndicatorPadding}
             telemetryFontSize={telemetryFontSize}
             sideBarRef={sideBarRef}
-            batteryData={batteryData}
           />
 
           <Divider className="my-2" />
 
           {/* Actions */}
           <TabsSection
-            connected={connected}
-            displayedData={displayedData}
-            setDisplayedData={setDisplayedData}
-          />
+            connected={connected}/>
         </ResizableInfoBox>
 
         {/* Status Bar */}
         <StatusBar className="absolute top-0 right-0">
-          <StatusSection
-            icon={<IconRadar />}
-            value={fixType}
-            tooltip="GPS fix type"
-          />
-          <StatusSection
-            icon={<IconGps />}
-            value={`(${(lat * 1e-7).toFixed(6)}, ${(lon * 1e-7).toFixed(6)})`}
-            tooltip="GPS (lat, lon)"
-          />
-          <StatusSection
-            icon={<IconSatellite />}
-            value={satellitesVisible}
-            tooltip="Satellites visible"
-          />
-          <StatusSection
-            icon={<IconAntenna />}
-            value={useSelector(selectRSSI)}
-            tooltip="RC RSSI"
-          />
+          <StatusSection icon={<IconRadar />} value={fixType} tooltip="GPS fix type"/>
+          <StatusSection icon={<IconGps />} value={`(${lat.toFixed(6)}, ${lon.toFixed(6)})`} tooltip="GPS (lat, lon)"/>
+          <StatusSection icon={<IconSatellite />} value={satellitesVisible} tooltip="Satellites visible"/>
+          <StatusSection icon={<IconAntenna />} value={useSelector(selectRSSI)} tooltip="RC RSSI"/>
           <StatusSection
             icon={<IconBattery2 />}
             value={

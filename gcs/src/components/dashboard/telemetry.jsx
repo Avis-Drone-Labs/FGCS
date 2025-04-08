@@ -7,32 +7,22 @@
 import { useSelector } from "react-redux"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
-import { selectAlt, selectArmed, selectAttitudeDeg, selectFlightMode, selectHeading, selectNavController, selectPrearmEnabled, selectSystemStatus, selectTelemetry } from "../../redux/slices/droneInfoSlice"
+import { selectAlt, selectArmed, selectAttitudeDeg, selectBatteryData, selectFlightModeString, selectHeading, selectNavController, selectPrearmEnabled, selectSystemStatus, selectTelemetry } from "../../redux/slices/droneInfoSlice"
 
-export default function TelemetrySection({
-  calcIndicatorSize,
-  calcIndicatorPadding,
-  telemetryFontSize,
-  sideBarRef,
-  batteryData,
-}) {
+export default function TelemetrySection({calcIndicatorSize, calcIndicatorPadding, telemetryFontSize, sideBarRef}) {
 
-  const isArmed = useSelector(selectArmed);
-  const heading = useSelector(selectHeading);
-  const {yaw} = useSelector(selectAttitudeDeg);
-  const flightMode = useSelector(selectFlightMode);
+  const { yaw } = useSelector(selectAttitudeDeg)
   const {alt, relativeAlt} = useSelector(selectAlt)
-  const { wpDist } = useSelector(selectNavController);
-  const systemStatus = useSelector(selectSystemStatus);
-  const prearmEnabled = useSelector(selectPrearmEnabled);
-  const {airspeed, groundspeed} = useSelector(selectTelemetry);
+  const { wpDist } = useSelector(selectNavController)
+  const prearmEnabled = useSelector(selectPrearmEnabled)
+  const {airspeed, groundspeed} = useSelector(selectTelemetry)
 
   return (
     <div>
       {/* Information above indicators */}
       <div className="flex flex-col items-center space-y-2">
         <div className="flex items-center space-x-3">
-          {isArmed ? (
+          {useSelector(selectArmed) ? (
             <p className="font-bold text-falconred">ARMED</p>
           ) : (
             <>
@@ -46,8 +36,8 @@ export default function TelemetrySection({
           )}
         </div>
         <div className="flex flex-row space-x-6">
-          <p>{systemStatus}</p>
-          <p>{flightMode}</p>
+          <p>{useSelector(selectSystemStatus)}</p>
+          <p>{useSelector(selectFlightModeString)}</p>
         </div>
       </div>
 
@@ -110,7 +100,7 @@ export default function TelemetrySection({
             <p className="text-sm text-center">deg &#176;</p>
             <TelemetryValueDisplay
               title="HDG"
-              value={heading.toFixed(2)}
+              value={useSelector(selectHeading).toFixed(2)}
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay
@@ -151,7 +141,7 @@ export default function TelemetrySection({
 
         <table>
           <tbody>
-            {batteryData.map(battery => (
+            {useSelector(selectBatteryData).map(battery => (
               <tr className="w-full" key={battery.id}>
                 <td className="px-4">BATTERY{battery.id}</td>
                 <td className="font-bold px-2 text-xl text-right">

@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { COPTER_MODES_FLIGHT_MODE_MAP, GPS_FIX_TYPES, MAV_STATE, PLANE_MODES_FLIGHT_MODE_MAP } from "../../helpers/mavlinkConstants";
+import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages";
 
 const droneInfoSlice = createSlice({
     name: "droneInfo",
@@ -36,7 +37,11 @@ const droneInfoSlice = createSlice({
         },
         rssi: 0.0,
         notificationSound: "",
-        aircraftType: 1 // TODO: This should be in local storage but I have no idea how :D
+        aircraftType: 1, // TODO: This should be in local storage but I have no idea how :D,
+        batteryData: [],
+        extraDroneData: {
+            ...defaultDataMessages // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
+        }
     },
     reducers: {
         setHeartbeatData: (state, action) => {
@@ -45,8 +50,19 @@ const droneInfoSlice = createSlice({
             else if (!(action.payload.baseMode & 128) && state.heartbeatData.baseMode & 128)
                 state.notificationSound = "disarmed"
         },
+        setBatteryData: (state, action) => {
+            const battery = state.batteryData.filter(battery => battery.id == action.payload.id)[0]
+            if (battery) {
+                Object.assign(battery, action.payload)
+            } else {
+                state.batteryData.push(action.payload)
+            }
+        },
         soundPlayed: (state) => {
             state.notificationSound = "";
+        },
+        changeExtraData: (state, action) => {
+            state.extraDroneData[action.payload.index] = action.payload.data
         }
     },
     selectors: {
@@ -93,11 +109,14 @@ const droneInfoSlice = createSlice({
             return {...state.gpsRawIntData, fixType: GPS_FIX_TYPES[state.gpsRawIntData.fixType]};
         },
         selectRSSI: (state) => state.rssi,
-        selectAircraftType: (state) => state.aircraftType
+        selectAircraftType: (state) => state.aircraftType,
+        selectBatteryData: (state) => state.batteryData.sort((b1, b2) => b1.id - b2.id),
+
+        selectExtraDroneData: (state) => state.extraDroneData,
     }
 })
 
-export const {setHeartbeatData, soundPlayed} = droneInfoSlice.actions;
+export const {setHeartbeatData, soundPlayed, changeExtraData} = droneInfoSlice.actions;
 
 export const { selectAttitude,
             selectTelemetry,
@@ -116,6 +135,8 @@ export const { selectAttitude,
             selectFlightModeString,
             selectNotificationSound,
             selectFlightMode,
-            selectAircraftType } = droneInfoSlice.selectors;
+            selectAircraftType,
+            selectBatteryData,
+            selectExtraDroneData } = droneInfoSlice.selectors;
 
 export default droneInfoSlice.reducer;

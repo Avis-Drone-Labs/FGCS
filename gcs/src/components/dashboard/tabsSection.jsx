@@ -14,8 +14,6 @@ import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 
 export default function TabsSection({
   connected,
-  displayedData,
-  setDisplayedData,
 }) {
   const tabPadding = "pt-6"
 
@@ -30,8 +28,6 @@ export default function TabsSection({
       {/* Data */}
       <DataTabsSection
         tabPadding={tabPadding}
-        displayedData={displayedData}
-        setDisplayedData={setDisplayedData}
       />
 
       {/* Actions */}

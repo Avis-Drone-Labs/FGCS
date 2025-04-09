@@ -1,9 +1,10 @@
 import sys
 from typing import Any, List
 
-from customTypes import VehicleType
 from pymavlink import mavutil
 from serial.tools import list_ports
+
+from app.customTypes import VehicleType
 
 from . import socketio
 
@@ -212,12 +213,15 @@ def wpToMissionItemInt(
 
 FIXED_WING_TYPES = [
     mavutil.mavlink.MAV_TYPE_FIXED_WING,
-    mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER_DUOROTOR,
-    mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER_QUADROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR,
     mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR,
-    mavutil.mavlink.MAV_TYPE_VTOL_FIXEDROTOR,
-    mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER,
-    mavutil.mavlink.MAV_TYPE_VTOL_TILTWING,
+    # mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER,
+    # mavutil.mavlink.MAV_TYPE_VTOL_TILTWING,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED2,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED3,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED4,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED5,
 ]
 
 MULTIROTOR_TYPES = [
@@ -227,7 +231,6 @@ MULTIROTOR_TYPES = [
     mavutil.mavlink.MAV_TYPE_TRICOPTER,
     mavutil.mavlink.MAV_TYPE_DODECAROTOR,
     mavutil.mavlink.MAV_TYPE_ADSB,  # For cube orange (?)
-    mavutil.mavlink.MAV_TYPE_GENERIC_MULTIROTOR,
 ]
 
 

@@ -41,6 +41,6 @@ class SetFlightModeValueAndNumber(TypedDict):
 
 
 class VehicleType(Enum):
-    UNKNOWN: int = 0
-    FIXED_WING: int = 1
-    MULTIROTOR: int = 2
+    UNKNOWN = 0
+    FIXED_WING = 1
+    MULTIROTOR = 2

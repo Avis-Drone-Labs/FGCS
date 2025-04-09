@@ -234,7 +234,7 @@ MULTIROTOR_TYPES = [
 ]
 
 
-def getVehicleType(typeId: int) -> VehicleType:
+def getVehicleType(typeId: int) -> int:
     if typeId in FIXED_WING_TYPES:
         return VehicleType.FIXED_WING.value
     elif typeId in MULTIROTOR_TYPES:

@@ -233,8 +233,8 @@ MULTIROTOR_TYPES = [
 
 def getVehicleType(typeId: int) -> VehicleType:
     if typeId in FIXED_WING_TYPES:
-        return VehicleType.FIXED_WING
+        return VehicleType.FIXED_WING.value
     elif typeId in MULTIROTOR_TYPES:
-        return VehicleType.MULTIROTOR
+        return VehicleType.MULTIROTOR.value
     else:
-        return VehicleType.UNKNOWN
+        return VehicleType.UNKNOWN.value

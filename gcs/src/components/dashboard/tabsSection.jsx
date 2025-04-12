@@ -7,7 +7,7 @@
 import { Tabs } from "@mantine/core"
 
 // Tab Componenents
-import CameraTabsSection from "./tabsSectionTabs/CameraTabsSection"
+import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"

@@ -264,6 +264,7 @@ export default function Navbar({ currentPage }) {
             borderRadius: "0.5rem",
           },
         }}
+        withCloseButton={false}
       >
         <form
           onSubmit={(e) => {

@@ -22,8 +22,8 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
-from app.customTypes import Number, Response
-from app.utils import commandAccepted
+from app.customTypes import Number, Response, VehicleType
+from app.utils import commandAccepted, getVehicleType
 
 # Constants
 
@@ -132,8 +132,11 @@ class Drone:
 
         self.sendConnectionStatusUpdate("Received heartbeat")
 
-        self.aircraft_type = initial_heartbeat.type
-        if self.aircraft_type not in (1, 2):
+        self.aircraft_type = getVehicleType(initial_heartbeat.type)
+        if self.aircraft_type not in (
+            VehicleType.FIXED_WING.value,
+            VehicleType.MULTIROTOR.value,
+        ):
             self.logger.error("Aircraft not plane or quadcopter")
             self.master.close()
             self.master = None

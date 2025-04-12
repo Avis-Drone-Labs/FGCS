@@ -14,6 +14,11 @@
   -webkit-text-size-adjust: 100%;
 
   @apply bg-falcongrey-800 text-neutral-50 h-full max-h-full min-h-screen;
+
+  ul,
+  ol {
+    list-style: revert;
+  }
 }
 
 :root[data-mantine-color-scheme="dark"] {
@@ -53,10 +58,10 @@ body {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #d36565;
+  background: #727c7e;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #b43e31;
+  background: #535d5f;
 }

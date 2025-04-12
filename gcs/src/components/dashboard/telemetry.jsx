@@ -164,14 +164,13 @@ export default function TelemetrySection({
 
         <table>
           <tbody>
-            {batteryData.map(battery => (
+            {batteryData.map((battery) => (
               <tr className="w-full" key={battery.id}>
                 <td className="px-4">BATTERY{battery.id}</td>
                 <td className="font-bold px-2 text-xl text-right">
-                  {(battery.voltages
-                    ? battery.voltages[0] / 1000
-                    : 0
-                  ).toFixed(2)}
+                  {(battery.voltages ? battery.voltages[0] / 1000 : 0).toFixed(
+                    2,
+                  )}
                   V
                 </td>
                 <td className="font-bold px-2 text-xl text-right">

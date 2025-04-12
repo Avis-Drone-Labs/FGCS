@@ -8,6 +8,8 @@ if [ -z "$2" ]; then
 else
     cd radio
     pip install -r requirements.txt
+    cd ../gcs
+    yarn
     cd ../
     concurrently "python radio/app.py" "cd gcs && yarn dev" -n "backend,frontend" -c "red,blue"
 fi

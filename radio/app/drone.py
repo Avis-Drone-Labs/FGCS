@@ -485,8 +485,6 @@ class Drone:
                 elif msg.msgname == "STATUSTEXT":
                     self.logger.info(msg.text)
 
-                # self.logger.debug(msg.msgname)
-
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])
 

@@ -205,7 +205,7 @@ class NavController:
             self.drone.target_system,
             self.drone.target_component,
             mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-            65016,
+            65016,  # Bitmask to ignore all values except for x, y and z
             int(lat * 1e7),
             int(lon * 1e7),
             alt,

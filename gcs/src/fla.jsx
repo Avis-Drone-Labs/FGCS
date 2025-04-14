@@ -303,7 +303,6 @@ export default function FLA() {
             
             tempLoadedLogMessages["format"] = tempMsgFormat
           })
-          console.log(tempLoadedLogMessages)
 
           // Remove old BATT motor data
           delete tempLoadedLogMessages["BAT"]

@@ -268,6 +268,51 @@ export default function FLA() {
           delete logMessageFilterDefaultState["ESC"]
         }
 
+        if (loadedLogMessages["BAT"]) {
+          let tempLoadedLogMessages = { ...loadedLogMessages}
+          let tempMsgFormat = { ...loadedLogMessages["format"] }
+
+          // Load each BATT data into its own array
+          loadedLogMessages["BAT"].map((battData) => {
+            // Check for both "Inst" and "Instance" keys
+            const instanceValue = battData["Instance"] ?? battData["Inst"]
+            const battName = `BAT${(instanceValue ?? 0) + 1}`
+
+            // Initialize the array if it doesn't exist
+            if (!tempLoadedLogMessages[battName]) {
+              tempLoadedLogMessages[battName] = [];
+            }
+
+            tempLoadedLogMessages[battName].push({
+              ...battData,
+              name: battName,
+            })
+
+            // Add filter state for new BATT
+            if (!logMessageFilterDefaultState[battName])
+              logMessageFilterDefaultState[battName] = {
+                ...logMessageFilterDefaultState["BAT"],
+              }
+      
+            // Add format state for new BATT
+            if (!tempMsgFormat[battName])
+              tempMsgFormat[battName] = {
+                ...tempMsgFormat["BAT"],
+                name: battName,
+              }
+            
+            tempLoadedLogMessages["format"] = tempMsgFormat
+          })
+          console.log(tempLoadedLogMessages)
+
+          // Remove old BATT motor data
+          delete tempLoadedLogMessages["BAT"]
+          delete tempLoadedLogMessages["format"]["BAT"]
+          delete logMessageFilterDefaultState["BAT"]
+          updateLogMessages(tempLoadedLogMessages)
+          updateFormatMessages(tempLoadedLogMessages["format"])
+        }
+
         // Sort new filters
         const sortedLogMessageFilterState = Object.keys(
           logMessageFilterDefaultState,

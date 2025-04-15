@@ -10,6 +10,7 @@ const initialState = {
   connecting: false,
   connected: false,
   connection_modal: false,
+  connection_status: null,
 
   // aircraft type
   aircraft_type: 0,
@@ -90,6 +91,11 @@ const droneConnectionSlice = createSlice({
         state.connection_modal = action.payload
       }
     },
+    setConnectionStatus: (state, action) => {
+      if (action.payload !== state.connection_status) {
+        state.connection_status = action.payload
+      }
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -105,7 +111,8 @@ const droneConnectionSlice = createSlice({
     selectNetworkType: (state) => state.network_type,
     selectIp: (state) => state.ip,
     selectPort: (state) => state.port,
-    selectConnectionModal: (state) => state.connection_modal
+    selectConnectionModal: (state) => state.connection_modal,
+    selectConnectionStatus: (state) => state.connection_status,
   },
 })
 
@@ -122,6 +129,7 @@ export const {
   setIp,
   setPort,
   setConnectionModal,
+  setConnectionStatus,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -138,6 +146,7 @@ export const {
   selectIp,
   selectPort,
   selectConnectionModal,
+  selectConnectionStatus,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

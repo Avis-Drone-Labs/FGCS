@@ -14,6 +14,7 @@ import {
   setConnected,
   setConnecting,
   setConnectionModal,
+  setConnectionStatus,
   setFetchingComPorts,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
@@ -132,11 +133,16 @@ const socketMiddleware = (store) => {
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
           if (msg.aircraft_type != 1 && msg.aircraft_type != 2) {
-            // showErrorNotification("Aircraft not of type quadcopter or plane")
+            store.dispatch(queueNotification({"type": "error", "message": "Aircraft not of type quadcopter or plane"}))
           }
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
+        })
+
+        // Setting connection status 
+        socket.socket.on("drone_connect_status", (msg) => {
+          store.dispatch(setConnectionStatus(msg.message))
         })
       }
     }

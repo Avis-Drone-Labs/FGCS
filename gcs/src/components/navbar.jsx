@@ -39,6 +39,7 @@ import {
   selectConnected,
   selectConnecting,
   selectConnectionModal,
+  selectConnectionStatus,
   selectConnectionType,
   selectFetchingComPorts,
   selectIp,
@@ -91,12 +92,11 @@ export default function Navbar({ currentPage }) {
     key: "wirelessConnection",
     defaultValue: true,
   })
-  const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
-    useState(null)
 
   // Drones redux selectors
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
   const connecting = useSelector(selectConnecting)
+  const droneConnectionStatusMessage = useSelector(selectConnectionStatus)
   const connected = useSelector(selectConnected)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
@@ -129,10 +129,6 @@ export default function Navbar({ currentPage }) {
     if (selectedComPort === null) {
       dispatch(emitIsConnectedToDrone())
     }
-
-    socket.on("drone_connect_status", (msg) => {
-      setDroneConnectionStatusMessage(msg.message)
-    })
 
     return () => {
       socket.off("drone_connect_status")

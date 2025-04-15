@@ -286,9 +286,6 @@ export default function Graph({
     ]
     const scales = {}
 
-    // Capture current scales if they exist
-    const currentScales = chartRef.current?.scales
-
     if (yAxisIDs.length === 0) {
       scales.y = {
         grid: { color: tailwindColors.gray[500] },

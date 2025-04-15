@@ -269,7 +269,7 @@ export default function FLA() {
         }
 
         if (loadedLogMessages["BAT"]) {
-          let tempLoadedLogMessages = { ...loadedLogMessages}
+          let tempLoadedLogMessages = { ...loadedLogMessages }
           let tempMsgFormat = { ...loadedLogMessages["format"] }
 
           // Load each BATT data into its own array
@@ -280,7 +280,7 @@ export default function FLA() {
 
             // Initialize the array if it doesn't exist
             if (!tempLoadedLogMessages[battName]) {
-              tempLoadedLogMessages[battName] = [];
+              tempLoadedLogMessages[battName] = []
             }
 
             tempLoadedLogMessages[battName].push({
@@ -293,14 +293,14 @@ export default function FLA() {
               logMessageFilterDefaultState[battName] = {
                 ...logMessageFilterDefaultState["BAT"],
               }
-      
+
             // Add format state for new BATT
             if (!tempMsgFormat[battName])
               tempMsgFormat[battName] = {
                 ...tempMsgFormat["BAT"],
                 name: battName,
               }
-            
+
             tempLoadedLogMessages["format"] = tempMsgFormat
           })
 

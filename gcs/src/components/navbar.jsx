@@ -259,12 +259,12 @@ export default function Navbar({ currentPage }) {
           backgroundOpacity: 0.55,
           blur: 3,
         }}
-        withCloseButton={false}
         styles={{
           content: {
             borderRadius: "0.5rem",
           },
         }}
+        withCloseButton={false}
       >
         <form
           onSubmit={(e) => {

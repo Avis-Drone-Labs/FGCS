@@ -152,7 +152,9 @@ export default function Dashboard() {
     () => ({
       VFR_HUD: (msg) => setTelemetryData(msg),
       BATTERY_STATUS: (msg) => {
-        const battery = localBatteryData.filter(battery => battery.id == msg.id)[0]
+        const battery = localBatteryData.filter(
+          (battery) => battery.id == msg.id,
+        )[0]
         if (battery) {
           Object.assign(battery, msg)
         } else {

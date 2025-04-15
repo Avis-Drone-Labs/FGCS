@@ -13,6 +13,7 @@
         "RSSI",
         "serialutil",
         "SITL",
-        "statustext"
+        "statustext",
+        "SUAS"
     ]
 }

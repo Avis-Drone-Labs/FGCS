@@ -11,6 +11,7 @@ import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
+import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
 
 export default function TabsSection({
   connected,
@@ -22,16 +23,18 @@ export default function TabsSection({
   displayedData,
   setDisplayedData,
 }) {
-  const tabPadding = "pt-6"
+  const tabPadding = "pt-6 pb-4"
 
   return (
     <Tabs defaultValue="data">
-      <Tabs.List grow>
+      <Tabs.List className="!overflow-x-scroll !flex-nowrap">
         <Tabs.Tab value="data">Data</Tabs.Tab>
         <Tabs.Tab value="actions">Actions</Tabs.Tab>
         <Tabs.Tab value="mission">Mission</Tabs.Tab>
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
+        <Tabs.Tab value="preFlightChecklist">Pre-Flight Checklist</Tabs.Tab>
       </Tabs.List>
+
       {/* Data */}
       <DataTabsSection
         tabPadding={tabPadding}
@@ -60,6 +63,9 @@ export default function TabsSection({
 
       {/* Camera */}
       <CameraTabsSection tabPadding={tabPadding} />
+
+      {/* Pre Flight Checklist */}
+      <PreFlightChecklistTab tabPadding={tabPadding} />
     </Tabs>
   )
 }

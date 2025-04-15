@@ -880,6 +880,11 @@ export default function FLA() {
                             ),
                           }
 
+                          // Skip categories with no valid filters
+                          if (filteredCategory.filters.length === 0) {
+                            return null
+                          }
+
                           return (
                             <Fragment key={category.name}>
                               <PresetAccordionItem

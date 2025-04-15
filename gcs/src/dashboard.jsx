@@ -121,12 +121,8 @@ export default function Dashboard() {
   }
 
   // Show queued notifications
-  if (notificationQueue.length !== 0) {
-    const notification = notificationQueue[0](
-      notification.type == "error"
-        ? showErrorNotification
-        : showSuccessNotification,
-    )(notification.message)
+  if (notificationQueue.length !== 0){
+    (notificationQueue[0].type == 'error' ? showErrorNotification : showSuccessNotification)(notificationQueue[0].message)
   }
 
   // Following drone logic

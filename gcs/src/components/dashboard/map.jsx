@@ -43,25 +43,29 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { useSelector } from "react-redux"
-import { selectDroneCoords, selectFlightMode, selectHeading, selectNavController } from "../../redux/slices/droneInfoSlice"
-import { selectCurrentMissionItems, selectFilteredMissionItems, selectHomePosition } from "../../redux/slices/missionSlice"
+import {
+  selectDroneCoords,
+  selectFlightMode,
+  selectHeading,
+  selectNavController,
+} from "../../redux/slices/droneInfoSlice"
+import {
+  selectCurrentMissionItems,
+  selectFilteredMissionItems,
+  selectHomePosition,
+} from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
-function MapSectionNonMemo({
-  passedRef,
-  onDragstart,
-  mapId = "dashboard",
-}) {
-
+function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const heading = useSelector(selectHeading)
   const flightMode = useSelector(selectFlightMode)
-  const {lat, lon} = useSelector(selectDroneCoords)
+  const { lat, lon } = useSelector(selectDroneCoords)
   const homePosition = useSelector(selectHomePosition)
-  const {navBearing} = useSelector(selectNavController)
+  const { navBearing } = useSelector(selectNavController)
   const filteredMissionItems = useSelector(selectFilteredMissionItems)
-  const {fenceItems, rallyItems} = useSelector(selectCurrentMissionItems)
+  const { fenceItems, rallyItems } = useSelector(selectCurrentMissionItems)
 
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
@@ -123,7 +127,7 @@ function MapSectionNonMemo({
   }, [connected])
 
   // Move the drone icon
-  if (lon !== 0 && lat !== 0){
+  if (lon !== 0 && lat !== 0) {
     setPosition({ latitude: lat, longitude: lon })
 
     if (!firstCenteredToDrone) {
@@ -231,7 +235,7 @@ function MapSectionNonMemo({
           />
         )}
 
-        <MissionItems/>
+        <MissionItems />
 
         {/* Show mission geo-fence MARKERS */}
         {fenceItems.map((item, index) => {
@@ -253,10 +257,7 @@ function MapSectionNonMemo({
                 intToCoord(item.y),
                 intToCoord(item.x),
               ]),
-              [
-                intToCoord(fenceItems[0].y),
-                intToCoord(fenceItems[0].x),
-              ],
+              [intToCoord(fenceItems[0].y), intToCoord(fenceItems[0].x)],
             ]}
             colour={tailwindColors.blue[200]}
             lineProps={{ "line-dasharray": [2, 2] }}

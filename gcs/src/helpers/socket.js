@@ -12,22 +12,22 @@ socket.on("disconnect", () => {
 })
 
 class SocketConnection {
-  socket;
-  socketEndpoint = import.meta.env.VITE_BACKEND_URL;
-  
+  socket
+  socketEndpoint = import.meta.env.VITE_BACKEND_URL
+
   constructor() {
-    this.socket = io(this.socketEndpoint);
+    this.socket = io(this.socketEndpoint)
   }
 }
 
-let socketConnection = undefined;
+let socketConnection = undefined
 
 class SocketFactory {
   static create() {
-    if (!socketConnection){
-      socketConnection = new SocketConnection();
+    if (!socketConnection) {
+      socketConnection = new SocketConnection()
     }
-    return socketConnection;
+    return socketConnection
   }
 }
-export default SocketFactory;
+export default SocketFactory

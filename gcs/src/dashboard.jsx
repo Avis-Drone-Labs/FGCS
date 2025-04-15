@@ -51,21 +51,27 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
 import { useDispatch, useSelector } from "react-redux"
-import { selectBatteryData, selectDroneCoords, selectGPSRawInt, selectNotificationSound, selectRSSI, soundPlayed } from "./redux/slices/droneInfoSlice"
+import {
+  selectBatteryData,
+  selectDroneCoords,
+  selectGPSRawInt,
+  selectNotificationSound,
+  selectRSSI,
+  soundPlayed,
+} from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
 import { selectNotificationQueue } from "./redux/slices/notificationSlice"
 
 export default function Dashboard() {
-
   const dispatch = useDispatch()
 
-  const {lat, lon} = useSelector(selectDroneCoords)
+  const { lat, lon } = useSelector(selectDroneCoords)
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
   const notificationQueue = useSelector(selectNotificationQueue)
-  const {fixType, satellitesVisible} = useSelector(selectGPSRawInt)
+  const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
 
   // Local Storage
   const [connected] = useSessionStorage({
@@ -111,17 +117,20 @@ export default function Dashboard() {
   // Play queued arming sounds
   if (armedNotification !== "") {
     armedNotification === "armed" ? playArmed() : playDisarmed()
-    dispatch(soundPlayed());
+    dispatch(soundPlayed())
   }
 
   // Show queued notifications
-  if (notificationQueue.length !== 0){
-    const notification = notificationQueue[0]
-    (notification.type == 'error' ? showErrorNotification : showSuccessNotification)(notification.message)
+  if (notificationQueue.length !== 0) {
+    const notification = notificationQueue[0](
+      notification.type == "error"
+        ? showErrorNotification
+        : showSuccessNotification,
+    )(notification.message)
   }
 
   // Following drone logic
-  if (mapRef.current && followDrone && lon !== 0 && lat !== 0){
+  if (mapRef.current && followDrone && lon !== 0 && lat !== 0) {
     mapRef.current.setCenter({ lng: lon, lat: lat })
   }
 
@@ -181,16 +190,31 @@ export default function Dashboard() {
           <Divider className="my-2" />
 
           {/* Actions */}
-          <TabsSection
-            connected={connected}/>
+          <TabsSection connected={connected} />
         </ResizableInfoBox>
 
         {/* Status Bar */}
         <StatusBar className="absolute top-0 right-0">
-          <StatusSection icon={<IconRadar />} value={GPS_FIX_TYPES[fixType]} tooltip="GPS fix type"/>
-          <StatusSection icon={<IconGps />} value={`(${lat.toFixed(6)}, ${lon.toFixed(6)})`} tooltip="GPS (lat, lon)"/>
-          <StatusSection icon={<IconSatellite />} value={satellitesVisible} tooltip="Satellites visible"/>
-          <StatusSection icon={<IconAntenna />} value={useSelector(selectRSSI)} tooltip="RC RSSI"/>
+          <StatusSection
+            icon={<IconRadar />}
+            value={GPS_FIX_TYPES[fixType]}
+            tooltip="GPS fix type"
+          />
+          <StatusSection
+            icon={<IconGps />}
+            value={`(${lat.toFixed(6)}, ${lon.toFixed(6)})`}
+            tooltip="GPS (lat, lon)"
+          />
+          <StatusSection
+            icon={<IconSatellite />}
+            value={satellitesVisible}
+            tooltip="Satellites visible"
+          />
+          <StatusSection
+            icon={<IconAntenna />}
+            value={useSelector(selectRSSI)}
+            tooltip="RC RSSI"
+          />
           <StatusSection
             icon={<IconBattery2 />}
             value={

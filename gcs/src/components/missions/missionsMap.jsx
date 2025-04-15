@@ -37,7 +37,11 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { useSelector } from "react-redux"
 import { selectDroneCoords } from "../../redux/slices/droneInfoSlice"
-import { selectCurrentMissionItems, selectFilteredMissionItems, selectHomePosition } from "../../redux/slices/missionSlice"
+import {
+  selectCurrentMissionItems,
+  selectFilteredMissionItems,
+  selectHomePosition,
+} from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -91,7 +95,6 @@ function MapSectionNonMemo({
   useEffect(() => {
     return () => {}
   }, [connected])
-
 
   useEffect(() => {
     if (contextMenuRef.current) {
@@ -157,11 +160,7 @@ function MapSectionNonMemo({
         {droneCoords !== null &&
           !isNaN(droneCoords.lat) &&
           !isNaN(droneCoords.lon) && (
-            <DroneMarker
-              
-              zoom={initialViewState.zoom}
-              showHeadingLine={true}
-            />
+            <DroneMarker zoom={initialViewState.zoom} showHeadingLine={true} />
           )}
 
         {/* Show home position */}

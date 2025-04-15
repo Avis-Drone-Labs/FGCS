@@ -23,7 +23,7 @@ import { selectFilteredMissionItems } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function MissionItems() {
-  const filteredMissionItems = useSelector(selectFilteredMissionItems);
+  const filteredMissionItems = useSelector(selectFilteredMissionItems)
   const filteredMissionItemsCount = filteredMissionItems.length
 
   function getListOfLineCoordinates() {
@@ -46,7 +46,9 @@ export default function MissionItems() {
     }
 
     // Connect jump commands to previously displayed item and jump target item
-    const jumpCommandItems = filteredMissionItems.filter((item) => item.command === 177)
+    const jumpCommandItems = filteredMissionItems.filter(
+      (item) => item.command === 177,
+    )
     jumpCommandItems.forEach((jumpItem) => {
       const nextItem = filteredMissionItems.find((item) => {
         return item.seq === jumpItem.param1

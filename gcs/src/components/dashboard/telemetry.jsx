@@ -7,15 +7,30 @@
 import { useSelector } from "react-redux"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
-import { selectAlt, selectArmed, selectAttitudeDeg, selectBatteryData, selectFlightModeString, selectHeading, selectNavController, selectPrearmEnabled, selectSystemStatus, selectTelemetry } from "../../redux/slices/droneInfoSlice"
+import {
+  selectAlt,
+  selectArmed,
+  selectAttitudeDeg,
+  selectBatteryData,
+  selectFlightModeString,
+  selectHeading,
+  selectNavController,
+  selectPrearmEnabled,
+  selectSystemStatus,
+  selectTelemetry,
+} from "../../redux/slices/droneInfoSlice"
 
-export default function TelemetrySection({calcIndicatorSize, calcIndicatorPadding, telemetryFontSize, sideBarRef}) {
-
+export default function TelemetrySection({
+  calcIndicatorSize,
+  calcIndicatorPadding,
+  telemetryFontSize,
+  sideBarRef,
+}) {
   const { yaw } = useSelector(selectAttitudeDeg)
-  const {alt, relativeAlt} = useSelector(selectAlt)
+  const { alt, relativeAlt } = useSelector(selectAlt)
   const { wpDist } = useSelector(selectNavController)
   const prearmEnabled = useSelector(selectPrearmEnabled)
-  const {airspeed, groundspeed} = useSelector(selectTelemetry)
+  const { airspeed, groundspeed } = useSelector(selectTelemetry)
 
   return (
     <div>
@@ -27,7 +42,7 @@ export default function TelemetrySection({calcIndicatorSize, calcIndicatorPaddin
           ) : (
             <>
               <p className="font-bold">DISARMED</p>
-              {prearmEnabled? (
+              {prearmEnabled ? (
                 <p className="text-green-500">Prearm: Enabled</p>
               ) : (
                 <p className="font-bold text-falconred">Prearm: Disabled</p>
@@ -67,9 +82,7 @@ export default function TelemetrySection({calcIndicatorSize, calcIndicatorPaddin
           </div>
 
           {/* Attitude indicator image */}
-          <AttitudeIndicator
-            size={`${calcIndicatorSize()}px`}
-          />
+          <AttitudeIndicator size={`${calcIndicatorSize()}px`} />
 
           {/* AMSL and AREL values */}
           <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
@@ -111,9 +124,7 @@ export default function TelemetrySection({calcIndicatorSize, calcIndicatorPaddin
           </div>
 
           {/* Heading indicator image */}
-          <HeadingIndicator
-            size={`${calcIndicatorSize()}px`}
-          />
+          <HeadingIndicator size={`${calcIndicatorSize()}px`} />
 
           {/* YAW and HOME values */}
           <div
@@ -141,14 +152,13 @@ export default function TelemetrySection({calcIndicatorSize, calcIndicatorPaddin
 
         <table>
           <tbody>
-            {useSelector(selectBatteryData).map(battery => (
+            {useSelector(selectBatteryData).map((battery) => (
               <tr className="w-full" key={battery.id}>
                 <td className="px-4">BATTERY{battery.id}</td>
                 <td className="font-bold px-2 text-xl text-right">
-                  {(battery.voltages
-                    ? battery.voltages[0] / 1000
-                    : 0
-                  ).toFixed(2)}
+                  {(battery.voltages ? battery.voltages[0] / 1000 : 0).toFixed(
+                    2,
+                  )}
                   V
                 </td>
                 <td className="font-bold px-2 text-xl text-right">

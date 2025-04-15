@@ -18,13 +18,14 @@ import {
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
 import { useSelector } from "react-redux"
-import { selectAircraftType, selectFlightMode, selectNavController } from "../../../redux/slices/droneInfoSlice"
+import {
+  selectAircraftType,
+  selectFlightMode,
+  selectNavController,
+} from "../../../redux/slices/droneInfoSlice"
 import { selectCurrentMission } from "../../../redux/slices/missionSlice"
 
-export default function MissionTabsSection({
-  connected,
-  tabPadding,
-}) {
+export default function MissionTabsSection({ connected, tabPadding }) {
   return (
     <Tabs.Panel value="mission">
       <div className={tabPadding}>
@@ -33,12 +34,10 @@ export default function MissionTabsSection({
         ) : (
           <div className="flex flex-col gap-4">
             {/** Mission Information */}
-            <MissionInfo
-            />
+            <MissionInfo />
 
             {/** Auto, Start and Restart Mission */}
-            <AutoStartRestartMission
-            />
+            <AutoStartRestartMission />
           </div>
         )}
       </div>
@@ -47,9 +46,8 @@ export default function MissionTabsSection({
 }
 
 const MissionInfo = () => {
-
-  const {wpDist} = useSelector(selectNavController);
-  const {missionState, seq, total} = useSelector(selectCurrentMission);
+  const { wpDist } = useSelector(selectNavController)
+  const { missionState, seq, total } = useSelector(selectCurrentMission)
 
   return (
     <>
@@ -60,8 +58,7 @@ const MissionInfo = () => {
           {MISSION_STATES[missionState]}
         </p>
         <p>
-          <span className="font-bold"> Waypoint: </span>{" "}
-          {seq}/{total}
+          <span className="font-bold"> Waypoint: </span> {seq}/{total}
         </p>
         <p>
           <span className="font-bold">Distance to WP: </span>{" "}
@@ -75,8 +72,8 @@ const MissionInfo = () => {
 const AutoStartRestartMission = () => {
   // this is repeated code, will be updated after socket functionality is changed
 
-  const flightMode = useSelector(selectFlightMode);
-  const aircraftType = useSelector(selectAircraftType);
+  const flightMode = useSelector(selectFlightMode)
+  const aircraftType = useSelector(selectAircraftType)
 
   function setNewFlightMode(modeNumber) {
     if (modeNumber === null || modeNumber === flightMode) {

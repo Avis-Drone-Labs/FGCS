@@ -19,9 +19,12 @@ import { IconInfoCircle } from "@tabler/icons-react"
 // Helper
 import { DataMessage } from "../../../helpers/dataDisplay"
 import { useDispatch, useSelector } from "react-redux"
-import { changeExtraData, selectExtraDroneData } from "../../../redux/slices/droneInfoSlice"
+import {
+  changeExtraData,
+  selectExtraDroneData,
+} from "../../../redux/slices/droneInfoSlice"
 
-export default function DataTabsSection({tabPadding}) {
+export default function DataTabsSection({ tabPadding }) {
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
 
@@ -36,7 +39,16 @@ export default function DataTabsSection({tabPadding}) {
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
     if (isChecked) {
-      dispatch(changeExtraData({index: boxId, data: {currently_selected: `${key}.${subkey}`, display_name: subvalue, value: 0}}))
+      dispatch(
+        changeExtraData({
+          index: boxId,
+          data: {
+            currently_selected: `${key}.${subkey}`,
+            display_name: subvalue,
+            value: 0,
+          },
+        }),
+      )
       close()
     }
   }

@@ -56,10 +56,7 @@ export default function Missions() {
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Map area */}
             <div className="flex-1 relative">
-              <MissionsMapSection
-                passedRef={mapRef}
-                mapId="missions"
-              />
+              <MissionsMapSection passedRef={mapRef} mapId="missions" />
             </div>
 
             {/* Resizable Bottom Bar */}

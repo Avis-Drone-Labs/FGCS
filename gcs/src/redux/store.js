@@ -9,14 +9,22 @@ import missionInfoSlice from "./slices/missionSlice"
 import statusTextSlice from "./slices/statusTextSlice"
 import notificationSlice from "./slices/notificationSlice"
 
-const rootReducer = combineSlices(logAnalyserSlice, socketSlice, droneConnectionSlice, droneInfoSlice, missionInfoSlice, statusTextSlice, notificationSlice)
+const rootReducer = combineSlices(
+  logAnalyserSlice,
+  socketSlice,
+  droneConnectionSlice,
+  droneInfoSlice,
+  missionInfoSlice,
+  statusTextSlice,
+  notificationSlice,
+)
 
 export const store = configureStore({
   reducer: rootReducer,
-  middleware: (getDefaultMiddleware) =>{
+  middleware: (getDefaultMiddleware) => {
     return getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat([socketMiddleware]);
+    }).concat([socketMiddleware])
   },
 })

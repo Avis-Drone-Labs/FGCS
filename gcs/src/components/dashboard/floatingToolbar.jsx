@@ -32,7 +32,7 @@ export default function FloatingToolbar({
     defaultValue: false,
   })
 
-  const {lat, lon} = useSelector(selectDroneCoords)
+  const { lat, lon } = useSelector(selectDroneCoords)
   const filteredMissionItems = useSelector(selectFilteredMissionItems)
 
   function updateFollowDroneAction() {
@@ -92,13 +92,8 @@ export default function FloatingToolbar({
       </Tooltip>
 
       {/* Center Map on Drone */}
-      <Tooltip
-        label={!lon && !lat ? "No GPS data" : "Center on drone"}
-      >
-        <ActionIcon
-          disabled={!lon && !lat}
-          onClick={centerMapOnDrone}
-        >
+      <Tooltip label={!lon && !lat ? "No GPS data" : "Center on drone"}>
+        <ActionIcon disabled={!lon && !lat} onClick={centerMapOnDrone}>
           <IconCrosshair />
         </ActionIcon>
       </Tooltip>

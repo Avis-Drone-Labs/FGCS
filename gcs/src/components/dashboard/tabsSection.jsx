@@ -12,9 +12,7 @@ import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 
-export default function TabsSection({
-  connected,
-}) {
+export default function TabsSection({ connected }) {
   const tabPadding = "pt-6"
 
   return (
@@ -26,9 +24,7 @@ export default function TabsSection({
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
       </Tabs.List>
       {/* Data */}
-      <DataTabsSection
-        tabPadding={tabPadding}
-      />
+      <DataTabsSection tabPadding={tabPadding} />
 
       {/* Actions */}
       <ActionTabsSection
@@ -37,10 +33,7 @@ export default function TabsSection({
       ></ActionTabsSection>
 
       {/* Mission */}
-      <MissionTabsSection
-        connected={connected}
-        tabPadding={tabPadding}
-      />
+      <MissionTabsSection connected={connected} tabPadding={tabPadding} />
 
       {/* Camera */}
       <CameraTabsSection tabPadding={tabPadding} />

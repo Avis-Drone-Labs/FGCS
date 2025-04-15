@@ -16,7 +16,10 @@ import arrow from "../../assets/arrow.svg"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { useSelector } from "react-redux"
-import { selectHeading, selectNavController } from "../../redux/slices/droneInfoSlice"
+import {
+  selectHeading,
+  selectNavController,
+} from "../../redux/slices/droneInfoSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function DroneMarker({
@@ -25,9 +28,8 @@ export default function DroneMarker({
   zoom = null,
   showHeadingLine = false,
 }) {
-
   const heading = useSelector(selectHeading)
-  const {navBearing} = useSelector(selectNavController)
+  const { navBearing } = useSelector(selectNavController)
 
   return (
     <>

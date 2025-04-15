@@ -20,7 +20,7 @@ export default function StatusMessages(props) {
   const viewport = useRef(null)
   const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
 
-  const messages = useSelector(selectMessages);
+  const messages = useSelector(selectMessages)
 
   const [outsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
@@ -30,7 +30,6 @@ export default function StatusMessages(props) {
   if (scrollPosition.y < 100) {
     viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
   }
-
 
   function getSeverityClassNames(severity) {
     switch (severity) {

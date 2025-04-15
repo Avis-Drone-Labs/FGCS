@@ -10,7 +10,10 @@ import horizon_back from "../img/horizon_back.svg"
 import horizon_ball from "../img/horizon_ball.svg"
 import horizon_circle from "../img/horizon_circle.svg"
 import horizon_mechanics from "../img/horizon_mechanics.svg"
-import { selectAttitudeDeg, selectHeading } from "../../redux/slices/droneInfoSlice"
+import {
+  selectAttitudeDeg,
+  selectHeading,
+} from "../../redux/slices/droneInfoSlice"
 
 // File constants
 const constants = {
@@ -43,10 +46,9 @@ const Instrument = ({ children, size }) => {
 
 // Attitude component to show stats below the heading indicator
 export const AttitudeIndicator = (params) => {
+  const { roll, pitch } = useSelector(selectAttitudeDeg)
 
-  const {roll, pitch} = useSelector(selectAttitudeDeg);
-
-  let boundPitch;
+  let boundPitch
 
   if (pitch > constants.pitch_bound) {
     boundPitch = constants.pitch_bound
@@ -65,7 +67,10 @@ export const AttitudeIndicator = (params) => {
         }}
       >
         <img src={horizon_back} className="box" alt="" style={{ ...box }} />
-        <div className="pitch box" style={{ ...box, top: `${boundPitch * 0.7}%` }}>
+        <div
+          className="pitch box"
+          style={{ ...box, top: `${boundPitch * 0.7}%` }}
+        >
           <img src={horizon_ball} className="box" style={box} alt="" />
         </div>
         <img src={horizon_circle} className="box" style={box} alt="" />
@@ -79,8 +84,7 @@ export const AttitudeIndicator = (params) => {
 
 // Heading indicator for the drones yaw
 export const HeadingIndicator = (params) => {
-
-  const heading = useSelector(selectHeading);
+  const heading = useSelector(selectHeading)
 
   return (
     <Instrument {...params}>

@@ -32,8 +32,36 @@ import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitIsConnectedToDrone, selectBaudrate, selectComPorts, selectConnected, selectConnecting, selectConnectionType, selectFetchingComPorts, selectIp, selectNetworkType, selectPort, selectSelectedComPorts, setBaudrate, setComPorts, setConnected, setConnecting, setConnectionType, setFetchingComPorts, setIp, setNetworkType, setPort, setSelectedComPorts } from "../redux/slices/droneConnectionSlice.js"
-import { initSocket, selectIsConnectedToSocket, socketConnected } from "../redux/slices/socketSlice.js"
+import {
+  emitIsConnectedToDrone,
+  selectBaudrate,
+  selectComPorts,
+  selectConnected,
+  selectConnecting,
+  selectConnectionModal,
+  selectConnectionType,
+  selectFetchingComPorts,
+  selectIp,
+  selectNetworkType,
+  selectPort,
+  selectSelectedComPorts,
+  setBaudrate,
+  setComPorts,
+  setConnected,
+  setConnecting,
+  setConnectionModal,
+  setConnectionType,
+  setFetchingComPorts,
+  setIp,
+  setNetworkType,
+  setPort,
+  setSelectedComPorts,
+} from "../redux/slices/droneConnectionSlice.js"
+import {
+  initSocket,
+  selectIsConnectedToSocket,
+  socketConnected,
+} from "../redux/slices/socketSlice.js"
 import { setDroneAircraftType } from "../redux/slices/droneInfoSlice.js"
 
 // Local imports
@@ -52,13 +80,12 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
   // NOTE: Sockets won't work till this runs
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
   useEffect(() => {
     dispatch(initSocket())
   }, [])
-  
+
   // Non redux storage
-  const [opened, { open, close }] = useDisclosure(false)
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
   const [wireless, setWireless] = useLocalStorage({
     key: "wirelessConnection",
@@ -67,13 +94,13 @@ export default function Navbar({ currentPage }) {
   const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
     useState(null)
 
-  
   // Drones redux selectors
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
   const connecting = useSelector(selectConnecting)
   const connected = useSelector(selectConnected)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
+  const opened = useSelector(selectConnectionModal);
 
   const ConnectionType = {
     Serial: "serial",
@@ -81,7 +108,7 @@ export default function Navbar({ currentPage }) {
   }
 
   // Com ports redux selectors
-  const comPorts = useSelector(selectComPorts);
+  const comPorts = useSelector(selectComPorts)
   const selectedComPort = useSelector(selectSelectedComPorts)
   const fetchingComPorts = useSelector(selectFetchingComPorts)
 
@@ -89,7 +116,6 @@ export default function Navbar({ currentPage }) {
   const networkType = useSelector(selectNetworkType)
   const ip = useSelector(selectIp)
   const port = useSelector(selectPort)
-
 
   // Functions!
   function getComPorts() {
@@ -104,66 +130,11 @@ export default function Navbar({ currentPage }) {
       dispatch(emitIsConnectedToDrone())
     }
 
-    // Fetch com ports and list them
-    socket.on("list_com_ports", (msg) => {
-      dispatch(setFetchingComPorts(false))
-      dispatch(setComPorts(msg))
-      const possibleComPort = msg.find(
-        (port) =>
-          port.toLowerCase().includes("mavlink") ||
-          port.toLowerCase().includes("ardupilot"),
-      )
-      if (possibleComPort !== undefined) {
-        dispatch(setSelectedComPorts(possibleComPort))
-      } else if (msg.length > 0) {
-        dispatch(setSelectedComPorts(msg[0]))
-      }
-    })
-
-    // Flags that the drone is connected
-    socket.on("connected_to_drone", (data) => {
-      dispatch(setDroneAircraftType(data.aircraft_type))  // There are two aircraftTypes, make sure to not use FLA one haha :D
-      if (data.aircraft_type != 1 && data.aircraft_type != 2) {
-        showErrorNotification("Aircraft not of type quadcopter or plane")
-      }
-      dispatch(setConnected(true))
-      dispatch(setConnecting(false))
-      close()
-    })
-
-    // Flags that the drone is disconnected
-    socket.on("disconnected_from_drone", () => {
-      console.log("disconnected_from_drone")
-      dispatch(setConnected(false))
-    })
-
-    // Handles disconnect trigger
-    socket.on("disconnect", () => {
-      dispatch(setConnected(false))
-      dispatch(setConnecting(false))
-    })
-
-    // Flags an error with the com port
-    socket.on("connection_error", (msg) => {
-      console.log(msg.message)
-      showErrorNotification(msg.message)
-      dispatch(setConnecting(false))
-      dispatch(setConnected(false))
-    })
-
     socket.on("drone_connect_status", (msg) => {
       setDroneConnectionStatusMessage(msg.message)
     })
 
     return () => {
-      socket.off("connect")
-      socket.off("disconnect")
-      socket.off("is_connected_to_drone")
-      socket.off("list_com_ports")
-      socket.off("connected_to_drone")
-      socket.off("disconnected_from_drone")
-      socket.off("disconnect")
-      socket.off("connection_error")
       socket.off("drone_connect_status")
       dispatch(setConnected(false))
     }
@@ -202,7 +173,7 @@ export default function Navbar({ currentPage }) {
 
   function connectToDroneFromButton() {
     getComPorts()
-    open()
+    dispatch(setConnectionModal(true))
   }
   AddCommand("connect_to_drone", connectToDroneFromButton)
   AddCommand("disconnect_from_drone", disconnect)
@@ -216,7 +187,7 @@ export default function Navbar({ currentPage }) {
       <Modal
         opened={opened}
         onClose={() => {
-          close()
+          dispatch(setConnectionModal(false))
           dispatch(setConnecting(false))
         }}
         title="Connect to aircraft"
@@ -238,7 +209,12 @@ export default function Navbar({ currentPage }) {
             connectToDrone(connectionType)
           }}
         >
-          <Tabs value={connectionType} onChange={(e) => {dispatch(setConnectionType(e))}}>
+          <Tabs
+            value={connectionType}
+            onChange={(e) => {
+              dispatch(setConnectionType(e))
+            }}
+          >
             <Tabs.List grow>
               <Tabs.Tab value={ConnectionType.Serial}>
                 Serial Connection
@@ -306,7 +282,9 @@ export default function Navbar({ currentPage }) {
                   label="Network Connection type"
                   description="Select a network connection type"
                   value={networkType}
-                  onChange={(e) => {dispatch(setNetworkType(e))}}
+                  onChange={(e) => {
+                    dispatch(setNetworkType(e))
+                  }}
                   data={[
                     { value: "tcp", label: "TCP" },
                     { value: "udp", label: "UDP" },
@@ -317,7 +295,9 @@ export default function Navbar({ currentPage }) {
                   description="Enter the IP Address"
                   placeholder="127.0.0.1"
                   value={ip}
-                  onChange={(event) => dispatch(setIp(event.currentTarget.value))}
+                  onChange={(event) =>
+                    dispatch(setIp(event.currentTarget.value))
+                  }
                   data-autofocus
                 />
                 <TextInput
@@ -325,7 +305,9 @@ export default function Navbar({ currentPage }) {
                   description="Enter the port number"
                   placeholder="5760"
                   value={port}
-                  onChange={(event) => dispatch(setPort(event.currentTarget.value))}
+                  onChange={(event) =>
+                    dispatch(setPort(event.currentTarget.value))
+                  }
                 />
               </div>
             </Tabs.Panel>
@@ -336,7 +318,7 @@ export default function Navbar({ currentPage }) {
               variant="filled"
               color={tailwindColors.red[600]}
               onClick={() => {
-                close()
+                dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
               }}
             >

@@ -20,12 +20,13 @@ import {
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
 import { useSelector } from "react-redux"
-import { selectAircraftType, selectArmed, selectFlightMode } from "../../../redux/slices/droneInfoSlice"
+import {
+  selectAircraftType,
+  selectArmed,
+  selectFlightMode,
+} from "../../../redux/slices/droneInfoSlice"
 
-export default function ActionTabsSection({
-  connected,
-  tabPadding,
-}) {
+export default function ActionTabsSection({ connected, tabPadding }) {
   return (
     <Tabs.Panel value="actions">
       <div className={tabPadding}>
@@ -34,10 +35,9 @@ export default function ActionTabsSection({
         ) : (
           <div className="flex flex-col gap-y-2">
             {/** Flight Mode */}
-            <FlightModeAction
-            />
+            <FlightModeAction />
             {/** Arm / Takeoff / Landing */}
-            <ArmTakeoffLandAction/>
+            <ArmTakeoffLandAction />
           </div>
         )}
       </div>
@@ -48,8 +48,8 @@ export default function ActionTabsSection({
 const FlightModeAction = () => {
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
-  const aircraftType = useSelector(selectAircraftType);
-  const currentFlightMode = useSelector(selectFlightMode);
+  const aircraftType = useSelector(selectAircraftType)
+  const currentFlightMode = useSelector(selectFlightMode)
 
   // flight mode handling
   function setNewFlightMode(modeNumber) {
@@ -100,8 +100,7 @@ const FlightModeAction = () => {
 }
 
 const ArmTakeoffLandAction = () => {
-
-  const isArmed = useSelector(selectArmed);
+  const isArmed = useSelector(selectArmed)
 
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: "takeoffAltitude",

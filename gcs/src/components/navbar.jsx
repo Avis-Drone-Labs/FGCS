@@ -134,6 +134,7 @@ export default function Navbar({ currentPage }) {
       dispatch(emitIsConnectedToDrone())
     }
 
+    // Not sure what this is doing honestly
     return () => {
       dispatch(setConnected(false))
     }
@@ -166,10 +167,11 @@ export default function Navbar({ currentPage }) {
   }
 
   function connectToDroneFromButton() {
-    getComPorts()
     dispatch(setConnectionModal(true))
+    getComPorts()
   }
-  AddCommand("connect_to_drone", connectToDroneFromButton)
+
+  AddCommand("connect_to_drone", () => connectToDroneFromButton())
   AddCommand("disconnect_from_drone", () => dispatch(emitDisconnectFromDrone()))
 
   const linkClassName =

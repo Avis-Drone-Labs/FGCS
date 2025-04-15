@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Link } from "react-router-dom"
 
 // Third party imports
@@ -23,11 +23,7 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core"
-import {
-  useDisclosure,
-  useLocalStorage,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useLocalStorage, useSessionStorage } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Redux
@@ -50,7 +46,6 @@ import {
   selectPort,
   selectSelectedComPorts,
   setBaudrate,
-  setComPorts,
   setConnected,
   setConnecting,
   setConnectionModal,
@@ -64,23 +59,19 @@ import {
 import {
   initSocket,
   selectIsConnectedToSocket,
-  socketConnected,
 } from "../redux/slices/socketSlice.js"
-import { setDroneAircraftType } from "../redux/slices/droneInfoSlice.js"
 
 // Local imports
 import { AddCommand } from "./spotlight/commandHandler.js"
 
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
-import { showErrorNotification } from "../helpers/notification.js"
-import { socket } from "../helpers/socket"
 
 // Styling imports
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { queueErrorNotification, queueNotification } from "../redux/slices/notificationSlice.js"
+import { queueErrorNotification } from "../redux/slices/notificationSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
@@ -104,7 +95,7 @@ export default function Navbar({ currentPage }) {
   const connected = useSelector(selectConnectedToDrone)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
-  const opened = useSelector(selectConnectionModal);
+  const opened = useSelector(selectConnectionModal)
 
   const ConnectionType = {
     Serial: "serial",
@@ -142,24 +133,28 @@ export default function Navbar({ currentPage }) {
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
-      dispatch(emitConnectToDrone({
-        port: selectedComPort,
-        baud: parseInt(selectedBaudRate),
-        wireless: wireless,
-        connectionType: type,
-      }))
+      dispatch(
+        emitConnectToDrone({
+          port: selectedComPort,
+          baud: parseInt(selectedBaudRate),
+          wireless: wireless,
+          connectionType: type,
+        }),
+      )
     } else if (type === ConnectionType.Network) {
       if (ip === "" || port === "") {
         dispatch(queueErrorNotification("IP Address and Port cannot be empty"))
         return
       }
       const networkString = `${networkType}:${ip}:${port}`
-      dispatch(emitConnectToDrone({
-        port: networkString,
-        baud: 115200,
-        wireless: true,
-        connectionType: type,
-      }))
+      dispatch(
+        emitConnectToDrone({
+          port: networkString,
+          baud: 115200,
+          wireless: true,
+          connectionType: type,
+        }),
+      )
     } else {
       return
     }
@@ -433,7 +428,11 @@ export default function Navbar({ currentPage }) {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connected ? () => dispatch(emitDisconnectFromDrone()) : connectToDroneFromButton}
+              onClick={
+                connected
+                  ? () => dispatch(emitDisconnectFromDrone())
+                  : connectToDroneFromButton
+              }
               color={
                 connected
                   ? tailwindColors.falconred[800]

@@ -21,7 +21,10 @@ import {
 
 // socket factory
 import SocketFactory from "../../helpers/socket"
-import { queueErrorNotification, queueNotification } from "../slices/notificationSlice"
+import {
+  queueErrorNotification,
+  queueNotification,
+} from "../slices/notificationSlice"
 import { setHomePosition } from "../slices/missionSlice"
 import { setDroneAircraftType } from "../slices/droneInfoSlice"
 
@@ -92,7 +95,7 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on("connected", () => {
-          sstore.dispatch(etConnected(true))
+          store.dispatch(setConnected(true))
         })
 
         socket.socket.on("disconnect", () => {
@@ -133,14 +136,18 @@ const socketMiddleware = (store) => {
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
           if (msg.aircraft_type != 1 && msg.aircraft_type != 2) {
-            store.dispatch(queueErrorNotification("Aircraft not of type quadcopter or plane"))
+            store.dispatch(
+              queueErrorNotification(
+                "Aircraft not of type quadcopter or plane",
+              ),
+            )
           }
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
         })
 
-        // Setting connection status 
+        // Setting connection status
         socket.socket.on("drone_connect_status", (msg) => {
           store.dispatch(setConnectionStatus(msg.message))
         })

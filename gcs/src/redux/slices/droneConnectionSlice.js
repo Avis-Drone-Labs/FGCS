@@ -112,7 +112,7 @@ const droneConnectionSlice = createSlice({
     emitConnectToDrone: (_, action) => {
       console.log("Attempting to connecto to drone")
       socket.emit("connect_to_drone", action.payload)
-    }
+    },
   },
   selectors: {
     selectConnecting: (state) => state.connecting,

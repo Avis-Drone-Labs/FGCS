@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { socket } from "../../helpers/socket"
 
 const socketSlice = createSlice({
   name: "socketConnection",
@@ -7,7 +6,7 @@ const socketSlice = createSlice({
     isConnected: false,
   },
   reducers: {
-    initSocket: (state) => {
+    initSocket: () => {
       return
     },
     socketConnected: (state) => {

@@ -5,7 +5,6 @@ import {
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../helpers/mavlinkConstants"
 import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages"
-import { setAircraftType } from "../logAnalyserSlice"
 
 const droneInfoSlice = createSlice({
   name: "droneInfo",

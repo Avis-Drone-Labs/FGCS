@@ -33,12 +33,13 @@ import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  emitConnectToDrone,
   emitDisconnectFromDrone,
   emitGetComPorts,
   emitIsConnectedToDrone,
   selectBaudrate,
   selectComPorts,
-  selectConnected,
+  selectConnectedToDrone,
   selectConnecting,
   selectConnectionModal,
   selectConnectionStatus,
@@ -79,6 +80,7 @@ import { socket } from "../helpers/socket"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
+import { queueErrorNotification, queueNotification } from "../redux/slices/notificationSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
@@ -99,7 +101,7 @@ export default function Navbar({ currentPage }) {
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
   const connecting = useSelector(selectConnecting)
   const droneConnectionStatusMessage = useSelector(selectConnectionStatus)
-  const connected = useSelector(selectConnected)
+  const connected = useSelector(selectConnectedToDrone)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
   const opened = useSelector(selectConnectionModal);
@@ -139,24 +141,24 @@ export default function Navbar({ currentPage }) {
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
-      socket.emit("connect_to_drone", {
+      dispatch(emitConnectToDrone({
         port: selectedComPort,
         baud: parseInt(selectedBaudRate),
         wireless: wireless,
         connectionType: type,
-      })
+      }))
     } else if (type === ConnectionType.Network) {
       if (ip === "" || port === "") {
-        showErrorNotification("IP Address and Port cannot be empty")
+        dispatch(queueErrorNotification("IP Address and Port cannot be empty"))
         return
       }
       const networkString = `${networkType}:${ip}:${port}`
-      socket.emit("connect_to_drone", {
+      dispatch(emitConnectToDrone({
         port: networkString,
         baud: 115200,
         wireless: true,
         connectionType: type,
-      })
+      }))
     } else {
       return
     }
@@ -168,7 +170,7 @@ export default function Navbar({ currentPage }) {
     dispatch(setConnectionModal(true))
   }
   AddCommand("connect_to_drone", connectToDroneFromButton)
-  AddCommand("disconnect_from_drone", () => dispatch(emitDisconnectFromDrone))
+  AddCommand("disconnect_from_drone", () => dispatch(emitDisconnectFromDrone()))
 
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
@@ -429,7 +431,7 @@ export default function Navbar({ currentPage }) {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connected ? () => dispatch(emitDisconnectFromDrone) : connectToDroneFromButton}
+              onClick={connected ? () => dispatch(emitDisconnectFromDrone()) : connectToDroneFromButton}
               color={
                 connected
                   ? tailwindColors.falconred[800]

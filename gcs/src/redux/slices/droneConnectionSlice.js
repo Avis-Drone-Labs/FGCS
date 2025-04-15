@@ -44,7 +44,7 @@ const droneConnectionSlice = createSlice({
     },
     setConnected: (state, action) => {
       if (action.payload !== state.connected) {
-        state.connecting = action.payload
+        state.connected = action.payload
       }
     },
     setBaudrate: (state, action) => {
@@ -108,11 +108,15 @@ const droneConnectionSlice = createSlice({
     emitDisconnectFromDrone: () => {
       console.log("Disconnecting from drone")
       socket.emit("disconnect_from_drone")
+    },
+    emitConnectToDrone: (msg) => {
+      console.log("Attempting to connecto to drone")
+      socket.emit("connect_to_drone", msg)
     }
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
-    selectConnected: (state) => state.connected,
+    selectConnectedToDrone: (state) => state.connected,
     selectBaudrate: (state) => state.baudrate,
     selectConnectionType: (state) => state.connection_type,
     selectFetchingComPorts: (state) => state.fetching_com_ports,
@@ -145,10 +149,11 @@ export const {
   emitIsConnectedToDrone,
   emitGetComPorts,
   emitDisconnectFromDrone,
+  emitConnectToDrone,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,
-  selectConnected,
+  selectConnectedToDrone,
   selectBaudrate,
   selectConnectionType,
   selectFetchingComPorts,

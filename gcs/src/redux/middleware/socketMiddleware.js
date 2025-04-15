@@ -21,7 +21,7 @@ import {
 
 // socket factory
 import SocketFactory from "../../helpers/socket"
-import { queueNotification } from "../slices/notificationSlice"
+import { queueErrorNotification, queueNotification } from "../slices/notificationSlice"
 import { setHomePosition } from "../slices/missionSlice"
 import { setDroneAircraftType } from "../slices/droneInfoSlice"
 
@@ -118,14 +118,13 @@ const socketMiddleware = (store) => {
 
         // Flags that the drone is disconnected
         socket.socket.on("disconnected_from_drone", () => {
-          console.log("disconnected_from_drone")
           store.dispatch(setConnected(false))
         })
 
         // Flags an error with the com port
         socket.socket.on("connection_error", (msg) => {
           console.log("Connection error: " + msg.message)
-          store.dispatch(queueNotification({"type": "error", "message": msg.message}))
+          store.dispatch(queueErrorNotification(msg.message))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnected(false))
         })
@@ -134,7 +133,7 @@ const socketMiddleware = (store) => {
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
           if (msg.aircraft_type != 1 && msg.aircraft_type != 2) {
-            store.dispatch(queueNotification({"type": "error", "message": "Aircraft not of type quadcopter or plane"}))
+            store.dispatch(queueErrorNotification("Aircraft not of type quadcopter or plane"))
           }
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))

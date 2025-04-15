@@ -123,7 +123,7 @@ const socketMiddleware = (store) => {
         // Flags an error with the com port
         socket.socket.on("connection_error", (msg) => {
           console.log("Connection error: " + msg.message)
-          // store.dispatch(queueNotification({"type": "error", "message": msg.message}))
+          store.dispatch(queueNotification({"type": "error", "message": msg.message}))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnected(false))
         })

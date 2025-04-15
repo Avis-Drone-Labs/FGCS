@@ -286,9 +286,6 @@ export default function Graph({
     ]
     const scales = {}
 
-    // Capture current scales if they exist
-    const currentScales = chartRef.current?.scales
-
     if (yAxisIDs.length === 0) {
       scales.y = {
         grid: { color: tailwindColors.gray[500] },
@@ -309,27 +306,9 @@ export default function Graph({
           text: yAxisID,
         },
       }
-      // Only add min/max if we have existing scales and they're not undefined
-      if (
-        data.datasets.length > 0 &&
-        currentScales[yAxisID]?.min !== undefined
-      ) {
-        scales[yAxisID].min = currentScales[yAxisID].min
-        scales[yAxisID].max = currentScales[yAxisID].max
-      } else {
-        scales[yAxisID].min = undefined
-        scales[yAxisID].max = undefined
-      }
     })
 
     scales.x = { ...config.scales.x }
-    if (data.datasets.length > 0 && currentScales.x?.min !== undefined) {
-      scales.x.min = currentScales.x.min
-      scales.x.max = currentScales.x.max
-    } else {
-      scales.x.min = undefined
-      scales.x.max = undefined
-    }
 
     setConfig({
       ...config,

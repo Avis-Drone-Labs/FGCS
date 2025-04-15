@@ -861,11 +861,30 @@ export default function FLA() {
                         )}
                         {/* Default Presets */}
                         {presetCategories[logType]?.map((category) => {
+                          // Filter out presets with unavailable keys or fields
+                          const filteredCategory = {
+                            ...category,
+                            filters: category.filters.filter((filter) =>
+                              Object.keys(filter.filters).every((key) => {
+                                // Check if the key exists in logMessages
+                                if (!logMessages[key]) return false
+
+                                // Check if the required fields exist in logMessages["format"][key].fields
+                                const requiredFields = filter.filters[key]
+                                const availableFields =
+                                  logMessages["format"]?.[key]?.fields || []
+                                return requiredFields.every((field) =>
+                                  availableFields.includes(field),
+                                )
+                              }),
+                            ),
+                          }
+
                           return (
                             <Fragment key={category.name}>
                               <PresetAccordionItem
                                 key={category.name}
-                                category={category}
+                                category={filteredCategory}
                                 selectPresetFunc={selectPreset}
                                 aircraftType={aircraftType}
                               />

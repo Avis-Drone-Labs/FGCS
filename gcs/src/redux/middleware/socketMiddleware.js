@@ -9,7 +9,10 @@ import {
 
 // drone actions
 import {
+  emitGetCurrentMission,
+  emitGetHomePosition,
   emitIsConnectedToDrone,
+  emitSetState,
   setComPorts,
   setConnected,
   setConnecting,
@@ -26,7 +29,7 @@ import {
   queueNotification,
 } from "../slices/notificationSlice"
 import { setHomePosition } from "../slices/missionSlice"
-import { setDroneAircraftType } from "../slices/droneInfoSlice"
+import { setDroneAircraftType, setGpsData, setTelemetryData } from "../slices/droneInfoSlice"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -50,6 +53,17 @@ const DroneSpecificSocketEvents = Object.freeze({
 
 const socketMiddleware = (store) => {
   let socket
+
+  const incomingMessageHandler = (msg) => {
+    switch (msg.mavpackettype) {
+      case "VFR_HUD": 
+        store.dispatch(setTelemetryData(msg)) 
+        break
+      // case "GLOBAL_POSITION_INT":
+      //   store.dispatch(setGpsData(msg))
+      //   break
+    }
+  }
 
   return (next) => (action) => {
     if (initSocket.match(action)) {
@@ -146,6 +160,13 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
+
+          store.dispatch(emitSetState({ state: "dashboard" }))  // Potential issue with state?
+          store.dispatch(emitGetHomePosition())
+          store.dispatch(emitGetCurrentMission())
+          // socket.emit("set_state", { state: "dashboard" })
+          // socket.emit("get_home_position")
+          // socket.emit("get_current_mission")
         })
 
         // Setting connection status
@@ -156,10 +177,7 @@ const socketMiddleware = (store) => {
     }
 
     if (setConnected.match(action)) {
-      // Setup socket listeners on drone connection, TODO: add these on connect somehow
-      // socket.emit("set_state", { state: "dashboard" })
-      // socket.emit("get_home_position")
-      // socket.emit("get_current_mission")
+      // Setup socket listeners on drone connection
       if (action.payload) {
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
           if (!msg.success)
@@ -208,11 +226,11 @@ const socketMiddleware = (store) => {
           },
         )
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
-          if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-            incomingMessageHandler()[msg.mavpackettype](msg)
+          incomingMessageHandler(msg)
+          // if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
+            // incomingMessageHandler()[msg.mavpackettype](msg)
             // Store packetType that has arrived
-            const packetType = msg.mavpackettype
-            console.log(packetType)
+            // const packetType = msg.mavpackettype
     
             // Use functional form of setState to ensure the latest state is used
             // setDisplayedData((prevDisplayedData) => {
@@ -232,7 +250,7 @@ const socketMiddleware = (store) => {
     
             //   return updatedDisplayedData
             // })
-          }
+          // }
         })
       } else {
         Object.values(DroneSpecificSocketEvents).map((event) =>

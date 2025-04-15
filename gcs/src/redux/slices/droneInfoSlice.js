@@ -84,6 +84,16 @@ const droneInfoSlice = createSlice({
         state.aircraftType = action.payload
       }
     },
+    setTelemetryData: (state, action) => {
+      if (action.payload !== state.telemetryData) {
+        state.telemetryData = action.payload
+      }
+    },
+    setGpsData: (state, action) => {
+      if (action.payload !== state.gpsData) {
+        state.gpsData = action.payload
+      }
+    }
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -118,6 +128,8 @@ export const {
   soundPlayed,
   changeExtraData,
   setDroneAircraftType,
+  setTelemetryData,
+  setGpsData,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -161,6 +173,41 @@ export const selectAlt = createSelector(
     return { alt: alt / 1000, relativeAlt: relativeAlt / 1000 }
   },
 )
+
+// export function incomingMessageHandler(msg) {
+//   switch (msg.mavpackettype) {
+//     case "VFR_HUD": 
+//       console.log(msg)
+//       setTelemetryData({ airspeed: msg.airspeed, groundspeed: msg.groundspeed }); 
+//       break;
+//   }
+    // VFR_HUD: (msg) => setTelemetryData(msg),
+    // BATTERY_STATUS: (msg) => {
+    //   const battery = localBatteryData.filter(
+    //     (battery) => battery.id == msg.id,
+    //   )[0]
+    //   if (battery) {
+    //     Object.assign(battery, msg)
+    //   } else {
+    //     localBatteryData.push(msg)
+    //   }
+    //   localBatteryData.sort((b1, b2) => b1.id - b2.id)
+    //   setBatteryData(localBatteryData)
+    // },
+    // ATTITUDE: (msg) => setAttitudeData(msg),
+    // GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
+    // NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
+    // HEARTBEAT: (msg) => {
+    //   if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
+    //     setHeartbeatData(msg)
+    //   }
+    // },
+    // STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
+    // SYS_STATUS: (msg) => setSysStatusData(msg),
+    // GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
+    // RC_CHANNELS: (msg) => setRCChannelsData(msg),
+    // MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
+// }
 
 export const {
   selectAttitude,

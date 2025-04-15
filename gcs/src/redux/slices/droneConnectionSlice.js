@@ -113,6 +113,18 @@ const droneConnectionSlice = createSlice({
       console.log("Attempting to connecto to drone")
       socket.emit("connect_to_drone", action.payload)
     },
+    emitSetState: (_, action) => {
+      console.log(`Setting State to ${action.payload.state}`)
+      socket.emit("set_state", action.payload)
+    },
+    emitGetHomePosition: () => {
+      console.log("Getting home position")
+      socket.emit("get_home_position")
+    },
+    emitGetCurrentMission: () => {
+      console.log("Getting current mission")
+      socket.emit("get_current_mission")
+    }
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -150,6 +162,9 @@ export const {
   emitGetComPorts,
   emitDisconnectFromDrone,
   emitConnectToDrone,
+  emitSetState,
+  emitGetHomePosition,
+  emitGetCurrentMission,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,

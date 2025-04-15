@@ -23,6 +23,7 @@ import {
 import SocketFactory from "../../helpers/socket"
 import { queueNotification } from "../slices/notificationSlice"
 import { setHomePosition } from "../slices/missionSlice"
+import { setDroneAircraftType } from "../slices/droneInfoSlice"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -53,10 +54,10 @@ const socketMiddleware = (store) => {
         socket = SocketFactory.create()
 
         /*
-                    ========================
-                    = UNDERLYING CONNETION =
-                    ========================
-                */
+          ========================
+          = UNDERLYING CONNETION =
+          ========================
+        */
 
         // handle socket connection events
         // EXAMPLE SOCKET.ON EVENT
@@ -73,10 +74,10 @@ const socketMiddleware = (store) => {
         })
 
         /*
-                    ====================
-                    = DRONE CONNETIONS =
-                    ====================
-                */
+          ====================
+          = DRONE CONNETIONS =
+          ====================
+        */
 
         socket.socket.on("is_connected_to_drone", (msg) => {
           if (msg) {

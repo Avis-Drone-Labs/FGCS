@@ -33,6 +33,8 @@ import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  emitDisconnectFromDrone,
+  emitGetComPorts,
   emitIsConnectedToDrone,
   selectBaudrate,
   selectComPorts,
@@ -120,7 +122,7 @@ export default function Navbar({ currentPage }) {
   // Functions!
   function getComPorts() {
     if (!connectedToSocket) return
-    socket.emit("get_com_ports")
+    dispatch(emitGetComPorts())
     dispatch(setFetchingComPorts(true))
   }
 
@@ -131,7 +133,6 @@ export default function Navbar({ currentPage }) {
     }
 
     return () => {
-      socket.off("drone_connect_status")
       dispatch(setConnected(false))
     }
   }, [])
@@ -162,17 +163,12 @@ export default function Navbar({ currentPage }) {
     dispatch(setConnecting(true))
   }
 
-  function disconnect() {
-    console.log("disconnect")
-    socket.emit("disconnect_from_drone")
-  }
-
   function connectToDroneFromButton() {
     getComPorts()
     dispatch(setConnectionModal(true))
   }
   AddCommand("connect_to_drone", connectToDroneFromButton)
-  AddCommand("disconnect_from_drone", disconnect)
+  AddCommand("disconnect_from_drone", () => dispatch(emitDisconnectFromDrone))
 
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
@@ -433,7 +429,7 @@ export default function Navbar({ currentPage }) {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connected ? disconnect : connectToDroneFromButton}
+              onClick={connected ? () => dispatch(emitDisconnectFromDrone) : connectToDroneFromButton}
               color={
                 connected
                   ? tailwindColors.falconred[800]

@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
+import { socket } from "../../helpers/socket"
 
 export const ConnectionType = {
   Serial: "serial",
@@ -98,7 +99,16 @@ const droneConnectionSlice = createSlice({
     },
 
     // Emits
-    emitIsConnectedToDrone: () => {},
+    emitIsConnectedToDrone: () => {
+      socket.emit("is_connected_to_drone")
+    },
+    emitGetComPorts: () => {
+      socket.emit("get_com_ports")
+    },
+    emitDisconnectFromDrone: () => {
+      console.log("Disconnecting from drone")
+      socket.emit("disconnect_from_drone")
+    }
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -133,6 +143,8 @@ export const {
 
   // Emitters
   emitIsConnectedToDrone,
+  emitGetComPorts,
+  emitDisconnectFromDrone,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,

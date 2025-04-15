@@ -8,7 +8,7 @@ echo ""
 
 # Run
 sudo systemctl start docker.service
-sudo docker run -it --rm -p 5760:7560 kushmakkapati/ardupilot_sitl
+sudo docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
 
 # Stop
 sudo systemctl stop docker.service

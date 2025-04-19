@@ -29,7 +29,16 @@ import {
   queueNotification,
 } from "../slices/notificationSlice"
 import { setHomePosition } from "../slices/missionSlice"
-import { setDroneAircraftType, setGpsData, setTelemetryData } from "../slices/droneInfoSlice"
+import { 
+  setDroneAircraftType, 
+  setTelemetryData, 
+  setAttitudeData, 
+  setGpsData, 
+  setNavControllerOutput,
+  setHeartbeatData,
+  setGpsRawIntData,
+  setBatteryData
+} from "../slices/droneInfoSlice"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -59,9 +68,36 @@ const socketMiddleware = (store) => {
       case "VFR_HUD": 
         store.dispatch(setTelemetryData(msg)) 
         break
-      // case "GLOBAL_POSITION_INT":
-      //   store.dispatch(setGpsData(msg))
-      //   break
+      case "ATTITUDE":
+        store.dispatch(setAttitudeData(msg))
+        break
+      case "GLOBAL_POSITION_INT":
+        store.dispatch(setGpsData(msg))
+        break
+      case "NAV_CONTROLLER_OUTPUT":
+        store.dispatch(setNavControllerOutput(msg))
+        break
+      case "HEARTBEAT":
+        store.dispatch(setHeartbeatData(msg))
+        break
+      case "STATUSTEXT":
+        // TODO: statustextMessagesHandler.prepend(msg)
+        break
+      case "SYS_STATUS":
+        // TODO: store.dispatch(setSysStatusData(msg))
+        break
+      case "GPS_RAW_INT":
+        store.dispatch(setGpsRawIntData(msg))
+        break
+      case "RC_CHANNELS":
+        // TODO: store.dispatch(setRCChannelsData(msg))
+        break
+      case "MISSION_CURRENT":
+        // TODO: store.dispatch(setCurrentMissionData(msg))
+        break
+      case "BATTERY_STATUS":
+        store.dispatch(setBatteryData(msg))
+        break
     }
   }
 

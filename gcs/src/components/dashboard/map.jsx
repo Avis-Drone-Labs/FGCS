@@ -126,20 +126,22 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
     }
   }, [connected])
 
-  // Move the drone icon
-  if (lon !== 0 && lat !== 0) {
-    setPosition({ latitude: lat, longitude: lon })
-
-    if (!firstCenteredToDrone) {
-      passedRef.current.getMap().flyTo({
-        center: [lon, lat],
-        zoom: initialViewState.zoom,
-      })
-      setFirstCenteredToDrone(true)
-    }
-  }
-
   useEffect(() => {
+    // Move the drone icon
+    if (lon !== 0 && lat !== 0) {
+      setPosition({ latitude: lat, longitude: lon })
+
+      if (!firstCenteredToDrone) {
+        passedRef.current.getMap().flyTo({
+          center: [lon, lat],
+          zoom: initialViewState.zoom,
+        })
+        setFirstCenteredToDrone(true)
+      }
+    }
+  }, [lon, lat])
+
+   useEffect(() => {
     if (contextMenuRef.current) {
       const contextMenuWidth = Math.round(
         contextMenuRef.current.getBoundingClientRect().width,

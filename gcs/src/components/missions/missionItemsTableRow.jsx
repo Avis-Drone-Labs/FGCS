@@ -74,6 +74,7 @@ export default function MissionItemsTableRow({
           onChange={(value) =>
             updateMissionItemData("command", parseInt(value))
           }
+          allowDeselect={false}
         />
       </TableTd>
       <TableTd>

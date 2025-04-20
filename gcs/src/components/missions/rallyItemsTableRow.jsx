@@ -43,6 +43,7 @@ export default function RallyItemsTableRow({
         <Select
           data={[{ value: "5100", label: "RALLY_POINT" }]}
           value={"5100"}
+          allowDeselect={false}
           disabled
         />
       </TableTd>

@@ -99,7 +99,7 @@ export default function Dashboard() {
   const previousHeartbeatData = usePrevious(heartbeatData)
 
   // System data
-  const [batteryData, setBatteryData] = useState({})
+  const [batteryData, setBatteryData] = useState([])
   const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({
@@ -151,7 +151,18 @@ export default function Dashboard() {
   const incomingMessageHandler = useCallback(
     () => ({
       VFR_HUD: (msg) => setTelemetryData(msg),
-      BATTERY_STATUS: (msg) => setBatteryData(msg),
+      BATTERY_STATUS: (msg) => {
+        const battery = localBatteryData.filter(
+          (battery) => battery.id == msg.id,
+        )[0]
+        if (battery) {
+          Object.assign(battery, msg)
+        } else {
+          localBatteryData.push(msg)
+        }
+        localBatteryData.sort((b1, b2) => b1.id - b2.id)
+        setBatteryData(localBatteryData)
+      },
       ATTITUDE: (msg) => setAttitudeData(msg),
       GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
       NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
@@ -353,6 +364,8 @@ export default function Dashboard() {
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
 
+  let localBatteryData = []
+
   return (
     <Layout currentPage="dashboard">
       <div className="relative flex flex-auto w-full h-full overflow-hidden">
@@ -438,8 +451,8 @@ export default function Dashboard() {
           <StatusSection
             icon={<IconBattery2 />}
             value={
-              batteryData.battery_remaining
-                ? `${batteryData.battery_remaining}%`
+              batteryData[0]?.battery_remaining
+                ? `${batteryData[0].battery_remaining}%`
                 : "0%"
             }
             tooltip="Battery remaining"

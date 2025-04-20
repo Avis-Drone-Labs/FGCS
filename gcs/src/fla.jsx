@@ -268,6 +268,50 @@ export default function FLA() {
           delete logMessageFilterDefaultState["ESC"]
         }
 
+        if (loadedLogMessages["BAT"]) {
+          let tempLoadedLogMessages = { ...loadedLogMessages }
+          let tempMsgFormat = { ...loadedLogMessages["format"] }
+
+          // Load each BATT data into its own array
+          loadedLogMessages["BAT"].map((battData) => {
+            // Check for both "Inst" and "Instance" keys
+            const instanceValue = battData["Instance"] ?? battData["Inst"]
+            const battName = `BAT${(instanceValue ?? 0) + 1}`
+
+            // Initialize the array if it doesn't exist
+            if (!tempLoadedLogMessages[battName]) {
+              tempLoadedLogMessages[battName] = []
+            }
+
+            tempLoadedLogMessages[battName].push({
+              ...battData,
+              name: battName,
+            })
+
+            // Add filter state for new BATT
+            if (!logMessageFilterDefaultState[battName])
+              logMessageFilterDefaultState[battName] = {
+                ...logMessageFilterDefaultState["BAT"],
+              }
+
+            // Add format state for new BATT
+            if (!tempMsgFormat[battName])
+              tempMsgFormat[battName] = {
+                ...tempMsgFormat["BAT"],
+                name: battName,
+              }
+
+            tempLoadedLogMessages["format"] = tempMsgFormat
+          })
+
+          // Remove old BATT motor data
+          delete tempLoadedLogMessages["BAT"]
+          delete tempLoadedLogMessages["format"]["BAT"]
+          delete logMessageFilterDefaultState["BAT"]
+          updateLogMessages(tempLoadedLogMessages)
+          updateFormatMessages(tempLoadedLogMessages["format"])
+        }
+
         // Sort new filters
         const sortedLogMessageFilterState = Object.keys(
           logMessageFilterDefaultState,
@@ -817,11 +861,30 @@ export default function FLA() {
                         )}
                         {/* Default Presets */}
                         {presetCategories[logType]?.map((category) => {
+                          // Filter out presets with unavailable keys or fields
+                          const filteredCategory = {
+                            ...category,
+                            filters: category.filters.filter((filter) =>
+                              Object.keys(filter.filters).every((key) => {
+                                // Check if the key exists in logMessages
+                                if (!logMessages[key]) return false
+
+                                // Check if the required fields exist in logMessages["format"][key].fields
+                                const requiredFields = filter.filters[key]
+                                const availableFields =
+                                  logMessages["format"]?.[key]?.fields || []
+                                return requiredFields.every((field) =>
+                                  availableFields.includes(field),
+                                )
+                              }),
+                            ),
+                          }
+
                           return (
                             <Fragment key={category.name}>
                               <PresetAccordionItem
                                 key={category.name}
-                                category={category}
+                                category={filteredCategory}
                                 selectPresetFunc={selectPreset}
                                 aircraftType={aircraftType}
                               />

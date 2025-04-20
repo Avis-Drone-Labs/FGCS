@@ -173,7 +173,7 @@ function MapSectionNonMemo({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${getSetting("General.maptilerAPIKey") || import.meta.env.VITE_MAPTILER_API_KEY}`}
+        mapStyle={`https://api.maptiler.com/maps/${getSetting("General.mapStyle") || "hybrid"}/style.json?key=${getSetting("General.maptilerAPIKey") || import.meta.env.VITE_MAPTILER_API_KEY}`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}

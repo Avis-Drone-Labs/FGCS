@@ -7,8 +7,11 @@ import Divider from "./divider"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
 import packageJson from "../../../../package.json"
+import { useSettings } from "../../../helpers/settings"
 
 export default function FileMenu(props) {
+  const { open } = useSettings()
+
   return (
     <MenuTemplate
       title="File"
@@ -43,6 +46,8 @@ export default function FileMenu(props) {
         shortcut="Alt + F4"
         callback={() => window.ipcRenderer.send("close")}
       />
+      <Divider />
+      <MenuItem name="Settings" callback={() => open()} />
     </MenuTemplate>
   )
 }

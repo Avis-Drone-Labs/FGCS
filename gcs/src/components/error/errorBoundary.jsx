@@ -7,7 +7,7 @@ import React from "react"
 
 // 3rd Party Imports
 import { Button } from "@mantine/core"
-import { CodeHighlight } from '@mantine/code-highlight'
+import { CodeHighlight } from "@mantine/code-highlight"
 
 export default function ErrorBoundaryFallback({ error }) {
   return (

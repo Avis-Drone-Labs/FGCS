@@ -47,7 +47,7 @@ export default function TelemetrySection({
       </div>
 
       {/* Indicators */}
-      <div className="flex items-center flex-col justify-center justify-evenly @xl:flex-row">
+      <div className="flex items-center flex-col justify-evenly @xl:flex-row">
         {/* Attitude Indicator */}
         <div
           className="flex flex-row items-center justify-center"
@@ -158,29 +158,35 @@ export default function TelemetrySection({
         </div>
       </div>
 
-      {/* Batter information */}
+      {/* Battery information */}
       <div className="flex flex-col items-center">
         <p>BATTERY</p>
 
-        <div className="flex flex-row space-x-4">
-          <p className="font-bold text-xl">
-            {(batteryData.voltages
-              ? batteryData.voltages[0] / 1000
-              : 0
-            ).toFixed(2)}
-            V
-          </p>
-          <p className="font-bold text-xl">
-            {(batteryData.current_battery
-              ? batteryData.current_battery / 100
-              : 0
-            ).toFixed(2)}
-            A
-          </p>
-          <p className="font-bold text-xl">
-            {batteryData.battery_remaining ? batteryData.battery_remaining : 0}%
-          </p>
-        </div>
+        <table>
+          <tbody>
+            {batteryData.map((battery) => (
+              <tr className="w-full" key={battery.id}>
+                <td className="px-4">BATTERY{battery.id}</td>
+                <td className="font-bold px-2 text-xl text-right">
+                  {(battery.voltages ? battery.voltages[0] / 1000 : 0).toFixed(
+                    2,
+                  )}
+                  V
+                </td>
+                <td className="font-bold px-2 text-xl text-right">
+                  {(battery.current_battery
+                    ? battery.current_battery / 100
+                    : 0
+                  ).toFixed(2)}
+                  A
+                </td>
+                <td className="font-bold px-2 text-xl text-right">
+                  {battery.battery_remaining ? battery.battery_remaining : 0}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

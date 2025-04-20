@@ -11,6 +11,7 @@ import { SettingsProvider } from "../helpers/settingsProvider"
 // Routes
 import FLA from "../fla"
 import Graphs from "../graphs"
+import Missions from "../missions"
 import Params from "../params"
 import Config from "../config"
 import CameraWindow from "./dashboard/webcam/webcam"
@@ -35,6 +36,7 @@ export default function AppContent() {
           <SettingsModal />
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/missions" element={<Missions />} />
             <Route path="/graphs" element={<Graphs />} />
             <Route path="/params" element={<Params />} />
             <Route path="/config" element={<Config />} />

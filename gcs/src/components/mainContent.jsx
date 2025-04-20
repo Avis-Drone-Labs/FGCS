@@ -15,6 +15,7 @@ import Params from "../params"
 import Config from "../config"
 import CameraWindow from "./dashboard/webcam/webcam"
 import Dashboard from "../dashboard"
+import Missions from "../missions"
 
 // Redux
 import { store } from "../redux/store"
@@ -46,6 +47,7 @@ export default function AppContent() {
                 </Provider>
               }
             />
+            <Route path="/missions" element={<Missions />} />
           </Routes>
           {renderUI && <Commands />}
         </ErrorBoundary>

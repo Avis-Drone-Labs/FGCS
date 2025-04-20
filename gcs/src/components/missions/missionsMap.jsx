@@ -50,7 +50,9 @@ function MapSectionNonMemo({
   homePosition,
   onDragstart,
   getFlightMode,
+  currentTab,
   markerDragEndCallback,
+  rallyDragEndCallback,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -214,7 +216,7 @@ function MapSectionNonMemo({
 
         <MissionItems
           missionItems={missionItemsList}
-          editable={true}
+          editable={currentTab === "mission"}
           dragEndCallback={markerDragEndCallback}
         />
 
@@ -253,10 +255,13 @@ function MapSectionNonMemo({
           return (
             <MarkerPin
               key={index}
+              id={item.id}
               lat={intToCoord(item.x)}
               lon={intToCoord(item.y)}
               colour={tailwindColors.purple[400]}
               tooltipText={item.z ? `Alt: ${item.z}` : null}
+              draggable={currentTab === "rally"}
+              dragEndCallback={rallyDragEndCallback}
             />
           )
         })}

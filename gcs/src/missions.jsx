@@ -15,6 +15,8 @@ import { Button, Divider, Tabs } from "@mantine/core"
 import Layout from "./components/layout"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
+import RallyItemsTable from "./components/missions/rallyItemsTable"
+import NoDroneConnected from "./components/noDroneConnected"
 import { intToCoord } from "./helpers/dataFormatters"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
@@ -112,16 +114,26 @@ export default function Missions() {
         return
       }
 
+      console.log(data)
+
       if (data.mission_type === "mission") {
+        console.log("Read mission items")
         const missionItemsWithIds = []
         for (let missionItem of data.items) {
-          missionItemsWithIds.push(addIdToMissionItem(missionItem))
+          missionItemsWithIds.push(addIdToItem(missionItem))
         }
         setMissionItems(missionItemsWithIds)
       } else if (data.mission_type === "fence") {
+        console.log("Read fence items")
         setFenceItems(data.items)
       } else if (data.mission_type === "rally") {
-        setRallyItems(data.items)
+        console.log("Read rally items")
+        console.log(data.items)
+        const rallyItemsWithIds = []
+        for (let rallyItem of data.items) {
+          rallyItemsWithIds.push(addIdToItem(rallyItem))
+        }
+        setRallyItems(rallyItemsWithIds)
       }
 
       showSuccessNotification(`${data.mission_type} read successfully`)
@@ -144,7 +156,7 @@ export default function Missions() {
     return "UNKNOWN"
   }
 
-  function addIdToMissionItem(missionItem) {
+  function addIdToItem(missionItem) {
     if (!missionItem.id) {
       missionItem.id = uuidv4()
     }
@@ -160,9 +172,17 @@ export default function Missions() {
       ),
     )
   }
+  function updateRallyItem(updatedRallyItem) {
+    setRallyItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === updatedRallyItem.id
+          ? { ...item, ...updatedRallyItem }
+          : item,
+      ),
+    )
+  }
 
   function readMissionFromDrone() {
-    setMissionItems([])
     socket.emit("get_current_mission", { type: activeTab })
   }
 
@@ -180,133 +200,154 @@ export default function Missions() {
 
   return (
     <Layout currentPage="missions">
-      <div className="flex flex-col h-screen overflow-hidden">
-        <div className="flex flex-1 overflow-hidden">
-          {/* Resizable Sidebar */}
-          <ResizableBox
-            width={200}
-            height={Infinity}
-            minConstraints={[200, Infinity]}
-            maxConstraints={[600, Infinity]}
-            resizeHandles={["e"]}
-            axis="x"
-            handle={
-              <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
-            }
-            className="relative bg-falcongrey-800 overflow-y-auto"
-          >
-            <div className="flex flex-col gap-8 p-4">
-              <div className="flex flex-col gap-4">
-                <Button
-                  onClick={() => {
-                    readMissionFromDrone()
-                  }}
-                  disabled={!connected}
-                  className="grow"
-                >
-                  Read {activeTab}
-                </Button>
-                <Button
-                  onClick={() => {
-                    writeMissionToDrone()
-                  }}
-                  disabled={!connected}
-                  className="grow"
-                >
-                  Write {activeTab}
-                </Button>
-              </div>
-
-              <Divider className="my-1" />
-
-              <div className="flex flex-col gap-4">
-                <Button
-                  onClick={() => {
-                    importMissionFromFile()
-                  }}
-                  className="grow"
-                >
-                  Import from file
-                </Button>
-                <Button
-                  onClick={() => {
-                    saveMissionToFile()
-                  }}
-                  className="grow"
-                >
-                  Save to file
-                </Button>
-              </div>
-
-              <Divider className="my-1" />
-
-              <div className="flex flex-col gap-2">
-                <p className="font-bold">Home location</p>
-                <p>
-                  Lat:{" "}
-                  {intToCoord(homePosition?.lat).toFixed(coordsFractionDigits)}
-                </p>
-                <p>
-                  Lon:{" "}
-                  {intToCoord(homePosition?.lon).toFixed(coordsFractionDigits)}
-                </p>
-              </div>
-            </div>
-          </ResizableBox>
-
-          {/* Main content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Map area */}
-            <div className="flex-1 relative">
-              <MissionsMapSection
-                passedRef={mapRef}
-                data={gpsData}
-                heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-                desiredBearing={navControllerOutputData.nav_bearing}
-                missionItems={{
-                  mission_items: missionItems,
-                  fence_items: fenceItems,
-                  rally_items: rallyItems,
-                }}
-                homePosition={homePosition}
-                getFlightMode={getFlightMode}
-                markerDragEndCallback={updateMissionItem}
-                mapId="missions"
-              />
-            </div>
-
-            {/* Resizable Bottom Bar */}
+      {connected ? (
+        <div className="flex flex-col h-screen overflow-hidden">
+          <div className="flex flex-1 overflow-hidden">
+            {/* Resizable Sidebar */}
             <ResizableBox
-              width={Infinity}
-              height={300}
-              minConstraints={[Infinity, 100]}
-              maxConstraints={[Infinity, 400]}
-              resizeHandles={["n"]}
-              axis="y"
+              width={200}
+              height={Infinity}
+              minConstraints={[200, Infinity]}
+              maxConstraints={[600, Infinity]}
+              resizeHandles={["e"]}
+              axis="x"
               handle={
-                <div className="w-full h-2 bg-falcongrey-900 hover:bg-falconred-500 cursor-row-resize absolute top-0 left-0 z-10"></div>
+                <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
               }
               className="relative bg-falcongrey-800 overflow-y-auto"
             >
-              <Tabs value={activeTab} onChange={setActiveTab} className="mt-2">
-                <Tabs.List grow>
-                  <Tabs.Tab value="mission">Mission</Tabs.Tab>
-                  <Tabs.Tab value="fence">Fence</Tabs.Tab>
-                  <Tabs.Tab value="rally">Rally</Tabs.Tab>
-                </Tabs.List>
+              <div className="flex flex-col gap-8 p-4">
+                <div className="flex flex-col gap-4">
+                  <Button
+                    onClick={() => {
+                      readMissionFromDrone()
+                    }}
+                    disabled={!connected}
+                    className="grow"
+                  >
+                    Read {activeTab}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      writeMissionToDrone()
+                    }}
+                    disabled={!connected}
+                    className="grow"
+                  >
+                    Write {activeTab}
+                  </Button>
+                </div>
 
-                <Tabs.Panel value="mission">
-                  <MissionItemsTable
-                    missionItems={missionItems}
-                    aircraftType={aircraftType}
-                    updateMissionItem={updateMissionItem}
-                  />
-                </Tabs.Panel>
-              </Tabs>
+                <Divider className="my-1" />
+
+                <div className="flex flex-col gap-4">
+                  <Button
+                    onClick={() => {
+                      importMissionFromFile()
+                    }}
+                    className="grow"
+                  >
+                    Import from file
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      saveMissionToFile()
+                    }}
+                    className="grow"
+                  >
+                    Save to file
+                  </Button>
+                </div>
+
+                <Divider className="my-1" />
+
+                <div className="flex flex-col gap-2">
+                  <p className="font-bold">Home location</p>
+                  <p>
+                    Lat:{" "}
+                    {intToCoord(homePosition?.lat).toFixed(
+                      coordsFractionDigits,
+                    )}
+                  </p>
+                  <p>
+                    Lon:{" "}
+                    {intToCoord(homePosition?.lon).toFixed(
+                      coordsFractionDigits,
+                    )}
+                  </p>
+                </div>
+              </div>
             </ResizableBox>
+
+            {/* Main content area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Map area */}
+              <div className="flex-1 relative">
+                <MissionsMapSection
+                  passedRef={mapRef}
+                  data={gpsData}
+                  heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+                  desiredBearing={navControllerOutputData.nav_bearing}
+                  missionItems={{
+                    mission_items: missionItems,
+                    fence_items: fenceItems,
+                    rally_items: rallyItems,
+                  }}
+                  homePosition={homePosition}
+                  getFlightMode={getFlightMode}
+                  currentTab={activeTab}
+                  markerDragEndCallback={updateMissionItem}
+                  rallyDragEndCallback={updateRallyItem}
+                  mapId="missions"
+                />
+              </div>
+
+              {/* Resizable Bottom Bar */}
+              <ResizableBox
+                width={Infinity}
+                height={300}
+                minConstraints={[Infinity, 100]}
+                maxConstraints={[Infinity, 400]}
+                resizeHandles={["n"]}
+                axis="y"
+                handle={
+                  <div className="w-full h-2 bg-falcongrey-900 hover:bg-falconred-500 cursor-row-resize absolute top-0 left-0 z-10"></div>
+                }
+                className="relative bg-falcongrey-800 overflow-y-auto"
+              >
+                <Tabs
+                  value={activeTab}
+                  onChange={setActiveTab}
+                  className="mt-2"
+                >
+                  <Tabs.List grow>
+                    <Tabs.Tab value="mission">Mission</Tabs.Tab>
+                    <Tabs.Tab value="fence">Fence</Tabs.Tab>
+                    <Tabs.Tab value="rally">Rally</Tabs.Tab>
+                  </Tabs.List>
+
+                  <Tabs.Panel value="mission">
+                    <MissionItemsTable
+                      missionItems={missionItems}
+                      aircraftType={aircraftType}
+                      updateMissionItem={updateMissionItem}
+                    />
+                  </Tabs.Panel>
+                  <Tabs.Panel value="fence"></Tabs.Panel>
+                  <Tabs.Panel value="rally">
+                    <RallyItemsTable
+                      rallyItems={rallyItems}
+                      updateRallyItem={updateRallyItem}
+                    />
+                  </Tabs.Panel>
+                </Tabs>
+              </ResizableBox>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <NoDroneConnected />
+      )}
     </Layout>
   )
 }

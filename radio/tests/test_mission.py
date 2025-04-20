@@ -24,7 +24,7 @@ def test_getCurrentMission_correctState(
     socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
-    assert socketio_result["name"] == "current_mission"  # Correct name emitted
+    assert socketio_result["name"] == "current_mission_all"  # Correct name emitted
 
     # pytest.skip(reason="Sending mission to simulator is currently bugged and fails sometimes")
     assert socketio_result["args"][0] == {
@@ -191,5 +191,5 @@ def test_getCurrentMission_noDroneConnection(
 
         assert socketio_result["name"] == "connection_error"  # Correct name emitted
         assert socketio_result["args"][0] == {
-            "message": "You must be on the dashboard or missions screen to get the current mission."
+            "message": "Must be connected to the drone to get current mission."
         }

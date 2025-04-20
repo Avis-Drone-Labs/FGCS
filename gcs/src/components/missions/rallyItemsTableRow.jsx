@@ -1,3 +1,7 @@
+/*
+  This component displays the row for a rally item in a table.
+*/
+
 import { NumberInput, Select, TableTd, TableTr } from "@mantine/core"
 import { useEffect, useState } from "react"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"

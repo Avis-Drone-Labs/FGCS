@@ -1,3 +1,6 @@
+/*
+  This table displays all the rally items.
+*/
 import { Table } from "@mantine/core"
 import React from "react"
 import RallyItemsTableRow from "./rallyItemsTableRow"

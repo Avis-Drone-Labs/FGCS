@@ -1,3 +1,7 @@
+/*
+  This table displays all the mission items.
+*/
+
 import { Table } from "@mantine/core"
 import React from "react"
 import MissionItemsTableRow from "./missionItemsTableRow"

@@ -35,7 +35,6 @@ import { socket } from "../../helpers/socket"
 import ContextMenuItem from "../mapComponents/contextMenuItem"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import DroneMarker from "../mapComponents/droneMarker"
-import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
@@ -43,6 +42,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -224,20 +224,6 @@ function MapSectionNonMemo({
             />
           )}
 
-        {/* Show home position */}
-        {homePosition !== null && (
-          <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
-          />
-        )}
-
         <MissionItems missionItems={missionItems.mission_items} />
 
         {/* Show mission geo-fence MARKERS */}
@@ -290,6 +276,20 @@ function MapSectionNonMemo({
             colour={tailwindColors.pink[500]}
             tooltipText={
               guidedModePinData.alt ? `Alt: ${guidedModePinData.alt}` : null
+            }
+          />
+        )}
+
+        {/* Show home position */}
+        {homePosition !== null && (
+          <HomeMarker
+            lat={intToCoord(homePosition.lat)}
+            lon={intToCoord(homePosition.lon)}
+            lineTo={
+              filteredMissionItems.length > 0 && [
+                intToCoord(filteredMissionItems[0].y),
+                intToCoord(filteredMissionItems[0].x),
+              ]
             }
           />
         )}

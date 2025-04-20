@@ -140,10 +140,10 @@ class Drone:
             self.logger.error("Aircraft not plane or quadcopter")
             self.master.close()
             self.master = None
-            self.connectionError = (
-                "Could not connect to the drone. Aircraft not plane or quadcopter."
-            )
+            self.connectionError = f"Could not connect to the drone. Aircraft not plane or quadcopter, got type {self.aircraft_type}"
             return
+
+        self.logger.info(f"Connected to aircraft of type {self.aircraft_type}")
 
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system

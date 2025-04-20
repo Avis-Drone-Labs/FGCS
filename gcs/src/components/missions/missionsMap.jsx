@@ -13,6 +13,7 @@ import React, { useEffect, useRef, useState } from "react"
 import {
   useClipboard,
   useLocalStorage,
+  usePrevious,
   useSessionStorage,
 } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -49,6 +50,9 @@ function MapSectionNonMemo({
   homePosition,
   onDragstart,
   getFlightMode,
+  currentTab,
+  markerDragEndCallback,
+  rallyDragEndCallback,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -76,7 +80,11 @@ function MapSectionNonMemo({
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
+  const previousHomePositionValue = usePrevious(homePosition)
 
+  const [missionItemsList, setMissionItemsList] = useState(
+    missionItems.mission_items,
+  )
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
@@ -105,7 +113,11 @@ function MapSectionNonMemo({
   }, [data])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItemsList))
+  }, [missionItemsList])
+
+  useEffect(() => {
+    setMissionItemsList(missionItems.mission_items)
   }, [missionItems])
 
   useEffect(() => {
@@ -136,6 +148,26 @@ function MapSectionNonMemo({
       setPoints({ x, y })
     }
   }, [contextMenuPositionCalculationInfo])
+
+  useEffect(() => {
+    // center map on home point only on first instance of home point being
+    // received from the drone
+    if (
+      passedRef.current &&
+      homePosition !== null &&
+      previousHomePositionValue === null
+    ) {
+      setInitialViewState({
+        latitude: intToCoord(homePosition.lat),
+        longitude: intToCoord(homePosition.lon),
+        zoom: initialViewState.zoom,
+      })
+      passedRef.current.getMap().flyTo({
+        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        zoom: initialViewState.zoom,
+      })
+    }
+  }, [homePosition])
 
   return (
     <div className="w-initial h-full" id="map">
@@ -182,21 +214,11 @@ function MapSectionNonMemo({
             />
           )}
 
-        {/* Show home position */}
-        {homePosition !== null && (
-          <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
-          />
-        )}
-
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems
+          missionItems={missionItemsList}
+          editable={currentTab === "mission"}
+          dragEndCallback={markerDragEndCallback}
+        />
 
         {/* Show mission geo-fence MARKERS */}
         {missionItems.fence_items.map((item, index) => {
@@ -233,10 +255,13 @@ function MapSectionNonMemo({
           return (
             <MarkerPin
               key={index}
+              id={item.id}
               lat={intToCoord(item.x)}
               lon={intToCoord(item.y)}
               colour={tailwindColors.purple[400]}
               tooltipText={item.z ? `Alt: ${item.z}` : null}
+              draggable={currentTab === "rally"}
+              dragEndCallback={rallyDragEndCallback}
             />
           )
         })}
@@ -248,6 +273,20 @@ function MapSectionNonMemo({
             colour={tailwindColors.pink[500]}
             tooltipText={
               guidedModePinData.alt ? `Alt: ${guidedModePinData.alt}` : null
+            }
+          />
+        )}
+
+        {/* Show home position */}
+        {homePosition !== null && (
+          <HomeMarker
+            lat={intToCoord(homePosition.lat)}
+            lon={intToCoord(homePosition.lon)}
+            lineTo={
+              filteredMissionItems.length > 0 && [
+                intToCoord(filteredMissionItems[0].y),
+                intToCoord(filteredMissionItems[0].x),
+              ]
             }
           />
         )}
@@ -291,6 +330,7 @@ function MapSectionNonMemo({
     </div>
   )
 }
+
 function propsAreEqual(prev, next) {
   return JSON.stringify(prev) === JSON.stringify(next)
 }

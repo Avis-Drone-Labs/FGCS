@@ -12,7 +12,7 @@ def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, drone
 
     assert socketio_result["name"] == "params_error"  # Correct name emitted
     assert socketio_result["args"][0] == {
-        "message": "You must be on the dashboard screen to get the current mission."
+        "message": "You must be on the dashboard or missions screen to get the current mission."
     }
 
 
@@ -191,5 +191,5 @@ def test_getCurrentMission_noDroneConnection(
 
         assert socketio_result["name"] == "connection_error"  # Correct name emitted
         assert socketio_result["args"][0] == {
-            "message": "Must be connected to the drone to get current mission."
+            "message": "You must be on the dashboard or missions screen to get the current mission."
         }

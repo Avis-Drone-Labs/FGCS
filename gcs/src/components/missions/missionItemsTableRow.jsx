@@ -90,8 +90,8 @@ export default function MissionItemsTableRow({
       </TableTd>
       <TableTd>
         <NumberInput
-          value={missionItemData.param3}
-          onChange={(val) => updateMissionItemData("param3", val)}
+          value={missionItemData.param2}
+          onChange={(val) => updateMissionItemData("param2", val)}
           hideControls
         />
       </TableTd>

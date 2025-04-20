@@ -55,7 +55,7 @@ export default function RallyItemsTableRow({
         <NumberInput value={rallyItemData.param1} hideControls disabled />
       </TableTd>
       <TableTd>
-        <NumberInput value={rallyItemData.param3} hideControls disabled />
+        <NumberInput value={rallyItemData.param2} hideControls disabled />
       </TableTd>
       <TableTd>
         <NumberInput value={rallyItemData.param3} hideControls disabled />

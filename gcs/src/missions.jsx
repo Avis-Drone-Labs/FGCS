@@ -117,18 +117,14 @@ export default function Missions() {
       console.log(data)
 
       if (data.mission_type === "mission") {
-        console.log("Read mission items")
         const missionItemsWithIds = []
         for (let missionItem of data.items) {
           missionItemsWithIds.push(addIdToItem(missionItem))
         }
         setMissionItems(missionItemsWithIds)
       } else if (data.mission_type === "fence") {
-        console.log("Read fence items")
         setFenceItems(data.items)
       } else if (data.mission_type === "rally") {
-        console.log("Read rally items")
-        console.log(data.items)
         const rallyItemsWithIds = []
         for (let rallyItem of data.items) {
           rallyItemsWithIds.push(addIdToItem(rallyItem))

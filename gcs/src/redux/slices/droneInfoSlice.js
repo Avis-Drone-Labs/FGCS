@@ -109,6 +109,16 @@ const droneInfoSlice = createSlice({
       if (action.payload !== state.gpsRawIntData) {
         state.gpsRawIntData = action.payload
       }
+    },
+    setOnboardControlSensorsEnabled: (state, action) => {
+      if (action.payload !== state.onboardControlSensorsEnabled) {
+        state.onboardControlSensorsEnabled = action.payload
+      }
+    },
+    setRSSIData: (state, action) => {
+      if (action.payload !== state.rssi) {
+        state.rssi = action.payload
+      }
     }
   },
   selectors: {
@@ -150,7 +160,9 @@ export const {
   setAttitudeData,
   setNavControllerOutput,
   setGpsRawIntData,
-  setBatteryData
+  setBatteryData,
+  setOnboardControlSensorsEnabled,
+  setRSSIData
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch

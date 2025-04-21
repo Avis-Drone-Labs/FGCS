@@ -28,7 +28,7 @@ import {
   queueErrorNotification,
   queueNotification,
 } from "../slices/notificationSlice"
-import { setHomePosition } from "../slices/missionSlice"
+import { setCurrentMission, setHomePosition } from "../slices/missionSlice"
 import { 
   setDroneAircraftType, 
   setTelemetryData, 
@@ -37,8 +37,11 @@ import {
   setNavControllerOutput,
   setHeartbeatData,
   setGpsRawIntData,
-  setBatteryData
+  setBatteryData,
+  setOnboardControlSensorsEnabled,
+  setRSSIData
 } from "../slices/droneInfoSlice"
+import { pushMessage } from "../slices/statusTextSlice.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -81,19 +84,20 @@ const socketMiddleware = (store) => {
         store.dispatch(setHeartbeatData(msg))
         break
       case "STATUSTEXT":
-        // TODO: statustextMessagesHandler.prepend(msg)
+        store.dispatch(pushMessage(msg))
         break
       case "SYS_STATUS":
-        // TODO: store.dispatch(setSysStatusData(msg))
+        store.dispatch(setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled))
         break
       case "GPS_RAW_INT":
         store.dispatch(setGpsRawIntData(msg))
         break
       case "RC_CHANNELS":
-        // TODO: store.dispatch(setRCChannelsData(msg))
+        // NOTE: UNABLE TO TEST IN SIMULATOR!
+        store.dispatch(setRSSIData(msg.rssi))
         break
       case "MISSION_CURRENT":
-        // TODO: store.dispatch(setCurrentMissionData(msg))
+        store.dispatch(setCurrentMission(msg))
         break
       case "BATTERY_STATUS":
         store.dispatch(setBatteryData(msg))

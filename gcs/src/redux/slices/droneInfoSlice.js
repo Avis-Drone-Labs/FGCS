@@ -92,7 +92,23 @@ const droneInfoSlice = createSlice({
     setGpsData: (state, action) => {
       if (action.payload !== state.gpsData) {
         state.gpsData = action.payload
-      }nee
+      }
+    },
+    setAttitudeData: (state, action) => {
+      if (action.payload !== state.attitudeData) {
+        state.attitudeData = action.payload
+      }
+    },
+    setNavControllerOutput: (state, action) => {
+      if (action.payload !== state.navControllerData) {
+        state.navControllerData.wpDist = action.payload.wp_dist
+        state.navControllerData.navBearing = action.payload.nav_bearing
+      }
+    },
+    setGpsRawIntData: (state, action) => {
+      if (action.payload !== state.gpsRawIntData) {
+        state.gpsRawIntData = action.payload
+      }
     }
   },
   selectors: {
@@ -120,6 +136,7 @@ const droneInfoSlice = createSlice({
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
 
     selectExtraDroneData: (state) => state.extraDroneData,
+    selectStatusText: (state) => state.statusText
   },
 })
 
@@ -130,6 +147,10 @@ export const {
   setDroneAircraftType,
   setTelemetryData,
   setGpsData,
+  setAttitudeData,
+  setNavControllerOutput,
+  setGpsRawIntData,
+  setBatteryData
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch

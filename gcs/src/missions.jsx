@@ -196,6 +196,11 @@ export default function Missions() {
 
   return (
     <Layout currentPage="missions">
+      {/* Banner to let people know that things are still under development */}
+      <div className="bg-falconred-700 text-white text-center">
+        Missions is still under development so some features are still missing.
+      </div>
+
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">
           <div className="flex flex-1 overflow-hidden">

@@ -267,9 +267,14 @@ export default function Graph({
               xMaxValue = new Date(nextFlightMode.TimeUS);
           } else {
             // Stretch to the latest date
-            const maxTime = Math.max(
-              ...data.datasets.flatMap(ds => ds.data.map(point => point.x))
-            );
+            let maxTime = 0;
+            data.datasets.forEach((dataset) => {
+              dataset.data.forEach((point) => {
+                if (point.x > maxTime) {
+                  maxTime = point.x;
+                }
+              });
+            });
             const maxDate = new Date(maxTime);
             xMaxValue = maxDate;
           }

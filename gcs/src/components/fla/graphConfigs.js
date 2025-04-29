@@ -21,19 +21,6 @@ function microsecondsToDisplayTime(microseconds, roundTo) {
   ).padStart(2, "0")}`
 }
 
-function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
-  // GPS epoch starts at 1980-01-06 00:00:00 UTC
-  const gpsEpoch = new Date(Date.UTC(1980, 0, 6));
-  
-  // Calculate total milliseconds since Unix epoch
-  const totalMs = gpsEpoch.getTime() + 
-                  gpsWeek * 604_800_000 +  // Convert weeks to milliseconds
-                  gms +                  // Add GPS milliseconds
-                  - leapSeconds * 1_000;  // Subtract leap seconds
-  
-  return new Date(totalMs);
-}
-
 const defaultOptions = {
   responsive: true,
   parsing: false,
@@ -106,7 +93,7 @@ export const fgcsOptions = {
     tooltip: {
       callbacks: {
         title: function (context) {
-          return moment(context[0].parsed.x).format("HH:mm:ss")
+          return moment(context[0].parsed.x).format("MMMM Do YYYY, h:mm:ss a")
         },
       },
     },

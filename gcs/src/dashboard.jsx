@@ -99,7 +99,7 @@ export default function Dashboard() {
   const previousHeartbeatData = usePrevious(heartbeatData)
 
   // System data
-  const [batteryData, setBatteryData] = useState({})
+  const [batteryData, setBatteryData] = useState([])
   const [navControllerOutputData, setNavControllerOutputData] = useState({})
   const [statustextMessages, statustextMessagesHandler] = useListState([])
   const [sysStatusData, setSysStatusData] = useState({
@@ -130,7 +130,10 @@ export default function Dashboard() {
   const [homePosition, setHomePosition] = useState(null)
 
   // Following Drone
-  const [followDrone, setFollowDrone] = useState(false)
+  const [followDrone, setFollowDrone] = useSessionStorage({
+    key: "followDroneBool",
+    defaultValue: false,
+  })
   const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
 
   // Map and messages
@@ -148,7 +151,18 @@ export default function Dashboard() {
   const incomingMessageHandler = useCallback(
     () => ({
       VFR_HUD: (msg) => setTelemetryData(msg),
-      BATTERY_STATUS: (msg) => setBatteryData(msg),
+      BATTERY_STATUS: (msg) => {
+        const battery = localBatteryData.filter(
+          (battery) => battery.id == msg.id,
+        )[0]
+        if (battery) {
+          Object.assign(battery, msg)
+        } else {
+          localBatteryData.push(msg)
+        }
+        localBatteryData.sort((b1, b2) => b1.id - b2.id)
+        setBatteryData(localBatteryData)
+      },
       ATTITUDE: (msg) => setAttitudeData(msg),
       GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
       NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
@@ -186,7 +200,6 @@ export default function Dashboard() {
     } else {
       socket.emit("set_state", { state: "dashboard" })
       socket.emit("get_home_position")
-      socket.emit("get_current_mission")
     }
 
     socket.on("incoming_msg", (msg) => {
@@ -222,7 +235,7 @@ export default function Dashboard() {
       }
     })
 
-    socket.on("current_mission", (msg) => {
+    socket.on("current_mission_all", (msg) => {
       setMissionItems(msg)
     })
 
@@ -256,12 +269,13 @@ export default function Dashboard() {
       } else {
         showErrorNotification(data.message)
       }
+      socket.emit("get_current_mission_all")
     })
 
     return () => {
       socket.off("incoming_msg")
       socket.off("arm_disarm")
-      socket.off("current_mission")
+      socket.off("current_mission_all")
       socket.off("set_current_flight_mode_result")
       socket.off("nav_result")
       socket.off("mission_control_result")
@@ -350,6 +364,8 @@ export default function Dashboard() {
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
 
+  let localBatteryData = []
+
   return (
     <Layout currentPage="dashboard">
       <div className="relative flex flex-auto w-full h-full overflow-hidden">
@@ -365,6 +381,7 @@ export default function Dashboard() {
               setFollowDrone(false)
             }}
             getFlightMode={getFlightMode}
+            mapId="dashboard"
           />
         </div>
 
@@ -434,8 +451,8 @@ export default function Dashboard() {
           <StatusSection
             icon={<IconBattery2 />}
             value={
-              batteryData.battery_remaining
-                ? `${batteryData.battery_remaining}%`
+              batteryData[0]?.battery_remaining
+                ? `${batteryData[0].battery_remaining}%`
                 : "0%"
             }
             tooltip="Battery remaining"

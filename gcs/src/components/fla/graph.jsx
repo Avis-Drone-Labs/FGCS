@@ -251,13 +251,48 @@ export default function Graph({
         // https://stackoverflow.com/a/8179549/10077669
         const labelColor = backgroundColor.replace(/[^,]+(?=\))/, "1")
 
+        // Critical fix: Convert timestamp to Date object for time scale
+        let xMinValue = flightMode.TimeUS;
+        let xMaxValue = xMax;
+
+        // Check if we're using a time scale
+        const isTimeScale = config.scales?.x?.type === "time";
+        
+        // Convert timestamps to Date objects when using time scale
+        if (isTimeScale) {
+            xMinValue = new Date(flightMode.TimeUS);
+          
+          // Handle xMax
+          if (nextFlightMode !== undefined) {
+              xMaxValue = new Date(nextFlightMode.TimeUS);
+          } else {
+            // Stretch to the latest date
+            let maxTime = 0;
+            data.datasets.forEach((dataset) => {
+              dataset.data.forEach((point) => {
+                if (point.x > maxTime) {
+                  maxTime = point.x;
+                }
+              });
+            });
+            const maxDate = new Date(maxTime);
+            xMaxValue = maxDate;
+          }
+
+        } else {
+          // For non-time scales, handle next flight mode
+          if (nextFlightMode !== undefined) {
+            xMaxValue = nextFlightMode.TimeUS;
+          }
+        }
+
         const flightModeChange = {
           type: "box",
           xScaleID: "x",
           yMin: "end",
           yMax: "start",
-          xMin: flightMode.TimeUS,
-          xMax: xMax,
+          xMin: xMinValue,
+          xMax: xMaxValue,
           backgroundColor: backgroundColor,
           borderWidth: 0,
           display: true,
@@ -271,12 +306,6 @@ export default function Graph({
           },
         }
 
-        // If there is a next flight mode, then set the xMax of the current flight
-        // mode to the xMin of the next flight mode
-        if (nextFlightMode !== undefined) {
-          flightModeChange.xMax = nextFlightMode.TimeUS
-        }
-
         annotations.push(flightModeChange)
       }
     }
@@ -285,9 +314,6 @@ export default function Graph({
       ...new Set(data.datasets.map((dataset) => dataset.yAxisID)),
     ]
     const scales = {}
-
-    // Capture current scales if they exist
-    const currentScales = chartRef.current?.scales
 
     if (yAxisIDs.length === 0) {
       scales.y = {
@@ -309,27 +335,9 @@ export default function Graph({
           text: yAxisID,
         },
       }
-      // Only add min/max if we have existing scales and they're not undefined
-      if (
-        data.datasets.length > 0 &&
-        currentScales[yAxisID]?.min !== undefined
-      ) {
-        scales[yAxisID].min = currentScales[yAxisID].min
-        scales[yAxisID].max = currentScales[yAxisID].max
-      } else {
-        scales[yAxisID].min = undefined
-        scales[yAxisID].max = undefined
-      }
     })
 
     scales.x = { ...config.scales.x }
-    if (data.datasets.length > 0 && currentScales.x?.min !== undefined) {
-      scales.x.min = currentScales.x.min
-      scales.x.max = currentScales.x.max
-    } else {
-      scales.x.min = undefined
-      scales.x.max = undefined
-    }
 
     setConfig({
       ...config,

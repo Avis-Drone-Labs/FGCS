@@ -13,7 +13,7 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const badgeColor = tailwindColors.falcongrey[600]
 
 export let actions = []
-export function AddSpotlightAction(
+function AddSpotlightAction(
   id,
   label,
   type,
@@ -43,14 +43,24 @@ AddSpotlightAction(
   kbdBadge("⌘ + 1", badgeColor),
 )
 AddSpotlightAction(
+  "missions",
+  "Missions",
+  "page",
+  () => {
+    RunCommand("goto_missions")
+  },
+  kbdBadge("ALT + 2", badgeColor),
+  kbdBadge("⌘ + 2", badgeColor),
+)
+AddSpotlightAction(
   "graphs",
   "Graphs",
   "page",
   () => {
     RunCommand("goto_graphs")
   },
-  kbdBadge("ALT + 2", badgeColor),
-  kbdBadge("⌘ + 2", badgeColor),
+  kbdBadge("ALT + 3", badgeColor),
+  kbdBadge("⌘ + 3", badgeColor),
 )
 AddSpotlightAction(
   "params",
@@ -59,8 +69,8 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_params")
   },
-  kbdBadge("ALT + 3", badgeColor),
-  kbdBadge("⌘ + 3", badgeColor),
+  kbdBadge("ALT + 4", badgeColor),
+  kbdBadge("⌘ + 4", badgeColor),
 )
 AddSpotlightAction(
   "config",
@@ -69,8 +79,8 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_config")
   },
-  kbdBadge("ALT + 4", badgeColor),
-  kbdBadge("⌘ + 4", badgeColor),
+  kbdBadge("ALT + 5", badgeColor),
+  kbdBadge("⌘ + 5", badgeColor),
 )
 AddSpotlightAction(
   "fla",
@@ -79,8 +89,8 @@ AddSpotlightAction(
   () => {
     RunCommand("goto_fla")
   },
-  kbdBadge("ALT + 5", badgeColor),
-  kbdBadge("⌘ + 5", badgeColor),
+  kbdBadge("ALT + 6", badgeColor),
+  kbdBadge("⌘ + 6", badgeColor),
 )
 
 // Commands
@@ -114,4 +124,12 @@ AddSpotlightAction(
   },
   kbdBadge("Ctrl + ,", badgeColor),
   kbdBadge("⌘ + ,", badgeColor),
+)
+AddSpotlightAction(
+  "new_preflight_checklist",
+  "New Pre-flight Checklist",
+  "command",
+  () => {
+    RunCommand("new_preflight_checklist")
+  },
 )

@@ -1,8 +1,10 @@
 import sys
-from typing import Any, List, Optional, Union
+from typing import Any, List
 
 from pymavlink import mavutil
 from serial.tools import list_ports
+
+from app.customTypes import VehicleType
 
 from . import socketio
 
@@ -138,12 +140,12 @@ def droneConnectStatusCb(msg: Any) -> None:
     socketio.emit("drone_connect_status", {"message": msg})
 
 
-def notConnectedError(action: Optional[str] = None) -> None:
+def notConnectedError(action: str | None = None) -> None:
     """
     Send error to the socket indicating that drone connection must be established to complete this action
 
     Args:
-        action Optional[str]: The action the that requires drone connection. Default `None`.
+        action (str | None): The action the that requires drone connection. Default `None`.
     """
     socketio.emit(
         "connection_error",
@@ -153,13 +155,13 @@ def notConnectedError(action: Optional[str] = None) -> None:
     )
 
 
-def missingParameterError(endpoint: str, params: Union[str, List[str]]) -> None:
+def missingParameterError(endpoint: str, params: str | list[str]) -> None:
     """ "
     Send error to the socket indicating that a request made to the server was missing required parameters
 
     Args
         endpoint (str): The endpoint that is missing a parameter
-        params Union[str, List[str]]: The names of the parameter/s that are missing from the request
+        params (str | list[str]): The names of the parameter/s that are missing from the request
     """
     socketio.emit(
         "drone_error",
@@ -181,3 +183,61 @@ def sendMessage(msg: Any) -> None:
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
     socketio.emit("incoming_msg", data)
+
+
+def wpToMissionItemInt(
+    wp: mavutil.mavlink.MAVLink_message,
+) -> mavutil.mavlink.MAVLink_message:
+    if wp.get_type() == "MISSION_ITEM_INT":
+        return wp
+
+    wp_int = mavutil.mavlink.MAVLink_mission_item_int_message(
+        wp.target_system,
+        wp.target_component,
+        wp.seq,
+        wp.frame,
+        wp.command,
+        wp.current,
+        wp.autocontinue,
+        wp.param1,
+        wp.param2,
+        wp.param3,
+        wp.param4,
+        int(wp.x * 1e7),
+        int(wp.y * 1e7),
+        wp.z,
+        wp.mission_type,
+    )
+    return wp_int
+
+
+FIXED_WING_TYPES = [
+    mavutil.mavlink.MAV_TYPE_FIXED_WING,
+    mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR,
+    mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR,
+    # mavutil.mavlink.MAV_TYPE_VTOL_TAILSITTER,
+    # mavutil.mavlink.MAV_TYPE_VTOL_TILTWING,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED2,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED3,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED4,
+    mavutil.mavlink.MAV_TYPE_VTOL_RESERVED5,
+]
+
+MULTIROTOR_TYPES = [
+    mavutil.mavlink.MAV_TYPE_QUADROTOR,
+    mavutil.mavlink.MAV_TYPE_HEXAROTOR,
+    mavutil.mavlink.MAV_TYPE_OCTOROTOR,
+    mavutil.mavlink.MAV_TYPE_TRICOPTER,
+    mavutil.mavlink.MAV_TYPE_DODECAROTOR,
+    mavutil.mavlink.MAV_TYPE_ADSB,  # For cube orange (?)
+]
+
+
+def getVehicleType(typeId: int) -> int:
+    if typeId in FIXED_WING_TYPES:
+        return VehicleType.FIXED_WING.value
+    elif typeId in MULTIROTOR_TYPES:
+        return VehicleType.MULTIROTOR.value
+    else:
+        return VehicleType.UNKNOWN.value

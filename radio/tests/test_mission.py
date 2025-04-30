@@ -7,12 +7,12 @@ from .helpers import NoDrone
 @falcon_test(pass_drone_status=True)
 def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "params"
-    socketio_client.emit("get_current_mission")
+    socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
     assert socketio_result["name"] == "params_error"  # Correct name emitted
     assert socketio_result["args"][0] == {
-        "message": "You must be on the dashboard screen to get the current mission."
+        "message": "You must be on the dashboard or missions screen to get the current mission."
     }
 
 
@@ -21,14 +21,32 @@ def test_getCurrentMission_correctState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "dashboard"
-    socketio_client.emit("get_current_mission")
+    socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
-    assert socketio_result["name"] == "current_mission"  # Correct name emitted
+    assert socketio_result["name"] == "current_mission_all"  # Correct name emitted
 
     # pytest.skip(reason="Sending mission to simulator is currently bugged and fails sometimes")
     assert socketio_result["args"][0] == {
         "mission_items": [
+            {
+                "autocontinue": 1,
+                "command": 16,
+                "current": 0,
+                "frame": 0,
+                "mavpackettype": "MISSION_ITEM_INT",
+                "mission_type": 0,
+                "param1": 0.0,
+                "param2": 0.0,
+                "param3": 0.0,
+                "param4": 0.0,
+                "seq": 0,
+                "target_component": 0,
+                "target_system": 255,
+                "x": 527805690,
+                "y": -7079236,
+                "z": 0.09999999403953552,
+            },
             {
                 "mavpackettype": "MISSION_ITEM_INT",
                 "target_system": 255,
@@ -168,7 +186,7 @@ def test_getCurrentMission_noDroneConnection(
     droneStatus.state = "dashboard"
 
     with NoDrone():
-        socketio_client.emit("get_current_mission")
+        socketio_client.emit("get_current_mission_all")
         socketio_result = socketio_client.get_received()[0]
 
         assert socketio_result["name"] == "connection_error"  # Correct name emitted

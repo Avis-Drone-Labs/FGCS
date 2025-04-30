@@ -1,7 +1,7 @@
 /*
-  The dashboard map.
+  The missions map.
 
-  This uses maplibre to load the map, currently (as of 23/04/2024) this needs an internet
+  This uses maplibre to load the map, currently (as of 16/03/2025) this needs an internet
   connection to load but this will be addressed in later versions of FGCS. Please check
   docs/changelogs if this description has not been updated.
 */
@@ -10,11 +10,10 @@
 import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import { Button, Divider, Modal, NumberInput } from "@mantine/core"
 import {
   useClipboard,
-  useDisclosure,
   useLocalStorage,
+  usePrevious,
   useSessionStorage,
 } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -23,18 +22,14 @@ import Map from "react-map-gl/maplibre"
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
-import {
-  showErrorNotification,
-  showNotification,
-  showSuccessNotification,
-} from "../../helpers/notification"
+import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
-import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import DroneMarker from "../mapComponents/droneMarker"
+import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
@@ -42,7 +37,6 @@ import useContextMenu from "../mapComponents/useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -56,15 +50,21 @@ function MapSectionNonMemo({
   homePosition,
   onDragstart,
   getFlightMode,
+  currentTab,
+  markerDragEndCallback,
+  rallyDragEndCallback,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
   })
+  const [guidedModePinData] = useSessionStorage({
+    key: "guidedModePinData",
+    defaultValue: null,
+  })
 
   const [position, setPosition] = useState(null)
-  const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const { getSetting } = useSettings()
 
   // Check if maps should be synchronized (from settings)
@@ -80,12 +80,11 @@ function MapSectionNonMemo({
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
+  const previousHomePositionValue = usePrevious(homePosition)
 
-  const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
-    key: "repositionAltitude",
-    defaultValue: 30,
-  })
-
+  const [missionItemsList, setMissionItemsList] = useState(
+    missionItems.mission_items,
+  )
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
@@ -96,27 +95,10 @@ function MapSectionNonMemo({
   ] = useState()
   const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
-  const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
-
   useEffect(() => {
-    socket.on("nav_reposition_result", (msg) => {
-      if (!msg.success) {
-        showErrorNotification(msg.message)
-      } else {
-        showSuccessNotification(msg.message)
-        setGuidedModePinData(msg.data)
-      }
-    })
-
-    return () => {
-      socket.off("nav_reposition_result")
-    }
+    return () => {}
   }, [connected])
 
   useEffect(() => {
@@ -128,18 +110,14 @@ function MapSectionNonMemo({
     let lat = intToCoord(data.lat)
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
-
-    if (!firstCenteredToDrone) {
-      passedRef.current.getMap().flyTo({
-        center: [lon, lat],
-        zoom: initialViewState.zoom,
-      })
-      setFirstCenteredToDrone(true)
-    }
   }, [data])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItemsList))
+  }, [missionItemsList])
+
+  useEffect(() => {
+    setMissionItemsList(missionItems.mission_items)
   }, [missionItems])
 
   useEffect(() => {
@@ -171,13 +149,25 @@ function MapSectionNonMemo({
     }
   }, [contextMenuPositionCalculationInfo])
 
-  function reposition() {
-    socket.emit("reposition", {
-      lat: clickedGpsCoords.lat,
-      lon: clickedGpsCoords.lng,
-      alt: repositionAltitude,
-    })
-  }
+  useEffect(() => {
+    // center map on home point only on first instance of home point being
+    // received from the drone
+    if (
+      passedRef.current &&
+      homePosition !== null &&
+      previousHomePositionValue === null
+    ) {
+      setInitialViewState({
+        latitude: intToCoord(homePosition.lat),
+        longitude: intToCoord(homePosition.lon),
+        zoom: initialViewState.zoom,
+      })
+      passedRef.current.getMap().flyTo({
+        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        zoom: initialViewState.zoom,
+      })
+    }
+  }, [homePosition])
 
   return (
     <div className="w-initial h-full" id="map">
@@ -224,7 +214,11 @@ function MapSectionNonMemo({
             />
           )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems
+          missionItems={missionItemsList}
+          editable={currentTab === "mission"}
+          dragEndCallback={markerDragEndCallback}
+        />
 
         {/* Show mission geo-fence MARKERS */}
         {missionItems.fence_items.map((item, index) => {
@@ -261,10 +255,13 @@ function MapSectionNonMemo({
           return (
             <MarkerPin
               key={index}
+              id={item.id}
               lat={intToCoord(item.x)}
               lon={intToCoord(item.y)}
               colour={tailwindColors.purple[400]}
               tooltipText={item.z ? `Alt: ${item.z}` : null}
+              draggable={currentTab === "rally"}
+              dragEndCallback={rallyDragEndCallback}
             />
           )
         })}
@@ -294,38 +291,12 @@ function MapSectionNonMemo({
           />
         )}
 
-        <Modal opened={opened} onClose={close} title="Enter altitude" centered>
-          <form
-            className="flex flex-col space-y-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              reposition()
-              close()
-            }}
-          >
-            <NumberInput
-              placeholder="Altitude (m)"
-              value={repositionAltitude}
-              onChange={setRepositionAltitude}
-              min={0}
-              allowNegative={false}
-              hideControls
-              data-autofocus
-            />
-            <Button fullWidth type="submit">
-              Reposition
-            </Button>
-          </form>
-        </Modal>
-
         {clicked && (
           <div
             ref={contextMenuRef}
             className="absolute bg-falcongrey-700 rounded-md p-1"
             style={{ top: points.y, left: points.x }}
           >
-            <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
-            <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {
                 clipboard.copy(
@@ -359,9 +330,10 @@ function MapSectionNonMemo({
     </div>
   )
 }
+
 function propsAreEqual(prev, next) {
   return JSON.stringify(prev) === JSON.stringify(next)
 }
-const MapSection = React.memo(MapSectionNonMemo, propsAreEqual)
+const MissionsMapSection = React.memo(MapSectionNonMemo, propsAreEqual)
 
-export default MapSection
+export default MissionsMapSection

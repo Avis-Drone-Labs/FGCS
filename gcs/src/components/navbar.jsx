@@ -87,7 +87,10 @@ export default function Navbar({ currentPage }) {
 
   // Com Ports
   const [comPorts, setComPorts] = useState([])
-  const [selectedComPort, setSelectedComPort] = useState(null)
+  const [selectedComPort, setSelectedComPort] = useSessionStorage({
+    key: "selectedComPort",
+    defaultValue: null,
+  })
   const [fetchingComPorts, setFetchingComPorts] = useState(false)
 
   // Network Connection
@@ -142,15 +145,17 @@ export default function Navbar({ currentPage }) {
     socket.on("list_com_ports", (msg) => {
       setFetchingComPorts(false)
       setComPorts(msg)
-      const possibleComPort = msg.find(
-        (port) =>
-          port.toLowerCase().includes("mavlink") ||
-          port.toLowerCase().includes("ardupilot"),
-      )
-      if (possibleComPort !== undefined) {
-        setSelectedComPort(possibleComPort)
-      } else if (msg.length > 0) {
-        setSelectedComPort(msg[0])
+      if (selectedComPort === null || !msg.includes(selectedComPort)) {
+        const possibleComPort = msg.find(
+          (port) =>
+            port.toLowerCase().includes("mavlink") ||
+            port.toLowerCase().includes("ardupilot"),
+        )
+        if (possibleComPort !== undefined) {
+          setSelectedComPort(possibleComPort)
+        } else if (msg.length > 0) {
+          setSelectedComPort(msg[0])
+        }
       }
     })
 
@@ -230,7 +235,6 @@ export default function Navbar({ currentPage }) {
   }
 
   function disconnect() {
-    console.log("disconnect")
     socket.emit("disconnect_from_drone")
   }
 
@@ -259,12 +263,12 @@ export default function Navbar({ currentPage }) {
           backgroundOpacity: 0.55,
           blur: 3,
         }}
-        withCloseButton={false}
         styles={{
           content: {
             borderRadius: "0.5rem",
           },
         }}
+        withCloseButton={false}
       >
         <form
           onSubmit={(e) => {
@@ -408,6 +412,15 @@ export default function Navbar({ currentPage }) {
             )}
           >
             Dashboard
+          </Link>
+          <Link
+            to="/missions"
+            className={twMerge(
+              linkClassName,
+              currentPage === "missions" && "text-falconred font-bold",
+            )}
+          >
+            Missions
           </Link>
           <Link
             to="/graphs"

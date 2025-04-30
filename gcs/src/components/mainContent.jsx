@@ -48,6 +48,7 @@ export default function AppContent() {
                 </Provider>
               }
             />
+            <Route path="/missions" element={<Missions />} />
           </Routes>
           {renderUI && <Commands />}
         </ErrorBoundary>

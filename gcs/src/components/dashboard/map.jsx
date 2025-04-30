@@ -35,7 +35,6 @@ import { socket } from "../../helpers/socket"
 import ContextMenuItem from "../mapComponents/contextMenuItem"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import DroneMarker from "../mapComponents/droneMarker"
-import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
@@ -43,6 +42,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -183,7 +183,7 @@ function MapSectionNonMemo({
     <div className="w-initial h-full" id="map">
       <Map
         initialViewState={initialViewState}
-        mapStyle={`https://api.maptiler.com/maps/8ff50749-c346-42f6-be2b-39d85c9c330d/style.json?key=${getSetting("General.maptilerAPIKey") || import.meta.env.VITE_MAPTILER_API_KEY}`}
+        mapStyle={`https://api.maptiler.com/maps/${getSetting("General.mapStyle") || "hybrid"}/style.json?key=${getSetting("General.maptilerAPIKey") || import.meta.env.VITE_MAPTILER_API_KEY}`}
         ref={passedRef}
         attributionControl={false}
         dragRotate={false}
@@ -223,20 +223,6 @@ function MapSectionNonMemo({
               desiredBearing={desiredBearing ?? 0}
             />
           )}
-
-        {/* Show home position */}
-        {homePosition !== null && (
-          <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
-          />
-        )}
 
         <MissionItems missionItems={missionItems.mission_items} />
 
@@ -290,6 +276,20 @@ function MapSectionNonMemo({
             colour={tailwindColors.pink[500]}
             tooltipText={
               guidedModePinData.alt ? `Alt: ${guidedModePinData.alt}` : null
+            }
+          />
+        )}
+
+        {/* Show home position */}
+        {homePosition !== null && (
+          <HomeMarker
+            lat={intToCoord(homePosition.lat)}
+            lon={intToCoord(homePosition.lon)}
+            lineTo={
+              filteredMissionItems.length > 0 && [
+                intToCoord(filteredMissionItems[0].y),
+                intToCoord(filteredMissionItems[0].x),
+              ]
             }
           />
         )}

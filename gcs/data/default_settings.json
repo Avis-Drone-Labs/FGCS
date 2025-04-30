@@ -1,39 +1,41 @@
 {
-    "General": {
-        "maptilerAPIKey": {
-            "default": "",
-            "type": "string",
-            "display": "Maptiler API Key",
-            "hidden": true
-        },
-        "port": {
-            "default": "4237",
-            "type": "number",
-            "range": [
-                0,
-                65535
-            ],
-            "display": "Backend Port"
-        },
-        "interfaceLanguage": {
-            "default": "English",
-            "type": "option",
-            "options": ["English"],
-            "display": "Interface Language"
-        },
-        "autoCheckForUpdates": {
-            "default": true,
-            "type": "boolean",
-            "display": "Automatically Check for Updates"
-        },
-        "syncMapViews": {
-            "default": false,
-            "type": "boolean",
-            "display": "Sync Dashboard and Missions Map Viewstate"
-        }
+  "General": {
+    "maptilerAPIKey": {
+      "default": "",
+      "type": "string",
+      "display": "Maptiler API Key",
+      "hidden": true
     },
-    "Params": {},
-    "Config": {},
-    "FGCS": {
+    "mapStyle": {
+      "default": "hybrid",
+      "type": "option",
+      "options": ["satellite", "hybrid", "streets", "outdoor"],
+      "display": "Map Style"
+    },
+    "port": {
+      "default": "4237",
+      "type": "number",
+      "range": [0, 65535],
+      "display": "Backend Port"
+    },
+    "interfaceLanguage": {
+      "default": "English",
+      "type": "option",
+      "options": ["English"],
+      "display": "Interface Language"
+    },
+    "autoCheckForUpdates": {
+      "default": true,
+      "type": "boolean",
+      "display": "Automatically Check for Updates"
+    },
+    "syncMapViews": {
+      "default": false,
+      "type": "boolean",
+      "display": "Sync Dashboard and Missions Map Viewstate"
     }
+  },
+  "Params": {},
+  "Config": {},
+  "FGCS": {}
 }

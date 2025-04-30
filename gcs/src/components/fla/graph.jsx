@@ -251,13 +251,48 @@ export default function Graph({
         // https://stackoverflow.com/a/8179549/10077669
         const labelColor = backgroundColor.replace(/[^,]+(?=\))/, "1")
 
+        // Critical fix: Convert timestamp to Date object for time scale
+        let xMinValue = flightMode.TimeUS;
+        let xMaxValue = xMax;
+
+        // Check if we're using a time scale
+        const isTimeScale = config.scales?.x?.type === "time";
+        
+        // Convert timestamps to Date objects when using time scale
+        if (isTimeScale) {
+            xMinValue = new Date(flightMode.TimeUS);
+          
+          // Handle xMax
+          if (nextFlightMode !== undefined) {
+              xMaxValue = new Date(nextFlightMode.TimeUS);
+          } else {
+            // Stretch to the latest date
+            let maxTime = 0;
+            data.datasets.forEach((dataset) => {
+              dataset.data.forEach((point) => {
+                if (point.x > maxTime) {
+                  maxTime = point.x;
+                }
+              });
+            });
+            const maxDate = new Date(maxTime);
+            xMaxValue = maxDate;
+          }
+
+        } else {
+          // For non-time scales, handle next flight mode
+          if (nextFlightMode !== undefined) {
+            xMaxValue = nextFlightMode.TimeUS;
+          }
+        }
+
         const flightModeChange = {
           type: "box",
           xScaleID: "x",
           yMin: "end",
           yMax: "start",
-          xMin: flightMode.TimeUS,
-          xMax: xMax,
+          xMin: xMinValue,
+          xMax: xMaxValue,
           backgroundColor: backgroundColor,
           borderWidth: 0,
           display: true,
@@ -269,12 +304,6 @@ export default function Graph({
             position: { y: "end", x: "start" },
             color: labelColor,
           },
-        }
-
-        // If there is a next flight mode, then set the xMax of the current flight
-        // mode to the xMin of the next flight mode
-        if (nextFlightMode !== undefined) {
-          flightModeChange.xMax = nextFlightMode.TimeUS
         }
 
         annotations.push(flightModeChange)

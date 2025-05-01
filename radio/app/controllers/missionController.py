@@ -28,9 +28,6 @@ class MissionController:
 
         self.drone = drone
 
-        self.mission_items: List[Any] = []
-        self.fence_items: List[Any] = []
-        self.rally_items: List[Any] = []
         self.missionLoader = mavwp.MAVWPLoader(
             target_system=drone.target_system, target_component=drone.target_component
         )
@@ -41,27 +38,6 @@ class MissionController:
             target_system=drone.target_system, target_component=drone.target_component
         )
 
-        mission_items = self.getMissionItems(mission_type=TYPE_MISSION)
-        if not mission_items.get("success"):
-            self.drone.logger.warning(mission_items.get("message"))
-            return
-        else:
-            self.mission_items = mission_items.get("data", [])
-
-        fence_items = self.getMissionItems(mission_type=TYPE_FENCE)
-        if not fence_items.get("success"):
-            self.drone.logger.warning(fence_items.get("message"))
-            return
-        else:
-            self.fence_items = fence_items.get("data", [])
-
-        rally_items = self.getMissionItems(mission_type=TYPE_RALLY)
-        if not rally_items.get("success"):
-            self.drone.logger.warning(rally_items.get("message"))
-            return
-        else:
-            self.rally_items = rally_items.get("data", [])
-
     def _checkMissionType(self, mission_type: int) -> Response:
         if mission_type not in MISSION_TYPES:
             return {
@@ -69,6 +45,69 @@ class MissionController:
                 "message": f"Invalid mission type {mission_type}. Must be one of {MISSION_TYPES}",
             }
         return {"success": True}
+
+    def getCurrentMission(self, mission_type: int) -> Response:
+        """
+        Get the current mission of a specific type from the drone.
+        """
+        mission_type_check = self._checkMissionType(mission_type)
+        if not mission_type_check.get("success"):
+            return mission_type_check
+
+        failure_message = "Could not get current mission"
+
+        try:
+            mission_items = self.getMissionItems(mission_type=mission_type)
+            if not mission_items.get("success"):
+                return {
+                    "success": False,
+                    "message": mission_items.get("message", failure_message),
+                }
+
+            return {
+                "success": True,
+                "data": [item.to_dict() for item in mission_items.get("data", [])],
+            }
+        except serial.serialutil.SerialException:
+            return {
+                "success": False,
+                "message": f"{failure_message}, serial exception",
+            }
+
+    def getCurrentMissionAll(self) -> Response:
+        """
+        Get the current mission, fence and rally from the drone.
+        """
+        mission_items: List[Any] = []
+        fence_items: List[Any] = []
+        rally_items: List[Any] = []
+
+        _mission_items = self.getMissionItems(mission_type=TYPE_MISSION)
+        if not _mission_items.get("success"):
+            self.drone.logger.warning(_mission_items.get("message"))
+        else:
+            mission_items = _mission_items.get("data", [])
+
+        _fence_items = self.getMissionItems(mission_type=TYPE_FENCE)
+        if not _fence_items.get("success"):
+            self.drone.logger.warning(_fence_items.get("message"))
+        else:
+            fence_items = _fence_items.get("data", [])
+
+        _rally_items = self.getMissionItems(mission_type=TYPE_RALLY)
+        if not _rally_items.get("success"):
+            self.drone.logger.warning(_rally_items.get("message"))
+        else:
+            rally_items = _rally_items.get("data", [])
+
+        return {
+            "success": True,
+            "data": {
+                "mission_items": [item.to_dict() for item in mission_items],
+                "fence_items": [item.to_dict() for item in fence_items],
+                "rally_items": [item.to_dict() for item in rally_items],
+            },
+        }
 
     def getMissionItems(self, mission_type: int) -> Response:
         """
@@ -90,6 +129,8 @@ class MissionController:
         else:
             loader = self.rallyLoader
 
+        self.drone.is_listening = False
+
         try:
             self.drone.master.mav.mission_request_list_send(
                 self.drone.target_system,
@@ -97,11 +138,15 @@ class MissionController:
                 mission_type=mission_type,
             )
         except TypeError:
+            self.drone.is_listening = True
             # TypeError is raised if mavlink V1 is used where the mission_request_list_send
             # function does not have a mission_type parameter
+            self.drone.logger.error(
+                "Failed to request mission list from autopilot, got type error"
+            )
             return {
                 "success": False,
-                "message": failure_message,
+                "message": "Failed to request mission list from autopilot, got type error",
             }
 
         try:
@@ -110,46 +155,81 @@ class MissionController:
                     "MISSION_COUNT",
                 ],
                 blocking=True,
-                timeout=1.5,
+                timeout=2,
             )
             if response:
+                if response.mission_type != mission_type:
+                    self.drone.logger.error(
+                        f"Received response with wrong mission type {response.mission_type}, expected {mission_type}"
+                    )
+                    return {
+                        "success": False,
+                        "message": f"Received response with wrong mission type {response.mission_type}, expected {mission_type}",
+                    }
+                self.drone.logger.debug(
+                    f"Got response for mission count of {response.count} for mission type {response.mission_type}"
+                )
+                loader.clear()
+                self.drone.is_listening = True
                 for i in range(0, response.count):
-                    item_response = self.getItemDetails(i, mission_type=mission_type)
-                    if not item_response.get("success"):
+                    retry_count = 0
+                    while retry_count < 3:
+                        item_response = self.getItemDetails(
+                            i, mission_type, response.count
+                        )
+                        if not item_response.get("success"):
+                            retry_count += 1
+                            self.drone.logger.warning(
+                                f"Failed to get item details for mission item {i} for mission type {mission_type}, retry count {retry_count}/3"
+                            )
+                            continue
+
+                        item_response_data = item_response.get("data", None)
+
+                        if item_response_data:
+                            loader.add(item_response_data)
+                            break
+                        else:
+                            self.drone.logger.warning(
+                                f"Failed to get item details for mission item {i} for mission type {mission_type}"
+                            )
+                            continue
+                    else:
                         return {
                             "success": False,
                             "message": item_response.get("message", failure_message),
                         }
-
-                    item_response_data = item_response.get("data", None)
-
-                    if item_response_data:
-                        loader.add(item_response_data)
-
                 return {
                     "success": True,
                     "data": loader.wpoints,
                 }
-
             else:
+                self.drone.is_listening = True
+                self.drone.logger.error(
+                    f"No response received for mission count for mission type {mission_type}."
+                )
                 return {
                     "success": False,
                     "message": failure_message,
                 }
 
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",
             }
 
-    def getItemDetails(self, item_number: int, mission_type: int) -> Response:
+    def getItemDetails(
+        self, item_number: int, mission_type: int, mission_count: int
+    ) -> Response:
         """
         Get the details of a specific mission item.
 
         Args:
             item_number (int): The number of the mission item to get
-            mission_type (int): The type of mission to get. 0=Mission,1=Fence,2=Rally.
+            mission_type (int): The type of mission to get. 0=Mission,1=Fence,2=Rally
+            mission_count (int): The total count of mission items for the mission type, used just for logging
 
         Returns:
             Dict: The details of the mission item
@@ -158,9 +238,9 @@ class MissionController:
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        failure_message = (
-            f"Failed to get mission item {item_number} for mission type {mission_type}"
-        )
+        failure_message = f"Failed to get mission item {item_number}/{mission_count} for mission type {mission_type}"
+
+        self.drone.is_listening = False
 
         self.drone.master.mav.mission_request_int_send(
             self.drone.target_system,
@@ -176,19 +256,31 @@ class MissionController:
                 timeout=1.5,
             )
 
+            self.drone.is_listening = True
+
             if response:
+                self.drone.logger.debug(
+                    f"Got response for mission item {item_number}/{mission_count} for mission type {mission_type}"
+                )
                 return {
                     "success": True,
                     "data": response,
                 }
 
             else:
+                self.drone.logger.error(
+                    f"Got no response for mission item {item_number}/{mission_count} for mission type {mission_type}"
+                )
                 return {
                     "success": False,
                     "message": failure_message,
                 }
 
         except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            self.drone.logger.error(
+                f"Got no response for mission item {item_number}/{mission_count}, serial exception"
+            )
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",

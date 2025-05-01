@@ -125,3 +125,11 @@ AddSpotlightAction(
   kbdBadge("Ctrl + ,", badgeColor),
   kbdBadge("⌘ + ,", badgeColor),
 )
+AddSpotlightAction(
+  "new_preflight_checklist",
+  "New Pre-flight Checklist",
+  "command",
+  () => {
+    RunCommand("new_preflight_checklist")
+  },
+)

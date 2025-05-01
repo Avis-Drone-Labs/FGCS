@@ -1,4 +1,4 @@
-export default function NoDroneConnected({tab}) {
+export default function NoDroneConnected({ tab }) {
   return (
     <div className="flex items-center justify-center h-full">
       <p className="text-red-400">

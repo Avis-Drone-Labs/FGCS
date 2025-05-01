@@ -93,7 +93,7 @@ export const fgcsOptions = {
     tooltip: {
       callbacks: {
         title: function (context) {
-          return moment(context[0].parsed.x).format("HH:mm:ss")
+          return moment(context[0].parsed.x).format("MMMM Do YYYY, h:mm:ss a")
         },
       },
     },

@@ -7,6 +7,10 @@ export function intToCoord(val) {
   return val * 1e-7
 }
 
+export function coordToInt(val) {
+  return val * 1e7
+}
+
 export const dataFormatters = {
   "ATTITUDE.pitch": radToDeg,
   "ATTITUDE.roll": radToDeg,

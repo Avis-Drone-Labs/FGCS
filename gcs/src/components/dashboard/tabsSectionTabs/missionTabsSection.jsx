@@ -9,8 +9,8 @@ import { Button, Tabs } from "@mantine/core"
 
 // Mavlink
 import {
-  MISSION_STATES,
   COPTER_MODES_FLIGHT_MODE_MAP,
+  MISSION_STATES,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../../helpers/mavlinkConstants"
 
@@ -99,6 +99,10 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
     return {}
   }
 
+  function readCurrentMission() {
+    socket.emit("get_current_mission_all")
+  }
+
   return (
     <>
       <div className="flex flex-wrap flex-cols gap-2">
@@ -136,6 +140,10 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
           className="grow"
         >
           Restart Mission
+        </Button>
+
+        <Button onClick={readCurrentMission} className="grow">
+          Read mission
         </Button>
       </div>
     </>

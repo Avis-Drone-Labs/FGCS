@@ -7,6 +7,7 @@ const logAnalyserSlice = createSlice({
     units: {},
     formatMessages: {},
     logMessages: null,
+    utcAvailable: false,
     logEvents: null,
     flightModeMessages: [],
     logType: "dataflash",
@@ -30,6 +31,9 @@ const logAnalyserSlice = createSlice({
     },
     setLogMessages: (state, action) => {
       state.logMessages = action.payload
+    },
+    setUtcAvailable: (state, action) => {
+      state.utcAvailable = action.payload
     },
     setLogEvents: (state, action) => {
       state.logEvents = action.payload
@@ -69,6 +73,7 @@ export const {
   setUnits,
   setFormatMessages,
   setLogMessages,
+  setUtcAvailable,
   setLogEvents,
   setFlightModeMessages,
   setLogType,

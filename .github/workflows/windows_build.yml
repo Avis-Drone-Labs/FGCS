@@ -35,5 +35,5 @@ jobs:
 
       - name: Run build script
         working-directory: building\windows
-        run: build.ps1 -Version "${{ github.event.inputs.version }}"
+        run: ./build.ps1 -Version "${{ github.event.inputs.version }}"
 

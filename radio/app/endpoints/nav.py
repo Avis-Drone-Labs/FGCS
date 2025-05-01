@@ -18,13 +18,13 @@ class RepositionDataType(TypedDict):
 @socketio.on("get_home_position")
 def getHomePosition() -> None:
     """
-    Gets the home position of the drone, only works when the dashboard page is loaded.
+    Gets the home position of the drone, only works when the dashboard or missions page is loaded.
     """
-    if droneStatus.state != "dashboard":
+    if droneStatus.state not in ["dashboard", "missions"]:
         socketio.emit(
             "params_error",
             {
-                "message": "You must be on the dashboard screen to get the home position."
+                "message": "You must be on the dashboard or missions screen to get the home position."
             },
         )
         logger.debug(f"Current state: {droneStatus.state}")

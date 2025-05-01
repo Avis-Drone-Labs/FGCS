@@ -48,6 +48,7 @@ import {
   setLogEvents,
   setFlightModeMessages,
   setLogType,
+  setUtcAvailable,
   setMessageFilters,
   setMessageMeans,
   setChartData,
@@ -127,6 +128,7 @@ export default function FLA() {
     logEvents,
     flightModeMessages,
     logType,
+    utcAvailable,
     messageFilters,
     messageMeans,
     chartData,
@@ -153,6 +155,8 @@ export default function FLA() {
   const updateFlightModeMessages = (newFlightModeMessages) =>
     dispatch(setFlightModeMessages(newFlightModeMessages))
   const updateLogType = (newLogType) => dispatch(setLogType(newLogType))
+  const updateUtcAvailable = (newUtcAvailable) =>
+    dispatch(setUtcAvailable(newUtcAvailable))
   const updateMessageFilters = (newMessageFilters) =>
     dispatch(setMessageFilters(newMessageFilters))
   const updateMessageMeans = (newMessageMeans) =>
@@ -177,6 +181,8 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
+      let gpsOffset = null; // To store the offset between TimeUS and TimeUTC
+
       if (result.success) {
         // Load messages into states
         setLoadingFile(false)
@@ -198,6 +204,7 @@ export default function FLA() {
         if (result.logType === "dataflash") {
           updateFlightModeMessages(loadedLogMessages.MODE)
         } else if (result.logType === "fgcs_telemetry") {
+          updateUtcAvailable(true)
           // Get the heartbeat messages only where index is the first or last or the mode changes
           const modeMessages = []
           for (let i = 0; i < loadedLogMessages.HEARTBEAT.length; i++) {
@@ -268,6 +275,76 @@ export default function FLA() {
           delete logMessageFilterDefaultState["ESC"]
         }
 
+        let tempLoadedLogMessages = { ...loadedLogMessages }
+
+        if ("GPS" in loadedLogMessages && result.logType === "dataflash" && gpsOffset === null) {
+          const messageObj = tempLoadedLogMessages["GPS"][0] // Get the first GPS message
+          
+          // Calculate the offset
+          if (messageObj.GWk !== undefined && messageObj.GMS !== undefined) {
+            const utcTime = gpsToUTC(messageObj.GWk, messageObj.GMS);
+            gpsOffset = utcTime.getTime() - messageObj.TimeUS/1000;
+          }
+
+          // Loop through all messages and replace TimeUS with UTC
+          Object.keys(tempLoadedLogMessages).forEach((key) => {
+            if (key !== "format" && key !== "units") {
+              tempLoadedLogMessages[key] = tempLoadedLogMessages[key].map((message) => {
+                return {
+                  ...message,
+                  TimeUS: message.TimeUS/1000 + gpsOffset, // Add the new property
+                };
+              });
+            }
+          });
+          updateUtcAvailable(true)
+          updateFlightModeMessages(tempLoadedLogMessages.MODE)
+        }
+
+        if (loadedLogMessages["BAT"]) {
+          let tempMsgFormat = { ...loadedLogMessages["format"] }
+
+          // Load each BATT data into its own array
+          loadedLogMessages["BAT"].map((battData) => {
+            // Check for both "Inst" and "Instance" keys
+            const instanceValue = battData["Instance"] ?? battData["Inst"]
+            const battName = `BAT${(instanceValue ?? 0) + 1}`
+
+            // Initialize the array if it doesn't exist
+            if (!tempLoadedLogMessages[battName]) {
+              tempLoadedLogMessages[battName] = []
+            }
+
+            tempLoadedLogMessages[battName].push({
+              ...battData,
+              name: battName,
+              TimeUS: battData.TimeUS/1000 + gpsOffset
+            })
+
+            // Add filter state for new BATT
+            if (!logMessageFilterDefaultState[battName])
+              logMessageFilterDefaultState[battName] = {
+                ...logMessageFilterDefaultState["BAT"],
+              }
+
+            // Add format state for new BATT
+            if (!tempMsgFormat[battName])
+              tempMsgFormat[battName] = {
+                ...tempMsgFormat["BAT"],
+                name: battName,
+              }
+
+            tempLoadedLogMessages["format"] = tempMsgFormat
+          })
+
+          // Remove old BATT motor data
+          delete tempLoadedLogMessages["BAT"]
+          delete tempLoadedLogMessages["format"]["BAT"]
+          delete logMessageFilterDefaultState["BAT"]
+          updateLogMessages(tempLoadedLogMessages)
+          updateFormatMessages(tempLoadedLogMessages["format"])
+        }
+
         // Sort new filters
         const sortedLogMessageFilterState = Object.keys(
           logMessageFilterDefaultState,
@@ -300,6 +377,20 @@ export default function FLA() {
     }
   }
 
+  function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
+    // GPS epoch starts at 1980-01-06 00:00:00 UTC
+    const gpsEpoch = new Date(Date.UTC(1980, 0, 6));
+  
+    // Calculate total milliseconds since Unix epoch
+    const totalMs =
+      gpsEpoch.getTime() +
+      gpsWeek * 604_800_000 + // Convert weeks to milliseconds
+      gms - // Add GPS milliseconds
+      leapSeconds * 1_000; // Subtract leap seconds
+  
+    return new Date(totalMs);
+  }
+
   // Get a list of the recent FGCS telemetry logs
   async function getFgcsLogs() {
     setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
@@ -324,6 +415,7 @@ export default function FLA() {
     updateChartData({ datasets: [] })
     updateMessageFilters(null)
     updateCustomColors({})
+    updateUtcAvailable(false)
     updateColorIndex(0)
     updateLogEvents(null)
     updateLogType("dataflash")
@@ -817,11 +909,35 @@ export default function FLA() {
                         )}
                         {/* Default Presets */}
                         {presetCategories[logType]?.map((category) => {
+                          // Filter out presets with unavailable keys or fields
+                          const filteredCategory = {
+                            ...category,
+                            filters: category.filters.filter((filter) =>
+                              Object.keys(filter.filters).every((key) => {
+                                // Check if the key exists in logMessages
+                                if (!logMessages[key]) return false
+
+                                // Check if the required fields exist in logMessages["format"][key].fields
+                                const requiredFields = filter.filters[key]
+                                const availableFields =
+                                  logMessages["format"]?.[key]?.fields || []
+                                return requiredFields.every((field) =>
+                                  availableFields.includes(field),
+                                )
+                              }),
+                            ),
+                          }
+
+                          // Skip categories with no valid filters
+                          if (filteredCategory.filters.length === 0) {
+                            return null
+                          }
+
                           return (
                             <Fragment key={category.name}>
                               <PresetAccordionItem
                                 key={category.name}
-                                category={category}
+                                category={filteredCategory}
                                 selectPresetFunc={selectPreset}
                                 aircraftType={aircraftType}
                               />
@@ -869,7 +985,7 @@ export default function FLA() {
                 events={logEvents}
                 flightModes={flightModeMessages}
                 graphConfig={
-                  logType === "dataflash" ? dataflashOptions : fgcsOptions
+                  utcAvailable ? fgcsOptions: dataflashOptions
                 }
                 clearFilters={clearFilters}
                 canSavePreset={canSavePreset}

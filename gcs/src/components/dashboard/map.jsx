@@ -78,6 +78,7 @@ function MapSectionNonMemo({
   const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
   const [opened, { open, close }] = useDisclosure(false)
+  const [loiterRadiusOpened, { open: openLoiterRadius, close: closeLoiterRadius}] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
   const { getSetting } = useSettings()
@@ -85,6 +86,10 @@ function MapSectionNonMemo({
   const [repositionAltitude, setRepositionAltitude] = useLocalStorage({
     key: "repositionAltitude",
     defaultValue: 30,
+  })
+  const [loiterRadius, setLoiterRadius] = useLocalStorage({
+    key: "loiterRadius",
+    defaultValue: 50,
   })
   const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
     key: "guidedModePinData",
@@ -102,9 +107,19 @@ function MapSectionNonMemo({
         setGuidedModePinData(msg.data)
       }
     })
-
+  
+    socket.on("set_loiter_radius_result", (msg) => {
+      if (!msg.success) {
+        showErrorNotification(msg.message)
+      } else {
+        showSuccessNotification(msg.message)
+        setGuidedModePinData(msg.data)      
+      }
+    })
+  
     return () => {
       socket.off("nav_reposition_result")
+      socket.off("set_loiter_radius_result")
     }
   }, [connected])
 
@@ -165,6 +180,12 @@ function MapSectionNonMemo({
       lat: clickedGpsCoords.lat,
       lon: clickedGpsCoords.lng,
       alt: repositionAltitude,
+    })
+  }
+
+  function set_wp_loiter_radius() {
+    socket.emit("set_wp_loiter_radius", {
+      radius: loiterRadius,
     })
   }
 
@@ -307,6 +328,29 @@ function MapSectionNonMemo({
           </form>
         </Modal>
 
+        <Modal opened={loiterRadiusOpened} onClose={closeLoiterRadius} title="Set loiter radius" centered>
+          <form
+            className="flex flex-col space-y-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              set_wp_loiter_radius()
+              closeLoiterRadius()
+            }}
+          >
+            <NumberInput
+              placeholder="Radius (m)"
+              value={loiterRadius}
+              onChange={setLoiterRadius}
+              allowNegative={true} // Negative values will change loiter direction 
+              hideControls
+              data-autofocus
+            />
+            <Button fullWidth type="submit">
+              Set radius
+            </Button>
+          </form>
+        </Modal>
+
         {clicked && (
           <div
             ref={contextMenuRef}
@@ -314,11 +358,12 @@ function MapSectionNonMemo({
             style={{ top: points.y, left: points.x }}
           >
             <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
+            <ContextMenuItem onClick={openLoiterRadius}>Set loiter radius</ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {
                 clipboard.copy(
-                  `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
+                  `${clickedGpsCoords.lat.toFixed(coordsFractionDigits)}, ${clickedGpsCoords.lng.toFixed(coordsFractionDigits)}`,
                 )
                 showNotification("Copied to clipboard")
               }}

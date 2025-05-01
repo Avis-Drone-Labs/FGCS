@@ -14,6 +14,10 @@ class RepositionDataType(TypedDict):
     lon: float
     alt: int
 
+class LoiterRadiusDataType(TypedDict):
+    radius: float
+    lat: float
+    lon: float
 
 @socketio.on("get_home_position")
 def getHomePosition() -> None:
@@ -125,3 +129,42 @@ def reposition(data: RepositionDataType) -> None:
     result = droneStatus.drone.navController.reposition(lat, lon, alt)
 
     socketio.emit("nav_reposition_result", result)
+
+
+@socketio.on("set_wp_loiter_radius")
+def set_wp_loiter_radius(data: LoiterRadiusDataType) -> None:
+    """
+    Sets WP_LOITER_RAD parameter, Only works when the dashboard page is loaded.
+    """
+    if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the dashboard screen to set the loiter radius parameter."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="set_loiter_radius")
+
+    radius = data.get("radius", None)
+
+    if radius is None:
+        socketio.emit(
+            "params_error",
+            {"message": "Loiter radius must be specified to set the parameter."},
+        )
+        return
+
+    try:
+        radius_float = float(radius)
+    except (ValueError, TypeError):
+         socketio.emit(
+            "params_error",
+            {"message": "Invalid radius value specified. Must be a number."},
+         )
+         return
+
+    result = droneStatus.drone.navController.set_wp_loiter_radius(radius_float) 
+
+    socketio.emit("set_loiter_radius_result", result)

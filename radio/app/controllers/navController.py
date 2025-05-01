@@ -183,3 +183,44 @@ class NavController:
                 "success": False,
                 "message": "Could not reposition, serial exception",
             }
+            
+    def set_wp_loiter_radius(self, radius: float) -> Response:
+        """
+        Sets the WP_LOITER_RAD parameter on the drone using the ParamsController.
+
+        Args:
+            radius (float): The loiter radius in meters.
+
+        Returns:
+            Response: A dictionary indicating success or failure.
+        """
+        self.drone.is_listening = False
+
+        param_name = "WP_LOITER_RAD"
+        param_type = mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+
+
+        success = self.drone.paramsController.setParam(
+            param_name,
+            radius,
+            param_type
+        )
+
+        if success:
+            self.drone.is_listening = True
+
+            self.drone.logger.info("Set WP_LOITER_RAD successfully")
+            return {
+                "success": True,
+                "message": "WP_LOITER_RAD set successfully",
+                "data": {
+                    "rad": radius,
+                },
+            }
+        else:
+            self.drone.is_listening = True
+            self.drone.logger.error("Failed to set WP_LOITER_RAD")
+            return {
+                "success": False,
+                "message": "Could not set WP_LOITER_RAD",
+            }

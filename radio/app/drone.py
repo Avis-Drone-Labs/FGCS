@@ -748,5 +748,5 @@ class Drone:
                 self.logger.error("Failed to save drone logs")
                 self.logger.error(e, exc_info=True)
 
-            print(f"Saved drone logs to: {final_log_file}")
-        print("Closed connection to drone")
+            self.logger.info(f"Saved drone logs to: {final_log_file}")
+        self.logger.info("Closed connection to drone")

@@ -19,23 +19,22 @@ def get_settings_path() -> str:
     Returns:
         str: The path to the settings file
     """
-    platform = sys.platform
-    if platform in ["win32", "cygwin"]:
+    if (platform := sys.platform) in ["win32", "cygwin"]:
         if (appdata := os.getenv('APPDATA')) is None:
-            raise EnvironmentError("Could not read APPDATA environment variable.")
+            raise EnvironmentError("Could not read %APPDATA% environment variable.")
         return os.path.join(appdata, "FGCS", "settings.json")
     elif platform == "linux":
         return os.path.join("~", '.config', 'FGCS', 'settings.json')
     elif platform == "darwin":
         return os.path.join("~", 'Library', 'Application Support', 'FGCS')
 
-    raise OSError("Unknown platform :(")
+    raise OSError("Unknown platform. Are you running TempleOS?")
 
 def load_user_logging_settings() -> Dict:
-    """Load
+    """Load the user's logging configuration
 
     Returns:
-        dict: _description_
+        dict: The users's logging configuration
     """
     with open(get_settings_path(), "r") as f:
         log_settings = json.load(f).get("settings", {}).get("General", {})
@@ -43,10 +42,19 @@ def load_user_logging_settings() -> Dict:
 
 
 def get_latest_log(log_dir: Path) -> str:
+    """Get the last backend log so that we can overwrite it if werkzeug is attempting to create
+    two files
+
+    Args:
+        log_dir (Path): The directory of FGCS logs
+
+    Returns:
+        str: The name of the last modified backend log file
+    """
     logs = glob.glob(os.path.join(log_dir, "*.log"))
     return max(logs, key=os.path.getmtime)
 
-def setup_logging(format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s") -> logging.Logger:
+def setup_logging(format: str = "[%(asctime)s] [%(levelname)s] %(message)s") -> logging.Logger:
     """Setup logging for the application
 
     Configures the default logger (fgcs) and the werkzeug logger, routes them to a file based on the user's
@@ -70,7 +78,6 @@ def setup_logging(format: str = "%(asctime)s - %(name)s - %(levelname)s - %(mess
         log_name = "backend.log" if user_settings["only_keep_latest"] else f"backend_{start_time}.log"
     else:
         log_name = get_latest_log(log_directory)
-        print(f"Found latest log at {log_name}")
 
     log_path = Path(log_directory).joinpath(log_name)
 
@@ -80,9 +87,11 @@ def setup_logging(format: str = "%(asctime)s - %(name)s - %(levelname)s - %(mess
     logger = logging.getLogger("fgcs")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
+    logger.addHandler(logging.StreamHandler(sys.stderr))
 
     flask_logger = logging.getLogger("werkzeug")
-    flask_logger.setLevel(logging.INFO)
+    # No werkzeug INFO because we use sockets and werkzeug socket INFO logs are useless :D
+    flask_logger.setLevel(logging.WARNING)
     flask_logger.addHandler(file_handler)
 
     return logger

@@ -23,6 +23,11 @@ def getComPort() -> None:
     Gets a list of all COM port available and sends it to the client, also updates the global list of all ports
     """
     ports = list(list_ports.comports())
+    if ports:
+        logger.info("Available COM ports: " + " ".join(f"\t[{i}]\t{port.name}: {port.description}" for i, port in enumerate(ports)))
+    else:
+        logger.warning("No COM ports available for connection")
+
     droneStatus.correct_ports = []
     for i in range(len(ports)):
         port = ports[i]

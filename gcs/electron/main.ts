@@ -112,11 +112,28 @@ type ResizeCallback = (event: Event, arg1: Rectangle) => void;
 
 let currentResizeHandler: ResizeCallback | null = null
 
+/**
+ * If id and name are provided, passes the id and name to the webcam popout so that the given
+ * video stream is rendered. If id or name are not provided, prevents any video streams from
+ * being rendered on the window so that the webcam is not showing in the background
+ * @param id The device stream ID
+ * @param name The name of the device
+ */
+function loadWebcam(id: string = "", name: string = ""){
+
+  const params: string = id && name ? "/webcam?deviceId=" + id + "&deviceName=" + name : "/webcam";
+
+  if (VITE_DEV_SERVER_URL)
+    webcamPopoutWin?.loadURL(VITE_DEV_SERVER_URL + "#" + params)
+  else
+    webcamPopoutWin?.loadFile(path.join(process.env.DIST, 'index.html'), {hash: params})
+}
+
 function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
 
   if (webcamPopoutWin === null) return;
+  loadWebcam(videoStreamId, name);
 
-  webcamPopoutWin.loadURL("http://localhost:5173/#/webcam?deviceId=" + videoStreamId + "&deviceName=" + name);
   webcamPopoutWin.setTitle(name);
 
   // Remove previous resize handler
@@ -150,7 +167,7 @@ function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
 
 function closeWebcamPopout(){
   webcamPopoutWin?.hide()
-  webcamPopoutWin?.loadURL("http://localhost:5173/#/webcam")
+  loadWebcam();
   win?.webContents.send("webcam-closed");
 }
 
@@ -210,7 +227,10 @@ function createWindow() {
     fullscreen: false,
     fullscreenable: false,
   });
-  webcamPopoutWin.loadURL("http://localhost:5173/#/webcam")
+
+
+  // We load the webcam route here to prevent having to load the page on popout
+  loadWebcam();
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"

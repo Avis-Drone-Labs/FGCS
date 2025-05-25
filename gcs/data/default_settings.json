@@ -35,8 +35,7 @@
       "display": "Sync Dashboard and Missions Map Viewstate"
     }
   },
-  "Params": {},
-  "Config": {
+  "Dashboard": {
     "altitudeAlerts": {
       "description": "Add as many altitude alerts as you want, they'll show when you fall below the set limit",
       "default": [100, 90, 80],
@@ -48,5 +47,7 @@
       "display": "Altitude Alerts"
     }
   },
+  "Params": {},
+  "Config": {},
   "FGCS": {}
 }

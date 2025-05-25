@@ -160,7 +160,7 @@ export default function Dashboard() {
   function updateAltitudeAlert(msg) {
     if (msg.alt > highestAltitudeRef.current)
       return (highestAltitudeRef.current = msg.alt)
-    const altitudes = getSetting("Config.altitudeAlerts")
+    const altitudes = getSetting("Dashboard.altitudeAlerts")
     altitudes.sort((a1, a2) => a1 - a2)
 
     for (const [i, altitude] of altitudes.entries()) {

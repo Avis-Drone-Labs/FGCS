@@ -111,14 +111,16 @@ function ExtendableNumberSetting({ settingName, range }) {
           />
         </div>
       ))}
-      <Button
-        fullWidth
-        onClick={() =>
-          setAltitudes([...altitudes, { id: generateId(), value: 0 }])
-        }
-      >
-        Add new Alert
-      </Button>
+      <div className="w-full pl-9">
+        <Button
+          fullWidth
+          onClick={() =>
+            setAltitudes([...altitudes, { id: generateId(), value: 0 }])
+          }
+        >
+          Add new Alert
+        </Button>
+      </div>
     </div>
   )
 }

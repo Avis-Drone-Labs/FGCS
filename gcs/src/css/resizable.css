@@ -79,7 +79,7 @@
 
 .custom-handle-e {
   top: 50%;
-  right: 1%;
+  right: 10px;
   transform: rotate(135deg);
   cursor: e-resize;
   position: absolute;

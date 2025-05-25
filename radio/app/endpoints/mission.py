@@ -5,20 +5,24 @@ from app import logger, socketio
 from app.utils import notConnectedError
 
 
+class CurrentMissionType(TypedDict):
+    type: str
+
+
 class ControlMissionType(TypedDict):
     action: str
 
 
 @socketio.on("get_current_mission")
-def getCurrentMission() -> None:
+def getCurrentMission(data: CurrentMissionType) -> None:
     """
-    Sends the current mission to the frontend, only works if dashboard screen is loaded.
+    Sends the current mission to the frontend, only works if dashboard or missions screen is loaded.
     """
-    if droneStatus.state != "dashboard":
+    if droneStatus.state not in ["dashboard", "missions"]:
         socketio.emit(
             "params_error",
             {
-                "message": "You must be on the dashboard screen to get the current mission."
+                "message": "You must be on the dashboard or missions screen to get the current mission."
             },
         )
         logger.debug(f"Current state: {droneStatus.state}")
@@ -27,22 +31,61 @@ def getCurrentMission() -> None:
     if not droneStatus.drone:
         return notConnectedError(action="get current mission")
 
-    mission_items = [
-        item.to_dict() for item in droneStatus.drone.missionController.mission_items
-    ]
-    fence_items = [
-        item.to_dict() for item in droneStatus.drone.missionController.fence_items
-    ]
-    rally_items = [
-        item.to_dict() for item in droneStatus.drone.missionController.rally_items
-    ]
+    mission_type = data.get("type")
+    mission_type_array = ["mission", "fence", "rally"]
+
+    if mission_type not in mission_type_array:
+        socketio.emit(
+            "current_mission",
+            {
+                "success": False,
+                "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
+            },
+        )
+        logger.error(f"Could not get mission items for {mission_type} type.")
+        return
+
+    result = droneStatus.drone.missionController.getCurrentMission(
+        mission_type_array.index(mission_type)
+    )
+
+    if not result.get("success"):
+        logger.error(result.get("message"))
+        socketio.emit("current_mission", result)
+        return
 
     socketio.emit(
         "current_mission",
+        {"success": True, "mission_type": mission_type, "items": result.get("data")},
+    )
+
+
+@socketio.on("get_current_mission_all")
+def getCurrentMissionAll() -> None:
+    """
+    Sends the current mission to the frontend, only works if dashboard or missions screen is loaded.
+    """
+    if droneStatus.state not in ["dashboard", "missions"]:
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the dashboard or missions screen to get the current mission."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="get current mission")
+
+    result = droneStatus.drone.missionController.getCurrentMissionAll()
+
+    socketio.emit(
+        "current_mission_all",
         {
-            "mission_items": mission_items,
-            "fence_items": fence_items,
-            "rally_items": rally_items,
+            "mission_items": result.get("data", {}).get("mission_items", []),
+            "fence_items": result.get("data", {}).get("fence_items", []),
+            "rally_items": result.get("data", {}).get("rally_items", []),
         },
     )
 

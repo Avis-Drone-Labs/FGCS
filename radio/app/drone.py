@@ -22,8 +22,8 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
-from app.customTypes import Number, Response
-from app.utils import commandAccepted
+from app.customTypes import Number, Response, VehicleType
+from app.utils import commandAccepted, getVehicleType
 
 # Constants
 
@@ -132,15 +132,18 @@ class Drone:
 
         self.sendConnectionStatusUpdate("Received heartbeat")
 
-        self.aircraft_type = initial_heartbeat.type
-        if self.aircraft_type not in (1, 2):
+        self.aircraft_type = getVehicleType(initial_heartbeat.type)
+        if self.aircraft_type not in (
+            VehicleType.FIXED_WING.value,
+            VehicleType.MULTIROTOR.value,
+        ):
             self.logger.error("Aircraft not plane or quadcopter")
             self.master.close()
             self.master = None
-            self.connectionError = (
-                "Could not connect to the drone. Aircraft not plane or quadcopter."
-            )
+            self.connectionError = f"Could not connect to the drone. Aircraft not plane or quadcopter, got type {self.aircraft_type}"
             return
+
+        self.logger.info(f"Connected to aircraft of type {self.aircraft_type}")
 
         self.autopilot = initial_heartbeat.autopilot
         self.target_system = self.master.target_system
@@ -481,8 +484,6 @@ class Drone:
                     continue
                 elif msg.msgname == "STATUSTEXT":
                     self.logger.info(msg.text)
-
-                # self.logger.debug(msg.msgname)
 
                 if msg.msgname in self.message_listeners:
                     self.message_queue.put([msg.msgname, msg])

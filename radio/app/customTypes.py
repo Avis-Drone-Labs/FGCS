@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Union
 
 from typing_extensions import NotRequired, TypedDict
@@ -37,3 +38,9 @@ class MotorTestAllValues(TypedDict):
 class SetFlightModeValueAndNumber(TypedDict):
     mode_number: int
     flight_mode: int
+
+
+class VehicleType(Enum):
+    UNKNOWN = 0
+    FIXED_WING = 1
+    MULTIROTOR = 2

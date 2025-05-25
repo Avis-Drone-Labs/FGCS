@@ -237,7 +237,6 @@ export default function Dashboard() {
     } else {
       socket.emit("set_state", { state: "dashboard" })
       socket.emit("get_home_position")
-      socket.emit("get_current_mission")
     }
 
     socket.on("incoming_msg", (msg) => {
@@ -273,7 +272,7 @@ export default function Dashboard() {
       }
     })
 
-    socket.on("current_mission", (msg) => {
+    socket.on("current_mission_all", (msg) => {
       setMissionItems(msg)
     })
 
@@ -307,12 +306,13 @@ export default function Dashboard() {
       } else {
         showErrorNotification(data.message)
       }
+      socket.emit("get_current_mission_all")
     })
 
     return () => {
       socket.off("incoming_msg")
       socket.off("arm_disarm")
-      socket.off("current_mission")
+      socket.off("current_mission_all")
       socket.off("set_current_flight_mode_result")
       socket.off("nav_result")
       socket.off("mission_control_result")

@@ -35,11 +35,14 @@ export default function AppContent() {
         <ErrorBoundary fallbackRender={ErrorBoundaryFallback}>
           <SettingsModal />
           <Routes>
-            <Route path="/" element={
-              <AlertProvider>
-                <Dashboard />
-              </AlertProvider>
-            } />
+            <Route
+              path="/"
+              element={
+                <AlertProvider>
+                  <Dashboard />
+                </AlertProvider>
+              }
+            />
             <Route path="/missions" element={<Missions />} />
             <Route path="/graphs" element={<Graphs />} />
             <Route path="/params" element={<Params />} />

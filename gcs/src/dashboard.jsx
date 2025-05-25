@@ -158,7 +158,8 @@ export default function Dashboard() {
   const highestAltitudeRef = useRef(0)
 
   function updateAltitudeAlert(msg) {
-    if (msg.alt > highestAltitudeRef.current) return highestAltitudeRef.current = msg.alt
+    if (msg.alt > highestAltitudeRef.current)
+      return (highestAltitudeRef.current = msg.alt)
     const altitudes = getSetting("Config.altitudeAlerts")
     altitudes.sort((a1, a2) => a1 - a2)
 
@@ -166,8 +167,13 @@ export default function Dashboard() {
       if (highestAltitudeRef.current > altitude && msg.alt < altitude) {
         dispatchAlert({
           category: AlertCategory.Altitude,
-          severity: i == 0 ? AlertSeverity.Red : (i == altitudes.length - 1 ? AlertSeverity.Yellow : AlertSeverity.Orange),
-          jsx: <>Caution! You've fallen below {altitude}m</>
+          severity:
+            i == 0
+              ? AlertSeverity.Red
+              : i == altitudes.length - 1
+                ? AlertSeverity.Yellow
+                : AlertSeverity.Orange,
+          jsx: <>Caution! You've fallen below {altitude}m</>,
         })
         return
       }
@@ -183,7 +189,9 @@ export default function Dashboard() {
         updateAltitudeAlert(msg)
       },
       BATTERY_STATUS: (msg) => {
-        const battery = localBatteryData.filter(battery => battery.id == msg.id)[0]
+        const battery = localBatteryData.filter(
+          (battery) => battery.id == msg.id,
+        )[0]
         if (battery) {
           Object.assign(battery, msg)
         } else {
@@ -462,8 +470,9 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
-              })`}
+            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
+              gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
+            })`}
             tooltip="GPS (lat, lon)"
           />
           <StatusSection

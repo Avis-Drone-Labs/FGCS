@@ -1,4 +1,12 @@
-import { Button, Checkbox, Input, Modal, NativeSelect, NumberInput, Tabs } from "@mantine/core"
+import {
+  Button,
+  Checkbox,
+  Input,
+  Modal,
+  NativeSelect,
+  NumberInput,
+  Tabs,
+} from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
 import { IconTrash } from "@tabler/icons-react"
@@ -8,8 +16,8 @@ import DefaultSettings from "../../data/default_settings.json"
 const isValidNumber = (num, range) => {
   return (
     num &&
-    (parseInt(num) &&
-      (range === null || (range[0] <= num && num <= range[1])))
+    parseInt(num) &&
+    (range === null || (range[0] <= num && num <= range[1]))
   )
 }
 
@@ -59,28 +67,29 @@ function NumberSetting({ settingName, range }) {
   )
 }
 
-const generateId = () => Math.random().toString(36).slice(8);
+const generateId = () => Math.random().toString(36).slice(8)
 
 function ExtendableNumberSetting({ settingName, range }) {
   const { getSetting, setSetting } = useSettings()
 
   const [altitudes, setAltitudes] = useState(
-    getSetting(settingName).map(val => ({ id: generateId(), value: val }))
-  );
+    getSetting(settingName).map((val) => ({ id: generateId(), value: val })),
+  )
 
   useEffect(() => {
-    setSetting(settingName, altitudes.map(a => a.value));
-  }, [altitudes]);
+    setSetting(
+      settingName,
+      altitudes.map((a) => a.value),
+    )
+  }, [altitudes])
 
   const updateAltitude = (id, value) => {
-    setAltitudes(prev =>
-      prev.map(a => (a.id === id ? { ...a, value } : a))
-    );
-  };
+    setAltitudes((prev) => prev.map((a) => (a.id === id ? { ...a, value } : a)))
+  }
 
   const removeAltitude = (id) => {
-    setAltitudes(prev => prev.filter(a => a.id !== id));
-  };
+    setAltitudes((prev) => prev.filter((a) => a.id !== id))
+  }
 
   return (
     <div className="flex flex-col shrink-0 items-end gap-2">
@@ -95,29 +104,39 @@ function ExtendableNumberSetting({ settingName, range }) {
           <NumberInput
             value={value}
             onChange={(num) => {
-              if (!isValidNumber(num, range)) return;
-              updateAltitude(id, parseInt(num));
+              if (!isValidNumber(num, range)) return
+              updateAltitude(id, parseInt(num))
             }}
             suffix="m"
           />
         </div>
       ))}
-      <Button fullWidth onClick={() =>
-        setAltitudes([...altitudes, { id: generateId(), value: 0 }])
-      }>Add new Alert</Button>
+      <Button
+        fullWidth
+        onClick={() =>
+          setAltitudes([...altitudes, { id: generateId(), value: 0 }])
+        }
+      >
+        Add new Alert
+      </Button>
     </div>
-  );
+  )
 }
 
 function Setting({ settingName, df }) {
   return (
-    <div className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}>
+    <div
+      className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}
+    >
       <div className="space-y-px">
         <div>{df.display}:</div>
         <p className="text-gray-400 text-sm">{df.description}</p>
       </div>
       {df.type == "extendableNumber" ? (
-        <ExtendableNumberSetting settingName={settingName} range={df.range || null} />
+        <ExtendableNumberSetting
+          settingName={settingName}
+          range={df.range || null}
+        />
       ) : df.type == "number" ? (
         <NumberSetting settingName={settingName} range={df.range || null} />
       ) : df.type == "boolean" ? (

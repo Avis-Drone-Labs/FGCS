@@ -61,6 +61,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
+import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
+import { useAlerts } from "./components/dashboard/alertProvider"
+import { useSettings } from "./helpers/settings"
 
 export default function Dashboard() {
   // Local Storage
@@ -148,9 +151,37 @@ export default function Dashboard() {
     defaultValue: defaultDataMessages,
   })
 
+  const { getSetting } = useSettings()
+
+  // Alerts
+  const { dispatchAlert, dismissAlert } = useAlerts()
+  const highestAltitudeRef = useRef(0)
+
+  function updateAltitudeAlert(msg) {
+    if (msg.alt > highestAltitudeRef.current) return highestAltitudeRef.current = msg.alt
+    const altitudes = getSetting("Config.altitudeAlerts")
+    altitudes.sort((a1, a2) => a1 - a2)
+
+    for (const [i, altitude] of altitudes.entries()) {
+      if (highestAltitudeRef.current > altitude && msg.alt < altitude) {
+        dispatchAlert({
+          category: AlertCategory.Altitude,
+          severity: i == 0 ? AlertSeverity.Red : (i == altitudes.length - 1 ? AlertSeverity.Yellow : AlertSeverity.Orange),
+          jsx: <>Caution! You've fallen below {altitude}m</>
+        })
+        return
+      }
+    }
+
+    dismissAlert(AlertCategory.Altitude)
+  }
+
   const incomingMessageHandler = useCallback(
     () => ({
-      VFR_HUD: (msg) => setTelemetryData(msg),
+      VFR_HUD: (msg) => {
+        setTelemetryData(msg)
+        updateAltitudeAlert(msg)
+      },
       BATTERY_STATUS: (msg) => {
         const battery = localBatteryData.filter(battery => battery.id == msg.id)[0]
         if (battery) {
@@ -431,9 +462,8 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
-              gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
-            })`}
+            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
+              })`}
             tooltip="GPS (lat, lon)"
           />
           <StatusSection

@@ -1,5 +1,5 @@
 /*
-  Telemetry. This file holds all the telemetry indicators and is part of the resizable info box 
+  Telemetry. This file holds all the telemetry indicators and is part of the resizable info box
   section, found in the top half.
 */
 

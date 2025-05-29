@@ -1,6 +1,6 @@
-# FGCS
+# IMACS 3.0
 
-Falcon Ground Control Station.
+IMACS 3.0 is forked from Falcon Ground Control Station (FGCS).
 
 > Learn more on our [website](https://fgcs.projectfalcon.uk)!
 

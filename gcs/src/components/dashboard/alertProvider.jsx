@@ -17,6 +17,7 @@ export default function AlertProvider({ children }) {
   function dispatchAlert(alert) {
     if (dismissedAlerts.current.get(alert.category) >= alert.severity) return
     dismissedAlerts.current.delete(alert.category)
+
     const existingAlertIndex = alerts.findIndex(
       (existingAlert) => existingAlert.category == alert.category,
     )

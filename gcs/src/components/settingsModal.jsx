@@ -72,32 +72,32 @@ const generateId = () => Math.random().toString(36).slice(8)
 function ExtendableNumberSetting({ settingName, range }) {
   const { getSetting, setSetting } = useSettings()
 
-  const [altitudes, setAltitudes] = useState(
+  const [values, setValues] = useState(
     getSetting(settingName).map((val) => ({ id: generateId(), value: val })),
   )
 
   useEffect(() => {
     setSetting(
       settingName,
-      altitudes.map((a) => a.value),
+      values.map((a) => a.value),
     )
-  }, [altitudes])
+  }, [values])
 
-  const updateAltitude = (id, value) => {
-    setAltitudes((prev) => prev.map((a) => (a.id === id ? { ...a, value } : a)))
+  const updateValue = (id, value) => {
+    setValues((prev) => prev.map((a) => (a.id === id ? { ...a, value } : a)))
   }
 
-  const removeAltitude = (id) => {
-    setAltitudes((prev) => prev.filter((a) => a.id !== id))
+  const removeValue = (id) => {
+    setValues((prev) => prev.filter((a) => a.id !== id))
   }
 
   return (
     <div className="flex flex-col shrink-0 items-end gap-2">
-      {altitudes.map(({ id, value }) => (
+      {values.map(({ id, value }) => (
         <div key={id} className="flex gap-2 items-center">
           <button
             className="text-falconred-600 hover:text-falconred-700 p-1 rounded-full"
-            onClick={() => removeAltitude(id)}
+            onClick={() => removeValue(id)}
           >
             <IconTrash size={20} />
           </button>
@@ -105,7 +105,7 @@ function ExtendableNumberSetting({ settingName, range }) {
             value={value}
             onChange={(num) => {
               if (!isValidNumber(num, range)) return
-              updateAltitude(id, parseInt(num))
+              updateValue(id, parseInt(num))
             }}
             suffix="m"
           />
@@ -115,7 +115,7 @@ function ExtendableNumberSetting({ settingName, range }) {
         <Button
           fullWidth
           onClick={() =>
-            setAltitudes([...altitudes, { id: generateId(), value: 0 }])
+            setValues([...values, { id: generateId(), value: 0 }])
           }
         >
           Add new Alert

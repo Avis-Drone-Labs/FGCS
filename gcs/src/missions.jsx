@@ -1,5 +1,5 @@
 /*
-  The missions screen. 
+  The missions screen.
 */
 
 // Base imports

@@ -8,7 +8,7 @@
 SET venv_path=%1
 
 IF "%venv_path%"=="" (
-    SET venv_path="radio\venv"
+    SET venv_path=radio\venv
 )
 
 :: create venv if not already created
@@ -22,7 +22,7 @@ CALL "%venv_path%\Scripts\activate.bat"
 
 cd radio || exit /b 1
 
-pyinstaller --paths ./venv/lib/python3.11/site-packages/ --add-data="./venv/lib/python3.11/site-packages/pymavlink/message_definitions:message_definitions" --add-data="./venv/lib/python3.11/site-packages/pymavlink:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading --windowed --name fgcs_backend ./app.py
+pyinstaller --paths .\venv\Lib\site-packages\ --add-data=".\venv\Lib\site-packages\pymavlink\message_definitions\:message_definitions" --add-data=".\venv\Lib\site-packages\pymavlink\:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading .\app.py -n fgcs_backend
 
 cd .. || exit /b 1
 

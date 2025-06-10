@@ -8,7 +8,7 @@
 SET venv_path=%1
 
 IF "%venv_path%"=="" (
-    SET venv_path="radio\venv"
+    SET venv_path=radio\venv
 )
 
 :: create venv if not already created

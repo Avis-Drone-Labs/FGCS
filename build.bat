@@ -17,19 +17,17 @@ IF NOT EXIST %venv_path% (
     exit /b 1
 )
 
-IF NOT EXIST "gcs\node_modules" (
-    ECHO Node modules not found, run setup.sh first.
-    exit /b 1
-)
-
 :: activate the virtual environment
 CALL "%venv_path%\Scripts\activate.bat"
 
-:: make sure concurrently is installed
-where concurrently >nul 2>&1
-IF ERRORLEVEL 1 (
-    ECHO concurrently not found, installing...
-    npm install -g concurrently
-)
+cd radio || exit /b 1
 
-concurrently "python radio/app.py" "cd gcs && yarn dev" -n "backend,frontend" -c "red,blue"
+pyinstaller --paths ./venv/lib/python3.11/site-packages/ --add-data="./venv/lib/python3.11/site-packages/pymavlink/message_definitions:message_definitions" --add-data="./venv/lib/python3.11/site-packages/pymavlink:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading --windowed --name fgcs_backend ./app.py
+
+cd .. || exit /b 1
+
+move radio\dist\fgcs_backend gcs\extras
+
+cd gcs || exit /b 1
+
+yarn build

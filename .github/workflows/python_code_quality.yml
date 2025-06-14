@@ -12,11 +12,15 @@ jobs:
           python-version: '3.11'
 
       - run: pip install --upgrade pip
-      - run: pip install ruff mypy
+      - run: pip install black mypy flake8
 
-      - name: Run ruff
+      - name: Run black
         working-directory: ./radio
-        run: ruff check .
+        run: black --check .
+
+      - name: Run flake8
+        working-directory: ./radio
+        run: flake8 .
 
       - name: Run mypy
         working-directory: ./radio

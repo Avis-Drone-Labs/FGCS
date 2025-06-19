@@ -12,11 +12,14 @@ jobs:
           python-version: '3.11'
 
       - run: pip install --upgrade pip
-      - run: pip install ruff mypy
+      - run: pip install black mypy flake8 flake8-annotations pylint
 
-      - name: Run ruff
+      - name: Linters and formatters
         working-directory: ./radio
-        run: ruff check .
+        run: |
+          black --check .
+          flake8 .
+          pylint .
 
       - name: Run mypy
         working-directory: ./radio

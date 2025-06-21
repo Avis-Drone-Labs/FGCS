@@ -1,4 +1,4 @@
-import { BrowserWindow, Event, Menu, MenuItemConstructorOptions, MessageBoxOptions, Rectangle, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -6,6 +6,10 @@ import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
 import openFile, { getRecentFiles, clearRecentFiles } from './fla'
+
+import registerSettingsIPC, { getUserConfiguration } from './modules/settings'
+import registerLoggingIPC, { combineLogFiles, electronLogger, setupLog4js } from './modules/logging'
+import registerWebcamIPC, { destroyWebcamWindow, setupWebcamWindow } from './modules/webcam'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -26,7 +30,6 @@ app.commandLine.appendSwitch('force-device-scale-factor', '1')
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
-let webcamPopoutWin: BrowserWindow | null
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -36,127 +39,8 @@ function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
 
-// Settings logic
-
-interface Settings {
-  version: string,
-  settings: object
-}
-
-let userSettings: Settings | null = null
-
-function saveUserConfiguration(settings: Settings){
-  userSettings = settings;
-  fs.writeFileSync(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify(userSettings, null,  2), 'utf-8');
-}
-
-/**
- * Checks the application version within the loaded user settings and updates if it is outdated
- * @param configPath The path to the configuration file
- * @returns
- */
-function checkAppVersion(configPath: string){
-
-  if (userSettings === null){
-    console.warn("Attempting to check app version when user settings have not been loaded");
-    return;
-  }
-
-  if (userSettings.version == app.getVersion())
-    return;
-
-  userSettings.version = app.getVersion();
-  fs.writeFileSync(configPath, JSON.stringify(userSettings))
-}
-
-/**
- * Called when the application requests user settings
- *
- * @returns
- */
-function getUserConfiguration(){
-
-  // Return the already loaded user settings if loaded
-  console.log("Fetching user settings!");
-  if (userSettings !== null) return userSettings
-
-
-  // Directories
-  const userDir = app.getPath('userData');
-  const config = path.join(userDir, 'settings.json');
-
-  // Write version and blank settings to user config if doesn't exist
-  if (!fs.existsSync(config)) {
-    console.log("Generating user settings")
-    userSettings = {version: app.getVersion(), settings: {}}
-    fs.writeFileSync(config, JSON.stringify(userSettings))
-  } else{
-    console.log("Reading user settings from config file " + config)
-    userSettings = JSON.parse(fs.readFileSync(config, 'utf-8'))
-    checkAppVersion(config)
-  }
-  return userSettings
-}
-
-ipcMain.handle("getSettings", () => {return getUserConfiguration(); })
-ipcMain.handle("setSettings", (_, settings) => {saveUserConfiguration(settings)})
-
-// Webcam popout window
-
-const MIN_WEBCAM_HEIGHT: number = 100
-const WEBCAM_TITLEBAR_HEIGHT: number = 28
-
-// Disable unused vars because they are needed for TS function type
-// eslint-disable-next-line no-unused-vars
-type ResizeCallback = (event: Event, arg1: Rectangle) => void;
-
-let currentResizeHandler: ResizeCallback | null = null
-
-function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
-
-  if (webcamPopoutWin === null) return;
-
-  webcamPopoutWin.loadURL("http://localhost:5173/#/webcam?deviceId=" + videoStreamId + "&deviceName=" + name);
-  webcamPopoutWin.setTitle(name);
-
-  // Remove previous resize handler
-  if (currentResizeHandler)
-    webcamPopoutWin.off("will-resize", currentResizeHandler)
-
-  // Create resize handler to maintain aspect ratio
-  currentResizeHandler = function(event, newBounds){
-    event.preventDefault();
-
-    const newWidth = newBounds.width;
-    const newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-    webcamPopoutWin?.setBounds({
-      x: newBounds.x,
-      y: newBounds.y,
-      width: newWidth,
-      height: newHeight
-    });
-  }
-
-  webcamPopoutWin.on('will-resize', currentResizeHandler);
-
-  // Ensure initial size fits the aspect ratio ()
-  webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-  webcamPopoutWin.setMinimumSize(Math.round(aspect * (MIN_WEBCAM_HEIGHT-28)), MIN_WEBCAM_HEIGHT);
-  webcamPopoutWin.show();
-
-}
-
-function closeWebcamPopout(){
-  webcamPopoutWin?.hide()
-  webcamPopoutWin?.loadURL("http://localhost:5173/#/webcam")
-  win?.webContents.send("webcam-closed");
-}
-
-ipcMain.handle("openWebcamWindow", (_, videoStreamId, name, aspect) => {openWebcamPopout(videoStreamId, name, aspect)})
-ipcMain.handle("closeWebcamWindow", () => closeWebcamPopout())
-
+registerLoggingIPC();
+registerSettingsIPC();
 
 ipcMain.handle("isMac", () => { return process.platform == "darwin" })
 ipcMain.on('close', () => {closeWithBackend()})
@@ -179,6 +63,10 @@ ipcMain.on("zoom_out", () => {
 ipcMain.on("openFileInExplorer", (_event, filePath) => {shell.showItemInFolder(filePath)})
 
 function createWindow() {
+
+  const {combineLogs, onlyKeepLastLog} = getUserConfiguration()?.settings["General"];
+  setupLog4js(combineLogs, onlyKeepLastLog);
+
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
     webPreferences: {
@@ -193,24 +81,9 @@ function createWindow() {
     frame: false,
   })
 
-  // Create webcam window keep it hidden to avoid delay between popping out windows
-  webcamPopoutWin = new BrowserWindow({
-    width: 400,
-    height: 300,
-    frame: false,
-    alwaysOnTop: true,
-    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
-    show: false,
-    title: "Webcam",
-    webPreferences: {
-      nodeIntegration: true,
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true
-    },
-    fullscreen: false,
-    fullscreenable: false,
-  });
-  webcamPopoutWin.loadURL("http://localhost:5173/#/webcam")
+  // Register here because depends on win
+  registerWebcamIPC(win)
+  setupWebcamWindow();
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -324,11 +197,11 @@ function createLoadingWindow() {
 
 function startBackend() {
   if (pythonBackend) {
-    console.log('Backend already running');
+    electronLogger.info('Backend already running');
     return;
   }
 
-  console.log('Starting backend');
+  electronLogger.info('Starting backend');
 
   // Add more platforms here
   const backendPaths: Partial<Record<NodeJS.Platform, string>> ={
@@ -339,23 +212,23 @@ function startBackend() {
   const backendPath = backendPaths[process.platform];
 
   if (!backendPath) {
-    console.error('Unsupported platform!');
+    electronLogger.error('Unsupported platform!');
     return;
   }
 
-  console.log(`Starting backend: ${backendPath}`);
+  electronLogger.info(`Starting backend: ${backendPath}`);
   pythonBackend = spawn(backendPath);
 
   // pythonBackend.stdout.on('data', (data) => console.log(`Backend stdout: ${data}`));
   // pythonBackend.stderr.on('data', (data) => console.error(`Backend stderr: ${data}`));
 
   pythonBackend.on('close', (code) => {
-    console.log(`Backend process exited with code ${code}`);
+    electronLogger.info(`Backend process exited with code ${code}`);
     pythonBackend = null;
   });
 
   pythonBackend.on('error', (error) => {
-    console.error('Failed to start backend:', error);
+    electronLogger.error('Failed to start backend:', error);
     dialog.showErrorBox('Backend Error', `Failed to start backend: ${error.message}`);
   });
 }
@@ -367,14 +240,15 @@ function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
-    webcamPopoutWin?.close()
-    webcamPopoutWin = null
+    destroyWebcamWindow()
   }
 
-  console.log('Killing backend')
+  electronLogger.info('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
-  spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
+  spawn('taskkill /f /t /im fgcs_backend.exe', { shell: true });
+
+  if (getUserConfiguration().settings["General"]["combineLogs"] ?? false) combineLogFiles();
 }
 app.on('window-all-closed', () => {
   closeWithBackend();
@@ -384,11 +258,11 @@ app.on('window-all-closed', () => {
 // listen to the before-quit event.
 app.on('before-quit', () => {
   if(process.platform === 'darwin' && pythonBackend){
-    console.log('Stopping backend')
+    electronLogger.info('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
   }
-  webcamPopoutWin?.close();
+  destroyWebcamWindow()
 });
 
 app.on('activate', () => {

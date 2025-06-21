@@ -1,5 +1,5 @@
 /*
-  The missions screen. 
+  The missions screen.
 */
 
 // Base imports
@@ -28,6 +28,7 @@ import {
   showSuccessNotification,
 } from "./helpers/notification"
 import { socket } from "./helpers/socket"
+import { logDebug } from "./helpers/logging"
 
 const coordsFractionDigits = 7
 
@@ -114,7 +115,7 @@ export default function Missions() {
         return
       }
 
-      console.log(data)
+      logDebug(data)
 
       if (data.mission_type === "mission") {
         const missionItemsWithIds = []

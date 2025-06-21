@@ -18,6 +18,7 @@ import { MantineProvider } from "@mantine/core"
 // Component imports
 import AppContent from "./components/mainContent.jsx"
 import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
+import { logDebug } from "./helpers/logging.js"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
@@ -33,5 +34,5 @@ postMessage({ payload: "removeLoading" }, "*")
 
 // Use contextBridge
 window.ipcRenderer.on("main-process-message", (_event, message) => {
-  console.log(message)
+  logDebug(message)
 })

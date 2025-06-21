@@ -15,6 +15,7 @@ import EditCheckList from "./checkListEdit.jsx"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
+import { logInfo } from "../../../helpers/logging.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function CheckListArea({
@@ -51,7 +52,7 @@ export default function CheckListArea({
 
   function generateCheckboxList(defaultCheck = false) {
     // Go from string to list, does not return
-    console.log(checkBoxListString)
+    logInfo(checkBoxListString)
     var final = []
     checkBoxListString
       .split("<li><p>")

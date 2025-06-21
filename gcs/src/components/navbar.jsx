@@ -42,6 +42,7 @@ import { socket } from "../helpers/socket"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
+import { logInfo } from "../helpers/logging.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
@@ -172,7 +173,7 @@ export default function Navbar({ currentPage }) {
 
     // Flags that the drone is disconnected
     socket.on("disconnected_from_drone", () => {
-      console.log("disconnected_from_drone")
+      logInfo("disconnected_from_drone message recieved")
       setConnected(false)
     })
 
@@ -184,7 +185,7 @@ export default function Navbar({ currentPage }) {
 
     // Flags an error with the com port
     socket.on("connection_error", (msg) => {
-      console.log(msg.message)
+      logInfo(msg.message)
       showErrorNotification(msg.message)
       setConnecting(false)
       setConnected(false)

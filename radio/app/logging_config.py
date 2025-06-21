@@ -33,12 +33,16 @@ def get_settings_path() -> str:
 def load_user_logging_settings() -> Dict:
     """Load the user's logging configuration
 
+    TODO: Currently this just uses hard coded defaults for the logging settings that we need
+    Since we are likely to want backend settings at some point should probably create a proper
+    module for loading the defaults and user settings and getting them
+
     Returns:
         dict: The users's logging configuration
     """
     with open(get_settings_path(), "r") as f:
         log_settings = json.load(f).get("settings", {}).get("General", {})
-    return {"log_dir": log_settings.get("logDirectory", ""), "only_keep_latest": log_settings.get("onlyKeepLastLog", False)}
+    return {"log_dir": log_settings.get("logDirectory", ""), "only_keep_latest": log_settings.get("onlyKeepLastLog", False), "combine_logs": log_settings.get("combineLogs", False)}
 
 
 def get_latest_log(log_dir: Path) -> str:
@@ -51,10 +55,10 @@ def get_latest_log(log_dir: Path) -> str:
     Returns:
         str: The name of the last modified backend log file
     """
-    logs = glob.glob(os.path.join(log_dir, "*.log"))
+    logs = glob.glob(os.path.join(log_dir, "backend*.log"))
     return max(logs, key=os.path.getmtime)
 
-def setup_logging(format: str = "[%(asctime)s] [%(levelname)s] %(message)s") -> logging.Logger:
+def setup_logging(format: str = "[%(asctime)s:%(msecs)03d] [%(levelname)s] backend - %(message)s") -> logging.Logger:
     """Setup logging for the application
 
     Configures the default logger (fgcs) and the werkzeug logger, routes them to a file based on the user's
@@ -72,22 +76,23 @@ def setup_logging(format: str = "[%(asctime)s] [%(levelname)s] %(message)s") -> 
     user_settings = load_user_logging_settings()
 
     start_time = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
-    log_directory = user_settings["log_dir"] or Path.home().joinpath("FGCS", "logs")
+    log_directory = Path.home().joinpath("FGCS", "tmp") if user_settings["combine_logs"] else (user_settings["log_dir"] or Path.home().joinpath("FGCS", "logs"))
+
+    if not os.path.isdir(log_directory):
+        os.mkdir(log_directory)
 
     if not reloaded:
-        log_name = "backend.log" if user_settings["only_keep_latest"] else f"backend_{start_time}.log"
+        log_name = "backend.log" if user_settings["only_keep_latest"] or user_settings["combine_logs"] else f"backend-{start_time}.log"
     else:
         log_name = get_latest_log(log_directory)
 
     log_path = Path(log_directory).joinpath(log_name)
-
     file_handler = logging.FileHandler(log_path, "w+")
-    file_handler.setFormatter(logging.Formatter(format))
+    file_handler.setFormatter(logging.Formatter(format, datefmt="%d/%m/%Y %H:%M:%S"))
 
     logger = logging.getLogger("fgcs")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
-    logger.addHandler(logging.StreamHandler(sys.stderr))
 
     flask_logger = logging.getLogger("werkzeug")
     # No werkzeug INFO because we use sockets and werkzeug socket INFO logs are useless :D

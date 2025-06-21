@@ -1,8 +1,10 @@
 import os
-import app.droneStatus as droneStatus
-from app import create_app, socketio, logger
+
 from pathlib import Path
 from dotenv import load_dotenv
+
+import app.droneStatus as droneStatus
+from app import create_app, socketio, logger
 
 app = create_app(debug=True)
 

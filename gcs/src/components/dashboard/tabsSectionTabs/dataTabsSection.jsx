@@ -8,7 +8,7 @@ import { useState } from "react"
 
 // Mantine
 import { useDisclosure } from "@mantine/hooks"
-import { Tabs, Grid } from "@mantine/core"
+import { Button, Tabs, Grid } from "@mantine/core"
 
 // Custom Components
 import DashboardDataModal from "../../dashboardDataModal"
@@ -53,17 +53,6 @@ export default function DataTabsSection({
   return (
     
     <Tabs.Panel value="data">
-      <div className="p-2">
-        <button
-          onClick={() => {
-            localStorage.removeItem("dashboardDataMessages")
-            window.location.reload()
-          }}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Reset Dashboard
-        </button>
-      </div>
       <div className={tabPadding}>
         <Grid className="cursor-pointer select-none">
           {displayedData.length > 0 ? (
@@ -94,6 +83,17 @@ export default function DataTabsSection({
           selectedBox={selectedBox}
           handleCheckboxChange={handleCheckboxChange}
         />
+      </div>
+      <div className="p-2 flex justify-center">
+        <Button
+          color="red"
+          onClick={() => {
+            localStorage.removeItem("dashboardDataMessages");
+            window.location.reload();
+          }}
+        >
+          Reset Dashboard
+        </Button>
       </div>
     </Tabs.Panel>
   )

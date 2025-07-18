@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from datetime import datetime
+from configparser import ConfigParser
 
 from flask import Flask
 from flask_socketio import SocketIO
@@ -29,12 +30,15 @@ def create_directory(path: str, count: int) -> str:
     except OSError:
         return create_directory(path, count + 1)
 
+file = 'imacs.ini'
 
-log_dir = os.path.expanduser("~/.imacs/logs")
+config = ConfigParser()
+config.read(file)
 
-# Checks if a Configuration Directory exists
-if "IMACS_LOG_DIR" in os.environ:
-    log_dir = os.environ["IMACS_LOG_DIR"]
+if 'logs' in config.sections() and 'location' in config['logs']:
+    log_dir = config['logs']['location']
+else:
+    log_dir = os.path.expanduser("~/.imacs/logs")
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 

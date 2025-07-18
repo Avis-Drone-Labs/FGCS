@@ -1,4 +1,4 @@
-from app import logger, socketio
+from app import fgcs_logger, socketio
 import app.droneStatus as droneStatus
 from app.utils import notConnectedError
 
@@ -16,7 +16,7 @@ def getFrameDetails() -> None:
                 "message": "You must be on the motor test section of the config page to access the frame details"
             },
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

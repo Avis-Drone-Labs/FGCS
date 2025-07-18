@@ -1,7 +1,7 @@
 import time
 
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.drone import Drone
 
 
@@ -42,7 +42,7 @@ def rebootAutopilot() -> None:
         else:
             break
     else:
-        logger.error("Could not reconnect to drone after 3 attempts.")
+        fgcs_logger.error("Could not reconnect to drone after 3 attempts.")
         socketio.emit(
             "reboot_autopilot",
             {
@@ -54,7 +54,7 @@ def rebootAutopilot() -> None:
 
     time.sleep(1)
     socketio.emit("connected_to_drone")
-    logger.info("Rebooted autopilot successfully.")
+    fgcs_logger.info("Rebooted autopilot successfully.")
     socketio.emit(
         "reboot_autopilot",
         {"success": True, "message": "Rebooted autopilot successfully."},

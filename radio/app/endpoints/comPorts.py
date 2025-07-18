@@ -5,7 +5,7 @@ from serial.tools import list_ports
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.drone import Drone
 from app.utils import droneConnectStatusCb, droneErrorCb, getComPortNames
 
@@ -82,7 +82,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
             )
             return
 
-    logger.debug("Trying to connect to drone")
+    fgcs_logger.debug("Trying to connect to drone")
     baud = data.get("baud", 57600)
 
     if not isinstance(baud, int):
@@ -114,7 +114,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
 
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
-    logger.debug("Created drone instance")
+    fgcs_logger.debug("Created drone instance")
     socketio.emit("connected_to_drone", {"aircraft_type": drone.aircraft_type})
 
 

@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.utils import notConnectedError
 
 
@@ -27,7 +27,7 @@ def getHomePosition() -> None:
                 "message": "You must be on the dashboard or missions screen to get the home position."
             },
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -48,7 +48,7 @@ def takeoff(data: TakeoffDataType) -> None:
             "params_error",
             {"message": "You must be on the dashboard screen to takeoff."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -77,7 +77,7 @@ def land() -> None:
             "params_error",
             {"message": "You must be on the dashboard screen to land."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -98,7 +98,7 @@ def reposition(data: RepositionDataType) -> None:
             "params_error",
             {"message": "You must be on the dashboard screen to reposition."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

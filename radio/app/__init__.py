@@ -2,11 +2,12 @@ import logging
 import os
 import sys
 from datetime import datetime
-from configparser import ConfigParser
+import yaml
 
 from flask import Flask
 from flask_socketio import SocketIO
 
+CONFIG_FILE = os.path.join(os.getcwd(), "IMACS.yml")
 
 def create_directory(path: str, count: int) -> str:
     """
@@ -30,12 +31,11 @@ def create_directory(path: str, count: int) -> str:
     except OSError:
         return create_directory(path, count + 1)
 
-file = 'imacs.ini'
 
-config = ConfigParser()
-config.read(file)
+with open(CONFIG_FILE, 'r') as file:
+    config = yaml.safe_load(file)
 
-if 'logs' in config.sections() and 'location' in config['logs']:
+if 'logs' in config and config['logs'].get('location'):
     log_dir = config['logs']['location']
 else:
     log_dir = os.path.expanduser("~/.imacs/logs")

@@ -457,10 +457,25 @@ class MissionController:
     def _parseWaypointsListIntoLoader(
         self, waypoints: List[dict], mission_type: int
     ) -> mavwp.MAVWPLoader:
-        loader = mavwp.MAVWPLoader(
-            target_system=self.drone.target_system,
-            target_component=self.drone.target_component,
-        )
+        """
+        Parses a list of waypoints into a MAVWPLoader object.
+        """
+
+        if mission_type == TYPE_MISSION:
+            loader = mavwp.MAVWPLoader(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
+        elif mission_type == TYPE_FENCE:
+            loader = mavwp.MissionItemProtocol_Fence(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
+        elif mission_type == TYPE_RALLY:
+            loader = mavwp.MissionItemProtocol_Rally(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
 
         for wp in waypoints:
             if isinstance(wp, mavutil.mavlink.MAVLink_mission_item_int_message):

@@ -118,7 +118,7 @@ def writeCurrentMission(data: WriteCurrentMissionType) -> None:
 
     if mission_type not in mission_type_array:
         socketio.emit(
-            "current_mission",
+            "write_mission_result",
             {
                 "success": False,
                 "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",

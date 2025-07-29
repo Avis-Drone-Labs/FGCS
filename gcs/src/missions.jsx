@@ -187,6 +187,18 @@ export default function Missions() {
     )
   }
 
+  function deleteMissionItem(missionItemId) {
+    setMissionItems((prevItems) => {
+      const updatedItems = prevItems.filter((item) => item.id !== missionItemId)
+
+      return updatedItems.map((item, index) => ({
+        ...item,
+        seq: index, // Reassign seq based on the new order
+      }))
+    })
+    console.log(missionItems)
+  }
+
   function readMissionFromDrone() {
     socket.emit("get_current_mission", { type: activeTab })
   }
@@ -350,6 +362,7 @@ export default function Missions() {
                       missionItems={missionItems}
                       aircraftType={aircraftType}
                       updateMissionItem={updateMissionItem}
+                      deleteMissionItem={deleteMissionItem}
                     />
                   </Tabs.Panel>
                   <Tabs.Panel value="fence"></Tabs.Panel>

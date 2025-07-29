@@ -2,7 +2,14 @@
   This component displays the row for a mission item in a table.
 */
 
-import { NumberInput, Select, TableTd, TableTr } from "@mantine/core"
+import {
+  ActionIcon,
+  NumberInput,
+  Select,
+  TableTd,
+  TableTr,
+} from "@mantine/core"
+import { IconTrash } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
@@ -18,6 +25,7 @@ export default function MissionItemsTableRow({
   aircraftType,
   missionItem,
   updateMissionItem,
+  deleteMissionItem,
 }) {
   const [missionItemData, setMissionItemData] = useState(missionItem)
 
@@ -131,6 +139,14 @@ export default function MissionItemsTableRow({
         />
       </TableTd>
       <TableTd>{getFrameName(missionItemData.frame)}</TableTd>
+      <TableTd>
+        <ActionIcon
+          onClick={() => deleteMissionItem(missionItemData.id)}
+          color="red"
+        >
+          <IconTrash size={20} />
+        </ActionIcon>
+      </TableTd>
     </TableTr>
   )
 }

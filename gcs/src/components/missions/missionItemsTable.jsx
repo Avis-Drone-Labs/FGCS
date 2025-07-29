@@ -12,7 +12,7 @@ function MissionItemsTableNonMemo({
   updateMissionItem,
 }) {
   return (
-    <Table striped withTableBorder withColumnBorders>
+    <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>
         <Table.Tr>
           <Table.Th></Table.Th>

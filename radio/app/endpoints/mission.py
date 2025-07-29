@@ -124,7 +124,9 @@ def writeCurrentMission(data: WriteCurrentMissionType) -> None:
                 "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
             },
         )
-        logger.error(f"Could not get mission items for {mission_type} type.")
+        logger.error(
+            f"Invalid mission type: {mission_type}. Must be 'mission', 'fence', or 'rally'."
+        )
         return
 
     items = data.get("items", [])

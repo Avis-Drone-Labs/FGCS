@@ -192,7 +192,6 @@ export default function Missions() {
   }
 
   function writeMissionToDrone() {
-    console.log(missionItems)
     if (activeTab === "mission") {
       socket.emit("write_current_mission", {
         type: "mission",

@@ -497,7 +497,7 @@ class MissionController:
                     int(wp["x"]),
                     int(wp["y"]),
                     wp["z"],
-                    mission_type,
+                    wp["mission_type"],
                 )
                 loader.add(p)
             else:

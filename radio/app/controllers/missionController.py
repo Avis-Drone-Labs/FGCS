@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, List
 
 import serial
 from app.customTypes import Response
-from app.utils import commandAccepted, wpToMissionItemInt
+from app.utils import commandAccepted
 from pymavlink import mavutil, mavwp
 
 if TYPE_CHECKING:
@@ -238,7 +238,7 @@ class MissionController:
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        failure_message = f"Failed to get mission item {item_number}/{mission_count} for mission type {mission_type}"
+        failure_message = f"Failed to get mission item {item_number}/{mission_count - 1} for mission type {mission_type}"
 
         self.drone.is_listening = False
 
@@ -260,7 +260,7 @@ class MissionController:
 
             if response:
                 self.drone.logger.debug(
-                    f"Got response for mission item {item_number}/{mission_count} for mission type {mission_type}"
+                    f"Got response for mission item {item_number}/{mission_count - 1} for mission type {mission_type}"
                 )
                 return {
                     "success": True,
@@ -269,7 +269,7 @@ class MissionController:
 
             else:
                 self.drone.logger.error(
-                    f"Got no response for mission item {item_number}/{mission_count} for mission type {mission_type}"
+                    f"Got no response for mission item {item_number}/{mission_count - 1} for mission type {mission_type}"
                 )
                 return {
                     "success": False,
@@ -279,7 +279,7 @@ class MissionController:
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
             self.drone.logger.error(
-                f"Got no response for mission item {item_number}/{mission_count}, serial exception"
+                f"Got no response for mission item {item_number}/{mission_count - 1}, serial exception"
             )
             return {
                 "success": False,
@@ -454,9 +454,63 @@ class MissionController:
             "message": f"Waypoint file loaded {loader.count()} points successfully",
         }
 
-    def uploadMission(self, mission_type: int) -> Response:
+    def _parseWaypointsListIntoLoader(
+        self, waypoints: List[dict], mission_type: int
+    ) -> mavwp.MAVWPLoader:
         """
-        Uploads the current mission to the drone.
+        Parses a list of waypoints into a MAVWPLoader object.
+        """
+
+        if mission_type == TYPE_MISSION:
+            loader = mavwp.MAVWPLoader(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
+        elif mission_type == TYPE_FENCE:
+            loader = mavwp.MissionItemProtocol_Fence(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
+        elif mission_type == TYPE_RALLY:
+            loader = mavwp.MissionItemProtocol_Rally(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
+
+        for wp in waypoints:
+            if isinstance(wp, mavutil.mavlink.MAVLink_mission_item_int_message):
+                loader.add(wp)
+            elif isinstance(wp, dict):
+                # Convert dict to MAVLink mission item int message
+                p = mavutil.mavlink.MAVLink_mission_item_int_message(
+                    self.drone.target_system,
+                    self.drone.target_component,
+                    wp["seq"],
+                    wp["frame"],
+                    wp["command"],
+                    wp["current"],
+                    wp["autocontinue"],
+                    wp["param1"],
+                    wp["param2"],
+                    wp["param3"],
+                    wp["param4"],
+                    int(wp["x"]),
+                    int(wp["y"]),
+                    wp["z"],
+                    wp["mission_type"],
+                )
+                loader.add(p)
+            else:
+                self.drone.logger.error(
+                    f"Invalid waypoint type {type(wp)} in waypoints list"
+                )
+                raise ValueError(f"Invalid waypoint type {type(wp)} in waypoints list")
+
+        return loader
+
+    def uploadMission(self, mission_type: int, waypoints: List[dict]) -> Response:
+        """
+        Uploads the current mission to the drone. This method overwrites the current loader if the upload is successful.
 
         Args:
             mission_type (int): The type of mission to upload. 0=Mission,1=Fence,2=Rally.
@@ -465,14 +519,9 @@ class MissionController:
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        if mission_type == TYPE_MISSION:
-            loader = self.missionLoader
-        elif mission_type == TYPE_FENCE:
-            loader = self.fenceLoader
-        else:
-            loader = self.rallyLoader
+        new_loader = self._parseWaypointsListIntoLoader(waypoints, mission_type)
 
-        if loader.count() == 0:
+        if new_loader.count() == 0:
             return {
                 "success": False,
                 "message": f"No waypoints loaded for the mission type of {mission_type}",
@@ -487,7 +536,7 @@ class MissionController:
         self.drone.master.mav.mission_count_send(
             self.drone.target_system,
             self.drone.target_component,
-            loader.count(),
+            new_loader.count(),
             mission_type=mission_type,
         )
 
@@ -515,13 +564,11 @@ class MissionController:
                     }
                 elif response.mission_type == mission_type:
                     self.drone.logger.debug(
-                        f"Sending mission item {response.seq} out of {loader.count()}"
+                        f"Sending mission item {response.seq} out of {new_loader.count()-1}"
                     )
-                    self.drone.master.mav.send(
-                        wpToMissionItemInt(loader.item(response.seq))
-                    )
+                    self.drone.master.mav.send(new_loader.item(response.seq))
 
-                    if response.seq == loader.count() - 1:
+                    if response.seq == new_loader.count() - 1:
                         mission_ack_response = self.drone.master.recv_match(
                             type=[
                                 "MISSION_ACK",
@@ -537,6 +584,12 @@ class MissionController:
                             and mission_ack_response.mission_type == mission_type
                         ):
                             self.drone.logger.info("Uploaded mission successfully")
+                            if mission_type == TYPE_MISSION:
+                                self.missionLoader = new_loader
+                            elif mission_type == TYPE_FENCE:
+                                self.fenceLoader = new_loader
+                            else:
+                                self.rallyLoader = new_loader
                             return {
                                 "success": True,
                                 "message": "Mission uploaded successfully",

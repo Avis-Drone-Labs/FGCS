@@ -135,10 +135,19 @@ export default function Missions() {
       showSuccessNotification(`${data.mission_type} read successfully`)
     })
 
+    socket.on("write_mission_result", (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
       socket.off("current_mission")
+      socket.off("write_mission_result")
     }
   }, [connected])
 
@@ -183,7 +192,17 @@ export default function Missions() {
   }
 
   function writeMissionToDrone() {
-    return
+    console.log(missionItems)
+    if (activeTab === "mission") {
+      socket.emit("write_current_mission", {
+        type: "mission",
+        items: missionItems,
+      })
+    } else if (activeTab === "fence") {
+      socket.emit("write_current_mission", { type: "fence", items: fenceItems })
+    } else if (activeTab === "rally") {
+      socket.emit("write_current_mission", { type: "rally", items: rallyItems })
+    }
   }
 
   function importMissionFromFile() {

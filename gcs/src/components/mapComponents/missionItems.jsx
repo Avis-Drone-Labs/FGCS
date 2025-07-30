@@ -51,7 +51,16 @@ export default function MissionItems({
     const lineCoordsList = []
     const dottedLineCoordsList = []
 
-    filteredMissionItems.forEach((item) => {
+    // Stop processing waypoints after a land command
+    const landCommandIndex = filteredMissionItems.findIndex((item) =>
+      [21, 189].includes(item.command),
+    )
+    const itemsToProcess =
+      landCommandIndex === -1
+        ? filteredMissionItems
+        : filteredMissionItems.slice(0, landCommandIndex + 1)
+
+    itemsToProcess.forEach((item) => {
       lineCoordsList.push([intToCoord(item.y), intToCoord(item.x)])
     })
 
@@ -59,16 +68,16 @@ export default function MissionItems({
     // dotted line
     if (
       ![21, 189].includes(
-        filteredMissionItems[filteredMissionItems.length - 1].command,
+        itemsToProcess[itemsToProcess.length - 1].command, // Use itemsToProcess here
       )
     ) {
       dottedLineCoordsList.push([
-        intToCoord(filteredMissionItems[0].y),
-        intToCoord(filteredMissionItems[0].x),
+        intToCoord(itemsToProcess[0].y), // Use itemsToProcess here
+        intToCoord(itemsToProcess[0].x),
       ])
       dottedLineCoordsList.push([
-        intToCoord(filteredMissionItems[filteredMissionItems.length - 1].y),
-        intToCoord(filteredMissionItems[filteredMissionItems.length - 1].x),
+        intToCoord(itemsToProcess[itemsToProcess.length - 1].y), // Use itemsToProcess here
+        intToCoord(itemsToProcess[itemsToProcess.length - 1].x),
       ])
     }
 

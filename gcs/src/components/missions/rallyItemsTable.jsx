@@ -7,7 +7,7 @@ import RallyItemsTableRow from "./rallyItemsTableRow"
 
 function RallyItemsTableNonMemo({ rallyItems, updateRallyItem }) {
   return (
-    <Table striped withTableBorder withColumnBorders>
+    <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>
         <Table.Tr>
           <Table.Th></Table.Th>
@@ -17,7 +17,7 @@ function RallyItemsTableNonMemo({ rallyItems, updateRallyItem }) {
           <Table.Th>Param 3</Table.Th>
           <Table.Th>Param 4</Table.Th>
           <Table.Th>Lat</Table.Th>
-          <Table.Th>Long</Table.Th>
+          <Table.Th>Lng</Table.Th>
           <Table.Th>Alt</Table.Th>
           <Table.Th>Frame</Table.Th>
         </Table.Tr>

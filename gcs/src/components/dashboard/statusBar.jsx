@@ -15,6 +15,7 @@ import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 // Helper imports
 import { socket } from "../../helpers/socket"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
+import AlertSection from "./alert"
 
 export function StatusSection({ icon, value, tooltip }) {
   return (
@@ -65,6 +66,9 @@ export default function StatusBar(props) {
       >
         <p className="text-sm text-blue-200">Current heading</p>
         <p className="text-sm text-red-200">Desired heading</p>
+      </div>
+      <div className="m-2">
+        <AlertSection />
       </div>
     </div>
   )

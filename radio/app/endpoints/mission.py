@@ -9,6 +9,11 @@ class CurrentMissionType(TypedDict):
     type: str
 
 
+class WriteCurrentMissionType(TypedDict):
+    type: str
+    items: list[dict]
+
+
 class ControlMissionType(TypedDict):
     action: str
 
@@ -88,6 +93,51 @@ def getCurrentMissionAll() -> None:
             "rally_items": result.get("data", {}).get("rally_items", []),
         },
     )
+
+
+@socketio.on("write_current_mission")
+def writeCurrentMission(data: WriteCurrentMissionType) -> None:
+    """
+    Writes the current mission to the drone, only works if missions screen is loaded.
+    """
+    if droneStatus.state != "missions":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the missions screen to write the current mission."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="write current mission")
+
+    mission_type = data.get("type")
+    mission_type_array = ["mission", "fence", "rally"]
+
+    if mission_type not in mission_type_array:
+        socketio.emit(
+            "write_mission_result",
+            {
+                "success": False,
+                "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
+            },
+        )
+        logger.error(
+            f"Invalid mission type: {mission_type}. Must be 'mission', 'fence', or 'rally'."
+        )
+        return
+
+    items = data.get("items", [])
+
+    result = droneStatus.drone.missionController.uploadMission(
+        mission_type_array.index(mission_type), items
+    )
+    if not result.get("success"):
+        logger.error(result.get("message"))
+
+    socketio.emit("write_mission_result", result)
 
 
 @socketio.on("control_mission")

@@ -31,33 +31,53 @@ export default function MissionItems({
     filterMissionItems(missionItems),
   )
   const [listOfLineCoords, setListOfLineCoords] = useState([])
+  const [listOfDottedLineCoords, setListOfDottedLineCoords] = useState([])
 
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItems))
   }, [missionItems])
 
   useEffect(() => {
-    setListOfLineCoords(getListOfLineCoordinates(filteredMissionItems))
+    const { solid: solidLineCoords, dotted: dottedLineCoords } =
+      getListOfLineCoordinates(filteredMissionItems)
+
+    setListOfLineCoords(solidLineCoords)
+    setListOfDottedLineCoords(dottedLineCoords)
   }, [filteredMissionItems])
 
   function getListOfLineCoordinates(filteredMissionItems) {
-    if (filteredMissionItems.length === 0) return []
+    if (filteredMissionItems.length === 0) return { solid: [], dotted: [] }
 
     const lineCoordsList = []
+    const dottedLineCoordsList = []
 
-    filteredMissionItems.forEach((item) => {
+    // Stop processing waypoints after a land command
+    const landCommandIndex = filteredMissionItems.findIndex((item) =>
+      [21, 189].includes(item.command),
+    )
+    const itemsToProcess =
+      landCommandIndex === -1
+        ? filteredMissionItems
+        : filteredMissionItems.slice(0, landCommandIndex + 1)
+
+    itemsToProcess.forEach((item) => {
       lineCoordsList.push([intToCoord(item.y), intToCoord(item.x)])
     })
 
-    // Join the last item to first item if aircraft does not land
+    // Join the last item to first item if aircraft does not land, with a
+    // dotted line
     if (
       ![21, 189].includes(
-        filteredMissionItems[filteredMissionItems.length - 1].command,
+        itemsToProcess[itemsToProcess.length - 1].command, // Use itemsToProcess here
       )
     ) {
-      lineCoordsList.push([
-        intToCoord(filteredMissionItems[0].y),
-        intToCoord(filteredMissionItems[0].x),
+      dottedLineCoordsList.push([
+        intToCoord(itemsToProcess[0].y), // Use itemsToProcess here
+        intToCoord(itemsToProcess[0].x),
+      ])
+      dottedLineCoordsList.push([
+        intToCoord(itemsToProcess[itemsToProcess.length - 1].y), // Use itemsToProcess here
+        intToCoord(itemsToProcess[itemsToProcess.length - 1].x),
       ])
     }
 
@@ -80,7 +100,7 @@ export default function MissionItems({
       lineCoordsList.push([intToCoord(nextItem.y), intToCoord(nextItem.x)])
     })
 
-    return lineCoordsList
+    return { solid: lineCoordsList, dotted: dottedLineCoordsList }
   }
 
   return (
@@ -106,6 +126,12 @@ export default function MissionItems({
       <DrawLineCoordinates
         coordinates={listOfLineCoords}
         colour={tailwindColors.yellow[400]}
+      />
+
+      <DrawLineCoordinates
+        coordinates={listOfDottedLineCoords}
+        colour={tailwindColors.yellow[400]}
+        lineProps={{ "line-dasharray": [2, 2] }}
       />
     </>
   )

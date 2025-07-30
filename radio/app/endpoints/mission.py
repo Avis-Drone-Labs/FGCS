@@ -176,7 +176,7 @@ def importMissionFromFile(data: ImportMissionFromFileType) -> None:
         )
         return
 
-    file_path = data.get("file_path")
+    file_path = data.get("file_path", "")
 
     result = droneStatus.drone.missionController.importMissionFromFile(
         mission_type_array.index(mission_type), file_path

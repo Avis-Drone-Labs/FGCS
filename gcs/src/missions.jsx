@@ -66,7 +66,7 @@ export default function Missions() {
     defaultValue: { target_component: 0, target_system: 255 },
   })
 
-  const newMissionItemAltitude = 30
+  const newMissionItemAltitude = 30 // TODO: Make this configurable
 
   // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
@@ -188,8 +188,10 @@ export default function Missions() {
       x: coordToInt(lat),
       y: coordToInt(lon),
       z: newMissionItemAltitude,
-      frame: Object.keys(MAV_FRAME_LIST).find(
-        (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
+      frame: parseInt(
+        Object.keys(MAV_FRAME_LIST).find(
+          (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
+        ),
       ),
       command: 16, // MAV_CMD_NAV_WAYPOINT
       param1: 0,

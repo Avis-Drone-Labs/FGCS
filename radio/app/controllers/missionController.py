@@ -412,48 +412,6 @@ class MissionController:
                 "message": "Could not clear mission, serial exception",
             }
 
-    def loadWaypointFile(self, file_path: str, mission_type: int) -> Response:
-        """
-        Loads waypoints from a file into the specified mission type.
-
-        Args:
-            file_path (str): The path to the waypoint file
-            mission_type (int): The type of mission to load the waypoints into. 0=Mission,1=Fence,2=Rally.
-        """
-        mission_type_check = self._checkMissionType(mission_type)
-        if not mission_type_check.get("success"):
-            return mission_type_check
-
-        if not os.path.exists(file_path):
-            self.drone.logger.error(f"Waypoint file not found at {file_path}")
-            return {
-                "success": False,
-                "message": f"Waypoint file not found at {file_path}",
-            }
-
-        if mission_type == TYPE_MISSION:
-            loader = self.missionLoader
-        elif mission_type == TYPE_FENCE:
-            loader = self.fenceLoader
-        else:
-            loader = self.rallyLoader
-
-        loader.load(file_path)
-
-        # Remove the first point if it's a command 16 as this is usually a home point or placeholder.
-        if mission_type in [TYPE_FENCE, TYPE_RALLY]:
-            first_wp = loader.item(0)
-            if first_wp.command == 16:
-                loader.remove(first_wp)
-
-        self.drone.logger.info(
-            f"Loaded waypoint file with {loader.count()} points successfully"
-        )
-        return {
-            "success": True,
-            "message": f"Waypoint file loaded {loader.count()} points successfully",
-        }
-
     def _parseWaypointsListIntoLoader(
         self, waypoints: List[dict], mission_type: int
     ) -> mavwp.MAVWPLoader:
@@ -514,6 +472,7 @@ class MissionController:
 
         Args:
             mission_type (int): The type of mission to upload. 0=Mission,1=Fence,2=Rally.
+            waypoints (List[dict]): The list of waypoints to upload. Each waypoint should be a dict with the required fields.
         """
         mission_type_check = self._checkMissionType(mission_type)
         if not mission_type_check.get("success"):
@@ -608,3 +567,56 @@ class MissionController:
                 "success": False,
                 "message": "Could not upload mission, serial exception",
             }
+
+    def importMissionFromFile(self, mission_type: int, file_path: str) -> Response:
+        mission_type_check = self._checkMissionType(mission_type)
+        if not mission_type_check.get("success"):
+            return mission_type_check
+
+        if not file_path or not os.path.exists(file_path):
+            self.drone.logger.error(f"Waypoint file not found at {file_path}")
+            return {
+                "success": False,
+                "message": f"Waypoint file not found at {file_path}",
+            }
+
+        self.drone.logger.debug(
+            f"Importing waypoint file from {file_path} for mission type {mission_type}"
+        )
+
+        if mission_type == TYPE_MISSION:
+            loader = self.missionLoader
+        elif mission_type == TYPE_FENCE:
+            loader = self.fenceLoader
+        else:
+            loader = self.rallyLoader
+
+        try:
+            loader.load(file_path)
+        except Exception as e:
+            self.drone.logger.error(f"Failed to load waypoint file: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to load waypoint file: {e}",
+            }
+
+        # Remove the first point if it's a command 16 as this is usually a home point or placeholder.
+        if mission_type in [TYPE_FENCE, TYPE_RALLY]:
+            first_wp = loader.item(0)
+            if first_wp.command == 16:
+                loader.remove(first_wp)
+
+        for wp in loader.wpoints:
+            if isinstance(wp.x, float):
+                wp.x = int(wp.x * 1e7)
+            if isinstance(wp.y, float):
+                wp.y = int(wp.y * 1e7)
+
+        self.drone.logger.info(
+            f"Loaded waypoint file with {loader.count()} points successfully"
+        )
+        return {
+            "success": True,
+            "message": f"Waypoint file loaded {loader.count()} points successfully",
+            "data": [wp.to_dict() for wp in loader.wpoints],
+        }

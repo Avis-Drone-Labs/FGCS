@@ -9,7 +9,7 @@ import {
   TableTd,
   TableTr,
 } from "@mantine/core"
-import { IconTrash } from "@tabler/icons-react"
+import { IconArrowDown, IconArrowUp, IconTrash } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
@@ -26,6 +26,7 @@ export default function MissionItemsTableRow({
   missionItem,
   updateMissionItem,
   deleteMissionItem,
+  updateMissionItemOrder,
 }) {
   const [missionItemData, setMissionItemData] = useState(missionItem)
 
@@ -139,7 +140,17 @@ export default function MissionItemsTableRow({
         />
       </TableTd>
       <TableTd>{getFrameName(missionItemData.frame)}</TableTd>
-      <TableTd>
+      <TableTd className="flex flex-row gap-2">
+        <ActionIcon
+          onClick={() => updateMissionItemOrder(missionItemData.id, -1)}
+        >
+          <IconArrowUp size={20} />
+        </ActionIcon>
+        <ActionIcon
+          onClick={() => updateMissionItemOrder(missionItemData.id, 1)}
+        >
+          <IconArrowDown size={20} />
+        </ActionIcon>
         <ActionIcon
           onClick={() => deleteMissionItem(missionItemData.id)}
           color="red"

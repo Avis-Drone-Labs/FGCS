@@ -196,7 +196,40 @@ export default function Missions() {
         seq: index, // Reassign seq based on the new order
       }))
     })
-    console.log(missionItems)
+  }
+
+  function updateMissionItemOrder(missionItemId, indexIncrement) {
+    setMissionItems((prevItems) => {
+      const currentIndex = prevItems.findIndex(
+        (item) => item.id === missionItemId,
+      )
+
+      // Ensure the item exists and the swap is within bounds
+      if (
+        currentIndex === -1 ||
+        (indexIncrement === -1 && currentIndex === 0) ||
+        (indexIncrement === 1 && currentIndex === prevItems.length - 1)
+      ) {
+        return prevItems // No changes if out of bounds
+      }
+
+      // Calculate the new index
+      const newIndex = currentIndex + indexIncrement
+
+      // Create a copy of the items array
+      const updatedItems = [...prevItems]
+
+      // Swap the items
+      const temp = updatedItems[currentIndex]
+      updatedItems[currentIndex] = updatedItems[newIndex]
+      updatedItems[newIndex] = temp
+
+      // Update the seq values
+      updatedItems[currentIndex].seq = currentIndex
+      updatedItems[newIndex].seq = newIndex
+
+      return updatedItems
+    })
   }
 
   function readMissionFromDrone() {
@@ -363,6 +396,7 @@ export default function Missions() {
                       aircraftType={aircraftType}
                       updateMissionItem={updateMissionItem}
                       deleteMissionItem={deleteMissionItem}
+                      updateMissionItemOrder={updateMissionItemOrder}
                     />
                   </Tabs.Panel>
                   <Tabs.Panel value="fence"></Tabs.Panel>

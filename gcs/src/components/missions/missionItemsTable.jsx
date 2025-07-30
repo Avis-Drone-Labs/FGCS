@@ -11,6 +11,7 @@ function MissionItemsTableNonMemo({
   aircraftType,
   updateMissionItem,
   deleteMissionItem,
+  updateMissionItemOrder,
 }) {
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
@@ -48,6 +49,7 @@ function MissionItemsTableNonMemo({
               missionItem={missionItem}
               updateMissionItem={updateMissionItem}
               deleteMissionItem={deleteMissionItem}
+              updateMissionItemOrder={updateMissionItemOrder}
             />
           )
         })}

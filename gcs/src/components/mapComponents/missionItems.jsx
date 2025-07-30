@@ -41,8 +41,6 @@ export default function MissionItems({
     const { solid: solidLineCoords, dotted: dottedLineCoords } =
       getListOfLineCoordinates(filteredMissionItems)
 
-    console.log(solidLineCoords)
-    console.log(dottedLineCoords)
     setListOfLineCoords(solidLineCoords)
     setListOfDottedLineCoords(dottedLineCoords)
   }, [filteredMissionItems])

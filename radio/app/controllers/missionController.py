@@ -569,6 +569,13 @@ class MissionController:
             }
 
     def importMissionFromFile(self, mission_type: int, file_path: str) -> Response:
+        """
+        Imports a mission from a file into the drone's mission loader, return the waypoints loaded.
+
+        Args:
+            mission_type (int): The type of mission to import. 0=Mission,1=Fence,2=Rally.
+            file_path (str): The path to the waypoint file to import.
+        """
         mission_type_check = self._checkMissionType(mission_type)
         if not mission_type_check.get("success"):
             return mission_type_check
@@ -602,15 +609,23 @@ class MissionController:
 
         # Remove the first point if it's a command 16 as this is usually a home point or placeholder.
         if mission_type in [TYPE_FENCE, TYPE_RALLY]:
-            first_wp = loader.item(0)
-            if first_wp.command == 16:
-                loader.remove(first_wp)
+            if loader.count() > 0:
+                first_wp = loader.item(0)
+                if first_wp.command == 16:
+                    loader.remove(first_wp)
+            else:
+                self.drone.logger.error("Loader is empty; no waypoints to process.")
+                return {
+                    "success": False,
+                    "message": "Loader is empty; no waypoints to process.",
+                }
 
         for wp in loader.wpoints:
-            if isinstance(wp.x, float):
-                wp.x = int(wp.x * 1e7)
-            if isinstance(wp.y, float):
-                wp.y = int(wp.y * 1e7)
+            if hasattr(wp, "x") and hasattr(wp, "y"):
+                if isinstance(wp.x, float):
+                    wp.x = int(wp.x * 1e7)
+                if isinstance(wp.y, float):
+                    wp.y = int(wp.y * 1e7)
 
         self.drone.logger.info(
             f"Loaded waypoint file with {loader.count()} points successfully"

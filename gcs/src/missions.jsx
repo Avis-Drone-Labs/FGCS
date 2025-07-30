@@ -17,10 +17,11 @@ import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
-import { intToCoord } from "./helpers/dataFormatters"
+import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   MAV_AUTOPILOT_INVALID,
+  MAV_FRAME_LIST,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
 import {
@@ -60,6 +61,12 @@ export default function Missions() {
     key: "homePosition",
     defaultValue: null,
   })
+  const [targetInfo, setTargetInfo] = useSessionStorage({
+    key: "targetInfo",
+    defaultValue: { target_component: 0, target_system: 255 },
+  })
+
+  const newMissionItemAltitude = 30 // TODO: Make this configurable
 
   // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
@@ -92,6 +99,7 @@ export default function Missions() {
     } else {
       socket.emit("set_state", { state: "missions" })
       socket.emit("get_home_position")
+      socket.emit("get_target_info")
     }
 
     socket.on("incoming_msg", (msg) => {
@@ -108,13 +116,17 @@ export default function Missions() {
       }
     })
 
+    socket.on("target_info", (data) => {
+      if (data) {
+        setTargetInfo(data)
+      }
+    })
+
     socket.on("current_mission", (data) => {
       if (!data.success) {
         showErrorNotification(data.message)
         return
       }
-
-      console.log(data)
 
       if (data.mission_type === "mission") {
         const missionItemsWithIds = []
@@ -146,6 +158,7 @@ export default function Missions() {
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
+      socket.off("target_info")
       socket.off("current_mission")
       socket.off("write_mission_result")
     }
@@ -168,6 +181,34 @@ export default function Missions() {
     return missionItem
   }
 
+  function addNewMissionItem(lat, lon) {
+    const newMissionItem = {
+      id: uuidv4(),
+      seq: missionItems.length,
+      x: coordToInt(lat),
+      y: coordToInt(lon),
+      z: newMissionItemAltitude,
+      frame: parseInt(
+        Object.keys(MAV_FRAME_LIST).find(
+          (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
+        ),
+      ),
+      command: 16, // MAV_CMD_NAV_WAYPOINT
+      param1: 0,
+      param2: 0,
+      param3: 0,
+      param4: 0,
+      current: 0,
+      autocontinue: 1,
+      target_component: targetInfo.target_component,
+      target_system: targetInfo.target_system,
+      mission_type: 0,
+      mavpackettype: "MISSION_ITEM_INT",
+    }
+
+    setMissionItems((prevItems) => [...prevItems, newMissionItem])
+  }
+
   function updateMissionItem(updatedMissionItem) {
     setMissionItems((prevItems) =>
       prevItems.map((item) =>
@@ -185,6 +226,51 @@ export default function Missions() {
           : item,
       ),
     )
+  }
+
+  function deleteMissionItem(missionItemId) {
+    setMissionItems((prevItems) => {
+      const updatedItems = prevItems.filter((item) => item.id !== missionItemId)
+
+      return updatedItems.map((item, index) => ({
+        ...item,
+        seq: index, // Reassign seq based on the new order
+      }))
+    })
+  }
+
+  function updateMissionItemOrder(missionItemId, indexIncrement) {
+    setMissionItems((prevItems) => {
+      const currentIndex = prevItems.findIndex(
+        (item) => item.id === missionItemId,
+      )
+
+      // Ensure the item exists and the swap is within bounds
+      if (
+        currentIndex === -1 ||
+        (indexIncrement === -1 && currentIndex === 0) ||
+        (indexIncrement === 1 && currentIndex === prevItems.length - 1)
+      ) {
+        return prevItems // No changes if out of bounds
+      }
+
+      // Calculate the new index
+      const newIndex = currentIndex + indexIncrement
+
+      // Create a copy of the items array
+      const updatedItems = [...prevItems]
+
+      // Swap the items
+      const temp = updatedItems[currentIndex]
+      updatedItems[currentIndex] = updatedItems[newIndex]
+      updatedItems[newIndex] = temp
+
+      // Update the seq values
+      updatedItems[currentIndex].seq = currentIndex
+      updatedItems[newIndex].seq = newIndex
+
+      return updatedItems
+    })
   }
 
   function readMissionFromDrone() {
@@ -317,6 +403,7 @@ export default function Missions() {
                   currentTab={activeTab}
                   markerDragEndCallback={updateMissionItem}
                   rallyDragEndCallback={updateRallyItem}
+                  addNewMissionItem={addNewMissionItem}
                   mapId="missions"
                 />
               </div>
@@ -350,6 +437,8 @@ export default function Missions() {
                       missionItems={missionItems}
                       aircraftType={aircraftType}
                       updateMissionItem={updateMissionItem}
+                      deleteMissionItem={deleteMissionItem}
+                      updateMissionItemOrder={updateMissionItemOrder}
                     />
                   </Tabs.Panel>
                   <Tabs.Panel value="fence"></Tabs.Panel>

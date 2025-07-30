@@ -53,6 +53,7 @@ function MapSectionNonMemo({
   currentTab,
   markerDragEndCallback,
   rallyDragEndCallback,
+  addNewMissionItem,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -197,6 +198,12 @@ function MapSectionNonMemo({
               width: e.originalEvent.target.clientWidth,
             },
           })
+        }}
+        onClick={(e) => {
+          setClicked(false)
+          let lat = e.lngLat.lat
+          let lon = e.lngLat.lng
+          addNewMissionItem(lat, lon)
         }}
         cursor="default"
       >

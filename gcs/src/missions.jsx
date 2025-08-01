@@ -11,7 +11,7 @@ import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
 // Custom component and helpers
-import { Button, Divider, Tabs } from "@mantine/core"
+import { Button, Divider, FileButton, Tabs } from "@mantine/core"
 import Layout from "./components/layout"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
@@ -65,6 +65,8 @@ export default function Missions() {
     key: "targetInfo",
     defaultValue: { target_component: 0, target_system: 255 },
   })
+  const [importFile, setImportFile] = useState(null)
+  const importFileResetRef = useRef(null)
 
   const newMissionItemAltitude = 30 // TODO: Make this configurable
 
@@ -155,14 +157,44 @@ export default function Missions() {
       }
     })
 
+    socket.on("import_mission_result", (data) => {
+      if (data.success) {
+        if (data.mission_type === "mission") {
+          const missionItemsWithIds = []
+          for (let missionItem of data.items) {
+            missionItemsWithIds.push(addIdToItem(missionItem))
+          }
+          setMissionItems(missionItemsWithIds)
+        } else if (data.mission_type === "fence") {
+          setFenceItems(data.items)
+        } else if (data.mission_type === "rally") {
+          const rallyItemsWithIds = []
+          for (let rallyItem of data.items) {
+            rallyItemsWithIds.push(addIdToItem(rallyItem))
+          }
+          setRallyItems(rallyItemsWithIds)
+        }
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
       socket.off("target_info")
       socket.off("current_mission")
       socket.off("write_mission_result")
+      socket.off("import_mission_result")
     }
   }, [connected])
+
+  useEffect(() => {
+    if (importFile) {
+      importMissionFromFile(importFile.path)
+    }
+  }, [importFile])
 
   function getFlightMode() {
     if (aircraftType === 1) {
@@ -290,8 +322,15 @@ export default function Missions() {
     }
   }
 
-  function importMissionFromFile() {
-    return
+  function importMissionFromFile(filePath) {
+    socket.emit("import_mission_from_file", {
+      type: activeTab,
+      file_path: filePath,
+    })
+
+    // Reset the import file after sending
+    setImportFile(null)
+    importFileResetRef.current?.()
   }
 
   function saveMissionToFile() {
@@ -346,14 +385,14 @@ export default function Missions() {
                 <Divider className="my-1" />
 
                 <div className="flex flex-col gap-4">
-                  <Button
-                    onClick={() => {
-                      importMissionFromFile()
-                    }}
+                  <FileButton
+                    resetRef={importFileResetRef}
+                    onChange={setImportFile}
+                    accept=".waypoints,.txt"
                     className="grow"
                   >
-                    Import from file
-                  </Button>
+                    {(props) => <Button {...props}>Import from file</Button>}
+                  </FileButton>
                   <Button
                     onClick={() => {
                       saveMissionToFile()

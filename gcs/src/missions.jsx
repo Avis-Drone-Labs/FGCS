@@ -135,6 +135,7 @@ export default function Missions() {
         for (let missionItem of data.items) {
           missionItemsWithIds.push(addIdToItem(missionItem))
         }
+        updateHomePositionBasedOnWaypoints(missionItemsWithIds)
         setMissionItems(missionItemsWithIds)
       } else if (data.mission_type === "fence") {
         setFenceItems(data.items)
@@ -164,6 +165,9 @@ export default function Missions() {
           for (let missionItem of data.items) {
             missionItemsWithIds.push(addIdToItem(missionItem))
           }
+
+          updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+
           setMissionItems(missionItemsWithIds)
         } else if (data.mission_type === "fence") {
           setFenceItems(data.items)
@@ -204,6 +208,29 @@ export default function Missions() {
       importMissionFromFile(importFile.path)
     }
   }, [importFile])
+
+  function updateHomePositionBasedOnWaypoints(waypoints) {
+    if (waypoints.length > 0) {
+      const potentialHomeLocation = waypoints[0]
+      if (
+        potentialHomeLocation.frame ===
+          parseInt(
+            Object.keys(MAV_FRAME_LIST).find(
+              (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+            ),
+          ) &&
+        potentialHomeLocation.x !== 0 &&
+        potentialHomeLocation.y !== 0 &&
+        potentialHomeLocation.command === 16
+      ) {
+        setHomePosition({
+          lat: potentialHomeLocation.x,
+          lon: potentialHomeLocation.y,
+          alt: potentialHomeLocation.z,
+        })
+      }
+    }
+  }
 
   function getFlightMode() {
     if (aircraftType === 1) {

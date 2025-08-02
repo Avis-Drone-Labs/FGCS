@@ -4,7 +4,7 @@ import os
 from typing import TYPE_CHECKING, Any, List
 
 import serial
-from app.customTypes import Response
+from app.customTypes import Number, Response
 from app.utils import commandAccepted
 from pymavlink import mavutil, mavwp
 
@@ -28,6 +28,9 @@ class MissionController:
 
         self.drone = drone
 
+        # Loaders are only used to manage the mission items that are currently loaded in the drone.
+        # Importing and exporting mission items to/from files do not use loaders as these waypoints
+        # are not then loaded into the drone's mission items.
         self.missionLoader = mavwp.MAVWPLoader(
             target_system=drone.target_system, target_component=drone.target_component
         )
@@ -45,6 +48,18 @@ class MissionController:
                 "message": f"Invalid mission type {mission_type}. Must be one of {MISSION_TYPES}",
             }
         return {"success": True}
+
+    def _convertCoordinate(self, coordinate) -> Number:
+        gps_coordinate_scale = 1e7
+
+        if isinstance(coordinate, float):
+            return int(coordinate * gps_coordinate_scale)
+        elif isinstance(coordinate, int):
+            return coordinate / gps_coordinate_scale
+
+        raise ValueError(
+            f"Invalid coordinate type {type(coordinate)}. Must be int or float."
+        )
 
     def getCurrentMission(self, mission_type: int) -> Response:
         """
@@ -464,6 +479,9 @@ class MissionController:
                 )
                 raise ValueError(f"Invalid waypoint type {type(wp)} in waypoints list")
 
+        self.drone.logger.debug(
+            f"Parsed {loader.count()} waypoints into loader for mission type {mission_type}"
+        )
         return loader
 
     def uploadMission(self, mission_type: int, waypoints: List[dict]) -> Response:
@@ -570,7 +588,7 @@ class MissionController:
 
     def importMissionFromFile(self, mission_type: int, file_path: str) -> Response:
         """
-        Imports a mission from a file into the drone's mission loader, return the waypoints loaded.
+        Imports a mission from a file, return the waypoints loaded.
 
         Args:
             mission_type (int): The type of mission to import. 0=Mission,1=Fence,2=Rally.
@@ -592,11 +610,20 @@ class MissionController:
         )
 
         if mission_type == TYPE_MISSION:
-            loader = self.missionLoader
+            loader = mavwp.MAVWPLoader(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
         elif mission_type == TYPE_FENCE:
-            loader = self.fenceLoader
+            loader = mavwp.MissionItemProtocol_Fence(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
         else:
-            loader = self.rallyLoader
+            loader = mavwp.MissionItemProtocol_Rally(
+                target_system=self.drone.target_system,
+                target_component=self.drone.target_component,
+            )
 
         try:
             loader.load(file_path)
@@ -622,10 +649,8 @@ class MissionController:
 
         for wp in loader.wpoints:
             if hasattr(wp, "x") and hasattr(wp, "y"):
-                if isinstance(wp.x, float):
-                    wp.x = int(wp.x * 1e7)
-                if isinstance(wp.y, float):
-                    wp.y = int(wp.y * 1e7)
+                wp.x = self._convertCoordinate(wp.x)
+                wp.y = self._convertCoordinate(wp.y)
 
         self.drone.logger.info(
             f"Loaded waypoint file with {loader.count()} points successfully"
@@ -634,4 +659,53 @@ class MissionController:
             "success": True,
             "message": f"Waypoint file loaded {loader.count()} points successfully",
             "data": [wp.to_dict() for wp in loader.wpoints],
+        }
+
+    def exportMissionToFile(
+        self, mission_type: int, file_path: str, waypoints: List[dict]
+    ) -> Response:
+        """
+        Exports a mission to a file from a given list of waypoints.
+
+        Args:
+            mission_type (int): The type of mission to export. 0=Mission,1=Fence,2=Rally.
+            file_path (str): The path to the waypoint file to export.
+            waypoints (List[dict]): The list of waypoints to upload. Each waypoint should be a dict with the required fields.
+        """
+        mission_type_check = self._checkMissionType(mission_type)
+        if not mission_type_check.get("success"):
+            return mission_type_check
+
+        loader = self._parseWaypointsListIntoLoader(waypoints, mission_type)
+
+        for wp in loader.wpoints:
+            if hasattr(wp, "x") and hasattr(wp, "y"):
+                wp.x = self._convertCoordinate(wp.x)
+                wp.y = self._convertCoordinate(wp.y)
+
+        if loader.count() == 0:
+            return {
+                "success": False,
+                "message": f"No waypoints loaded for the mission type of {mission_type}",
+            }
+
+        self.drone.logger.debug(
+            f"Exporting waypoint file to {file_path} for mission type {mission_type}"
+        )
+
+        try:
+            loader.save(file_path)
+        except Exception as e:
+            self.drone.logger.error(f"Failed to save waypoint file: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to save waypoint file: {e}",
+            }
+
+        self.drone.logger.info(
+            f"Saved waypoint file with {loader.count()} points successfully to {file_path}"
+        )
+        return {
+            "success": True,
+            "message": f"Waypoint file saved {loader.count()} points successfully to {file_path}",
         }

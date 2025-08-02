@@ -11,7 +11,8 @@ import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
 // Custom component and helpers
-import { Button, Divider, FileButton, Tabs } from "@mantine/core"
+import { Button, Divider, FileButton, Tabs, Tooltip } from "@mantine/core"
+import { IconInfoCircle } from "@tabler/icons-react"
 import Layout from "./components/layout"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
@@ -403,6 +404,53 @@ export default function Missions() {
     }
   }
 
+  function updateMissionHomePosition(lat, lon) {
+    const newHomePosition = {
+      lat: Number.isInteger(lat) ? lat : coordToInt(lat),
+      lon: Number.isInteger(lon) ? lon : coordToInt(lon),
+      alt: 0.1,
+    }
+    setHomePosition(newHomePosition)
+
+    // Also update the first waypoint if it is a home position waypoint
+    if (missionItems.length > 0 && isGlobalFrameHomeCommand(missionItems[0])) {
+      // Check if the first item is a home position command
+      const updatedMissionItems = [...missionItems]
+      updatedMissionItems[0] = {
+        ...updatedMissionItems[0],
+        x: newHomePosition.lat,
+        y: newHomePosition.lon,
+      }
+      setMissionItems(updatedMissionItems)
+    } else {
+      // If the first item is not a home position command, add a new home position item
+      const newHomeMissionItem = {
+        id: uuidv4(),
+        seq: 0,
+        x: newHomePosition.lat,
+        y: newHomePosition.lon,
+        z: 0.1,
+        frame: parseInt(
+          Object.keys(MAV_FRAME_LIST).find(
+            (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+          ),
+        ),
+        command: 16, // MAV_CMD_NAV_WAYPOINT
+        param1: 0,
+        param2: 0,
+        param3: 0,
+        param4: 0,
+        current: 0,
+        autocontinue: 1,
+        target_component: targetInfo.target_component,
+        target_system: targetInfo.target_system,
+        mission_type: 0,
+        mavpackettype: "MISSION_ITEM_INT",
+      }
+      setMissionItems((prevItems) => [newHomeMissionItem, ...prevItems])
+    }
+  }
+
   return (
     <Layout currentPage="missions">
       {/* Banner to let people know that things are still under development */}
@@ -472,7 +520,17 @@ export default function Missions() {
                 <Divider className="my-1" />
 
                 <div className="flex flex-col gap-2">
-                  <p className="font-bold">Home location</p>
+                  <p className="font-bold">
+                    Home location{" "}
+                    <span>
+                      <Tooltip
+                        className="inline"
+                        label="The home location is written to a mission save file."
+                      >
+                        <IconInfoCircle size={20} />
+                      </Tooltip>
+                    </span>
+                  </p>
                   <p>
                     Lat:{" "}
                     {intToCoord(homePosition?.lat).toFixed(
@@ -509,6 +567,7 @@ export default function Missions() {
                   markerDragEndCallback={updateMissionItem}
                   rallyDragEndCallback={updateRallyItem}
                   addNewMissionItem={addNewMissionItem}
+                  updateMissionHomePosition={updateMissionHomePosition}
                   mapId="missions"
                 />
               </div>

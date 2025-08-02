@@ -8,7 +8,7 @@ export function intToCoord(val) {
 }
 
 export function coordToInt(val) {
-  return val * 1e7
+  return parseInt(val * 1e7)
 }
 
 export const dataFormatters = {

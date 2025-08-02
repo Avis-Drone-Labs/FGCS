@@ -290,7 +290,7 @@ function MapSectionNonMemo({
           <HomeMarker
             lat={intToCoord(homePosition.lat)}
             lon={intToCoord(homePosition.lon)}
-            updateMissionHomePositionDragCb={({ _, x, y }) => {
+            updateMissionHomePositionDragCb={({ x, y }) => {
               updateMissionHomePosition(x, y)
             }}
             lineTo={

@@ -216,7 +216,7 @@ def exportMissionToFile(data: ExportMissionFileType) -> None:
         return
 
     if not droneStatus.drone:
-        return notConnectedError(action="export mission from file")
+        return notConnectedError(action="export mission to file")
 
     mission_type = data.get("type")
     mission_type_array = ["mission", "fence", "rally"]

@@ -658,8 +658,9 @@ class MissionController:
         Exports a mission to a file from a given list of waypoints.
 
         Args:
-            mission_type (int): The type of mission to import. 0=Mission,1=Fence,2=Rally.
-            file_path (str): The path to the waypoint file to import.
+            mission_type (int): The type of mission to export. 0=Mission,1=Fence,2=Rally.
+            file_path (str): The path to the waypoint file to export.
+            waypoints (List[dict]): The list of waypoints to upload. Each waypoint should be a dict with the required fields.
         """
         mission_type_check = self._checkMissionType(mission_type)
         if not mission_type_check.get("success"):

@@ -5,7 +5,7 @@ import path from 'node:path'
 import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
-import openFile, { getRecentFiles, clearRecentFiles } from './fla'
+import openFile, { clearRecentFiles, getRecentFiles } from './fla'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -447,6 +447,16 @@ app.whenReady().then(() => {
   })
   // Clear recent logs
   ipcMain.handle('fla:clear-recent-logs', clearRecentFiles)
+
+  // Save mission file
+  ipcMain.handle('missions:get-save-mission-file-path', async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (!window) {
+      throw new Error('No active window found')
+    }
+    const result = await dialog.showSaveDialog(window, options);
+    return result;
+  })
 
   ipcMain.handle('app:get-node-env', () =>
     app.isPackaged ? 'production' : 'development',

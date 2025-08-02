@@ -4,7 +4,7 @@ import os
 from typing import TYPE_CHECKING, Any, List
 
 import serial
-from app.customTypes import Response
+from app.customTypes import Number, Response
 from app.utils import commandAccepted
 from pymavlink import mavutil, mavwp
 
@@ -48,6 +48,18 @@ class MissionController:
                 "message": f"Invalid mission type {mission_type}. Must be one of {MISSION_TYPES}",
             }
         return {"success": True}
+
+    def _convertCoordinate(self, coordinate) -> Number:
+        gps_coordinate_scale = 1e7
+
+        if isinstance(coordinate, float):
+            return int(coordinate * gps_coordinate_scale)
+        elif isinstance(coordinate, int):
+            return coordinate / gps_coordinate_scale
+
+        raise ValueError(
+            f"Invalid coordinate type {type(coordinate)}. Must be int or float."
+        )
 
     def getCurrentMission(self, mission_type: int) -> Response:
         """
@@ -637,10 +649,8 @@ class MissionController:
 
         for wp in loader.wpoints:
             if hasattr(wp, "x") and hasattr(wp, "y"):
-                if isinstance(wp.x, float):
-                    wp.x = int(wp.x * 1e7)
-                if isinstance(wp.y, float):
-                    wp.y = int(wp.y * 1e7)
+                wp.x = self._convertCoordinate(wp.x)
+                wp.y = self._convertCoordinate(wp.y)
 
         self.drone.logger.info(
             f"Loaded waypoint file with {loader.count()} points successfully"
@@ -670,10 +680,8 @@ class MissionController:
 
         for wp in loader.wpoints:
             if hasattr(wp, "x") and hasattr(wp, "y"):
-                if isinstance(wp.x, int):
-                    wp.x = wp.x / 1e7
-                if isinstance(wp.y, int):
-                    wp.y = wp.y / 1e7
+                wp.x = self._convertCoordinate(wp.x)
+                wp.y = self._convertCoordinate(wp.y)
 
         if loader.count() == 0:
             return {

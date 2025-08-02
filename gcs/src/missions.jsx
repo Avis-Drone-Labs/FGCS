@@ -209,20 +209,24 @@ export default function Missions() {
     }
   }, [importFile])
 
+  function isGlobalFrameHomeCommand(waypoint) {
+    const globalFrameValue = parseInt(
+      Object.keys(MAV_FRAME_LIST).find(
+        (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+      ),
+    )
+    return (
+      waypoint.frame === globalFrameValue &&
+      waypoint.x !== 0 &&
+      waypoint.y !== 0 &&
+      waypoint.command === 16
+    )
+  }
+
   function updateHomePositionBasedOnWaypoints(waypoints) {
     if (waypoints.length > 0) {
       const potentialHomeLocation = waypoints[0]
-      if (
-        potentialHomeLocation.frame ===
-          parseInt(
-            Object.keys(MAV_FRAME_LIST).find(
-              (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
-            ),
-          ) &&
-        potentialHomeLocation.x !== 0 &&
-        potentialHomeLocation.y !== 0 &&
-        potentialHomeLocation.command === 16
-      ) {
+      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
         setHomePosition({
           lat: potentialHomeLocation.x,
           lon: potentialHomeLocation.y,

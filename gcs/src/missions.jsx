@@ -135,6 +135,7 @@ export default function Missions() {
         for (let missionItem of data.items) {
           missionItemsWithIds.push(addIdToItem(missionItem))
         }
+        updateHomePositionBasedOnWaypoints(missionItemsWithIds)
         setMissionItems(missionItemsWithIds)
       } else if (data.mission_type === "fence") {
         setFenceItems(data.items)
@@ -164,6 +165,9 @@ export default function Missions() {
           for (let missionItem of data.items) {
             missionItemsWithIds.push(addIdToItem(missionItem))
           }
+
+          updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+
           setMissionItems(missionItemsWithIds)
         } else if (data.mission_type === "fence") {
           setFenceItems(data.items)
@@ -180,6 +184,14 @@ export default function Missions() {
       }
     })
 
+    socket.on("export_mission_result", (data) => {
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
@@ -187,6 +199,7 @@ export default function Missions() {
       socket.off("current_mission")
       socket.off("write_mission_result")
       socket.off("import_mission_result")
+      socket.off("export_mission_result")
     }
   }, [connected])
 
@@ -195,6 +208,33 @@ export default function Missions() {
       importMissionFromFile(importFile.path)
     }
   }, [importFile])
+
+  function isGlobalFrameHomeCommand(waypoint) {
+    const globalFrameValue = parseInt(
+      Object.keys(MAV_FRAME_LIST).find(
+        (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+      ),
+    )
+    return (
+      waypoint.frame === globalFrameValue &&
+      waypoint.x !== 0 &&
+      waypoint.y !== 0 &&
+      waypoint.command === 16
+    )
+  }
+
+  function updateHomePositionBasedOnWaypoints(waypoints) {
+    if (waypoints.length > 0) {
+      const potentialHomeLocation = waypoints[0]
+      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+        setHomePosition({
+          lat: potentialHomeLocation.x,
+          lon: potentialHomeLocation.y,
+          alt: potentialHomeLocation.z,
+        })
+      }
+    }
+  }
 
   function getFlightMode() {
     if (aircraftType === 1) {
@@ -333,8 +373,34 @@ export default function Missions() {
     importFileResetRef.current?.()
   }
 
-  function saveMissionToFile() {
-    return
+  async function saveMissionToFile() {
+    // The options for the save dialog
+    const options = {
+      title: "Save the mission to a file",
+      filters: [
+        { name: "Waypoint Files", extensions: ["waypoints"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    }
+
+    const result = await window.ipcRenderer.getSaveMissionFilePath(options)
+
+    if (!result.canceled) {
+      let items = []
+      if (activeTab === "mission") {
+        items = missionItems
+      } else if (activeTab === "fence") {
+        items = fenceItems
+      } else if (activeTab === "rally") {
+        items = rallyItems
+      }
+
+      socket.emit("export_mission_to_file", {
+        type: activeTab,
+        file_path: result.filePath,
+        items: items,
+      })
+    }
   }
 
   return (

@@ -86,7 +86,7 @@
     "@vitejs/plugin-react": "^4.0.4",
     "@vitest/browser": "^2.0.5",
     "autoprefixer": "^10.4.16",
-    "electron": "^37.1.0",
+    "electron": "^26.1.0",
     "electron-builder": "^24.6.4",
     "eslint": "^8.48.0",
     "eslint-plugin-react-hooks": "^4.6.0",

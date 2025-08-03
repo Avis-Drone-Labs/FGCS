@@ -52,7 +52,6 @@ function MapSectionNonMemo({
   getFlightMode,
   currentTab,
   markerDragEndCallback,
-  rallyDragEndCallback,
   addNewMissionItem,
   mapId = "dashboard",
 }) {
@@ -266,9 +265,10 @@ function MapSectionNonMemo({
               lat={intToCoord(item.x)}
               lon={intToCoord(item.y)}
               colour={tailwindColors.purple[400]}
+              text={`${item.seq}`}
               tooltipText={item.z ? `Alt: ${item.z}` : null}
               draggable={currentTab === "rally"}
-              dragEndCallback={rallyDragEndCallback}
+              dragEndCallback={markerDragEndCallback}
             />
           )
         })}

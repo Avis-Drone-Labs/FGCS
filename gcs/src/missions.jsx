@@ -282,33 +282,40 @@ export default function Missions() {
   }
 
   function updateMissionItem(updatedMissionItem) {
-    setMissionItems((prevItems) =>
-      prevItems.map((item) =>
+    function getUpdatedItems(prevItems) {
+      return prevItems.map((item) =>
         item.id === updatedMissionItem.id
           ? { ...item, ...updatedMissionItem }
           : item,
-      ),
-    )
-  }
-  function updateRallyItem(updatedRallyItem) {
-    setRallyItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === updatedRallyItem.id
-          ? { ...item, ...updatedRallyItem }
-          : item,
-      ),
-    )
+      )
+    }
+
+    if (activeTab === "mission") {
+      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+    } else if (activeTab === "fence") {
+      // TODO: Implement fence item update logic
+    } else if (activeTab === "rally") {
+      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+    }
   }
 
   function deleteMissionItem(missionItemId) {
-    setMissionItems((prevItems) => {
+    function getUpdatedItems(prevItems) {
       const updatedItems = prevItems.filter((item) => item.id !== missionItemId)
 
       return updatedItems.map((item, index) => ({
         ...item,
         seq: index, // Reassign seq based on the new order
       }))
-    })
+    }
+
+    if (activeTab === "mission") {
+      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+    } else if (activeTab === "fence") {
+      // TODO: Implement fence item deletion logic
+    } else if (activeTab === "rally") {
+      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+    }
   }
 
   function updateMissionItemOrder(missionItemId, indexIncrement) {
@@ -507,7 +514,6 @@ export default function Missions() {
                   getFlightMode={getFlightMode}
                   currentTab={activeTab}
                   markerDragEndCallback={updateMissionItem}
-                  rallyDragEndCallback={updateRallyItem}
                   addNewMissionItem={addNewMissionItem}
                   mapId="missions"
                 />
@@ -550,7 +556,8 @@ export default function Missions() {
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
                       rallyItems={rallyItems}
-                      updateRallyItem={updateRallyItem}
+                      updateRallyItem={updateMissionItem}
+                      deleteRallyItem={deleteMissionItem}
                     />
                   </Tabs.Panel>
                 </Tabs>

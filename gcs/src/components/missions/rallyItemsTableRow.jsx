@@ -2,7 +2,14 @@
   This component displays the row for a rally item in a table.
 */
 
-import { NumberInput, Select, TableTd, TableTr } from "@mantine/core"
+import {
+  ActionIcon,
+  NumberInput,
+  Select,
+  TableTd,
+  TableTr,
+} from "@mantine/core"
+import { IconTrash } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
@@ -12,6 +19,7 @@ export default function RallyItemsTableRow({
   index,
   rallyItem,
   updateRallyItem,
+  deleteRallyItem,
 }) {
   const [rallyItemData, setRallyItemData] = useState(rallyItem)
 
@@ -85,6 +93,14 @@ export default function RallyItemsTableRow({
         />
       </TableTd>
       <TableTd>{getFrameName(rallyItemData.frame)}</TableTd>
+      <TableTd>
+        <ActionIcon
+          onClick={() => deleteRallyItem(rallyItemData.id)}
+          color="red"
+        >
+          <IconTrash size={20} />
+        </ActionIcon>
+      </TableTd>
     </TableTr>
   )
 }

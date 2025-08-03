@@ -61,6 +61,34 @@ class MissionController:
             f"Invalid coordinate type {type(coordinate)}. Must be int or float."
         )
 
+    def _getMissionName(self, mission_type: int) -> str:
+        """
+        Get the name of the mission type.
+
+        Args:
+            mission_type (int): The type of mission to get the name for.
+        """
+        if mission_type == TYPE_MISSION:
+            return "mission"
+        elif mission_type == TYPE_FENCE:
+            return "fence"
+        elif mission_type == TYPE_RALLY:
+            return "rally"
+        else:
+            raise ValueError(f"Invalid mission type {mission_type}")
+
+    def _getCommandName(self, command: int) -> str:
+        """
+        Get the name of the command type.
+
+        Args:
+            command (int): The command to get the name for.
+        """
+        try:
+            return mavutil.mavlink.enums["MAV_CMD"][command].name
+        except KeyError:
+            return f"Unknown command {command}"
+
     def getCurrentMission(self, mission_type: int) -> Response:
         """
         Get the current mission of a specific type from the drone.
@@ -665,23 +693,25 @@ class MissionController:
                         mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
                     ]
                 )
-                or (mission_type == TYPE_MISSION)
-                and wp.command
-                in [
-                    mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT,
-                    mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
-                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
-                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
-                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
-                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
-                ]
+                or (
+                    mission_type == TYPE_MISSION
+                    and wp.command
+                    in [
+                        mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                    ]
+                )
             ):
                 self.drone.logger.error(
-                    f"Waypoint command {wp.command} does not match mission type {mission_type}"
+                    f"Waypoint command {self._getCommandName(wp.command)} does not match mission type {self._getMissionName(mission_type)}"
                 )
                 return {
                     "success": False,
-                    "message": f"Could not load the waypoint file. Waypoint command {wp.command} does not match mission type {mission_type}",
+                    "message": f"Could not load the waypoint file. Waypoint command {self._getCommandName(wp.command)} does not match mission type {self._getMissionName(mission_type)}",
                 }
 
             # Convert coordinates to the correct format

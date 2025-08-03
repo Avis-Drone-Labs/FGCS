@@ -5,7 +5,11 @@ import { Table } from "@mantine/core"
 import React from "react"
 import RallyItemsTableRow from "./rallyItemsTableRow"
 
-function RallyItemsTableNonMemo({ rallyItems, updateRallyItem }) {
+function RallyItemsTableNonMemo({
+  rallyItems,
+  updateRallyItem,
+  deleteRallyItem,
+}) {
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>
@@ -20,6 +24,7 @@ function RallyItemsTableNonMemo({ rallyItems, updateRallyItem }) {
           <Table.Th>Lng</Table.Th>
           <Table.Th>Alt</Table.Th>
           <Table.Th>Frame</Table.Th>
+          <Table.Th></Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
@@ -30,6 +35,7 @@ function RallyItemsTableNonMemo({ rallyItems, updateRallyItem }) {
               index={idx}
               rallyItem={rallyItem}
               updateRallyItem={updateRallyItem}
+              deleteRallyItem={deleteRallyItem}
             />
           )
         })}

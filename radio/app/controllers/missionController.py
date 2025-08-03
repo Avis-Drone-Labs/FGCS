@@ -648,6 +648,43 @@ class MissionController:
                 }
 
         for wp in loader.wpoints:
+            # Check if mission type correlates to correct command
+            if (
+                (
+                    mission_type == TYPE_RALLY
+                    and wp.command != mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT
+                )
+                or (
+                    mission_type == TYPE_FENCE
+                    and wp.command
+                    not in [
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
+                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                    ]
+                )
+                or (mission_type == TYPE_MISSION)
+                and wp.command
+                in [
+                    mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                ]
+            ):
+                self.drone.logger.error(
+                    f"Waypoint command {wp.command} does not match mission type {mission_type}"
+                )
+                return {
+                    "success": False,
+                    "message": f"Could not load the waypoint file. Waypoint command {wp.command} does not match mission type {mission_type}",
+                }
+
+            # Convert coordinates to the correct format
             if hasattr(wp, "x") and hasattr(wp, "y"):
                 wp.x = self._convertCoordinate(wp.x)
                 wp.y = self._convertCoordinate(wp.y)

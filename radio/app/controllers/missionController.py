@@ -503,7 +503,7 @@ class MissionController:
             return clear_mission_response
 
         # If the loader is empty, we don't need to upload anything.
-        if new_loader.count() == 0 and mission_type in [TYPE_FENCE, TYPE_RALLY]:
+        if new_loader.count() == 0:
             self.drone.logger.info(
                 f"Cleared mission type {mission_type}, no waypoints to upload"
             )

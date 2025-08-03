@@ -176,6 +176,7 @@ export default function Missions() {
           for (let rallyItem of data.items) {
             rallyItemsWithIds.push(addIdToItem(rallyItem))
           }
+
           setRallyItems(rallyItemsWithIds)
         }
         showSuccessNotification(data.message)
@@ -256,7 +257,7 @@ export default function Missions() {
   function addNewMissionItem(lat, lon) {
     const newMissionItem = {
       id: uuidv4(),
-      seq: missionItems.length,
+      seq: null,
       x: coordToInt(lat),
       y: coordToInt(lon),
       z: newMissionItemAltitude,
@@ -265,7 +266,7 @@ export default function Missions() {
           (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
         ),
       ),
-      command: 16, // MAV_CMD_NAV_WAYPOINT
+      command: null,
       param1: 0,
       param2: 0,
       param3: 0,
@@ -274,11 +275,70 @@ export default function Missions() {
       autocontinue: 1,
       target_component: targetInfo.target_component,
       target_system: targetInfo.target_system,
-      mission_type: 0,
+      mission_type: null,
       mavpackettype: "MISSION_ITEM_INT",
     }
 
-    setMissionItems((prevItems) => [...prevItems, newMissionItem])
+    if (activeTab === "mission") {
+      newMissionItem.seq = missionItems.length
+      newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
+      newMissionItem.mission_type = 0 // Mission type
+
+      setMissionItems((prevItems) => [...prevItems, newMissionItem])
+    } else if (activeTab === "fence") {
+      newMissionItem.seq = fenceItems.length
+      newMissionItem.command = 5100 // MAV_CMD_NAV_FENCE_POINT
+      newMissionItem.mission_type = 1 // Fence type
+
+      setFenceItems((prevItems) => [...prevItems, newMissionItem])
+    } else if (activeTab === "rally") {
+      newMissionItem.seq = rallyItems.length
+      newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
+      newMissionItem.mission_type = 2 // Rally type
+
+      setRallyItems((prevItems) => [...prevItems, newMissionItem])
+    }
+  }
+
+  function createHomePositionItem() {
+    if (!homePosition) {
+      showErrorNotification("Home position is not set")
+      return
+    }
+
+    const newHomeItem = {
+      id: uuidv4(),
+      seq: 0, // Home position is always the first item
+      x: homePosition.lat,
+      y: homePosition.lon,
+      z: homePosition.alt || 0,
+      frame: parseInt(
+        Object.keys(MAV_FRAME_LIST).find(
+          (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+        ),
+      ),
+      command: 16, // MAV_CMD_NAV_WAYPOINT
+      param1: 0,
+      param2: 0,
+      param3: 0,
+      param4: 0,
+      current: 1, // Set as current waypoint
+      autocontinue: 1,
+      target_component: targetInfo.target_component,
+      target_system: targetInfo.target_system,
+      mission_type: null,
+      mavpackettype: "MISSION_ITEM_INT",
+    }
+
+    if (activeTab === "mission") {
+      newHomeItem.mission_type = 0 // Mission type
+    } else if (activeTab === "fence") {
+      newHomeItem.mission_type = 1 // Fence type
+    } else if (activeTab === "rally") {
+      newHomeItem.mission_type = 2 // Rally type
+    }
+
+    return newHomeItem
   }
 
   function updateMissionItem(updatedMissionItem) {
@@ -395,11 +455,22 @@ export default function Missions() {
     if (!result.canceled) {
       let items = []
       if (activeTab === "mission") {
-        items = missionItems
+        items = [...missionItems]
       } else if (activeTab === "fence") {
-        items = fenceItems
+        items = [...fenceItems]
       } else if (activeTab === "rally") {
-        items = rallyItems
+        items = [...rallyItems]
+
+        const newHomeItem = createHomePositionItem()
+        if (newHomeItem) {
+          items.unshift(newHomeItem) // Add home item at the beginning
+        }
+
+        // Ensure all sequence values are updated
+        items = items.map((item, index) => ({
+          ...item,
+          seq: index,
+        }))
       }
 
       socket.emit("export_mission_to_file", {

@@ -177,6 +177,7 @@ export default function Missions() {
           for (let rallyItem of data.items) {
             rallyItemsWithIds.push(addIdToItem(rallyItem))
           }
+
           setRallyItems(rallyItemsWithIds)
         }
         showSuccessNotification(data.message)
@@ -257,7 +258,7 @@ export default function Missions() {
   function addNewMissionItem(lat, lon) {
     const newMissionItem = {
       id: uuidv4(),
-      seq: missionItems.length,
+      seq: null,
       x: coordToInt(lat),
       y: coordToInt(lon),
       z: newMissionItemAltitude,
@@ -266,7 +267,7 @@ export default function Missions() {
           (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
         ),
       ),
-      command: 16, // MAV_CMD_NAV_WAYPOINT
+      command: null,
       param1: 0,
       param2: 0,
       param3: 0,
@@ -275,41 +276,106 @@ export default function Missions() {
       autocontinue: 1,
       target_component: targetInfo.target_component,
       target_system: targetInfo.target_system,
-      mission_type: 0,
+      mission_type: null,
       mavpackettype: "MISSION_ITEM_INT",
     }
 
-    setMissionItems((prevItems) => [...prevItems, newMissionItem])
+    if (activeTab === "mission") {
+      newMissionItem.seq = missionItems.length
+      newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
+      newMissionItem.mission_type = 0 // Mission type
+
+      setMissionItems((prevItems) => [...prevItems, newMissionItem])
+    } else if (activeTab === "fence") {
+      newMissionItem.seq = fenceItems.length
+      newMissionItem.command = 5100 // MAV_CMD_NAV_FENCE_POINT
+      newMissionItem.mission_type = 1 // Fence type
+
+      setFenceItems((prevItems) => [...prevItems, newMissionItem])
+    } else if (activeTab === "rally") {
+      newMissionItem.seq = rallyItems.length
+      newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
+      newMissionItem.mission_type = 2 // Rally type
+
+      setRallyItems((prevItems) => [...prevItems, newMissionItem])
+    }
+  }
+
+  function createHomePositionItem() {
+    if (!homePosition) {
+      showErrorNotification("Home position is not set")
+      return
+    }
+
+    const newHomeItem = {
+      id: uuidv4(),
+      seq: 0, // Home position is always the first item
+      x: homePosition.lat,
+      y: homePosition.lon,
+      z: homePosition.alt || 0,
+      frame: parseInt(
+        Object.keys(MAV_FRAME_LIST).find(
+          (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+        ),
+      ),
+      command: 16, // MAV_CMD_NAV_WAYPOINT
+      param1: 0,
+      param2: 0,
+      param3: 0,
+      param4: 0,
+      current: 1, // Set as current waypoint
+      autocontinue: 1,
+      target_component: targetInfo.target_component,
+      target_system: targetInfo.target_system,
+      mission_type:
+        activeTab === "mission"
+          ? 0
+          : activeTab === "fence"
+            ? 1
+            : activeTab === "rally"
+              ? 2
+              : 0, // Default to 0 (Mission type) if activeTab is unrecognized,
+      mavpackettype: "MISSION_ITEM_INT",
+    }
+
+    return newHomeItem
   }
 
   function updateMissionItem(updatedMissionItem) {
-    setMissionItems((prevItems) =>
-      prevItems.map((item) =>
+    function getUpdatedItems(prevItems) {
+      return prevItems.map((item) =>
         item.id === updatedMissionItem.id
           ? { ...item, ...updatedMissionItem }
           : item,
-      ),
-    )
-  }
-  function updateRallyItem(updatedRallyItem) {
-    setRallyItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === updatedRallyItem.id
-          ? { ...item, ...updatedRallyItem }
-          : item,
-      ),
-    )
+      )
+    }
+
+    if (activeTab === "mission") {
+      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+    } else if (activeTab === "fence") {
+      // TODO: Implement fence item update logic
+    } else if (activeTab === "rally") {
+      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+    }
   }
 
   function deleteMissionItem(missionItemId) {
-    setMissionItems((prevItems) => {
+    function getUpdatedItems(prevItems) {
       const updatedItems = prevItems.filter((item) => item.id !== missionItemId)
 
       return updatedItems.map((item, index) => ({
         ...item,
         seq: index, // Reassign seq based on the new order
       }))
-    })
+    }
+
+    if (activeTab === "mission") {
+      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+    } else if (activeTab === "fence") {
+      // TODO: Implement fence item deletion logic
+    } else if (activeTab === "rally") {
+      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+    }
   }
 
   function updateMissionItemOrder(missionItemId, indexIncrement) {
@@ -389,11 +455,22 @@ export default function Missions() {
     if (!result.canceled) {
       let items = []
       if (activeTab === "mission") {
-        items = missionItems
+        items = [...missionItems]
       } else if (activeTab === "fence") {
-        items = fenceItems
+        items = [...fenceItems]
       } else if (activeTab === "rally") {
-        items = rallyItems
+        items = [...rallyItems]
+
+        const newHomeItem = createHomePositionItem()
+        if (newHomeItem) {
+          items.unshift(newHomeItem) // Add home item at the beginning
+        }
+
+        // Ensure all sequence values are updated
+        items = items.map((item, index) => ({
+          ...item,
+          seq: index,
+        }))
       }
 
       socket.emit("export_mission_to_file", {
@@ -565,7 +642,6 @@ export default function Missions() {
                   getFlightMode={getFlightMode}
                   currentTab={activeTab}
                   markerDragEndCallback={updateMissionItem}
-                  rallyDragEndCallback={updateRallyItem}
                   addNewMissionItem={addNewMissionItem}
                   updateMissionHomePosition={updateMissionHomePosition}
                   mapId="missions"
@@ -609,7 +685,8 @@ export default function Missions() {
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
                       rallyItems={rallyItems}
-                      updateRallyItem={updateRallyItem}
+                      updateRallyItem={updateMissionItem}
+                      deleteRallyItem={deleteMissionItem}
                     />
                   </Tabs.Panel>
                 </Tabs>

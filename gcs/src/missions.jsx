@@ -326,16 +326,15 @@ export default function Missions() {
       autocontinue: 1,
       target_component: targetInfo.target_component,
       target_system: targetInfo.target_system,
-      mission_type: null,
+      mission_type:
+        activeTab === "mission"
+          ? 0
+          : activeTab === "fence"
+            ? 1
+            : activeTab === "rally"
+              ? 2
+              : 0, // Default to 0 (Mission type) if activeTab is unrecognized,
       mavpackettype: "MISSION_ITEM_INT",
-    }
-
-    if (activeTab === "mission") {
-      newHomeItem.mission_type = 0 // Mission type
-    } else if (activeTab === "fence") {
-      newHomeItem.mission_type = 1 // Fence type
-    } else if (activeTab === "rally") {
-      newHomeItem.mission_type = 2 // Rally type
     }
 
     return newHomeItem

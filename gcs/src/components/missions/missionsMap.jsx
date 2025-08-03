@@ -54,6 +54,7 @@ function MapSectionNonMemo({
   markerDragEndCallback,
   addNewMissionItem,
   updateMissionHomePosition,
+  clearMissionItems,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -345,6 +346,11 @@ function MapSectionNonMemo({
             >
               <div className="w-full flex justify-between gap-2">
                 <p>Set home position</p>
+              </div>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={clearMissionItems}>
+              <div className="w-full flex justify-between gap-2">
+                <p>Clear mission</p>
               </div>
             </ContextMenuItem>
           </div>

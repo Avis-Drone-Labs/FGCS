@@ -11,7 +11,12 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function HomeMarker({ lat, lon, lineTo = null }) {
+export default function HomeMarker({
+  lat,
+  lon,
+  updateMissionHomePositionDragCb,
+  lineTo = null,
+}) {
   return (
     <>
       <MarkerPin
@@ -20,6 +25,8 @@ export default function HomeMarker({ lat, lon, lineTo = null }) {
         colour={tailwindColors.green[400]}
         text={"H"}
         showOnTop={true}
+        draggable={true}
+        dragEndCallback={updateMissionHomePositionDragCb}
       />
       {lineTo !== null && (
         <DrawLineCoordinates

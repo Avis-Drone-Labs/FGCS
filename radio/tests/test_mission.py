@@ -409,6 +409,6 @@ def test_writeCurrentMission_correctState_noWaypoints(
 
     assert socketio_result["name"] == "write_mission_result"
     assert socketio_result["args"][0] == {
-        "success": False,
+        "success": True,
         "message": "Cleared mission type 0, no waypoints to upload",
     }

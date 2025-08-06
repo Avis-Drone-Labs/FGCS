@@ -24,6 +24,12 @@ process.env.VITE_PUBLIC = app.isPackaged
 app.commandLine.appendSwitch('high-dpi-support', '1')
 app.commandLine.appendSwitch('force-device-scale-factor', '1')
 
+// Fix linux WebGL error (icl chatgpt made this)
+app.commandLine.appendSwitch('use-gl', 'desktop'); // force mesa
+app.commandLine.appendSwitch('ignore-gpu-blacklist'); // allow iris, etc.
+app.commandLine.appendSwitch('enable-webgl');
+app.commandLine.appendSwitch('enable-webgl2-compute-context');
+
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
 let webcamPopoutWin: BrowserWindow | null

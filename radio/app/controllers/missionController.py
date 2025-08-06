@@ -498,15 +498,19 @@ class MissionController:
 
         new_loader = self._parseWaypointsListIntoLoader(waypoints, mission_type)
 
-        if new_loader.count() == 0:
-            return {
-                "success": False,
-                "message": f"No waypoints loaded for the mission type of {mission_type}",
-            }
-
         clear_mission_response = self.clearMission(mission_type)
         if not clear_mission_response.get("success"):
             return clear_mission_response
+
+        # If the loader is empty, we don't need to upload anything.
+        if new_loader.count() == 0:
+            self.drone.logger.info(
+                f"Cleared mission type {mission_type}, no waypoints to upload"
+            )
+            return {
+                "success": True,
+                "message": f"Cleared mission type {mission_type}, no waypoints to upload",
+            }
 
         self.drone.is_listening = False
 

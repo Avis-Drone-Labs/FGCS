@@ -528,6 +528,24 @@ export default function Missions() {
     }
   }
 
+  function clearMissionItems() {
+    if (activeTab === "mission") {
+      // Clear all mission items except the first if the first is a home position
+      if (
+        missionItems.length > 0 &&
+        isGlobalFrameHomeCommand(missionItems[0])
+      ) {
+        setMissionItems([missionItems[0]])
+      } else {
+        setMissionItems([])
+      }
+    } else if (activeTab === "fence") {
+      setFenceItems([])
+    } else if (activeTab === "rally") {
+      setRallyItems([])
+    }
+  }
+
   return (
     <Layout currentPage="missions">
       {/* Banner to let people know that things are still under development */}
@@ -644,6 +662,7 @@ export default function Missions() {
                   markerDragEndCallback={updateMissionItem}
                   addNewMissionItem={addNewMissionItem}
                   updateMissionHomePosition={updateMissionHomePosition}
+                  clearMissionItems={clearMissionItems}
                   mapId="missions"
                 />
               </div>

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import serial
 from app.customTypes import Number, Response
@@ -89,9 +89,18 @@ class MissionController:
         except KeyError:
             return f"Unknown command {command}"
 
-    def getCurrentMission(self, mission_type: int) -> Response:
+    def getCurrentMission(
+        self,
+        mission_type: int,
+        progressUpdateCallback: Optional[Callable[[str, float], None]] = None,
+    ) -> Response:
         """
         Get the current mission of a specific type from the drone.
+
+        Args:
+            mission_type (int): The type of mission to get. 0=Mission,1=Fence,2=Rally.
+            progressUpdateCallback (Optional[Callable]): A callback function to update the progress of the mission fetch.
+                The callback should accept a string message and a float progress value.
         """
         mission_type_check = self._checkMissionType(mission_type)
         if not mission_type_check.get("success"):
@@ -100,7 +109,7 @@ class MissionController:
         failure_message = "Could not get current mission"
 
         try:
-            mission_items = self.getMissionItems(mission_type=mission_type)
+            mission_items = self.getMissionItems(mission_type, progressUpdateCallback)
             if not mission_items.get("success"):
                 return {
                     "success": False,
@@ -152,12 +161,18 @@ class MissionController:
             },
         }
 
-    def getMissionItems(self, mission_type: int) -> Response:
+    def getMissionItems(
+        self,
+        mission_type: int,
+        progressUpdateCallback: Optional[Callable[[str, float], None]] = None,
+    ) -> Response:
         """
         Get all mission items of a specific type from the drone.
 
         Args:
             mission_type (int): The type of mission to get. 0=Mission,1=Fence,2=Rally.
+            progressUpdateCallback (Optional[Callable]): A callback function to update the progress of the mission fetch.
+                The callback should accept a string message and a float progress value.
         """
         mission_type_check = self._checkMissionType(mission_type)
         if not mission_type_check.get("success"):
@@ -213,6 +228,12 @@ class MissionController:
                     f"Got response for mission count of {response.count} for mission type {response.mission_type}"
                 )
                 loader.clear()
+
+                if progressUpdateCallback:
+                    progressUpdateCallback(
+                        f"Received count of {response.count} waypoints", 0.0
+                    )
+
                 self.drone.is_listening = True
                 for i in range(0, response.count):
                     retry_count = 0
@@ -231,6 +252,12 @@ class MissionController:
 
                         if item_response_data:
                             loader.add(item_response_data)
+
+                            if progressUpdateCallback and response.count != 0:
+                                progressUpdateCallback(
+                                    f"Received waypoint {i+1}", (i + 1) / response.count
+                                )
+
                             break
                         else:
                             self.drone.logger.warning(
@@ -512,13 +539,20 @@ class MissionController:
         )
         return loader
 
-    def uploadMission(self, mission_type: int, waypoints: List[dict]) -> Response:
+    def uploadMission(
+        self,
+        mission_type: int,
+        waypoints: List[dict],
+        progressUpdateCallback: Optional[Callable[[str, float], None]] = None,
+    ) -> Response:
         """
         Uploads the current mission to the drone. This method overwrites the current loader if the upload is successful.
 
         Args:
             mission_type (int): The type of mission to upload. 0=Mission,1=Fence,2=Rally.
             waypoints (List[dict]): The list of waypoints to upload. Each waypoint should be a dict with the required fields.
+            progressUpdateCallback (Optional[Callable]): A callback function to update the progress of the mission writing.
+                The callback should accept a string message and a float progress value.
         """
         mission_type_check = self._checkMissionType(mission_type)
         if not mission_type_check.get("success"):
@@ -576,6 +610,12 @@ class MissionController:
                         f"Sending mission item {response.seq} out of {new_loader.count()-1}"
                     )
                     self.drone.master.mav.send(new_loader.item(response.seq))
+
+                    if progressUpdateCallback and new_loader.count() != 0:
+                        progressUpdateCallback(
+                            f"Sending waypoint {response.seq + 1}",
+                            (response.seq + 1) / (new_loader.count()),
+                        )
 
                     if response.seq == new_loader.count() - 1:
                         mission_ack_response = self.drone.master.recv_match(

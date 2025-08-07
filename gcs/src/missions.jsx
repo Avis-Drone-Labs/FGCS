@@ -6,12 +6,24 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { useLocalStorage, useSessionStorage } from "@mantine/hooks"
+import {
+  useDisclosure,
+  useLocalStorage,
+  useSessionStorage,
+} from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
 // Custom component and helpers
-import { Button, Divider, FileButton, Tabs, Tooltip } from "@mantine/core"
+import {
+  Button,
+  Divider,
+  FileButton,
+  Modal,
+  Progress,
+  Tabs,
+  Tooltip,
+} from "@mantine/core"
 import { IconInfoCircle } from "@tabler/icons-react"
 import Layout from "./components/layout"
 import MissionItemsTable from "./components/missions/missionItemsTable"
@@ -71,6 +83,15 @@ export default function Missions() {
 
   const newMissionItemAltitude = 30 // TODO: Make this configurable
 
+  const [
+    missionProgressModalOpened,
+    { open: openMissionProgressModal, close: closeMissionProgressModal },
+  ] = useDisclosure(false)
+  const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
+    "Mission progress update",
+  )
+  const [missionProgressModalData, setMissionProgressModalData] = useState({})
+
   // Heartbeat data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
 
@@ -126,6 +147,8 @@ export default function Missions() {
     })
 
     socket.on("current_mission", (data) => {
+      closeMissionProgressModal()
+
       if (!data.success) {
         showErrorNotification(data.message)
         return
@@ -152,6 +175,8 @@ export default function Missions() {
     })
 
     socket.on("write_mission_result", (data) => {
+      closeMissionProgressModal()
+
       if (data.success) {
         showSuccessNotification(data.message)
       } else {
@@ -194,6 +219,10 @@ export default function Missions() {
       }
     })
 
+    socket.on("current_mission_progress", (data) => {
+      setMissionProgressModalData(data)
+    })
+
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
@@ -202,6 +231,7 @@ export default function Missions() {
       socket.off("write_mission_result")
       socket.off("import_mission_result")
       socket.off("export_mission_result")
+      socket.off("current_mission_progress")
     }
   }, [connected])
 
@@ -210,6 +240,13 @@ export default function Missions() {
       importMissionFromFile(importFile.path)
     }
   }, [importFile])
+
+  function resetMissionProgressModalData() {
+    setMissionProgressModalData({
+      message: "",
+      progress: null,
+    })
+  }
 
   function isGlobalFrameHomeCommand(waypoint) {
     const globalFrameValue = parseInt(
@@ -414,6 +451,9 @@ export default function Missions() {
 
   function readMissionFromDrone() {
     socket.emit("get_current_mission", { type: activeTab })
+    setMissionProgressModalTitle(`Reading ${activeTab} from drone`)
+    resetMissionProgressModalData()
+    openMissionProgressModal()
   }
 
   function writeMissionToDrone() {
@@ -427,6 +467,9 @@ export default function Missions() {
     } else if (activeTab === "rally") {
       socket.emit("write_current_mission", { type: "rally", items: rallyItems })
     }
+    setMissionProgressModalTitle(`Writing ${activeTab} to drone`)
+    resetMissionProgressModalData()
+    openMissionProgressModal()
   }
 
   function importMissionFromFile(filePath) {
@@ -548,6 +591,40 @@ export default function Missions() {
 
   return (
     <Layout currentPage="missions">
+      <Modal
+        opened={missionProgressModalOpened}
+        onClose={closeMissionProgressModal}
+        title={missionProgressModalTitle}
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        withCloseButton={false}
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <div className="flex flex-col items-center justify-center mt-4">
+          {missionProgressModalData.message && (
+            <p className="text-center mb-2">
+              {missionProgressModalData.message}
+            </p>
+          )}
+
+          {missionProgressModalData.progress !== null &&
+            missionProgressModalData.progress !== undefined && (
+              <Progress
+                color="lime"
+                animated
+                size="lg"
+                transitionDuration={300}
+                value={missionProgressModalData.progress * 100}
+                className="w-full mx-auto my-auto"
+              />
+            )}
+        </div>
+      </Modal>
+
       {/* Banner to let people know that things are still under development */}
       <div className="bg-falconred-700 text-white text-center">
         Missions is still under development so some features are still missing.

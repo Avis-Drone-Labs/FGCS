@@ -90,7 +90,7 @@ class MissionController:
             return f"Unknown command {command}"
 
     def getCurrentMission(
-        self, mission_type: int, progressUpdateCallback: Optional[Callable]
+        self, mission_type: int, progressUpdateCallback: Optional[Callable] = None
     ) -> Response:
         """
         Get the current mission of a specific type from the drone.
@@ -159,7 +159,7 @@ class MissionController:
         }
 
     def getMissionItems(
-        self, mission_type: int, progressUpdateCallback: Optional[Callable]
+        self, mission_type: int, progressUpdateCallback: Optional[Callable] = None
     ) -> Response:
         """
         Get all mission items of a specific type from the drone.
@@ -537,7 +537,7 @@ class MissionController:
         self,
         mission_type: int,
         waypoints: List[dict],
-        progressUpdateCallback: Optional[Callable],
+        progressUpdateCallback: Optional[Callable] = None,
     ) -> Response:
         """
         Uploads the current mission to the drone. This method overwrites the current loader if the upload is successful.

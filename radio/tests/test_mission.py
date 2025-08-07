@@ -365,7 +365,7 @@ def test_writeCurrentMission_correctState(
     }
 
     socketio_client.emit("write_current_mission", data)
-    socketio_result = socketio_client.get_received()[0]
+    socketio_result = socketio_client.get_received()[-1]
 
     assert socketio_result["name"] == "write_mission_result"
     assert socketio_result["args"][0] == {

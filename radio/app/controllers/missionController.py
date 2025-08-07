@@ -231,7 +231,7 @@ class MissionController:
 
                 if progressUpdateCallback:
                     progressUpdateCallback(
-                        f"Received count of {response.count} waypoints", 0
+                        f"Received count of {response.count} waypoints", 0.0
                     )
 
                 self.drone.is_listening = True
@@ -253,7 +253,7 @@ class MissionController:
                         if item_response_data:
                             loader.add(item_response_data)
 
-                            if progressUpdateCallback:
+                            if progressUpdateCallback and response.count != 0:
                                 progressUpdateCallback(
                                     f"Received waypoint {i+1}", (i + 1) / response.count
                                 )
@@ -611,7 +611,7 @@ class MissionController:
                     )
                     self.drone.master.mav.send(new_loader.item(response.seq))
 
-                    if progressUpdateCallback:
+                    if progressUpdateCallback and new_loader.count() != 0:
                         progressUpdateCallback(
                             f"Sending waypoint {response.seq + 1}",
                             (response.seq + 1) / (new_loader.count()),

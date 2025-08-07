@@ -29,6 +29,15 @@ class ControlMissionType(TypedDict):
     action: str
 
 
+def progressUpdateCallback(message: str, progress: float) -> None:
+    """
+    Callback that is used to update the frontend with the current mission function progress.
+    """
+    socketio.emit(
+        "current_mission_progress", {"message": message, "progress": progress}
+    )
+
+
 @socketio.on("get_current_mission")
 def getCurrentMission(data: CurrentMissionType) -> None:
     """
@@ -62,7 +71,7 @@ def getCurrentMission(data: CurrentMissionType) -> None:
         return
 
     result = droneStatus.drone.missionController.getCurrentMission(
-        mission_type_array.index(mission_type)
+        mission_type_array.index(mission_type), progressUpdateCallback
     )
 
     if not result.get("success"):
@@ -143,7 +152,7 @@ def writeCurrentMission(data: WriteCurrentMissionType) -> None:
     items = data.get("items", [])
 
     result = droneStatus.drone.missionController.uploadMission(
-        mission_type_array.index(mission_type), items
+        mission_type_array.index(mission_type), items, progressUpdateCallback
     )
     if not result.get("success"):
         logger.error(result.get("message"))

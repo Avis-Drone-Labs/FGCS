@@ -611,17 +611,17 @@ export default function Missions() {
             </p>
           )}
 
-          {(missionProgressModalData.progress !== null ||
-            missionProgressModalData !== undefined) && (
-            <Progress
-              color="lime"
-              animated
-              size="lg"
-              transitionDuration={300}
-              value={missionProgressModalData.progress * 100}
-              className="w-full mx-auto my-auto"
-            />
-          )}
+          {missionProgressModalData.progress !== null &&
+            missionProgressModalData.progress !== undefined && (
+              <Progress
+                color="lime"
+                animated
+                size="lg"
+                transitionDuration={300}
+                value={missionProgressModalData.progress * 100}
+                className="w-full mx-auto my-auto"
+              />
+            )}
         </div>
       </Modal>
 

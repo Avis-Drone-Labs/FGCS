@@ -314,7 +314,7 @@ export default function Missions() {
         ),
       ),
       command: null,
-      param1: 0,
+      param1: activeTab === "fence" ? 5 : 0,
       param2: 0,
       param3: 0,
       param4: 0,
@@ -399,7 +399,7 @@ export default function Missions() {
     if (activeTab === "mission") {
       setMissionItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "fence") {
-      // TODO: Implement fence item update logic
+      setFenceItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "rally") {
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
     }
@@ -418,14 +418,14 @@ export default function Missions() {
     if (activeTab === "mission") {
       setMissionItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "fence") {
-      // TODO: Implement fence item deletion logic
+      setFenceItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "rally") {
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
     }
   }
 
   function updateMissionItemOrder(missionItemId, indexIncrement) {
-    setMissionItems((prevItems) => {
+    function updateItemOrder(prevItems) {
       const currentIndex = prevItems.findIndex(
         (item) => item.id === missionItemId,
       )
@@ -455,7 +455,13 @@ export default function Missions() {
       updatedItems[newIndex].seq = newIndex
 
       return updatedItems
-    })
+    }
+
+    if (activeTab === "mission") {
+      setMissionItems((prevItems) => updateItemOrder(prevItems))
+    } else if (activeTab === "fence") {
+      setFenceItems((prevItems) => updateItemOrder(prevItems))
+    }
   }
 
   function readMissionFromDrone() {
@@ -510,6 +516,17 @@ export default function Missions() {
         items = [...missionItems]
       } else if (activeTab === "fence") {
         items = [...fenceItems]
+
+        const newHomeItem = createHomePositionItem()
+        if (newHomeItem) {
+          items.unshift(newHomeItem) // Add home item at the beginning
+        }
+
+        // Ensure all sequence values are updated
+        items = items.map((item, index) => ({
+          ...item,
+          seq: index,
+        }))
       } else if (activeTab === "rally") {
         items = [...rallyItems]
 

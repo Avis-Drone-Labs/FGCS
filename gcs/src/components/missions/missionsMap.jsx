@@ -27,7 +27,6 @@ import { useSettings } from "../../helpers/settings"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
-import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import DroneMarker from "../mapComponents/droneMarker"
 import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
@@ -37,6 +36,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import FenceItems from "../mapComponents/fenceItems"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -228,38 +228,11 @@ function MapSectionNonMemo({
           dragEndCallback={markerDragEndCallback}
         />
 
-        {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
-          return (
-            <MarkerPin
-              key={index}
-              id={item.id}
-              lat={intToCoord(item.x)}
-              lon={intToCoord(item.y)}
-              colour={tailwindColors.blue[400]}
-              draggable={currentTab === "fence"}
-              dragEndCallback={markerDragEndCallback}
-            />
-          )
-        })}
-
-        {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
-          <DrawLineCoordinates
-            coordinates={[
-              ...missionItems.fence_items.map((item) => [
-                intToCoord(item.y),
-                intToCoord(item.x),
-              ]),
-              [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
-              ],
-            ]}
-            colour={tailwindColors.blue[200]}
-            lineProps={{ "line-dasharray": [4, 6] }}
-          />
-        )}
+        <FenceItems
+          fenceItems={missionItems.fence_items}
+          editable={currentTab === "fence"}
+          dragEndCallback={markerDragEndCallback}
+        />
 
         {/* Show mission rally point */}
         {missionItems.rally_items.map((item, index) => {

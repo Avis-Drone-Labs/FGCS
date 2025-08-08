@@ -119,6 +119,10 @@ export default function Missions() {
   )
 
   useEffect(() => {
+    setActiveTab("mission") // Default to mission tab on load
+  }, [])
+
+  useEffect(() => {
     if (!connected) {
       return
     } else {

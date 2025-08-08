@@ -233,9 +233,12 @@ function MapSectionNonMemo({
           return (
             <MarkerPin
               key={index}
+              id={item.id}
               lat={intToCoord(item.x)}
               lon={intToCoord(item.y)}
               colour={tailwindColors.blue[400]}
+              draggable={currentTab === "fence"}
+              dragEndCallback={markerDragEndCallback}
             />
           )
         })}
@@ -254,7 +257,7 @@ function MapSectionNonMemo({
               ],
             ]}
             colour={tailwindColors.blue[200]}
-            lineProps={{ "line-dasharray": [2, 2] }}
+            lineProps={{ "line-dasharray": [4, 6] }}
           />
         )}
 

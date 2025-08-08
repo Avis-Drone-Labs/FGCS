@@ -26,6 +26,7 @@ import {
 } from "@mantine/core"
 import { IconInfoCircle } from "@tabler/icons-react"
 import Layout from "./components/layout"
+import FenceItemsTable from "./components/missions/fenceItemsTable"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
@@ -162,7 +163,11 @@ export default function Missions() {
         updateHomePositionBasedOnWaypoints(missionItemsWithIds)
         setMissionItems(missionItemsWithIds)
       } else if (data.mission_type === "fence") {
-        setFenceItems(data.items)
+        const fenceItemsWithIds = []
+        for (let fence of data.items) {
+          fenceItemsWithIds.push(addIdToItem(fence))
+        }
+        setFenceItems(fenceItemsWithIds)
       } else if (data.mission_type === "rally") {
         const rallyItemsWithIds = []
         for (let rallyItem of data.items) {
@@ -196,7 +201,11 @@ export default function Missions() {
 
           setMissionItems(missionItemsWithIds)
         } else if (data.mission_type === "fence") {
-          setFenceItems(data.items)
+          const fenceItemsWithIds = []
+          for (let fence of data.items) {
+            fenceItemsWithIds.push(addIdToItem(fence))
+          }
+          setFenceItems(fenceItemsWithIds)
         } else if (data.mission_type === "rally") {
           const rallyItemsWithIds = []
           for (let rallyItem of data.items) {
@@ -325,7 +334,7 @@ export default function Missions() {
       setMissionItems((prevItems) => [...prevItems, newMissionItem])
     } else if (activeTab === "fence") {
       newMissionItem.seq = fenceItems.length
-      newMissionItem.command = 5100 // MAV_CMD_NAV_FENCE_POINT
+      newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
       setFenceItems((prevItems) => [...prevItems, newMissionItem])
@@ -777,7 +786,14 @@ export default function Missions() {
                       updateMissionItemOrder={updateMissionItemOrder}
                     />
                   </Tabs.Panel>
-                  <Tabs.Panel value="fence"></Tabs.Panel>
+                  <Tabs.Panel value="fence">
+                    <FenceItemsTable
+                      fenceItems={fenceItems}
+                      updateMissionItem={updateMissionItem}
+                      deleteMissionItem={deleteMissionItem}
+                      updateMissionItemOrder={updateMissionItemOrder}
+                    />
+                  </Tabs.Panel>
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
                       rallyItems={rallyItems}

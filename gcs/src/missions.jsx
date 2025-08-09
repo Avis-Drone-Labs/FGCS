@@ -44,6 +44,11 @@ import {
 } from "./helpers/notification"
 import { socket } from "./helpers/socket"
 
+// Tailwind styling
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 const coordsFractionDigits = 7
 
 export default function Missions() {
@@ -791,9 +796,18 @@ export default function Missions() {
                   className="mt-2"
                 >
                   <Tabs.List grow>
-                    <Tabs.Tab value="mission">Mission</Tabs.Tab>
-                    <Tabs.Tab value="fence">Fence</Tabs.Tab>
-                    <Tabs.Tab value="rally">Rally</Tabs.Tab>
+                    <Tabs.Tab
+                      value="mission"
+                      color={tailwindColors.yellow[400]}
+                    >
+                      Mission
+                    </Tabs.Tab>
+                    <Tabs.Tab value="fence" color={tailwindColors.blue[400]}>
+                      Fence
+                    </Tabs.Tab>
+                    <Tabs.Tab value="rally" color={tailwindColors.purple[400]}>
+                      Rally
+                    </Tabs.Tab>
                   </Tabs.List>
 
                   <Tabs.Panel value="mission">

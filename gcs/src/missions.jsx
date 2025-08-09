@@ -58,7 +58,7 @@ export default function Missions() {
 
   const [activeTab, setActiveTab] = useState("mission")
 
-  // Mission
+  // Mission data
   const [missionItems, setMissionItems] = useSessionStorage({
     key: "missionItems",
     defaultValue: [],
@@ -79,11 +79,12 @@ export default function Missions() {
     key: "targetInfo",
     defaultValue: { target_component: 0, target_system: 255 },
   })
+
+  // File import handling
   const [importFile, setImportFile] = useState(null)
   const importFileResetRef = useRef(null)
 
-  const newMissionItemAltitude = 30 // TODO: Make this configurable
-
+  // Modal for mission progress
   const [
     missionProgressModalOpened,
     { open: openMissionProgressModal, close: closeMissionProgressModal },
@@ -93,17 +94,14 @@ export default function Missions() {
   )
   const [missionProgressModalData, setMissionProgressModalData] = useState({})
 
-  // Heartbeat data
+  // Drone data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-
-  // GPS and Telemetry
   const [gpsData, setGpsData] = useState({})
+  const [navControllerOutputData, setNavControllerOutputData] = useState({})
 
-  // Map and messages
   const mapRef = useRef()
 
-  // System data
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
+  const newMissionItemAltitude = 30 // TODO: Make this configurable
 
   const incomingMessageHandler = useCallback(
     () => ({

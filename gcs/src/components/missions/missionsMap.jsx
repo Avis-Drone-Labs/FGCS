@@ -20,6 +20,7 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
 // Helper scripts
+import { v4 as uuidv4 } from "uuid"
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 import { showNotification } from "../../helpers/notification"
@@ -33,6 +34,7 @@ import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
+import Polygon from "../mapComponents/polygon"
 import useContextMenu from "../mapComponents/useContextMenu"
 import Divider from "../toolbar/menus/divider"
 
@@ -100,6 +102,9 @@ function MapSectionNonMemo({
   const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
   const clipboard = useClipboard({ timeout: 500 })
+
+  const [polygonDrawMode, setPolygonDrawMode] = useState(false)
+  const [polygonPoints, setPolygonPoints] = useState([])
 
   useEffect(() => {
     return () => {}
@@ -173,6 +178,16 @@ function MapSectionNonMemo({
     }
   }, [homePosition])
 
+  function addNewPolygonVertex(lat, lon) {
+    if (!polygonDrawMode) return
+
+    // Add new point to polygon points
+    setPolygonPoints((prevPoints) => [
+      ...prevPoints,
+      { id: uuidv4(), lat: lat, lon: lon },
+    ])
+  }
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -202,14 +217,19 @@ function MapSectionNonMemo({
             },
           })
         }}
-        onMouseDown={(e) => {
+        onMouseDown={() => {
           setClicked(false)
         }}
         onClick={(e) => {
           setClicked(false)
           let lat = e.lngLat.lat
           let lon = e.lngLat.lng
-          addNewMissionItem(lat, lon)
+
+          if (polygonDrawMode) {
+            addNewPolygonVertex(lat, lon)
+          } else {
+            addNewMissionItem(lat, lon)
+          }
         }}
         cursor="default"
       >
@@ -226,6 +246,12 @@ function MapSectionNonMemo({
               desiredBearing={desiredBearing ?? 0}
             />
           )}
+
+        <Polygon
+          polygonPoints={polygonPoints}
+          editable={polygonDrawMode}
+          dragEndCallback={() => {}}
+        />
 
         <MissionItems
           missionItems={missionItemsList}
@@ -330,10 +356,18 @@ function MapSectionNonMemo({
             </ContextMenuItem>
             <Divider />
             <ContextMenuSubMenuItem title={"Polygon"}>
-              <ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  setPolygonDrawMode(true)
+                }}
+              >
                 <p>Draw polygon</p>
               </ContextMenuItem>
-              <ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  setPolygonDrawMode(true)
+                }}
+              >
                 <p>Clear polygon</p>
               </ContextMenuItem>
               {currentTab === "fence" && (

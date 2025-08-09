@@ -41,7 +41,6 @@ export default function DrawLineCoordinates({
       />
       {fillLayer && (
         <Layer
-          id="fence-polygon-fill-layer"
           type="fill"
           paint={{
             "fill-color": colour,

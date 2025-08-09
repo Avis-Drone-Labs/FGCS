@@ -626,7 +626,7 @@ export default function Missions() {
     var seqNumber =
       fenceItems.length > 0 ? fenceItems[fenceItems.length - 1].seq + 1 : 0
 
-    const newFenceMissionItems = newFenceItems.map((item, index) => {
+    const newFenceMissionItems = newFenceItems.map((item) => {
       const newFenceMissionItem = {
         id: item.id,
         seq: seqNumber,

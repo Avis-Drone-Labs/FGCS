@@ -25,6 +25,23 @@ import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+function getFenceCommandNumber(value) {
+  return parseInt(
+    Object.keys(FENCE_ITEM_COMMANDS_LIST).filter(
+      (key) => FENCE_ITEM_COMMANDS_LIST[key] === value,
+    ),
+  )
+}
+
+const polygonCommands = [
+  getFenceCommandNumber("MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION"),
+  getFenceCommandNumber("MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION"),
+]
+const circleCommands = [
+  getFenceCommandNumber("MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION"),
+  getFenceCommandNumber("MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION"),
+]
+
 export default function FenceItems({
   fenceItems,
   editable = false,
@@ -34,24 +51,7 @@ export default function FenceItems({
   const [fenceCircleItems, setFenceCircleItems] = useState([])
 
   useEffect(() => {
-    function getFenceCommandNumber(value) {
-      return parseInt(
-        Object.keys(FENCE_ITEM_COMMANDS_LIST).filter(
-          (key) => FENCE_ITEM_COMMANDS_LIST[key] === value,
-        ),
-      )
-    }
-
     // Filter out fence items based on their type
-    const polygonCommands = [
-      getFenceCommandNumber("MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION"),
-      getFenceCommandNumber("MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION"),
-    ]
-    const circleCommands = [
-      getFenceCommandNumber("MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION"),
-      getFenceCommandNumber("MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION"),
-    ]
-
     const polygonItems = fenceItems.filter((item) =>
       polygonCommands.includes(item.command),
     )

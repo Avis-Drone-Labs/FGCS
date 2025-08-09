@@ -19,6 +19,25 @@ import {
 
 const coordsFractionDigits = 9
 
+function getAvailableCommands() {
+  var commandsList = FENCE_ITEM_COMMANDS_LIST
+
+  return Object.entries(commandsList).map(([key, value]) => ({
+    value: key,
+    label: getDisplayCommandName(value),
+  }))
+}
+
+function getFrameName(frameId) {
+  var frameName = MAV_FRAME_LIST[frameId]
+
+  if (frameName.startsWith("MAV_FRAME_")) {
+    frameName = frameName.replace("MAV_FRAME_", "")
+  }
+
+  return frameName || "UNKNOWN"
+}
+
 export default function FenceItemsTableRow({
   index,
   fenceItem,
@@ -44,25 +63,6 @@ export default function FenceItemsTableRow({
     }
 
     return commandName
-  }
-
-  function getAvailableCommands() {
-    var commandsList = FENCE_ITEM_COMMANDS_LIST
-
-    return Object.entries(commandsList).map(([key, value]) => ({
-      value: key,
-      label: getDisplayCommandName(value),
-    }))
-  }
-
-  function getFrameName(frameId) {
-    var frameName = MAV_FRAME_LIST[frameId]
-
-    if (frameName.startsWith("MAV_FRAME_")) {
-      frameName = frameName.replace("MAV_FRAME_", "")
-    }
-
-    return frameName || "UNKNOWN"
   }
 
   function updateFenceItemData(key, newVal) {

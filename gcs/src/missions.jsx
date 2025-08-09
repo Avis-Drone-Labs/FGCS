@@ -623,7 +623,7 @@ export default function Missions() {
   }
 
   function addFencePolygon(newFenceItems) {
-    var seqNumber =
+    let seqNumber =
       fenceItems.length > 0 ? fenceItems[fenceItems.length - 1].seq + 1 : 0
 
     const newFenceMissionItems = newFenceItems.map((item) => {

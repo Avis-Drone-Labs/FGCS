@@ -19,6 +19,16 @@ import {
 
 const coordsFractionDigits = 9
 
+function getDisplayCommandName(commandName) {
+  if (commandName.startsWith("MAV_CMD_NAV_")) {
+    commandName = commandName.replace("MAV_CMD_NAV_", "")
+  } else if (commandName.startsWith("MAV_CMD_")) {
+    commandName = commandName.replace("MAV_CMD_", "")
+  }
+
+  return commandName
+}
+
 function getAvailableCommands() {
   var commandsList = FENCE_ITEM_COMMANDS_LIST
 
@@ -54,16 +64,6 @@ export default function FenceItemsTableRow({
   useEffect(() => {
     updateMissionItem(fenceItemData)
   }, [fenceItemData])
-
-  function getDisplayCommandName(commandName) {
-    if (commandName.startsWith("MAV_CMD_NAV_")) {
-      commandName = commandName.replace("MAV_CMD_NAV_", "")
-    } else if (commandName.startsWith("MAV_CMD_")) {
-      commandName = commandName.replace("MAV_CMD_", "")
-    }
-
-    return commandName
-  }
 
   function updateFenceItemData(key, newVal) {
     setFenceItemData({

@@ -43,8 +43,8 @@ export default function Polygon({
       {polygonPoints.length > 0 && (
         <DrawLineCoordinates
           coordinates={[
-            ...polygonPoints.map((item) => [item.lat, item.lon]),
-            [polygonPoints[0].lat, polygonPoints[0].lon],
+            ...polygonPoints.map((item) => [item.lon, item.lat]),
+            [polygonPoints[0].lon, polygonPoints[0].lat],
           ]}
           colour={tailwindColors.red[200]}
         />

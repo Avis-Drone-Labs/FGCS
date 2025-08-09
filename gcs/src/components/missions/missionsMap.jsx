@@ -188,6 +188,20 @@ function MapSectionNonMemo({
     ])
   }
 
+  function updatePolygonVertex(updatedPolygonVertex) {
+    setPolygonPoints((prevPoints) =>
+      prevPoints.map((item) =>
+        item.id === updatedPolygonVertex.id
+          ? {
+              ...item,
+              lat: intToCoord(updatedPolygonVertex.x),
+              lon: intToCoord(updatedPolygonVertex.y),
+            }
+          : item,
+      ),
+    )
+  }
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -250,7 +264,7 @@ function MapSectionNonMemo({
         <Polygon
           polygonPoints={polygonPoints}
           editable={polygonDrawMode}
-          dragEndCallback={() => {}}
+          dragEndCallback={updatePolygonVertex}
         />
 
         <MissionItems
@@ -365,7 +379,8 @@ function MapSectionNonMemo({
               </ContextMenuItem>
               <ContextMenuItem
                 onClick={() => {
-                  setPolygonDrawMode(true)
+                  setPolygonPoints([])
+                  setPolygonDrawMode(false)
                 }}
               >
                 <p>Clear polygon</p>

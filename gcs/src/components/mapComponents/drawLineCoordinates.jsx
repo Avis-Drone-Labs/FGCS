@@ -9,6 +9,8 @@ export default function DrawLineCoordinates({
   colour,
   width = 1,
   lineProps = {},
+  fillLayer = false,
+  fillOpacity = 0.5,
 }) {
   return (
     <Source
@@ -21,6 +23,7 @@ export default function DrawLineCoordinates({
           coordinates,
         },
       }}
+      buffer={512} // Attempt to increase buffer to remove fill layer clipping
     >
       <Layer
         {...{
@@ -36,6 +39,19 @@ export default function DrawLineCoordinates({
           },
         }}
       />
+      {fillLayer && (
+        <Layer
+          id="fence-polygon-fill-layer"
+          type="fill"
+          paint={{
+            "fill-color": colour,
+            "fill-opacity": fillOpacity,
+          }}
+          layout={{
+            "fill-sort-key": 10,
+          }}
+        />
+      )}
     </Source>
   )
 }

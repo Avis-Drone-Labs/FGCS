@@ -622,6 +622,43 @@ export default function Missions() {
     }
   }
 
+  function addFencePolygon(newFenceItems) {
+    var seqNumber =
+      fenceItems.length > 0 ? fenceItems[fenceItems.length - 1].seq + 1 : 0
+
+    const newFenceMissionItems = newFenceItems.map((item, index) => {
+      const newFenceMissionItem = {
+        id: item.id,
+        seq: seqNumber,
+        x: item.x,
+        y: item.y,
+        z: item.z,
+        frame: parseInt(
+          Object.keys(MAV_FRAME_LIST).find(
+            (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
+          ),
+        ),
+        command: item.command,
+        param1: item.param1,
+        param2: item.param2,
+        param3: item.param3,
+        param4: item.param4,
+        current: 0,
+        autocontinue: 1,
+        target_component: targetInfo.target_component,
+        target_system: targetInfo.target_system,
+        mission_type: 1, // Fence type
+        mavpackettype: "MISSION_ITEM_INT",
+      }
+
+      seqNumber++
+
+      return newFenceMissionItem
+    })
+
+    setFenceItems((prevItems) => [...prevItems, ...newFenceMissionItems])
+  }
+
   return (
     <Layout currentPage="missions">
       <Modal
@@ -773,6 +810,7 @@ export default function Missions() {
                   addNewMissionItem={addNewMissionItem}
                   updateMissionHomePosition={updateMissionHomePosition}
                   clearMissionItems={clearMissionItems}
+                  addFencePolygon={addFencePolygon}
                   mapId="missions"
                 />
               </div>

@@ -80,23 +80,49 @@ export default function FenceItems({
         )
       })}
 
-      {/* Show geo-fence outlines */}
-      {fencePolygonItems.length > 0 && (
-        <DrawLineCoordinates
-          coordinates={[
-            ...fencePolygonItems.map((item) => [
-              intToCoord(item.y),
-              intToCoord(item.x),
-            ]),
-            [
-              intToCoord(fencePolygonItems[0].y),
-              intToCoord(fencePolygonItems[0].x),
-            ],
-          ]}
-          colour={tailwindColors.blue[200]}
-          lineProps={{ "line-dasharray": [4, 6] }}
-        />
-      )}
+      {/* Group fencePolygonItems into separate polygons */}
+      {(() => {
+        const polygons = []
+        let currentPolygon = []
+        let currentPoints = 0
+
+        fencePolygonItems.forEach((item) => {
+          currentPolygon.push(item)
+          currentPoints++
+
+          if (currentPoints === item.param1) {
+            polygons.push(currentPolygon)
+            currentPolygon = []
+            currentPoints = 0
+          }
+        })
+
+        return polygons.map((polygon, index) => {
+          const lastPolygonItem = polygon[polygon.length - 1]
+
+          const color =
+            lastPolygonItem.command === 5002
+              ? tailwindColors.red[500]
+              : tailwindColors.blue[200]
+
+          return (
+            <DrawLineCoordinates
+              key={index}
+              coordinates={[
+                ...polygon.map((item) => [
+                  intToCoord(item.y),
+                  intToCoord(item.x),
+                ]),
+                [intToCoord(polygon[0].y), intToCoord(polygon[0].x)],
+              ]}
+              colour={color}
+              lineProps={{ "line-width": 2, "line-dasharray": [4, 6] }}
+              fillLayer={true}
+              fillOpacity={lastPolygonItem.command === 5002 ? 0.2 : 0}
+            />
+          )
+        })
+      })()}
 
       {fenceCircleItems.map((item, index) => {
         return (
@@ -133,7 +159,7 @@ export default function FenceItems({
         }}
       >
         <Layer
-          id="circle-fill-layer"
+          id="fence-circle-fill-layer"
           type="fill"
           paint={{
             "fill-color": ["get", "color"],
@@ -141,7 +167,7 @@ export default function FenceItems({
           }}
         />
         <Layer
-          id="circle-border-layer"
+          id="fence-circle-border-layer"
           type="line"
           paint={{
             "line-color": ["get", "color"],

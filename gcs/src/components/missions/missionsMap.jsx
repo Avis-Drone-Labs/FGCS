@@ -21,7 +21,7 @@ import Map from "react-map-gl/maplibre"
 
 // Helper scripts
 import { v4 as uuidv4 } from "uuid"
-import { intToCoord } from "../../helpers/dataFormatters"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
@@ -59,6 +59,7 @@ function MapSectionNonMemo({
   addNewMissionItem,
   updateMissionHomePosition,
   clearMissionItems,
+  addFencePolygon,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -200,6 +201,29 @@ function MapSectionNonMemo({
           : item,
       ),
     )
+  }
+
+  function convertPolygonToFenceItems(fenceType) {
+    if (polygonPoints.length < 3) {
+      showNotification("Polygon must have at least 3 points to be valid")
+      return
+    }
+
+    const fenceItems = polygonPoints.map((point, index) => ({
+      id: point.id,
+      command: fenceType === "inclusion" ? 5001 : 5002, // 5001 for inclusion, 5002 for exclusion
+      param1: polygonPoints.length, // Number of points in the polygon
+      param2: 0,
+      param3: 0,
+      param4: 0,
+      x: coordToInt(point.lat),
+      y: coordToInt(point.lon),
+      z: index,
+    }))
+
+    addFencePolygon(fenceItems)
+    setPolygonPoints([])
+    setPolygonDrawMode(false)
   }
 
   return (
@@ -387,10 +411,18 @@ function MapSectionNonMemo({
               </ContextMenuItem>
               {currentTab === "fence" && (
                 <>
-                  <ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => {
+                      convertPolygonToFenceItems("inclusion")
+                    }}
+                  >
                     <p>Fence inclusion</p>
                   </ContextMenuItem>
-                  <ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => {
+                      convertPolygonToFenceItems("exclusion")
+                    }}
+                  >
                     <p>Fence exclusion</p>
                   </ContextMenuItem>
                 </>

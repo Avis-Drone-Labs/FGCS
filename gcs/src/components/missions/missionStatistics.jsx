@@ -99,7 +99,7 @@ function calculateMaxSlopeGradient(missionItems) {
 
 function calculateTotalDistance(missionItems) {
   // This function should calculate the total distance of the waypoints,
-  // ignoring any waypoints without coordinates. If the jump command (117) is present,
+  // ignoring any waypoints without coordinates. If the jump command (177) is present,
   // then the distance for all of the jump waypoints for the number of laps should
   // be calculated as well.
   let totalDistance = 0
@@ -128,9 +128,9 @@ function calculateTotalDistance(missionItems) {
         }
 
         for (let j = 0; j < jumpCount; j++) {
-          // Slice the missionItems list between jumpTo.seq and i
-          const jumpItems = missionItems.slice(jumpWaypoint.seq, i)
-          console.log(jumpItems, calculateTotalDistance(jumpItems))
+          // Slice the missionItems list between the actual array index of jumpWaypoint and i
+          const jumpStartIdx = missionItems.findIndex((wp) => wp.seq === jumpTo)
+          const jumpItems = missionItems.slice(jumpStartIdx, i)
           totalDistance += calculateTotalDistance(jumpItems)
         }
       }
@@ -148,8 +148,7 @@ function calculateTotalDistance(missionItems) {
     lastPoint = item
   }
 
-  // Round to two decimal places and convert to km
-  return Math.round(totalDistance * 100) / 100 / 1000
+  return Math.round(totalDistance * 100) / 100
 }
 
 function StatisticItem({ label, value, units, tooltip = null }) {
@@ -185,6 +184,7 @@ export default function MissionStatistics({ missionItems }) {
   useEffect(() => {
     if (filteredMissionItems.length === 0) return
 
+    // Use unfiltered mission items
     setTotalDistance(calculateTotalDistance(missionItems))
     setMaxAltitude(calculateMaxAltitude(filteredMissionItems))
     setMaxDistanceBetweenWaypoints(
@@ -195,7 +195,7 @@ export default function MissionStatistics({ missionItems }) {
 
   return (
     <>
-      <StatisticItem label="Total distance" value={totalDistance} units="km" />
+      <StatisticItem label="Total distance" value={totalDistance} units="m" />
       <StatisticItem
         label="Max distance between waypoints"
         value={maxDistanceBetweenWaypoints.maxDistance}

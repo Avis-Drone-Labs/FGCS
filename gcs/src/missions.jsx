@@ -27,6 +27,7 @@ import {
 import { IconInfoCircle } from "@tabler/icons-react"
 import Layout from "./components/layout"
 import MissionItemsTable from "./components/missions/missionItemsTable"
+import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
@@ -44,6 +45,20 @@ import {
 import { socket } from "./helpers/socket"
 
 const coordsFractionDigits = 7
+
+export function isGlobalFrameHomeCommand(waypoint) {
+  const globalFrameValue = parseInt(
+    Object.keys(MAV_FRAME_LIST).find(
+      (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
+    ),
+  )
+  return (
+    waypoint.frame === globalFrameValue &&
+    waypoint.x !== 0 &&
+    waypoint.y !== 0 &&
+    waypoint.command === 16
+  )
+}
 
 export default function Missions() {
   // Local Storage
@@ -246,20 +261,6 @@ export default function Missions() {
       message: "",
       progress: null,
     })
-  }
-
-  function isGlobalFrameHomeCommand(waypoint) {
-    const globalFrameValue = parseInt(
-      Object.keys(MAV_FRAME_LIST).find(
-        (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
-      ),
-    )
-    return (
-      waypoint.frame === globalFrameValue &&
-      waypoint.x !== 0 &&
-      waypoint.y !== 0 &&
-      waypoint.command === 16
-    )
   }
 
   function updateHomePositionBasedOnWaypoints(waypoints) {
@@ -715,6 +716,12 @@ export default function Missions() {
                       coordsFractionDigits,
                     )}
                   </p>
+                </div>
+
+                <Divider className="my-1" />
+
+                <div className="flex flex-col gap-2">
+                  <MissionStatistics missionItems={missionItems} />
                 </div>
               </div>
             </ResizableBox>

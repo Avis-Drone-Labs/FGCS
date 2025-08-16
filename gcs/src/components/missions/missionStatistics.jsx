@@ -7,8 +7,10 @@ import { Tooltip } from "@mantine/core"
 import { distance } from "@turf/turf"
 import { useEffect, useState } from "react"
 import { intToCoord } from "../../helpers/dataFormatters"
-import { filterMissionItems } from "../../helpers/filterMissions"
-import { isGlobalFrameHomeCommand } from "../../missions"
+import {
+  filterMissionItems,
+  isGlobalFrameHomeCommand,
+} from "../../helpers/filterMissions"
 
 function calculateMaxAltitude(missionItems) {
   missionItems = missionItems.filter(

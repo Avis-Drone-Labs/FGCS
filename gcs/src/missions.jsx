@@ -32,6 +32,7 @@ import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
 import { coordToInt, intToCoord } from "./helpers/dataFormatters"
+import { isGlobalFrameHomeCommand } from "./helpers/filterMissions"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   MAV_AUTOPILOT_INVALID,
@@ -45,20 +46,6 @@ import {
 import { socket } from "./helpers/socket"
 
 const coordsFractionDigits = 7
-
-export function isGlobalFrameHomeCommand(waypoint) {
-  const globalFrameValue = parseInt(
-    Object.keys(MAV_FRAME_LIST).find(
-      (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
-    ),
-  )
-  return (
-    waypoint.frame === globalFrameValue &&
-    waypoint.x !== 0 &&
-    waypoint.y !== 0 &&
-    waypoint.command === 16
-  )
-}
 
 export default function Missions() {
   // Local Storage

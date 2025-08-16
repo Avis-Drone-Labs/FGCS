@@ -26,6 +26,7 @@ import {
 } from "@mantine/core"
 import { IconInfoCircle } from "@tabler/icons-react"
 import Layout from "./components/layout"
+import FenceItemsTable from "./components/missions/fenceItemsTable"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
@@ -45,6 +46,11 @@ import {
 } from "./helpers/notification"
 import { socket } from "./helpers/socket"
 
+// Tailwind styling
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 const coordsFractionDigits = 7
 
 export default function Missions() {
@@ -59,7 +65,7 @@ export default function Missions() {
 
   const [activeTab, setActiveTab] = useState("mission")
 
-  // Mission
+  // Mission data
   const [missionItems, setMissionItems] = useSessionStorage({
     key: "missionItems",
     defaultValue: [],
@@ -80,11 +86,12 @@ export default function Missions() {
     key: "targetInfo",
     defaultValue: { target_component: 0, target_system: 255 },
   })
+
+  // File import handling
   const [importFile, setImportFile] = useState(null)
   const importFileResetRef = useRef(null)
 
-  const newMissionItemAltitude = 30 // TODO: Make this configurable
-
+  // Modal for mission progress
   const [
     missionProgressModalOpened,
     { open: openMissionProgressModal, close: closeMissionProgressModal },
@@ -94,17 +101,14 @@ export default function Missions() {
   )
   const [missionProgressModalData, setMissionProgressModalData] = useState({})
 
-  // Heartbeat data
+  // Drone data
   const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-
-  // GPS and Telemetry
   const [gpsData, setGpsData] = useState({})
+  const [navControllerOutputData, setNavControllerOutputData] = useState({})
 
-  // Map and messages
   const mapRef = useRef()
 
-  // System data
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
+  const newMissionItemAltitude = 30 // TODO: Make this configurable
 
   const incomingMessageHandler = useCallback(
     () => ({
@@ -118,6 +122,10 @@ export default function Missions() {
     }),
     [],
   )
+
+  useEffect(() => {
+    setActiveTab("mission") // Default to mission tab on load
+  }, [])
 
   useEffect(() => {
     if (!connected) {
@@ -164,7 +172,11 @@ export default function Missions() {
         updateHomePositionBasedOnWaypoints(missionItemsWithIds)
         setMissionItems(missionItemsWithIds)
       } else if (data.mission_type === "fence") {
-        setFenceItems(data.items)
+        const fenceItemsWithIds = []
+        for (let fence of data.items) {
+          fenceItemsWithIds.push(addIdToItem(fence))
+        }
+        setFenceItems(fenceItemsWithIds)
       } else if (data.mission_type === "rally") {
         const rallyItemsWithIds = []
         for (let rallyItem of data.items) {
@@ -198,7 +210,11 @@ export default function Missions() {
 
           setMissionItems(missionItemsWithIds)
         } else if (data.mission_type === "fence") {
-          setFenceItems(data.items)
+          const fenceItemsWithIds = []
+          for (let fence of data.items) {
+            fenceItemsWithIds.push(addIdToItem(fence))
+          }
+          setFenceItems(fenceItemsWithIds)
         } else if (data.mission_type === "rally") {
           const rallyItemsWithIds = []
           for (let rallyItem of data.items) {
@@ -293,7 +309,7 @@ export default function Missions() {
         ),
       ),
       command: null,
-      param1: 0,
+      param1: activeTab === "fence" ? 5 : 0,
       param2: 0,
       param3: 0,
       param4: 0,
@@ -313,7 +329,7 @@ export default function Missions() {
       setMissionItems((prevItems) => [...prevItems, newMissionItem])
     } else if (activeTab === "fence") {
       newMissionItem.seq = fenceItems.length
-      newMissionItem.command = 5100 // MAV_CMD_NAV_FENCE_POINT
+      newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
       setFenceItems((prevItems) => [...prevItems, newMissionItem])
@@ -378,7 +394,7 @@ export default function Missions() {
     if (activeTab === "mission") {
       setMissionItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "fence") {
-      // TODO: Implement fence item update logic
+      setFenceItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "rally") {
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
     }
@@ -397,14 +413,14 @@ export default function Missions() {
     if (activeTab === "mission") {
       setMissionItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "fence") {
-      // TODO: Implement fence item deletion logic
+      setFenceItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTab === "rally") {
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
     }
   }
 
   function updateMissionItemOrder(missionItemId, indexIncrement) {
-    setMissionItems((prevItems) => {
+    function updateItemOrder(prevItems) {
       const currentIndex = prevItems.findIndex(
         (item) => item.id === missionItemId,
       )
@@ -434,7 +450,13 @@ export default function Missions() {
       updatedItems[newIndex].seq = newIndex
 
       return updatedItems
-    })
+    }
+
+    if (activeTab === "mission") {
+      setMissionItems((prevItems) => updateItemOrder(prevItems))
+    } else if (activeTab === "fence") {
+      setFenceItems((prevItems) => updateItemOrder(prevItems))
+    }
   }
 
   function readMissionFromDrone() {
@@ -489,6 +511,17 @@ export default function Missions() {
         items = [...missionItems]
       } else if (activeTab === "fence") {
         items = [...fenceItems]
+
+        const newHomeItem = createHomePositionItem()
+        if (newHomeItem) {
+          items.unshift(newHomeItem) // Add home item at the beginning
+        }
+
+        // Ensure all sequence values are updated
+        items = items.map((item, index) => ({
+          ...item,
+          seq: index,
+        }))
       } else if (activeTab === "rally") {
         items = [...rallyItems]
 
@@ -575,6 +608,43 @@ export default function Missions() {
     } else if (activeTab === "rally") {
       setRallyItems([])
     }
+  }
+
+  function addFencePolygon(newFenceItems) {
+    let seqNumber =
+      fenceItems.length > 0 ? fenceItems[fenceItems.length - 1].seq + 1 : 0
+
+    const newFenceMissionItems = newFenceItems.map((item) => {
+      const newFenceMissionItem = {
+        id: item.id,
+        seq: seqNumber,
+        x: item.x,
+        y: item.y,
+        z: item.z,
+        frame: parseInt(
+          Object.keys(MAV_FRAME_LIST).find(
+            (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
+          ),
+        ),
+        command: item.command,
+        param1: item.param1,
+        param2: item.param2,
+        param3: item.param3,
+        param4: item.param4,
+        current: 0,
+        autocontinue: 1,
+        target_component: targetInfo.target_component,
+        target_system: targetInfo.target_system,
+        mission_type: 1, // Fence type
+        mavpackettype: "MISSION_ITEM_INT",
+      }
+
+      seqNumber++
+
+      return newFenceMissionItem
+    })
+
+    setFenceItems((prevItems) => [...prevItems, ...newFenceMissionItems])
   }
 
   return (
@@ -734,6 +804,7 @@ export default function Missions() {
                   addNewMissionItem={addNewMissionItem}
                   updateMissionHomePosition={updateMissionHomePosition}
                   clearMissionItems={clearMissionItems}
+                  addFencePolygon={addFencePolygon}
                   mapId="missions"
                 />
               </div>
@@ -757,9 +828,18 @@ export default function Missions() {
                   className="mt-2"
                 >
                   <Tabs.List grow>
-                    <Tabs.Tab value="mission">Mission</Tabs.Tab>
-                    <Tabs.Tab value="fence">Fence</Tabs.Tab>
-                    <Tabs.Tab value="rally">Rally</Tabs.Tab>
+                    <Tabs.Tab
+                      value="mission"
+                      color={tailwindColors.yellow[400]}
+                    >
+                      Mission
+                    </Tabs.Tab>
+                    <Tabs.Tab value="fence" color={tailwindColors.blue[400]}>
+                      Fence
+                    </Tabs.Tab>
+                    <Tabs.Tab value="rally" color={tailwindColors.purple[400]}>
+                      Rally
+                    </Tabs.Tab>
                   </Tabs.List>
 
                   <Tabs.Panel value="mission">
@@ -771,7 +851,14 @@ export default function Missions() {
                       updateMissionItemOrder={updateMissionItemOrder}
                     />
                   </Tabs.Panel>
-                  <Tabs.Panel value="fence"></Tabs.Panel>
+                  <Tabs.Panel value="fence">
+                    <FenceItemsTable
+                      fenceItems={fenceItems}
+                      updateMissionItem={updateMissionItem}
+                      deleteMissionItem={deleteMissionItem}
+                      updateMissionItemOrder={updateMissionItemOrder}
+                    />
+                  </Tabs.Panel>
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
                       rallyItems={rallyItems}

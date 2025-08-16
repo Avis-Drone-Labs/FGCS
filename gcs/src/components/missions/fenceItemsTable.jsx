@@ -1,14 +1,16 @@
 /*
-  This table displays all the rally items.
+  This table displays all the fence items.
 */
+
 import { Table } from "@mantine/core"
 import React from "react"
-import RallyItemsTableRow from "./rallyItemsTableRow"
+import FenceItemsTableRow from "./fenceItemsTableRow"
 
-function RallyItemsTableNonMemo({
-  rallyItems,
-  updateRallyItem,
-  deleteRallyItem,
+function FenceItemsTableNonMemo({
+  fenceItems,
+  updateMissionItem,
+  deleteMissionItem,
+  updateMissionItemOrder,
 }) {
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
@@ -16,26 +18,27 @@ function RallyItemsTableNonMemo({
         <Table.Tr>
           <Table.Th></Table.Th>
           <Table.Th>Command</Table.Th>
-          <Table.Th></Table.Th>
+          <Table.Th>Param 1</Table.Th>
           <Table.Th></Table.Th>
           <Table.Th></Table.Th>
           <Table.Th></Table.Th>
           <Table.Th>Lat</Table.Th>
           <Table.Th>Lng</Table.Th>
-          <Table.Th>Alt</Table.Th>
+          <Table.Th></Table.Th>
           <Table.Th>Frame</Table.Th>
           <Table.Th></Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {rallyItems.map((rallyItem, idx) => {
+        {fenceItems.map((fenceItem, idx) => {
           return (
-            <RallyItemsTableRow
-              key={rallyItem.id}
+            <FenceItemsTableRow
+              key={fenceItem.id}
               index={idx}
-              rallyItem={rallyItem}
-              updateRallyItem={updateRallyItem}
-              deleteRallyItem={deleteRallyItem}
+              fenceItem={fenceItem}
+              updateMissionItem={updateMissionItem}
+              deleteMissionItem={deleteMissionItem}
+              updateMissionItemOrder={updateMissionItemOrder}
             />
           )
         })}
@@ -47,6 +50,6 @@ function RallyItemsTableNonMemo({
 function propsAreEqual(prev, next) {
   return JSON.stringify(prev) === JSON.stringify(next)
 }
-const RallyItemsTable = React.memo(RallyItemsTableNonMemo, propsAreEqual)
+const FenceItemsTable = React.memo(FenceItemsTableNonMemo, propsAreEqual)
 
-export default RallyItemsTable
+export default FenceItemsTable

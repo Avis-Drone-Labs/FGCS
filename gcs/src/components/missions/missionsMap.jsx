@@ -20,19 +20,23 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
 // Helper scripts
-import { intToCoord } from "../../helpers/dataFormatters"
+import { v4 as uuidv4 } from "uuid"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
-import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
+import ContextMenuSubMenuItem from "../mapComponents/contextMenuSubMenuItem"
 import DroneMarker from "../mapComponents/droneMarker"
+import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
+import Polygon from "../mapComponents/polygon"
 import useContextMenu from "../mapComponents/useContextMenu"
+import Divider from "../toolbar/menus/divider"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -55,6 +59,7 @@ function MapSectionNonMemo({
   addNewMissionItem,
   updateMissionHomePosition,
   clearMissionItems,
+  addFencePolygon,
   mapId = "dashboard",
 }) {
   const [connected] = useSessionStorage({
@@ -98,6 +103,9 @@ function MapSectionNonMemo({
   const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
   const clipboard = useClipboard({ timeout: 500 })
+
+  const [polygonDrawMode, setPolygonDrawMode] = useState(false)
+  const [polygonPoints, setPolygonPoints] = useState([])
 
   useEffect(() => {
     return () => {}
@@ -171,6 +179,53 @@ function MapSectionNonMemo({
     }
   }, [homePosition])
 
+  function addNewPolygonVertex(lat, lon) {
+    if (!polygonDrawMode) return
+
+    // Add new point to polygon points
+    setPolygonPoints((prevPoints) => [
+      ...prevPoints,
+      { id: uuidv4(), lat: lat, lon: lon },
+    ])
+  }
+
+  function updatePolygonVertex(updatedPolygonVertex) {
+    setPolygonPoints((prevPoints) =>
+      prevPoints.map((item) =>
+        item.id === updatedPolygonVertex.id
+          ? {
+              ...item,
+              lat: intToCoord(updatedPolygonVertex.x),
+              lon: intToCoord(updatedPolygonVertex.y),
+            }
+          : item,
+      ),
+    )
+  }
+
+  function convertPolygonToFenceItems(fenceType) {
+    if (polygonPoints.length < 3) {
+      showNotification("Polygon must have at least 3 points to be valid")
+      return
+    }
+
+    const fenceItems = polygonPoints.map((point, index) => ({
+      id: point.id,
+      command: fenceType === "inclusion" ? 5001 : 5002, // 5001 for inclusion, 5002 for exclusion
+      param1: polygonPoints.length, // Number of points in the polygon
+      param2: 0,
+      param3: 0,
+      param4: 0,
+      x: coordToInt(point.lat),
+      y: coordToInt(point.lon),
+      z: index,
+    }))
+
+    addFencePolygon(fenceItems)
+    setPolygonPoints([])
+    setPolygonDrawMode(false)
+  }
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -200,11 +255,19 @@ function MapSectionNonMemo({
             },
           })
         }}
+        onMouseDown={() => {
+          setClicked(false)
+        }}
         onClick={(e) => {
           setClicked(false)
           let lat = e.lngLat.lat
           let lon = e.lngLat.lng
-          addNewMissionItem(lat, lon)
+
+          if (polygonDrawMode) {
+            addNewPolygonVertex(lat, lon)
+          } else {
+            addNewMissionItem(lat, lon)
+          }
         }}
         cursor="default"
       >
@@ -222,41 +285,23 @@ function MapSectionNonMemo({
             />
           )}
 
+        <Polygon
+          polygonPoints={polygonPoints}
+          editable={polygonDrawMode}
+          dragEndCallback={updatePolygonVertex}
+        />
+
         <MissionItems
           missionItems={missionItemsList}
           editable={currentTab === "mission"}
           dragEndCallback={markerDragEndCallback}
         />
 
-        {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
-          return (
-            <MarkerPin
-              key={index}
-              lat={intToCoord(item.x)}
-              lon={intToCoord(item.y)}
-              colour={tailwindColors.blue[400]}
-            />
-          )
-        })}
-
-        {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
-          <DrawLineCoordinates
-            coordinates={[
-              ...missionItems.fence_items.map((item) => [
-                intToCoord(item.y),
-                intToCoord(item.x),
-              ]),
-              [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
-              ],
-            ]}
-            colour={tailwindColors.blue[200]}
-            lineProps={{ "line-dasharray": [2, 2] }}
-          />
-        )}
+        <FenceItems
+          fenceItems={missionItems.fence_items}
+          editable={currentTab === "fence"}
+          dragEndCallback={markerDragEndCallback}
+        />
 
         {/* Show mission rally point */}
         {missionItems.rally_items.map((item, index) => {
@@ -317,24 +362,22 @@ function MapSectionNonMemo({
                 showNotification("Copied to clipboard")
               }}
             >
-              <div className="w-full flex justify-between gap-2">
-                <p>
-                  {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
-                  {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
-                </p>
-                <svg
-                  className="relative -right-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z"
-                  />
-                </svg>
-              </div>
+              <p>
+                {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
+                {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
+              </p>
+              <svg
+                className="relative -right-1"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="currentColor"
+                  d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z"
+                />
+              </svg>
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
@@ -344,15 +387,47 @@ function MapSectionNonMemo({
                 )
               }}
             >
-              <div className="w-full flex justify-between gap-2">
-                <p>Set home position</p>
-              </div>
+              <p>Set home position</p>
             </ContextMenuItem>
             <ContextMenuItem onClick={clearMissionItems}>
-              <div className="w-full flex justify-between gap-2">
-                <p>Clear mission</p>
-              </div>
+              <p>Clear mission</p>
             </ContextMenuItem>
+            <Divider />
+            <ContextMenuSubMenuItem title={"Polygon"}>
+              <ContextMenuItem
+                onClick={() => {
+                  setPolygonDrawMode(true)
+                }}
+              >
+                <p>Draw polygon</p>
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  setPolygonPoints([])
+                  setPolygonDrawMode(false)
+                }}
+              >
+                <p>Clear polygon</p>
+              </ContextMenuItem>
+              {currentTab === "fence" && (
+                <>
+                  <ContextMenuItem
+                    onClick={() => {
+                      convertPolygonToFenceItems("inclusion")
+                    }}
+                  >
+                    <p>Fence inclusion</p>
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => {
+                      convertPolygonToFenceItems("exclusion")
+                    }}
+                  >
+                    <p>Fence exclusion</p>
+                  </ContextMenuItem>
+                </>
+              )}
+            </ContextMenuSubMenuItem>
           </div>
         )}
       </Map>

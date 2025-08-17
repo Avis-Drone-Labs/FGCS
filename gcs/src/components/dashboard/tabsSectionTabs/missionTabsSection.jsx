@@ -35,9 +35,7 @@ export default function MissionTabsSection({
         ) : (
           <div className="flex flex-col gap-4">
             {/** Mission Information */}
-            <MissionInfo
-              navControllerOutputData={navControllerOutputData}
-            />
+            <MissionInfo navControllerOutputData={navControllerOutputData} />
 
             {/** Auto, Start and Restart Mission */}
             <AutoStartRestartMission
@@ -62,8 +60,8 @@ const MissionInfo = ({ navControllerOutputData }) => {
           {MISSION_STATES[currentMission.mission_state]}
         </p>
         <p>
-          <span className="font-bold"> Waypoint: </span>{" "}
-          {currentMission.seq}/{currentMission.total}
+          <span className="font-bold"> Waypoint: </span> {currentMission.seq}/
+          {currentMission.total}
         </p>
         <p>
           <span className="font-bold">Distance to WP: </span>{" "}

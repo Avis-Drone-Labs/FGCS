@@ -83,7 +83,6 @@ import disarmSound from "./assets/sounds/disarmed.mp3"
 // import { useAlerts } from "./components/dashboard/alertProvider"
 // import { useSettings } from "./helpers/settings"
 import {
-  selectCurrentMission,
   selectCurrentMissionItems,
   selectHomePosition,
 } from "./redux/slices/missionSlice"
@@ -164,7 +163,7 @@ export default function Dashboard() {
   // Show queued notifications
   useEffect(() => {
     if (notificationQueue.length !== 0) {
-      (notificationQueue[0].type === "error"
+      ;(notificationQueue[0].type === "error"
         ? showErrorNotification
         : showSuccessNotification)(notificationQueue[0].message)
       dispatch(notificationShown())

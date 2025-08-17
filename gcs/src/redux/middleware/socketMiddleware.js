@@ -28,7 +28,11 @@ import {
   queueErrorNotification,
   queueNotification,
 } from "../slices/notificationSlice"
-import { setCurrentMission, setCurrentMissionItems, setHomePosition } from "../slices/missionSlice"
+import {
+  setCurrentMission,
+  setCurrentMissionItems,
+  setHomePosition,
+} from "../slices/missionSlice"
 import {
   setDroneAircraftType,
   setTelemetryData,
@@ -62,7 +66,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onMissionControlResult: "mission_control_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
-  onCurrentMissionAll: "current_mission_all"
+  onCurrentMissionAll: "current_mission_all",
 })
 
 const socketMiddleware = (store) => {
@@ -262,7 +266,9 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           DroneSpecificSocketEvents.onHomePositionResult,
           (msg) => {
-            console.log(`Got home position ${msg.success ? 'successfully' : 'unsuccessfully'}`)
+            console.log(
+              `Got home position ${msg.success ? "successfully" : "unsuccessfully"}`,
+            )
             store.dispatch(
               msg.success
                 ? setHomePosition(msg.data)
@@ -272,9 +278,12 @@ const socketMiddleware = (store) => {
           },
         )
 
-        socket.socket.on(DroneSpecificSocketEvents.onCurrentMissionAll, (msg) => {
-          store.dispatch(setCurrentMissionItems(msg))
-        })
+        socket.socket.on(
+          DroneSpecificSocketEvents.onCurrentMissionAll,
+          (msg) => {
+            store.dispatch(setCurrentMissionItems(msg))
+          },
+        )
 
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)

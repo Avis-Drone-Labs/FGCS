@@ -9,7 +9,8 @@ const missionInfoSlice = createSlice({
       total: 0,
       seq: 0,
     },
-    currentMissionItems: {  // These should be camelCase etc but its easier to keep it as snake_case
+    currentMissionItems: {
+      // These should be camelCase etc but its easier to keep it as snake_case
       mission_items: [],
       fence_items: [],
       rally_items: [],
@@ -26,7 +27,11 @@ const missionInfoSlice = createSlice({
       state.currentMission = action.payload
     },
     setCurrentMissionItems: (state, action) => {
-      if (action.payload === state.currentMissionItems || action.payload == undefined) return
+      if (
+        action.payload === state.currentMissionItems ||
+        action.payload == undefined
+      )
+        return
       state.currentMissionItems = action.payload
     },
     setHomePosition: (state, action) => {

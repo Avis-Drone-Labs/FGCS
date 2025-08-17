@@ -116,7 +116,8 @@ const droneInfoSlice = createSlice({
     },
     setGpsRawIntData: (state, action) => {
       if (action.payload !== state.gpsRawIntData) {
-        state.gpsRawIntData.satellitesVisible = action.payload.satellites_visible
+        state.gpsRawIntData.satellitesVisible =
+          action.payload.satellites_visible
         state.gpsRawIntData.fixType = action.payload.fix_type
       }
     },

@@ -194,13 +194,14 @@ def test_writeCurrentMission_wrongState(
 
 
 @falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_correctState(
+def test_writeCurrentMission_uploadMissionSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "missions"
     with open(
         os.path.join(
-            MISSION_FILES_PATH, "test_writeCurrentMission_correctState_data.json"
+            MISSION_FILES_PATH,
+            "test_writeCurrentMission_uploadMissionSuccess_data.json",
         ),
         "r",
     ) as f:
@@ -217,7 +218,53 @@ def test_writeCurrentMission_correctState(
 
 
 @falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_correctState_incorrectMissionType(
+def test_writeCurrentMission_uploadFenceSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_writeCurrentMission_uploadFenceSuccess_data.json"
+        ),
+        "r",
+    ) as f:
+        data = json.load(f)
+
+    socketio_client.emit("write_current_mission", data)
+    socketio_result = socketio_client.get_received()[-1]
+
+    assert socketio_result["name"] == "write_mission_result"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "Mission uploaded successfully",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_writeCurrentMission_uploadRallySuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_writeCurrentMission_uploadRallySuccess_data.json"
+        ),
+        "r",
+    ) as f:
+        data = json.load(f)
+
+    socketio_client.emit("write_current_mission", data)
+    socketio_result = socketio_client.get_received()[-1]
+
+    assert socketio_result["name"] == "write_mission_result"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "Mission uploaded successfully",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_writeCurrentMission_incorrectMissionType(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "missions"
@@ -237,7 +284,7 @@ def test_writeCurrentMission_correctState_incorrectMissionType(
 
 
 @falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_correctState_noWaypoints(
+def test_writeCurrentMission_noWaypoints(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "missions"

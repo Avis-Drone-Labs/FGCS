@@ -30,15 +30,16 @@ jobs:
     - name: Run FGCS frontend
       run: yarn dev:test &
     
+    - name: Wait for dev server to be ready
+      run: |
+        timeout 60 bash -c 'until curl -f http://localhost:5173; do sleep 2; done'
+    
     - name: Run Playwright tests
-      uses: coactions/setup-xvfb@v1
-      with:
-        working-directory: gcs
-        run: yarn playwright test
+      run: yarn playwright test
     
     - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report
-        path: playwright-report/
+        path: gcs/playwright-report/
         retention-days: 30

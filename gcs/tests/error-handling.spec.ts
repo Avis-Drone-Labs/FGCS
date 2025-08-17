@@ -41,9 +41,7 @@ test.describe('GCS Error Handling and Application Stability Tests', () => {
       
       // Look for the specific full disconnection message
       const disconnectionMessage = page.locator(`text=${pageInfo.expectedMessage}`);
-      if (await disconnectionMessage.count() > 0) {
-        await expect(disconnectionMessage).toBeVisible();
-      }
+      await expect(disconnectionMessage).toBeVisible();
     }
   });
 
@@ -101,11 +99,9 @@ test.describe('GCS Error Handling and Application Stability Tests', () => {
     await page.reload();
     await expect(page.locator('#root')).toBeVisible();
     
-    // After refresh, should still show appropriate content
-    const configContent = page.locator('text=Motor Test, text=config, text=Not connected to drone');
-    if (await configContent.count() > 0) {
-      await expect(configContent.first()).toBeVisible();
-    }
+    // After refresh, should show disconnection message
+    const configMessage = page.locator('text=Not connected to drone. Please connect to view config');
+    await expect(configMessage).toBeVisible();
   });
 
   test('should handle browser back/forward navigation without errors', async ({ page }) => {

@@ -1,80 +1,54 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('GCS Navigation and Connection State Tests', () => {
-  test('should navigate to dashboard page and show specific content', async ({ page }) => {
+  test('should navigate to dashboard page and load correctly', async ({ page }) => {
     await page.goto('/');
     
     // Test that the page loads with correct title
     await expect(page).toHaveTitle('FGCS');
     
-    // Check for specific dashboard elements - map section and telemetry panel
+    // Check that the root element is visible
     await expect(page.locator('#root')).toBeVisible();
-    // Dashboard should have a map and status bar when connected or disconnected
-    await expect(page.locator('[data-testid="status-bar"], .status-bar')).toBeVisible().catch(() => {
-      // If no status bar data attribute, look for GPS coordinates pattern in status
-      expect(page.locator('text=/GPS.*\\(.*,.*\\)/')).toBeVisible();
-    });
   });
 
-  test('should navigate to config page and show specific content', async ({ page }) => {
+  test('should navigate to config page and show disconnection message', async ({ page }) => {
     await page.goto('/#/config');
     
-    // Check for config-specific elements - should show disconnected message or tabs
     await expect(page.locator('#root')).toBeVisible();
     
-    // When not connected, should show the no drone connected message
+    // Should show the no drone connected message
     const noDroneMessage = page.locator('text=Not connected to drone. Please connect to view config');
-    if (await noDroneMessage.count() > 0) {
-      await expect(noDroneMessage).toBeVisible();
-    } else {
-      // If connected, should show config tabs
-      await expect(page.locator('text=Motor Test')).toBeVisible();
-    }
+    await expect(noDroneMessage).toBeVisible();
   });
 
-  test('should navigate to missions page and show specific content', async ({ page }) => {
+  test('should navigate to missions page and show disconnection message', async ({ page }) => {
     await page.goto('/#/missions');
     
     await expect(page.locator('#root')).toBeVisible();
     
-    // Check for missions-specific content
+    // Should show the no drone connected message
     const noDroneMessage = page.locator('text=Not connected to drone. Please connect to view missions');
-    if (await noDroneMessage.count() > 0) {
-      await expect(noDroneMessage).toBeVisible();
-    } else {
-      // If connected, should show mission-related elements
-      await expect(page.locator('text=/mission/i')).toBeVisible();
-    }
+    await expect(noDroneMessage).toBeVisible();
   });
 
-  test('should navigate to graphs page and show specific content', async ({ page }) => {
+  test('should navigate to graphs page and show disconnection message', async ({ page }) => {
     await page.goto('/#/graphs');
     
     await expect(page.locator('#root')).toBeVisible();
     
-    // Check for graphs-specific content
+    // Should show the no drone connected message
     const noDroneMessage = page.locator('text=Not connected to drone. Please connect to view graphs');
-    if (await noDroneMessage.count() > 0) {
-      await expect(noDroneMessage).toBeVisible();
-    } else {
-      // If connected, should show graph-related elements
-      await expect(page.locator('text=/graph/i')).toBeVisible();
-    }
+    await expect(noDroneMessage).toBeVisible();
   });
 
-  test('should navigate to parameters page and show specific content', async ({ page }) => {
+  test('should navigate to parameters page and show disconnection message', async ({ page }) => {
     await page.goto('/#/params');
     
     await expect(page.locator('#root')).toBeVisible();
     
-    // Check for parameters-specific content
+    // Should show the no drone connected message
     const noDroneMessage = page.locator('text=Not connected to drone. Please connect to view params');
-    if (await noDroneMessage.count() > 0) {
-      await expect(noDroneMessage).toBeVisible();
-    } else {
-      // If connected, should show parameter-related elements
-      await expect(page.locator('text=/param/i')).toBeVisible();
-    }
+    await expect(noDroneMessage).toBeVisible();
   });
 
   test('should navigate to FLA page and show specific content', async ({ page }) => {
@@ -107,14 +81,9 @@ test.describe('GCS Navigation and Connection State Tests', () => {
     await page.goto('/#/missions');
     await expect(page.locator('#root')).toBeVisible();
     
-    // Go back to config - should show config content
+    // Go back to config
     await page.goBack();
     await expect(page.locator('#root')).toBeVisible();
-    // Verify we're on config page
-    const configIndicator = page.locator('text=Motor Test, text=config');
-    if (await configIndicator.count() > 0) {
-      await expect(configIndicator.first()).toBeVisible();
-    }
     
     // Go back to dashboard
     await page.goBack();
@@ -127,7 +96,6 @@ test.describe('GCS Navigation and Connection State Tests', () => {
 
   test('should show consistent disconnected state across all pages', async ({ page }) => {
     const pages = [
-      { path: '/', name: 'dashboard' },
       { path: '/#/config', name: 'config' },
       { path: '/#/missions', name: 'missions' },
       { path: '/#/graphs', name: 'graphs' },
@@ -138,13 +106,9 @@ test.describe('GCS Navigation and Connection State Tests', () => {
       await page.goto(pageInfo.path);
       await expect(page.locator('#root')).toBeVisible();
       
-      // For pages other than dashboard and FLA, check for the "Not connected to drone" message
-      if (pageInfo.name !== 'dashboard') {
-        const noDroneMessage = page.locator(`text=Not connected to drone. Please connect to view ${pageInfo.name}`);
-        if (await noDroneMessage.count() > 0) {
-          await expect(noDroneMessage).toBeVisible();
-        }
-      }
+      // Check for the "Not connected to drone" message
+      const noDroneMessage = page.locator(`text=Not connected to drone. Please connect to view ${pageInfo.name}`);
+      await expect(noDroneMessage).toBeVisible();
       
       // Verify page loads without critical errors
       const criticalErrors = page.locator('[data-testid="error"], .error-boundary, .critical-error');

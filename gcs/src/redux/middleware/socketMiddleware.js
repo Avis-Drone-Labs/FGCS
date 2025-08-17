@@ -129,7 +129,7 @@ const socketMiddleware = (store) => {
         // EXAMPLE SOCKET.ON EVENT
         socket.socket.on(SocketEvents.Connect, () => {
           // DISPATCH ALL ACTIONS HERE
-          // SINCE ITS MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
+          // SINCE IT'S MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
           console.log(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
         })
@@ -290,7 +290,7 @@ const socketMiddleware = (store) => {
           const packetType = msg.mavpackettype
           const storeState = store.getState()
           if (storeState !== undefined) {
-            var extraDroneData = storeState.droneInfo.extraDroneData
+            const extraDroneData = storeState.droneInfo.extraDroneData
             const updatedExtraDroneData = extraDroneData.map((dataItem) => {
               if (dataItem.currently_selected.startsWith(packetType)) {
                 const specificData = dataItem.currently_selected.split(".")[1]

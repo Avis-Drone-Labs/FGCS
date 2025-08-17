@@ -29,7 +29,7 @@ const missionInfoSlice = createSlice({
     setCurrentMissionItems: (state, action) => {
       if (
         action.payload === state.currentMissionItems ||
-        action.payload == undefined
+        action.payload === undefined
       )
         return
       state.currentMissionItems = action.payload

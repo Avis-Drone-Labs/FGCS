@@ -6,7 +6,7 @@
 // 3rd Party Imports
 import { Tabs } from "@mantine/core"
 
-// Tab Componenents
+// Tab Components
 import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
@@ -17,7 +17,6 @@ export default function TabsSection({
   connected,
   aircraftType,
   currentFlightModeNumber,
-  currentMissionData,
   navControllerOutputData,
 }) {
   const tabPadding = "pt-6 pb-4"
@@ -47,7 +46,6 @@ export default function TabsSection({
       <MissionTabsSection
         connected={connected}
         tabPadding={tabPadding}
-        currentMissionData={currentMissionData}
         navControllerOutputData={navControllerOutputData}
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}

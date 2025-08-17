@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
 import { Divider } from "@mantine/core"
@@ -89,8 +89,6 @@ import {
 } from "./redux/slices/missionSlice"
 
 export default function Dashboard() {
-  const dispatch = useDispatch()
-
   const gpsData = useSelector(selectGPS)
   const telemetryData = useSelector(selectTelemetry)
   const navControllerOutputData = useSelector(selectNavController)
@@ -98,7 +96,6 @@ export default function Dashboard() {
   const rssi = useSelector(selectRSSI)
   const heartbeatData = useSelector(selectHeartbeat)
 
-  const currentMissionData = useSelector(selectCurrentMission)
   const missionItems = useSelector(selectCurrentMissionItems)
   const homePosition = useSelector(selectHomePosition)
   const currentFlightModeNumber = useSelector(selectFlightMode)
@@ -110,6 +107,7 @@ export default function Dashboard() {
   const armedNotification = useSelector(selectNotificationSound)
   const notificationQueue = useSelector(selectNotificationQueue)
   const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
+  const dispatch = useDispatch()
 
   // Local Storage
   const [connected] = useSessionStorage({
@@ -156,23 +154,29 @@ export default function Dashboard() {
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
   // Play queued arming sounds
-  if (armedNotification !== "") {
-    armedNotification === "armed" ? playArmed() : playDisarmed()
-    dispatch(soundPlayed())
-  }
+  useEffect(() => {
+    if (armedNotification !== "") {
+      armedNotification === "armed" ? playArmed() : playDisarmed()
+      dispatch(soundPlayed())
+    }
+  }, [armedNotification, playArmed, playDisarmed, dispatch])
 
   // Show queued notifications
-  if (notificationQueue.length !== 0) {
-    ;(notificationQueue[0].type == "error"
-      ? showErrorNotification
-      : showSuccessNotification)(notificationQueue[0].message)
-    dispatch(notificationShown())
-  }
+  useEffect(() => {
+    if (notificationQueue.length !== 0) {
+      (notificationQueue[0].type === "error"
+        ? showErrorNotification
+        : showSuccessNotification)(notificationQueue[0].message)
+      dispatch(notificationShown())
+    }
+  }, [notificationQueue, dispatch])
 
   // Following drone logic
-  if (mapRef.current && followDrone && lon !== 0 && lat !== 0) {
-    mapRef.current.setCenter({ lng: lon, lat: lat })
-  }
+  useEffect(() => {
+    if (mapRef.current && followDrone && lon !== 0 && lat !== 0) {
+      mapRef.current.setCenter({ lng: lon, lat: lat })
+    }
+  }, [followDrone, lon, lat])
 
   function centerMapOnDrone() {
     mapRef.current.getMap().flyTo({
@@ -248,7 +252,7 @@ export default function Dashboard() {
             passedRef={mapRef}
             data={gpsData}
             heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            desiredBearing={navControllerOutputData.nav_bearing}
+            desiredBearing={navControllerOutputData.navBearing}
             missionItems={missionItems}
             homePosition={homePosition}
             onDragstart={() => {
@@ -289,7 +293,6 @@ export default function Dashboard() {
             connected={connected}
             aircraftType={aircraftType}
             currentFlightModeNumber={currentFlightModeNumber}
-            currentMissionData={currentMissionData}
             navControllerOutputData={navControllerOutputData}
           />
         </ResizableInfoBox>

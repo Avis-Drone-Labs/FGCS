@@ -5,7 +5,7 @@ const missionInfoSlice = createSlice({
   name: "missionInfo",
   initialState: {
     currentMission: {
-      missionState: 0,
+      mission_state: 0,
       total: 0,
       seq: 0,
     },

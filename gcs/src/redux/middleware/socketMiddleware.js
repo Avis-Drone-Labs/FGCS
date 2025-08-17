@@ -62,6 +62,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onMissionControlResult: "mission_control_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+  onCurrentMissionAll: "current_mission_all"
 })
 
 const socketMiddleware = (store) => {
@@ -116,7 +117,7 @@ const socketMiddleware = (store) => {
 
         /*
           ========================
-          = UNDERLYING CONNETION =
+          = UNDERLYING CONNECTION =
           ========================
         */
 
@@ -124,7 +125,7 @@ const socketMiddleware = (store) => {
         // EXAMPLE SOCKET.ON EVENT
         socket.socket.on(SocketEvents.Connect, () => {
           // DISPATCH ALL ACTIONS HERE
-          // SINCE ITS MIDDLWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
+          // SINCE ITS MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
           console.log(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
         })
@@ -136,7 +137,7 @@ const socketMiddleware = (store) => {
 
         /*
           ====================
-          = DRONE CONNETIONS =
+          = DRONE CONNECTIONS =
           ====================
         */
 
@@ -206,16 +207,11 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" })) // Potential issue with state?
           store.dispatch(emitGetHomePosition())
-          store.dispatch(emitGetCurrentMission())
         })
 
         // Setting connection status
         socket.socket.on("drone_connect_status", (msg) => {
           store.dispatch(setConnectionStatus(msg.message))
-        })
-
-        socket.socket.on("current_mission_all", (msg) => {
-          store.dispatch(setCurrentMissionItems(msg))
         })
       }
     }
@@ -229,6 +225,7 @@ const socketMiddleware = (store) => {
               queueNotification({ type: "error", message: msg.message }),
             )
         })
+
         socket.socket.on(
           DroneSpecificSocketEvents.onSetCurrentFlightMode,
           (msg) => {
@@ -240,6 +237,7 @@ const socketMiddleware = (store) => {
             )
           },
         )
+
         socket.socket.on(DroneSpecificSocketEvents.onNavResult, (msg) => {
           store.dispatch(
             queueNotification({
@@ -248,6 +246,7 @@ const socketMiddleware = (store) => {
             }),
           )
         })
+
         socket.socket.on(
           DroneSpecificSocketEvents.onMissionControlResult,
           (msg) => {
@@ -259,16 +258,24 @@ const socketMiddleware = (store) => {
             )
           },
         )
+
         socket.socket.on(
           DroneSpecificSocketEvents.onHomePositionResult,
           (msg) => {
+            console.log(`Got home position ${msg.success ? 'successfully' : 'unsuccessfully'}`)
             store.dispatch(
               msg.success
                 ? setHomePosition(msg.data)
                 : queueNotification({ type: "error", message: msg.message }),
             )
+            store.dispatch(emitGetCurrentMission())
           },
         )
+
+        socket.socket.on(DroneSpecificSocketEvents.onCurrentMissionAll, (msg) => {
+          store.dispatch(setCurrentMissionItems(msg))
+        })
+
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
           const packetType = msg.mavpackettype

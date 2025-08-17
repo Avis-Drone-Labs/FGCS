@@ -114,9 +114,7 @@ function ExtendableNumberSetting({ settingName, range }) {
       <div className="w-full pl-9">
         <Button
           fullWidth
-          onClick={() =>
-            setValues([...values, { id: generateId(), value: 0 }])
-          }
+          onClick={() => setValues([...values, { id: generateId(), value: 0 }])}
         >
           Add new Alert
         </Button>

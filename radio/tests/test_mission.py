@@ -50,7 +50,9 @@ def upload_default_mission():
 
 
 @falcon_test(pass_drone_status=True)
-def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, droneStatus):
+def test_getCurrentMissionAll_wrongState(
+    socketio_client: SocketIOTestClient, droneStatus
+):
     droneStatus.state = "params"
     socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
@@ -63,7 +65,7 @@ def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, drone
 
 @pytest.mark.usefixtures("upload_default_mission")
 @falcon_test(pass_drone_status=True)
-def test_getCurrentMission_correctState(
+def test_getCurrentMissionAll_correctState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "dashboard"
@@ -84,7 +86,7 @@ def test_getCurrentMission_correctState(
 
 
 @falcon_test(pass_drone_status=True)
-def test_getCurrentMission_noDroneConnection(
+def test_getCurrentMissionAll_noDroneConnection(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "dashboard"
@@ -97,6 +99,84 @@ def test_getCurrentMission_noDroneConnection(
         assert socketio_result["args"][0] == {
             "message": "Must be connected to the drone to get current mission."
         }
+
+
+@falcon_test(pass_drone_status=True)
+def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, droneStatus):
+    droneStatus.state = "params"
+    socketio_client.emit("get_current_mission", {"type": "mission"})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"  # Correct name emitted
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the dashboard or missions screen to get the current mission."
+    }
+
+
+@pytest.mark.usefixtures("upload_default_mission")
+@falcon_test(pass_drone_status=True)
+def test_getCurrentMission_correctMission(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    socketio_client.emit("get_current_mission", {"type": "mission"})
+    socketio_result = socketio_client.get_received()[-1]
+
+    assert socketio_result["name"] == "current_mission"
+
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_getCurrentMission_correctMission_result.json"
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    assert socketio_result["args"][0] == result_data
+
+
+@pytest.mark.usefixtures("upload_default_mission")
+@falcon_test(pass_drone_status=True)
+def test_getCurrentMission_correctFence(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    socketio_client.emit("get_current_mission", {"type": "fence"})
+    socketio_result = socketio_client.get_received()[-1]
+
+    assert socketio_result["name"] == "current_mission"
+
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_getCurrentMission_correctFence_result.json"
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    assert socketio_result["args"][0] == result_data
+
+
+@pytest.mark.usefixtures("upload_default_mission")
+@falcon_test(pass_drone_status=True)
+def test_getCurrentMission_correctRally(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    socketio_client.emit("get_current_mission", {"type": "rally"})
+    socketio_result = socketio_client.get_received()[-1]
+
+    assert socketio_result["name"] == "current_mission"
+
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_getCurrentMission_correctRally_result.json"
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    assert socketio_result["args"][0] == result_data
 
 
 @falcon_test(pass_drone_status=True)

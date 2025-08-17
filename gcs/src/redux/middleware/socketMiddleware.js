@@ -28,7 +28,7 @@ import {
   queueErrorNotification,
   queueNotification,
 } from "../slices/notificationSlice"
-import { setCurrentMission, setHomePosition } from "../slices/missionSlice"
+import { setCurrentMission, setCurrentMissionItems, setHomePosition } from "../slices/missionSlice"
 import {
   setDroneAircraftType,
   setTelemetryData,
@@ -207,14 +207,15 @@ const socketMiddleware = (store) => {
           store.dispatch(emitSetState({ state: "dashboard" })) // Potential issue with state?
           store.dispatch(emitGetHomePosition())
           store.dispatch(emitGetCurrentMission())
-          // socket.emit("set_state", { state: "dashboard" })
-          // socket.emit("get_home_position")
-          // socket.emit("get_current_mission")
         })
 
         // Setting connection status
         socket.socket.on("drone_connect_status", (msg) => {
           store.dispatch(setConnectionStatus(msg.message))
+        })
+
+        socket.socket.on("current_mission_all", (msg) => {
+          store.dispatch(setCurrentMissionItems(msg))
         })
       }
     }

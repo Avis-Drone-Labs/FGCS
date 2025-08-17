@@ -139,7 +139,7 @@ function MapSectionNonMemo({
   }, [data])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.missionItems))
+    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
   }, [missionItems])
 
   useEffect(() => {
@@ -224,10 +224,10 @@ function MapSectionNonMemo({
             />
           )}
 
-        <MissionItems missionItems={missionItems.missionItems} />
+        <MissionItems missionItems={missionItems.mission_items} />
 
         {/* Show mission geo-fence MARKERS */}
-        {missionItems.fenceItems.map((item, index) => {
+        {missionItems.fence_items.map((item, index) => {
           return (
             <MarkerPin
               key={index}
@@ -239,16 +239,16 @@ function MapSectionNonMemo({
         })}
 
         {/* Show geo-fence outlines */}
-        {missionItems.fenceItems.length > 0 && (
+        {missionItems.fence_items.length > 0 && (
           <DrawLineCoordinates
             coordinates={[
-              ...missionItems.fenceItems.map((item) => [
+              ...missionItems.fence_items.map((item) => [
                 intToCoord(item.y),
                 intToCoord(item.x),
               ]),
               [
-                intToCoord(missionItems.fenceItems[0].y),
-                intToCoord(missionItems.fenceItems[0].x),
+                intToCoord(missionItems.fence_items[0].y),
+                intToCoord(missionItems.fence_items[0].x),
               ],
             ]}
             colour={tailwindColors.blue[200]}
@@ -257,7 +257,7 @@ function MapSectionNonMemo({
         )}
 
         {/* Show mission rally point */}
-        {missionItems.rallyItems.map((item, index) => {
+        {missionItems.rally_items.map((item, index) => {
           return (
             <MarkerPin
               key={index}

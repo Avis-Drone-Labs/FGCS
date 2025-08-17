@@ -6,8 +6,6 @@ const socketSlice = createSlice({
     isConnected: false,
   },
   reducers: {
-    initSocket: () => {
-      return
     initSocket: (state) => state,
     socketConnected: (state) => {
       state.isConnected = true

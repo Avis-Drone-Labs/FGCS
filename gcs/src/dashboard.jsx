@@ -43,7 +43,10 @@ import {
   soundPlayed,
 } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
-import { selectNotificationQueue } from "./redux/slices/notificationSlice"
+import {
+  notificationShown,
+  selectNotificationQueue,
+} from "./redux/slices/notificationSlice"
 
 // Helper javascript files
 import {
@@ -56,7 +59,6 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "./helpers/notification"
-import { socket } from "./helpers/socket"
 
 // Custom component
 import useSound from "use-sound"
@@ -77,10 +79,14 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
-import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
-import { useAlerts } from "./components/dashboard/alertProvider"
-import { useSettings } from "./helpers/settings"
-import { selectCurrentMission, selectCurrentMissionItems, selectHomePosition } from "./redux/slices/missionSlice"
+// import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
+// import { useAlerts } from "./components/dashboard/alertProvider"
+// import { useSettings } from "./helpers/settings"
+import {
+  selectCurrentMission,
+  selectCurrentMissionItems,
+  selectHomePosition,
+} from "./redux/slices/missionSlice"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -91,12 +97,12 @@ export default function Dashboard() {
   const prearmEnabled = useSelector(selectPrearmEnabled)
   const rssi = useSelector(selectRSSI)
   const heartbeatData = useSelector(selectHeartbeat)
-  
+
   const currentMissionData = useSelector(selectCurrentMission)
   const missionItems = useSelector(selectCurrentMissionItems)
   const homePosition = useSelector(selectHomePosition)
   const currentFlightModeNumber = useSelector(selectFlightMode)
-  
+
   const attitudeData = useSelector(selectAttitude)
   const { lat, lon } = useSelector(selectDroneCoords)
   const batteryData = useSelector(selectBatteryData)
@@ -156,11 +162,13 @@ export default function Dashboard() {
   }
 
   // Show queued notifications
-  // if (notificationQueue.length !== 0) {
-  //   ;(notificationQueue[0].type == "error"
-  //     ? showErrorNotification
-  //     : showSuccessNotification)(notificationQueue[0].message)
-  // }
+  if (notificationQueue.length !== 0) {
+    console.log(notificationQueue)
+    ;(notificationQueue[0].type == "error"
+      ? showErrorNotification
+      : showSuccessNotification)(notificationQueue[0].message)
+    dispatch(notificationShown())
+  }
 
   // Following drone logic
   if (mapRef.current && followDrone && lon !== 0 && lat !== 0) {

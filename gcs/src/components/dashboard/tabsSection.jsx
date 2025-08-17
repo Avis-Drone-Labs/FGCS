@@ -33,9 +33,7 @@ export default function TabsSection({
       </Tabs.List>
 
       {/* Data */}
-      <DataTabsSection
-        tabPadding={tabPadding}
-      />
+      <DataTabsSection tabPadding={tabPadding} />
 
       {/* Actions */}
       <ActionTabsSection

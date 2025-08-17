@@ -49,9 +49,15 @@ const droneInfoSlice = createSlice({
   },
   reducers: {
     setHeartbeatData: (state, action) => {
-      if (action.payload.base_mode & 128 && !(state.heartbeatData.baseMode & 128)) {
+      if (
+        action.payload.base_mode & 128 &&
+        !(state.heartbeatData.baseMode & 128)
+      ) {
         state.notificationSound = "armed"
-      } else if (!(action.payload.base_mode & 128) && state.heartbeatData.baseMode & 128) {
+      } else if (
+        !(action.payload.base_mode & 128) &&
+        state.heartbeatData.baseMode & 128
+      ) {
         state.notificationSound = "disarmed"
       }
       state.heartbeatData.baseMode = action.payload.base_mode

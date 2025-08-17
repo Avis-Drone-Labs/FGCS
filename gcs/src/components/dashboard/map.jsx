@@ -240,7 +240,7 @@ function MapSectionNonMemo({
 
         {/* Show geo-fence outlines */}
         {missionItems.fenceItems.length > 0 && (
-          <fenceItems
+          <DrawLineCoordinates
             coordinates={[
               ...missionItems.fenceItems.map((item) => [
                 intToCoord(item.y),

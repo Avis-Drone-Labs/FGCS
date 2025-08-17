@@ -5,7 +5,7 @@
 // subscribe to store updates
 // and save to local storage any values that have changed
 
-import { store } from '../store';
+import { store } from "../store"
 
 store.subscribe(() => {
   // create a mutable copy of the store

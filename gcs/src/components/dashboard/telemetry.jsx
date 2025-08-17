@@ -24,7 +24,7 @@ export default function TelemetrySection({
   systemStatus,
 }) {
   const isArmed = useSelector(selectArmed)
-  
+
   return (
     <div>
       {/* Information above indicators */}

@@ -252,37 +252,36 @@ export default function Graph({
         const labelColor = backgroundColor.replace(/[^,]+(?=\))/, "1")
 
         // Critical fix: Convert timestamp to Date object for time scale
-        let xMinValue = flightMode.TimeUS;
-        let xMaxValue = xMax;
+        let xMinValue = flightMode.TimeUS
+        let xMaxValue = xMax
 
         // Check if we're using a time scale
-        const isTimeScale = config.scales?.x?.type === "time";
-        
+        const isTimeScale = config.scales?.x?.type === "time"
+
         // Convert timestamps to Date objects when using time scale
         if (isTimeScale) {
-            xMinValue = new Date(flightMode.TimeUS);
-          
+          xMinValue = new Date(flightMode.TimeUS)
+
           // Handle xMax
           if (nextFlightMode !== undefined) {
-              xMaxValue = new Date(nextFlightMode.TimeUS);
+            xMaxValue = new Date(nextFlightMode.TimeUS)
           } else {
             // Stretch to the latest date
-            let maxTime = 0;
+            let maxTime = 0
             data.datasets.forEach((dataset) => {
               dataset.data.forEach((point) => {
                 if (point.x > maxTime) {
-                  maxTime = point.x;
+                  maxTime = point.x
                 }
-              });
-            });
-            const maxDate = new Date(maxTime);
-            xMaxValue = maxDate;
+              })
+            })
+            const maxDate = new Date(maxTime)
+            xMaxValue = maxDate
           }
-
         } else {
           // For non-time scales, handle next flight mode
           if (nextFlightMode !== undefined) {
-            xMaxValue = nextFlightMode.TimeUS;
+            xMaxValue = nextFlightMode.TimeUS
           }
         }
 

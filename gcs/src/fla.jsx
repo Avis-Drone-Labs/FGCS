@@ -181,7 +181,7 @@ export default function FLA() {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
-      let gpsOffset = null; // To store the offset between TimeUS and TimeUTC
+      let gpsOffset = null // To store the offset between TimeUS and TimeUTC
 
       if (result.success) {
         // Load messages into states
@@ -277,26 +277,32 @@ export default function FLA() {
 
         let tempLoadedLogMessages = { ...loadedLogMessages }
 
-        if ("GPS" in loadedLogMessages && result.logType === "dataflash" && gpsOffset === null) {
+        if (
+          "GPS" in loadedLogMessages &&
+          result.logType === "dataflash" &&
+          gpsOffset === null
+        ) {
           const messageObj = tempLoadedLogMessages["GPS"][0] // Get the first GPS message
-          
+
           // Calculate the offset
           if (messageObj.GWk !== undefined && messageObj.GMS !== undefined) {
-            const utcTime = gpsToUTC(messageObj.GWk, messageObj.GMS);
-            gpsOffset = utcTime.getTime() - messageObj.TimeUS/1000;
+            const utcTime = gpsToUTC(messageObj.GWk, messageObj.GMS)
+            gpsOffset = utcTime.getTime() - messageObj.TimeUS / 1000
           }
 
           // Loop through all messages and replace TimeUS with UTC
           Object.keys(tempLoadedLogMessages).forEach((key) => {
             if (key !== "format" && key !== "units") {
-              tempLoadedLogMessages[key] = tempLoadedLogMessages[key].map((message) => {
-                return {
-                  ...message,
-                  TimeUS: message.TimeUS/1000 + gpsOffset, // Add the new property
-                };
-              });
+              tempLoadedLogMessages[key] = tempLoadedLogMessages[key].map(
+                (message) => {
+                  return {
+                    ...message,
+                    TimeUS: message.TimeUS / 1000 + gpsOffset, // Add the new property
+                  }
+                },
+              )
             }
-          });
+          })
           updateUtcAvailable(true)
           updateFlightModeMessages(tempLoadedLogMessages.MODE)
         }
@@ -318,7 +324,7 @@ export default function FLA() {
             tempLoadedLogMessages[battName].push({
               ...battData,
               name: battName,
-              TimeUS: battData.TimeUS/1000 + gpsOffset
+              TimeUS: battData.TimeUS / 1000 + gpsOffset,
             })
 
             // Add filter state for new BATT
@@ -379,16 +385,16 @@ export default function FLA() {
 
   function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
     // GPS epoch starts at 1980-01-06 00:00:00 UTC
-    const gpsEpoch = new Date(Date.UTC(1980, 0, 6));
-  
+    const gpsEpoch = new Date(Date.UTC(1980, 0, 6))
+
     // Calculate total milliseconds since Unix epoch
     const totalMs =
       gpsEpoch.getTime() +
       gpsWeek * 604_800_000 + // Convert weeks to milliseconds
       gms - // Add GPS milliseconds
-      leapSeconds * 1_000; // Subtract leap seconds
-  
-    return new Date(totalMs);
+      leapSeconds * 1_000 // Subtract leap seconds
+
+    return new Date(totalMs)
   }
 
   // Get a list of the recent FGCS telemetry logs
@@ -984,9 +990,7 @@ export default function FLA() {
                 data={chartData}
                 events={logEvents}
                 flightModes={flightModeMessages}
-                graphConfig={
-                  utcAvailable ? fgcsOptions: dataflashOptions
-                }
+                graphConfig={utcAvailable ? fgcsOptions : dataflashOptions}
                 clearFilters={clearFilters}
                 canSavePreset={canSavePreset}
                 openPresetModal={open}

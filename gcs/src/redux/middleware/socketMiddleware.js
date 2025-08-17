@@ -29,17 +29,17 @@ import {
   queueNotification,
 } from "../slices/notificationSlice"
 import { setCurrentMission, setHomePosition } from "../slices/missionSlice"
-import { 
-  setDroneAircraftType, 
-  setTelemetryData, 
-  setAttitudeData, 
-  setGpsData, 
+import {
+  setDroneAircraftType,
+  setTelemetryData,
+  setAttitudeData,
+  setGpsData,
   setNavControllerOutput,
   setHeartbeatData,
   setGpsRawIntData,
   setBatteryData,
   setOnboardControlSensorsEnabled,
-  setRSSIData
+  setRSSIData,
 } from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 
@@ -60,7 +60,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavResult: "nav_result",
   onMissionControlResult: "mission_control_result",
   onHomePositionResult: "home_position_result",
-  onIncomingMsg: "incoming_msg"
+  onIncomingMsg: "incoming_msg",
 })
 
 const socketMiddleware = (store) => {
@@ -68,8 +68,8 @@ const socketMiddleware = (store) => {
 
   const incomingMessageHandler = (msg) => {
     switch (msg.mavpackettype) {
-      case "VFR_HUD": 
-        store.dispatch(setTelemetryData(msg)) 
+      case "VFR_HUD":
+        store.dispatch(setTelemetryData(msg))
         break
       case "ATTITUDE":
         store.dispatch(setAttitudeData(msg))
@@ -87,7 +87,9 @@ const socketMiddleware = (store) => {
         store.dispatch(pushMessage(msg))
         break
       case "SYS_STATUS":
-        store.dispatch(setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled))
+        store.dispatch(
+          setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
+        )
         break
       case "GPS_RAW_INT":
         store.dispatch(setGpsRawIntData(msg))
@@ -201,7 +203,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          store.dispatch(emitSetState({ state: "dashboard" }))  // Potential issue with state?
+          store.dispatch(emitSetState({ state: "dashboard" })) // Potential issue with state?
           store.dispatch(emitGetHomePosition())
           store.dispatch(emitGetCurrentMission())
           // socket.emit("set_state", { state: "dashboard" })
@@ -268,28 +270,28 @@ const socketMiddleware = (store) => {
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
           // if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-            // incomingMessageHandler()[msg.mavpackettype](msg)
-            // Store packetType that has arrived
-            // const packetType = msg.mavpackettype
-    
-            // Use functional form of setState to ensure the latest state is used
-            // setDisplayedData((prevDisplayedData) => {
-            //   // Create a copy of displayedData to modify
-            //   let updatedDisplayedData = [...prevDisplayedData]
-    
-            //   // Iterate over displayedData to find and update the matching item
-            //   updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
-            //     if (dataItem.currently_selected.startsWith(packetType)) {
-            //       const specificData = dataItem.currently_selected.split(".")[1]
-            //       if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-            //         return { ...dataItem, value: msg[specificData] }
-            //       }
-            //     }
-            //     return dataItem
-            //   })
-    
-            //   return updatedDisplayedData
-            // })
+          // incomingMessageHandler()[msg.mavpackettype](msg)
+          // Store packetType that has arrived
+          // const packetType = msg.mavpackettype
+
+          // Use functional form of setState to ensure the latest state is used
+          // setDisplayedData((prevDisplayedData) => {
+          //   // Create a copy of displayedData to modify
+          //   let updatedDisplayedData = [...prevDisplayedData]
+
+          //   // Iterate over displayedData to find and update the matching item
+          //   updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
+          //     if (dataItem.currently_selected.startsWith(packetType)) {
+          //       const specificData = dataItem.currently_selected.split(".")[1]
+          //       if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+          //         return { ...dataItem, value: msg[specificData] }
+          //       }
+          //     }
+          //     return dataItem
+          //   })
+
+          //   return updatedDisplayedData
+          // })
           // }
         })
       } else {

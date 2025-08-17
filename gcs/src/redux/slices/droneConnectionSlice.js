@@ -124,7 +124,7 @@ const droneConnectionSlice = createSlice({
     emitGetCurrentMission: () => {
       console.log("Getting current mission")
       socket.emit("get_current_mission")
-    }
+    },
   },
   selectors: {
     selectConnecting: (state) => state.connecting,

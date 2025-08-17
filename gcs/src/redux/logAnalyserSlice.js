@@ -86,4 +86,4 @@ export const {
   setCanSavePreset,
 } = logAnalyserSlice.actions
 
-export default logAnalyserSlice.reducer
+export default logAnalyserSlice

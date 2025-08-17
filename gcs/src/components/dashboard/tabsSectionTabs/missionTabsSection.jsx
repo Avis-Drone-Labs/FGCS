@@ -58,7 +58,7 @@ const MissionInfo = ({ currentMissionData, navControllerOutputData }) => {
       <div className="text-lg">
         <p>
           <span className="font-bold"> Mission State:</span>{" "}
-          {MISSION_STATES[currentMissionData.mission_state]}
+          {MISSION_STATES[currentMissionData.missionState]}
         </p>
         <p>
           <span className="font-bold"> Waypoint: </span>{" "}

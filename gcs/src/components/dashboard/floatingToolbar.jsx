@@ -27,7 +27,7 @@ export default function FloatingToolbar({
   setFollowDrone,
   mapRef,
 }) {
-  const filteredMissionItems = filterMissionItems(missionItems.mission_items)
+  const filteredMissionItems = filterMissionItems(missionItems.missionItems)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false,

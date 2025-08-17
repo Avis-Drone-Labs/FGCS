@@ -49,16 +49,14 @@ const droneInfoSlice = createSlice({
   },
   reducers: {
     setHeartbeatData: (state, action) => {
-      if (
-        action.payload.baseMode & 128 &&
-        !(state.heartbeatData.baseMode & 128)
-      )
+      if (action.payload.base_mode & 128 && !(state.heartbeatData.baseMode & 128)) {
         state.notificationSound = "armed"
-      else if (
-        !(action.payload.baseMode & 128) &&
-        state.heartbeatData.baseMode & 128
-      )
+      } else if (!(action.payload.base_mode & 128) && state.heartbeatData.baseMode & 128) {
         state.notificationSound = "disarmed"
+      }
+      state.heartbeatData.baseMode = action.payload.base_mode
+      state.heartbeatData.customMode = action.payload.custom_mode
+      state.heartbeatData.systemStatus = action.payload.system_status
     },
     setBatteryData: (state, action) => {
       const battery = state.batteryData.filter(
@@ -77,6 +75,11 @@ const droneInfoSlice = createSlice({
       state.extraDroneData[action.payload.index] = {
         ...state.extraDroneData[action.payload.index],
         ...action.payload.data,
+      }
+    },
+    setExtraData: (state, action) => {
+      if (action.payload !== state.extraDroneData) {
+        state.extraDroneData = action.payload
       }
     },
     setDroneAircraftType: (state, action) => {
@@ -154,6 +157,7 @@ export const {
   setHeartbeatData,
   soundPlayed,
   changeExtraData,
+  setExtraData,
   setDroneAircraftType,
   setTelemetryData,
   setGpsData,
@@ -206,41 +210,6 @@ export const selectAlt = createSelector(
     return { alt: alt / 1000, relativeAlt: relativeAlt / 1000 }
   },
 )
-
-// export function incomingMessageHandler(msg) {
-//   switch (msg.mavpackettype) {
-//     case "VFR_HUD":
-//       console.log(msg)
-//       setTelemetryData({ airspeed: msg.airspeed, groundspeed: msg.groundspeed });
-//       break;
-//   }
-// VFR_HUD: (msg) => setTelemetryData(msg),
-// BATTERY_STATUS: (msg) => {
-//   const battery = localBatteryData.filter(
-//     (battery) => battery.id == msg.id,
-//   )[0]
-//   if (battery) {
-//     Object.assign(battery, msg)
-//   } else {
-//     localBatteryData.push(msg)
-//   }
-//   localBatteryData.sort((b1, b2) => b1.id - b2.id)
-//   setBatteryData(localBatteryData)
-// },
-// ATTITUDE: (msg) => setAttitudeData(msg),
-// GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
-// NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-// HEARTBEAT: (msg) => {
-//   if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
-//     setHeartbeatData(msg)
-//   }
-// },
-// STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
-// SYS_STATUS: (msg) => setSysStatusData(msg),
-// GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
-// RC_CHANNELS: (msg) => setRCChannelsData(msg),
-// MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
-// }
 
 export const {
   selectAttitude,

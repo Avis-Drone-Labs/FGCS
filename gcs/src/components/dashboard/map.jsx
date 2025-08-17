@@ -129,7 +129,7 @@ function MapSectionNonMemo({
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
 
-    if (!firstCenteredToDrone) {
+    if (!firstCenteredToDrone && passedRef.current !== null) {
       passedRef.current.getMap().flyTo({
         center: [lon, lat],
         zoom: initialViewState.zoom,
@@ -139,7 +139,7 @@ function MapSectionNonMemo({
   }, [data])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItems.missionItems))
   }, [missionItems])
 
   useEffect(() => {
@@ -224,10 +224,10 @@ function MapSectionNonMemo({
             />
           )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems missionItems={missionItems.missionItems} />
 
         {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
+        {missionItems.fenceItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}
@@ -239,16 +239,16 @@ function MapSectionNonMemo({
         })}
 
         {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
-          <DrawLineCoordinates
+        {missionItems.fenceItems.length > 0 && (
+          <fenceItems
             coordinates={[
-              ...missionItems.fence_items.map((item) => [
+              ...missionItems.fenceItems.map((item) => [
                 intToCoord(item.y),
                 intToCoord(item.x),
               ]),
               [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
+                intToCoord(missionItems.fenceItems[0].y),
+                intToCoord(missionItems.fenceItems[0].x),
               ],
             ]}
             colour={tailwindColors.blue[200]}
@@ -257,7 +257,7 @@ function MapSectionNonMemo({
         )}
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {missionItems.rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}

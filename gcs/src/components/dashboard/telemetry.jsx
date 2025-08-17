@@ -4,11 +4,12 @@
 */
 
 // Custom Components
+import { useSelector } from "react-redux"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
+import { selectArmed } from "../../redux/slices/droneInfoSlice"
 
 export default function TelemetrySection({
-  getIsArmed,
   prearmEnabled,
   calcIndicatorSize,
   calcIndicatorPadding,
@@ -22,17 +23,19 @@ export default function TelemetrySection({
   batteryData,
   systemStatus,
 }) {
+  const isArmed = useSelector(selectArmed)
+  
   return (
     <div>
       {/* Information above indicators */}
       <div className="flex flex-col items-center space-y-2">
         <div className="flex items-center space-x-3">
-          {getIsArmed() ? (
+          {isArmed ? (
             <p className="font-bold text-falconred">ARMED</p>
           ) : (
             <>
               <p className="font-bold">DISARMED</p>
-              {prearmEnabled() ? (
+              {prearmEnabled ? (
                 <p className="text-green-500">Prearm: Enabled</p>
               ) : (
                 <p className="font-bold text-falconred">Prearm: Disabled</p>

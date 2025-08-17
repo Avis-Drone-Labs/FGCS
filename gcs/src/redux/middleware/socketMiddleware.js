@@ -40,6 +40,7 @@ import {
   setBatteryData,
   setOnboardControlSensorsEnabled,
   setRSSIData,
+  setExtraData
 } from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 
@@ -269,6 +270,24 @@ const socketMiddleware = (store) => {
         )
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
+          const packetType = msg.mavpackettype
+          const storeState = store.getState()
+          if (storeState !== undefined) {
+            var extraDroneData = storeState.droneInfo.extraDroneData
+            const updatedExtraDroneData = extraDroneData.map((dataItem) => {
+              if (dataItem.currently_selected.startsWith(packetType)) {
+                const specificData = dataItem.currently_selected.split(".")[1]
+                if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+                  return { ...dataItem, value: msg[specificData] }
+                }
+              }
+              return dataItem
+            })
+
+            store.dispatch(setExtraData(updatedExtraDroneData))
+          }
+
+
           // if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
           // incomingMessageHandler()[msg.mavpackettype](msg)
           // Store packetType that has arrived

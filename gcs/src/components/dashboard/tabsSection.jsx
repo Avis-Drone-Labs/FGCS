@@ -16,12 +16,9 @@ import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
 export default function TabsSection({
   connected,
   aircraftType,
-  getIsArmed,
   currentFlightModeNumber,
   currentMissionData,
   navControllerOutputData,
-  displayedData,
-  setDisplayedData,
 }) {
   const tabPadding = "pt-6 pb-4"
 
@@ -38,8 +35,6 @@ export default function TabsSection({
       {/* Data */}
       <DataTabsSection
         tabPadding={tabPadding}
-        displayedData={displayedData}
-        setDisplayedData={setDisplayedData}
       />
 
       {/* Actions */}
@@ -48,7 +43,6 @@ export default function TabsSection({
         tabPadding={tabPadding}
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}
-        getIsArmed={getIsArmed}
       ></ActionTabsSection>
 
       {/* Mission */}

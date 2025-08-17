@@ -69,6 +69,9 @@ def uploadMission(file_name, mission_type, master):
 
     for i in range(loader.count()):
         msg = master.recv_match(type=["MISSION_REQUEST"], blocking=True, timeout=3)
+        if msg is None:
+            raise TimeoutError("Did not receive MISSION_REQUEST message within timeout")
+
         master.mav.send(loader.wp(msg.seq))
 
     print(f"Uploaded {mission_type} with {loader.count()} items")

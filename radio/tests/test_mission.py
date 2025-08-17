@@ -20,6 +20,8 @@ def upload_default_mission():
     Uploads the default mission, fence, and rally files to the drone before running a test.
     """
     # Setup
+
+    # Should be imported after the fixture to ensure the droneStatus is fresh
     import app.droneStatus as droneStatus
 
     assert droneStatus.drone is not None, "Drone must be connected before running tests"

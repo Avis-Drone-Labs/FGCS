@@ -175,7 +175,7 @@ export const selectDroneCoords = createSelector(
 
 export const selectAttitudeDeg = createSelector(
   [droneInfoSlice.selectors.selectAttitude],
-  (roll, pitch, yaw) => {
+  ({ roll, pitch, yaw }) => {
     return {
       roll: roll * (180 / Math.PI),
       pitch: pitch * (180 / Math.PI),

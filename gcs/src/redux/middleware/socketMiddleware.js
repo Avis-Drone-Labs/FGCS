@@ -232,7 +232,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             store.dispatch(
               queueNotification({
-                type: msg.success ? "success " : "error",
+                type: msg.success ? "success" : "error",
                 message: msg.message,
               }),
             )
@@ -241,7 +241,7 @@ const socketMiddleware = (store) => {
         socket.socket.on(DroneSpecificSocketEvents.onNavResult, (msg) => {
           store.dispatch(
             queueNotification({
-              type: msg.success ? "success " : "error",
+              type: msg.success ? "success" : "error",
               message: msg.message,
             }),
           )
@@ -251,7 +251,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             store.dispatch(
               queueNotification({
-                type: msg.success ? "success " : "error",
+                type: msg.success ? "success" : "error",
                 message: msg.message,
               }),
             )

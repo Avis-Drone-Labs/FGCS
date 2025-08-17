@@ -1,7 +1,52 @@
+import json
+import os
+
+import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
 from .helpers import NoDrone
+from .mission_test_files.upload_mission_helper import uploadMission
+
+MISSION_FILES_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "mission_test_files",
+)
+
+
+@pytest.fixture()
+def upload_default_mission():
+    """
+    Uploads the default mission, fence, and rally files to the drone before running a test.
+    """
+    # Setup
+    import app.droneStatus as droneStatus
+
+    assert droneStatus.drone is not None, "Drone must be connected before running tests"
+
+    droneStatus.drone.is_listening = False
+
+    uploadMission(
+        os.path.join(MISSION_FILES_PATH, "default_mission.txt"),
+        "mission",
+        droneStatus.drone.master,
+    )
+    uploadMission(
+        os.path.join(MISSION_FILES_PATH, "default_fence.txt"),
+        "fence",
+        droneStatus.drone.master,
+    )
+    uploadMission(
+        os.path.join(MISSION_FILES_PATH, "default_rally.txt"),
+        "rally",
+        droneStatus.drone.master,
+    )
+
+    droneStatus.drone.is_listening = True
+
+    yield  # this is where the testing happens
+
+    # Teardown
 
 
 @falcon_test(pass_drone_status=True)
@@ -16,6 +61,7 @@ def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, drone
     }
 
 
+@pytest.mark.usefixtures("upload_default_mission")
 @falcon_test(pass_drone_status=True)
 def test_getCurrentMission_correctState(
     socketio_client: SocketIOTestClient, droneStatus
@@ -26,157 +72,15 @@ def test_getCurrentMission_correctState(
 
     assert socketio_result["name"] == "current_mission_all"  # Correct name emitted
 
-    # pytest.skip(reason="Sending mission to simulator is currently bugged and fails sometimes")
-    assert socketio_result["args"][0] == {
-        "mission_items": [
-            {
-                "autocontinue": 1,
-                "command": 16,
-                "current": 0,
-                "frame": 0,
-                "mavpackettype": "MISSION_ITEM_INT",
-                "mission_type": 0,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "seq": 0,
-                "target_component": 0,
-                "target_system": 255,
-                "x": 527805690,
-                "y": -7079236,
-                "z": 0.09999999403953552,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 1,
-                "frame": 3,
-                "command": 22,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 0,
-                "y": 0,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 2,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527803200,
-                "y": -7097929,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 3,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527812256,
-                "y": -7098949,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 4,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527816992,
-                "y": -7079530,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 5,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527814400,
-                "y": -7057160,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 6,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527807968,
-                "y": -7065958,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 7,
-                "frame": 3,
-                "command": 21,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 1.0,
-                "x": 527804416,
-                "y": -7081997,
-                "z": 0.0,
-                "mission_type": 0,
-            },
-        ],
-        "fence_items": [],
-        "rally_items": [],
-    }
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_getCurrentMission_correctState_result.json"
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    assert socketio_result["args"][0] == result_data
 
 
 @falcon_test(pass_drone_status=True)
@@ -214,155 +118,13 @@ def test_writeCurrentMission_correctState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
     droneStatus.state = "missions"
-    data = {
-        "type": "mission",
-        "items": [
-            {
-                "autocontinue": 1,
-                "command": 16,
-                "current": 0,
-                "frame": 0,
-                "mavpackettype": "MISSION_ITEM_INT",
-                "mission_type": 0,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "seq": 0,
-                "target_component": 0,
-                "target_system": 255,
-                "x": 527805690,
-                "y": -7079236,
-                "z": 0.09999999403953552,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 1,
-                "frame": 3,
-                "command": 22,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 0,
-                "y": 0,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 2,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527803200,
-                "y": -7097929,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 3,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527812256,
-                "y": -7098949,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 4,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527816992,
-                "y": -7079530,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 5,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527814400,
-                "y": -7057160,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 6,
-                "frame": 3,
-                "command": 16,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 0.0,
-                "x": 527807968,
-                "y": -7065958,
-                "z": 30.0,
-                "mission_type": 0,
-            },
-            {
-                "mavpackettype": "MISSION_ITEM_INT",
-                "target_system": 255,
-                "target_component": 0,
-                "seq": 7,
-                "frame": 3,
-                "command": 21,
-                "current": 0,
-                "autocontinue": 1,
-                "param1": 0.0,
-                "param2": 0.0,
-                "param3": 0.0,
-                "param4": 1.0,
-                "x": 527804416,
-                "y": -7081997,
-                "z": 0.0,
-                "mission_type": 0,
-            },
-        ],
-    }
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH, "test_writeCurrentMission_correctState_data.json"
+        ),
+        "r",
+    ) as f:
+        data = json.load(f)
 
     socketio_client.emit("write_current_mission", data)
     socketio_result = socketio_client.get_received()[-1]

@@ -27,6 +27,19 @@ import {
 } from "@tabler/icons-react"
 import { ResizableBox } from "react-resizable"
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  selectBatteryData,
+  selectDroneCoords,
+  selectGPSRawInt,
+  selectNotificationSound,
+  selectRSSI,
+  soundPlayed,
+} from "./redux/slices/droneInfoSlice"
+import { selectMessages } from "./redux/slices/statusTextSlice"
+import { selectNotificationQueue } from "./redux/slices/notificationSlice"
+
 // Helper javascript files
 import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
 import {
@@ -66,6 +79,8 @@ import { useAlerts } from "./components/dashboard/alertProvider"
 import { useSettings } from "./helpers/settings"
 
 export default function Dashboard() {
+  const { lat, lon } = useSelector(selectDroneCoords)
+
   // Local Storage
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
@@ -321,18 +336,15 @@ export default function Dashboard() {
   }, [connected])
 
   // Following drone logic
-  useEffect(() => {
-    if (
-      mapRef.current &&
-      gpsData?.lon !== 0 &&
-      gpsData?.lat !== 0 &&
-      followDrone
-    ) {
-      let lat = parseFloat(gpsData.lat * 1e-7)
-      let lon = parseFloat(gpsData.lon * 1e-7)
-      mapRef.current.setCenter({ lng: lon, lat: lat })
-    }
-  }, [gpsData])
+  if (mapRef.current && followDrone && lon !== 0 && lat !== 0) {
+    mapRef.current.setCenter({ lng: lon, lat: lat })
+  }
+
+  function centerMapOnDrone() {
+    mapRef.current.getMap().flyTo({
+      center: [lon, lat],
+    })
+  }
 
   useEffect(() => {
     if (!previousHeartbeatData?.base_mode || !heartbeatData?.base_mode) return
@@ -372,14 +384,6 @@ export default function Dashboard() {
     // Checks if prearm check is enabled, if yes then not armable
     // TOOD: test if this returns true if all checks pass
     return Boolean(sysStatusData.onboard_control_sensors_enabled & 268435456)
-  }
-
-  function centerMapOnDrone() {
-    let lat = parseFloat(gpsData.lat * 1e-7)
-    let lon = parseFloat(gpsData.lon * 1e-7)
-    mapRef.current.getMap().flyTo({
-      center: [lon, lat],
-    })
   }
 
   function calcBigTextFontSize() {
@@ -470,8 +474,8 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
-              gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
+            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${
+              lon !== undefined ? lon.toFixed(6) : 0
             })`}
             tooltip="GPS (lat, lon)"
           />

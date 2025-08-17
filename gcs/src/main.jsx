@@ -19,12 +19,18 @@ import { MantineProvider } from "@mantine/core"
 import AppContent from "./components/mainContent.jsx"
 import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
 
+// Redux
+import { store } from "./redux/store.js"
+import { Provider } from "react-redux"
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
   <MantineProvider defaultColorScheme="dark" theme={CustomMantineTheme}>
-    <HashRouter>
-      <AppContent />
-    </HashRouter>
+    <Provider store={store}>
+      <HashRouter>
+        <AppContent />
+      </HashRouter>
+    </Provider>
   </MantineProvider>,
 )
 

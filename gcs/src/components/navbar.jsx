@@ -30,6 +30,10 @@ import {
 } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
+// Redux
+import { useDispatch } from "react-redux"
+import { initSocket } from "../redux/slices/socketSlice.js"
+
 // Local imports
 import { AddCommand } from "./spotlight/commandHandler.js"
 
@@ -45,6 +49,12 @@ import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar({ currentPage }) {
+  // NOTE: Sockets won't work till this runs
+  const dispatch = useDispatch()
+  useEffect(() => {
+    dispatch(initSocket())
+  }, [])
+
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
 

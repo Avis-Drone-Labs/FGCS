@@ -6,23 +6,25 @@
 // 3rd Party Imports
 import { Tabs } from "@mantine/core"
 
-// Tab Componenents
+// Tab Components
 import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
 
-export default function TabsSection({
-  connected,
-  aircraftType,
-  getIsArmed,
-  currentFlightModeNumber,
-  currentMissionData,
-  navControllerOutputData,
-  displayedData,
-  setDisplayedData,
-}) {
+// Redux
+import { useSelector } from "react-redux"
+import {
+  selectAircraftType,
+  selectNavController,
+} from "../../redux/slices/droneInfoSlice"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+
+export default function TabsSection({ currentFlightModeNumber }) {
+  const connected = useSelector(selectConnectedToDrone)
+  const aircraftType = useSelector(selectAircraftType)
+  const navControllerOutputData = useSelector(selectNavController)
   const tabPadding = "pt-6 pb-4"
 
   return (
@@ -36,11 +38,7 @@ export default function TabsSection({
       </Tabs.List>
 
       {/* Data */}
-      <DataTabsSection
-        tabPadding={tabPadding}
-        displayedData={displayedData}
-        setDisplayedData={setDisplayedData}
-      />
+      <DataTabsSection tabPadding={tabPadding} />
 
       {/* Actions */}
       <ActionTabsSection
@@ -48,14 +46,12 @@ export default function TabsSection({
         tabPadding={tabPadding}
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}
-        getIsArmed={getIsArmed}
       ></ActionTabsSection>
 
       {/* Mission */}
       <MissionTabsSection
         connected={connected}
         tabPadding={tabPadding}
-        currentMissionData={currentMissionData}
         navControllerOutputData={navControllerOutputData}
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}

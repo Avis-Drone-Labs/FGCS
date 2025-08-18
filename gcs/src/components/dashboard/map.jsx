@@ -20,6 +20,18 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
+// Redux
+import { useSelector } from "react-redux"
+import {
+  selectFlightModeString,
+  selectGPS,
+  selectNavController,
+} from "../../redux/slices/droneInfoSlice"
+import {
+  selectCurrentMissionItems,
+  selectHomePosition,
+} from "../../redux/slices/missionSlice"
+
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
@@ -47,17 +59,17 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
-function MapSectionNonMemo({
-  passedRef,
-  data,
-  heading,
-  desiredBearing,
-  missionItems,
-  homePosition,
-  onDragstart,
-  getFlightMode,
-  mapId = "dashboard",
-}) {
+function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
+  // Redux
+  const gpsData = useSelector(selectGPS)
+  const navControllerOutputData = useSelector(selectNavController)
+  const missionItems = useSelector(selectCurrentMissionItems)
+  const homePosition = useSelector(selectHomePosition)
+  const flightMode = useSelector(selectFlightModeString)
+  const data = gpsData
+  const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
+  const desiredBearing = navControllerOutputData.navBearing
+
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
@@ -129,7 +141,7 @@ function MapSectionNonMemo({
     let lon = intToCoord(data.lon)
     setPosition({ latitude: lat, longitude: lon })
 
-    if (!firstCenteredToDrone) {
+    if (!firstCenteredToDrone && passedRef.current !== null) {
       passedRef.current.getMap().flyTo({
         center: [lon, lat],
         zoom: initialViewState.zoom,
@@ -269,7 +281,7 @@ function MapSectionNonMemo({
           )
         })}
 
-        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+        {flightMode === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}

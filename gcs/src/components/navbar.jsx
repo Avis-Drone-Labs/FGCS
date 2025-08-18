@@ -44,11 +44,14 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Navbar({ currentPage }) {
+export default function Navbar() {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
-
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
+  const [currentPage] = useSessionStorage({
+    key: "currentPage",
+    defaultValue: "dashboard",
+  })
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)

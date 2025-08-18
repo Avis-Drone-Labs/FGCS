@@ -17,11 +17,12 @@ import {
 // Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
+import { useSelector } from "react-redux"
+import { selectCurrentMission } from "../../../redux/slices/missionSlice"
 
 export default function MissionTabsSection({
   connected,
   tabPadding,
-  currentMissionData,
   navControllerOutputData,
   currentFlightModeNumber,
   aircraftType,
@@ -34,10 +35,7 @@ export default function MissionTabsSection({
         ) : (
           <div className="flex flex-col gap-4">
             {/** Mission Information */}
-            <MissionInfo
-              currentMissionData={currentMissionData}
-              navControllerOutputData={navControllerOutputData}
-            />
+            <MissionInfo navControllerOutputData={navControllerOutputData} />
 
             {/** Auto, Start and Restart Mission */}
             <AutoStartRestartMission
@@ -51,18 +49,19 @@ export default function MissionTabsSection({
   )
 }
 
-const MissionInfo = ({ currentMissionData, navControllerOutputData }) => {
+const MissionInfo = ({ navControllerOutputData }) => {
+  const currentMission = useSelector(selectCurrentMission)
   return (
     <>
       {/** Mission Information */}
       <div className="text-lg">
         <p>
           <span className="font-bold"> Mission State:</span>{" "}
-          {MISSION_STATES[currentMissionData.mission_state]}
+          {MISSION_STATES[currentMission.mission_state]}
         </p>
         <p>
-          <span className="font-bold"> Waypoint: </span>{" "}
-          {currentMissionData.seq}/{currentMissionData.total}
+          <span className="font-bold"> Waypoint: </span> {currentMission.seq}/
+          {currentMission.total}
         </p>
         <p>
           <span className="font-bold">Distance to WP: </span>{" "}

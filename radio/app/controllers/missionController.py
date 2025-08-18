@@ -605,6 +605,8 @@ class MissionController:
                         "success": False,
                         "message": "Could not upload mission, received mission acknowledgement error",
                     }
+                elif response.msgname == "MISSION_ACK" and response.type == 0:
+                    continue  # Continue to next iteration if we received a MISSION_ACK
                 elif response.mission_type == mission_type:
                     self.drone.logger.debug(
                         f"Sending mission item {response.seq} out of {new_loader.count()-1}"

@@ -213,7 +213,7 @@ export default function MissionStatistics({ missionItems }) {
         value={maxSlopeGradient.maxGradient}
         tooltip={
           maxSlopeGradient.points &&
-          `Between ${maxSlopeGradient.points[0].seq} and ${maxSlopeGradient.points[1].seq}`
+          `Between ${maxSlopeGradient.points[0]?.seq} and ${maxSlopeGradient.points[1]?.seq}`
         }
         units="%"
       />

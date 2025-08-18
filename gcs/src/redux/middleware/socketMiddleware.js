@@ -266,9 +266,6 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           DroneSpecificSocketEvents.onHomePositionResult,
           (msg) => {
-            console.log(
-              `Got home position ${msg.success ? "successfully" : "unsuccessfully"}`,
-            )
             store.dispatch(
               msg.success
                 ? setHomePosition(msg.data)

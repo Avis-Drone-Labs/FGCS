@@ -5,7 +5,7 @@ const statusTextSlice = createSlice({
   initialState: { messages: [] },
   reducers: {
     pushMessage: (state, action) => {
-      state.messages.push(action.payload)
+      state.messages.unshift(action.payload)
     },
   },
   selectors: {

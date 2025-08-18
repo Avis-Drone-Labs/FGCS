@@ -20,6 +20,10 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectGPS, selectNavController } from "../../redux/slices/droneInfoSlice"
+
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
@@ -49,15 +53,19 @@ const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  data,
-  heading,
-  desiredBearing,
   missionItems,
   homePosition,
   onDragstart,
   getFlightMode,
   mapId = "dashboard",
 }) {
+  // Redux 
+  const gpsData = useSelector(selectGPS)
+  const navControllerOutputData = useSelector(selectNavController)
+  const data = gpsData
+  const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
+  const desiredBearing = navControllerOutputData.navBearing
+
   const [connected] = useSessionStorage({
     key: "connectedToDrone",
     defaultValue: false,
@@ -178,6 +186,10 @@ function MapSectionNonMemo({
       alt: repositionAltitude,
     })
   }
+
+  useEffect(() => {
+    console.log("Reloaded map")
+  }, [])
 
   return (
     <div className="w-initial h-full" id="map">

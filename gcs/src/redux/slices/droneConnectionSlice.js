@@ -118,11 +118,9 @@ const droneConnectionSlice = createSlice({
       socket.emit("set_state", action.payload)
     },
     emitGetHomePosition: () => {
-      console.log("Getting home position")
       socket.emit("get_home_position")
     },
     emitGetCurrentMission: () => {
-      console.log("Getting current mission")
       socket.emit("get_current_mission_all")
     },
   },

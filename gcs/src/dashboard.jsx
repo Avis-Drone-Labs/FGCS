@@ -249,9 +249,6 @@ export default function Dashboard() {
         <div className="w-full">
           <MapSection
             passedRef={mapRef}
-            data={gpsData}
-            heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            desiredBearing={navControllerOutputData.navBearing}
             missionItems={missionItems}
             homePosition={homePosition}
             onDragstart={() => {

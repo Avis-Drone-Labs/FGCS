@@ -27,18 +27,26 @@ jobs:
     
     - name: Install dependencies
       working-directory: gcs
-      run: yarn
+      run: npm install -g yarn && yarn
     
     - name: Install Playwright Browsers
       working-directory: gcs
       run: yarn playwright install --with-deps
 
+    - name: Run FGCS frontend
+      run: yarn dev:test &
+    
     - name: Run Playwright tests
-      run: yarn playwright test
+      uses: coactions/setup-xvfb@v1
+      with:
+        working-directory: gcs
+        run: yarn playwright test
     
     - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report
+        path: playwright-report/
+        retention-days: 30
         path: gcs/playwright-report/
         retention-days: 30

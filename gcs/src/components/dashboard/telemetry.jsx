@@ -4,26 +4,30 @@
 */
 
 // Custom Components
-import { useSelector } from "react-redux"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
-import { selectArmed, selectFlightModeString, selectGPS, selectPrearmEnabled } from "../../redux/slices/droneInfoSlice"
+import { MAV_STATE } from "../../helpers/mavlinkConstants"
+
+// Redux
+import { useSelector } from "react-redux"
+import { selectArmed, selectAttitude, selectBatteryData, selectFlightModeString, selectGPS, selectHeartbeat, selectNavController, selectPrearmEnabled, selectTelemetry } from "../../redux/slices/droneInfoSlice"
 
 export default function TelemetrySection({
   calcIndicatorSize,
   calcIndicatorPadding,
-  telemetryData,
   telemetryFontSize,
-  attitudeData,
   sideBarRef,
-  navControllerOutputData,
-  batteryData,
-  systemStatus,
 }) {
   const prearmEnabled = useSelector(selectPrearmEnabled)
   const flightMode = useSelector(selectFlightModeString)
   const gpsData = useSelector(selectGPS)
   const isArmed = useSelector(selectArmed)
+  const telemetryData = useSelector(selectTelemetry)
+  const attitudeData = useSelector(selectAttitude)
+  const navControllerOutputData = useSelector(selectNavController)
+  const batteryData = useSelector(selectBatteryData)
+  const heartbeatData = useSelector(selectHeartbeat)
+  const systemStatus = MAV_STATE[heartbeatData.systemStatus]
 
   return (
     <div>

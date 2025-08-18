@@ -29,16 +29,12 @@ import { ResizableBox } from "react-resizable"
 import { useDispatch, useSelector } from "react-redux"
 import {
   selectAircraftTypeString,
-  selectAttitude,
   selectBatteryData,
   selectDroneCoords,
   selectFlightMode,
   selectGPSRawInt,
-  selectHeartbeat,
-  selectNavController,
   selectNotificationSound,
   selectRSSI,
-  selectTelemetry,
   soundPlayed,
 } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
@@ -50,10 +46,7 @@ import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 // Helper javascript files
 import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
   GPS_FIX_TYPES,
-  MAV_STATE,
-  PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
 import {
   showErrorNotification,
@@ -84,15 +77,12 @@ import disarmSound from "./assets/sounds/disarmed.mp3"
 // import { useSettings } from "./helpers/settings"
 
 export default function Dashboard() {
-  const telemetryData = useSelector(selectTelemetry)
-  const navControllerOutputData = useSelector(selectNavController)
+  const dispatch = useDispatch()
   const rssi = useSelector(selectRSSI)
-  const heartbeatData = useSelector(selectHeartbeat)
 
   const currentFlightModeNumber = useSelector(selectFlightMode)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
 
-  const attitudeData = useSelector(selectAttitude)
   const { lat, lon } = useSelector(selectDroneCoords)
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
@@ -100,7 +90,6 @@ export default function Dashboard() {
   const notificationQueue = useSelector(selectNotificationQueue)
   const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
   const connectedToDrone = useSelector(selectConnectedToDrone)
-  const dispatch = useDispatch()
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -242,22 +231,15 @@ export default function Dashboard() {
           <TelemetrySection
             calcIndicatorSize={calcIndicatorSize}
             calcIndicatorPadding={calcIndicatorPadding}
-            telemetryData={telemetryData}
             telemetryFontSize={telemetryFontSize}
-            attitudeData={attitudeData}
             sideBarRef={sideBarRef}
-            navControllerOutputData={navControllerOutputData}
-            batteryData={batteryData}
-            systemStatus={MAV_STATE[heartbeatData.systemStatus]}
           />
 
           <Divider className="my-2" />
 
           {/* Actions */}
           <TabsSection
-            connected={connectedToDrone}
             currentFlightModeNumber={currentFlightModeNumber}
-            navControllerOutputData={navControllerOutputData}
           />
         </ResizableInfoBox>
 

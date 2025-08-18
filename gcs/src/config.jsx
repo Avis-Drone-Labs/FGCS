@@ -47,7 +47,6 @@ export default function Config() {
       setActiveTab(null)
       return
     } else {
-      socket.emit("set_state", { state: "config" })
       socket.emit("gripper_enabled")
     }
 

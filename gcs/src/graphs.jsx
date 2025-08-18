@@ -78,7 +78,6 @@ export default function Graphs() {
     if (!connected) {
       return
     } else {
-      socket.emit("set_state", { state: "graphs" })
     }
   }, [connected])
 

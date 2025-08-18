@@ -151,7 +151,6 @@ export default function Params() {
 
     // Fetch params on connection to drone
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      socket.emit("set_state", { state: "params" })
       setFetchingVars(true)
     }
 

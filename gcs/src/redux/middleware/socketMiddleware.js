@@ -271,7 +271,6 @@ const socketMiddleware = (store) => {
                 ? setHomePosition(msg.data)
                 : queueNotification({ type: "error", message: msg.message }),
             )
-            store.dispatch(emitGetCurrentMission())
           },
         )
 

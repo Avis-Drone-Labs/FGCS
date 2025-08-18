@@ -38,8 +38,8 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Use system Chrome browser
-        channel: 'chrome'
+        // Use system Chrome browser in local dev, fall back to Chromium in CI
+        ...(process.env.CI ? {} : { channel: 'chrome' })
       },
     },
 

@@ -19,13 +19,14 @@ import {
 // Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
+import { useSelector } from "react-redux"
+import { selectArmed } from "../../../redux/slices/droneInfoSlice"
 
 export default function ActionTabsSection({
   connected,
   tabPadding,
   currentFlightModeNumber,
   aircraftType,
-  getIsArmed,
 }) {
   return (
     <Tabs.Panel value="actions">
@@ -40,7 +41,7 @@ export default function ActionTabsSection({
               currentFlightModeNumber={currentFlightModeNumber}
             />
             {/** Arm / Takeoff / Landing */}
-            <ArmTakeoffLandAction getIsArmed={getIsArmed} />
+            <ArmTakeoffLandAction />
           </div>
         )}
       </div>
@@ -99,11 +100,12 @@ const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
   )
 }
 
-const ArmTakeoffLandAction = ({ getIsArmed }) => {
+const ArmTakeoffLandAction = () => {
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: "takeoffAltitude",
     defaultValue: 10,
   })
+  const isArmed = useSelector(selectArmed)
 
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
@@ -123,11 +125,11 @@ const ArmTakeoffLandAction = ({ getIsArmed }) => {
       <div className="flex flex-wrap flex-cols gap-2">
         <Button
           onClick={() => {
-            armDisarm(!getIsArmed())
+            armDisarm(!isArmed)
           }}
           className="grow"
         >
-          {getIsArmed() ? "Disarm" : "Arm"}
+          {isArmed ? "Disarm" : "Arm"}
         </Button>
 
         {/** Takeoff button with popover */}

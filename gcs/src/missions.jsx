@@ -144,7 +144,6 @@ export default function Missions() {
     if (!connected) {
       return
     } else {
-      socket.emit("set_state", { state: "missions" })
       socket.emit("get_home_position")
       socket.emit("get_target_info")
     }

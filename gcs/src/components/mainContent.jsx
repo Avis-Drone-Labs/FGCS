@@ -61,12 +61,7 @@ export default function AppContent() {
             <Route path="/params" element={<Params />} />
             <Route path="/config" element={<Config />} />
             <Route path="/webcam" element={<CameraWindow />} />
-            <Route
-              path="/fla"
-              element={
-                  <FLA />
-              }
-            />
+            <Route path="/fla" element={<FLA />} />
           </Routes>
           {renderUI && <Commands />}
         </ErrorBoundary>

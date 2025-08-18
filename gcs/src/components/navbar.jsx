@@ -48,7 +48,7 @@ export default function Navbar() {
   // Panel is open/closed
   const [opened, { open, close }] = useDisclosure(false)
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
-  const [currentPage, _] = useSessionStorage({
+  const [currentPage] = useSessionStorage({
     key: "currentPage",
     defaultValue: "dashboard",
   })

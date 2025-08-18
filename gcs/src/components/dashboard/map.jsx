@@ -22,8 +22,15 @@ import Map from "react-map-gl/maplibre"
 
 // Redux
 import { useSelector } from "react-redux"
-import { selectFlightModeString, selectGPS, selectNavController } from "../../redux/slices/droneInfoSlice"
-import { selectCurrentMissionItems, selectHomePosition } from "../../redux/slices/missionSlice"
+import {
+  selectFlightModeString,
+  selectGPS,
+  selectNavController,
+} from "../../redux/slices/droneInfoSlice"
+import {
+  selectCurrentMissionItems,
+  selectHomePosition,
+} from "../../redux/slices/missionSlice"
 
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
@@ -52,12 +59,8 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
-function MapSectionNonMemo({
-  passedRef,
-  onDragstart,
-  mapId = "dashboard",
-}) {
-  // Redux 
+function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
+  // Redux
   const gpsData = useSelector(selectGPS)
   const navControllerOutputData = useSelector(selectNavController)
   const missionItems = useSelector(selectCurrentMissionItems)

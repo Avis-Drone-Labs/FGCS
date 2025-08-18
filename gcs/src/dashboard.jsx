@@ -45,9 +45,7 @@ import {
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 // Helper javascript files
-import {
-  GPS_FIX_TYPES,
-} from "./helpers/mavlinkConstants"
+import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -238,9 +236,7 @@ export default function Dashboard() {
           <Divider className="my-2" />
 
           {/* Actions */}
-          <TabsSection
-            currentFlightModeNumber={currentFlightModeNumber}
-          />
+          <TabsSection currentFlightModeNumber={currentFlightModeNumber} />
         </ResizableInfoBox>
 
         {/* Status Bar */}
@@ -303,11 +299,17 @@ export default function Dashboard() {
               }}
             >
               {/* In a single component to stop errors */}
-              <> 
+              <>
                 {/* Show a "Waiting for message area" */}
                 {statustextMessages.length == 0 && (
                   <StatusMessages
-                    messages={[{timestamp: "0", text: `Waiting for messages from ${aircraftTypeString}`, severity: 7}]}
+                    messages={[
+                      {
+                        timestamp: "0",
+                        text: `Waiting for messages from ${aircraftTypeString}`,
+                        severity: 7,
+                      },
+                    ]}
                     className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
                   />
                 )}

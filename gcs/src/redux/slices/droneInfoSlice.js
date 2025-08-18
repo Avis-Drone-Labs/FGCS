@@ -219,16 +219,19 @@ export const selectAlt = createSelector(
   },
 )
 
-export const selectAircraftTypeString = createSelector([droneInfoSlice.selectors.selectAircraftType], (aircraftType) => {
-  switch (aircraftType) {
-    case 1:
-      return "Plane"
-    case 2:
-      return "Copter"
-    default:
-      return "Unknown"
-  }
-},)
+export const selectAircraftTypeString = createSelector(
+  [droneInfoSlice.selectors.selectAircraftType],
+  (aircraftType) => {
+    switch (aircraftType) {
+      case 1:
+        return "Plane"
+      case 2:
+        return "Copter"
+      default:
+        return "Unknown"
+    }
+  },
+)
 
 export const {
   selectAttitude,

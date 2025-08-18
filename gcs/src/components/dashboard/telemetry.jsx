@@ -10,7 +10,17 @@ import { MAV_STATE } from "../../helpers/mavlinkConstants"
 
 // Redux
 import { useSelector } from "react-redux"
-import { selectArmed, selectAttitude, selectBatteryData, selectFlightModeString, selectGPS, selectHeartbeat, selectNavController, selectPrearmEnabled, selectTelemetry } from "../../redux/slices/droneInfoSlice"
+import {
+  selectArmed,
+  selectAttitude,
+  selectBatteryData,
+  selectFlightModeString,
+  selectGPS,
+  selectHeartbeat,
+  selectNavController,
+  selectPrearmEnabled,
+  selectTelemetry,
+} from "../../redux/slices/droneInfoSlice"
 
 export default function TelemetrySection({
   calcIndicatorSize,

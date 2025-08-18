@@ -298,7 +298,6 @@ export default function Dashboard() {
                 setMessagesPanelSize({ width: size.width, height: size.height })
               }}
             >
-              {/* In a single component to stop errors */}
               <>
                 {/* Show a "Waiting for message area" */}
                 {statustextMessages.length == 0 && (

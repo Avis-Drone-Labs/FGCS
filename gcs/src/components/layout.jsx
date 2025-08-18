@@ -25,7 +25,8 @@ export default function Layout({ children, currentPage }) {
   const dispatch = useDispatch()
   const connectedToDrone = useSelector(selectConnectedToDrone)
 
-  // Change current page
+  // Change current page, there's a single comma because javascript has weird syntax
+  // we don't care about the first variable.
   const [, setCurrentPageInMemory] = useSessionStorage({
     key: "currentPage",
     defaultValue: "dashboard",

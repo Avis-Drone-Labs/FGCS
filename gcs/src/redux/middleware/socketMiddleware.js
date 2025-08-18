@@ -283,7 +283,8 @@ const socketMiddleware = (store) => {
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
 
-          // Data points on dashboard
+          // Data points on dashboard, the below code updates the value in the store when a new message
+          // comes in in the type of specificData.
           const packetType = msg.mavpackettype
           const storeState = store.getState()
           if (storeState !== undefined) {

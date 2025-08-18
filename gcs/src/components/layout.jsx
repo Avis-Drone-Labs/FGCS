@@ -6,12 +6,12 @@
 import { useEffect } from "react"
 
 // 3rd Party Imports
+import { useSessionStorage } from "@mantine/hooks"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
 import { showErrorNotification } from "../helpers/notification"
 import { socket } from "../helpers/socket"
-import Navbar from "./navbar"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -24,6 +24,12 @@ import {
 export default function Layout({ children, currentPage }) {
   const dispatch = useDispatch()
   const connectedToDrone = useSelector(selectConnectedToDrone)
+
+  // Change current page
+  const [_, setCurrentPageInMemory] = useSessionStorage({
+    key: "currentPage",
+    defaultValue: "dashboard",
+  })
 
   // Handle drone errors
   useEffect(() => {
@@ -38,6 +44,8 @@ export default function Layout({ children, currentPage }) {
 
   // Handle switching to states
   useEffect(() => {
+    setCurrentPageInMemory(currentPage)
+
     if (!connectedToDrone) return
 
     dispatch(emitSetState({ state: currentPage }))
@@ -48,7 +56,6 @@ export default function Layout({ children, currentPage }) {
 
   return (
     <>
-      <Navbar currentPage={currentPage} className="no-drag" />
       <Notifications limit={5} position="bottom-center" />
       {children}
     </>

@@ -10,7 +10,6 @@ import "@mantine/tiptap/styles.css"
 
 // React imports
 import { HashRouter } from "react-router-dom"
-import React from "react"
 import ReactDOM from "react-dom/client"
 // Mantine imports
 import { MantineProvider } from "@mantine/core"

@@ -134,7 +134,7 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(SocketEvents.Disconnect, () => {
-          console.log(`Disconnected from socket, ${socket.socket.id}`)
+          console.log(`Disconnected from socket via redux, ${socket.socket.id}`)
           store.dispatch(socketDisconnected())
         })
 
@@ -282,6 +282,8 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
+
+          // Data points on dashboard
           const packetType = msg.mavpackettype
           const storeState = store.getState()
           if (storeState !== undefined) {

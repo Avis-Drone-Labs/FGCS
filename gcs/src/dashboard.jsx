@@ -47,6 +47,7 @@ import {
   notificationShown,
   selectNotificationQueue,
 } from "./redux/slices/notificationSlice"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 // Helper javascript files
 import {
@@ -106,6 +107,7 @@ export default function Dashboard() {
   const armedNotification = useSelector(selectNotificationSound)
   const notificationQueue = useSelector(selectNotificationQueue)
   const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   const dispatch = useDispatch()
 
   // Local Storage
@@ -338,7 +340,7 @@ export default function Dashboard() {
           mapRef={mapRef}
         />
 
-        {statustextMessages.length !== 0 && (
+        {connectedToDrone && (
           <div className="absolute bottom-0 right-0 z-20">
             <ResizableBox
               height={messagesPanelSize.height}
@@ -354,6 +356,14 @@ export default function Dashboard() {
                 setMessagesPanelSize({ width: size.width, height: size.height })
               }}
             >
+              {/* Show a "Waiting for message area" */}
+              {statustextMessages.length == 0 && (
+                <StatusMessages
+                  messages={[{timestamp: "0", text: "Waiting for messages from drone", severity: 7}]}
+                  className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
+                />
+              )}
+              {/* Show real messages */}
               <StatusMessages
                 messages={statustextMessages}
                 className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}

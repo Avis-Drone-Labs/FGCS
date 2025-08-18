@@ -33,14 +33,11 @@ jobs:
       working-directory: gcs
       run: yarn playwright install --with-deps
 
-    - name: Run FGCS frontend
-      run: yarn dev:test &
+    # - name: Run FGCS frontend
+    #   run: yarn dev:test &
     
     - name: Run Playwright tests
-      uses: coactions/setup-xvfb@v1
-      with:
-        working-directory: gcs
-        run: yarn playwright test
+      run: yarn playwright test
     
     - uses: actions/upload-artifact@v4
       if: always()
@@ -48,3 +45,4 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+    

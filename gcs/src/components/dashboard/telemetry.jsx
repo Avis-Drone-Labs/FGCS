@@ -7,22 +7,22 @@
 import { useSelector } from "react-redux"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
-import { selectArmed } from "../../redux/slices/droneInfoSlice"
+import { selectArmed, selectFlightModeString, selectGPS, selectPrearmEnabled } from "../../redux/slices/droneInfoSlice"
 
 export default function TelemetrySection({
-  prearmEnabled,
   calcIndicatorSize,
   calcIndicatorPadding,
-  getFlightMode,
   telemetryData,
   telemetryFontSize,
   attitudeData,
-  gpsData,
   sideBarRef,
   navControllerOutputData,
   batteryData,
   systemStatus,
 }) {
+  const prearmEnabled = useSelector(selectPrearmEnabled)
+  const flightMode = useSelector(selectFlightModeString)
+  const gpsData = useSelector(selectGPS)
   const isArmed = useSelector(selectArmed)
 
   return (
@@ -45,7 +45,7 @@ export default function TelemetrySection({
         </div>
         <div className="flex flex-row space-x-6">
           <p>{systemStatus}</p>
-          <p>{getFlightMode()}</p>
+          <p>{flightMode}</p>
         </div>
       </div>
 

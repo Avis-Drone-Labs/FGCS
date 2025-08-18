@@ -22,7 +22,8 @@ import Map from "react-map-gl/maplibre"
 
 // Redux
 import { useSelector } from "react-redux"
-import { selectGPS, selectNavController } from "../../redux/slices/droneInfoSlice"
+import { selectFlightModeString, selectGPS, selectNavController } from "../../redux/slices/droneInfoSlice"
+import { selectCurrentMissionItems, selectHomePosition } from "../../redux/slices/missionSlice"
 
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
@@ -53,15 +54,15 @@ const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  missionItems,
-  homePosition,
   onDragstart,
-  getFlightMode,
   mapId = "dashboard",
 }) {
   // Redux 
   const gpsData = useSelector(selectGPS)
   const navControllerOutputData = useSelector(selectNavController)
+  const missionItems = useSelector(selectCurrentMissionItems)
+  const homePosition = useSelector(selectHomePosition)
+  const flightMode = useSelector(selectFlightModeString)
   const data = gpsData
   const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
   const desiredBearing = navControllerOutputData.navBearing
@@ -187,10 +188,6 @@ function MapSectionNonMemo({
     })
   }
 
-  useEffect(() => {
-    console.log("Reloaded map")
-  }, [])
-
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -281,7 +278,7 @@ function MapSectionNonMemo({
           )
         })}
 
-        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+        {flightMode === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}

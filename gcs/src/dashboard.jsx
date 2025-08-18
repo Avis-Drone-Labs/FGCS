@@ -28,16 +28,15 @@ import { ResizableBox } from "react-resizable"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  selectAircraftTypeString,
   selectAttitude,
   selectBatteryData,
   selectDroneCoords,
   selectFlightMode,
-  selectGPS,
   selectGPSRawInt,
   selectHeartbeat,
   selectNavController,
   selectNotificationSound,
-  selectPrearmEnabled,
   selectRSSI,
   selectTelemetry,
   soundPlayed,
@@ -83,22 +82,15 @@ import disarmSound from "./assets/sounds/disarmed.mp3"
 // import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
 // import { useAlerts } from "./components/dashboard/alertProvider"
 // import { useSettings } from "./helpers/settings"
-import {
-  selectCurrentMissionItems,
-  selectHomePosition,
-} from "./redux/slices/missionSlice"
 
 export default function Dashboard() {
-  const gpsData = useSelector(selectGPS)
   const telemetryData = useSelector(selectTelemetry)
   const navControllerOutputData = useSelector(selectNavController)
-  const prearmEnabled = useSelector(selectPrearmEnabled)
   const rssi = useSelector(selectRSSI)
   const heartbeatData = useSelector(selectHeartbeat)
 
-  const missionItems = useSelector(selectCurrentMissionItems)
-  const homePosition = useSelector(selectHomePosition)
   const currentFlightModeNumber = useSelector(selectFlightMode)
+  const aircraftTypeString = useSelector(selectAircraftTypeString)
 
   const attitudeData = useSelector(selectAttitude)
   const { lat, lon } = useSelector(selectDroneCoords)
@@ -109,15 +101,6 @@ export default function Dashboard() {
   const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const dispatch = useDispatch()
-
-  // Local Storage
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -216,16 +199,6 @@ export default function Dashboard() {
   //   dismissAlert(AlertCategory.Altitude)
   // }
 
-  function getFlightMode() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.customMode]
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.customMode]
-    }
-
-    return "UNKNOWN"
-  }
-
   function calcBigTextFontSize() {
     let w = telemetryPanelSize.width
     const BREAKPOINT_SM = 350.0
@@ -251,12 +224,9 @@ export default function Dashboard() {
         <div className="w-full">
           <MapSection
             passedRef={mapRef}
-            missionItems={missionItems}
-            homePosition={homePosition}
             onDragstart={() => {
               setFollowDrone(false)
             }}
-            getFlightMode={getFlightMode}
             mapId="dashboard"
           />
         </div>
@@ -270,14 +240,11 @@ export default function Dashboard() {
         >
           {/* Telemetry Information */}
           <TelemetrySection
-            prearmEnabled={prearmEnabled}
             calcIndicatorSize={calcIndicatorSize}
             calcIndicatorPadding={calcIndicatorPadding}
-            getFlightMode={getFlightMode}
             telemetryData={telemetryData}
             telemetryFontSize={telemetryFontSize}
             attitudeData={attitudeData}
-            gpsData={gpsData}
             sideBarRef={sideBarRef}
             navControllerOutputData={navControllerOutputData}
             batteryData={batteryData}
@@ -288,8 +255,7 @@ export default function Dashboard() {
 
           {/* Actions */}
           <TabsSection
-            connected={connected}
-            aircraftType={aircraftType}
+            connected={connectedToDrone}
             currentFlightModeNumber={currentFlightModeNumber}
             navControllerOutputData={navControllerOutputData}
           />
@@ -332,9 +298,7 @@ export default function Dashboard() {
 
         {/* Right side floating toolbar */}
         <FloatingToolbar
-          missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
-          gpsData={gpsData}
           followDrone={followDrone}
           setFollowDrone={setFollowDrone}
           mapRef={mapRef}
@@ -348,7 +312,7 @@ export default function Dashboard() {
               minConstraints={[600, 150]}
               maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
               resizeHandles={["nw"]}
-              handle={(h, ref) => (
+              handle={(_, ref) => (
                 <span className={"custom-handle-nw"} ref={ref} />
               )}
               handleSize={[32, 32]}
@@ -356,18 +320,21 @@ export default function Dashboard() {
                 setMessagesPanelSize({ width: size.width, height: size.height })
               }}
             >
-              {/* Show a "Waiting for message area" */}
-              {statustextMessages.length == 0 && (
+              {/* In a single component to stop errors */}
+              <> 
+                {/* Show a "Waiting for message area" */}
+                {statustextMessages.length == 0 && (
+                  <StatusMessages
+                    messages={[{timestamp: "0", text: `Waiting for messages from ${aircraftTypeString}`, severity: 7}]}
+                    className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
+                  />
+                )}
+                {/* Show real messages */}
                 <StatusMessages
-                  messages={[{timestamp: "0", text: "Waiting for messages from drone", severity: 7}]}
+                  messages={statustextMessages}
                   className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
                 />
-              )}
-              {/* Show real messages */}
-              <StatusMessages
-                messages={statustextMessages}
-                className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
-              />
+              </>
             </ResizableBox>
           </div>
         )}

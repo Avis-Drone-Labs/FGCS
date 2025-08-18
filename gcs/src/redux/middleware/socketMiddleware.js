@@ -9,7 +9,6 @@ import {
 
 // drone actions
 import {
-  emitGetCurrentMission,
   emitGetHomePosition,
   emitIsConnectedToDrone,
   emitSetState,

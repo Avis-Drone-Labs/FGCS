@@ -15,7 +15,11 @@ import Navbar from "./navbar"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitGetCurrentMission, emitSetState, selectConnectedToDrone } from "../redux/slices/droneConnectionSlice"
+import {
+  emitGetCurrentMission,
+  emitSetState,
+  selectConnectedToDrone,
+} from "../redux/slices/droneConnectionSlice"
 
 export default function Layout({ children, currentPage }) {
   const dispatch = useDispatch()

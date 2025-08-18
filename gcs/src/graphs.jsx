@@ -75,13 +75,6 @@ export default function Graphs() {
   }
 
   useEffect(() => {
-    if (!connected) {
-      return
-    } else {
-    }
-  }, [connected])
-
-  useEffect(() => {
     socket.on("incoming_msg", (msg) => {
       const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
       if (graphResults !== false) {

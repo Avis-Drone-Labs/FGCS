@@ -7,14 +7,12 @@
 */
 
 // Base imports
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
 import { Divider } from "@mantine/core"
 import {
-  useListState,
   useLocalStorage,
-  usePrevious,
   useSessionStorage,
   useViewportSize,
 } from "@mantine/hooks"
@@ -27,20 +25,31 @@ import {
 } from "@tabler/icons-react"
 import { ResizableBox } from "react-resizable"
 
-// Helper javascript files
-import { defaultDataMessages } from "./helpers/dashboardDefaultDataMessages"
+// Redux
+import { useDispatch, useSelector } from "react-redux"
 import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
-  GPS_FIX_TYPES,
-  MAV_AUTOPILOT_INVALID,
-  MAV_STATE,
-  PLANE_MODES_FLIGHT_MODE_MAP,
-} from "./helpers/mavlinkConstants"
+  selectAircraftTypeString,
+  selectBatteryData,
+  selectDroneCoords,
+  selectFlightMode,
+  selectGPSRawInt,
+  selectNotificationSound,
+  selectRSSI,
+  soundPlayed,
+} from "./redux/slices/droneInfoSlice"
+import { selectMessages } from "./redux/slices/statusTextSlice"
+import {
+  notificationShown,
+  selectNotificationQueue,
+} from "./redux/slices/notificationSlice"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+
+// Helper javascript files
+import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
 import {
   showErrorNotification,
   showSuccessNotification,
 } from "./helpers/notification"
-import { socket } from "./helpers/socket"
 
 // Custom component
 import useSound from "use-sound"
@@ -61,19 +70,24 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
-import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
-import { useAlerts } from "./components/dashboard/alertProvider"
-import { useSettings } from "./helpers/settings"
+// import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
+// import { useAlerts } from "./components/dashboard/alertProvider"
+// import { useSettings } from "./helpers/settings"
 
 export default function Dashboard() {
-  // Local Storage
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
+  const dispatch = useDispatch()
+  const rssi = useSelector(selectRSSI)
+
+  const currentFlightModeNumber = useSelector(selectFlightMode)
+  const aircraftTypeString = useSelector(selectAircraftTypeString)
+
+  const { lat, lon } = useSelector(selectDroneCoords)
+  const batteryData = useSelector(selectBatteryData)
+  const statustextMessages = useSelector(selectMessages)
+  const armedNotification = useSelector(selectNotificationSound)
+  const notificationQueue = useSelector(selectNotificationQueue)
+  const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
+  const connectedToDrone = useSelector(selectConnectedToDrone)
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -97,47 +111,11 @@ export default function Dashboard() {
 
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()
 
-  // Heartbeat data
-  const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-  const previousHeartbeatData = usePrevious(heartbeatData)
-
-  // System data
-  const [batteryData, setBatteryData] = useState([])
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
-  const [statustextMessages, statustextMessagesHandler] = useListState([])
-  const [sysStatusData, setSysStatusData] = useState({
-    onboard_control_sensors_enabled: 0,
-  })
-  const [rcChannelsData, setRCChannelsData] = useState({ rssi: 0 })
-
-  // GPS and Telemetry
-  const [gpsData, setGpsData] = useState({})
-  const [telemetryData, setTelemetryData] = useState({})
-  const [attitudeData, setAttitudeData] = useState({ roll: 0, pitch: 0 })
-  const [gpsRawIntData, setGpsRawIntData] = useState({
-    fix_type: 0,
-    satellites_visible: 0,
-  })
-  const [currentMissionData, setCurrentMissionData] = useState({
-    mission_state: 0,
-    seq: 0,
-    total: 0,
-  })
-
-  // Mission
-  const [missionItems, setMissionItems] = useState({
-    mission_items: [],
-    fence_items: [],
-    rally_items: [],
-  })
-  const [homePosition, setHomePosition] = useState(null)
-
   // Following Drone
   const [followDrone, setFollowDrone] = useSessionStorage({
     key: "followDroneBool",
     defaultValue: false,
   })
-  const [currentFlightModeNumber, setCurrentFlightModeNumber] = useState(null)
 
   // Map and messages
   const mapRef = useRef()
@@ -146,241 +124,67 @@ export default function Dashboard() {
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
 
-  const [displayedData, setDisplayedData] = useLocalStorage({
-    key: "dashboardDataMessages",
-    defaultValue: defaultDataMessages,
-  })
-
-  const { getSetting } = useSettings()
-
-  // Alerts
-  const { dispatchAlert, dismissAlert } = useAlerts()
-  const highestAltitudeRef = useRef(0)
-
-  function updateAltitudeAlert(msg) {
-    if (msg.alt > highestAltitudeRef.current)
-      return (highestAltitudeRef.current = msg.alt)
-    const altitudes = getSetting("Dashboard.altitudeAlerts")
-    altitudes.sort((a1, a2) => a1 - a2)
-
-    for (const [i, altitude] of altitudes.entries()) {
-      if (highestAltitudeRef.current > altitude && msg.alt < altitude) {
-        dispatchAlert({
-          category: AlertCategory.Altitude,
-          severity:
-            i == 0
-              ? AlertSeverity.Red
-              : i == altitudes.length - 1
-                ? AlertSeverity.Yellow
-                : AlertSeverity.Orange,
-          jsx: <>Caution! You've fallen below {altitude}m</>,
-        })
-        return
-      }
-    }
-
-    dismissAlert(AlertCategory.Altitude)
-  }
-
-  const incomingMessageHandler = useCallback(
-    () => ({
-      VFR_HUD: (msg) => {
-        setTelemetryData(msg)
-        updateAltitudeAlert(msg)
-      },
-      BATTERY_STATUS: (msg) => {
-        const battery = localBatteryData.filter(
-          (battery) => battery.id == msg.id,
-        )[0]
-        if (battery) {
-          Object.assign(battery, msg)
-        } else {
-          localBatteryData.push(msg)
-        }
-        localBatteryData.sort((b1, b2) => b1.id - b2.id)
-        setBatteryData(localBatteryData)
-      },
-      ATTITUDE: (msg) => setAttitudeData(msg),
-      GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
-      NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-      HEARTBEAT: (msg) => {
-        if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
-          setHeartbeatData(msg)
-        }
-      },
-      STATUSTEXT: (msg) => statustextMessagesHandler.prepend(msg),
-      SYS_STATUS: (msg) => setSysStatusData(msg),
-      GPS_RAW_INT: (msg) => setGpsRawIntData(msg),
-      RC_CHANNELS: (msg) => setRCChannelsData(msg),
-      MISSION_CURRENT: (msg) => setCurrentMissionData(msg),
-    }),
-    [],
-  )
-
+  // Play queued arming sounds
   useEffect(() => {
-    // Use localStorage.getItem as useLocalStorage hook updates slower
-    const oldDisplayedData = localStorage.getItem("dashboardDataMessages")
-
-    if (oldDisplayedData) {
-      const resetDisplayedDataValues = Object.keys(
-        JSON.parse(oldDisplayedData),
-      ).map((key) => {
-        return { ...JSON.parse(oldDisplayedData)[key], value: 0 }
-      })
-      setDisplayedData(resetDisplayedDataValues)
+    if (armedNotification !== "") {
+      armedNotification === "armed" ? playArmed() : playDisarmed()
+      dispatch(soundPlayed())
     }
-  }, [])
+  }, [armedNotification, playArmed, playDisarmed, dispatch])
 
+  // Show queued notifications
   useEffect(() => {
-    if (!connected) {
-      return
-    } else {
-      socket.emit("set_state", { state: "dashboard" })
-      socket.emit("get_home_position")
+    if (notificationQueue.length !== 0) {
+      ;(notificationQueue[0].type === "error"
+        ? showErrorNotification
+        : showSuccessNotification)(notificationQueue[0].message)
+      dispatch(notificationShown())
     }
-
-    socket.on("incoming_msg", (msg) => {
-      if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler()[msg.mavpackettype](msg)
-        // Store packetType that has arrived
-        const packetType = msg.mavpackettype
-
-        // Use functional form of setState to ensure the latest state is used
-        setDisplayedData((prevDisplayedData) => {
-          // Create a copy of displayedData to modify
-          let updatedDisplayedData = [...prevDisplayedData]
-
-          // Iterate over displayedData to find and update the matching item
-          updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
-            if (dataItem.currently_selected.startsWith(packetType)) {
-              const specificData = dataItem.currently_selected.split(".")[1]
-              if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-                return { ...dataItem, value: msg[specificData] }
-              }
-            }
-            return dataItem
-          })
-
-          return updatedDisplayedData
-        })
-      }
-    })
-
-    socket.on("arm_disarm", (msg) => {
-      if (!msg.success) {
-        showErrorNotification(msg.message)
-      }
-    })
-
-    socket.on("current_mission_all", (msg) => {
-      setMissionItems(msg)
-    })
-
-    socket.on("set_current_flight_mode_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("nav_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("mission_control_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("home_position_result", (data) => {
-      if (data.success) {
-        setHomePosition(data.data)
-      } else {
-        showErrorNotification(data.message)
-      }
-      socket.emit("get_current_mission_all")
-    })
-
-    return () => {
-      socket.off("incoming_msg")
-      socket.off("arm_disarm")
-      socket.off("current_mission_all")
-      socket.off("set_current_flight_mode_result")
-      socket.off("nav_result")
-      socket.off("mission_control_result")
-      socket.off("home_position_result")
-    }
-  }, [connected])
+  }, [notificationQueue, dispatch])
 
   // Following drone logic
   useEffect(() => {
-    if (
-      mapRef.current &&
-      gpsData?.lon !== 0 &&
-      gpsData?.lat !== 0 &&
-      followDrone
-    ) {
-      let lat = parseFloat(gpsData.lat * 1e-7)
-      let lon = parseFloat(gpsData.lon * 1e-7)
+    if (mapRef.current && followDrone && lon !== 0 && lat !== 0) {
       mapRef.current.setCenter({ lng: lon, lat: lat })
     }
-  }, [gpsData])
-
-  useEffect(() => {
-    if (!previousHeartbeatData?.base_mode || !heartbeatData?.base_mode) return
-
-    if (
-      heartbeatData.base_mode & 128 &&
-      !(previousHeartbeatData.base_mode & 128)
-    ) {
-      playArmed()
-    } else if (
-      !(heartbeatData.base_mode & 128) &&
-      previousHeartbeatData.base_mode & 128
-    ) {
-      playDisarmed()
-    }
-
-    if (currentFlightModeNumber !== heartbeatData.custom_mode) {
-      setCurrentFlightModeNumber(heartbeatData.custom_mode)
-    }
-  }, [heartbeatData])
-
-  function getFlightMode() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
-    }
-
-    return "UNKNOWN"
-  }
-
-  function getIsArmed() {
-    return heartbeatData.base_mode & 128
-  }
-
-  function prearmEnabled() {
-    // Checks if prearm check is enabled, if yes then not armable
-    // TOOD: test if this returns true if all checks pass
-    return Boolean(sysStatusData.onboard_control_sensors_enabled & 268435456)
-  }
+  }, [followDrone, lon, lat])
 
   function centerMapOnDrone() {
-    let lat = parseFloat(gpsData.lat * 1e-7)
-    let lon = parseFloat(gpsData.lon * 1e-7)
     mapRef.current.getMap().flyTo({
       center: [lon, lat],
     })
   }
+
+  // NEED TO FIX THIS BEFORE WE MERGE KUSH/BEN
+  // Alerts
+  // const { getSetting } = useSettings()
+  // const { dispatchAlert, dismissAlert } = useAlerts()
+  // const highestAltitudeRef = useRef(0)
+
+  // function updateAltitudeAlert(msg) {
+  //   if (msg.alt > highestAltitudeRef.current)
+  //     return (highestAltitudeRef.current = msg.alt)
+  //   const altitudes = getSetting("Dashboard.altitudeAlerts")
+  //   altitudes.sort((a1, a2) => a1 - a2)
+
+  //   for (const [i, altitude] of altitudes.entries()) {
+  //     if (highestAltitudeRef.current > altitude && msg.alt < altitude) {
+  //       dispatchAlert({
+  //         category: AlertCategory.Altitude,
+  //         severity:
+  //           i == 0
+  //             ? AlertSeverity.Red
+  //             : i == altitudes.length - 1
+  //               ? AlertSeverity.Yellow
+  //               : AlertSeverity.Orange,
+  //         jsx: <>Caution! You've fallen below {altitude}m</>,
+  //       })
+  //       return
+  //     }
+  //   }
+
+  //   dismissAlert(AlertCategory.Altitude)
+  // }
 
   function calcBigTextFontSize() {
     let w = telemetryPanelSize.width
@@ -401,23 +205,15 @@ export default function Dashboard() {
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
   }
 
-  let localBatteryData = []
-
   return (
     <Layout currentPage="dashboard">
       <div className="relative flex flex-auto w-full h-full overflow-hidden">
         <div className="w-full">
           <MapSection
             passedRef={mapRef}
-            data={gpsData}
-            heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            desiredBearing={navControllerOutputData.nav_bearing}
-            missionItems={missionItems}
-            homePosition={homePosition}
             onDragstart={() => {
               setFollowDrone(false)
             }}
-            getFlightMode={getFlightMode}
             mapId="dashboard"
           />
         </div>
@@ -431,58 +227,40 @@ export default function Dashboard() {
         >
           {/* Telemetry Information */}
           <TelemetrySection
-            getIsArmed={getIsArmed}
-            prearmEnabled={prearmEnabled}
             calcIndicatorSize={calcIndicatorSize}
             calcIndicatorPadding={calcIndicatorPadding}
-            getFlightMode={getFlightMode}
-            telemetryData={telemetryData}
             telemetryFontSize={telemetryFontSize}
-            attitudeData={attitudeData}
-            gpsData={gpsData}
             sideBarRef={sideBarRef}
-            navControllerOutputData={navControllerOutputData}
-            batteryData={batteryData}
-            systemStatus={MAV_STATE[heartbeatData.system_status]}
           />
 
           <Divider className="my-2" />
 
           {/* Actions */}
-          <TabsSection
-            connected={connected}
-            aircraftType={aircraftType}
-            getIsArmed={getIsArmed}
-            currentFlightModeNumber={currentFlightModeNumber}
-            currentMissionData={currentMissionData}
-            navControllerOutputData={navControllerOutputData}
-            displayedData={displayedData}
-            setDisplayedData={setDisplayedData}
-          />
+          <TabsSection currentFlightModeNumber={currentFlightModeNumber} />
         </ResizableInfoBox>
 
         {/* Status Bar */}
         <StatusBar className="absolute top-0 right-0">
           <StatusSection
             icon={<IconRadar />}
-            value={GPS_FIX_TYPES[gpsRawIntData.fix_type]}
+            value={GPS_FIX_TYPES[fixType]}
             tooltip="GPS fix type"
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${gpsData.lat !== undefined ? (gpsData.lat * 1e-7).toFixed(6) : 0}, ${
-              gpsData.lon !== undefined ? (gpsData.lon * 1e-7).toFixed(6) : 0
+            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${
+              lon !== undefined ? lon.toFixed(6) : 0
             })`}
             tooltip="GPS (lat, lon)"
           />
           <StatusSection
             icon={<IconSatellite />}
-            value={gpsRawIntData.satellites_visible}
+            value={satellitesVisible}
             tooltip="Satellites visible"
           />
           <StatusSection
             icon={<IconAntenna />}
-            value={rcChannelsData.rssi}
+            value={rssi}
             tooltip="RC RSSI"
           />
           <StatusSection
@@ -498,15 +276,13 @@ export default function Dashboard() {
 
         {/* Right side floating toolbar */}
         <FloatingToolbar
-          missionItems={missionItems}
           centerMapOnDrone={centerMapOnDrone}
-          gpsData={gpsData}
           followDrone={followDrone}
           setFollowDrone={setFollowDrone}
           mapRef={mapRef}
         />
 
-        {statustextMessages.length !== 0 && (
+        {connectedToDrone && (
           <div className="absolute bottom-0 right-0 z-20">
             <ResizableBox
               height={messagesPanelSize.height}
@@ -514,7 +290,7 @@ export default function Dashboard() {
               minConstraints={[600, 150]}
               maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
               resizeHandles={["nw"]}
-              handle={(h, ref) => (
+              handle={(_, ref) => (
                 <span className={"custom-handle-nw"} ref={ref} />
               )}
               handleSize={[32, 32]}
@@ -522,10 +298,26 @@ export default function Dashboard() {
                 setMessagesPanelSize({ width: size.width, height: size.height })
               }}
             >
-              <StatusMessages
-                messages={statustextMessages}
-                className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
-              />
+              <>
+                {/* Show a "Waiting for message area" */}
+                {statustextMessages.length == 0 && (
+                  <StatusMessages
+                    messages={[
+                      {
+                        timestamp: "0",
+                        text: `Waiting for messages from ${aircraftTypeString}`,
+                        severity: 7,
+                      },
+                    ]}
+                    className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
+                  />
+                )}
+                {/* Show real messages */}
+                <StatusMessages
+                  messages={statustextMessages}
+                  className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
+                />
+              </>
             </ResizableBox>
           </div>
         )}

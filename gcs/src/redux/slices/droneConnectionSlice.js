@@ -114,16 +114,15 @@ const droneConnectionSlice = createSlice({
       socket.emit("connect_to_drone", action.payload)
     },
     emitSetState: (_, action) => {
-      console.log(`Setting State to ${action.payload.state}`)
+      console.log(`Setting State to ${action.payload.state} from redux`)
       socket.emit("set_state", action.payload)
     },
     emitGetHomePosition: () => {
-      console.log("Getting home position")
       socket.emit("get_home_position")
     },
     emitGetCurrentMission: () => {
-      console.log("Getting current mission")
-      socket.emit("get_current_mission")
+      console.log("Getting current mission from redux")
+      socket.emit("get_current_mission_all")
     },
   },
   selectors: {

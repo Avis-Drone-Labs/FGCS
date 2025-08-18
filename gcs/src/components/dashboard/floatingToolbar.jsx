@@ -15,19 +15,25 @@ import {
   IconSunOff,
 } from "@tabler/icons-react"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectGPS } from "../../redux/slices/droneInfoSlice"
+import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
+
 // Helper Functions
 import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 
 export default function FloatingToolbar({
-  missionItems,
   centerMapOnDrone,
-  gpsData,
   followDrone,
   setFollowDrone,
   mapRef,
 }) {
-  const filteredMissionItems = filterMissionItems(missionItems.mission_items)
+  const gpsData = useSelector(selectGPS)
+  const missionItems = useSelector(selectCurrentMissionItems)
+
+  const filteredMissionItems = filterMissionItems(missionItems.missionItems)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false,

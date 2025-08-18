@@ -5,14 +5,15 @@ const missionInfoSlice = createSlice({
   name: "missionInfo",
   initialState: {
     currentMission: {
-      missionState: 0,
+      mission_state: 0,
       total: 0,
       seq: 0,
     },
     currentMissionItems: {
-      missionItems: [],
-      fenceItems: [],
-      rallyItems: [],
+      // These should be camelCase etc but its easier to keep it as snake_case
+      mission_items: [],
+      fence_items: [],
+      rally_items: [],
     },
     homePosition: {
       lat: 0,
@@ -25,9 +26,12 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.currentMission) return
       state.currentMission = action.payload
     },
-    // TODO: on socket.on(current_mission)
     setCurrentMissionItems: (state, action) => {
-      if (action.payload === state.currentMissionItems) return
+      if (
+        action.payload === state.currentMissionItems ||
+        action.payload === undefined
+      )
+        return
       state.currentMissionItems = action.payload
     },
     setHomePosition: (state, action) => {

@@ -9,7 +9,6 @@ import {
 
 // drone actions
 import {
-  emitGetCurrentMission,
   emitGetHomePosition,
   emitIsConnectedToDrone,
   emitSetState,
@@ -28,7 +27,11 @@ import {
   queueErrorNotification,
   queueNotification,
 } from "../slices/notificationSlice"
-import { setCurrentMission, setHomePosition } from "../slices/missionSlice"
+import {
+  setCurrentMission,
+  setCurrentMissionItems,
+  setHomePosition,
+} from "../slices/missionSlice"
 import {
   setDroneAircraftType,
   setTelemetryData,
@@ -40,6 +43,7 @@ import {
   setBatteryData,
   setOnboardControlSensorsEnabled,
   setRSSIData,
+  setExtraData,
 } from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 
@@ -61,6 +65,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onMissionControlResult: "mission_control_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+  onCurrentMissionAll: "current_mission_all",
 })
 
 const socketMiddleware = (store) => {
@@ -115,7 +120,7 @@ const socketMiddleware = (store) => {
 
         /*
           ========================
-          = UNDERLYING CONNETION =
+          = UNDERLYING CONNECTION =
           ========================
         */
 
@@ -123,19 +128,19 @@ const socketMiddleware = (store) => {
         // EXAMPLE SOCKET.ON EVENT
         socket.socket.on(SocketEvents.Connect, () => {
           // DISPATCH ALL ACTIONS HERE
-          // SINCE ITS MIDDLWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
+          // SINCE IT'S MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
           console.log(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
         })
 
         socket.socket.on(SocketEvents.Disconnect, () => {
-          console.log(`Disconnected from socket, ${socket.socket.id}`)
+          console.log(`Disconnected from socket via redux, ${socket.socket.id}`)
           store.dispatch(socketDisconnected())
         })
 
         /*
           ====================
-          = DRONE CONNETIONS =
+          = DRONE CONNECTIONS =
           ====================
         */
 
@@ -205,10 +210,6 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" })) // Potential issue with state?
           store.dispatch(emitGetHomePosition())
-          store.dispatch(emitGetCurrentMission())
-          // socket.emit("set_state", { state: "dashboard" })
-          // socket.emit("get_home_position")
-          // socket.emit("get_current_mission")
         })
 
         // Setting connection status
@@ -227,6 +228,7 @@ const socketMiddleware = (store) => {
               queueNotification({ type: "error", message: msg.message }),
             )
         })
+
         socket.socket.on(
           DroneSpecificSocketEvents.onSetCurrentFlightMode,
           (msg) => {
@@ -238,6 +240,7 @@ const socketMiddleware = (store) => {
             )
           },
         )
+
         socket.socket.on(DroneSpecificSocketEvents.onNavResult, (msg) => {
           store.dispatch(
             queueNotification({
@@ -246,6 +249,7 @@ const socketMiddleware = (store) => {
             }),
           )
         })
+
         socket.socket.on(
           DroneSpecificSocketEvents.onMissionControlResult,
           (msg) => {
@@ -257,6 +261,7 @@ const socketMiddleware = (store) => {
             )
           },
         )
+
         socket.socket.on(
           DroneSpecificSocketEvents.onHomePositionResult,
           (msg) => {
@@ -267,32 +272,35 @@ const socketMiddleware = (store) => {
             )
           },
         )
+
+        socket.socket.on(
+          DroneSpecificSocketEvents.onCurrentMissionAll,
+          (msg) => {
+            store.dispatch(setCurrentMissionItems(msg))
+          },
+        )
+
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
-          // if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-          // incomingMessageHandler()[msg.mavpackettype](msg)
-          // Store packetType that has arrived
-          // const packetType = msg.mavpackettype
 
-          // Use functional form of setState to ensure the latest state is used
-          // setDisplayedData((prevDisplayedData) => {
-          //   // Create a copy of displayedData to modify
-          //   let updatedDisplayedData = [...prevDisplayedData]
+          // Data points on dashboard, the below code updates the value in the store when a new message
+          // comes in in the type of specificData.
+          const packetType = msg.mavpackettype
+          const storeState = store.getState()
+          if (storeState !== undefined) {
+            const extraDroneData = storeState.droneInfo.extraDroneData
+            const updatedExtraDroneData = extraDroneData.map((dataItem) => {
+              if (dataItem.currently_selected.startsWith(packetType)) {
+                const specificData = dataItem.currently_selected.split(".")[1]
+                if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+                  return { ...dataItem, value: msg[specificData] }
+                }
+              }
+              return dataItem
+            })
 
-          //   // Iterate over displayedData to find and update the matching item
-          //   updatedDisplayedData = updatedDisplayedData.map((dataItem) => {
-          //     if (dataItem.currently_selected.startsWith(packetType)) {
-          //       const specificData = dataItem.currently_selected.split(".")[1]
-          //       if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-          //         return { ...dataItem, value: msg[specificData] }
-          //       }
-          //     }
-          //     return dataItem
-          //   })
-
-          //   return updatedDisplayedData
-          // })
-          // }
+            store.dispatch(setExtraData(updatedExtraDroneData))
+          }
         })
       } else {
         Object.values(DroneSpecificSocketEvents).map((event) =>

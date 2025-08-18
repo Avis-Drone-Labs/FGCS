@@ -48,5 +48,3 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
-        path: gcs/playwright-report/
-        retention-days: 30

@@ -43,12 +43,24 @@ export const store = configureStore({
 
 let droneConnection = persistedState.droneConnection
 if (droneConnection !== null) {
-  store.dispatch(setWireless(droneConnection.wireless))
-  store.dispatch(setBaudrate(droneConnection.baudrate))
-  store.dispatch(setConnectionType(droneConnection.connection_type))
-  store.dispatch(setNetworkType(droneConnection.network_type))
-  store.dispatch(setIp(droneConnection.ip))
-  store.dispatch(setPort(droneConnection.port))
+  if (droneConnection.wireless !== undefined) {
+    store.dispatch(setWireless(droneConnection.wireless))
+  }
+  if (droneConnection.baudrate !== undefined) {
+    store.dispatch(setBaudrate(droneConnection.baudrate))
+  }
+  if (droneConnection.connection_type !== undefined) {
+    store.dispatch(setConnectionType(droneConnection.connection_type))
+  }
+  if (droneConnection.network_type !== undefined) {
+    store.dispatch(setNetworkType(droneConnection.network_type))
+  }
+  if (droneConnection.ip !== undefined) {
+    store.dispatch(setIp(droneConnection.ip))
+  }
+  if (droneConnection.port !== undefined) {
+    store.dispatch(setPort(droneConnection.port))
+  }
 }
 
 // Update states when a new message comes in, probably inefficient

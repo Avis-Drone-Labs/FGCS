@@ -53,6 +53,22 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
+function UnwrittenChangesWarning({ unwrittenChanges }) {
+  const firstUnwrittenTab = Object.entries(unwrittenChanges).find(
+    ([, changed]) => changed,
+  )
+
+  return (
+    <>
+      {firstUnwrittenTab && (
+        <p className="text-red-400 text-center">
+          You have unwritten {firstUnwrittenTab[0]} changes.
+        </p>
+      )}
+    </>
+  )
+}
+
 export default function Missions() {
   // Local Storage
   const [connected] = useSessionStorage({
@@ -68,18 +84,13 @@ export default function Missions() {
   // Need to keep a reference to the active tab to avoid stale closures
   const activeTabRef = useRef(activeTab)
 
-  const [unwrittenMissionChanges, setUnwrittenMissionChanges] =
-    useSessionStorage({
-      key: "unwrittenMissionChanges",
-      defaultValue: false,
-    })
-  const [unwrittenFenceChanges, setUnwrittenFenceChanges] = useSessionStorage({
-    key: "unwrittenFenceChanges",
-    defaultValue: false,
-  })
-  const [unwrittenRallyChanges, setUnwrittenRallyChanges] = useSessionStorage({
-    key: "unwrittenRallyChanges",
-    defaultValue: false,
+  const [unwrittenChanges, setUnwrittenChanges] = useSessionStorage({
+    key: "unwrittenChanges",
+    defaultValue: {
+      mission: false,
+      fence: false,
+      rally: false,
+    },
   })
 
   // Mission data
@@ -140,10 +151,6 @@ export default function Missions() {
     [],
   )
 
-  // useEffect(() => {
-  //   setActiveTab("mission") // Default to mission tab on load
-  // }, [])
-
   useEffect(() => {
     if (!connected) {
       return
@@ -187,21 +194,21 @@ export default function Missions() {
         }
         updateHomePositionBasedOnWaypoints(missionItemsWithIds)
         setMissionItems(missionItemsWithIds)
-        setUnwrittenMissionChanges(false)
+        setUnwrittenChanges((prev) => ({ ...prev, mission: false }))
       } else if (data.mission_type === "fence") {
         const fenceItemsWithIds = []
         for (let fence of data.items) {
           fenceItemsWithIds.push(addIdToItem(fence))
         }
         setFenceItems(fenceItemsWithIds)
-        setUnwrittenFenceChanges(false)
+        setUnwrittenChanges((prev) => ({ ...prev, fence: false }))
       } else if (data.mission_type === "rally") {
         const rallyItemsWithIds = []
         for (let rallyItem of data.items) {
           rallyItemsWithIds.push(addIdToItem(rallyItem))
         }
         setRallyItems(rallyItemsWithIds)
-        setUnwrittenRallyChanges(false)
+        setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
       }
 
       showSuccessNotification(`${data.mission_type} read successfully`)
@@ -212,13 +219,10 @@ export default function Missions() {
 
       if (data.success) {
         showSuccessNotification(data.message)
-        if (data.mission_type === "mission") {
-          setUnwrittenMissionChanges(false)
-        } else if (data.mission_type === "fence") {
-          setUnwrittenFenceChanges(false)
-        } else if (data.mission_type === "rally") {
-          setUnwrittenRallyChanges(false)
-        }
+        setUnwrittenChanges((prev) => ({
+          ...prev,
+          [activeTabRef.current]: false,
+        }))
       } else {
         showErrorNotification(data.message)
       }
@@ -234,14 +238,14 @@ export default function Missions() {
 
           updateHomePositionBasedOnWaypoints(missionItemsWithIds)
           setMissionItems(missionItemsWithIds)
-          setUnwrittenMissionChanges(false)
+          setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
         } else if (data.mission_type === "fence") {
           const fenceItemsWithIds = []
           for (let fence of data.items) {
             fenceItemsWithIds.push(addIdToItem(fence))
           }
           setFenceItems(fenceItemsWithIds)
-          setUnwrittenFenceChanges(false)
+          setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
         } else if (data.mission_type === "rally") {
           const rallyItemsWithIds = []
           for (let rallyItem of data.items) {
@@ -249,7 +253,7 @@ export default function Missions() {
           }
 
           setRallyItems(rallyItemsWithIds)
-          setUnwrittenRallyChanges(false)
+          setUnwrittenChanges((prev) => ({ ...prev, rally: true }))
         }
         showSuccessNotification(data.message)
       } else {
@@ -388,8 +392,10 @@ export default function Missions() {
       setRallyItems((prevItems) => [...prevItems, newMissionItem])
     }
 
-    console.log("unwritten changes true add new mission item", activeTab)
-    updateCurrentTabUnwrittenChanges(false)
+    setUnwrittenChanges((prev) => ({
+      ...prev,
+      [activeTabRef.current]: true,
+    }))
   }
 
   function createHomePositionItem() {
@@ -469,11 +475,14 @@ export default function Missions() {
       }
 
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
+    } else {
+      return
     }
 
-    console.log("unwritten changes true update mission item", activeTab)
-
-    updateCurrentTabUnwrittenChanges(true)
+    setUnwrittenChanges((prev) => ({
+      ...prev,
+      [activeTabRef.current]: true,
+    }))
   }
 
   function deleteMissionItem(missionItemId) {
@@ -494,16 +503,10 @@ export default function Missions() {
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
     }
 
-    console.log("unwritten changes true delete mission item", activeTab)
-
-    updateCurrentTabUnwrittenChanges(true)
-    // if (activeTab === "mission") {
-    //   setUnwrittenMissionChanges(newValue)
-    // } else if (activeTab === "fence") {
-    //   setUnwrittenFenceChanges(newValue)
-    // } else if (activeTab === "rally") {
-    //   setUnwrittenRallyChanges(newValue)
-    // }
+    setUnwrittenChanges((prev) => ({
+      ...prev,
+      [activeTabRef.current]: true,
+    }))
   }
 
   function updateMissionItemOrder(missionItemId, indexIncrement) {
@@ -543,10 +546,10 @@ export default function Missions() {
 
     if (activeTabRef.current === "mission") {
       setMissionItems((prevItems) => updateItemOrder(prevItems))
-      setUnwrittenMissionChanges(true)
+      setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
     } else if (activeTabRef.current === "fence") {
       setFenceItems((prevItems) => updateItemOrder(prevItems))
-      setUnwrittenFenceChanges(true)
+      setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
     }
   }
 
@@ -681,9 +684,8 @@ export default function Missions() {
       }
       setMissionItems((prevItems) => [newHomeMissionItem, ...prevItems])
     }
-    console.log("unwritten changes true update home position", activeTab)
 
-    setUnwrittenMissionChanges(true)
+    setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
   }
 
   function clearMissionItems() {
@@ -703,9 +705,10 @@ export default function Missions() {
       setRallyItems([])
     }
 
-    console.log("unwritten changes true clear mission items", activeTab)
-
-    updateCurrentTabUnwrittenChanges(false)
+    setUnwrittenChanges((prev) => ({
+      ...prev,
+      [activeTabRef.current]: true,
+    }))
   }
 
   function addFencePolygon(newFenceItems) {
@@ -743,7 +746,7 @@ export default function Missions() {
     })
 
     setFenceItems((prevItems) => [...prevItems, ...newFenceMissionItems])
-    setUnwrittenFenceChanges(true)
+    setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
   }
 
   return (
@@ -805,6 +808,10 @@ export default function Missions() {
             >
               <div className="flex flex-col gap-8 p-4">
                 <div className="flex flex-col gap-4">
+                  <UnwrittenChangesWarning
+                    unwrittenChanges={unwrittenChanges}
+                  />
+
                   <Button
                     onClick={() => {
                       readMissionFromDrone()

@@ -53,7 +53,9 @@ export default function FenceItemsTableRow({
   }, [fenceItem])
 
   useEffect(() => {
-    updateMissionItem(fenceItemData)
+    if (JSON.stringify(fenceItem) !== JSON.stringify(fenceItemData)) {
+      updateMissionItem(fenceItemData)
+    }
   }, [fenceItemData])
 
   function updateFenceItemData(key, newVal) {

@@ -11,8 +11,11 @@ import {
 } from "@mantine/core"
 import { IconTrash } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
-import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
-import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
+import {
+  coordToInt,
+  getPositionFrameName,
+  intToCoord,
+} from "../../helpers/dataFormatters"
 const coordsFractionDigits = 9
 
 export default function RallyItemsTableRow({
@@ -30,16 +33,6 @@ export default function RallyItemsTableRow({
   useEffect(() => {
     updateRallyItem(rallyItemData)
   }, [rallyItemData])
-
-  function getFrameName(frameId) {
-    var frameName = MAV_FRAME_LIST[frameId]
-
-    if (frameName.startsWith("MAV_FRAME_")) {
-      frameName = frameName.replace("MAV_FRAME_", "")
-    }
-
-    return frameName || "UNKNOWN"
-  }
 
   function updateRallyItemData(key, newVal) {
     setRallyItemData({
@@ -92,7 +85,7 @@ export default function RallyItemsTableRow({
           hideControls
         />
       </TableTd>
-      <TableTd>{getFrameName(rallyItemData.frame)}</TableTd>
+      <TableTd>{getPositionFrameName(rallyItemData.frame)}</TableTd>
       <TableTd>
         <ActionIcon
           onClick={() => deleteRallyItem(rallyItemData.id)}

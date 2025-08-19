@@ -42,7 +42,7 @@ export const store = configureStore({
 })
 
 let droneConnection = persistedState.droneConnection
-if (droneConnection !== null) {
+if (droneConnection !== undefined) {
   if (droneConnection.wireless !== undefined) {
     store.dispatch(setWireless(droneConnection.wireless))
   }

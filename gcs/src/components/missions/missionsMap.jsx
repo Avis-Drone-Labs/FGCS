@@ -257,7 +257,7 @@ function MapSectionNonMemo({
   }
 
   function zoomToHome() {
-    if (passedRef.current && position) {
+    if (passedRef.current && homePosition) {
       passedRef.current.getMap().flyTo({
         center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
         zoom: 17,

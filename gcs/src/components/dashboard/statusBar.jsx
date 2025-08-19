@@ -52,22 +52,34 @@ export default function StatusBar(props) {
   const highestAltitudeRef = useRef(0)
 
   useEffect(() => {
+    const maxAltitude = getSetting("Dashboard.maxAltitudeAlert")
+    if (telemetryData.alt > maxAltitude) {
+      dispatchAlert({
+        category: AlertCategory.Altitude,
+        severity: AlertSeverity.Red,
+        jsx: <>Caution! You've exceeded {maxAltitude}m</>,
+      })
+      return
+    } else {
+      dismissAlert(AlertCategory.Altitude)
+    }
+
     if (telemetryData.alt > highestAltitudeRef.current) {
       highestAltitudeRef.current = telemetryData.alt
       return
     }
 
-    const altitudes = getSetting("Dashboard.altitudeAlerts")
-    altitudes.sort((a1, a2) => a1 - a2)
+    const minAltitudes = getSetting("Dashboard.minAltitudeAlerts")
+    minAltitudes.sort((a1, a2) => a1 - a2)
 
-    for (const [i, altitude] of altitudes.entries()) {
+    for (const [i, altitude] of minAltitudes.entries()) {
       if (highestAltitudeRef.current > altitude && telemetryData.alt < altitude) {
         dispatchAlert({
           category: AlertCategory.Altitude,
           severity:
             i == 0
               ? AlertSeverity.Red
-              : i == altitudes.length - 1
+              : i == minAltitudes.length - 1
                 ? AlertSeverity.Yellow
                 : AlertSeverity.Orange,
           jsx: <>Caution! You've fallen below {altitude}m</>,

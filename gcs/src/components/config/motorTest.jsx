@@ -8,7 +8,7 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Button, NumberInput } from "@mantine/core"
-import { useSessionStorage } from "@mantine/hooks"
+import { useSessionStorage } from "@uidotdev/usehooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -23,10 +23,7 @@ import {
 import { socket } from "../../helpers/socket"
 
 export default function MotorTestPanel() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  const [connected] = useSessionStorage("connectedToDrone", false)
   const [frameTypeOrder, setFrameTypeOrder] = useState(null)
   const [frameTypeDirection, setFrameTypeDirection] = useState(null)
   const [frameTypename, setFrameTypename] = useState(null)

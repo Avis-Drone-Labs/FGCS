@@ -12,9 +12,8 @@ import { useEffect, useState } from "react"
 import { Button, LoadingOverlay, Select } from "@mantine/core"
 import {
   useListState,
-  useLocalStorage,
-  useSessionStorage,
 } from "@mantine/hooks"
+import { useLocalStorage, useSessionStorage } from "@uidotdev/usehooks";
 
 // Helper javascript files
 import {
@@ -38,10 +37,7 @@ const FLIGHT_MODE_PWM_VALUES = [
 ]
 
 export default function FlightModes() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  const [connected] = useSessionStorage("connectedToDrone", false)
 
   function getCurrentFlightMap(currentFlightState) {
     if (currentFlightState === 1) {
@@ -63,9 +59,7 @@ export default function FlightModes() {
   ])
   const [flightModeChannel, setFlightModeChannel] = useState("UNKNOWN")
   const [currentFlightMode, setCurrentFlightMode] = useState("UNKNOWN")
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
+  const [aircraftType] = useLocalStorage("aircraftType")
   const [currentPwmValue, setCurrentPwmValue] = useState(0)
   const [refreshingFlightModeData, setRefreshingFlightModeData] =
     useState(false)
@@ -78,11 +72,13 @@ export default function FlightModes() {
   }))
 
   useEffect(() => {
+    console.log("UPDATED!!")
     if (!connected) {
       return
     }
 
     socket.emit("set_state", { state: "config.flight_modes" })
+    console.log("Set state")
     socket.emit("get_flight_mode_config")
 
     socket.on("flight_mode_config", (data) => {

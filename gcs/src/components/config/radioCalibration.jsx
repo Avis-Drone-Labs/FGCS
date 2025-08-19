@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react"
 
 // 3rd party imports
-import { useLocalStorage, useSessionStorage } from "@mantine/hooks"
+import { useLocalStorage, useSessionStorage } from "@uidotdev/usehooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -42,13 +42,8 @@ function getPercentageValueFromPWM(pwmValue) {
 }
 
 export default function RadioCalibration() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
+  const [connected] = useSessionStorage("connectedToDrone", false)
+  const [aircraftType] = useLocalStorage("aircraftType")
   const [channels, setChannels] = useState({
     1: 0,
     2: 0,

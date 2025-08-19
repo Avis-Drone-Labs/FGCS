@@ -14,8 +14,8 @@ import {
   useClipboard,
   useLocalStorage,
   usePrevious,
-  useSessionStorage,
 } from "@mantine/hooks"
+import { useSessionStorage } from "@uidotdev/usehooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
@@ -62,14 +62,8 @@ function MapSectionNonMemo({
   addFencePolygon,
   mapId = "dashboard",
 }) {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [guidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
+  const [connected] = useSessionStorage("connectedToDrone", false)
+  const [guidedModePinData] = useSessionStorage("guidedModePinData", null)
 
   const [position, setPosition] = useState(null)
   const { getSetting } = useSettings()

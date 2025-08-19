@@ -157,6 +157,8 @@ def writeCurrentMission(data: WriteCurrentMissionType) -> None:
     if not result.get("success"):
         logger.error(result.get("message"))
 
+    result["mission_type"] = mission_type
+
     socketio.emit("write_mission_result", result)
 
 

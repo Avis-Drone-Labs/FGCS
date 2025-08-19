@@ -97,13 +97,19 @@ const droneConnectionSlice = createSlice({
         state.connection_status = action.payload
       }
     },
+    setWireless: (state, action) => {
+      if (action.payload !== state.wireless) {
+        state.wireless = action.payload
+      }
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {
       socket.emit("is_connected_to_drone")
     },
-    emitGetComPorts: () => {
+    emitGetComPorts: (state) => {
       socket.emit("get_com_ports")
+      state.fetching_com_ports = true
     },
     emitDisconnectFromDrone: () => {
       console.log("Disconnecting from drone")
@@ -138,6 +144,7 @@ const droneConnectionSlice = createSlice({
     selectPort: (state) => state.port,
     selectConnectionModal: (state) => state.connection_modal,
     selectConnectionStatus: (state) => state.connection_status,
+    selectWireless: (state) => state.wireless,
   },
 })
 
@@ -155,6 +162,7 @@ export const {
   setPort,
   setConnectionModal,
   setConnectionStatus,
+  setWireless,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -178,6 +186,7 @@ export const {
   selectPort,
   selectConnectionModal,
   selectConnectionStatus,
+  selectWireless,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

@@ -69,7 +69,7 @@ export default function StatusBar(props) {
       return
     }
 
-    const minAltitudes = getSetting("Dashboard.minAltitudeAlerts")
+    const minAltitudes = (getSetting("Dashboard.minAltitudeAlerts") ?? []).slice()
     minAltitudes.sort((a1, a2) => a1 - a2)
 
     for (const [i, altitude] of minAltitudes.entries()) {

@@ -38,7 +38,9 @@ export default function MissionItemsTableRow({
   }, [missionItem])
 
   useEffect(() => {
-    updateMissionItem(missionItemData)
+    if (JSON.stringify(missionItem) !== JSON.stringify(missionItemData)) {
+      updateMissionItem(missionItemData)
+    }
   }, [missionItemData])
 
   function getDisplayCommandName(commandName) {

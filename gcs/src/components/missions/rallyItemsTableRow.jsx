@@ -31,7 +31,7 @@ export default function RallyItemsTableRow({
   }, [rallyItem])
 
   useEffect(() => {
-    if (rallyItem !== rallyItemData) {
+    if (JSON.stringify(rallyItem) !== JSON.stringify(rallyItemData)) {
       updateRallyItem(rallyItemData)
     }
   }, [rallyItemData])

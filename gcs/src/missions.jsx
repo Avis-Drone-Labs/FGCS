@@ -64,6 +64,10 @@ export default function Missions() {
   })
 
   const [activeTab, setActiveTab] = useState("mission")
+
+  // Need to keep a reference to the active tab to avoid stale closures
+  const activeTabRef = useRef(activeTab)
+
   const [unwrittenMissionChanges, setUnwrittenMissionChanges] =
     useSessionStorage({
       key: "unwrittenMissionChanges",
@@ -284,7 +288,7 @@ export default function Missions() {
   }, [importFile])
 
   useEffect(() => {
-    console.log(activeTab)
+    activeTabRef.current = activeTab
   }, [activeTab])
 
   function updateCurrentTabUnwrittenChanges(newValue) {
@@ -344,11 +348,15 @@ export default function Missions() {
       z: newMissionItemAltitude,
       frame: parseInt(
         Object.keys(MAV_FRAME_LIST).find(
-          (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
+          (key) =>
+            MAV_FRAME_LIST[key] ===
+            (activeTabRef.current === "fence"
+              ? "MAV_FRAME_GLOBAL"
+              : "MAV_FRAME_GLOBAL_RELATIVE_ALT"),
         ),
       ),
       command: null,
-      param1: activeTab === "fence" ? 5 : 0,
+      param1: activeTabRef.current === "fence" ? 5 : 0,
       param2: 0,
       param3: 0,
       param4: 0,
@@ -360,19 +368,19 @@ export default function Missions() {
       mavpackettype: "MISSION_ITEM_INT",
     }
 
-    if (activeTab === "mission") {
+    if (activeTabRef.current === "mission") {
       newMissionItem.seq = missionItems.length
       newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
       newMissionItem.mission_type = 0 // Mission type
 
       setMissionItems((prevItems) => [...prevItems, newMissionItem])
-    } else if (activeTab === "fence") {
+    } else if (activeTabRef.current === "fence") {
       newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
       setFenceItems((prevItems) => [...prevItems, newMissionItem])
-    } else if (activeTab === "rally") {
+    } else if (activeTabRef.current === "rally") {
       newMissionItem.seq = rallyItems.length
       newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
       newMissionItem.mission_type = 2 // Rally type
@@ -411,11 +419,11 @@ export default function Missions() {
       target_component: targetInfo.target_component,
       target_system: targetInfo.target_system,
       mission_type:
-        activeTab === "mission"
+        activeTabRef.current === "mission"
           ? 0
-          : activeTab === "fence"
+          : activeTabRef.current === "fence"
             ? 1
-            : activeTab === "rally"
+            : activeTabRef.current === "rally"
               ? 2
               : 0, // Default to 0 (Mission type) if activeTab is unrecognized,
       mavpackettype: "MISSION_ITEM_INT",
@@ -443,19 +451,19 @@ export default function Missions() {
     // Check if the updated mission item is equal to the current mission item
     // if so, don't update
 
-    if (activeTab === "mission") {
+    if (activeTabRef.current === "mission") {
       if (isEqualItem(updatedMissionItem, missionItems)) {
         return
       }
 
       setMissionItems((prevItems) => getUpdatedItems(prevItems))
-    } else if (activeTab === "fence") {
+    } else if (activeTabRef.current === "fence") {
       if (isEqualItem(updatedMissionItem, fenceItems)) {
         return
       }
 
       setFenceItems((prevItems) => getUpdatedItems(prevItems))
-    } else if (activeTab === "rally") {
+    } else if (activeTabRef.current === "rally") {
       if (isEqualItem(updatedMissionItem, rallyItems)) {
         return
       }
@@ -478,11 +486,11 @@ export default function Missions() {
       }))
     }
 
-    if (activeTab === "mission") {
+    if (activeTabRef.current === "mission") {
       setMissionItems((prevItems) => getUpdatedItems(prevItems))
-    } else if (activeTab === "fence") {
+    } else if (activeTabRef.current === "fence") {
       setFenceItems((prevItems) => getUpdatedItems(prevItems))
-    } else if (activeTab === "rally") {
+    } else if (activeTabRef.current === "rally") {
       setRallyItems((prevItems) => getUpdatedItems(prevItems))
     }
 
@@ -533,41 +541,41 @@ export default function Missions() {
 
     console.log("unwritten changes true update item order", activeTab)
 
-    if (activeTab === "mission") {
+    if (activeTabRef.current === "mission") {
       setMissionItems((prevItems) => updateItemOrder(prevItems))
       setUnwrittenMissionChanges(true)
-    } else if (activeTab === "fence") {
+    } else if (activeTabRef.current === "fence") {
       setFenceItems((prevItems) => updateItemOrder(prevItems))
       setUnwrittenFenceChanges(true)
     }
   }
 
   function readMissionFromDrone() {
-    socket.emit("get_current_mission", { type: activeTab })
-    setMissionProgressModalTitle(`Reading ${activeTab} from drone`)
+    socket.emit("get_current_mission", { type: activeTabRef.current })
+    setMissionProgressModalTitle(`Reading ${activeTabRef.current} from drone`)
     resetMissionProgressModalData()
     openMissionProgressModal()
   }
 
   function writeMissionToDrone() {
-    if (activeTab === "mission") {
+    if (activeTabRef.current === "mission") {
       socket.emit("write_current_mission", {
         type: "mission",
         items: missionItems,
       })
-    } else if (activeTab === "fence") {
+    } else if (activeTabRef.current === "fence") {
       socket.emit("write_current_mission", { type: "fence", items: fenceItems })
-    } else if (activeTab === "rally") {
+    } else if (activeTabRef.current === "rally") {
       socket.emit("write_current_mission", { type: "rally", items: rallyItems })
     }
-    setMissionProgressModalTitle(`Writing ${activeTab} to drone`)
+    setMissionProgressModalTitle(`Writing ${activeTabRef.current} to drone`)
     resetMissionProgressModalData()
     openMissionProgressModal()
   }
 
   function importMissionFromFile(filePath) {
     socket.emit("import_mission_from_file", {
-      type: activeTab,
+      type: activeTabRef.current,
       file_path: filePath,
     })
 
@@ -590,9 +598,9 @@ export default function Missions() {
 
     if (!result.canceled) {
       let items = []
-      if (activeTab === "mission") {
+      if (activeTabRef.current === "mission") {
         items = [...missionItems]
-      } else if (activeTab === "fence") {
+      } else if (activeTabRef.current === "fence") {
         items = [...fenceItems]
 
         const newHomeItem = createHomePositionItem()
@@ -605,7 +613,7 @@ export default function Missions() {
           ...item,
           seq: index,
         }))
-      } else if (activeTab === "rally") {
+      } else if (activeTabRef.current === "rally") {
         items = [...rallyItems]
 
         const newHomeItem = createHomePositionItem()
@@ -621,7 +629,7 @@ export default function Missions() {
       }
 
       socket.emit("export_mission_to_file", {
-        type: activeTab,
+        type: activeTabRef.current,
         file_path: result.filePath,
         items: items,
       })
@@ -679,7 +687,7 @@ export default function Missions() {
   }
 
   function clearMissionItems() {
-    if (activeTab === "mission") {
+    if (activeTabRef.current === "mission") {
       // Clear all mission items except the first if the first is a home position
       if (
         missionItems.length > 0 &&
@@ -689,9 +697,9 @@ export default function Missions() {
       } else {
         setMissionItems([])
       }
-    } else if (activeTab === "fence") {
+    } else if (activeTabRef.current === "fence") {
       setFenceItems([])
-    } else if (activeTab === "rally") {
+    } else if (activeTabRef.current === "rally") {
       setRallyItems([])
     }
 

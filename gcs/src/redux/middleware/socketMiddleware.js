@@ -196,7 +196,6 @@ const socketMiddleware = (store) => {
 
         // Setting connection status
         socket.socket.on("drone_connect_status", (msg) => {
-          console.log(msg)
           store.dispatch(setConnectionStatus(msg.message))
         })
 

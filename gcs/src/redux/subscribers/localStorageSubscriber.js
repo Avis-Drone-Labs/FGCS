@@ -1,7 +1,3 @@
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// !! THIS IS CURRENT BROKEN, I DON'T THINK WE NEED IT !!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 // subscribe to store updates
 // and save to local storage any values that have changed
 
@@ -31,4 +27,5 @@ store.subscribe(() => {
   )
   window.localStorage.setItem("ip", store_mut.droneConnection.ip)
   window.localStorage.setItem("port", store_mut.droneConnection.port)
+  window.localStorage.setItem("connectedToDrone", store_mut.droneConnection.connected)
 })

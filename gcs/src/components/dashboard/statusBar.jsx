@@ -5,17 +5,24 @@
 
 // Base imports
 import moment from "moment"
-import { cloneElement, useEffect, useState } from "react"
+import { cloneElement, useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { Tooltip } from "@mantine/core"
 import { useInterval } from "@mantine/hooks"
 import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectTelemetry } from "../../redux/slices/droneInfoSlice"
+
 // Helper imports
 import { socket } from "../../helpers/socket"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import AlertSection from "./alert"
+import AlertSection, { AlertCategory, AlertSeverity } from "./alert"
+import { useSettings } from "../../helpers/settings"
+
+import { useAlerts } from "./alertProvider"
 
 export function StatusSection({ icon, value, tooltip }) {
   return (
@@ -31,12 +38,46 @@ export function StatusSection({ icon, value, tooltip }) {
 export default function StatusBar(props) {
   const [time, setTime] = useState(moment())
   const updateClock = useInterval(() => setTime(moment()), 1000)
+  const telemetryData = useSelector(selectTelemetry)
 
   // Start clock
   useEffect(() => {
     updateClock.start()
     return updateClock.stop
   }, [])
+
+  // Alerts
+  const { getSetting } = useSettings()
+  const { dispatchAlert, dismissAlert } = useAlerts()
+  const highestAltitudeRef = useRef(0)
+
+  useEffect(() => {
+    if (telemetryData.alt > highestAltitudeRef.current) {
+      highestAltitudeRef.current = telemetryData.alt
+      return
+    }
+
+    const altitudes = getSetting("Dashboard.altitudeAlerts")
+    altitudes.sort((a1, a2) => a1 - a2)
+
+    for (const [i, altitude] of altitudes.entries()) {
+      if (highestAltitudeRef.current > altitude && telemetryData.alt < altitude) {
+        dispatchAlert({
+          category: AlertCategory.Altitude,
+          severity:
+            i == 0
+              ? AlertSeverity.Red
+              : i == altitudes.length - 1
+                ? AlertSeverity.Yellow
+                : AlertSeverity.Orange,
+          jsx: <>Caution! You've fallen below {altitude}m</>,
+        })
+        return
+      }
+    }
+
+    dismissAlert(AlertCategory.Altitude)
+  }, [telemetryData]);
 
   return (
     <div className={`${props.className} flex flex-col items-end`}>

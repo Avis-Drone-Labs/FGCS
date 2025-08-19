@@ -27,5 +27,8 @@ store.subscribe(() => {
   )
   window.localStorage.setItem("ip", store_mut.droneConnection.ip)
   window.localStorage.setItem("port", store_mut.droneConnection.port)
-  window.localStorage.setItem("connectedToDrone", store_mut.droneConnection.connected)
+  window.localStorage.setItem(
+    "connectedToDrone",
+    store_mut.droneConnection.connected,
+  )
 })

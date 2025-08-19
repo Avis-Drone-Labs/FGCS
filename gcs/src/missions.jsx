@@ -6,8 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { useDisclosure } from "@mantine/hooks"
-import { useSessionStorage } from "@uidotdev/usehooks"
+import { useDisclosure, useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
@@ -66,11 +65,26 @@ export default function Missions() {
   const activeTabRef = useRef(activeTab)
 
   // Mission data
-  const [missionItems, setMissionItems] = useSessionStorage("missionItems", [])
-  const [fenceItems, setFenceItems] = useSessionStorage("fenceItems", [])
-  const [rallyItems, setRallyItems] = useSessionStorage("rallyItems", [])
-  const [homePosition, setHomePosition] = useSessionStorage("homePosition", null)
-  const [targetInfo, setTargetInfo] = useSessionStorage("targetInfo", { target_component: 0, target_system: 255 })
+  const [missionItems, setMissionItems] = useSessionStorage({
+    key: "missionItems",
+    defaultValue: [],
+  })
+  const [fenceItems, setFenceItems] = useSessionStorage({
+    key: "fenceItems",
+    defaultValue: [],
+  })
+  const [rallyItems, setRallyItems] = useSessionStorage({
+    key: "rallyItems",
+    defaultValue: [],
+  })
+  const [homePosition, setHomePosition] = useSessionStorage({
+    key: "homePosition",
+    defaultValue: null,
+  })
+  const [targetInfo, setTargetInfo] = useSessionStorage({
+    key: "targetInfo",
+    defaultValue: { target_component: 0, target_system: 255 },
+  })
 
   // File import handling
   const [importFile, setImportFile] = useState(null)

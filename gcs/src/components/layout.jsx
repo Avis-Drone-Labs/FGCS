@@ -6,7 +6,7 @@
 import { useEffect } from "react"
 
 // 3rd Party Imports
-import { useSessionStorage } from "@uidotdev/usehooks"
+import { useSessionStorage } from "@mantine/hooks"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
@@ -27,7 +27,10 @@ export default function Layout({ children, currentPage }) {
 
   // Change current page, there's a single comma because javascript has weird syntax
   // we don't care about the first variable.
-  const [, setCurrentPageInMemory] = useSessionStorage("currentPage", "dashboard")
+  const [, setCurrentPageInMemory] = useSessionStorage({
+    key: "currentPage",
+    defaultValue: "dashboard",
+  })
 
   // Handle drone errors
   useEffect(() => {

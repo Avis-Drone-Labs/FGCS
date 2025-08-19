@@ -9,6 +9,7 @@ import {
 
 // drone actions
 import {
+  emitGetComPorts,
   emitGetHomePosition,
   emitIsConnectedToDrone,
   emitSetState,
@@ -131,6 +132,7 @@ const socketMiddleware = (store) => {
           // SINCE IT'S MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
           console.log(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
+          store.dispatch(emitIsConnectedToDrone())
         })
 
         socket.socket.on(SocketEvents.Disconnect, () => {
@@ -150,9 +152,7 @@ const socketMiddleware = (store) => {
           } else {
             store.dispatch(setConnected(false))
             store.dispatch(setConnecting(false))
-            // Get com ports?
-            // check if we're connected
-            // emit get_com_ports
+            store.dispatch(emitGetComPorts())
           }
         })
 
@@ -205,10 +205,11 @@ const socketMiddleware = (store) => {
             )
           }
           store.dispatch(setConnected(true))
+          console.log("Set connected to true")
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          store.dispatch(emitSetState({ state: "dashboard" })) // Potential issue with state?
+          store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
         })
 

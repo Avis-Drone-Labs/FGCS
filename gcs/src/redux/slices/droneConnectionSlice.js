@@ -104,6 +104,7 @@ const droneConnectionSlice = createSlice({
     },
     emitGetComPorts: () => {
       socket.emit("get_com_ports")
+      setFetchingComPorts(true)
     },
     emitDisconnectFromDrone: () => {
       console.log("Disconnecting from drone")

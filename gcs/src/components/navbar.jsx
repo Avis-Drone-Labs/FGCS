@@ -7,7 +7,7 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 // Third party imports
@@ -38,6 +38,11 @@ import { IconAlertTriangle } from "@tabler/icons-react"
 import { showErrorNotification } from "../helpers/notification.js"
 import { socket } from "../helpers/socket"
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { emitDisconnectFromDrone, emitGetComPorts, selectComPorts, selectConnectedToDrone, selectConnectionModal, selectFetchingComPorts, selectSelectedComPorts, setConnectionModal, setSelectedComPorts } from "../redux/slices/droneConnectionSlice.js"
+import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
+
 // Styling imports
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -45,8 +50,16 @@ import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
+  // Redux
+  const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
+  const connectedToSocket = useSelector(selectIsConnectedToSocket)
+  const openedModal = useSelector(selectConnectionModal)
+  const comPorts = useSelector(selectComPorts)
+  const selectedComPort = useSelector(selectSelectedComPorts)
+  const fetchingComPorts = useSelector(selectFetchingComPorts)
+
   // Panel is open/closed
-  const [opened, { open, close }] = useDisclosure(false)
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
   const [currentPage] = useSessionStorage({
     key: "currentPage",
@@ -55,27 +68,17 @@ export default function Navbar() {
 
   // Connection to drone
   const [connecting, setConnecting] = useState(false)
-  const [connected, setConnected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  // const [connected, setConnected] = useSessionStorage({
+  //   key: "connectedToDrone",
+  //   defaultValue: false,
+  // })
   const [wireless, setWireless] = useLocalStorage({
     key: "wirelessConnection",
     defaultValue: true,
   })
-  const [connectedToSocket, setConnectedToSocket] = useSessionStorage({
-    key: "socketConnection",
-    defaultValue: false,
-  })
   const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
     key: "baudrate",
     defaultValue: "9600",
-  })
-
-  // eslint-disable-next-line no-unused-vars
-  const [aircraftType, setAircraftType] = useLocalStorage({
-    key: "aircraftType",
-    defaultValue: 0,
   })
 
   const ConnectionType = {
@@ -87,14 +90,6 @@ export default function Navbar() {
     key: "connectionType",
     defaultValue: ConnectionType.Serial,
   })
-
-  // Com Ports
-  const [comPorts, setComPorts] = useState([])
-  const [selectedComPort, setSelectedComPort] = useSessionStorage({
-    key: "selectedComPort",
-    defaultValue: null,
-  })
-  const [fetchingComPorts, setFetchingComPorts] = useState(false)
 
   // Network Connection
   const [networkType, setNetworkType] = useLocalStorage({
@@ -113,103 +108,92 @@ export default function Navbar() {
   const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
     useState(null)
 
-  function getComPorts() {
-    if (!connectedToSocket) return
-    socket.emit("get_com_ports")
-    setFetchingComPorts(true)
-  }
+  // function getComPorts() {
+  //   if (!connectedToSocket) return
+  //   socket.emit("get_com_ports")
+  //   setFetchingComPorts(true)
+  // }
 
   // Check if connected to drone
-  useEffect(() => {
-    if (selectedComPort === null) {
-      socket.emit("is_connected_to_drone")
-    }
+  // useEffect(() => {
+  //   if (selectedComPort === null) {
+  //     socket.emit("is_connected_to_drone")
+  //   }
 
-    socket.on("connect", () => {
-      setConnectedToSocket(true)
-    })
+  //   socket.on("connect", () => {
+  //     setConnectedToSocket(true)
+  //   })
 
-    socket.on("disconnect", () => {
-      setConnectedToSocket(false)
-    })
+  //   socket.on("disconnect", () => {
+  //     setConnectedToSocket(false)
+  //   })
 
-    // Flag connected/not connected, if not fetch ports
-    socket.on("is_connected_to_drone", (msg) => {
-      if (msg) {
-        setConnected(true)
-      } else {
-        setConnected(false)
-        setConnecting(false)
-        getComPorts()
-      }
-    })
+  //   // Flag connected/not connected, if not fetch ports
+  //   socket.on("is_connected_to_drone", (msg) => {
+  //     if (msg) {
+  //       setConnected(true)
+  //     } else {
+  //       setConnected(false)
+  //       setConnecting(false)
+  //       getComPorts()
+  //     }
+  //   })
 
-    // Fetch com ports and list them
-    socket.on("list_com_ports", (msg) => {
-      setFetchingComPorts(false)
-      setComPorts(msg)
-      if (selectedComPort === null || !msg.includes(selectedComPort)) {
-        const possibleComPort = msg.find(
-          (port) =>
-            port.toLowerCase().includes("mavlink") ||
-            port.toLowerCase().includes("ardupilot"),
-        )
-        if (possibleComPort !== undefined) {
-          setSelectedComPort(possibleComPort)
-        } else if (msg.length > 0) {
-          setSelectedComPort(msg[0])
-        }
-      }
-    })
+  //   // Fetch com ports and list them
+  //   socket.on("list_com_ports", (msg) => {
+  //     setFetchingComPorts(false)
+  //     setComPorts(msg)
+  //     if (selectedComPort === null || !msg.includes(selectedComPort)) {
+  //       const possibleComPort = msg.find(
+  //         (port) =>
+  //           port.toLowerCase().includes("mavlink") ||
+  //           port.toLowerCase().includes("ardupilot"),
+  //       )
+  //       if (possibleComPort !== undefined) {
+  //         setSelectedComPort(possibleComPort)
+  //       } else if (msg.length > 0) {
+  //         setSelectedComPort(msg[0])
+  //       }
+  //     }
+  //   })
 
-    // Flags that the drone is connected
-    socket.on("connected_to_drone", (data) => {
-      setAircraftType(data.aircraft_type)
-      if (data.aircraft_type != 1 && data.aircraft_type != 2) {
-        showErrorNotification("Aircraft not of type quadcopter or plane")
-      }
-      setConnected(true)
-      setConnecting(false)
-      close()
-    })
+  //   // Flags that the drone is disconnected
+  //   socket.on("disconnected_from_drone", () => {
+  //     console.log("disconnected_from_drone")
+  //     setConnected(false)
+  //   })
 
-    // Flags that the drone is disconnected
-    socket.on("disconnected_from_drone", () => {
-      console.log("disconnected_from_drone")
-      setConnected(false)
-    })
+  //   // Handles disconnect trigger
+  //   socket.on("disconnect", () => {
+  //     setConnected(false)
+  //     setConnecting(false)
+  //   })
 
-    // Handles disconnect trigger
-    socket.on("disconnect", () => {
-      setConnected(false)
-      setConnecting(false)
-    })
+  //   // Flags an error with the com port
+  //   socket.on("connection_error", (msg) => {
+  //     console.log(msg.message)
+  //     showErrorNotification(msg.message)
+  //     setConnecting(false)
+  //     setConnected(false)
+  //   })
 
-    // Flags an error with the com port
-    socket.on("connection_error", (msg) => {
-      console.log(msg.message)
-      showErrorNotification(msg.message)
-      setConnecting(false)
-      setConnected(false)
-    })
+  //   socket.on("drone_connect_status", (msg) => {
+  //     setDroneConnectionStatusMessage(msg.message)
+  //   })
 
-    socket.on("drone_connect_status", (msg) => {
-      setDroneConnectionStatusMessage(msg.message)
-    })
-
-    return () => {
-      socket.off("connect")
-      socket.off("disconnect")
-      socket.off("is_connected_to_drone")
-      socket.off("list_com_ports")
-      socket.off("connected_to_drone")
-      socket.off("disconnected_from_drone")
-      socket.off("disconnect")
-      socket.off("connection_error")
-      socket.off("drone_connect_status")
-      setConnected(false)
-    }
-  }, [])
+  //   return () => {
+  //     socket.off("connect")
+  //     socket.off("disconnect")
+  //     socket.off("is_connected_to_drone")
+  //     socket.off("list_com_ports")
+  //     socket.off("connected_to_drone")
+  //     socket.off("disconnected_from_drone")
+  //     socket.off("disconnect")
+  //     socket.off("connection_error")
+  //     socket.off("drone_connect_status")
+  //     setConnected(false)
+  //   }
+  // }, [])
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
@@ -238,13 +222,14 @@ export default function Navbar() {
   }
 
   function disconnect() {
-    socket.emit("disconnect_from_drone")
+    dispatch(emitDisconnectFromDrone())
   }
 
   function connectToDroneFromButton() {
-    getComPorts()
-    open()
+    dispatch(emitGetComPorts())
+    dispatch(setConnectionModal(true))
   }
+
   AddCommand("connect_to_drone", connectToDroneFromButton)
   AddCommand("disconnect_from_drone", disconnect)
 
@@ -255,9 +240,9 @@ export default function Navbar() {
     <div className="flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900">
       {/* Connect to drone modal - should probably be moved into its own component? */}
       <Modal
-        opened={opened}
+        opened={openedModal}
         onClose={() => {
-          close()
+          dispatch(setConnectionModal(false))
           setConnecting(false)
         }}
         title="Connect to aircraft"
@@ -299,11 +284,11 @@ export default function Navbar() {
                   }
                   data={comPorts}
                   value={selectedComPort}
-                  onChange={setSelectedComPort}
+                  onChange={(value) => dispatch(setSelectedComPorts(value))}
                   rightSectionPointerEvents="all"
                   rightSection={<IconRefresh />}
                   rightSectionProps={{
-                    onClick: getComPorts,
+                    onClick: () => dispatch(emitGetComPorts()),
                     className: "hover:cursor-pointer hover:bg-transparent/50",
                   }}
                 />
@@ -377,7 +362,7 @@ export default function Navbar() {
               variant="filled"
               color={tailwindColors.red[600]}
               onClick={() => {
-                close()
+                dispatch(setConnectionModal(false))
                 setConnecting(false)
               }}
             >
@@ -478,7 +463,7 @@ export default function Navbar() {
 
           {/* Connected to message */}
           <p>
-            {connected && (
+            {connectedToDrone && (
               <>
                 Connected to
                 <span className="inline font-bold">
@@ -496,15 +481,15 @@ export default function Navbar() {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connected ? disconnect : connectToDroneFromButton}
+              onClick={connectedToDrone ? disconnect : connectToDroneFromButton}
               color={
-                connected
+                connectedToDrone
                   ? tailwindColors.falconred[800]
                   : tailwindColors.green[600]
               }
               radius="xs"
             >
-              {connected ? "Disconnect" : "Connect"}
+              {connectedToDrone ? "Disconnect" : "Connect"}
             </Button>
           ) : (
             <Tooltip label="Not connected to socket">

@@ -61,7 +61,13 @@ export default function MissionItemsTableRow({
   }
 
   function getFrameName(frameId) {
+    if (frameId === undefined || frameId === null) {
+      return "UNKNOWN"
+    }
+
     var frameName = MAV_FRAME_LIST[frameId]
+
+    console.log(frameId, frameName)
 
     if (frameName.startsWith("MAV_FRAME_")) {
       frameName = frameName.replace("MAV_FRAME_", "")

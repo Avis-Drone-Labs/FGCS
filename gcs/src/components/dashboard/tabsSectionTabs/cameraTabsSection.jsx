@@ -6,8 +6,8 @@
 // Native
 import { useCallback, useState, useEffect, useRef } from "react"
 
-// Mantine
-import { useSessionStorage } from "@mantine/hooks"
+// 3rd Party Imports
+import { useSessionStorage } from "@uidotdev/usehooks"
 import { Tabs, Select } from "@mantine/core"
 
 // Helper
@@ -16,10 +16,7 @@ import { IconExternalLink, IconVideoOff } from "@tabler/icons-react"
 
 export default function CameraTabsSection({ tabPadding }) {
   // Camera devices
-  const [deviceId, setDeviceId] = useSessionStorage({
-    key: "deviceId",
-    defaultValue: null,
-  })
+  const [deviceId, setDeviceId] = useSessionStorage("deviceId", null)
 
   window.ipcRenderer.onCameraWindowClose(() => setPictureInPicture(false))
 

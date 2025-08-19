@@ -11,8 +11,8 @@ import { Button, Modal } from "@mantine/core"
 import {
   useDisclosure,
   useLocalStorage,
-  useSessionStorage,
 } from "@mantine/hooks"
+import { useSessionStorage } from "@uidotdev/usehooks"
 import { Octokit } from "octokit"
 import semverGt from "semver/functions/gt"
 
@@ -32,10 +32,7 @@ export default function SingleRunWrapper({ children }) {
   const [opened, { open, close }] = useDisclosure(false)
   const [fgcsOutOfDateInfo, setFgcsOutOfDateInfo] = useState(null)
   // eslint-disable-next-line no-unused-vars
-  const [outOfDate, setOutOfDate] = useSessionStorage({
-    key: "outOfDate",
-    defaultValue: false,
-  })
+  const [outOfDate, setOutOfDate] = useSessionStorage("outOfDate", false)
 
   const [isUpdateDismissed, setUpdateDismissed] = useLocalStorage({
     key: "isUpdateDismissed",

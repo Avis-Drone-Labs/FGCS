@@ -22,7 +22,7 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core"
-import { useSessionStorage } from "@mantine/hooks"
+import { useSessionStorage } from "@uidotdev/usehooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Local imports
@@ -91,11 +91,8 @@ export default function Navbar() {
   const droneConnectionStatusMessage = useSelector(selectConnectionStatus)
 
   // Panel is open/closed
-  const [outOfDate] = useSessionStorage({ key: "outOfDate" })
-  const [currentPage] = useSessionStorage({
-    key: "currentPage",
-    defaultValue: "dashboard",
-  })
+  const [outOfDate] = useSessionStorage("outOfDate")
+  const [currentPage] = useSessionStorage("currentPage", "dashboard")
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {

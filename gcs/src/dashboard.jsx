@@ -13,9 +13,9 @@ import { useEffect, useRef, useState } from "react"
 import { Divider } from "@mantine/core"
 import {
   useLocalStorage,
-  useSessionStorage,
   useViewportSize,
 } from "@mantine/hooks"
+import { useSessionStorage } from "@uidotdev/usehooks"
 import {
   IconAntenna,
   IconBattery2,
@@ -112,10 +112,7 @@ export default function Dashboard() {
   const { height: viewportHeight, width: viewportWidth } = useViewportSize()
 
   // Following Drone
-  const [followDrone, setFollowDrone] = useSessionStorage({
-    key: "followDroneBool",
-    defaultValue: false,
-  })
+  const [followDrone, setFollowDrone] = useSessionStorage("followDroneBool", false)
 
   // Map and messages
   const mapRef = useRef()

@@ -41,14 +41,15 @@ export const store = configureStore({
   },
 })
 
-store.dispatch(setWireless(persistedState.droneConnection.wireless))
-store.dispatch(setBaudrate(persistedState.droneConnection.baudrate))
-store.dispatch(
-  setConnectionType(persistedState.droneConnection.connection_type),
-)
-store.dispatch(setNetworkType(persistedState.droneConnection.network_type))
-store.dispatch(setIp(persistedState.droneConnection.ip))
-store.dispatch(setPort(persistedState.droneConnection.port))
+let droneConnection = persistedState.droneConnection
+if (droneConnection !== null) {
+  store.dispatch(setWireless(droneConnection.wireless))
+  store.dispatch(setBaudrate(droneConnection.baudrate))
+  store.dispatch(setConnectionType(droneConnection.connection_type))
+  store.dispatch(setNetworkType(droneConnection.network_type))
+  store.dispatch(setIp(droneConnection.ip))
+  store.dispatch(setPort(droneConnection.port))
+}
 
 // Update states when a new message comes in, probably inefficient
 // In the future we should check to see if the variables have changed before updating

@@ -210,7 +210,6 @@ const socketMiddleware = (store) => {
             )
           }
           store.dispatch(setConnected(true))
-          console.log("Set connected to true")
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 

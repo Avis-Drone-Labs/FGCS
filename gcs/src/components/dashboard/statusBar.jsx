@@ -89,7 +89,7 @@ export default function StatusBar(props) {
     }
 
     dismissAlert(AlertCategory.Altitude)
-  }, [telemetryData]);
+  }, [telemetryData.alt]);
 
   return (
     <div className={`${props.className} flex flex-col items-end`}>

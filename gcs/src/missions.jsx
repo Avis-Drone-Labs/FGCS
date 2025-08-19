@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 // 3rd Party Imports
 import {
   useDisclosure,
-  useLocalStorage,
   useSessionStorage,
 } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
@@ -46,6 +45,11 @@ import {
 } from "./helpers/notification"
 import { socket } from "./helpers/socket"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import { selectAircraftType } from "./redux/slices/droneInfoSlice"
+
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
@@ -54,14 +58,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const coordsFractionDigits = 7
 
 export default function Missions() {
-  // Local Storage
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
+  // Redux
+  const connected = useSelector(selectConnectedToDrone)
+  const aircraftType = useSelector(selectAircraftType)
 
   const [activeTab, setActiveTab] = useState("mission")
 

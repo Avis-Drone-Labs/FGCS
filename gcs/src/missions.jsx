@@ -295,17 +295,6 @@ export default function Missions() {
     activeTabRef.current = activeTab
   }, [activeTab])
 
-  function updateCurrentTabUnwrittenChanges(newValue) {
-    console.log(activeTab)
-    if (activeTab === "mission") {
-      setUnwrittenMissionChanges(newValue)
-    } else if (activeTab === "fence") {
-      setUnwrittenFenceChanges(newValue)
-    } else if (activeTab === "rally") {
-      setUnwrittenRallyChanges(newValue)
-    }
-  }
-
   function resetMissionProgressModalData() {
     setMissionProgressModalData({
       message: "",
@@ -830,11 +819,6 @@ export default function Missions() {
                   >
                     Write {activeTab}
                   </Button>
-                  {((unwrittenMissionChanges && activeTab === "mission") ||
-                    (unwrittenFenceChanges && activeTab === "fence") ||
-                    (unwrittenRallyChanges && activeTab === "rally")) && (
-                    <p className="text-red-500">You have unwritten changes.</p>
-                  )}
                 </div>
 
                 <Divider className="my-1" />

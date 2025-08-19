@@ -531,8 +531,6 @@ export default function Missions() {
       return updatedItems
     }
 
-    console.log("unwritten changes true update item order", activeTab)
-
     if (activeTabRef.current === "mission") {
       setMissionItems((prevItems) => updateItemOrder(prevItems))
       setUnwrittenChanges((prev) => ({ ...prev, mission: true }))

@@ -15,8 +15,6 @@
         "serialutil",
         "SITL",
         "statustext",
-        "SUAS",
-        "uidotdev",
-        "usehooks"
+        "SUAS"
     ]
 }

@@ -7,7 +7,7 @@ import { memo, useEffect, useState } from "react"
 
 // 3rd party imports
 import { ScrollArea, Tooltip } from "@mantine/core"
-import { useLocalStorage } from "@uidotdev/usehooks"
+import { useLocalStorage } from "@mantine/hooks"
 
 // Custom components, helpers and data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
@@ -15,7 +15,9 @@ import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import ValueInput from "./valueInput"
 
 const RowItem = memo(({ param, style, onChange }) => {
-  const [aircraftType] = useLocalStorage("aircraftType")
+  const [aircraftType] = useLocalStorage({
+    key: "aircraftType",
+  })
   const [paramDef, setParamDef] = useState({})
 
   useEffect(() => {

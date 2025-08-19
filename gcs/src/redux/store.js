@@ -68,7 +68,6 @@ if (droneConnection !== undefined) {
 store.subscribe(() => {
   let store_mut = store.getState()
   let local_storage = window.localStorage
-  let session_storage = window.sessionStorage
   local_storage.setItem("reduxState", JSON.stringify(store.getState()))
 
   // Drone connection
@@ -84,5 +83,5 @@ store.subscribe(() => {
   local_storage.setItem("networkType", store_mut.droneConnection.network_type)
   local_storage.setItem("ip", store_mut.droneConnection.ip)
   local_storage.setItem("port", store_mut.droneConnection.port)
-  session_storage.setItem("connectedToDrone", store_mut.droneConnection.connected)
+  local_storage.setItem("connectedToDrone", store_mut.droneConnection.connected)
 })

@@ -15,8 +15,8 @@ import {
   useClipboard,
   useDisclosure,
   useLocalStorage,
+  useSessionStorage,
 } from "@mantine/hooks"
-import { useSessionStorage } from "@uidotdev/usehooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
@@ -70,7 +70,10 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
   const desiredBearing = navControllerOutputData.navBearing
 
-  const [connected] = useSessionStorage("connectedToDrone", false)
+  const [connected] = useSessionStorage({
+    key: "connectedToDrone",
+    defaultValue: false,
+  })
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -108,7 +111,10 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  const [guidedModePinData, setGuidedModePinData] = useSessionStorage("guidedModePinData", null)
+  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
+    key: "guidedModePinData",
+    defaultValue: null,
+  })
 
   useEffect(() => {
     socket.on("nav_reposition_result", (msg) => {

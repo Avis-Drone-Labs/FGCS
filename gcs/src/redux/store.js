@@ -64,7 +64,7 @@ if (droneConnection !== undefined) {
 }
 
 // Update states when a new message comes in, probably inefficient
-// In the future we should check to see if the variables have changed before updating
+// TODO: In the future we should check to see if the variables have changed before updating
 store.subscribe(() => {
   let store_mut = store.getState()
   let local_storage = window.localStorage

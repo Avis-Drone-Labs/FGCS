@@ -11,10 +11,13 @@ import {
 } from "@mantine/core"
 import { IconArrowDown, IconArrowUp, IconTrash } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
-import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
+import {
+  coordToInt,
+  getPositionFrameName,
+  intToCoord,
+} from "../../helpers/dataFormatters"
 import {
   COPTER_MISSION_ITEM_COMMANDS_LIST,
-  MAV_FRAME_LIST,
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
 
@@ -58,16 +61,6 @@ export default function MissionItemsTableRow({
       value: key,
       label: getDisplayCommandName(value),
     }))
-  }
-
-  function getFrameName(frameId) {
-    var frameName = MAV_FRAME_LIST[frameId]
-
-    if (frameName.startsWith("MAV_FRAME_")) {
-      frameName = frameName.replace("MAV_FRAME_", "")
-    }
-
-    return frameName || "UNKNOWN"
   }
 
   function updateMissionItemData(key, newVal) {
@@ -139,7 +132,7 @@ export default function MissionItemsTableRow({
           hideControls
         />
       </TableTd>
-      <TableTd>{getFrameName(missionItemData.frame)}</TableTd>
+      <TableTd>{getPositionFrameName(missionItemData.frame)}</TableTd>
       <TableTd className="flex flex-row gap-2">
         <ActionIcon
           onClick={() => updateMissionItemOrder(missionItemData.id, -1)}

@@ -39,6 +39,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import Divider from "../toolbar/menus/divider"
 
 // Tailwind styling
+import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -226,6 +227,44 @@ function MapSectionNonMemo({
     setPolygonDrawMode(false)
   }
 
+  function zoomToDrone() {
+    if (passedRef.current && position) {
+      passedRef.current.getMap().flyTo({
+        center: [position.longitude, position.latitude],
+        zoom: 17,
+      })
+    }
+  }
+
+  function zoomToMission() {
+    if (passedRef.current && filteredMissionItems.length > 0) {
+      const filteredCoords = filteredMissionItems.map((item) =>
+        point([intToCoord(item.y), intToCoord(item.x)]),
+      )
+      const features = featureCollection(filteredCoords)
+      const boundingBox = envelope(features).bbox
+
+      passedRef.current.getMap().fitBounds(
+        [
+          [boundingBox[0], boundingBox[1]],
+          [boundingBox[2], boundingBox[3]],
+        ],
+        {
+          padding: 50,
+        },
+      )
+    }
+  }
+
+  function zoomToHome() {
+    if (passedRef.current && position) {
+      passedRef.current.getMap().flyTo({
+        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        zoom: 17,
+      })
+    }
+  }
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -379,6 +418,17 @@ function MapSectionNonMemo({
                 />
               </svg>
             </ContextMenuItem>
+            <Divider />
+            <ContextMenuItem onClick={zoomToDrone}>
+              <p>Zoom to drone</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToMission}>
+              <p>Zoom to mission</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToHome}>
+              <p>Zoom to home</p>
+            </ContextMenuItem>
+            <Divider />
             <ContextMenuItem
               onClick={() => {
                 updateMissionHomePosition(

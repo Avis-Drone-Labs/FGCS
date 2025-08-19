@@ -23,11 +23,11 @@ store.subscribe(() => {
   window.localStorage.setItem("baudrate", store_mut.droneConnection.baudrate)
   window.localStorage.setItem(
     "connectionType",
-    store_mut.droneConnection.connectionType,
+    store_mut.droneConnection.connection_type,
   )
   window.localStorage.setItem(
     "networkType",
-    store_mut.droneConnection.networkType,
+    store_mut.droneConnection.network_type,
   )
   window.localStorage.setItem("ip", store_mut.droneConnection.ip)
   window.localStorage.setItem("port", store_mut.droneConnection.port)

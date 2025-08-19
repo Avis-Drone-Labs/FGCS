@@ -146,6 +146,15 @@ const socketMiddleware = (store) => {
           ====================
         */
 
+        socket.socket.on("connected", () => {
+          store.dispatch(setConnected(true))
+        })
+
+        socket.socket.on("disconnect", () => {
+          store.dispatch(setConnected(false))
+          store.dispatch(setConnecting(false))
+        })
+
         socket.socket.on("is_connected_to_drone", (msg) => {
           if (msg) {
             store.dispatch(setConnected(true))
@@ -154,15 +163,6 @@ const socketMiddleware = (store) => {
             store.dispatch(setConnecting(false))
             store.dispatch(emitGetComPorts())
           }
-        })
-
-        socket.socket.on("connected", () => {
-          store.dispatch(setConnected(true))
-        })
-
-        socket.socket.on("disconnect", () => {
-          store.dispatch(setConnected(false))
-          store.dispatch(setConnecting(false))
         })
 
         // Fetch com ports and list them
@@ -194,6 +194,12 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnected(false))
         })
 
+        // Setting connection status
+        socket.socket.on("drone_connect_status", (msg) => {
+          console.log(msg)
+          store.dispatch(setConnectionStatus(msg.message))
+        })
+
         // Flags that the drone is connected
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
@@ -211,11 +217,6 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
-        })
-
-        // Setting connection status
-        socket.socket.on("drone_connect_status", (msg) => {
-          store.dispatch(setConnectionStatus(msg.message))
         })
       }
     }

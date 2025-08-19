@@ -7,7 +7,6 @@
 */
 
 // Base imports
-import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 // Third party imports
@@ -23,11 +22,7 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core"
-import {
-  useDisclosure,
-  useLocalStorage,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useSessionStorage } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
 // Local imports
@@ -36,11 +31,37 @@ import { AddCommand } from "./spotlight/commandHandler.js"
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
 import { showErrorNotification } from "../helpers/notification.js"
-import { socket } from "../helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitDisconnectFromDrone, emitGetComPorts, selectComPorts, selectConnectedToDrone, selectConnectionModal, selectFetchingComPorts, selectSelectedComPorts, setConnectionModal, setSelectedComPorts } from "../redux/slices/droneConnectionSlice.js"
+import {
+  ConnectionType,
+  emitConnectToDrone,
+  emitDisconnectFromDrone,
+  emitGetComPorts,
+  selectBaudrate,
+  selectComPorts,
+  selectConnectedToDrone,
+  selectConnecting,
+  selectConnectionModal,
+  selectConnectionStatus,
+  selectConnectionType,
+  selectFetchingComPorts,
+  selectIp,
+  selectNetworkType,
+  selectPort,
+  selectSelectedComPorts,
+  selectWireless,
+  setBaudrate,
+  setConnecting,
+  setConnectionModal,
+  setConnectionType,
+  setIp,
+  setNetworkType,
+  setPort,
+  setSelectedComPorts,
+  setWireless,
+} from "../redux/slices/droneConnectionSlice.js"
 import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 
 // Styling imports
@@ -52,12 +73,22 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export default function Navbar() {
   // Redux
   const dispatch = useDispatch()
+  const openedModal = useSelector(selectConnectionModal)
+
+  const connecting = useSelector(selectConnecting)
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
-  const openedModal = useSelector(selectConnectionModal)
+
   const comPorts = useSelector(selectComPorts)
   const selectedComPort = useSelector(selectSelectedComPorts)
   const fetchingComPorts = useSelector(selectFetchingComPorts)
+  const wireless = useSelector(selectWireless)
+  const selectedBaudRate = useSelector(selectBaudrate)
+  const connectionType = useSelector(selectConnectionType)
+  const networkType = useSelector(selectNetworkType)
+  const ip = useSelector(selectIp)
+  const port = useSelector(selectPort)
+  const droneConnectionStatusMessage = useSelector(selectConnectionStatus)
 
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
@@ -66,161 +97,38 @@ export default function Navbar() {
     defaultValue: "dashboard",
   })
 
-  // Connection to drone
-  const [connecting, setConnecting] = useState(false)
-  // const [connected, setConnected] = useSessionStorage({
-  //   key: "connectedToDrone",
-  //   defaultValue: false,
-  // })
-  const [wireless, setWireless] = useLocalStorage({
-    key: "wirelessConnection",
-    defaultValue: true,
-  })
-  const [selectedBaudRate, setSelectedBaudRate] = useLocalStorage({
-    key: "baudrate",
-    defaultValue: "9600",
-  })
-
-  const ConnectionType = {
-    Serial: "serial",
-    Network: "network",
-  }
-
-  const [connectionType, setConnectionType] = useLocalStorage({
-    key: "connectionType",
-    defaultValue: ConnectionType.Serial,
-  })
-
-  // Network Connection
-  const [networkType, setNetworkType] = useLocalStorage({
-    key: "networkType",
-    defaultValue: "tcp",
-  })
-  const [ip, setIp] = useLocalStorage({
-    key: "ip",
-    defaultValue: "127.0.0.1",
-  })
-  const [port, setPort] = useLocalStorage({
-    key: "port",
-    defaultValue: "5760",
-  })
-
-  const [droneConnectionStatusMessage, setDroneConnectionStatusMessage] =
-    useState(null)
-
-  // function getComPorts() {
-  //   if (!connectedToSocket) return
-  //   socket.emit("get_com_ports")
-  //   setFetchingComPorts(true)
-  // }
-
-  // Check if connected to drone
-  // useEffect(() => {
-  //   if (selectedComPort === null) {
-  //     socket.emit("is_connected_to_drone")
-  //   }
-
-  //   socket.on("connect", () => {
-  //     setConnectedToSocket(true)
-  //   })
-
-  //   socket.on("disconnect", () => {
-  //     setConnectedToSocket(false)
-  //   })
-
-  //   // Flag connected/not connected, if not fetch ports
-  //   socket.on("is_connected_to_drone", (msg) => {
-  //     if (msg) {
-  //       setConnected(true)
-  //     } else {
-  //       setConnected(false)
-  //       setConnecting(false)
-  //       getComPorts()
-  //     }
-  //   })
-
-  //   // Fetch com ports and list them
-  //   socket.on("list_com_ports", (msg) => {
-  //     setFetchingComPorts(false)
-  //     setComPorts(msg)
-  //     if (selectedComPort === null || !msg.includes(selectedComPort)) {
-  //       const possibleComPort = msg.find(
-  //         (port) =>
-  //           port.toLowerCase().includes("mavlink") ||
-  //           port.toLowerCase().includes("ardupilot"),
-  //       )
-  //       if (possibleComPort !== undefined) {
-  //         setSelectedComPort(possibleComPort)
-  //       } else if (msg.length > 0) {
-  //         setSelectedComPort(msg[0])
-  //       }
-  //     }
-  //   })
-
-  //   // Flags that the drone is disconnected
-  //   socket.on("disconnected_from_drone", () => {
-  //     console.log("disconnected_from_drone")
-  //     setConnected(false)
-  //   })
-
-  //   // Handles disconnect trigger
-  //   socket.on("disconnect", () => {
-  //     setConnected(false)
-  //     setConnecting(false)
-  //   })
-
-  //   // Flags an error with the com port
-  //   socket.on("connection_error", (msg) => {
-  //     console.log(msg.message)
-  //     showErrorNotification(msg.message)
-  //     setConnecting(false)
-  //     setConnected(false)
-  //   })
-
-  //   socket.on("drone_connect_status", (msg) => {
-  //     setDroneConnectionStatusMessage(msg.message)
-  //   })
-
-  //   return () => {
-  //     socket.off("connect")
-  //     socket.off("disconnect")
-  //     socket.off("is_connected_to_drone")
-  //     socket.off("list_com_ports")
-  //     socket.off("connected_to_drone")
-  //     socket.off("disconnected_from_drone")
-  //     socket.off("disconnect")
-  //     socket.off("connection_error")
-  //     socket.off("drone_connect_status")
-  //     setConnected(false)
-  //   }
-  // }, [])
-
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
-      socket.emit("connect_to_drone", {
-        port: selectedComPort,
-        baud: parseInt(selectedBaudRate),
-        wireless: wireless,
-        connectionType: type,
-      })
+      dispatch(
+        emitConnectToDrone({
+          port: selectedComPort,
+          baud: parseInt(selectedBaudRate),
+          wireless: wireless,
+          connectionType: type,
+        }),
+      )
     } else if (type === ConnectionType.Network) {
       if (ip === "" || port === "") {
         showErrorNotification("IP Address and Port cannot be empty")
         return
       }
       const networkString = `${networkType}:${ip}:${port}`
-      socket.emit("connect_to_drone", {
-        port: networkString,
-        baud: 115200,
-        wireless: true,
-        connectionType: type,
-      })
+      dispatch(
+        emitConnectToDrone({
+          port: networkString,
+          baud: 115200,
+          wireless: true,
+          connectionType: type,
+        }),
+      )
     } else {
       return
     }
-    setConnecting(true)
+
+    dispatch(setConnecting(true))
   }
 
+  // All seems to be broken, made a ticket for joe to look into: https://github.com/orgs/Avis-Drone-Labs/projects/10/views/1?pane=issue&itemId=124913361
   function disconnect() {
     dispatch(emitDisconnectFromDrone())
   }
@@ -243,7 +151,7 @@ export default function Navbar() {
         opened={openedModal}
         onClose={() => {
           dispatch(setConnectionModal(false))
-          setConnecting(false)
+          dispatch(setConnecting(false))
         }}
         title="Connect to aircraft"
         centered
@@ -264,7 +172,10 @@ export default function Navbar() {
             connectToDrone(connectionType)
           }}
         >
-          <Tabs value={connectionType} onChange={setConnectionType}>
+          <Tabs
+            value={connectionType}
+            onChange={(value) => dispatch(setConnectionType(value))}
+          >
             <Tabs.List grow>
               <Tabs.Tab value={ConnectionType.Serial}>
                 Serial Connection
@@ -310,14 +221,14 @@ export default function Navbar() {
                     "250000",
                   ]}
                   value={selectedBaudRate}
-                  onChange={setSelectedBaudRate}
+                  onChange={(value) => dispatch(setBaudrate(value))}
                 />
                 <div className="flex flex-row gap-2">
                   <Checkbox
                     label="Wireless Connection"
                     checked={wireless}
                     onChange={(event) =>
-                      setWireless(event.currentTarget.checked)
+                      dispatch(setWireless(event.currentTarget.checked))
                     }
                   />
                   <Tooltip label="Wireless connection mode reduces the telemetry data rates to save bandwidth">
@@ -332,7 +243,7 @@ export default function Navbar() {
                   label="Network Connection type"
                   description="Select a network connection type"
                   value={networkType}
-                  onChange={setNetworkType}
+                  onChange={(value) => dispatch(setNetworkType(value))}
                   data={[
                     { value: "tcp", label: "TCP" },
                     { value: "udp", label: "UDP" },
@@ -343,7 +254,9 @@ export default function Navbar() {
                   description="Enter the IP Address"
                   placeholder="127.0.0.1"
                   value={ip}
-                  onChange={(event) => setIp(event.currentTarget.value)}
+                  onChange={(event) =>
+                    dispatch(setIp(event.currentTarget.value))
+                  }
                   data-autofocus
                 />
                 <TextInput
@@ -351,7 +264,9 @@ export default function Navbar() {
                   description="Enter the port number"
                   placeholder="5760"
                   value={port}
-                  onChange={(event) => setPort(event.currentTarget.value)}
+                  onChange={(event) =>
+                    dispatch(setPort(event.currentTarget.value))
+                  }
                 />
               </div>
             </Tabs.Panel>
@@ -363,7 +278,7 @@ export default function Navbar() {
               color={tailwindColors.red[600]}
               onClick={() => {
                 dispatch(setConnectionModal(false))
-                setConnecting(false)
+                dispatch(setConnecting(false))
               }}
             >
               Close

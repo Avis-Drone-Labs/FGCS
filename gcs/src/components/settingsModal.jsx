@@ -102,7 +102,9 @@ function ExtendableNumberSetting({ settingName, range }) {
             <IconTrash size={20} />
           </button>
           <NumberInput
-            value={value}
+            defaultValue={value}
+            min={range ? range[0] : null}
+            max={range ? range[1] : null}
             onChange={(num) => {
               if (!isValidNumber(num, range)) return
               updateValue(id, parseInt(num))

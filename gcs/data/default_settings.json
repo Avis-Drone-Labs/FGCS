@@ -36,15 +36,25 @@
     }
   },
   "Dashboard": {
-    "altitudeAlerts": {
-      "description": "Add as many altitude alerts as you want, they'll show when you fall below the set limit",
-      "default": [100, 90, 80],
+    "maxAltitudeAlert": {
+      "description": "You'll be notified when the relative altitude of a drone exceeds this value.",
+      "default": 120,
+      "type": "number",
+      "range": [
+          0,
+          100000
+      ],
+      "display": "Maximum Altitude Alert"
+    },
+    "minAltitudeAlerts": {
+      "description": "You'll be notified when the relative altitude of a drone goes below these values.",
+      "default": [],
       "type": "extendableNumber",
       "range": [
           0,
           100000
       ],
-      "display": "Altitude Alerts"
+      "display": "Minimum Altitude Alerts"
     }
   },
   "Params": {},

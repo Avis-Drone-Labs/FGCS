@@ -9,6 +9,7 @@ import {
 
 // drone actions
 import {
+  emitGetComPorts,
   emitGetHomePosition,
   emitIsConnectedToDrone,
   emitSetState,
@@ -131,6 +132,7 @@ const socketMiddleware = (store) => {
           // SINCE IT'S MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
           console.log(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
+          store.dispatch(emitIsConnectedToDrone())
         })
 
         socket.socket.on(SocketEvents.Disconnect, () => {
@@ -144,18 +146,6 @@ const socketMiddleware = (store) => {
           ====================
         */
 
-        socket.socket.on("is_connected_to_drone", (msg) => {
-          if (msg) {
-            store.dispatch(setConnected(true))
-          } else {
-            store.dispatch(setConnected(false))
-            store.dispatch(setConnecting(false))
-            // Get com ports?
-            // check if we're connected
-            // emit get_com_ports
-          }
-        })
-
         socket.socket.on("connected", () => {
           store.dispatch(setConnected(true))
         })
@@ -163,6 +153,16 @@ const socketMiddleware = (store) => {
         socket.socket.on("disconnect", () => {
           store.dispatch(setConnected(false))
           store.dispatch(setConnecting(false))
+        })
+
+        socket.socket.on("is_connected_to_drone", (msg) => {
+          if (msg) {
+            store.dispatch(setConnected(true))
+          } else {
+            store.dispatch(setConnected(false))
+            store.dispatch(setConnecting(false))
+            store.dispatch(emitGetComPorts())
+          }
         })
 
         // Fetch com ports and list them
@@ -194,6 +194,11 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnected(false))
         })
 
+        // Setting connection status
+        socket.socket.on("drone_connect_status", (msg) => {
+          store.dispatch(setConnectionStatus(msg.message))
+        })
+
         // Flags that the drone is connected
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
@@ -208,13 +213,8 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          store.dispatch(emitSetState({ state: "dashboard" })) // Potential issue with state?
+          store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
-        })
-
-        // Setting connection status
-        socket.socket.on("drone_connect_status", (msg) => {
-          store.dispatch(setConnectionStatus(msg.message))
         })
       }
     }

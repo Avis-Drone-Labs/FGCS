@@ -9,11 +9,6 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Tabs } from "@mantine/core"
-import { useSessionStorage } from "@mantine/hooks"
-
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config"
 
 // Custom component and helpers
 import FlightModes from "./components/config/flightModes"
@@ -28,13 +23,18 @@ import {
 } from "./helpers/notification"
 import { socket } from "./helpers/socket"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+
+// Styling imports
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config"
+
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Config() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  const connected = useSelector(selectConnectedToDrone)
 
   // States in the frontend
   const [activeTab, setActiveTab] = useState(null)

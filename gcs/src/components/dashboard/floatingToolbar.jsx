@@ -5,12 +5,10 @@
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
-import { centerOfMass, polygon } from "@turf/turf"
 import {
   IconAnchor,
   IconAnchorOff,
   IconCrosshair,
-  IconMapPins,
   IconSun,
   IconSunOff,
 } from "@tabler/icons-react"
@@ -18,10 +16,8 @@ import {
 // Redux
 import { useSelector } from "react-redux"
 import { selectGPS } from "../../redux/slices/droneInfoSlice"
-import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 
 // Helper Functions
-import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 
 export default function FloatingToolbar({
@@ -31,9 +27,6 @@ export default function FloatingToolbar({
   mapRef,
 }) {
   const gpsData = useSelector(selectGPS)
-  const missionItems = useSelector(selectCurrentMissionItems)
-
-  const filteredMissionItems = filterMissionItems(missionItems.missionItems)
   const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
     key: "outsideVisibility",
     defaultValue: false,
@@ -52,24 +45,6 @@ export default function FloatingToolbar({
             return true
           })(),
     )
-  }
-
-  function centerMapOnMission() {
-    if (filteredMissionItems.length > 0) {
-      let points = filteredMissionItems.map((item) => [
-        item.x * 1e-7,
-        item.y * 1e-7,
-      ])
-      points.push(points[0]) // Close the polygon
-      let geo = polygon([points])
-      let center = centerOfMass(geo).geometry.coordinates
-      let lat = parseFloat(center[0])
-      let lon = parseFloat(center[1])
-      mapRef.current.getMap().flyTo({
-        center: [lon, lat],
-      })
-    }
-    setFollowDrone(false)
   }
 
   return (
@@ -106,20 +81,6 @@ export default function FloatingToolbar({
           onClick={centerMapOnDrone}
         >
           <IconCrosshair />
-        </ActionIcon>
-      </Tooltip>
-
-      {/* Center Map on full mission */}
-      <Tooltip
-        label={
-          !filteredMissionItems.length > 0 ? "No mission" : "Center on mission"
-        }
-      >
-        <ActionIcon
-          disabled={filteredMissionItems.length <= 0}
-          onClick={centerMapOnMission}
-        >
-          <IconMapPins />
         </ActionIcon>
       </Tooltip>
 

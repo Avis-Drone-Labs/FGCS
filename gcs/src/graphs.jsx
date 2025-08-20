@@ -8,11 +8,7 @@
 import { useEffect, useRef } from "react"
 
 // 3rd Party Imports
-import { useLocalStorage, usePrevious, useSessionStorage } from "@mantine/hooks"
-
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config.js"
+import { useLocalStorage, usePrevious } from "@mantine/hooks"
 
 // Custom components and helpers
 import GraphPanel from "./components/graphs/graphPanel.jsx"
@@ -23,6 +19,13 @@ import { dataFormatters } from "./helpers/dataFormatters.js"
 import { graphOptions } from "./helpers/realTimeGraphOptions.js"
 import { socket } from "./helpers/socket"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
+
+// Styling imports
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const graphLabelColors = {
@@ -40,10 +43,7 @@ const graphColors = {
 }
 
 export default function Graphs() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  const connected = useSelector(selectConnectedToDrone)
 
   const [selectValues, setSelectValues] = useLocalStorage({
     key: "graphSelectedValues",

@@ -28,11 +28,10 @@ function RallyItemsTableNonMemo({
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {rallyItems.map((rallyItem, idx) => {
+        {rallyItems.map((rallyItem) => {
           return (
             <RallyItemsTableRow
               key={rallyItem.id}
-              index={idx}
               rallyItem={rallyItem}
               updateRallyItem={updateRallyItem}
               deleteRallyItem={deleteRallyItem}

@@ -27,6 +27,7 @@ import { ResizableBox } from "react-resizable"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 import {
   selectAircraftTypeString,
   selectBatteryData,
@@ -35,14 +36,13 @@ import {
   selectGPSRawInt,
   selectNotificationSound,
   selectRSSI,
-  soundPlayed,
+  soundPlayed
 } from "./redux/slices/droneInfoSlice"
-import { selectMessages } from "./redux/slices/statusTextSlice"
 import {
   notificationShown,
   selectNotificationQueue,
 } from "./redux/slices/notificationSlice"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import { selectMessages } from "./redux/slices/statusTextSlice"
 
 // Helper javascript files
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
@@ -70,9 +70,6 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
-// import { AlertCategory, AlertSeverity } from "./components/dashboard/alert"
-// import { useAlerts } from "./components/dashboard/alertProvider"
-// import { useSettings } from "./helpers/settings"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -135,7 +132,7 @@ export default function Dashboard() {
   // Show queued notifications
   useEffect(() => {
     if (notificationQueue.length !== 0) {
-      ;(notificationQueue[0].type === "error"
+      ; (notificationQueue[0].type === "error"
         ? showErrorNotification
         : showSuccessNotification)(notificationQueue[0].message)
       dispatch(notificationShown())
@@ -154,37 +151,6 @@ export default function Dashboard() {
       center: [lon, lat],
     })
   }
-
-  // NEED TO FIX THIS BEFORE WE MERGE KUSH/BEN
-  // Alerts
-  // const { getSetting } = useSettings()
-  // const { dispatchAlert, dismissAlert } = useAlerts()
-  // const highestAltitudeRef = useRef(0)
-
-  // function updateAltitudeAlert(msg) {
-  //   if (msg.alt > highestAltitudeRef.current)
-  //     return (highestAltitudeRef.current = msg.alt)
-  //   const altitudes = getSetting("Dashboard.altitudeAlerts")
-  //   altitudes.sort((a1, a2) => a1 - a2)
-
-  //   for (const [i, altitude] of altitudes.entries()) {
-  //     if (highestAltitudeRef.current > altitude && msg.alt < altitude) {
-  //       dispatchAlert({
-  //         category: AlertCategory.Altitude,
-  //         severity:
-  //           i == 0
-  //             ? AlertSeverity.Red
-  //             : i == altitudes.length - 1
-  //               ? AlertSeverity.Yellow
-  //               : AlertSeverity.Orange,
-  //         jsx: <>Caution! You've fallen below {altitude}m</>,
-  //       })
-  //       return
-  //     }
-  //   }
-
-  //   dismissAlert(AlertCategory.Altitude)
-  // }
 
   function calcBigTextFontSize() {
     let w = telemetryPanelSize.width
@@ -248,9 +214,8 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${
-              lon !== undefined ? lon.toFixed(6) : 0
-            })`}
+            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${lon !== undefined ? lon.toFixed(6) : 0
+              })`}
             tooltip="GPS (lat, lon)"
           />
           <StatusSection

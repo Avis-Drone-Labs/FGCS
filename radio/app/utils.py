@@ -4,6 +4,7 @@ from typing import Any, List
 from pymavlink import mavutil
 from serial.tools import list_ports
 
+from app import logger
 from app.customTypes import VehicleType
 
 from . import socketio
@@ -19,10 +20,8 @@ def getComPort() -> str:
     while True:
         ports = list(list_ports.comports())
 
-        print("Available COM ports:")
-        for i in range(len(ports)):
-            port = ports[i]
-            print(f"\t[{i}]\t{port.name}: {port.description}")
+        
+        logger.info("Available COM PORTS: \n" + "\n".join(f"\t[{i}]\t{port.name}: {port.description}" for i, port in enumerate(ports)))
 
         inp_port = input("Enter a port index to connect to: ")
         if not inp_port.isdigit():

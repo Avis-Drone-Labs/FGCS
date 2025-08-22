@@ -47,6 +47,7 @@ import {
   setExtraData,
 } from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
+import { emitLog } from "../slices/loggingSlice.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -138,6 +139,12 @@ const socketMiddleware = (store) => {
         socket.socket.on(SocketEvents.Disconnect, () => {
           console.log(`Disconnected from socket via redux, ${socket.socket.id}`)
           store.dispatch(socketDisconnected())
+        })
+        
+        socket.socket.on("log", (msg) => {
+          // Now we just want to send these to electron
+          console.log(`Got Log Message from backend: ${msg.level} - ${msg.message} ${msg.timestamp}`)
+          store.dispatch(emitLog(msg))
         })
 
         /*

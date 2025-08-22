@@ -30,11 +30,10 @@ function FenceItemsTableNonMemo({
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {fenceItems.map((fenceItem, idx) => {
+        {fenceItems.map((fenceItem) => {
           return (
             <FenceItemsTableRow
               key={fenceItem.id}
-              index={idx}
               fenceItem={fenceItem}
               updateMissionItem={updateMissionItem}
               deleteMissionItem={deleteMissionItem}

@@ -24,7 +24,6 @@ import {
 const coordsFractionDigits = 9
 
 export default function MissionItemsTableRow({
-  index,
   aircraftType,
   missionItem,
   updateMissionItem,
@@ -74,7 +73,7 @@ export default function MissionItemsTableRow({
 
   return (
     <TableTr>
-      <TableTd>{index}</TableTd>
+      <TableTd>{missionItemData.seq}</TableTd>
       <TableTd>
         <Select
           data={getAvailableCommands()}

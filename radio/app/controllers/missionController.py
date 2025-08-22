@@ -799,11 +799,11 @@ class MissionController:
         if loader.count() == 0:
             return {
                 "success": False,
-                "message": f"No waypoints loaded for the mission type of {mission_type}",
+                "message": f"No waypoints loaded for the mission type of {self._getMissionName(mission_type)}",
             }
 
         self.drone.logger.debug(
-            f"Exporting waypoint file to {file_path} for mission type {mission_type}"
+            f"Exporting waypoint file to {file_path} for mission type {self._getMissionName(mission_type)}"
         )
 
         try:

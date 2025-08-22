@@ -308,7 +308,7 @@ class MissionController:
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        failure_message = f"Failed to get mission item {item_number}/{mission_count - 1} for mission type {mission_type}"
+        failure_message = f"Failed to get mission item {item_number + 1}/{mission_count} for mission type {mission_type}"
 
         self.drone.is_listening = False
 
@@ -330,7 +330,7 @@ class MissionController:
 
             if response:
                 self.drone.logger.debug(
-                    f"Got response for mission item {item_number}/{mission_count - 1} for mission type {mission_type}"
+                    f"Got response for mission item {item_number + 1}/{mission_count} for mission type {mission_type}"
                 )
                 return {
                     "success": True,
@@ -339,7 +339,7 @@ class MissionController:
 
             else:
                 self.drone.logger.error(
-                    f"Got no response for mission item {item_number}/{mission_count - 1} for mission type {mission_type}"
+                    f"Got no response for mission item {item_number + 1}/{mission_count} for mission type {mission_type}"
                 )
                 return {
                     "success": False,
@@ -349,7 +349,7 @@ class MissionController:
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
             self.drone.logger.error(
-                f"Got no response for mission item {item_number}/{mission_count - 1}, serial exception"
+                f"Got no response for mission item {item_number + 1}/{mission_count}, serial exception"
             )
             return {
                 "success": False,
@@ -609,7 +609,7 @@ class MissionController:
                     continue  # Continue to next iteration if we received a MISSION_ACK
                 elif response.mission_type == mission_type:
                     self.drone.logger.debug(
-                        f"Sending mission item {response.seq} out of {new_loader.count()-1}"
+                        f"Sending mission item {response.seq + 1} out of {new_loader.count()}"
                     )
                     self.drone.master.mav.send(new_loader.item(response.seq))
 

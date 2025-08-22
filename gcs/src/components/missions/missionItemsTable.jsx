@@ -4,6 +4,7 @@
 
 import { Table } from "@mantine/core"
 import React from "react"
+import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import MissionItemsTableRow from "./missionItemsTableRow"
 
 function MissionItemsTableNonMemo({
@@ -33,18 +34,13 @@ function MissionItemsTableNonMemo({
       <Table.Tbody>
         {missionItems.map((missionItem, idx) => {
           // Skip home location
-          if (
-            missionItem.command === 16 &&
-            missionItem.frame === 0 &&
-            missionItem.mission_type === 0
-          ) {
+          if (idx === 0 && isGlobalFrameHomeCommand(missionItem)) {
             return null
           }
 
           return (
             <MissionItemsTableRow
               key={missionItem.id}
-              index={idx}
               aircraftType={aircraftType}
               missionItem={missionItem}
               updateMissionItem={updateMissionItem}

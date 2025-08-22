@@ -40,7 +40,6 @@ function getAvailableCommands() {
 }
 
 export default function FenceItemsTableRow({
-  index,
   fenceItem,
   updateMissionItem,
   deleteMissionItem,
@@ -67,7 +66,7 @@ export default function FenceItemsTableRow({
 
   return (
     <TableTr>
-      <TableTd>{index}</TableTd>
+      <TableTd>{fenceItemData.seq}</TableTd>
       <TableTd>
         <Select
           data={getAvailableCommands()}

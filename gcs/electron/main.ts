@@ -1,4 +1,4 @@
-import { BrowserWindow, Event, Menu, MenuItemConstructorOptions, MessageBoxOptions, Rectangle, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -6,6 +6,9 @@ import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
+import registerSettingsIPC, { getUserConfiguration } from './modules/settings'
+import registerWebcamIPC, { setupWebcamWindow } from './modules/webcam'
+import registerLoggingIPC, { setupLog4js } from './modules/logging'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -44,144 +47,8 @@ function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
 
-// Settings logic
-
-interface Settings {
-  version: string,
-  settings: object
-}
-
-let userSettings: Settings | null = null
-
-function saveUserConfiguration(settings: Settings){
-  userSettings = settings;
-  fs.writeFileSync(path.join(app.getPath('userData'), 'settings.json'), JSON.stringify(userSettings, null,  2), 'utf-8');
-}
-
-/**
- * Checks the application version within the loaded user settings and updates if it is outdated
- * @param configPath The path to the configuration file
- * @returns
- */
-function checkAppVersion(configPath: string){
-
-  if (userSettings === null){
-    console.warn("Attempting to check app version when user settings have not been loaded");
-    return;
-  }
-
-  if (userSettings.version == app.getVersion())
-    return;
-
-  userSettings.version = app.getVersion();
-  fs.writeFileSync(configPath, JSON.stringify(userSettings))
-}
-
-/**
- * Called when the application requests user settings
- *
- * @returns
- */
-function getUserConfiguration(){
-
-  // Return the already loaded user settings if loaded
-  console.log("Fetching user settings!");
-  if (userSettings !== null) return userSettings
-
-
-  // Directories
-  const userDir = app.getPath('userData');
-  const config = path.join(userDir, 'settings.json');
-
-  // Write version and blank settings to user config if doesn't exist
-  if (!fs.existsSync(config)) {
-    console.log("Generating user settings")
-    userSettings = {version: app.getVersion(), settings: {}}
-    fs.writeFileSync(config, JSON.stringify(userSettings))
-  } else{
-    console.log("Reading user settings from config file " + config)
-    userSettings = JSON.parse(fs.readFileSync(config, 'utf-8'))
-    checkAppVersion(config)
-  }
-  return userSettings
-}
-
-ipcMain.handle("getSettings", () => {return getUserConfiguration(); })
-ipcMain.handle("setSettings", (_, settings) => {saveUserConfiguration(settings)})
-
-// Webcam popout window
-
-const MIN_WEBCAM_HEIGHT: number = 100
-const WEBCAM_TITLEBAR_HEIGHT: number = 28
-
-// Disable unused vars because they are needed for TS function type
-// eslint-disable-next-line no-unused-vars
-type ResizeCallback = (event: Event, arg1: Rectangle) => void;
-
-let currentResizeHandler: ResizeCallback | null = null
-
-/**
- * If id and name are provided, passes the id and name to the webcam popout so that the given
- * video stream is rendered. If id or name are not provided, prevents any video streams from
- * being rendered on the window so that the webcam is not showing in the background
- * @param id The device stream ID
- * @param name The name of the device
- */
-function loadWebcam(id: string = "", name: string = ""){
-
-  const params: string = id && name ? "/webcam?deviceId=" + id + "&deviceName=" + name : "/webcam";
-
-  if (VITE_DEV_SERVER_URL)
-    webcamPopoutWin?.loadURL(VITE_DEV_SERVER_URL + "#" + params)
-  else
-    webcamPopoutWin?.loadFile(path.join(process.env.DIST, 'index.html'), {hash: params})
-}
-
-function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
-
-  if (webcamPopoutWin === null) return;
-  loadWebcam(videoStreamId, name);
-
-  webcamPopoutWin.setTitle(name);
-
-  // Remove previous resize handler
-  if (currentResizeHandler)
-    webcamPopoutWin.off("will-resize", currentResizeHandler)
-
-  // Create resize handler to maintain aspect ratio
-  currentResizeHandler = function(event, newBounds){
-    event.preventDefault();
-
-    const newWidth = newBounds.width;
-    const newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-    webcamPopoutWin?.setBounds({
-      x: newBounds.x,
-      y: newBounds.y,
-      width: newWidth,
-      height: newHeight
-    });
-  }
-
-  webcamPopoutWin.on('will-resize', currentResizeHandler);
-
-  // Ensure initial size fits the aspect ratio ()
-  webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-  webcamPopoutWin.setMinimumSize(Math.round(aspect * (MIN_WEBCAM_HEIGHT-28)), MIN_WEBCAM_HEIGHT);
-  webcamPopoutWin.show();
-
-}
-
-function closeWebcamPopout(){
-  webcamPopoutWin?.hide()
-  loadWebcam();
-  win?.webContents.send("webcam-closed");
-}
-
-ipcMain.handle("openWebcamWindow", (_, videoStreamId, name, aspect) => {openWebcamPopout(videoStreamId, name, aspect)})
-ipcMain.handle("closeWebcamWindow", () => closeWebcamPopout())
-
+registerLoggingIPC();
+registerSettingsIPC();
 
 ipcMain.handle("isMac", () => { return process.platform == "darwin" })
 ipcMain.on('close', () => {closeWithBackend()})
@@ -202,6 +69,15 @@ ipcMain.on("zoom_out", () => {
   window?.setZoomFactor(window?.getZoomFactor() - 0.1)
 })
 ipcMain.on("openFileInExplorer", (_event, filePath) => {shell.showItemInFolder(filePath)})
+
+ipcMain.handle('selectDirectory', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory'],
+    defaultPath: app.getAppPath()
+  });
+  if (result.canceled) return null;
+  return result.filePaths[0];
+});
 
 function createWindow() {
   win = new BrowserWindow({
@@ -238,7 +114,8 @@ function createWindow() {
 
 
   // We load the webcam route here to prevent having to load the page on popout
-  loadWebcam();
+  registerWebcamIPC(win);
+  setupWebcamWindow();
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -428,6 +305,10 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+
+  const {combineLogs, onlyKeepLastLog} = getUserConfiguration()?.settings["General"];
+  setupLog4js(combineLogs, onlyKeepLastLog);
+
   createLoadingWindow()
   // Open file and Get Recent Logs
   ipcMain.handle('fla:open-file', openFile)

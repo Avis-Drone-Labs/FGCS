@@ -1,4 +1,5 @@
 import sys
+import time
 import logging
 
 from flask_socketio import SocketIO
@@ -11,9 +12,10 @@ class SocketIOHandler(logging.Handler):
         self.socket = sio
     
     def emit(self, record) -> None:
+        
         try:
             entry = self.format(record)
-            self.socket.emit("log", {"level": record.levelname, "msg": entry})
+            self.socket.emit("log", {"level": record.levelname, "message": entry, "timestamp": time.time()})
         except:
             self.handleError(record)
 

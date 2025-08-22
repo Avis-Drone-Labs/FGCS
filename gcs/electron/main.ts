@@ -8,7 +8,7 @@ import packageInfo from '../package.json'
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
 import registerSettingsIPC, { getUserConfiguration } from './modules/settings'
 import registerWebcamIPC, { setupWebcamWindow } from './modules/webcam'
-import registerLoggingIPC, { setupLog4js } from './modules/logging'
+import registerLoggingIPC, { electronLogger, setupLog4js } from './modules/logging'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -229,11 +229,11 @@ function createLoadingWindow() {
 
 function startBackend() {
   if (pythonBackend) {
-    console.log('Backend already running');
+    electronLogger.warn('Backend already running');
     return;
   }
 
-  console.log('Starting backend');
+  electronLogger.info('Starting backend');
 
   // Add more platforms here
   const backendPaths: Partial<Record<NodeJS.Platform, string>> ={
@@ -248,19 +248,19 @@ function startBackend() {
     return;
   }
 
-  console.log(`Starting backend: ${backendPath}`);
+  electronLogger.info(`Starting backend: ${backendPath}`);
   pythonBackend = spawn(backendPath);
 
   // pythonBackend.stdout.on('data', (data) => console.log(`Backend stdout: ${data}`));
   // pythonBackend.stderr.on('data', (data) => console.error(`Backend stderr: ${data}`));
 
   pythonBackend.on('close', (code) => {
-    console.log(`Backend process exited with code ${code}`);
+    electronLogger.info(`Backend process exited with code ${code}`);
     pythonBackend = null;
   });
 
   pythonBackend.on('error', (error) => {
-    console.error('Failed to start backend:', error);
+    electronLogger.fatal('Failed to start backend:', error);
     dialog.showErrorBox('Backend Error', `Failed to start backend: ${error.message}`);
   });
 }
@@ -276,7 +276,7 @@ function closeWithBackend() {
     webcamPopoutWin = null
   }
 
-  console.log('Killing backend')
+  electronLogger.info('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
@@ -289,7 +289,7 @@ app.on('window-all-closed', () => {
 // listen to the before-quit event.
 app.on('before-quit', () => {
   if(process.platform === 'darwin' && pythonBackend){
-    console.log('Stopping backend')
+    electronLogger.info('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
   }

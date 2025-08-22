@@ -39,14 +39,15 @@ export default function AppContent() {
   // Setup sockets for redux
   const dispatch = useDispatch()
   useEffect(() => {
-    dispatch(initSocket())
-
+    
     // Only add console log handler in dev mode
     if (process.env.NODE_ENV === "development") {
       dispatch(registerHandler(consoleLogHandler))
     }
-
+    
     dispatch(registerHandler(electronLogHandler))
+    
+    dispatch(initSocket())
   }, [])
 
   return (

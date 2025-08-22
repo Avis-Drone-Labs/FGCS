@@ -8,6 +8,7 @@ import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
 import { useState, useEffect } from "react"
 import { useHotkeys } from "@mantine/hooks"
+import { logWarning } from "../../helpers/logging"
 
 let commands = []
 
@@ -86,6 +87,6 @@ export function RunCommand(id) {
   try {
     commands.find((entry) => entry.id == id).command()
   } catch {
-    console.log(`Couldn't find command, ${id}, to run`)
+    logWarning(`Couldn't find command, ${id}, to run`)
   }
 }

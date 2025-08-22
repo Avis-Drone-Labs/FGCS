@@ -48,6 +48,7 @@ import {
 } from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { emitLog } from "../slices/loggingSlice.js"
+import { logError, logInfo } from "../../helpers/logging.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -131,13 +132,13 @@ const socketMiddleware = (store) => {
         socket.socket.on(SocketEvents.Connect, () => {
           // DISPATCH ALL ACTIONS HERE
           // SINCE IT'S MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
-          console.log(`Connected to socket from redux, ${socket.socket.id}`)
+          logInfo(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
           store.dispatch(emitIsConnectedToDrone())
         })
 
         socket.socket.on(SocketEvents.Disconnect, () => {
-          console.log(`Disconnected from socket via redux, ${socket.socket.id}`)
+          logInfo(`Disconnected from socket via redux, ${socket.socket.id}`)
           store.dispatch(socketDisconnected())
         })
         
@@ -193,7 +194,7 @@ const socketMiddleware = (store) => {
 
         // Flags an error with the com port
         socket.socket.on("connection_error", (msg) => {
-          console.log("Connection error: " + msg.message)
+          logError("Connection error: " + msg.message)
           store.dispatch(queueErrorNotification(msg.message))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnected(false))

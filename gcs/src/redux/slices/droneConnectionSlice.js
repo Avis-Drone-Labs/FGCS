@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit"
 import { socket } from "../../helpers/socket"
+import { logInfo } from "../../helpers/logging"
 
 export const ConnectionType = {
   Serial: "serial",
@@ -112,22 +113,22 @@ const droneConnectionSlice = createSlice({
       state.fetching_com_ports = true
     },
     emitDisconnectFromDrone: () => {
-      console.log("Disconnecting from drone")
+      logInfo("Disconnecting from drone")
       socket.emit("disconnect_from_drone")
     },
     emitConnectToDrone: (_, action) => {
-      console.log("Attempting to connect to drone")
+      logInfo("Attempting to connect to drone")
       socket.emit("connect_to_drone", action.payload)
     },
     emitSetState: (_, action) => {
-      console.log(`Setting State to ${action.payload.state} from redux`)
+      logInfo(`Setting State to ${action.payload.state} from redux`)
       socket.emit("set_state", action.payload)
     },
     emitGetHomePosition: () => {
       socket.emit("get_home_position")
     },
     emitGetCurrentMission: () => {
-      console.log("Getting current mission from redux")
+      logInfo("Getting current mission from redux")
       socket.emit("get_current_mission_all")
     },
   },

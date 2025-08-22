@@ -33,6 +33,21 @@
       "default": false,
       "type": "boolean",
       "display": "Sync Dashboard and Missions Map Viewstate"
+    },
+    "logDirectory": {
+      "default": "",
+      "type": "directory",
+      "display": "Log directory"
+    },
+    "onlyKeepLastLog": {
+      "default": false,
+      "type": "boolean",
+      "display": "Only keep the most recent log file"
+    },
+    "combineLogs": {
+      "default": false,
+      "type": "boolean",
+      "display": "Combine frontend and backend log files"
     }
   },
   "Dashboard": {

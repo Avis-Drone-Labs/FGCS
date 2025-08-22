@@ -72,6 +72,8 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
       shortcut: shortcut,
       macShortcut: macShortcut,
     })
+  } else{
+    console.log(`Attempting to add command that already exists: ${id}`)
   }
 }
 

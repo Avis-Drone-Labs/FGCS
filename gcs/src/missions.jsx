@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid"
 
 // Custom component and helpers
 import {
+  ActionIcon,
   Button,
   Divider,
   FileButton,
@@ -20,7 +21,7 @@ import {
   Tabs,
   Tooltip,
 } from "@mantine/core"
-import { IconInfoCircle } from "@tabler/icons-react"
+import { IconInfoCircle, IconX } from "@tabler/icons-react"
 import Layout from "./components/layout"
 import FenceItemsTable from "./components/missions/fenceItemsTable"
 import MissionItemsTable from "./components/missions/missionItemsTable"
@@ -74,6 +75,11 @@ export default function Missions() {
   // Redux
   const connected = useSelector(selectConnectedToDrone)
   const aircraftType = useSelector(selectAircraftType)
+
+  const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
+    key: "showWarningBanner",
+    defaultValue: true,
+  })
 
   const [activeTab, setActiveTab] = useState("mission")
 
@@ -769,9 +775,21 @@ export default function Missions() {
       </Modal>
 
       {/* Banner to let people know that things are still under development */}
-      <div className="bg-falconred-700 text-white text-center">
-        Missions is still under development so some features are still missing.
-      </div>
+      {showWarningBanner && (
+        <div className="bg-falconred-700 flex flex-row items-center justify-between w-full">
+          <p className="text-white text-center flex-1">
+            Missions is still under development so some features are still
+            missing. If you find any bugs please report them to us.
+          </p>
+          <ActionIcon
+            onClick={() => setShowWarningBanner(false)}
+            variant="transparent"
+            className="mr-2"
+          >
+            <IconX color="white" />
+          </ActionIcon>
+        </div>
+      )}
 
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">

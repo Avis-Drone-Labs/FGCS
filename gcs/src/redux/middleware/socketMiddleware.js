@@ -142,8 +142,6 @@ const socketMiddleware = (store) => {
         })
         
         socket.socket.on("log", (msg) => {
-          // Now we just want to send these to electron
-          console.log(`Got Log Message from backend: ${msg.level} - ${msg.message} ${msg.timestamp}`)
           store.dispatch(emitLog(msg))
         })
 

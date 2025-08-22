@@ -125,6 +125,20 @@ function ExtendableNumberSetting({ settingName, range }) {
   )
 }
 
+function DirectorySetting({settingName}) {
+  const { getSetting, setSetting } = useSettings()
+
+  const setDirectory = async () => {
+    const dirHandle = await window.ipcRenderer.selectDirectory();
+    if (dirHandle !== null) setSetting(settingName, dirHandle);
+  }
+
+  return (
+    // <input type="file" webkitdirectory="true"/>
+    <div className="flex flex-col items-end">{getSetting(settingName)}<button class="bg-gray-300 rounded-sm text-black px-2 py-1 hover:bg-gray-400" onClick={setDirectory}>Choose Directory</button></div>
+  )
+}
+
 function Setting({ settingName, df }) {
   return (
     <div
@@ -145,6 +159,8 @@ function Setting({ settingName, df }) {
         <BoolSetting settingName={settingName} options={df.options} />
       ) : df.type == "option" ? (
         <OptionSetting settingName={settingName} options={df.options} />
+      ) : df.type == "directory" ? (
+        <DirectorySetting settingName={settingName}/>
       ) : (
         <TextSetting settingName={settingName} hidden={df.hidden || false} />
       )}

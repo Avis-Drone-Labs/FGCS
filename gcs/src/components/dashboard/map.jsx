@@ -52,6 +52,7 @@ import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
 
 // Tailwind styling
+import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import HomeMarker from "../mapComponents/homeMarker"
@@ -189,6 +190,49 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       lon: clickedGpsCoords.lng,
       alt: repositionAltitude,
     })
+  }
+
+  function zoomToDrone() {
+    if (passedRef.current && position) {
+      passedRef.current.getMap().flyTo({
+        center: [position.longitude, position.latitude],
+        zoom: 17,
+      })
+    }
+  }
+
+  function zoomToMission() {
+    if (passedRef.current && filteredMissionItems.length > 0) {
+      const filteredCoords = filteredMissionItems.map((item) =>
+        point([intToCoord(item.y), intToCoord(item.x)]),
+      )
+      const features = featureCollection(filteredCoords)
+      const boundingBox = envelope(features).bbox
+
+      passedRef.current.getMap().fitBounds(
+        [
+          [boundingBox[0], boundingBox[1]],
+          [boundingBox[2], boundingBox[3]],
+        ],
+        {
+          padding: 150,
+        },
+      )
+    }
+  }
+
+  function zoomToHome() {
+    if (
+      passedRef.current &&
+      homePosition &&
+      homePosition.lat !== 0 &&
+      homePosition.lon !== 0
+    ) {
+      passedRef.current.getMap().flyTo({
+        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        zoom: 17,
+      })
+    }
   }
 
   return (
@@ -336,6 +380,16 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             className="absolute bg-falcongrey-700 rounded-md p-1"
             style={{ top: points.y, left: points.x }}
           >
+            <ContextMenuItem onClick={zoomToDrone}>
+              <p>Zoom to drone</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToMission}>
+              <p>Zoom to mission</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToHome}>
+              <p>Zoom to home</p>
+            </ContextMenuItem>
+            <Divider className="my-1" />
             <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem

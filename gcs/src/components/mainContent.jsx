@@ -29,6 +29,8 @@ import { ErrorBoundary } from "react-error-boundary"
 import AlertProvider from "./dashboard/alertProvider"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 import { initSocket } from "../redux/slices/socketSlice"
+import { registerHandler } from "../redux/slices/loggingSlice"
+import { consoleLogHandler, fileLogHandler } from "../helpers/logHandlers"
 
 export default function AppContent() {
   // Conditionally render UI so the webcam route is literally just a webcam
@@ -38,6 +40,13 @@ export default function AppContent() {
   const dispatch = useDispatch()
   useEffect(() => {
     dispatch(initSocket())
+
+    // Only add console log handler in dev mode
+    if (process.env.NODE_ENV === "development") {
+      dispatch(registerHandler(consoleLogHandler))
+    }
+
+    dispatch(registerHandler(fileLogHandler))
   }, [])
 
   return (

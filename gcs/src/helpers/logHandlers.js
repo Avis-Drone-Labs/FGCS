@@ -1,5 +1,3 @@
-import { ipcRenderer } from "electron";
-
 
 export function consoleLogHandler(msg) {
     console.log(`[${msg.level}] [${msg.timestamp}] ${msg.message}`)

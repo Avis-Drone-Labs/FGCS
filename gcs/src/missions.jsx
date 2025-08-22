@@ -44,13 +44,14 @@ import {
 import { socket } from "./helpers/socket"
 
 // Redux
-import { useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
-import { selectAircraftType } from "./redux/slices/droneInfoSlice"
+import { useDispatch, useSelector } from "react-redux"
+import { emitGetComPorts, emitGetHomePosition, selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import { selectAircraftType, selectGPS, selectHeartbeat, selectNavController } from "./redux/slices/droneInfoSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
+import { emitGetTargetInfo, selectHomePosition, selectTargetInfo, setHomePosition } from "./redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -73,8 +74,14 @@ function UnwrittenChangesWarning({ unwrittenChanges }) {
 
 export default function Missions() {
   // Redux
+  const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const aircraftType = useSelector(selectAircraftType)
+  const heartbeatData = useSelector(selectHeartbeat)
+  const gpsData = useSelector(selectGPS)
+  const navControllerOutputData = useSelector(selectNavController)
+  const targetInfo = useSelector(selectTargetInfo)
+  const homePosition = useSelector(selectHomePosition)
 
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
     key: "showWarningBanner",
@@ -108,14 +115,6 @@ export default function Missions() {
     key: "rallyItems",
     defaultValue: [],
   })
-  const [homePosition, setHomePosition] = useSessionStorage({
-    key: "homePosition",
-    defaultValue: null,
-  })
-  const [targetInfo, setTargetInfo] = useSessionStorage({
-    key: "targetInfo",
-    defaultValue: { target_component: 0, target_system: 255 },
-  })
 
   // File import handling
   const [importFile, setImportFile] = useState(null)
@@ -129,63 +128,26 @@ export default function Missions() {
   const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
     "Mission progress update",
   )
+  const [currentPage,] = useSessionStorage({ key: "currentPage" })
   const [missionProgressModalData, setMissionProgressModalData] = useState({})
-
-  // Drone data
-  const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-  const [gpsData, setGpsData] = useState({})
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
-
   const mapRef = useRef()
-
   const newMissionItemAltitude = 30 // TODO: Make this configurable
 
-  const incomingMessageHandler = useCallback(
-    () => ({
-      GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
-      NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-      HEARTBEAT: (msg) => {
-        if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
-          setHeartbeatData(msg)
-        }
-      },
-    }),
-    [],
-  )
+  // Send some messages when file is loaded
+  useEffect(() => {
+    dispatch(emitGetHomePosition())
+    dispatch(emitGetTargetInfo())
+  }, [currentPage])
 
   useEffect(() => {
     if (!connected) {
       return
-    } else {
-      socket.emit("get_home_position")
-      socket.emit("get_target_info")
     }
-
-    socket.on("incoming_msg", (msg) => {
-      if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler()[msg.mavpackettype](msg)
-      }
-    })
-
-    socket.on("home_position_result", (data) => {
-      if (data.success) {
-        setHomePosition(data.data)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("target_info", (data) => {
-      if (data) {
-        setTargetInfo(data)
-      }
-    })
 
     socket.on("current_mission", (data) => {
       closeMissionProgressModal()
 
       if (!data.success) {
-        showErrorNotification(data.message)
         return
       }
 
@@ -212,8 +174,6 @@ export default function Missions() {
         setRallyItems(rallyItemsWithIds)
         setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
       }
-
-      showSuccessNotification(`${data.mission_type} read successfully`)
     })
 
     socket.on("write_mission_result", (data) => {
@@ -308,11 +268,13 @@ export default function Missions() {
     if (waypoints.length > 0) {
       const potentialHomeLocation = waypoints[0]
       if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-        setHomePosition({
-          lat: potentialHomeLocation.x,
-          lon: potentialHomeLocation.y,
-          alt: potentialHomeLocation.z,
-        })
+        dispatch(
+          setHomePosition({
+            lat: potentialHomeLocation.x,
+            lon: potentialHomeLocation.y,
+            alt: potentialHomeLocation.z,
+          })
+        )
       }
     }
   }
@@ -634,7 +596,7 @@ export default function Missions() {
       lon: Number.isInteger(lon) ? lon : coordToInt(lon),
       alt: 0.1,
     }
-    setHomePosition(newHomePosition)
+    dispatch(setHomePosition(newHomePosition))
 
     // Also update the first waypoint if it is a home position waypoint
     if (missionItems.length > 0 && isGlobalFrameHomeCommand(missionItems[0])) {

@@ -82,7 +82,6 @@ export default function Dashboard() {
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
-  const notificationQueue = useSelector(selectNotificationQueue)
   const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
   const connectedToDrone = useSelector(selectConnectedToDrone)
 
@@ -128,16 +127,6 @@ export default function Dashboard() {
       dispatch(soundPlayed())
     }
   }, [armedNotification, playArmed, playDisarmed, dispatch])
-
-  // Show queued notifications
-  useEffect(() => {
-    if (notificationQueue.length !== 0) {
-      ; (notificationQueue[0].type === "error"
-        ? showErrorNotification
-        : showSuccessNotification)(notificationQueue[0].message)
-      dispatch(notificationShown())
-    }
-  }, [notificationQueue, dispatch])
 
   // Following drone logic
   useEffect(() => {

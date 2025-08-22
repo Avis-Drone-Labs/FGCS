@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
+import { socket } from "../../helpers/socket"
 
 const missionInfoSlice = createSlice({
   name: "missionInfo",
@@ -19,6 +20,10 @@ const missionInfoSlice = createSlice({
       lon: 0,
       alt: 0,
     },
+    targetInfo: {
+      target_component: 0,
+      target_system: 255
+    }
   },
   reducers: {
     setCurrentMission: (state, action) => {
@@ -37,11 +42,21 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.homePosition) return
       state.homePosition = action.payload
     },
+    setTargetInfo: (state, action) => {
+      if (action.payload === state.targetInfo) return
+      state.targetInfo = action.payload
+    },
+
+    // Emits
+    emitGetTargetInfo: () => {
+      socket.emit("get_target_info")
+    }
   },
   selectors: {
     selectCurrentMission: (state) => state.currentMission,
     selectCurrentMissionItems: (state) => state.currentMissionItems,
     selectHomePosition: (state) => state.homePosition,
+    selectTargetInfo: (state) => state.targetInfo
   },
 })
 
@@ -49,8 +64,14 @@ export const {
   selectCurrentMission,
   selectCurrentMissionItems,
   selectHomePosition,
+  selectTargetInfo,
 } = missionInfoSlice.selectors
-export const { setCurrentMission, setCurrentMissionItems, setHomePosition } =
-  missionInfoSlice.actions
+export const { 
+  setCurrentMission, 
+  setCurrentMissionItems, 
+  setHomePosition, 
+  setTargetInfo,
+  emitGetTargetInfo
+} = missionInfoSlice.actions
 
 export default missionInfoSlice

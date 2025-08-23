@@ -84,8 +84,8 @@ const missionInfoSlice = createSlice({
       state.unwrittenChanges = action.payload
     },
     setMissionProgressModal: (state, action) => {
-      if (action.payload === state.missionProgressModal) return
-      state.missionProgressModal = action.payload
+      if (action.payload === state.modals.missionProgressModal) return
+      state.modals.missionProgressModal = action.payload
     },
     setActiveTab: (state, action) => {
       if (action.payload === state.activeTab) return

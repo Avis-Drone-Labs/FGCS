@@ -522,10 +522,7 @@ export default function Missions() {
         mavpackettype: "MISSION_ITEM_INT",
       }
       dispatch(
-        setDrawingMissionItems((prevItems) => [
-          newHomeMissionItem,
-          ...prevItems,
-        ]),
+        setDrawingMissionItems([newHomeMissionItem, ...missionItems])
       )
     }
 

@@ -8,7 +8,7 @@ import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
 import { useState, useEffect } from "react"
 import { useHotkeys } from "@mantine/hooks"
-import { logWarning } from "../../helpers/logging"
+import { logError, logWarning } from "../../helpers/logging"
 
 let commands = []
 
@@ -74,7 +74,7 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
       macShortcut: macShortcut,
     })
   } else{
-    console.log(`Attempting to add command that already exists: ${id}`)
+    logWarning(`Attempting to add command that already exists: ${id}`)
   }
 }
 
@@ -82,15 +82,10 @@ export function RunCommand(id) {
   // Search for a command by id
 
   var cmd = commands.find((entry) => entry.id == id);
+  
   if (cmd !== undefined) {
     cmd.command();
   } else {
-    console.log(`Couldn't find command ${id} to run`)
-  }
-
-  try {
-    commands.find((entry) => entry.id == id).command()
-  } catch {
-    logWarning(`Couldn't find command, ${id}, to run`)
+    logError(`Couldn't find command ${id} to run`)
   }
 }

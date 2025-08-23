@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.drone import Drone
 
+logger = logging.getLogger("fgcs")
 
 class FrameController:
     def __init__(self, drone: Drone) -> None:
@@ -32,8 +35,9 @@ class FrameController:
             frame_type_data = frame_type_result.get("data")
             if frame_type_data:
                 self.frame_type = frame_type_data.param_value
+            logger.info(f"Found current frame type: {self.frame_type}")
         else:
-            self.drone.logger.error(frame_type_result.get("message"))
+            logger.error(frame_type_result.get("message"))
 
     def getFrameClass(self) -> None:
         """
@@ -44,5 +48,6 @@ class FrameController:
             frame_class_data = frame_class_result.get("data")
             if frame_class_data:
                 self.frame_class = frame_class_data.param_value
+            logger.info(f"Found current frame class: {self.frame_class}")
         else:
-            self.drone.logger.error(frame_class_result.get("message"))
+            logger.error(frame_class_result.get("message"))

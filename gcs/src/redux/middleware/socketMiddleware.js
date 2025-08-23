@@ -286,7 +286,6 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           DroneSpecificSocketEvents.onCurrentMission,
           (msg) => {
-            console.log(msg)
             if (msg.success) {
               store.dispatch(queueNotification({ type: "success", message: `${msg.mission_type} read successfully` }))
             } else {

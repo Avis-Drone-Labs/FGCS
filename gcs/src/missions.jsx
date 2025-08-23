@@ -51,7 +51,7 @@ import { selectAircraftType, selectGPS, selectHeartbeat, selectNavController } f
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
-import { emitGetTargetInfo, selectDrawingMissionItems, selectHomePosition, selectTargetInfo, setDrawingMissionItems, setHomePosition } from "./redux/slices/missionSlice"
+import { emitGetTargetInfo, selectDrawingFenceItems, selectDrawingMissionItems, selectDrawingRallyItems, selectHomePosition, selectTargetInfo, setDrawingFenceItems, setDrawingMissionItems, setDrawingRallyItems, setHomePosition } from "./redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -82,8 +82,13 @@ export default function Missions() {
   const navControllerOutputData = useSelector(selectNavController)
   const targetInfo = useSelector(selectTargetInfo)
   const homePosition = useSelector(selectHomePosition)
-  const missionItems = useSelector(selectDrawingMissionItems)
 
+  // Mission items
+  const missionItems = useSelector(selectDrawingMissionItems)
+  const fenceItems = useSelector(selectDrawingFenceItems)
+  const rallyItems = useSelector(selectDrawingRallyItems)
+
+  // Other states
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
     key: "showWarningBanner",
     defaultValue: true,
@@ -102,17 +107,7 @@ export default function Missions() {
       rally: false,
     },
   })
-
-  // Mission data
-  const [fenceItems, setFenceItems] = useSessionStorage({
-    key: "fenceItems",
-    defaultValue: [],
-  })
-  const [rallyItems, setRallyItems] = useSessionStorage({
-    key: "rallyItems",
-    defaultValue: [],
-  })
-
+  
   // File import handling
   const [importFile, setImportFile] = useState(null)
   const importFileResetRef = useRef(null)
@@ -161,14 +156,14 @@ export default function Missions() {
         for (let fence of data.items) {
           fenceItemsWithIds.push(addIdToItem(fence))
         }
-        setFenceItems(fenceItemsWithIds)
+        dispatch(setDrawingFenceItems(fenceItemsWithIds))
         setUnwrittenChanges((prev) => ({ ...prev, fence: false }))
       } else if (data.mission_type === "rally") {
         const rallyItemsWithIds = []
         for (let rallyItem of data.items) {
           rallyItemsWithIds.push(addIdToItem(rallyItem))
         }
-        setRallyItems(rallyItemsWithIds)
+        dispatch(setDrawingRallyItems(rallyItemsWithIds))
         setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
       }
     })
@@ -203,7 +198,7 @@ export default function Missions() {
           for (let fence of data.items) {
             fenceItemsWithIds.push(addIdToItem(fence))
           }
-          setFenceItems(fenceItemsWithIds)
+          dispatch(setDrawingFenceItems(fenceItemsWithIds))
           setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
         } else if (data.mission_type === "rally") {
           const rallyItemsWithIds = []
@@ -211,7 +206,7 @@ export default function Missions() {
             rallyItemsWithIds.push(addIdToItem(rallyItem))
           }
 
-          setRallyItems(rallyItemsWithIds)
+          dispatch(setDrawingRallyItems(rallyItemsWithIds))
           setUnwrittenChanges((prev) => ({ ...prev, rally: true }))
         }
         showSuccessNotification(data.message)
@@ -327,19 +322,20 @@ export default function Missions() {
       newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
       newMissionItem.mission_type = 0 // Mission type
 
-      dispatch(setDrawingMissionItems((prevItems) => [...prevItems, newMissionItem]))
+      dispatch(setDrawingMissionItems([...missionItems, newMissionItem]))
     } else if (activeTabRef.current === "fence") {
+      console.log("fence?", fenceItems)
       newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
-      setFenceItems((prevItems) => [...prevItems, newMissionItem])
+      dispatch(setDrawingFenceItems([...fenceItems, newMissionItem]))
     } else if (activeTabRef.current === "rally") {
       newMissionItem.seq = rallyItems.length
       newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
       newMissionItem.mission_type = 2 // Rally type
 
-      setRallyItems((prevItems) => [...prevItems, newMissionItem])
+      dispatch(setDrawingRallyItems([...rallyItems, newMissionItem]))
     }
 
     setUnwrittenChanges((prev) => ({
@@ -412,19 +408,19 @@ export default function Missions() {
         return
       }
 
-      dispatch(setDrawingMissionItems((prevItems) => getUpdatedItems(prevItems)))
+      dispatch(setDrawingMissionItems(getUpdatedItems(missionItems)))
     } else if (activeTabRef.current === "fence") {
       if (isEqualItem(updatedMissionItem, fenceItems)) {
         return
       }
 
-      setFenceItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingFenceItems(getUpdatedItems(fenceItems)))
     } else if (activeTabRef.current === "rally") {
       if (isEqualItem(updatedMissionItem, rallyItems)) {
         return
       }
 
-      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingRallyItems(getUpdatedItems(rallyItems)))
     } else {
       return
     }
@@ -446,11 +442,11 @@ export default function Missions() {
     }
 
     if (activeTabRef.current === "mission") {
-      dispatch(setDrawingMissionItems((prevItems) => getUpdatedItems(prevItems)))
+      dispatch(setDrawingMissionItems(getUpdatedItems(missionItems)))
     } else if (activeTabRef.current === "fence") {
-      setFenceItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingFenceItems(getUpdatedItems(fenceItems)))
     } else if (activeTabRef.current === "rally") {
-      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingRallyItems(getUpdatedItems(rallyItems)))
     }
 
     setUnwrittenChanges((prev) => ({
@@ -493,10 +489,10 @@ export default function Missions() {
     }
 
     if (activeTabRef.current === "mission") {
-      dispatch(setDrawingMissionItems((prevItems) => updateItemOrder(prevItems)))
+      dispatch(setDrawingMissionItems(updateItemOrder(missionItems)))
       setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
     } else if (activeTabRef.current === "fence") {
-      setFenceItems((prevItems) => updateItemOrder(prevItems))
+      dispatch(setDrawingFenceItems(updateItemOrder(fenceItems)))
       setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
     }
   }
@@ -648,9 +644,9 @@ export default function Missions() {
         dispatch(setDrawingMissionItems([]))
       }
     } else if (activeTabRef.current === "fence") {
-      setFenceItems([])
+      dispatch(setDrawingFenceItems([]))
     } else if (activeTabRef.current === "rally") {
-      setRallyItems([])
+      dispatch(setDrawingRallyItems([]))
     }
 
     setUnwrittenChanges((prev) => ({
@@ -693,7 +689,7 @@ export default function Missions() {
       return newFenceMissionItem
     })
 
-    setFenceItems((prevItems) => [...prevItems, ...newFenceMissionItems])
+    dispatch(setDrawingFenceItems([...fenceItems, ...newFenceMissionItems]))
     setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
   }
 

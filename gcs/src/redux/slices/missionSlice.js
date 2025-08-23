@@ -58,7 +58,7 @@ const missionInfoSlice = createSlice({
     },
     setDrawingFenceItems: (state, action) => {
       if (action.payload === state.drawingItems.fenceItems) return
-      state.drawingItems.missionItems = action.payload
+      state.drawingItems.fenceItems = action.payload
     },
     setDrawingRallyItems: (state, action) => {
       if (action.payload === state.drawingItems.rallyItems) return

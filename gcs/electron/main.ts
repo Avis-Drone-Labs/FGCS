@@ -8,7 +8,7 @@ import packageInfo from '../package.json'
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
 import registerSettingsIPC, { getUserConfiguration } from './modules/settings'
 import registerWebcamIPC, { setupWebcamWindow } from './modules/webcam'
-import registerLoggingIPC, { electronLogger, setupLog4js } from './modules/logging'
+import registerLoggingIPC, { setupLog4js, frontendLogger } from './modules/logging'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -229,11 +229,11 @@ function createLoadingWindow() {
 
 function startBackend() {
   if (pythonBackend) {
-    electronLogger.warn('Backend already running');
+    frontendLogger.warn('Backend already running');
     return;
   }
 
-  electronLogger.info('Starting backend');
+  frontendLogger.info('Starting backend');
 
   // Add more platforms here
   const backendPaths: Partial<Record<NodeJS.Platform, string>> ={
@@ -248,19 +248,19 @@ function startBackend() {
     return;
   }
 
-  electronLogger.info(`Starting backend: ${backendPath}`);
+  frontendLogger.info(`Starting backend: ${backendPath}`);
   pythonBackend = spawn(backendPath);
 
   // pythonBackend.stdout.on('data', (data) => console.log(`Backend stdout: ${data}`));
   // pythonBackend.stderr.on('data', (data) => console.error(`Backend stderr: ${data}`));
 
   pythonBackend.on('close', (code) => {
-    electronLogger.info(`Backend process exited with code ${code}`);
+    frontendLogger.info(`Backend process exited with code ${code}`);
     pythonBackend = null;
   });
 
   pythonBackend.on('error', (error) => {
-    electronLogger.fatal('Failed to start backend:', error);
+    frontendLogger.fatal('Failed to start backend:', error);
     dialog.showErrorBox('Backend Error', `Failed to start backend: ${error.message}`);
   });
 }
@@ -276,7 +276,7 @@ function closeWithBackend() {
     webcamPopoutWin = null
   }
 
-  electronLogger.info('Killing backend')
+  frontendLogger.info('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
@@ -289,7 +289,7 @@ app.on('window-all-closed', () => {
 // listen to the before-quit event.
 app.on('before-quit', () => {
   if(process.platform === 'darwin' && pythonBackend){
-    electronLogger.info('Stopping backend')
+    frontendLogger.info('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
   }
@@ -305,9 +305,16 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+  
+  const settings = getUserConfiguration().settings["General"];
 
-  const {combineLogs, onlyKeepLastLog} = getUserConfiguration()?.settings["General"];
-  setupLog4js(combineLogs, onlyKeepLastLog);
+  var combineLogs = settings === undefined ? false : settings.combineLogs ?? false;
+  var onlyKeepLastLog = settings === undefined ? false : settings.onlyKeepLastLog ?? false;
+
+  setupLog4js(
+    typeof combineLogs === "boolean" ? combineLogs : false, 
+    typeof onlyKeepLastLog === "boolean" ? onlyKeepLastLog : false
+  );
 
   createLoadingWindow()
   // Open file and Get Recent Logs

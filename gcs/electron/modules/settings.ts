@@ -2,13 +2,19 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { app, ipcMain } from 'electron';
 import { exit } from 'node:process';
+import { frontendLogger } from './logging';
 
 // Settings logic
 
 interface Settings {
   version: string,
-  settings: object
+  settings: {
+    [key: string]: {
+      [key: string]: boolean | number | string | object
+    }
+  }
 }
+
 
 let userSettings: Settings | null = null
 
@@ -63,6 +69,8 @@ export function getUserConfiguration(){
     checkAppVersion(config)
   }
   if (userSettings != null) return userSettings
+  
+  frontendLogger.fatal("Could not create settings for some reason")
   exit(-1);
 }
 

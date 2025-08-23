@@ -6,13 +6,24 @@ import { app, ipcMain } from "electron";
 
 import * as log4js from "log4js";
 
-export let electronLogger: log4js.Logger
 export let frontendLogger: log4js.Logger
 export let backendLogger: log4js.Logger
 
 const LOG_PATH = app.getPath("logs")
+const DEV_LOG_PATH = path.join(app.getAppPath(), "logs")
 
-require("log4js/lib/appenders/multiFile")
+function getDatedLogFile() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+  const second = String(now.getSeconds()).padStart(2, "0");
+
+  return `fgcs-${year}${month}${day}_${hour}${minute}${second}.log`;
+}
 
 export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
 
@@ -32,7 +43,7 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
         appenders: {
             file: {
                 type: 'file',
-                filename: path.join(LOG_PATH, onlyKeepLast ? "fgcs.log" : `${name}-${new Date().getTime()}.log`),
+                filename: path.join(isBuilt ? LOG_PATH : DEV_LOG_PATH, onlyKeepLast ? "fgcs.log" : getDatedLogFile()),
                 layout: {
                     type: 'pattern',
                     pattern: FILE_PATTERN
@@ -45,9 +56,14 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
             },
             multifile: {
                 type: "multiFile",
-                base: LOG_PATH,
+                base: isBuilt ? LOG_PATH : DEV_LOG_PATH,
                 property: "categoryName",
                 extension: ".log",
+                layout: {
+                    type: 'pattern',
+                    pattern: CONSOLE_PATTERN
+                },
+                flags: "w"
             }
         },
         categories: {
@@ -64,17 +80,16 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
                 level: "debug"
             },
             default: {
-                appenders: ["file"],
+                appenders: ["console"],
                 level: "info"
             }
         }
     })
 
-    electronLogger = log4js.getLogger("electron");
     frontendLogger = log4js.getLogger("frontend");
     backendLogger = log4js.getLogger("backend");
 
-    electronLogger.info("Setup frontend logging");
+    frontendLogger.info("Setup frontend logging");
 }
 
 export default function registerLoggingIPC(){

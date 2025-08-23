@@ -8,53 +8,60 @@ import * as log4js from "log4js";
 
 export let electronLogger: log4js.Logger
 export let frontendLogger: log4js.Logger
+export let backendLogger: log4js.Logger
 
-const LOG_PATH = path.join(app.getPath("home"), "FGCS", "logs");
+const LOG_PATH = app.getPath("logs")
 
-/**
- * Get the path of the frontend log file, based on the user preferences.
- * If the user wants both frontend and backend logs in a single file, then the log file
- * is written in the FGCS/tmp directory along with the backend log, then combined into a single log file
- */
-function getLogPath(name: string, combine: boolean, keepLast: boolean): string {
-    const logFile = combine || keepLast ? `${name}.log` : `${name}-${new Date().getTime()}.log`;
-    return path.join(LOG_PATH, logFile);
-}
+require("log4js/lib/appenders/multiFile")
 
 export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
-    const logPath = getLogPath("frontend", combineLogs, onlyKeepLast);
+
+    const isBuilt = process.env.NODE_ENV === 'production'
 
     // Change these for the console and file patterns respectively
     const CONSOLE_PATTERN   = "[%d{dd/MM/yyyy hh:mm:ss:SSS}] [%p] %m"
     const FILE_PATTERN      = "[%d{dd/MM/yyyy hh:mm:ss:SSS}] [%p] %c - %m"
 
+    // If user wants combined logs then we can use the multifile appender else just the standard file appender
+    const appenders = [combineLogs ? "file" : "multifile"]
+
+    // Log to console as well if in dev
+    if (!isBuilt) appenders.push("console")
+
     log4js.configure({
         appenders: {
-            stdout: {
-                type: 'stdout',
-                layout: {
-                    type: 'pattern',
-                    pattern: CONSOLE_PATTERN,
-                }
-            },
             file: {
                 type: 'file',
-                filename: logPath,
+                filename: path.join(LOG_PATH, onlyKeepLast ? "fgcs.log" : `${name}-${new Date().getTime()}.log`),
                 layout: {
                     type: 'pattern',
                     pattern: FILE_PATTERN
                 },
                 flags: "w"
+            },
+            console: {
+                type: "console",
+                pattern: CONSOLE_PATTERN,
+            },
+            multifile: {
+                type: "multiFile",
+                base: LOG_PATH,
+                property: "categoryName",
+                extension: ".log",
             }
         },
         categories: {
             electron: {
-                appenders: ["stdout", "file"],
+                appenders: appenders,
                 level: 'info'
             },
             frontend: {
-                appenders: ["file"],
+                appenders: appenders,
                 level: 'debug'
+            },
+            backend: {
+                appenders: appenders,
+                level: "debug"
             },
             default: {
                 appenders: ["file"],
@@ -65,10 +72,11 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
 
     electronLogger = log4js.getLogger("electron");
     frontendLogger = log4js.getLogger("frontend");
+    backendLogger = log4js.getLogger("backend");
 
     electronLogger.info("Setup frontend logging");
 }
 
 export default function registerLoggingIPC(){
-    ipcMain.handle("logMessage", (_, {level, message, timestamp}) => {frontendLogger.log(level, message)})
+    ipcMain.handle("logMessage", (_, {level, message, timestamp, source}) => {(source == "backend" ? backendLogger : frontendLogger).log(level, message)})
 }

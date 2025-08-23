@@ -171,7 +171,7 @@ export const {
   emitConnectToDrone,
   emitSetState,
   emitGetHomePosition,
-  emitGetCurrentMission,
+  emitGetCurrentMissionAll,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,

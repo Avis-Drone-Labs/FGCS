@@ -51,7 +51,7 @@ import { selectAircraftType, selectGPS, selectHeartbeat, selectNavController } f
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
-import { emitGetTargetInfo, selectDrawingFenceItems, selectDrawingMissionItems, selectDrawingRallyItems, selectHomePosition, selectTargetInfo, setDrawingFenceItems, setDrawingMissionItems, setDrawingRallyItems, setHomePosition } from "./redux/slices/missionSlice"
+import { addIdToItem, emitGetTargetInfo, selectDrawingFenceItems, selectDrawingMissionItems, selectDrawingRallyItems, selectHomePosition, selectMissionProgressModal, selectTargetInfo, selectUnwrittenChanges, setDrawingFenceItems, setDrawingMissionItems, setDrawingRallyItems, setHomePosition, setMissionProgressModal, setUnwrittenChanges, updateHomePositionBasedOnWaypoints } from "./redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -87,6 +87,8 @@ export default function Missions() {
   const missionItems = useSelector(selectDrawingMissionItems)
   const fenceItems = useSelector(selectDrawingFenceItems)
   const rallyItems = useSelector(selectDrawingRallyItems)
+  const unwrittenChanges = useSelector(selectUnwrittenChanges)
+  const missionProgressModalOpened = useSelector(selectMissionProgressModal)
 
   // Other states
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
@@ -99,24 +101,11 @@ export default function Missions() {
   // Need to keep a reference to the active tab to avoid stale closures
   const activeTabRef = useRef(activeTab)
 
-  const [unwrittenChanges, setUnwrittenChanges] = useSessionStorage({
-    key: "unwrittenChanges",
-    defaultValue: {
-      mission: false,
-      fence: false,
-      rally: false,
-    },
-  })
-  
   // File import handling
   const [importFile, setImportFile] = useState(null)
   const importFileResetRef = useRef(null)
 
   // Modal for mission progress
-  const [
-    missionProgressModalOpened,
-    { open: openMissionProgressModal, close: closeMissionProgressModal },
-  ] = useDisclosure(false)
   const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
     "Mission progress update",
   )
@@ -136,45 +125,45 @@ export default function Missions() {
       return
     }
 
-    socket.on("current_mission", (data) => {
-      closeMissionProgressModal()
+    // socket.on("current_mission", (data) => {
+    //   closeMissionProgressModal()
 
-      if (!data.success) {
-        return
-      }
+    //   if (!data.success) {
+    //     return
+    //   }
 
-      if (data.mission_type === "mission") {
-        const missionItemsWithIds = []
-        for (let missionItem of data.items) {
-          missionItemsWithIds.push(addIdToItem(missionItem))
-        }
-        updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-        dispatch(setDrawingMissionItems(missionItemsWithIds))
-        setUnwrittenChanges((prev) => ({ ...prev, mission: false }))
-      } else if (data.mission_type === "fence") {
-        const fenceItemsWithIds = []
-        for (let fence of data.items) {
-          fenceItemsWithIds.push(addIdToItem(fence))
-        }
-        dispatch(setDrawingFenceItems(fenceItemsWithIds))
-        setUnwrittenChanges((prev) => ({ ...prev, fence: false }))
-      } else if (data.mission_type === "rally") {
-        const rallyItemsWithIds = []
-        for (let rallyItem of data.items) {
-          rallyItemsWithIds.push(addIdToItem(rallyItem))
-        }
-        dispatch(setDrawingRallyItems(rallyItemsWithIds))
-        setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
-      }
-    })
+    //   if (data.mission_type === "mission") {
+    //     const missionItemsWithIds = []
+    //     for (let missionItem of data.items) {
+    //       missionItemsWithIds.push(addIdToItem(missionItem))
+    //     }
+    //     updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+    //     dispatch(setDrawingMissionItems(missionItemsWithIds))
+    //     setUnwrittenChanges((prev) => ({ ...prev, mission: false }))
+    //   } else if (data.mission_type === "fence") {
+    //     const fenceItemsWithIds = []
+    //     for (let fence of data.items) {
+    //       fenceItemsWithIds.push(addIdToItem(fence))
+    //     }
+    //     dispatch(setDrawingFenceItems(fenceItemsWithIds))
+    //     setUnwrittenChanges((prev) => ({ ...prev, fence: false }))
+    //   } else if (data.mission_type === "rally") {
+    //     const rallyItemsWithIds = []
+    //     for (let rallyItem of data.items) {
+    //       rallyItemsWithIds.push(addIdToItem(rallyItem))
+    //     }
+    //     dispatch(setDrawingRallyItems(rallyItemsWithIds))
+    //     setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
+    //   }
+    // })
 
     socket.on("write_mission_result", (data) => {
-      closeMissionProgressModal()
+      dispatch(setMissionProgressModal(false))
 
       if (data.success) {
         showSuccessNotification(data.message)
-        setUnwrittenChanges((prev) => ({
-          ...prev,
+        dispatch(setUnwrittenChanges({
+          ...unwrittenChanges,
           [activeTabRef.current]: false,
         }))
       } else {
@@ -192,14 +181,14 @@ export default function Missions() {
 
           updateHomePositionBasedOnWaypoints(missionItemsWithIds)
           dispatch(setDrawingMissionItems(missionItemsWithIds))
-          setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
+          dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
         } else if (data.mission_type === "fence") {
           const fenceItemsWithIds = []
           for (let fence of data.items) {
             fenceItemsWithIds.push(addIdToItem(fence))
           }
           dispatch(setDrawingFenceItems(fenceItemsWithIds))
-          setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
+          dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
         } else if (data.mission_type === "rally") {
           const rallyItemsWithIds = []
           for (let rallyItem of data.items) {
@@ -207,7 +196,7 @@ export default function Missions() {
           }
 
           dispatch(setDrawingRallyItems(rallyItemsWithIds))
-          setUnwrittenChanges((prev) => ({ ...prev, rally: true }))
+          dispatch(setUnwrittenChanges({ ...unwrittenChanges, rally: true }))
         }
         showSuccessNotification(data.message)
       } else {
@@ -256,21 +245,6 @@ export default function Missions() {
     })
   }
 
-  function updateHomePositionBasedOnWaypoints(waypoints) {
-    if (waypoints.length > 0) {
-      const potentialHomeLocation = waypoints[0]
-      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-        dispatch(
-          setHomePosition({
-            lat: potentialHomeLocation.x,
-            lon: potentialHomeLocation.y,
-            alt: potentialHomeLocation.z,
-          })
-        )
-      }
-    }
-  }
-
   function getFlightMode() {
     if (aircraftType === 1) {
       return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
@@ -279,13 +253,6 @@ export default function Missions() {
     }
 
     return "UNKNOWN"
-  }
-
-  function addIdToItem(missionItem) {
-    if (!missionItem.id) {
-      missionItem.id = uuidv4()
-    }
-    return missionItem
   }
 
   function addNewMissionItem(lat, lon) {
@@ -338,8 +305,8 @@ export default function Missions() {
       dispatch(setDrawingRallyItems([...rallyItems, newMissionItem]))
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
+    dispatch(setUnwrittenChanges({
+      ...unwrittenChanges,
       [activeTabRef.current]: true,
     }))
   }
@@ -425,8 +392,8 @@ export default function Missions() {
       return
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
+    dispatch(setUnwrittenChanges({
+      ...unwrittenChanges,
       [activeTabRef.current]: true,
     }))
   }
@@ -449,8 +416,8 @@ export default function Missions() {
       dispatch(setDrawingRallyItems(getUpdatedItems(rallyItems)))
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
+    dispatch(setUnwrittenChanges({
+      ...unwrittenChanges,
       [activeTabRef.current]: true,
     }))
   }
@@ -490,10 +457,10 @@ export default function Missions() {
 
     if (activeTabRef.current === "mission") {
       dispatch(setDrawingMissionItems(updateItemOrder(missionItems)))
-      setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
+      dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
     } else if (activeTabRef.current === "fence") {
       dispatch(setDrawingFenceItems(updateItemOrder(fenceItems)))
-      setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
+      dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
     }
   }
 
@@ -501,7 +468,7 @@ export default function Missions() {
     socket.emit("get_current_mission", { type: activeTabRef.current })
     setMissionProgressModalTitle(`Reading ${activeTabRef.current} from drone`)
     resetMissionProgressModalData()
-    openMissionProgressModal()
+    dispatch(setMissionProgressModal(true))
   }
 
   function writeMissionToDrone() {
@@ -517,7 +484,7 @@ export default function Missions() {
     }
     setMissionProgressModalTitle(`Writing ${activeTabRef.current} to drone`)
     resetMissionProgressModalData()
-    openMissionProgressModal()
+    dispatch(setMissionProgressModal(true))
   }
 
   function importMissionFromFile(filePath) {
@@ -629,7 +596,7 @@ export default function Missions() {
       dispatch(setDrawingMissionItems((prevItems) => [newHomeMissionItem, ...prevItems]))
     }
 
-    setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
+    dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
   }
 
   function clearMissionItems() {
@@ -649,8 +616,8 @@ export default function Missions() {
       dispatch(setDrawingRallyItems([]))
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
+    dispatch(setUnwrittenChanges({
+      ...unwrittenChanges,
       [activeTabRef.current]: true,
     }))
   }
@@ -690,14 +657,14 @@ export default function Missions() {
     })
 
     dispatch(setDrawingFenceItems([...fenceItems, ...newFenceMissionItems]))
-    setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
+    dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
   }
 
   return (
     <Layout currentPage="missions">
       <Modal
         opened={missionProgressModalOpened}
-        onClose={closeMissionProgressModal}
+        onClose={() => dispatch(setMissionProgressModal(false))}
         title={missionProgressModalTitle}
         closeOnClickOutside={false}
         closeOnEscape={false}

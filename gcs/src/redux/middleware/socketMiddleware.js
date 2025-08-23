@@ -29,10 +29,17 @@ import {
   queueNotification,
 } from "../slices/notificationSlice"
 import {
+  addIdToItem,
   setCurrentMission,
   setCurrentMissionItems,
+  setDrawingFenceItems,
+  setDrawingMissionItems,
+  setDrawingRallyItems,
   setHomePosition,
+  setMissionProgressModal,
   setTargetInfo,
+  setUnwrittenChanges,
+  updateHomePositionBasedOnWaypoints,
 } from "../slices/missionSlice"
 import {
   setDroneAircraftType,
@@ -287,6 +294,35 @@ const socketMiddleware = (store) => {
           DroneSpecificSocketEvents.onCurrentMission,
           (msg) => {
             if (msg.success) {
+              // Close modal
+              store.dispatch(setMissionProgressModal(false))
+
+              // Handle each mission item
+              const storeState = store.getState()
+              if (msg.mission_type === "mission") {
+                const missionItemsWithIds = []
+                for (let missionItem of msg.items) {
+                  missionItemsWithIds.push(addIdToItem(missionItem))
+                }
+                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
+                store.dispatch(setUnwrittenChanges({ ...storeState.missionInfo.unwrittenChanges, mission: false }))
+              } else if (msg.mission_type === "fence") {
+                const fenceItemsWithIds = []
+                for (let fence of msg.items) {
+                  fenceItemsWithIds.push(addIdToItem(fence))
+                }
+                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
+                store.dispatch(setUnwrittenChanges({ ...storeState.missionInfo.unwrittenChanges, fence: false }))
+              } else if (msg.mission_type === "rally") {
+                const rallyItemsWithIds = []
+                for (let rallyItem of msg.items) {
+                  rallyItemsWithIds.push(addIdToItem(rallyItem))
+                }
+                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
+                store.dispatch(setUnwrittenChanges({ ...storeState.missionInfo.unwrittenChanges, rally: false }))
+              }
+
               store.dispatch(queueNotification({ type: "success", message: `${msg.mission_type} read successfully` }))
             } else {
               store.dispatch(queueNotification({ type: "error", message: msg.message }))

@@ -1,5 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit"
 import { socket } from "../../helpers/socket"
+import { v4 as uuidv4 } from "uuid"
+import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 
 const missionInfoSlice = createSlice({
   name: "missionInfo",
@@ -20,6 +22,14 @@ const missionInfoSlice = createSlice({
       missionItems: [],
       fenceItems: [],
       rallyItems: []
+    },
+    unwrittenChanges: {
+      mission: false,
+      fence: false,
+      rally: false
+    },
+    modals: {
+      missionProgressModal: false
     },
     homePosition: {
       lat: 0,
@@ -64,6 +74,14 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.drawingItems.rallyItems) return
       state.drawingItems.rallyItems = action.payload
     },
+    setUnwrittenChanges: (state, action) => {
+      if (action.payload === state.unwrittenChanges) return
+      state.unwrittenChanges = action.payload
+    },
+    setMissionProgressModal: (state, action) => {
+      if (action.payload === state.missionProgressModal) return
+      state.missionProgressModal = action.payload
+    },
 
     // Emits
     emitGetTargetInfo: () => {
@@ -77,9 +95,31 @@ const missionInfoSlice = createSlice({
     selectTargetInfo: (state) => state.targetInfo,
     selectDrawingMissionItems: (state) => state.drawingItems.missionItems,
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
-    selectDrawingRallyItems: (state) => state.drawingItems.rallyItems
+    selectDrawingRallyItems: (state) => state.drawingItems.rallyItems,
+    selectUnwrittenChanges: (state) => state.unwrittenChanges,
+    selectMissionProgressModal: (state) => state.missionProgressModal
   },
 })
+
+export const addIdToItem = (missionItem) => {
+  if (!missionItem.id) {
+    missionItem.id = uuidv4()
+  }
+  return missionItem
+}
+
+export const updateHomePositionBasedOnWaypoints = (waypoints) => {
+    if (waypoints.length > 0) {
+      const potentialHomeLocation = waypoints[0]
+      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+        setHomePosition({
+          lat: potentialHomeLocation.x,
+          lon: potentialHomeLocation.y,
+          alt: potentialHomeLocation.z,
+        })
+      }
+    }
+  }
 
 export const {
   selectCurrentMission,
@@ -89,6 +129,8 @@ export const {
   selectDrawingMissionItems,
   selectDrawingFenceItems,
   selectDrawingRallyItems,
+  selectUnwrittenChanges,
+  selectMissionProgressModal,
 } = missionInfoSlice.selectors
 export const { 
   setCurrentMission, 
@@ -98,6 +140,8 @@ export const {
   setDrawingMissionItems,
   setDrawingFenceItems,
   setDrawingRallyItems,
+  setUnwrittenChanges,
+  setMissionProgressModal,
   emitGetTargetInfo
 } = missionInfoSlice.actions
 

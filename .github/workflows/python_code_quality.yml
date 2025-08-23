@@ -1,5 +1,8 @@
 name: Python Code Quality
-on: [pull_request]
+on: 
+  pull_request:
+    paths:
+      - radio/**
 
 jobs:
   build:

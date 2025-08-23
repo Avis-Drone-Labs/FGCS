@@ -28,8 +28,6 @@ def setup_logging(conn: SocketIO, debug: bool = False) -> logging.Logger:
     fgcs_logger.addHandler(SocketIOHandler(conn))
     
     # Stream handler on debug mode only
-    if debug:
-        fgcs_logger.addHandler(logging.StreamHandler(sys.stderr))
     
     flask_logger = logging.getLogger("werkzeug")
     flask_logger.setLevel(logging.WARNING)

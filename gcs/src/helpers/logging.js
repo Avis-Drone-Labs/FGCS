@@ -1,10 +1,9 @@
-import { useDispatch } from "react-redux";
-import { emitLog } from "../redux/slices/loggingSlice";
+import { emitLog } from "../redux/slices/loggingSlice"
+import { store } from "../redux/store"
 
 function logHelper(level, msg){
     
-    const dispatch = useDispatch();
-    dispatch(emitLog({
+    store.dispatch(emitLog({
         message: msg,
         level: level,
         timestamp: new Date() / 1000

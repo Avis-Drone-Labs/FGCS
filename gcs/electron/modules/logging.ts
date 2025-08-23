@@ -22,8 +22,6 @@ function getLogPath(name: string, combine: boolean, keepLast: boolean): string {
 }
 
 export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
-
-    console.log("SETTUP ULOGING")
     const logPath = getLogPath("frontend", combineLogs, onlyKeepLast);
 
     // Change these for the console and file patterns respectively
@@ -72,6 +70,5 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
 }
 
 export default function registerLoggingIPC(){
-    console.log("Recieved log message")
     ipcMain.handle("logMessage", (_, {level, message, timestamp}) => {frontendLogger.log(level, message)})
 }

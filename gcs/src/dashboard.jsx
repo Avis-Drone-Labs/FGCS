@@ -36,20 +36,12 @@ import {
   selectGPSRawInt,
   selectNotificationSound,
   selectRSSI,
-  soundPlayed
+  soundPlayed,
 } from "./redux/slices/droneInfoSlice"
-import {
-  notificationShown,
-  selectNotificationQueue,
-} from "./redux/slices/notificationSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
 
 // Helper javascript files
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification"
 
 // Custom component
 import useSound from "use-sound"
@@ -203,8 +195,9 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${lon !== undefined ? lon.toFixed(6) : 0
-              })`}
+            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${
+              lon !== undefined ? lon.toFixed(6) : 0
+            })`}
             tooltip="GPS (lat, lon)"
           />
           <StatusSection

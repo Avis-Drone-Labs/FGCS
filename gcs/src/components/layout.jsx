@@ -10,17 +10,23 @@ import { useSessionStorage } from "@mantine/hooks"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
-import { showErrorNotification, showSuccessNotification } from "../helpers/notification"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../helpers/notification"
 import { socket } from "../helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
-  emitGetCurrentMission,
+  emitGetCurrentMissionAll,
   emitSetState,
   selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice"
-import { notificationShown, selectNotificationQueue } from "../redux/slices/notificationSlice"
+import {
+  notificationShown,
+  selectNotificationQueue,
+} from "../redux/slices/notificationSlice"
 
 export default function Layout({ children, currentPage }) {
   const dispatch = useDispatch()
@@ -48,7 +54,7 @@ export default function Layout({ children, currentPage }) {
   // Show queued notifications
   useEffect(() => {
     if (notificationQueue.length !== 0) {
-      ; (notificationQueue[0].type === "error"
+      ;(notificationQueue[0].type === "error"
         ? showErrorNotification
         : showSuccessNotification)(notificationQueue[0].message)
       dispatch(notificationShown())
@@ -63,7 +69,7 @@ export default function Layout({ children, currentPage }) {
 
     dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
-      dispatch(emitGetCurrentMission())
+      dispatch(emitGetCurrentMissionAll())
     }
   }, [currentPage, connectedToDrone])
 

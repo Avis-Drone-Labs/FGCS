@@ -21,15 +21,19 @@ const missionInfoSlice = createSlice({
       // This is for the missions page, used locally and then will update currentMissionItems on save
       missionItems: [],
       fenceItems: [],
-      rallyItems: []
+      rallyItems: [],
     },
     unwrittenChanges: {
       mission: false,
       fence: false,
-      rally: false
+      rally: false,
+    },
+    missionProgressData: {
+      message: "",
+      progress: null,
     },
     modals: {
-      missionProgressModal: false
+      missionProgressModal: false,
     },
     homePosition: {
       lat: 0,
@@ -38,9 +42,9 @@ const missionInfoSlice = createSlice({
     },
     targetInfo: {
       target_component: 0,
-      target_system: 255
+      target_system: 255,
     },
-    activeTab: "mission"
+    activeTab: "mission",
   },
   reducers: {
     setCurrentMission: (state, action) => {
@@ -87,11 +91,37 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.activeTab) return
       state.activeTab = action.payload
     },
+    setMissionProgressData: (state, action) => {
+      if (action.payload === state.missionProgressData) return
+      state.missionProgressData = action.payload
+    },
 
     // Emits
     emitGetTargetInfo: () => {
       socket.emit("get_target_info")
-    }
+    },
+    emitGetCurrentMission: (state) => {
+      socket.emit("get_current_mission", { type: state.activeTab })
+    },
+    emitWriteCurrentMission: (_, action) => {
+      socket.emit("write_current_mission", {
+        type: action.payload.type,
+        items: action.payload.items,
+      })
+    },
+    emitImportMissionFromFile: (_, action) => {
+      socket.emit("import_mission_from_file", {
+        type: action.payload.type,
+        file_path: action.payload.file_path,
+      })
+    },
+    emitExportMissionToFile: (_, action) => {
+      socket.emit("export_mission_to_file", {
+        type: action.payload.type,
+        file_path: action.payload.file_path,
+        items: action.payload.items,
+      })
+    },
   },
   selectors: {
     selectCurrentMission: (state) => state.currentMission,
@@ -103,6 +133,7 @@ const missionInfoSlice = createSlice({
     selectDrawingRallyItems: (state) => state.drawingItems.rallyItems,
     selectUnwrittenChanges: (state) => state.unwrittenChanges,
     selectMissionProgressModal: (state) => state.missionProgressModal,
+    selectMissionProgressData: (state) => state.missionProgressData,
     selectActiveTab: (state) => state.activeTab,
   },
 })
@@ -115,17 +146,17 @@ export const addIdToItem = (missionItem) => {
 }
 
 export const updateHomePositionBasedOnWaypoints = (waypoints) => {
-    if (waypoints.length > 0) {
-      const potentialHomeLocation = waypoints[0]
-      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-        setHomePosition({
-          lat: potentialHomeLocation.x,
-          lon: potentialHomeLocation.y,
-          alt: potentialHomeLocation.z,
-        })
-      }
+  if (waypoints.length > 0) {
+    const potentialHomeLocation = waypoints[0]
+    if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+      setHomePosition({
+        lat: potentialHomeLocation.x,
+        lon: potentialHomeLocation.y,
+        alt: potentialHomeLocation.z,
+      })
     }
   }
+}
 
 export const {
   selectCurrentMission,
@@ -137,12 +168,13 @@ export const {
   selectDrawingRallyItems,
   selectUnwrittenChanges,
   selectMissionProgressModal,
+  selectMissionProgressData,
   selectActiveTab,
 } = missionInfoSlice.selectors
-export const { 
-  setCurrentMission, 
-  setCurrentMissionItems, 
-  setHomePosition, 
+export const {
+  setCurrentMission,
+  setCurrentMissionItems,
+  setHomePosition,
   setTargetInfo,
   setDrawingMissionItems,
   setDrawingFenceItems,
@@ -150,7 +182,12 @@ export const {
   setUnwrittenChanges,
   setMissionProgressModal,
   setActiveTab,
-  emitGetTargetInfo
+  setMissionProgressData,
+  emitGetTargetInfo,
+  emitGetCurrentMission,
+  emitWriteCurrentMission,
+  emitImportMissionFromFile,
+  emitExportMissionToFile,
 } = missionInfoSlice.actions
 
 export default missionInfoSlice

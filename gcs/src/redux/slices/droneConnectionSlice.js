@@ -126,7 +126,7 @@ const droneConnectionSlice = createSlice({
     emitGetHomePosition: () => {
       socket.emit("get_home_position")
     },
-    emitGetCurrentMission: () => {
+    emitGetCurrentMissionAll: () => {
       console.log("Getting current mission from redux")
       socket.emit("get_current_mission_all")
     },

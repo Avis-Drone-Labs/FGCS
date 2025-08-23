@@ -70,6 +70,7 @@ import {
   selectUnwrittenChanges,
   setActiveTab,
   setDrawingFenceItems,
+  setDrawingMissionItem,
   setDrawingMissionItems,
   setDrawingRallyItems,
   setHomePosition,
@@ -292,11 +293,7 @@ export default function Missions() {
     // if so, don't update
 
     if (activeTabRef.current === "mission") {
-      if (isEqualItem(updatedMissionItem, missionItems)) {
-        return
-      }
-
-      dispatch(setDrawingMissionItems(getUpdatedItems(missionItems)))
+      dispatch(setDrawingMissionItem(updatedMissionItem))
     } else if (activeTabRef.current === "fence") {
       if (isEqualItem(updatedMissionItem, fenceItems)) {
         return

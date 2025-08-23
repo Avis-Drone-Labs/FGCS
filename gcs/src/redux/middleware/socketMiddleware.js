@@ -143,7 +143,7 @@ const socketMiddleware = (store) => {
         })
         
         socket.socket.on("log", (msg) => {
-          store.dispatch(emitLog(msg))
+          store.dispatch(emitLog({...msg, source: "backend"}))
         })
 
         /*

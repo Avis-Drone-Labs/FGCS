@@ -106,6 +106,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
 
     if drone.connectionError is not None:
         socketio.emit("connection_error", {"message": drone.connectionError})
+        logger.error(f"Failed to connect to drone: {drone.connectionError}")
         droneStatus.drone = None
         return
 

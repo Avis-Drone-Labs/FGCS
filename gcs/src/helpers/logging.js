@@ -6,7 +6,8 @@ function logHelper(level, msg){
     store.dispatch(emitLog({
         message: msg,
         level: level,
-        timestamp: new Date() / 1000
+        timestamp: new Date() / 1000,
+        source: "frontend"
     }))
 
 }

@@ -113,22 +113,18 @@ const droneConnectionSlice = createSlice({
       state.fetching_com_ports = true
     },
     emitDisconnectFromDrone: () => {
-      logInfo("Disconnecting from drone")
       socket.emit("disconnect_from_drone")
     },
     emitConnectToDrone: (_, action) => {
-      logInfo("Attempting to connect to drone")
       socket.emit("connect_to_drone", action.payload)
     },
     emitSetState: (_, action) => {
-      logInfo(`Setting State to ${action.payload.state} from redux`)
       socket.emit("set_state", action.payload)
     },
     emitGetHomePosition: () => {
       socket.emit("get_home_position")
     },
     emitGetCurrentMission: () => {
-      logInfo("Getting current mission from redux")
       socket.emit("get_current_mission_all")
     },
   },

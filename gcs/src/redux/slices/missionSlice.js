@@ -132,7 +132,7 @@ const missionInfoSlice = createSlice({
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
     selectDrawingRallyItems: (state) => state.drawingItems.rallyItems,
     selectUnwrittenChanges: (state) => state.unwrittenChanges,
-    selectMissionProgressModal: (state) => state.missionProgressModal,
+    selectMissionProgressModal: (state) => state.modals.missionProgressModal,
     selectMissionProgressData: (state) => state.missionProgressData,
     selectActiveTab: (state) => state.activeTab,
   },

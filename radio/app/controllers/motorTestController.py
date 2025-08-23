@@ -247,7 +247,8 @@ class MotorTestController:
                 "message": f"All motor test successfully started {successful_responses} / {num_motors} motors",
             }
         else:  # pragma: no cover
-            # We should never reach this (since we should only ever have successful_responses <= num_motors)
+            # We should never reach this (since we should only ever have successful_responses <= num_motors) but theoretically could
+            # If there was a bug in pymavlink
             logger.warning(
                 f"All motor test potentially started, but received {successful_responses} responses with {num_motors} motors"
             )

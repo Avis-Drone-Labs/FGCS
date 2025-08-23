@@ -4,6 +4,7 @@ import time
 from typing import TYPE_CHECKING, List, Union
 
 import serial
+import logging
 from app.customTypes import Response
 from app.utils import commandAccepted
 from pymavlink import mavutil
@@ -21,6 +22,7 @@ FLIGHT_MODES = [
     "FLTMODE6",
 ]
 
+logger = logging.getLogger("fgcs")
 
 class FlightModesController:
     def __init__(self, drone: Drone) -> None:
@@ -42,6 +44,7 @@ class FlightModesController:
         """
         Get the current flight modes of the drone."""
         self.flight_modes = []
+        logger.info(f"Fetching {len(FLIGHT_MODES)} flight modes")
         for mode in FLIGHT_MODES:
             flight_mode = self.drone.paramsController.getSingleParam(mode)
             if flight_mode.get("success"):
@@ -49,7 +52,7 @@ class FlightModesController:
                 if flight_mode_data:
                     self.flight_modes.append(flight_mode_data.param_value)
             else:
-                self.drone.logger.error(flight_mode.get("message"))
+                logger.error(flight_mode.get("message"))
                 self.flight_modes.append("UNKNOWN")
 
     def getFlightModeChannel(self) -> None:
@@ -63,7 +66,7 @@ class FlightModesController:
             if flight_mode_channel_data:
                 self.flight_mode_channel = flight_mode_channel_data.param_value
         else:
-            self.drone.logger.error(flight_mode_channel.get("message"))
+            logger.error(flight_mode_channel.get("message"))
 
     def refreshData(self) -> None:
         """
@@ -83,7 +86,7 @@ class FlightModesController:
         """
 
         if mode_number < 1 or mode_number > 6:
-            self.drone.logger.error(
+            logger.error(
                 "Invalid flight mode number, must be between 1 and 6 inclusive."
             )
             return {
@@ -99,6 +102,7 @@ class FlightModesController:
 
         if self.drone.aircraft_type == 1:
             if (flight_mode < 0) or (flight_mode > 24):
+                logger.error(f"Invalid plane flight mode number, must be between 0 and 24 inclusive, got {flight_mode}")
                 return {
                     "success": False,
                     "message": f"Invalid plane flight mode, must be between 0 and 24 inclusive, got {flight_mode}",
@@ -106,6 +110,7 @@ class FlightModesController:
             mode_name = mavutil.mavlink.enums["PLANE_MODE"][flight_mode].name
         else:
             if (flight_mode < 0) or (flight_mode > 27):
+                logger.error(f"Invalid copter flight mode number, must be between 0 and 27 inclusive, got {flight_mode}")
                 return {
                     "success": False,
                     "message": f"Invalid copter flight mode, must be between 0 and 27 inclusive, got {flight_mode}",
@@ -113,7 +118,7 @@ class FlightModesController:
             mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
 
         if param_set_success:
-            self.drone.logger.info(f"Flight mode {mode_number} set to {mode_name}")
+            logger.info(f"Flight mode {mode_number} set to {mode_name}")
             self.flight_modes[mode_number - 1] = flight_mode
 
             return {
@@ -121,6 +126,7 @@ class FlightModesController:
                 "message": f"Flight mode {mode_number} set to {mode_name}",
             }
         else:
+            logger.error(f"Failed to set flight mode {mode_number} to {mode_name}")
             return {
                 "success": False,
                 "message": f"Failed to set flight mode {mode_number} to {mode_name}",
@@ -137,6 +143,9 @@ class FlightModesController:
         """
         self.drone.is_listening = False
         time.sleep(0.3)
+        
+        logger.info(f"Setting current flight mode to {flightMode}")
+        
         self.drone.sendCommand(
             message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
             param1=1,
@@ -155,16 +164,18 @@ class FlightModesController:
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
                 self.drone.is_listening = True
-                self.drone.logger.info("Flight mode set successfully")
+                logger.debug("Flight mode set successfully")
                 return {"success": True, "message": "Flight mode set successfully"}
             else:
                 self.drone.is_listening = True
+                logger.error("Could not set flight mode")
                 return {
                     "success": False,
                     "message": "Could not set flight mode",
                 }
-        except serial.serialutil.SerialException:
+        except serial.serialutil.SerialException as e:
             self.drone.is_listening = True
+            logger.error(e, exc_info=True)
             return {
                 "success": False,
                 "message": "Could not set flight mode, serial exception",

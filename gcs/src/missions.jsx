@@ -3,10 +3,10 @@
 */
 
 // Base imports
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { useDisclosure, useSessionStorage } from "@mantine/hooks"
+import { useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
@@ -33,7 +33,6 @@ import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "./helpers/filterMissions"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
-  MAV_AUTOPILOT_INVALID,
   MAV_FRAME_LIST,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
@@ -45,13 +44,13 @@ import { socket } from "./helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitGetComPorts, emitGetHomePosition, selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import { emitGetHomePosition, selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 import { selectAircraftType, selectGPS, selectHeartbeat, selectNavController } from "./redux/slices/droneInfoSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
-import { addIdToItem, emitGetTargetInfo, selectDrawingFenceItems, selectDrawingMissionItems, selectDrawingRallyItems, selectHomePosition, selectMissionProgressModal, selectTargetInfo, selectUnwrittenChanges, setDrawingFenceItems, setDrawingMissionItems, setDrawingRallyItems, setHomePosition, setMissionProgressModal, setUnwrittenChanges, updateHomePositionBasedOnWaypoints } from "./redux/slices/missionSlice"
+import { addIdToItem, emitGetTargetInfo, selectActiveTab, selectDrawingFenceItems, selectDrawingMissionItems, selectDrawingRallyItems, selectHomePosition, selectMissionProgressModal, selectTargetInfo, selectUnwrittenChanges, setActiveTab, setDrawingFenceItems, setDrawingMissionItems, setDrawingRallyItems, setHomePosition, setMissionProgressModal, setUnwrittenChanges, updateHomePositionBasedOnWaypoints } from "./redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -82,6 +81,7 @@ export default function Missions() {
   const navControllerOutputData = useSelector(selectNavController)
   const targetInfo = useSelector(selectTargetInfo)
   const homePosition = useSelector(selectHomePosition)
+  const activeTab = useSelector(selectActiveTab)
 
   // Mission items
   const missionItems = useSelector(selectDrawingMissionItems)
@@ -95,8 +95,6 @@ export default function Missions() {
     key: "showWarningBanner",
     defaultValue: true,
   })
-
-  const [activeTab, setActiveTab] = useState("mission")
 
   // Need to keep a reference to the active tab to avoid stale closures
   const activeTabRef = useRef(activeTab)
@@ -124,52 +122,6 @@ export default function Missions() {
     if (!connected) {
       return
     }
-
-    // socket.on("current_mission", (data) => {
-    //   closeMissionProgressModal()
-
-    //   if (!data.success) {
-    //     return
-    //   }
-
-    //   if (data.mission_type === "mission") {
-    //     const missionItemsWithIds = []
-    //     for (let missionItem of data.items) {
-    //       missionItemsWithIds.push(addIdToItem(missionItem))
-    //     }
-    //     updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-    //     dispatch(setDrawingMissionItems(missionItemsWithIds))
-    //     setUnwrittenChanges((prev) => ({ ...prev, mission: false }))
-    //   } else if (data.mission_type === "fence") {
-    //     const fenceItemsWithIds = []
-    //     for (let fence of data.items) {
-    //       fenceItemsWithIds.push(addIdToItem(fence))
-    //     }
-    //     dispatch(setDrawingFenceItems(fenceItemsWithIds))
-    //     setUnwrittenChanges((prev) => ({ ...prev, fence: false }))
-    //   } else if (data.mission_type === "rally") {
-    //     const rallyItemsWithIds = []
-    //     for (let rallyItem of data.items) {
-    //       rallyItemsWithIds.push(addIdToItem(rallyItem))
-    //     }
-    //     dispatch(setDrawingRallyItems(rallyItemsWithIds))
-    //     setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
-    //   }
-    // })
-
-    socket.on("write_mission_result", (data) => {
-      dispatch(setMissionProgressModal(false))
-
-      if (data.success) {
-        showSuccessNotification(data.message)
-        dispatch(setUnwrittenChanges({
-          ...unwrittenChanges,
-          [activeTabRef.current]: false,
-        }))
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
 
     socket.on("import_mission_result", (data) => {
       if (data.success) {
@@ -853,7 +805,7 @@ export default function Missions() {
               >
                 <Tabs
                   value={activeTab}
-                  onChange={setActiveTab}
+                  onChange={(value) => dispatch(setActiveTab(value))}
                   className="mt-2"
                 >
                   <Tabs.List grow>

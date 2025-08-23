@@ -39,7 +39,8 @@ const missionInfoSlice = createSlice({
     targetInfo: {
       target_component: 0,
       target_system: 255
-    }
+    },
+    activeTab: "mission"
   },
   reducers: {
     setCurrentMission: (state, action) => {
@@ -82,6 +83,10 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.missionProgressModal) return
       state.missionProgressModal = action.payload
     },
+    setActiveTab: (state, action) => {
+      if (action.payload === state.activeTab) return
+      state.activeTab = action.payload
+    },
 
     // Emits
     emitGetTargetInfo: () => {
@@ -97,7 +102,8 @@ const missionInfoSlice = createSlice({
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
     selectDrawingRallyItems: (state) => state.drawingItems.rallyItems,
     selectUnwrittenChanges: (state) => state.unwrittenChanges,
-    selectMissionProgressModal: (state) => state.missionProgressModal
+    selectMissionProgressModal: (state) => state.missionProgressModal,
+    selectActiveTab: (state) => state.activeTab,
   },
 })
 
@@ -131,6 +137,7 @@ export const {
   selectDrawingRallyItems,
   selectUnwrittenChanges,
   selectMissionProgressModal,
+  selectActiveTab,
 } = missionInfoSlice.selectors
 export const { 
   setCurrentMission, 
@@ -142,6 +149,7 @@ export const {
   setDrawingRallyItems,
   setUnwrittenChanges,
   setMissionProgressModal,
+  setActiveTab,
   emitGetTargetInfo
 } = missionInfoSlice.actions
 

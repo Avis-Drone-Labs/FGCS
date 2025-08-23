@@ -76,7 +76,8 @@ const DroneSpecificSocketEvents = Object.freeze({
   onIncomingMsg: "incoming_msg",
   onCurrentMissionAll: "current_mission_all",
   onCurrentMission: "current_mission",
-  onTargetInfo: "target_info"
+  onTargetInfo: "target_info",
+  onWriteMissionResult: "write_mission_result"
 })
 
 const socketMiddleware = (store) => {
@@ -261,18 +262,6 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(
-          DroneSpecificSocketEvents.onMissionControlResult,
-          (msg) => {
-            store.dispatch(
-              queueNotification({
-                type: msg.success ? "success" : "error",
-                message: msg.message,
-              }),
-            )
-          },
-        )
-
-        socket.socket.on(
           DroneSpecificSocketEvents.onHomePositionResult,
           (msg) => {
             store.dispatch(
@@ -283,6 +272,9 @@ const socketMiddleware = (store) => {
           },
         )
 
+        /*
+          Missions
+        */
         socket.socket.on(
           DroneSpecificSocketEvents.onCurrentMissionAll,
           (msg) => {
@@ -331,12 +323,45 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
+          DroneSpecificSocketEvents.onWriteMissionResult,
+          (msg) => {
+            store.dispatch(setMissionProgressModal(false))
+            
+            const storeState = store.getState()
+            if (msg.success) {
+              store.dispatch(queueNotification({ type: "success", message: msg.message }))
+              store.dispatch(setUnwrittenChanges({
+                ...storeState.missionInfo.unwrittenChanges,
+                [storeState.missionInfo.activeTab]: false,
+              }))
+            } else {
+              store.dispatch(queueNotification({ type: "error", message: msg.message }))
+            }
+          }
+        )
+
+        socket.socket.on(
+          DroneSpecificSocketEvents.onMissionControlResult,
+          (msg) => {
+            store.dispatch(
+              queueNotification({
+                type: msg.success ? "success" : "error",
+                message: msg.message,
+              }),
+            )
+          },
+        )
+
+        socket.socket.on(
           DroneSpecificSocketEvents.onTargetInfo,
           (msg) => {
             store.dispatch(setTargetInfo(msg))
           }
         )
 
+        /*
+          Generic Drone Date
+        */
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
 

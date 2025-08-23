@@ -71,6 +71,18 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.drawingItems.missionItems) return
       state.drawingItems.missionItems = action.payload
     },
+    setDrawingMissionItem: (state, action) => {
+      const index = state.drawingItems.missionItems.findIndex(i => i.id === action.payload.id);
+
+      if (index === -1) return;
+
+      const currentItem = state.drawingItems.missionItems[index];
+
+
+      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return;
+
+      state.drawingItems.missionItems[index] = {...currentItem, ...action.payload};
+    },
     setDrawingFenceItems: (state, action) => {
       if (action.payload === state.drawingItems.fenceItems) return
       state.drawingItems.fenceItems = action.payload
@@ -177,6 +189,7 @@ export const {
   setHomePosition,
   setTargetInfo,
   setDrawingMissionItems,
+  setDrawingMissionItem,
   setDrawingFenceItems,
   setDrawingRallyItems,
   setUnwrittenChanges,

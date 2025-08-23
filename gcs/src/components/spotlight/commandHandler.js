@@ -50,12 +50,6 @@ export function Commands() {
   AddCommand("open_settings", () => {
     open()
   })
-  AddCommand("connect_to_drone", () => {
-    /* connect */
-  })
-  AddCommand("disconnect_from_drone", () => {
-    /* disconnect */
-  })
 
   // Register hotkeys
   useHotkeys([
@@ -79,11 +73,21 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
       shortcut: shortcut,
       macShortcut: macShortcut,
     })
+  } else{
+    console.log(`Attempting to add command that already exists: ${id}`)
   }
 }
 
 export function RunCommand(id) {
   // Search for a command by id
+
+  var cmd = commands.find((entry) => entry.id == id);
+  if (cmd !== undefined) {
+    cmd.command();
+  } else {
+    console.log(`Couldn't find command ${id} to run`)
+  }
+
   try {
     commands.find((entry) => entry.id == id).command()
   } catch {

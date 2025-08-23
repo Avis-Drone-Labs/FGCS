@@ -19,7 +19,6 @@ import {
 const coordsFractionDigits = 9
 
 export default function RallyItemsTableRow({
-  index,
   rallyItem,
   updateRallyItem,
   deleteRallyItem,
@@ -45,7 +44,7 @@ export default function RallyItemsTableRow({
 
   return (
     <TableTr>
-      <TableTd>{index}</TableTd>
+      <TableTd>{rallyItemData.seq}</TableTd>
       <TableTd>
         <Select
           data={[{ value: "5100", label: "RALLY_POINT" }]}

@@ -114,7 +114,7 @@ export default function MissionItems({
             lat={intToCoord(item.x)}
             lon={intToCoord(item.y)}
             colour={tailwindColors.yellow[400]}
-            text={item.seq}
+            text={`${item.seq}`}
             tooltipText={item.z ? `Alt: ${item.z}` : null}
             draggable={editable}
             dragEndCallback={dragEndCallback}

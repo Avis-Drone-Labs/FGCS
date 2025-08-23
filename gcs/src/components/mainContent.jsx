@@ -56,7 +56,7 @@ export default function AppContent() {
         {renderUI && <Toolbar />}
         <ErrorBoundary fallbackRender={ErrorBoundaryFallback}>
           <SettingsModal />
-          <Navbar className="no-drag" />
+          {renderUI && <Navbar className="no-drag" />}
           <Routes>
             <Route
               path="/"

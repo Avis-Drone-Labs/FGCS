@@ -51,6 +51,26 @@ def upload_default_mission():
     # Teardown
 
 
+@pytest.fixture()
+def delete_export_files():
+    """
+    Deletes the exported mission files after running a test.
+    """
+    yield  # this is where the testing happens
+
+    # Teardown
+    export_files = [
+        "exported_mission.txt",
+        "exported_fence.txt",
+        "exported_rally.txt",
+    ]
+
+    for file_name in export_files:
+        file_path = os.path.join(MISSION_FILES_PATH, file_name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
 @falcon_test(pass_drone_status=True)
 def test_getCurrentMissionAll_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
@@ -218,6 +238,16 @@ def test_writeCurrentMission_uploadMissionSuccess(
         "message": "Mission uploaded successfully",
     }
 
+    # Read back the mission
+    socketio_client.emit("get_current_mission", {"type": "mission"})
+    read_result = socketio_client.get_received()[-1]
+    assert read_result["name"] == "current_mission"
+
+    # Compare items
+    written_items = data["items"]
+    returned_items = read_result["args"][0]["items"]
+    assert written_items == returned_items
+
 
 @falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_uploadFenceSuccess(
@@ -241,6 +271,16 @@ def test_writeCurrentMission_uploadFenceSuccess(
         "message": "Mission uploaded successfully",
     }
 
+    # Read back the mission
+    socketio_client.emit("get_current_mission", {"type": "fence"})
+    read_result = socketio_client.get_received()[-1]
+    assert read_result["name"] == "current_mission"
+
+    # Compare items
+    written_items = data["items"]
+    returned_items = read_result["args"][0]["items"]
+    assert written_items == returned_items
+
 
 @falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_uploadRallySuccess(
@@ -263,6 +303,16 @@ def test_writeCurrentMission_uploadRallySuccess(
         "success": True,
         "message": "Mission uploaded successfully",
     }
+
+    # Read back the mission
+    socketio_client.emit("get_current_mission", {"type": "rally"})
+    read_result = socketio_client.get_received()[-1]
+    assert read_result["name"] == "current_mission"
+
+    # Compare items
+    written_items = data["items"]
+    returned_items = read_result["args"][0]["items"]
+    assert written_items == returned_items
 
 
 @falcon_test(pass_drone_status=True)
@@ -302,4 +352,290 @@ def test_writeCurrentMission_noWaypoints(
     assert socketio_result["args"][0] == {
         "success": True,
         "message": "Cleared mission type 0, no waypoints to upload",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_missionImportSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    import_file_path = os.path.join(MISSION_FILES_PATH, "default_mission.txt")
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH,
+            "test_importMissionFromFile_missionImportSuccess_result.json",
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "mission", "file_path": import_file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == result_data
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_fenceImportSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    import_file_path = os.path.join(MISSION_FILES_PATH, "default_fence.txt")
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH,
+            "test_importMissionFromFile_fenceImportSuccess_result.json",
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "fence", "file_path": import_file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == result_data
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_rallyImportSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    import_file_path = os.path.join(MISSION_FILES_PATH, "default_rally.txt")
+    with open(
+        os.path.join(
+            MISSION_FILES_PATH,
+            "test_importMissionFromFile_rallyImportSuccess_result.json",
+        ),
+        "r",
+    ) as f:
+        result_data = json.load(f)
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "rally", "file_path": import_file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == result_data
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_fileNotFound(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    file_path = os.path.join(MISSION_FILES_PATH, "nonexistent.txt")
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "mission", "file_path": file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == {
+        "success": False,
+        "message": f"Waypoint file not found at {file_path}",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_incorrectMissionType_rallyWithMission(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    file_path = os.path.join(MISSION_FILES_PATH, "default_mission.txt")
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "rally", "file_path": file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == {
+        "success": False,
+        "message": "Could not load the waypoint file. Waypoint command MAV_CMD_NAV_TAKEOFF does not match mission type rally",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_incorrectMissionType_fenceWithMission(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    file_path = os.path.join(MISSION_FILES_PATH, "default_mission.txt")
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "fence", "file_path": file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == {
+        "success": False,
+        "message": "Could not load the waypoint file. Waypoint command MAV_CMD_NAV_TAKEOFF does not match mission type fence",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_incorrectMissionType_rallyWithFence(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    file_path = os.path.join(MISSION_FILES_PATH, "default_fence.txt")
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "rally", "file_path": file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == {
+        "success": False,
+        "message": "Could not load the waypoint file. Waypoint command MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION does not match mission type rally",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_importMissionFromFile_incorrectMissionType_fenceWithRally(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    file_path = os.path.join(MISSION_FILES_PATH, "default_rally.txt")
+
+    socketio_client.emit(
+        "import_mission_from_file", {"type": "fence", "file_path": file_path}
+    )
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "import_mission_result"
+    assert result["args"][0] == {
+        "success": False,
+        "message": "Could not load the waypoint file. Waypoint command MAV_CMD_NAV_RALLY_POINT does not match mission type fence",
+    }
+
+
+@pytest.mark.usefixtures("delete_export_files")
+@pytest.mark.usefixtures("upload_default_mission")
+@falcon_test(pass_drone_status=True)
+def test_exportMissionToFile_missionExportSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    export_file_path = os.path.join(MISSION_FILES_PATH, "exported_mission.txt")
+
+    # Get current mission items
+    socketio_client.emit("get_current_mission", {"type": "mission"})
+    result = socketio_client.get_received()[-1]
+    items = result["args"][0]["items"]
+
+    socketio_client.emit(
+        "export_mission_to_file",
+        {"type": "mission", "file_path": export_file_path, "items": items},
+    )
+    export_result = socketio_client.get_received()[-1]
+
+    assert export_result["name"] == "export_mission_result"
+    assert export_result["args"][0] == {
+        "success": True,
+        "message": f"Waypoint file saved 8 points successfully to {export_file_path}",
+    }
+    assert os.path.exists(export_file_path)
+    with open(export_file_path, "r") as f, open(
+        os.path.join(MISSION_FILES_PATH, "exported_mission_check.txt"),
+        "r",
+    ) as f_expected:
+        assert f.read() == f_expected.read()
+
+
+@pytest.mark.usefixtures("delete_export_files")
+@pytest.mark.usefixtures("upload_default_mission")
+@falcon_test(pass_drone_status=True)
+def test_exportMissionToFile_fenceExportSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    export_file_path = os.path.join(MISSION_FILES_PATH, "exported_fence.txt")
+
+    # Get current mission items
+    socketio_client.emit("get_current_mission", {"type": "fence"})
+    result = socketio_client.get_received()[-1]
+    items = result["args"][0]["items"]
+
+    socketio_client.emit(
+        "export_mission_to_file",
+        {"type": "fence", "file_path": export_file_path, "items": items},
+    )
+    export_result = socketio_client.get_received()[-1]
+
+    assert export_result["name"] == "export_mission_result"
+    assert export_result["args"][0] == {
+        "success": True,
+        "message": f"Waypoint file saved 13 points successfully to {export_file_path}",
+    }
+    assert os.path.exists(export_file_path)
+    with open(export_file_path, "r") as f, open(
+        os.path.join(MISSION_FILES_PATH, "exported_fence_check.txt"),
+        "r",
+    ) as f_expected:
+        assert f.read() == f_expected.read()
+
+
+@pytest.mark.usefixtures("delete_export_files")
+@pytest.mark.usefixtures("upload_default_mission")
+@falcon_test(pass_drone_status=True)
+def test_exportMissionToFile_rallyExportSuccess(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    export_file_path = os.path.join(MISSION_FILES_PATH, "exported_rally.txt")
+
+    # Get current mission items
+    socketio_client.emit("get_current_mission", {"type": "rally"})
+    result = socketio_client.get_received()[-1]
+    items = result["args"][0]["items"]
+
+    socketio_client.emit(
+        "export_mission_to_file",
+        {"type": "rally", "file_path": export_file_path, "items": items},
+    )
+    export_result = socketio_client.get_received()[-1]
+
+    assert export_result["name"] == "export_mission_result"
+    assert export_result["args"][0] == {
+        "success": True,
+        "message": f"Waypoint file saved 2 points successfully to {export_file_path}",
+    }
+    assert os.path.exists(export_file_path)
+    with open(export_file_path, "r") as f, open(
+        os.path.join(MISSION_FILES_PATH, "exported_rally_check.txt"),
+        "r",
+    ) as f_expected:
+        assert f.read() == f_expected.read()
+
+
+@falcon_test(pass_drone_status=True)
+def test_exportMissionToFile_noWaypoints(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "missions"
+    file_path = os.path.join(MISSION_FILES_PATH, "exported_empty.txt")
+
+    socketio_client.emit(
+        "export_mission_to_file",
+        {"type": "mission", "file_path": file_path, "items": []},
+    )
+    export_result = socketio_client.get_received()[-1]
+
+    assert export_result["name"] == "export_mission_result"
+    assert export_result["args"][0] == {
+        "success": False,
+        "message": "No waypoints loaded for the mission type of mission",
     }

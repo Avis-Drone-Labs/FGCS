@@ -15,6 +15,12 @@ const missionInfoSlice = createSlice({
       fence_items: [],
       rally_items: [],
     },
+    drawingItems: {
+      // This is for the missions page, used locally and then will update currentMissionItems on save
+      missionItems: [],
+      fenceItems: [],
+      rallyItems: []
+    },
     homePosition: {
       lat: 0,
       lon: 0,
@@ -46,6 +52,18 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.targetInfo) return
       state.targetInfo = action.payload
     },
+    setDrawingMissionItems: (state, action) => {
+      if (action.payload === state.drawingItems.missionItems) return
+      state.drawingItems.missionItems = action.payload
+    },
+    setDrawingFenceItems: (state, action) => {
+      if (action.payload === state.drawingItems.fenceItems) return
+      state.drawingItems.missionItems = action.payload
+    },
+    setDrawingRallyItems: (state, action) => {
+      if (action.payload === state.drawingItems.rallyItems) return
+      state.drawingItems.rallyItems = action.payload
+    },
 
     // Emits
     emitGetTargetInfo: () => {
@@ -56,7 +74,10 @@ const missionInfoSlice = createSlice({
     selectCurrentMission: (state) => state.currentMission,
     selectCurrentMissionItems: (state) => state.currentMissionItems,
     selectHomePosition: (state) => state.homePosition,
-    selectTargetInfo: (state) => state.targetInfo
+    selectTargetInfo: (state) => state.targetInfo,
+    selectDrawingMissionItems: (state) => state.drawingItems.missionItems,
+    selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
+    selectDrawingRallyItems: (state) => state.drawingItems.rallyItems
   },
 })
 
@@ -65,12 +86,18 @@ export const {
   selectCurrentMissionItems,
   selectHomePosition,
   selectTargetInfo,
+  selectDrawingMissionItems,
+  selectDrawingFenceItems,
+  selectDrawingRallyItems,
 } = missionInfoSlice.selectors
 export const { 
   setCurrentMission, 
   setCurrentMissionItems, 
   setHomePosition, 
   setTargetInfo,
+  setDrawingMissionItems,
+  setDrawingFenceItems,
+  setDrawingRallyItems,
   emitGetTargetInfo
 } = missionInfoSlice.actions
 

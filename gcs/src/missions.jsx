@@ -51,7 +51,7 @@ import { selectAircraftType, selectGPS, selectHeartbeat, selectNavController } f
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
-import { emitGetTargetInfo, selectHomePosition, selectTargetInfo, setHomePosition } from "./redux/slices/missionSlice"
+import { emitGetTargetInfo, selectDrawingMissionItems, selectHomePosition, selectTargetInfo, setDrawingMissionItems, setHomePosition } from "./redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -82,6 +82,7 @@ export default function Missions() {
   const navControllerOutputData = useSelector(selectNavController)
   const targetInfo = useSelector(selectTargetInfo)
   const homePosition = useSelector(selectHomePosition)
+  const missionItems = useSelector(selectDrawingMissionItems)
 
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
     key: "showWarningBanner",
@@ -103,10 +104,6 @@ export default function Missions() {
   })
 
   // Mission data
-  const [missionItems, setMissionItems] = useSessionStorage({
-    key: "missionItems",
-    defaultValue: [],
-  })
   const [fenceItems, setFenceItems] = useSessionStorage({
     key: "fenceItems",
     defaultValue: [],
@@ -157,7 +154,7 @@ export default function Missions() {
           missionItemsWithIds.push(addIdToItem(missionItem))
         }
         updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-        setMissionItems(missionItemsWithIds)
+        dispatch(setDrawingMissionItems(missionItemsWithIds))
         setUnwrittenChanges((prev) => ({ ...prev, mission: false }))
       } else if (data.mission_type === "fence") {
         const fenceItemsWithIds = []
@@ -199,7 +196,7 @@ export default function Missions() {
           }
 
           updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-          setMissionItems(missionItemsWithIds)
+          dispatch(setDrawingMissionItems(missionItemsWithIds))
           setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
         } else if (data.mission_type === "fence") {
           const fenceItemsWithIds = []
@@ -330,7 +327,7 @@ export default function Missions() {
       newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
       newMissionItem.mission_type = 0 // Mission type
 
-      setMissionItems((prevItems) => [...prevItems, newMissionItem])
+      dispatch(setDrawingMissionItems((prevItems) => [...prevItems, newMissionItem]))
     } else if (activeTabRef.current === "fence") {
       newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
@@ -415,7 +412,7 @@ export default function Missions() {
         return
       }
 
-      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingMissionItems((prevItems) => getUpdatedItems(prevItems)))
     } else if (activeTabRef.current === "fence") {
       if (isEqualItem(updatedMissionItem, fenceItems)) {
         return
@@ -449,7 +446,7 @@ export default function Missions() {
     }
 
     if (activeTabRef.current === "mission") {
-      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingMissionItems((prevItems) => getUpdatedItems(prevItems)))
     } else if (activeTabRef.current === "fence") {
       setFenceItems((prevItems) => getUpdatedItems(prevItems))
     } else if (activeTabRef.current === "rally") {
@@ -496,7 +493,7 @@ export default function Missions() {
     }
 
     if (activeTabRef.current === "mission") {
-      setMissionItems((prevItems) => updateItemOrder(prevItems))
+      dispatch(setDrawingMissionItems((prevItems) => updateItemOrder(prevItems)))
       setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
     } else if (activeTabRef.current === "fence") {
       setFenceItems((prevItems) => updateItemOrder(prevItems))
@@ -607,7 +604,7 @@ export default function Missions() {
         x: newHomePosition.lat,
         y: newHomePosition.lon,
       }
-      setMissionItems(updatedMissionItems)
+      dispatch(setDrawingMissionItems(updatedMissionItems))
     } else {
       // If the first item is not a home position command, add a new home position item
       const newHomeMissionItem = {
@@ -633,7 +630,7 @@ export default function Missions() {
         mission_type: 0,
         mavpackettype: "MISSION_ITEM_INT",
       }
-      setMissionItems((prevItems) => [newHomeMissionItem, ...prevItems])
+      dispatch(setDrawingMissionItems((prevItems) => [newHomeMissionItem, ...prevItems]))
     }
 
     setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
@@ -646,9 +643,9 @@ export default function Missions() {
         missionItems.length > 0 &&
         isGlobalFrameHomeCommand(missionItems[0])
       ) {
-        setMissionItems([missionItems[0]])
+        dispatch(setDrawingMissionItems([missionItems[0]]))
       } else {
-        setMissionItems([])
+        dispatch(setDrawingMissionItems([]))
       }
     } else if (activeTabRef.current === "fence") {
       setFenceItems([])

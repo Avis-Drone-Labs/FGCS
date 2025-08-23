@@ -6,8 +6,6 @@ from dotenv import load_dotenv
 
 app = create_app(debug=True)
 
-# DEBUG STATEMENT FOR TESTING #645
-
 if __name__ == "__main__":
     print("Loading dotenv.")
     env_path = Path("../gcs/.env")

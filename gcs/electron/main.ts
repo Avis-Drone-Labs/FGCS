@@ -1,4 +1,4 @@
-import { BrowserWindow, Event, Menu, MenuItemConstructorOptions, MessageBoxOptions, Rectangle, app, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -6,6 +6,7 @@ import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
+import registerWebcamIPC, { destroyWebcamWindow, setupWebcamWindow } from './modules/webcam'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -34,7 +35,7 @@ if (process.platform === 'linux') {
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
-let webcamPopoutWin: BrowserWindow | null
+
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -109,80 +110,6 @@ function getUserConfiguration(){
 ipcMain.handle("getSettings", () => {return getUserConfiguration(); })
 ipcMain.handle("setSettings", (_, settings) => {saveUserConfiguration(settings)})
 
-// Webcam popout window
-
-const MIN_WEBCAM_HEIGHT: number = 100
-const WEBCAM_TITLEBAR_HEIGHT: number = 28
-
-// Disable unused vars because they are needed for TS function type
-// eslint-disable-next-line no-unused-vars
-type ResizeCallback = (event: Event, arg1: Rectangle) => void;
-
-let currentResizeHandler: ResizeCallback | null = null
-
-/**
- * If id and name are provided, passes the id and name to the webcam popout so that the given
- * video stream is rendered. If id or name are not provided, prevents any video streams from
- * being rendered on the window so that the webcam is not showing in the background
- * @param id The device stream ID
- * @param name The name of the device
- */
-function loadWebcam(id: string = "", name: string = ""){
-
-  const params: string = id && name ? "/webcam?deviceId=" + id + "&deviceName=" + name : "/webcam";
-
-  if (VITE_DEV_SERVER_URL)
-    webcamPopoutWin?.loadURL(VITE_DEV_SERVER_URL + "#" + params)
-  else
-    webcamPopoutWin?.loadFile(path.join(process.env.DIST, 'index.html'), {hash: params})
-}
-
-function openWebcamPopout(videoStreamId: string, name: string, aspect: number){
-
-  if (webcamPopoutWin === null) return;
-  loadWebcam(videoStreamId, name);
-
-  webcamPopoutWin.setTitle(name);
-
-  // Remove previous resize handler
-  if (currentResizeHandler)
-    webcamPopoutWin.off("will-resize", currentResizeHandler)
-
-  // Create resize handler to maintain aspect ratio
-  currentResizeHandler = function(event, newBounds){
-    event.preventDefault();
-
-    const newWidth = newBounds.width;
-    const newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-    webcamPopoutWin?.setBounds({
-      x: newBounds.x,
-      y: newBounds.y,
-      width: newWidth,
-      height: newHeight
-    });
-  }
-
-  webcamPopoutWin.on('will-resize', currentResizeHandler);
-
-  // Ensure initial size fits the aspect ratio ()
-  webcamPopoutWin.setSize(webcamPopoutWin.getBounds().width, Math.round(webcamPopoutWin.getBounds().width / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-  webcamPopoutWin.setMinimumSize(Math.round(aspect * (MIN_WEBCAM_HEIGHT-28)), MIN_WEBCAM_HEIGHT);
-  webcamPopoutWin.show();
-
-}
-
-function closeWebcamPopout(){
-  webcamPopoutWin?.hide()
-  loadWebcam();
-  win?.webContents.send("webcam-closed");
-}
-
-ipcMain.handle("openWebcamWindow", (_, videoStreamId, name, aspect) => {openWebcamPopout(videoStreamId, name, aspect)})
-ipcMain.handle("closeWebcamWindow", () => closeWebcamPopout())
-
-
 ipcMain.handle("isMac", () => { return process.platform == "darwin" })
 ipcMain.on('close', () => {closeWithBackend()})
 ipcMain.on('minimise', () => {getWindow()?.minimize()})
@@ -218,27 +145,8 @@ function createWindow() {
     frame: false,
   })
 
-  // Create webcam window keep it hidden to avoid delay between popping out windows
-  webcamPopoutWin = new BrowserWindow({
-    width: 400,
-    height: 300,
-    frame: false,
-    alwaysOnTop: true,
-    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
-    show: false,
-    title: "Webcam",
-    webPreferences: {
-      nodeIntegration: true,
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true
-    },
-    fullscreen: false,
-    fullscreenable: false,
-  });
-
-
-  // We load the webcam route here to prevent having to load the page on popout
-  loadWebcam();
+  registerWebcamIPC(win);
+  setupWebcamWindow();
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -395,10 +303,10 @@ function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
-    webcamPopoutWin?.close()
-    webcamPopoutWin = null
+    destroyWebcamWindow();
   }
-
+  console.log("Destroying webcam window")
+  destroyWebcamWindow();
   console.log('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
@@ -416,7 +324,7 @@ app.on('before-quit', () => {
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
   }
-  webcamPopoutWin?.close();
+  destroyWebcamWindow();
 });
 
 app.on('activate', () => {

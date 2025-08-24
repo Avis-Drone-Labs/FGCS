@@ -25,9 +25,18 @@ import {
 // socket factory
 import SocketFactory from "../../helpers/socket"
 import {
-  queueErrorNotification,
-  queueNotification,
-} from "../slices/notificationSlice"
+  setAttitudeData,
+  setBatteryData,
+  setDroneAircraftType,
+  setExtraData,
+  setGpsData,
+  setGpsRawIntData,
+  setHeartbeatData,
+  setNavControllerOutput,
+  setOnboardControlSensorsEnabled,
+  setRSSIData,
+  setTelemetryData,
+} from "../slices/droneInfoSlice"
 import {
   addIdToItem,
   setCurrentMission,
@@ -43,18 +52,9 @@ import {
   updateHomePositionBasedOnWaypoints,
 } from "../slices/missionSlice"
 import {
-  setDroneAircraftType,
-  setTelemetryData,
-  setAttitudeData,
-  setGpsData,
-  setNavControllerOutput,
-  setHeartbeatData,
-  setGpsRawIntData,
-  setBatteryData,
-  setOnboardControlSensorsEnabled,
-  setRSSIData,
-  setExtraData,
-} from "../slices/droneInfoSlice"
+  queueErrorNotification,
+  queueNotification,
+} from "../slices/notificationSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 
 const SocketEvents = Object.freeze({
@@ -303,6 +303,7 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
+                console.log("update home current mission")
                 updateHomePositionBasedOnWaypoints(missionItemsWithIds)
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
@@ -386,7 +387,7 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-
+                console.log("update home import mission")
                 updateHomePositionBasedOnWaypoints(missionItemsWithIds)
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(

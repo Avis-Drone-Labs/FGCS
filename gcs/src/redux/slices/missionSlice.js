@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { socket } from "../../helpers/socket"
 import { v4 as uuidv4 } from "uuid"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
+import { socket } from "../../helpers/socket"
 
 const missionInfoSlice = createSlice({
   name: "missionInfo",
@@ -71,25 +71,61 @@ const missionInfoSlice = createSlice({
       if (action.payload === state.drawingItems.missionItems) return
       state.drawingItems.missionItems = action.payload
     },
-    setDrawingMissionItem: (state, action) => {
-      const index = state.drawingItems.missionItems.findIndex(i => i.id === action.payload.id);
+    updateDrawingMissionItem: (state, action) => {
+      const index = state.drawingItems.missionItems.findIndex(
+        (i) => i.id === action.payload.id,
+      )
 
-      if (index === -1) return;
+      if (index === -1) return
 
-      const currentItem = state.drawingItems.missionItems[index];
+      const currentItem = state.drawingItems.missionItems[index]
 
+      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return
 
-      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return;
-
-      state.drawingItems.missionItems[index] = {...currentItem, ...action.payload};
+      state.drawingItems.missionItems[index] = {
+        ...currentItem,
+        ...action.payload,
+      }
     },
     setDrawingFenceItems: (state, action) => {
       if (action.payload === state.drawingItems.fenceItems) return
       state.drawingItems.fenceItems = action.payload
     },
+    updateDrawingFenceItem: (state, action) => {
+      const index = state.drawingItems.fenceItems.findIndex(
+        (i) => i.id === action.payload.id,
+      )
+
+      if (index === -1) return
+
+      const currentItem = state.drawingItems.fenceItems[index]
+
+      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return
+
+      state.drawingItems.fenceItems[index] = {
+        ...currentItem,
+        ...action.payload,
+      }
+    },
     setDrawingRallyItems: (state, action) => {
       if (action.payload === state.drawingItems.rallyItems) return
       state.drawingItems.rallyItems = action.payload
+    },
+    updateDrawingRallyItem: (state, action) => {
+      const index = state.drawingItems.rallyItems.findIndex(
+        (i) => i.id === action.payload.id,
+      )
+
+      if (index === -1) return
+
+      const currentItem = state.drawingItems.rallyItems[index]
+
+      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return
+
+      state.drawingItems.rallyItems[index] = {
+        ...currentItem,
+        ...action.payload,
+      }
     },
     setUnwrittenChanges: (state, action) => {
       if (action.payload === state.unwrittenChanges) return
@@ -189,7 +225,9 @@ export const {
   setHomePosition,
   setTargetInfo,
   setDrawingMissionItems,
-  setDrawingMissionItem,
+  updateDrawingMissionItem,
+  updateDrawingFenceItem,
+  updateDrawingRallyItem,
   setDrawingFenceItems,
   setDrawingRallyItems,
   setUnwrittenChanges,

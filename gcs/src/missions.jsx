@@ -70,13 +70,15 @@ import {
   selectUnwrittenChanges,
   setActiveTab,
   setDrawingFenceItems,
-  setDrawingMissionItem,
   setDrawingMissionItems,
   setDrawingRallyItems,
   setHomePosition,
   setMissionProgressData,
   setMissionProgressModal,
   setUnwrittenChanges,
+  updateDrawingFenceItem,
+  updateDrawingMissionItem,
+  updateDrawingRallyItem,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -211,7 +213,6 @@ export default function Missions() {
 
       dispatch(setDrawingMissionItems([...missionItems, newMissionItem]))
     } else if (activeTabRef.current === "fence") {
-      console.log("fence?", fenceItems)
       newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
@@ -274,38 +275,12 @@ export default function Missions() {
   }
 
   function updateMissionItem(updatedMissionItem) {
-    function getUpdatedItems(prevItems) {
-      return prevItems.map((item) =>
-        item.id === updatedMissionItem.id
-          ? { ...item, ...updatedMissionItem }
-          : item,
-      )
-    }
-
-    function isEqualItem(newItem, itemsList) {
-      return (
-        JSON.stringify(itemsList.find((item) => item.id === newItem.id)) ===
-        JSON.stringify(newItem)
-      )
-    }
-
-    // Check if the updated mission item is equal to the current mission item
-    // if so, don't update
-
     if (activeTabRef.current === "mission") {
-      dispatch(setDrawingMissionItem(updatedMissionItem))
+      dispatch(updateDrawingMissionItem(updatedMissionItem))
     } else if (activeTabRef.current === "fence") {
-      if (isEqualItem(updatedMissionItem, fenceItems)) {
-        return
-      }
-
-      dispatch(setDrawingFenceItems(getUpdatedItems(fenceItems)))
+      dispatch(updateDrawingFenceItem(updatedMissionItem))
     } else if (activeTabRef.current === "rally") {
-      if (isEqualItem(updatedMissionItem, rallyItems)) {
-        return
-      }
-
-      dispatch(setDrawingRallyItems(getUpdatedItems(rallyItems)))
+      dispatch(updateDrawingRallyItem(updatedMissionItem))
     } else {
       return
     }
@@ -371,8 +346,11 @@ export default function Missions() {
       updatedItems[newIndex] = temp
 
       // Update the seq values
-      updatedItems[currentIndex].seq = currentIndex
-      updatedItems[newIndex].seq = newIndex
+      updatedItems[currentIndex] = {
+        ...updatedItems[currentIndex],
+        seq: currentIndex,
+      }
+      updatedItems[newIndex] = { ...updatedItems[newIndex], seq: newIndex }
 
       return updatedItems
     }
@@ -518,9 +496,7 @@ export default function Missions() {
         mission_type: 0,
         mavpackettype: "MISSION_ITEM_INT",
       }
-      dispatch(
-        setDrawingMissionItems([newHomeMissionItem, ...missionItems])
-      )
+      dispatch(setDrawingMissionItems([newHomeMissionItem, ...missionItems]))
     }
 
     dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))

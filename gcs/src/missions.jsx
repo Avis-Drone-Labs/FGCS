@@ -3,10 +3,10 @@
 */
 
 // Base imports
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { useDisclosure, useSessionStorage } from "@mantine/hooks"
+import { useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
@@ -33,24 +33,54 @@ import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "./helpers/filterMissions"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
-  MAV_AUTOPILOT_INVALID,
   MAV_FRAME_LIST,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "./helpers/mavlinkConstants"
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification"
-import { socket } from "./helpers/socket"
 
 // Redux
-import { useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
-import { selectAircraftType } from "./redux/slices/droneInfoSlice"
+import { useDispatch, useSelector } from "react-redux"
+import {
+  emitGetHomePosition,
+  selectConnectedToDrone,
+} from "./redux/slices/droneConnectionSlice"
+import {
+  selectAircraftType,
+  selectGPS,
+  selectHeartbeat,
+  selectNavController,
+} from "./redux/slices/droneInfoSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
+import {
+  emitExportMissionToFile,
+  emitGetCurrentMission,
+  emitGetTargetInfo,
+  emitImportMissionFromFile,
+  emitWriteCurrentMission,
+  selectActiveTab,
+  selectDrawingFenceItems,
+  selectDrawingMissionItems,
+  selectDrawingRallyItems,
+  selectHomePosition,
+  selectMissionProgressData,
+  selectMissionProgressModal,
+  selectTargetInfo,
+  selectUnwrittenChanges,
+  setActiveTab,
+  setDrawingFenceItems,
+  setDrawingMissionItems,
+  setDrawingRallyItems,
+  setHomePosition,
+  setMissionProgressData,
+  setMissionProgressModal,
+  setUnwrittenChanges,
+  updateDrawingFenceItem,
+  updateDrawingMissionItem,
+  updateDrawingRallyItem,
+} from "./redux/slices/missionSlice"
+import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -73,219 +103,50 @@ function UnwrittenChangesWarning({ unwrittenChanges }) {
 
 export default function Missions() {
   // Redux
+  const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const aircraftType = useSelector(selectAircraftType)
+  const heartbeatData = useSelector(selectHeartbeat)
+  const gpsData = useSelector(selectGPS)
+  const navControllerOutputData = useSelector(selectNavController)
+  const targetInfo = useSelector(selectTargetInfo)
+  const homePosition = useSelector(selectHomePosition)
+  const activeTab = useSelector(selectActiveTab)
 
+  // Mission items
+  const missionItems = useSelector(selectDrawingMissionItems)
+  const fenceItems = useSelector(selectDrawingFenceItems)
+  const rallyItems = useSelector(selectDrawingRallyItems)
+  const unwrittenChanges = useSelector(selectUnwrittenChanges)
+  const missionProgressModalOpened = useSelector(selectMissionProgressModal)
+  const missionProgressModalData = useSelector(selectMissionProgressData)
+
+  // Other states
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
     key: "showWarningBanner",
     defaultValue: true,
   })
 
-  const [activeTab, setActiveTab] = useState("mission")
-
   // Need to keep a reference to the active tab to avoid stale closures
   const activeTabRef = useRef(activeTab)
-
-  const [unwrittenChanges, setUnwrittenChanges] = useSessionStorage({
-    key: "unwrittenChanges",
-    defaultValue: {
-      mission: false,
-      fence: false,
-      rally: false,
-    },
-  })
-
-  // Mission data
-  const [missionItems, setMissionItems] = useSessionStorage({
-    key: "missionItems",
-    defaultValue: [],
-  })
-  const [fenceItems, setFenceItems] = useSessionStorage({
-    key: "fenceItems",
-    defaultValue: [],
-  })
-  const [rallyItems, setRallyItems] = useSessionStorage({
-    key: "rallyItems",
-    defaultValue: [],
-  })
-  const [homePosition, setHomePosition] = useSessionStorage({
-    key: "homePosition",
-    defaultValue: null,
-  })
-  const [targetInfo, setTargetInfo] = useSessionStorage({
-    key: "targetInfo",
-    defaultValue: { target_component: 0, target_system: 255 },
-  })
 
   // File import handling
   const [importFile, setImportFile] = useState(null)
   const importFileResetRef = useRef(null)
 
   // Modal for mission progress
-  const [
-    missionProgressModalOpened,
-    { open: openMissionProgressModal, close: closeMissionProgressModal },
-  ] = useDisclosure(false)
   const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
     "Mission progress update",
   )
-  const [missionProgressModalData, setMissionProgressModalData] = useState({})
-
-  // Drone data
-  const [heartbeatData, setHeartbeatData] = useState({ system_status: 0 })
-  const [gpsData, setGpsData] = useState({})
-  const [navControllerOutputData, setNavControllerOutputData] = useState({})
-
+  const [currentPage] = useSessionStorage({ key: "currentPage" })
   const mapRef = useRef()
-
   const newMissionItemAltitude = 30 // TODO: Make this configurable
 
-  const incomingMessageHandler = useCallback(
-    () => ({
-      GLOBAL_POSITION_INT: (msg) => setGpsData(msg),
-      NAV_CONTROLLER_OUTPUT: (msg) => setNavControllerOutputData(msg),
-      HEARTBEAT: (msg) => {
-        if (msg.autopilot !== MAV_AUTOPILOT_INVALID) {
-          setHeartbeatData(msg)
-        }
-      },
-    }),
-    [],
-  )
-
+  // Send some messages when file is loaded
   useEffect(() => {
-    if (!connected) {
-      return
-    } else {
-      socket.emit("get_home_position")
-      socket.emit("get_target_info")
-    }
-
-    socket.on("incoming_msg", (msg) => {
-      if (incomingMessageHandler()[msg.mavpackettype] !== undefined) {
-        incomingMessageHandler()[msg.mavpackettype](msg)
-      }
-    })
-
-    socket.on("home_position_result", (data) => {
-      if (data.success) {
-        setHomePosition(data.data)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("target_info", (data) => {
-      if (data) {
-        setTargetInfo(data)
-      }
-    })
-
-    socket.on("current_mission", (data) => {
-      closeMissionProgressModal()
-
-      if (!data.success) {
-        showErrorNotification(data.message)
-        return
-      }
-
-      if (data.mission_type === "mission") {
-        const missionItemsWithIds = []
-        for (let missionItem of data.items) {
-          missionItemsWithIds.push(addIdToItem(missionItem))
-        }
-        updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-        setMissionItems(missionItemsWithIds)
-        setUnwrittenChanges((prev) => ({ ...prev, mission: false }))
-      } else if (data.mission_type === "fence") {
-        const fenceItemsWithIds = []
-        for (let fence of data.items) {
-          fenceItemsWithIds.push(addIdToItem(fence))
-        }
-        setFenceItems(fenceItemsWithIds)
-        setUnwrittenChanges((prev) => ({ ...prev, fence: false }))
-      } else if (data.mission_type === "rally") {
-        const rallyItemsWithIds = []
-        for (let rallyItem of data.items) {
-          rallyItemsWithIds.push(addIdToItem(rallyItem))
-        }
-        setRallyItems(rallyItemsWithIds)
-        setUnwrittenChanges((prev) => ({ ...prev, rally: false }))
-      }
-
-      showSuccessNotification(`${data.mission_type} read successfully`)
-    })
-
-    socket.on("write_mission_result", (data) => {
-      closeMissionProgressModal()
-
-      if (data.success) {
-        showSuccessNotification(data.message)
-        setUnwrittenChanges((prev) => ({
-          ...prev,
-          [activeTabRef.current]: false,
-        }))
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("import_mission_result", (data) => {
-      if (data.success) {
-        if (data.mission_type === "mission") {
-          const missionItemsWithIds = []
-          for (let missionItem of data.items) {
-            missionItemsWithIds.push(addIdToItem(missionItem))
-          }
-
-          updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-          setMissionItems(missionItemsWithIds)
-          setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
-        } else if (data.mission_type === "fence") {
-          const fenceItemsWithIds = []
-          for (let fence of data.items) {
-            fenceItemsWithIds.push(addIdToItem(fence))
-          }
-          setFenceItems(fenceItemsWithIds)
-          setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
-        } else if (data.mission_type === "rally") {
-          const rallyItemsWithIds = []
-          for (let rallyItem of data.items) {
-            rallyItemsWithIds.push(addIdToItem(rallyItem))
-          }
-
-          setRallyItems(rallyItemsWithIds)
-          setUnwrittenChanges((prev) => ({ ...prev, rally: true }))
-        }
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("export_mission_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-    })
-
-    socket.on("current_mission_progress", (data) => {
-      setMissionProgressModalData(data)
-    })
-
-    return () => {
-      socket.off("incoming_msg")
-      socket.off("home_position_result")
-      socket.off("target_info")
-      socket.off("current_mission")
-      socket.off("write_mission_result")
-      socket.off("import_mission_result")
-      socket.off("export_mission_result")
-      socket.off("current_mission_progress")
-    }
-  }, [connected])
+    dispatch(emitGetHomePosition())
+    dispatch(emitGetTargetInfo())
+  }, [currentPage])
 
   useEffect(() => {
     if (importFile) {
@@ -298,40 +159,22 @@ export default function Missions() {
   }, [activeTab])
 
   function resetMissionProgressModalData() {
-    setMissionProgressModalData({
-      message: "",
-      progress: null,
-    })
-  }
-
-  function updateHomePositionBasedOnWaypoints(waypoints) {
-    if (waypoints.length > 0) {
-      const potentialHomeLocation = waypoints[0]
-      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-        setHomePosition({
-          lat: potentialHomeLocation.x,
-          lon: potentialHomeLocation.y,
-          alt: potentialHomeLocation.z,
-        })
-      }
-    }
+    dispatch(
+      setMissionProgressData({
+        message: "",
+        progress: null,
+      }),
+    )
   }
 
   function getFlightMode() {
     if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
+      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.customMode]
     } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.custom_mode]
+      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.customMode]
     }
 
     return "UNKNOWN"
-  }
-
-  function addIdToItem(missionItem) {
-    if (!missionItem.id) {
-      missionItem.id = uuidv4()
-    }
-    return missionItem
   }
 
   function addNewMissionItem(lat, lon) {
@@ -368,30 +211,32 @@ export default function Missions() {
       newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
       newMissionItem.mission_type = 0 // Mission type
 
-      setMissionItems((prevItems) => [...prevItems, newMissionItem])
+      dispatch(setDrawingMissionItems([...missionItems, newMissionItem]))
     } else if (activeTabRef.current === "fence") {
       newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
-      setFenceItems((prevItems) => [...prevItems, newMissionItem])
+      dispatch(setDrawingFenceItems([...fenceItems, newMissionItem]))
     } else if (activeTabRef.current === "rally") {
       newMissionItem.seq = rallyItems.length
       newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
       newMissionItem.mission_type = 2 // Rally type
 
-      setRallyItems((prevItems) => [...prevItems, newMissionItem])
+      dispatch(setDrawingRallyItems([...rallyItems, newMissionItem]))
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
-      [activeTabRef.current]: true,
-    }))
+    dispatch(
+      setUnwrittenChanges({
+        ...unwrittenChanges,
+        [activeTabRef.current]: true,
+      }),
+    )
   }
 
   function createHomePositionItem() {
     if (!homePosition) {
-      showErrorNotification("Home position is not set")
+      dispatch(queueErrorNotification("Home position is not set"))
       return
     }
 
@@ -430,50 +275,22 @@ export default function Missions() {
   }
 
   function updateMissionItem(updatedMissionItem) {
-    function getUpdatedItems(prevItems) {
-      return prevItems.map((item) =>
-        item.id === updatedMissionItem.id
-          ? { ...item, ...updatedMissionItem }
-          : item,
-      )
-    }
-
-    function isEqualItem(newItem, itemsList) {
-      return (
-        JSON.stringify(itemsList.find((item) => item.id === newItem.id)) ===
-        JSON.stringify(newItem)
-      )
-    }
-
-    // Check if the updated mission item is equal to the current mission item
-    // if so, don't update
-
     if (activeTabRef.current === "mission") {
-      if (isEqualItem(updatedMissionItem, missionItems)) {
-        return
-      }
-
-      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(updateDrawingMissionItem(updatedMissionItem))
     } else if (activeTabRef.current === "fence") {
-      if (isEqualItem(updatedMissionItem, fenceItems)) {
-        return
-      }
-
-      setFenceItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(updateDrawingFenceItem(updatedMissionItem))
     } else if (activeTabRef.current === "rally") {
-      if (isEqualItem(updatedMissionItem, rallyItems)) {
-        return
-      }
-
-      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(updateDrawingRallyItem(updatedMissionItem))
     } else {
       return
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
-      [activeTabRef.current]: true,
-    }))
+    dispatch(
+      setUnwrittenChanges({
+        ...unwrittenChanges,
+        [activeTabRef.current]: true,
+      }),
+    )
   }
 
   function deleteMissionItem(missionItemId) {
@@ -487,17 +304,19 @@ export default function Missions() {
     }
 
     if (activeTabRef.current === "mission") {
-      setMissionItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingMissionItems(getUpdatedItems(missionItems)))
     } else if (activeTabRef.current === "fence") {
-      setFenceItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingFenceItems(getUpdatedItems(fenceItems)))
     } else if (activeTabRef.current === "rally") {
-      setRallyItems((prevItems) => getUpdatedItems(prevItems))
+      dispatch(setDrawingRallyItems(getUpdatedItems(rallyItems)))
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
-      [activeTabRef.current]: true,
-    }))
+    dispatch(
+      setUnwrittenChanges({
+        ...unwrittenChanges,
+        [activeTabRef.current]: true,
+      }),
+    )
   }
 
   function updateMissionItemOrder(missionItemId, indexIncrement) {
@@ -527,49 +346,53 @@ export default function Missions() {
       updatedItems[newIndex] = temp
 
       // Update the seq values
-      updatedItems[currentIndex].seq = currentIndex
-      updatedItems[newIndex].seq = newIndex
+      updatedItems[currentIndex] = {
+        ...updatedItems[currentIndex],
+        seq: currentIndex,
+      }
+      updatedItems[newIndex] = { ...updatedItems[newIndex], seq: newIndex }
 
       return updatedItems
     }
 
     if (activeTabRef.current === "mission") {
-      setMissionItems((prevItems) => updateItemOrder(prevItems))
-      setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
+      dispatch(setDrawingMissionItems(updateItemOrder(missionItems)))
+      dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
     } else if (activeTabRef.current === "fence") {
-      setFenceItems((prevItems) => updateItemOrder(prevItems))
-      setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
+      dispatch(setDrawingFenceItems(updateItemOrder(fenceItems)))
+      dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
     }
   }
 
   function readMissionFromDrone() {
-    socket.emit("get_current_mission", { type: activeTabRef.current })
+    dispatch(emitGetCurrentMission())
     setMissionProgressModalTitle(`Reading ${activeTabRef.current} from drone`)
     resetMissionProgressModalData()
-    openMissionProgressModal()
+    dispatch(setMissionProgressModal(true))
   }
 
   function writeMissionToDrone() {
     if (activeTabRef.current === "mission") {
-      socket.emit("write_current_mission", {
-        type: "mission",
-        items: missionItems,
-      })
+      dispatch(
+        emitWriteCurrentMission({ type: "mission", items: missionItems }),
+      )
     } else if (activeTabRef.current === "fence") {
-      socket.emit("write_current_mission", { type: "fence", items: fenceItems })
+      dispatch(emitWriteCurrentMission({ type: "fence", items: fenceItems }))
     } else if (activeTabRef.current === "rally") {
-      socket.emit("write_current_mission", { type: "rally", items: rallyItems })
+      dispatch(emitWriteCurrentMission({ type: "rally", items: rallyItems }))
     }
     setMissionProgressModalTitle(`Writing ${activeTabRef.current} to drone`)
     resetMissionProgressModalData()
-    openMissionProgressModal()
+    dispatch(setMissionProgressModal(true))
   }
 
   function importMissionFromFile(filePath) {
-    socket.emit("import_mission_from_file", {
-      type: activeTabRef.current,
-      file_path: filePath,
-    })
+    dispatch(
+      emitImportMissionFromFile({
+        type: activeTabRef.current,
+        file_path: filePath,
+      }),
+    )
 
     // Reset the import file after sending
     setImportFile(null)
@@ -620,11 +443,13 @@ export default function Missions() {
         }))
       }
 
-      socket.emit("export_mission_to_file", {
-        type: activeTabRef.current,
-        file_path: result.filePath,
-        items: items,
-      })
+      dispatch(
+        emitExportMissionToFile({
+          type: activeTabRef.current,
+          file_path: result.filePath,
+          items: items,
+        }),
+      )
     }
   }
 
@@ -634,7 +459,7 @@ export default function Missions() {
       lon: Number.isInteger(lon) ? lon : coordToInt(lon),
       alt: 0.1,
     }
-    setHomePosition(newHomePosition)
+    dispatch(setHomePosition(newHomePosition))
 
     // Also update the first waypoint if it is a home position waypoint
     if (missionItems.length > 0 && isGlobalFrameHomeCommand(missionItems[0])) {
@@ -645,7 +470,7 @@ export default function Missions() {
         x: newHomePosition.lat,
         y: newHomePosition.lon,
       }
-      setMissionItems(updatedMissionItems)
+      dispatch(setDrawingMissionItems(updatedMissionItems))
     } else {
       // If the first item is not a home position command, add a new home position item
       const newHomeMissionItem = {
@@ -671,10 +496,10 @@ export default function Missions() {
         mission_type: 0,
         mavpackettype: "MISSION_ITEM_INT",
       }
-      setMissionItems((prevItems) => [newHomeMissionItem, ...prevItems])
+      dispatch(setDrawingMissionItems([newHomeMissionItem, ...missionItems]))
     }
 
-    setUnwrittenChanges((prev) => ({ ...prev, mission: true }))
+    dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
   }
 
   function clearMissionItems() {
@@ -684,20 +509,22 @@ export default function Missions() {
         missionItems.length > 0 &&
         isGlobalFrameHomeCommand(missionItems[0])
       ) {
-        setMissionItems([missionItems[0]])
+        dispatch(setDrawingMissionItems([missionItems[0]]))
       } else {
-        setMissionItems([])
+        dispatch(setDrawingMissionItems([]))
       }
     } else if (activeTabRef.current === "fence") {
-      setFenceItems([])
+      dispatch(setDrawingFenceItems([]))
     } else if (activeTabRef.current === "rally") {
-      setRallyItems([])
+      dispatch(setDrawingRallyItems([]))
     }
 
-    setUnwrittenChanges((prev) => ({
-      ...prev,
-      [activeTabRef.current]: true,
-    }))
+    dispatch(
+      setUnwrittenChanges({
+        ...unwrittenChanges,
+        [activeTabRef.current]: true,
+      }),
+    )
   }
 
   function addFencePolygon(newFenceItems) {
@@ -734,15 +561,15 @@ export default function Missions() {
       return newFenceMissionItem
     })
 
-    setFenceItems((prevItems) => [...prevItems, ...newFenceMissionItems])
-    setUnwrittenChanges((prev) => ({ ...prev, fence: true }))
+    dispatch(setDrawingFenceItems([...fenceItems, ...newFenceMissionItems]))
+    dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
   }
 
   return (
     <Layout currentPage="missions">
       <Modal
         opened={missionProgressModalOpened}
-        onClose={closeMissionProgressModal}
+        onClose={() => dispatch(setMissionProgressModal(false))}
         title={missionProgressModalTitle}
         closeOnClickOutside={false}
         closeOnEscape={false}
@@ -931,7 +758,7 @@ export default function Missions() {
               >
                 <Tabs
                   value={activeTab}
-                  onChange={setActiveTab}
+                  onChange={(value) => dispatch(setActiveTab(value))}
                   className="mt-2"
                 >
                   <Tabs.List grow>

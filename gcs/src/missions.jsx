@@ -47,6 +47,9 @@ import {
   appendDrawingFenceItem,
   appendDrawingMissionItem,
   appendDrawingRallyItem,
+  deleteDrawingFenceItem,
+  deleteDrawingMissionItem,
+  deleteDrawingRallyItem,
   emitExportMissionToFile,
   emitGetCurrentMission,
   emitGetTargetInfo,
@@ -186,19 +189,16 @@ export default function Missions() {
     }
 
     if (activeTabRef.current === "mission") {
-      newMissionItem.seq = missionItems.length
       newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
       newMissionItem.mission_type = 0 // Mission type
 
       dispatch(appendDrawingMissionItem(newMissionItem))
     } else if (activeTabRef.current === "fence") {
-      newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
       dispatch(appendDrawingFenceItem(newMissionItem))
     } else if (activeTabRef.current === "rally") {
-      newMissionItem.seq = rallyItems.length
       newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
       newMissionItem.mission_type = 2 // Rally type
 
@@ -273,21 +273,12 @@ export default function Missions() {
   }
 
   function deleteMissionItem(missionItemId) {
-    function getUpdatedItems(prevItems) {
-      const updatedItems = prevItems.filter((item) => item.id !== missionItemId)
-
-      return updatedItems.map((item, index) => ({
-        ...item,
-        seq: index, // Reassign seq based on the new order
-      }))
-    }
-
     if (activeTabRef.current === "mission") {
-      dispatch(setDrawingMissionItems(getUpdatedItems(missionItems)))
+      dispatch(deleteDrawingMissionItem(missionItemId))
     } else if (activeTabRef.current === "fence") {
-      dispatch(setDrawingFenceItems(getUpdatedItems(fenceItems)))
+      dispatch(deleteDrawingFenceItem(missionItemId))
     } else if (activeTabRef.current === "rally") {
-      dispatch(setDrawingRallyItems(getUpdatedItems(rallyItems)))
+      dispatch(deleteDrawingRallyItem(missionItemId))
     }
 
     dispatch(
@@ -702,11 +693,9 @@ export default function Missions() {
               <div className="flex-1 relative">
                 <MissionsMapSection
                   passedRef={mapRef}
-                  missionItems={{
-                    mission_items: missionItems,
-                    fence_items: fenceItems,
-                    rally_items: rallyItems,
-                  }}
+                  missionItems={missionItems}
+                  fenceItems={fenceItems}
+                  rallyItems={rallyItems}
                   markerDragEndCallback={updateMissionItem}
                   addNewMissionItem={addNewMissionItem}
                   updateMissionHomePosition={updateMissionHomePosition}

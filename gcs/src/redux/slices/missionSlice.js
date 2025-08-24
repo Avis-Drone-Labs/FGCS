@@ -88,7 +88,19 @@ const missionInfoSlice = createSlice({
       }
     },
     appendDrawingMissionItem: (state, action) => {
-      state.drawingItems.missionItems.push(action.payload)
+      state.drawingItems.missionItems.push({
+        ...action.payload,
+        seq: state.drawingItems.missionItems.length,
+      })
+    },
+    deleteDrawingMissionItem: (state, action) => {
+      const updatedItems = state.drawingItems.missionItems.filter(
+        (item) => item.id !== action.payload,
+      )
+      state.drawingItems.missionItems = updatedItems.map((item, index) => ({
+        ...item,
+        seq: index, // Reassign seq based on the new order
+      }))
     },
     setDrawingFenceItems: (state, action) => {
       if (action.payload === state.drawingItems.fenceItems) return
@@ -111,7 +123,19 @@ const missionInfoSlice = createSlice({
       }
     },
     appendDrawingFenceItem: (state, action) => {
-      state.drawingItems.fenceItems.push(action.payload)
+      state.drawingItems.fenceItems.push({
+        ...action.payload,
+        seq: state.drawingItems.fenceItems.length,
+      })
+    },
+    deleteDrawingFenceItem: (state, action) => {
+      const updatedItems = state.drawingItems.fenceItems.filter(
+        (item) => item.id !== action.payload,
+      )
+      state.drawingItems.fenceItems = updatedItems.map((item, index) => ({
+        ...item,
+        seq: index, // Reassign seq based on the new order
+      }))
     },
     setDrawingRallyItems: (state, action) => {
       if (action.payload === state.drawingItems.rallyItems) return
@@ -134,7 +158,19 @@ const missionInfoSlice = createSlice({
       }
     },
     appendDrawingRallyItem: (state, action) => {
-      state.drawingItems.rallyItems.push(action.payload)
+      state.drawingItems.rallyItems.push({
+        ...action.payload,
+        seq: state.drawingItems.rallyItems.length,
+      })
+    },
+    deleteDrawingRallyItem: (state, action) => {
+      const updatedItems = state.drawingItems.rallyItems.filter(
+        (item) => item.id !== action.payload,
+      )
+      state.drawingItems.rallyItems = updatedItems.map((item, index) => ({
+        ...item,
+        seq: index, // Reassign seq based on the new order
+      }))
     },
     setUnwrittenChanges: (state, action) => {
       if (action.payload === state.unwrittenChanges) return
@@ -242,6 +278,9 @@ export const {
   appendDrawingMissionItem,
   appendDrawingFenceItem,
   appendDrawingRallyItem,
+  deleteDrawingMissionItem,
+  deleteDrawingFenceItem,
+  deleteDrawingRallyItem,
   setUnwrittenChanges,
   setMissionProgressModal,
   setActiveTab,

@@ -63,6 +63,8 @@ const coordsFractionDigits = 7
 function MapSectionNonMemo({
   passedRef,
   missionItems,
+  fenceItems,
+  rallyItems,
   onDragstart,
   markerDragEndCallback,
   addNewMissionItem,
@@ -103,9 +105,6 @@ function MapSectionNonMemo({
   })
   const previousHomePositionValue = usePrevious(homePosition)
 
-  const [missionItemsList, setMissionItemsList] = useState(
-    missionItems.mission_items,
-  )
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
@@ -142,11 +141,7 @@ function MapSectionNonMemo({
   }, [gpsData])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItemsList))
-  }, [missionItemsList])
-
-  useEffect(() => {
-    setMissionItemsList(missionItems.mission_items)
+    setFilteredMissionItems(filterMissionItems(missionItems))
   }, [missionItems])
 
   useEffect(() => {
@@ -349,19 +344,19 @@ function MapSectionNonMemo({
         />
 
         <MissionItems
-          missionItems={missionItemsList}
+          missionItems={missionItems}
           editable={currentTab === "mission"}
           dragEndCallback={markerDragEndCallback}
         />
 
         <FenceItems
-          fenceItems={missionItems.fence_items}
+          fenceItems={fenceItems}
           editable={currentTab === "fence"}
           dragEndCallback={markerDragEndCallback}
         />
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}

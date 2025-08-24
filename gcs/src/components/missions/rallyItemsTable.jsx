@@ -3,13 +3,13 @@
 */
 import { Table } from "@mantine/core"
 import React from "react"
+import { useSelector } from "react-redux"
+import { selectDrawingRallyItems } from "../../redux/slices/missionSlice"
 import RallyItemsTableRow from "./rallyItemsTableRow"
 
-function RallyItemsTableNonMemo({
-  rallyItems,
-  updateRallyItem,
-  deleteRallyItem,
-}) {
+function RallyItemsTableNonMemo({ updateRallyItem, deleteRallyItem }) {
+  const rallyItems = useSelector(selectDrawingRallyItems)
+
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>

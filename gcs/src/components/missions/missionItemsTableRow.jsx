@@ -21,15 +21,20 @@ import {
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
+
 const coordsFractionDigits = 9
 
 export default function MissionItemsTableRow({
-  aircraftType,
   missionItem,
   updateMissionItem,
   deleteMissionItem,
   updateMissionItemOrder,
 }) {
+  const aircraftType = useSelector(selectAircraftType)
+
   const [missionItemData, setMissionItemData] = useState(missionItem)
 
   useEffect(() => {

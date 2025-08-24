@@ -6,12 +6,17 @@ import { Table } from "@mantine/core"
 import React from "react"
 import FenceItemsTableRow from "./fenceItemsTableRow"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectDrawingFenceItems } from "../../redux/slices/missionSlice"
+
 function FenceItemsTableNonMemo({
-  fenceItems,
   updateMissionItem,
   deleteMissionItem,
   updateMissionItemOrder,
 }) {
+  const fenceItems = useSelector(selectDrawingFenceItems)
+
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>

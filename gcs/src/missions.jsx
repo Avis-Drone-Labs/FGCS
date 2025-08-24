@@ -31,11 +31,7 @@ import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
 import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "./helpers/filterMissions"
-import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
-  MAV_FRAME_LIST,
-  PLANE_MODES_FLIGHT_MODE_MAP,
-} from "./helpers/mavlinkConstants"
+import { MAV_FRAME_LIST } from "./helpers/mavlinkConstants"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -43,17 +39,14 @@ import {
   emitGetHomePosition,
   selectConnectedToDrone,
 } from "./redux/slices/droneConnectionSlice"
-import {
-  selectAircraftType,
-  selectGPS,
-  selectHeartbeat,
-  selectNavController,
-} from "./redux/slices/droneInfoSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
 import {
+  appendDrawingFenceItem,
+  appendDrawingMissionItem,
+  appendDrawingRallyItem,
   emitExportMissionToFile,
   emitGetCurrentMission,
   emitGetTargetInfo,
@@ -105,10 +98,6 @@ export default function Missions() {
   // Redux
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const aircraftType = useSelector(selectAircraftType)
-  const heartbeatData = useSelector(selectHeartbeat)
-  const gpsData = useSelector(selectGPS)
-  const navControllerOutputData = useSelector(selectNavController)
   const targetInfo = useSelector(selectTargetInfo)
   const homePosition = useSelector(selectHomePosition)
   const activeTab = useSelector(selectActiveTab)
@@ -167,16 +156,6 @@ export default function Missions() {
     )
   }
 
-  function getFlightMode() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[heartbeatData.customMode]
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[heartbeatData.customMode]
-    }
-
-    return "UNKNOWN"
-  }
-
   function addNewMissionItem(lat, lon) {
     const newMissionItem = {
       id: uuidv4(),
@@ -211,19 +190,19 @@ export default function Missions() {
       newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
       newMissionItem.mission_type = 0 // Mission type
 
-      dispatch(setDrawingMissionItems([...missionItems, newMissionItem]))
+      dispatch(appendDrawingMissionItem(newMissionItem))
     } else if (activeTabRef.current === "fence") {
       newMissionItem.seq = fenceItems.length
       newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
       newMissionItem.mission_type = 1 // Fence type
 
-      dispatch(setDrawingFenceItems([...fenceItems, newMissionItem]))
+      dispatch(appendDrawingFenceItem(newMissionItem))
     } else if (activeTabRef.current === "rally") {
       newMissionItem.seq = rallyItems.length
       newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
       newMissionItem.mission_type = 2 // Rally type
 
-      dispatch(setDrawingRallyItems([...rallyItems, newMissionItem]))
+      dispatch(appendDrawingRallyItem(newMissionItem))
     }
 
     dispatch(
@@ -712,7 +691,7 @@ export default function Missions() {
                 <Divider className="my-1" />
 
                 <div className="flex flex-col gap-2">
-                  <MissionStatistics missionItems={missionItems} />
+                  <MissionStatistics />
                 </div>
               </div>
             </ResizableBox>
@@ -723,23 +702,16 @@ export default function Missions() {
               <div className="flex-1 relative">
                 <MissionsMapSection
                   passedRef={mapRef}
-                  data={gpsData}
-                  heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-                  desiredBearing={navControllerOutputData.nav_bearing}
                   missionItems={{
                     mission_items: missionItems,
                     fence_items: fenceItems,
                     rally_items: rallyItems,
                   }}
-                  homePosition={homePosition}
-                  getFlightMode={getFlightMode}
-                  currentTab={activeTab}
                   markerDragEndCallback={updateMissionItem}
                   addNewMissionItem={addNewMissionItem}
                   updateMissionHomePosition={updateMissionHomePosition}
                   clearMissionItems={clearMissionItems}
                   addFencePolygon={addFencePolygon}
-                  mapId="missions"
                 />
               </div>
 
@@ -778,8 +750,6 @@ export default function Missions() {
 
                   <Tabs.Panel value="mission">
                     <MissionItemsTable
-                      missionItems={missionItems}
-                      aircraftType={aircraftType}
                       updateMissionItem={updateMissionItem}
                       deleteMissionItem={deleteMissionItem}
                       updateMissionItemOrder={updateMissionItemOrder}
@@ -787,7 +757,6 @@ export default function Missions() {
                   </Tabs.Panel>
                   <Tabs.Panel value="fence">
                     <FenceItemsTable
-                      fenceItems={fenceItems}
                       updateMissionItem={updateMissionItem}
                       deleteMissionItem={deleteMissionItem}
                       updateMissionItemOrder={updateMissionItemOrder}
@@ -795,7 +764,6 @@ export default function Missions() {
                   </Tabs.Panel>
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
-                      rallyItems={rallyItems}
                       updateRallyItem={updateMissionItem}
                       deleteRallyItem={deleteMissionItem}
                     />

@@ -87,6 +87,9 @@ const missionInfoSlice = createSlice({
         ...action.payload,
       }
     },
+    appendDrawingMissionItem: (state, action) => {
+      state.drawingItems.missionItems.push(action.payload)
+    },
     setDrawingFenceItems: (state, action) => {
       if (action.payload === state.drawingItems.fenceItems) return
       state.drawingItems.fenceItems = action.payload
@@ -107,6 +110,9 @@ const missionInfoSlice = createSlice({
         ...action.payload,
       }
     },
+    appendDrawingFenceItem: (state, action) => {
+      state.drawingItems.fenceItems.push(action.payload)
+    },
     setDrawingRallyItems: (state, action) => {
       if (action.payload === state.drawingItems.rallyItems) return
       state.drawingItems.rallyItems = action.payload
@@ -126,6 +132,9 @@ const missionInfoSlice = createSlice({
         ...currentItem,
         ...action.payload,
       }
+    },
+    appendDrawingRallyItem: (state, action) => {
+      state.drawingItems.rallyItems.push(action.payload)
     },
     setUnwrittenChanges: (state, action) => {
       if (action.payload === state.unwrittenChanges) return
@@ -225,11 +234,14 @@ export const {
   setHomePosition,
   setTargetInfo,
   setDrawingMissionItems,
+  setDrawingFenceItems,
+  setDrawingRallyItems,
   updateDrawingMissionItem,
   updateDrawingFenceItem,
   updateDrawingRallyItem,
-  setDrawingFenceItems,
-  setDrawingRallyItems,
+  appendDrawingMissionItem,
+  appendDrawingFenceItem,
+  appendDrawingRallyItem,
   setUnwrittenChanges,
   setMissionProgressModal,
   setActiveTab,

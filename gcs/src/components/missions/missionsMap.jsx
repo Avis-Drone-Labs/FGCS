@@ -42,31 +42,44 @@ import Divider from "../toolbar/menus/divider"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+
+// Redux
+import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+import {
+  selectFlightModeString,
+  selectGPS,
+  selectNavController,
+} from "../../redux/slices/droneInfoSlice"
+import {
+  selectActiveTab,
+  selectHomePosition,
+} from "../../redux/slices/missionSlice"
+
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  data,
-  heading,
-  desiredBearing,
   missionItems,
-  homePosition,
   onDragstart,
-  getFlightMode,
-  currentTab,
   markerDragEndCallback,
   addNewMissionItem,
   updateMissionHomePosition,
   clearMissionItems,
   addFencePolygon,
-  mapId = "dashboard",
 }) {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  // Redux
+  const connected = useSelector(selectConnectedToDrone)
+  const gpsData = useSelector(selectGPS)
+  const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
+  const navControllerOutputData = useSelector(selectNavController)
+  const desiredBearing = navControllerOutputData.nav_bearing
+  const homePosition = useSelector(selectHomePosition)
+  const flightMode = useSelector(selectFlightModeString)
+  const currentTab = useSelector(selectActiveTab)
+
   const [guidedModePinData] = useSessionStorage({
     key: "guidedModePinData",
     defaultValue: null,
@@ -81,7 +94,7 @@ function MapSectionNonMemo({
   // Use either a shared key or a unique key based on the setting
   const viewStateKey = syncMaps
     ? "initialViewState"
-    : `initialViewState_${mapId}`
+    : `initialViewState_missions`
 
   const [initialViewState, setInitialViewState] = useLocalStorage({
     key: viewStateKey,
@@ -114,14 +127,19 @@ function MapSectionNonMemo({
 
   useEffect(() => {
     // Check latest data point is valid
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
+    if (
+      isNaN(gpsData.lat) ||
+      isNaN(gpsData.lon) ||
+      gpsData.lon === 0 ||
+      gpsData.lat === 0
+    )
       return
 
     // Move drone icon on map
-    let lat = intToCoord(data.lat)
-    let lon = intToCoord(data.lon)
+    let lat = intToCoord(gpsData.lat)
+    let lon = intToCoord(gpsData.lon)
     setPosition({ latitude: lat, longitude: lon })
-  }, [data])
+  }, [gpsData])
 
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItemsList))
@@ -359,7 +377,7 @@ function MapSectionNonMemo({
           )
         })}
 
-        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+        {flightMode === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}

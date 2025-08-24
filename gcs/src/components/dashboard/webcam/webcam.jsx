@@ -1,7 +1,6 @@
 "use client"
 
 import Webcam from "react-webcam"
-import { useSearchParams } from "react-router-dom"
 import { IconX } from "@tabler/icons-react"
 import { useRef } from "react"
 

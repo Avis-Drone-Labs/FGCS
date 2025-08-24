@@ -6,7 +6,7 @@ import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
-import registerWebcamIPC, { destroyWebcamWindow, setupWebcamWindow } from './modules/webcam'
+import registerWebcamIPC, { destroyWebcamWindow } from './modules/webcam'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -146,7 +146,6 @@ function createWindow() {
   })
 
   registerWebcamIPC(win);
-  setupWebcamWindow();
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -303,9 +302,7 @@ function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
-    destroyWebcamWindow();
   }
-  console.log("Destroying webcam window")
   destroyWebcamWindow();
   console.log('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
@@ -323,8 +320,8 @@ app.on('before-quit', () => {
     console.log('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
+    destroyWebcamWindow();
   }
-  destroyWebcamWindow();
 });
 
 app.on('activate', () => {

@@ -17,3 +17,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <CameraWindow />
   </React.StrictMode>
 );
+
+postMessage({ payload: "removeLoading" }, "*")

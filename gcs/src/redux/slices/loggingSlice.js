@@ -7,6 +7,7 @@ const loggingSlice = createSlice({
     initialState: {
         logHistory: [],
         handlers: [],
+        debugLogCount: 0
     },
     reducers: {
         emitLog: (state, action) => {
@@ -14,8 +15,9 @@ const loggingSlice = createSlice({
             if (state.logHistory.length > KEEP_LATEST_N_LOGS) state.logHistory.shift();
 
             state.handlers.forEach(handler => {
-                handler(action.payload);
+                handler({...action.payload, message: `${state.debugLogCount} ${action.payload.message}`, timestamp: action.payload.timestamp ?? Date.now() / 1000});
             })
+            state.debugLogCount += 1
         },
         registerHandler: (state, action) => {
             if (action.payload in state.handlers) return;

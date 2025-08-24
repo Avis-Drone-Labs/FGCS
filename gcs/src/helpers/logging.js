@@ -31,3 +31,10 @@ export function logError(msg){
 export function logFatal(msg){
     logHelper("FATAL", msg)
 }
+
+// Now these are global and don't need to be imported :D
+globalThis.logInfo = logInfo;
+globalThis.logDebug = logDebug;
+globalThis.logError = logError;
+globalThis.logWarn = logWarning;
+globalThis.logFatal = logFatal;

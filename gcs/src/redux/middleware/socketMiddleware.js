@@ -48,7 +48,7 @@ import {
 } from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { emitLog } from "../slices/loggingSlice.js"
-import { logError, logInfo } from "../../helpers/logging.js"
+import { logDebug, logError, logInfo } from "../../helpers/logging.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -127,6 +127,21 @@ const socketMiddleware = (store) => {
           ========================
         */
 
+        // In development mode, hook socket on so that we can debug log every time we recieve a socket message
+        if (process.env.NODE_ENV === "development") {
+          const originalOn = socket.socket.on.bind(socket.socket);
+
+          socket.socket.on = (event, callback) => {
+            const wrappedCallback = (...args) => {
+              logDebug(`Event "${event}" recieved by frontend`, ...args);
+              callback(...args);
+            };
+
+            return originalOn(event, wrappedCallback);
+          };
+        }
+        
+        // debug socket logging
         // handle socket connection events
         // EXAMPLE SOCKET.ON EVENT
         socket.socket.on(SocketEvents.Connect, () => {

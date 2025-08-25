@@ -72,7 +72,7 @@
       "display": "Log Format",
       "type": "string",
       "matches": "^(?:[^%]|%(?:d(?:\\{[^}]+\\})?|p|c|m|n|h|z|f|l|o|r|x\\{[^}]+\\}))*$",
-      "default": "[%d{dd/MM/yyyy hh:mm:ss:SSS}] [%p] %c - %m"
+      "default": "[%d{dd/MM/yyyy hh:mm:ss:SSS}] [%p] %f:%l - %m"
     },
     "loggingLevel": {
       "description": "Current development log level",

@@ -15,7 +15,13 @@ class SocketIOHandler(logging.Handler):
         
         try:
             entry = self.format(record)
-            self.socket.emit("log", {"level": record.levelname, "message": entry, "timestamp": time.time()})
+            self.socket.emit("log", {
+                "level": record.levelname, 
+                "message": entry, 
+                "timestamp": time.time(),
+                "file": record.filename,
+                "line": record.lineno
+            })
         except:
             self.handleError(record)
 

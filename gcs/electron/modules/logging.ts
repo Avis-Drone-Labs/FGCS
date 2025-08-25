@@ -45,23 +45,13 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
     // the log is sent not when it is recieved, we need a custom layout to deal with it)
     log4js.addLayout('epochLayout', (config: log4js.Config) => {
         return (loggingEvent) => {
-
-            let ts;
-
             const data = loggingEvent.data[0]
-
-            if (data._epoch != null) {
-
-                const epoch = Number(data._epoch);
-                const epochMs = epoch * 1e3;
-                ts = new Date(epochMs).toISOString();
-            } else {
-                ts = loggingEvent.startTime.toISOString();
-            }
-
-            const newTokens = {...config.tokens, d: () => ts}
-
-            return layouts.patternLayout(config.pattern, newTokens)({...loggingEvent, data: loggingEvent.data.slice(1)});
+            return layouts.patternLayout(config.pattern)({...loggingEvent, 
+                startTime: new Date(data._epoch * 1000), 
+                fileName: data._file,
+                lineNumber: data._lineNo,
+                data: loggingEvent.data.slice(1)
+            });
         };
     });
 
@@ -135,8 +125,17 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
 // Since there is a chance logging is uninitialised when logging within the
 // Electron process
 export function logHelper(log: BufferedLog) {
-    if (initialised) 
-        (frontendLogger as any)[log.level.levelStr.toLowerCase()]({_epoch: Date.now() / 1000}, log.message, ...log.data)
+    if (initialised) {
+
+        const err = new Error()
+        const caller = err.stack?.split('\n').at(3) ?? "unknown"
+        const file = caller.split("\\").at(-1) ?? "";
+        const fileName = file.slice(0, file.indexOf(":"));
+
+        const lineNo = caller.split(":").at(-2);
+
+        (frontendLogger as any)[log.level.levelStr.toLowerCase()]({_epoch: Date.now() / 1000, _file: fileName, _lineNo: lineNo}, log.message, ...log.data)
+    }
     else 
         logBuffer.push(log)
 }
@@ -165,16 +164,18 @@ interface LogPayload {
   level: 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'critical',
   message: string,
   timestamp: number,
-  source: string
+  source: string,
+  file: string,
+  line: number
 }
 
 export default function registerLoggingIPC(){
 
-    ipcMain.handle("logMessage", (_, {level, message, timestamp, source}: LogPayload) => {
+    ipcMain.handle("logMessage", (_, {level, message, timestamp, source, file, line}: LogPayload) => {
         // backend logs from python come in with CRITICAL level, log4js calls it FATAL (like every other logger ever)
         const resolvedLevel = level === "critical" ? "fatal" : level;
         source === "backend" 
-            ? backendLogger[resolvedLevel]({_epoch: timestamp}, message) 
-            : frontendLogger[resolvedLevel]({_epoch: timestamp}, message);
+            ? backendLogger[resolvedLevel]({_epoch: timestamp, _file: file, _lineNo: line}, message) 
+            : frontendLogger[resolvedLevel]({_epoch: timestamp, _file: file, _lineNo: line}, message);
     })
 }

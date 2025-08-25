@@ -3,13 +3,21 @@ import { store } from "../redux/store"
 
 function logHelper(level, msg){
     
+    const err = new Error();
+    const caller = err.stack.split('\n')[3];
+
+    const file = caller.split("/").at(-1)
+    const fileName = file.slice(0, file.indexOf(":"))
+    const lineNo = caller.split(":").at(-2)
+
     store.dispatch(emitLog({
         message: msg,
         level: level,
         timestamp: new Date() / 1000,
-        source: "frontend"
+        source: "frontend",
+        file: fileName,
+        line: lineNo
     }))
-
 }
 
 export function logDebug(msg){

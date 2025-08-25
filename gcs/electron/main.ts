@@ -6,8 +6,8 @@ import packageInfo from '../package.json'
 
 // @ts-expect-error - no types available
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
-import registerSettingsIPC, { getUserConfiguration } from './modules/settings'
-import registerWebcamIPC, { setupWebcamWindow, destroyWebcamWindow } from './modules/webcam'
+import registerSettingsIPC, { getSetting } from './modules/settings'
+import registerWebcamIPC, { destroyWebcamWindow } from './modules/webcam'
 import registerLoggingIPC, { setupLog4js, frontendLogger } from './modules/logging'
 // The built directory structure
 //
@@ -283,14 +283,11 @@ app.on('activate', () => {
 
 app.whenReady().then(() => {
   
-  const settings = getUserConfiguration().settings["General"];
-
-  var combineLogs = settings === undefined ? false : settings.combineLogs ?? false;
-  var onlyKeepLastLog = settings === undefined ? false : settings.onlyKeepLastLog ?? false;
-
   setupLog4js(
-    typeof combineLogs === "boolean" ? combineLogs : false, 
-    typeof onlyKeepLastLog === "boolean" ? onlyKeepLastLog : false
+    getSetting("Development", "logToWorkingDirectory"),
+    getSetting("Development", "combineLogs"),
+    getSetting("Development", "loggingFormat"),
+    getSetting("Development", "loggingLevel")
   );
 
   createLoadingWindow()

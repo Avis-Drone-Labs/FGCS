@@ -5,12 +5,10 @@ import path from "node:path";
 import { app, ipcMain } from "electron";
 
 import * as log4js from "log4js";
+import * as layouts from "log4js/lib/layouts";
 
 export let frontendLogger: log4js.Logger
 export let backendLogger: log4js.Logger
-
-const LOG_PATH = app.getPath("logs")
-const DEV_LOG_PATH = path.join(app.getAppPath(), "logs")
 
 function getDatedLogFile() {
   const now = new Date();
@@ -25,42 +23,38 @@ function getDatedLogFile() {
   return `fgcs-${year}${month}${day}_${hour}${minute}${second}.log`;
 }
 
-export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
 
-    const isBuilt = process.env.NODE_ENV === 'production'
+export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, logFormat: string, loggingLevel: string){
 
-    // If user wants combined logs then we can use the multifile appender else just the standard file appender
-    const appenders = [combineLogs ? "file" : "multifile"]
+    const isDev = process.env.NODE_ENV === 'development'
+
+    const appenders = [isDev && !combineLogFiles ? "multifile" : "file"]
+    const directory = isDev && logToWorkspace ? path.join(app.getAppPath(), "logs") : app.getPath("logs")
 
     // Log to console as well if in dev
-    if (!isBuilt) appenders.push("console")
+    if (isDev) appenders.push("console")
 
     // Since logs coming from the backend supply their own epoch timestamp (so that we can log based on when
     // the log is sent not when it is recieved, we need a custom layout to deal with it)
-    log4js.addLayout('epochLayout', () => {
+    log4js.addLayout('epochLayout', (config: log4js.Config) => {
         return (loggingEvent) => {
-            const first = loggingEvent.data && loggingEvent.data[0];
+
             let ts;
-            let messageParts;
 
-            if (first && typeof first === 'object' && first._epoch != null) {
+            const data = loggingEvent.data[0]
 
-                const epoch = Number(first._epoch);
+            if (data._epoch != null) {
+
+                const epoch = Number(data._epoch);
                 const epochMs = epoch * 1e3;
                 ts = new Date(epochMs).toISOString();
-
-                // remove that meta object from displayed message
-                messageParts = loggingEvent.data.slice(1);
             } else {
                 ts = loggingEvent.startTime.toISOString();
-                messageParts = loggingEvent.data;
             }
 
-            const msg = messageParts.map(part =>
-                (typeof part === 'object' ? JSON.stringify(part) : String(part))
-            ).join(' ');
+            const newTokens = {...config.tokens, d: () => ts}
 
-            return `[${ts}] [${loggingEvent.level.toString()}] ${loggingEvent.categoryName} - ${msg}`;
+            return layouts.patternLayout(config.pattern, newTokens)({...loggingEvent, data: loggingEvent.data.slice(1)});
         };
     });
 
@@ -68,25 +62,28 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
         appenders: {
             file: {
                 type: 'file',
-                filename: path.join(isBuilt ? LOG_PATH : DEV_LOG_PATH, onlyKeepLast ? "fgcs.log" : getDatedLogFile()),
+                filename: path.join(directory, "fgcs.log"),
                 layout: {
-                    type: 'epochLayout'
+                    type: 'epochLayout',
+                    pattern: logFormat
                 },
                 flags: "w"
             },
             console: {
                 type: "stdout",
                 layout: {
-                    type: 'epochLayout'
+                    type: 'epochLayout',
+                    pattern: logFormat
                 }
             },
             multifile: {
                 type: "multiFile",
-                base: isBuilt ? LOG_PATH : DEV_LOG_PATH,
+                base: directory,
                 property: "categoryName",
                 extension: ".log",
                 layout: {
-                    type: 'epochLayout'
+                    type: 'epochLayout',
+                    pattern: logFormat
                 },
                 flags: "w"
             }
@@ -98,11 +95,11 @@ export function setupLog4js(combineLogs: boolean, onlyKeepLast: boolean){
             },
             frontend: {
                 appenders: appenders,
-                level: 'debug'
+                level: loggingLevel
             },
             backend: {
                 appenders: appenders,
-                level: "debug"
+                level: loggingLevel
             },
             default: {
                 appenders: ["console"],

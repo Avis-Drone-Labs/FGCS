@@ -173,6 +173,8 @@ function SettingsModal() {
 
   const { opened, close } = useSettings()
 
+  const settingsWithoutDev = settingTabs.filter(t => t !== "Development")
+
   return (
     <Modal
       centered
@@ -197,15 +199,18 @@ function SettingsModal() {
         styles={{ list: { width: "15%" } }}
       >
         <Tabs.List>
-          {settingTabs.map((t) => {
+          {settingsWithoutDev.filter(t => t !== "Development").map((t) => {
             return (
               <Tabs.Tab key={t} value={t}>
                 {t}
               </Tabs.Tab>
             )
           })}
+
+          {process.env.NODE_ENV === "development" && <Tabs.Tab key={"Development"} value={"Development"} mt="auto">Development</Tabs.Tab>}
+
         </Tabs.List>
-        {settingTabs.map((t) => {
+        {settingsWithoutDev.map((t) => {
           return (
             <Tabs.Panel className="space-y-4" value={t} key={t}>
               {Object.keys(DefaultSettings[t]).map((s) => {
@@ -223,6 +228,23 @@ function SettingsModal() {
             </Tabs.Panel>
           )
         })}
+
+        {process.env.NODE_ENV === "development" && 
+          <Tabs.Panel className="space-y-4" value="Development" key="Development">
+              {Object.keys(DefaultSettings["Development"]).map((s) => {
+                return (
+                  <Setting
+                    settingName={`Development.${s}`}
+                    df={DefaultSettings["Development"][s]}
+                    key={`Development.${s}`}
+                  />
+                )
+              })}
+              {Object.keys(DefaultSettings["Development"]).length == 0 && (
+                <p className="pl-4 pt-2">No settings available right now.</p>
+              )}
+            </Tabs.Panel>
+        }
       </Tabs>
     </Modal>
   )

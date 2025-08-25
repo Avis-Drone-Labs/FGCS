@@ -1,22 +1,43 @@
+// This file contains logs of disgusting typescript but it DOES
+// make it so that accessing a setting which does not exist in default_settings.json 
+// prevents compilation so that's good
+
 import fs from 'node:fs'
 import path from 'node:path'
 import { app, ipcMain } from 'electron';
 import { exit } from 'node:process';
 import { frontendLogger } from './logging';
 
-// Settings logic
+import Data from "../../data/default_settings.json"
+
+
+type SettingsShape = typeof Data;
+type SettingsGroup = keyof SettingsShape;
+type Setting<G extends SettingsGroup> = keyof SettingsShape[G];
+
+type SettingValue<G extends SettingsGroup, S extends Setting<G>> =
+  SettingsShape[G][S] extends { default: infer V } ? V : never;
+
+interface DefaultSetting<G extends SettingsGroup, S extends Setting<G>> {
+  default: SettingValue<G, S>,
+  [k: string]: any
+}
+
+
+
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
+type PartialSettings = DeepPartial<SettingsShape>
 
 interface Settings {
   version: string,
-  settings: {
-    [key: string]: {
-      [key: string]: boolean | number | string | object
-    }
-  }
+  settings: PartialSettings
 }
 
 
 let userSettings: Settings | null = null
+const defaultSettings: SettingsShape = Data
 
 function saveUserConfiguration(settings: Settings){
   userSettings = settings;
@@ -47,7 +68,7 @@ function checkAppVersion(configPath: string){
  *
  * @returns Settings
  */
-export function getUserConfiguration(){
+export function getUserConfiguration(): Settings{
 
   // Return the already loaded user settings if loaded
   console.log("Fetching user settings!");
@@ -72,6 +93,29 @@ export function getUserConfiguration(){
   
   frontendLogger.fatal("Could not create settings for some reason")
   exit(-1);
+}
+
+/**
+ * Get the given user setting
+ * 
+ * A method exists for this in the frontend (see the settings provider)
+ * but this is useful to have if you need to access a setting in electron 
+ * (for example for logging)
+ * 
+ * @param group
+ * @param setting 
+ */
+export function getSetting<G extends SettingsGroup, S extends Setting<G>>(group: G, setting: S): SettingValue<G, S> {
+
+  const userConfig = getUserConfiguration().settings[group] as Partial<SettingsShape[G]> | undefined;
+  const userSetting = userConfig?.[setting];
+
+  if (userSetting) return userSetting as SettingValue<G, S>
+
+  // Fallback to the defaultSettings
+
+  const defaultSetting = defaultSettings[group][setting] as DefaultSetting<G, S>
+  return defaultSetting.default
 }
 
 export default function registerSettingsIPC(){

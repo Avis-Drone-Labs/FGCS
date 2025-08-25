@@ -33,21 +33,6 @@
       "default": false,
       "type": "boolean",
       "display": "Sync Dashboard and Missions Map Viewstate"
-    },
-    "logDirectory": {
-      "default": "",
-      "type": "directory",
-      "display": "Log directory"
-    },
-    "onlyKeepLastLog": {
-      "default": false,
-      "type": "boolean",
-      "display": "Only keep the most recent log file"
-    },
-    "combineLogs": {
-      "default": false,
-      "type": "boolean",
-      "display": "Combine frontend and backend log files"
     }
   },
   "Dashboard": {
@@ -74,5 +59,33 @@
   },
   "Params": {},
   "Config": {},
-  "FGCS": {}
+  "FGCS": {},
+  "Development": {
+    "logToWorkingDirectory": {
+      "description": "Log files will be placed in gcs/logs instead of appdata/FGCS/logs",
+      "display": "Log to Development Workspace",
+      "type": "boolean",
+      "default": false
+    },
+    "loggingFormat": {
+      "description": "Timestamp format for log messages",
+      "display": "Log Format",
+      "type": "string",
+      "matches": "^(?:[^%]|%(?:d(?:\\{[^}]+\\})?|p|c|m|n|h|z|f|l|o|r|x\\{[^}]+\\}))*$",
+      "default": "[%d{dd/MM/yyyy hh:mm:ss:SSS}] [%p] %c - %m"
+    },
+    "loggingLevel": {
+      "description": "Current development log level",
+      "display": "Log Level",
+      "type": "option",
+      "options": ["DEBUG", "INFO", "WARNING", "ERROR", "FATAL"],
+      "default": "INFO"
+    },
+    "combineLogs": {
+      "description": "Combine frontend and backend logs into a single file",
+      "display": "Combine Log Files",
+      "type": "boolean",
+      "default": false
+    }
+  }
 }

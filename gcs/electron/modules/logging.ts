@@ -16,7 +16,8 @@ let initialised: boolean = false;
 
 interface BufferedLog {
     message: string,
-    level: log4js.Level
+    level: log4js.Level,
+    data: any[]
 }
 let logBuffer: BufferedLog[] = []
 
@@ -26,6 +27,8 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
         logWarning("Attempting to initialise log4js when it has already been initialised")
         return;
     }
+
+    logInfo("Setting up logging with args (%s, %s, %s, %s)", logToWorkspace, combineLogFiles, logFormat, loggingLevel)
 
     const isDev = process.env.NODE_ENV === 'development'
 
@@ -95,15 +98,18 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
         categories: {
             electron: {
                 appenders: appenders,
-                level: 'info'
+                level: 'info',
+                enableCallStack: true
             },
             frontend: {
                 appenders: appenders,
-                level: loggingLevel
+                level: loggingLevel,
+                enableCallStack: true
             },
             backend: {
                 appenders: appenders,
-                level: loggingLevel
+                level: loggingLevel,
+                enableCallStack: true
             },
             default: {
                 appenders: ["console"],
@@ -130,38 +136,45 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
 // Electron process
 export function logHelper(log: BufferedLog) {
     if (initialised) 
-        frontendLogger.log(log.level, {_epoch: Date.now() / 1000}, log.message)
+        (frontendLogger as any)[log.level.levelStr.toLowerCase()]({_epoch: Date.now() / 1000}, log.message, ...log.data)
     else 
         logBuffer.push(log)
 }
 
-export function logDebug(message: string) {
-    logHelper({message: message, level: log4js.levels.DEBUG})
+export function logDebug(message: string, ...args: any[]) {
+    logHelper({message: message, level: log4js.levels.DEBUG, data: args})
 }
 
-export function logInfo(message: string) {
-    logHelper({message: message, level: log4js.levels.INFO})
+export function logInfo(message: string, ...args: any[]) {
+    logHelper({message: message, level: log4js.levels.INFO, data: args})
 }
 
-export function logWarning(message: string) {
-    logHelper({message: message, level: log4js.levels.WARN})
+export function logWarning(message: string, ...args: any[]) {
+    logHelper({message: message, level: log4js.levels.WARN, data: args})
 }
 
-export function logError(message: string) {
-    logHelper({message: message, level: log4js.levels.ERROR})
+export function logError(message: string, ...args: any[]) {
+    logHelper({message: message, level: log4js.levels.ERROR, data: args})
 }
 
-export function logFatal(message: string) {
-    logHelper({message: message, level: log4js.levels.FATAL})
+export function logFatal(message: string, ...args: any[]) {
+    logHelper({message: message, level: log4js.levels.FATAL, data: args})
+}
+
+interface LogPayload {
+  level: 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'critical',
+  message: string,
+  timestamp: number,
+  source: string
 }
 
 export default function registerLoggingIPC(){
 
-    ipcMain.handle("logMessage", (_, {level, message, timestamp, source}) => {
-        // backend logs from python come in with CRITICAL level, log4js calls it FATAL (like everything else)
-        const resolvedLevel = level === "CRITICAL" ? "FATAL" : level;
+    ipcMain.handle("logMessage", (_, {level, message, timestamp, source}: LogPayload) => {
+        // backend logs from python come in with CRITICAL level, log4js calls it FATAL (like every other logger ever)
+        const resolvedLevel = level === "critical" ? "fatal" : level;
         source === "backend" 
-            ? backendLogger.log(resolvedLevel, {_epoch: timestamp}, message) 
-            : frontendLogger.log(level, {_epoch: timestamp}, message);
+            ? backendLogger[resolvedLevel]({_epoch: timestamp}, message) 
+            : frontendLogger[resolvedLevel]({_epoch: timestamp}, message);
     })
 }

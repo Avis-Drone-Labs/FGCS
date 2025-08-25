@@ -161,7 +161,7 @@ const socketMiddleware = (store) => {
           const originalEmit = socket.socket.emit.bind(socket.socket);
 
           socket.socket.emit = (event, ...args) => {
-            logDebug(`Event ${event} emitted by frontend with args (${args.join(", ")})`)
+            logDebug(`Event "${event}" emitted by frontend with args (${args.join(", ")})`)
             return originalEmit(event, ...args)
           }
         }

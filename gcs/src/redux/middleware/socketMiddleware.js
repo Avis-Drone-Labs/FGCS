@@ -145,18 +145,25 @@ const socketMiddleware = (store) => {
           ========================
         */
 
-        // In development mode, hook socket on so that we can debug log every time we recieve a socket message
+        // In development mode, hook socket on and emit so that we can debug log every time we recieve / send a socket message
         if (process.env.NODE_ENV === "development") {
           const originalOn = socket.socket.on.bind(socket.socket);
 
           socket.socket.on = (event, callback) => {
             const wrappedCallback = (...args) => {
-              logDebug(`Event "${event}" recieved by frontend`, ...args);
+              logDebug(`Event "${event}" recieved by frontend with values ${args.join(", ")}`);
               callback(...args);
             };
 
             return originalOn(event, wrappedCallback);
           };
+
+          const originalEmit = socket.socket.emit.bind(socket.socket);
+
+          socket.socket.emit = (event, ...args) => {
+            logDebug(`Event ${event} emitted by frontend with args (${args.join(", ")})`)
+            return originalEmit(event, ...args)
+          }
         }
         
         // debug socket logging

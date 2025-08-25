@@ -15,7 +15,7 @@ const loggingSlice = createSlice({
             if (state.logHistory.length > KEEP_LATEST_N_LOGS) state.logHistory.shift();
 
             state.handlers.forEach(handler => {
-                handler({...action.payload, message: `${state.debugLogCount} ${action.payload.message}`, timestamp: action.payload.timestamp ?? Date.now() / 1000});
+                handler({...action.payload, timestamp: action.payload.timestamp ?? Date.now() / 1000});
             })
             state.debugLogCount += 1
         },

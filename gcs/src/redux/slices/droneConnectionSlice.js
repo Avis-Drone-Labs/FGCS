@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
 import { socket } from "../../helpers/socket"
-import { logInfo } from "../../helpers/logging"
 
 export const ConnectionType = {
   Serial: "serial",

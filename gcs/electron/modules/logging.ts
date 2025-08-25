@@ -5,6 +5,8 @@ import path from "node:path";
 import { app, ipcMain } from "electron";
 
 import * as log4js from "log4js";
+
+// @ts-ignore
 import * as layouts from "log4js/lib/layouts";
 
 let frontendLogger: log4js.Logger
@@ -111,10 +113,13 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
     backendLogger = log4js.getLogger("backend");
 
     // Log any logs that came through before logging was initialised
-    logBuffer.forEach(lb => frontendLogger.log(lb.level, lb.message))
-
-    frontendLogger.info("Setup frontend logging");
+    /* frontendLogger.info()
+    logBuffer.forEach(lb => frontendLogger.info(lb.message)) */
     initialised = true
+
+    logBuffer.forEach(logHelper);
+
+    logInfo("Setup user logging")
 }
 
 // We export these log functions purely for logging within electron
@@ -122,7 +127,7 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
 // Electron process
 export function logHelper(log: BufferedLog) {
     if (initialised) 
-        frontendLogger.log(log.level, log.message)
+        frontendLogger.log(log.level, {_epoch: Date.now() / 1000}, log.message)
     else 
         logBuffer.push(log)
 }

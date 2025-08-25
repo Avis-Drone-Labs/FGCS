@@ -71,8 +71,8 @@ function checkAppVersion(configPath: string){
 export function getUserConfiguration(): Settings{
 
   // Return the already loaded user settings if loaded
-  logDebug("Fetching user settings")
   if (userSettings !== null) return userSettings
+  logDebug("Fetching user settings")
 
 
   // Directories

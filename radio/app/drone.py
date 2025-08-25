@@ -111,7 +111,7 @@ class Drone:
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.master = None
-            self.logger.critical(str(e))
+            self.logger.error(str(e))
             if isinstance(e, SerialException):
                 self.connectionError = "Could not connect to drone, invalid port."
             elif isinstance(e, ConnectionRefusedError):

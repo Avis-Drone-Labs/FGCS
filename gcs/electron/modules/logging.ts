@@ -32,6 +32,9 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
     const appenders = [isDev && !combineLogFiles ? "multifile" : "file"]
     const directory = isDev && logToWorkspace ? path.join(app.getAppPath(), "logs") : app.getPath("logs")
 
+    // If we are logging to separate files no point including the logger name
+    const resolvedFormat =  logFormat.replace("%c", '').replace("  ", " ")
+
     // Log to console as well if in dev
     if (isDev) appenders.push("console")
 
@@ -84,7 +87,7 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
                 extension: ".log",
                 layout: {
                     type: 'epochLayout',
-                    pattern: logFormat
+                    pattern: resolvedFormat
                 },
                 flags: "w"
             }

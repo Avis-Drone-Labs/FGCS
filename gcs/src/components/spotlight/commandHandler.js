@@ -84,7 +84,7 @@ export function RunCommand(id) {
   var cmd = commands.find((entry) => entry.id == id);
   
   if (cmd !== undefined) {
-    cmd.command();
+    cmd.command()
   } else {
     logError(`Couldn't find command ${id} to run`)
   }

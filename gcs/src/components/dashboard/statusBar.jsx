@@ -69,11 +69,16 @@ export default function StatusBar(props) {
       return
     }
 
-    const minAltitudes = (getSetting("Dashboard.minAltitudeAlerts") ?? []).slice()
+    const minAltitudes = (
+      getSetting("Dashboard.minAltitudeAlerts") ?? []
+    ).slice()
     minAltitudes.sort((a1, a2) => a1 - a2)
 
     for (const [i, altitude] of minAltitudes.entries()) {
-      if (highestAltitudeRef.current > altitude && telemetryData.alt < altitude) {
+      if (
+        highestAltitudeRef.current > altitude &&
+        telemetryData.alt < altitude
+      ) {
         dispatchAlert({
           category: AlertCategory.Altitude,
           severity:
@@ -89,7 +94,7 @@ export default function StatusBar(props) {
     }
 
     dismissAlert(AlertCategory.Altitude)
-  }, [telemetryData.alt]);
+  }, [telemetryData.alt])
 
   return (
     <div className={`${props.className} flex flex-col items-end`}>

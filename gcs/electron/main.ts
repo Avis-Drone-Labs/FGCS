@@ -8,7 +8,7 @@ import packageInfo from '../package.json'
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
 import registerSettingsIPC, { getSetting } from './modules/settings'
 import registerWebcamIPC, { destroyWebcamWindow } from './modules/webcam'
-import registerLoggingIPC, { setupLog4js, frontendLogger } from './modules/logging'
+import registerLoggingIPC, { setupLog4js, logFatal, logWarning, logInfo } from './modules/logging'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -208,11 +208,11 @@ function createLoadingWindow() {
 
 function startBackend() {
   if (pythonBackend) {
-    frontendLogger.warn('Backend already running');
+    logWarning('Backend already running');
     return;
   }
 
-  frontendLogger.info('Starting backend');
+  logInfo('Starting backend');
 
   // Add more platforms here
   const backendPaths: Partial<Record<NodeJS.Platform, string>> ={
@@ -223,23 +223,23 @@ function startBackend() {
   const backendPath = backendPaths[process.platform];
 
   if (!backendPath) {
-    console.error('Unsupported platform!');
+    logFatal('Unsupported platform!');
     return;
   }
 
-  frontendLogger.info(`Starting backend: ${backendPath}`);
+  logInfo(`Starting backend: ${backendPath}`);
   pythonBackend = spawn(backendPath);
 
   // pythonBackend.stdout.on('data', (data) => console.log(`Backend stdout: ${data}`));
   // pythonBackend.stderr.on('data', (data) => console.error(`Backend stderr: ${data}`));
 
   pythonBackend.on('close', (code) => {
-    frontendLogger.info(`Backend process exited with code ${code}`);
+    logInfo(`Backend process exited with code ${code}`);
     pythonBackend = null;
   });
 
   pythonBackend.on('error', (error) => {
-    frontendLogger.fatal('Failed to start backend:', error);
+    logFatal('Failed to start backend: ' + error);
     dialog.showErrorBox('Backend Error', `Failed to start backend: ${error.message}`);
   });
 }
@@ -253,7 +253,7 @@ function closeWithBackend() {
     win = null
   }
   destroyWebcamWindow()
-  frontendLogger.info('Killing backend')
+  logInfo('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
@@ -266,7 +266,7 @@ app.on('window-all-closed', () => {
 // listen to the before-quit event.
 app.on('before-quit', () => {
   if(process.platform === 'darwin' && pythonBackend){
-    frontendLogger.info('Stopping backend')
+    logInfo('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
     destroyWebcamWindow();

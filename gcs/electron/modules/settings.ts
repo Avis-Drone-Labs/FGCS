@@ -6,9 +6,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { app, ipcMain } from 'electron';
 import { exit } from 'node:process';
-import { frontendLogger } from './logging';
 
 import Data from "../../data/default_settings.json"
+import { logDebug, logFatal, logInfo, logWarning } from './logging';
 
 
 type SettingsShape = typeof Data;
@@ -52,7 +52,7 @@ function saveUserConfiguration(settings: Settings){
 function checkAppVersion(configPath: string){
 
   if (userSettings === null){
-    console.warn("Attempting to check app version when user settings have not been loaded");
+    logWarning("Attempting to check app version when user settings have not been loaded");
     return;
   }
 
@@ -71,7 +71,7 @@ function checkAppVersion(configPath: string){
 export function getUserConfiguration(): Settings{
 
   // Return the already loaded user settings if loaded
-  console.log("Fetching user settings!");
+  logDebug("Fetching user settings")
   if (userSettings !== null) return userSettings
 
 
@@ -81,17 +81,17 @@ export function getUserConfiguration(): Settings{
 
   // Write version and blank settings to user config if doesn't exist
   if (!fs.existsSync(config)) {
-    console.log("Generating user settings")
+    logInfo("Generating user setings")
     userSettings = {version: app.getVersion(), settings: {}}
     fs.writeFileSync(config, JSON.stringify(userSettings))
   } else{
-    console.log("Reading user settings from config file " + config)
+    logInfo("Reading user settings from config file " + config)
     userSettings = JSON.parse(fs.readFileSync(config, 'utf-8'))
     checkAppVersion(config)
   }
   if (userSettings != null) return userSettings
   
-  frontendLogger.fatal("Could not create settings for some reason")
+  logFatal("Could not create settings for some reason")
   exit(-1);
 }
 

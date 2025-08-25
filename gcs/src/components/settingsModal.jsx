@@ -21,13 +21,14 @@ const isValidNumber = (num, range) => {
   )
 }
 
-function TextSetting({ settingName, hidden }) {
+function TextSetting({ settingName, hidden, regex = null }) {
   const { getSetting, setSetting } = useSettings()
   return (
     <Input
       value={getSetting(settingName)}
       onChange={(e) => setSetting(settingName, e.currentTarget.value)}
       type={hidden ? "password" : "text"}
+      pattern={regex === null ? "" : regex}
     />
   )
 }
@@ -162,7 +163,7 @@ function Setting({ settingName, df }) {
       ) : df.type == "directory" ? (
         <DirectorySetting settingName={settingName}/>
       ) : (
-        <TextSetting settingName={settingName} hidden={df.hidden || false} />
+        <TextSetting settingName={settingName} hidden={df.hidden || false} regex = {df.matches || null} />
       )}
     </div>
   )

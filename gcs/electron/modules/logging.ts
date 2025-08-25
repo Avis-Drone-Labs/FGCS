@@ -7,24 +7,23 @@ import { app, ipcMain } from "electron";
 import * as log4js from "log4js";
 import * as layouts from "log4js/lib/layouts";
 
-export let frontendLogger: log4js.Logger
-export let backendLogger: log4js.Logger
+let frontendLogger: log4js.Logger
+let backendLogger: log4js.Logger
 
-function getDatedLogFile() {
-  const now = new Date();
+let initialised: boolean = false;
 
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hour = String(now.getHours()).padStart(2, "0");
-  const minute = String(now.getMinutes()).padStart(2, "0");
-  const second = String(now.getSeconds()).padStart(2, "0");
-
-  return `fgcs-${year}${month}${day}_${hour}${minute}${second}.log`;
+interface BufferedLog {
+    message: string,
+    level: log4js.Level
 }
-
+let logBuffer: BufferedLog[] = []
 
 export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, logFormat: string, loggingLevel: string){
+
+    if (initialised) {
+        logWarning("Attempting to initialise log4js when it has already been initialised")
+        return;
+    }
 
     const isDev = process.env.NODE_ENV === 'development'
 
@@ -111,12 +110,45 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
     frontendLogger = log4js.getLogger("frontend");
     backendLogger = log4js.getLogger("backend");
 
+    // Log any logs that came through before logging was initialised
+    logBuffer.forEach(lb => frontendLogger.log(lb.level, lb.message))
+
     frontendLogger.info("Setup frontend logging");
+    initialised = true
+}
+
+// We export these log functions purely for logging within electron
+// Since there is a chance logging is uninitialised when logging within the
+// Electron process
+export function logHelper(log: BufferedLog) {
+    if (initialised) 
+        frontendLogger.log(log.level, log.message)
+    else 
+        logBuffer.push(log)
+}
+
+export function logDebug(message: string) {
+    logHelper({message: message, level: log4js.levels.DEBUG})
+}
+
+export function logInfo(message: string) {
+    logHelper({message: message, level: log4js.levels.INFO})
+}
+
+export function logWarning(message: string) {
+    logHelper({message: message, level: log4js.levels.WARN})
+}
+
+export function logError(message: string) {
+    logHelper({message: message, level: log4js.levels.ERROR})
+}
+
+export function logFatal(message: string) {
+    logHelper({message: message, level: log4js.levels.FATAL})
 }
 
 export default function registerLoggingIPC(){
 
-    
     ipcMain.handle("logMessage", (_, {level, message, timestamp, source}) => {
         // backend logs from python come in with CRITICAL level, log4js calls it FATAL (like everything else)
         const resolvedLevel = level === "CRITICAL" ? "FATAL" : level;

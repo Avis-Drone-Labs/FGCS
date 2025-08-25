@@ -7,7 +7,7 @@ import packageInfo from '../package.json'
 // @ts-expect-error - no types available
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
 import registerSettingsIPC, { getUserConfiguration } from './modules/settings'
-import registerWebcamIPC, { setupWebcamWindow } from './modules/webcam'
+import registerWebcamIPC, { setupWebcamWindow, destroyWebcamWindow } from './modules/webcam'
 import registerLoggingIPC, { setupLog4js, frontendLogger } from './modules/logging'
 // The built directory structure
 //
@@ -37,7 +37,7 @@ if (process.platform === 'linux') {
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
-let webcamPopoutWin: BrowserWindow | null
+
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -94,28 +94,7 @@ function createWindow() {
     frame: false,
   })
 
-  // Create webcam window keep it hidden to avoid delay between popping out windows
-  webcamPopoutWin = new BrowserWindow({
-    width: 400,
-    height: 300,
-    frame: false,
-    alwaysOnTop: true,
-    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
-    show: false,
-    title: "Webcam",
-    webPreferences: {
-      nodeIntegration: true,
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true
-    },
-    fullscreen: false,
-    fullscreenable: false,
-  });
-
-
-  // We load the webcam route here to prevent having to load the page on popout
   registerWebcamIPC(win);
-  setupWebcamWindow();
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -272,10 +251,8 @@ function closeWithBackend() {
   if (process.platform !== 'darwin') {
     app.quit()
     win = null
-    webcamPopoutWin?.close()
-    webcamPopoutWin = null
   }
-
+  destroyWebcamWindow()
   frontendLogger.info('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
@@ -292,8 +269,8 @@ app.on('before-quit', () => {
     frontendLogger.info('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
+    destroyWebcamWindow();
   }
-  webcamPopoutWin?.close();
 });
 
 app.on('activate', () => {

@@ -2,7 +2,6 @@
 
 const loggingMiddleware = store => next => action => {
 
-    console.log(action.type)
     const result = next(action);
     const state = store.getState();
 

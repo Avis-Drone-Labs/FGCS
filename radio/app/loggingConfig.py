@@ -28,7 +28,7 @@ class SocketIOHandler(logging.Handler):
             self.handleError(record)
 
 
-def setup_logging(conn: SocketIO, debug: bool = False) -> logging.Logger:
+def setup_logging(conn: SocketIO, debug: bool = False) -> None:
     fgcs_logger = logging.getLogger("fgcs")
 
     fgcs_logger.setLevel(logging.DEBUG if debug else logging.INFO)

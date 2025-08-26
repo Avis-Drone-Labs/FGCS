@@ -68,7 +68,7 @@
       "default": false
     },
     "loggingFormat": {
-      "description": "Timestamp format for log messages",
+      "description": "Format for log messages. See log4js patterns for more info",
       "display": "Log Format",
       "type": "string",
       "default": "[%d{dd/MM/yyyy hh:mm:ss:SSS}] [%p] %c - %m"

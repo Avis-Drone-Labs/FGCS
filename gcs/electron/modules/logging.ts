@@ -39,7 +39,7 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
 
     logDebug("Setting up logging with args (%s, %s, %s, %s)", logToWorkspace, combineLogFiles, logFormat, loggingLevel)
     
-    const appenders = [combineLogFiles ? "multifile" : "file"]
+    const appenders = [combineLogFiles ? "file" : "multifile"]
     const directory = logToWorkspace ? path.join(app.getAppPath(), "logs") : app.getPath("logs")
 
     // If we are logging to separate files no point including the logger name

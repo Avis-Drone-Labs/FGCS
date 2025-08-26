@@ -1,5 +1,5 @@
 /**
- * Functions related to both console and file logging
+ * Functions related to application-wide logging
  */
 import path from "node:path";
 import { app, ipcMain } from "electron";
@@ -21,6 +21,15 @@ interface BufferedLog {
 }
 let logBuffer: BufferedLog[] = []
 
+/**
+ * Setup logging for the application. Logs from the frontend are dispatched to this logger
+ * through ipcRenderer.pushLog. Logs from backend are dispatched to logger through socket, then ipcRenderer.pushLog
+ * 
+ * @param logToWorkspace Developer setting forcing logs to be stored in gcs/logs
+ * @param combineLogFiles Developer setting that combines the log files into one "fgcs.log" file
+ * @param logFormat The format for the logger (see log4js patterns)
+ * @param loggingLevel The level of the frontend and backend loggers
+ */
 export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, logFormat: string, loggingLevel: string){
 
     if (initialised) {
@@ -28,21 +37,19 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
         return;
     }
 
-    logInfo("Setting up logging with args (%s, %s, %s, %s)", logToWorkspace, combineLogFiles, logFormat, loggingLevel)
-
-    const isDev = process.env.NODE_ENV === 'development'
-
-    const appenders = [isDev && !combineLogFiles ? "multifile" : "file"]
-    const directory = isDev && logToWorkspace ? path.join(app.getAppPath(), "logs") : app.getPath("logs")
+    logDebug("Setting up logging with args (%s, %s, %s, %s)", logToWorkspace, combineLogFiles, logFormat, loggingLevel)
+    
+    const appenders = [combineLogFiles ? "multifile" : "file"]
+    const directory = logToWorkspace ? path.join(app.getAppPath(), "logs") : app.getPath("logs")
 
     // If we are logging to separate files no point including the logger name
     const resolvedFormat =  logFormat.replace("%c", '').replace("  ", " ")
 
     // Log to console as well if in dev
-    if (isDev) appenders.push("console")
+    if (process.env.NODE_ENV === 'development') appenders.push("console")
 
-    // Since logs coming from the backend supply their own epoch timestamp (so that we can log based on when
-    // the log is sent not when it is recieved, we need a custom layout to deal with it)
+    // Since logs coming from the backend supply their own epoch timestamp, file and line no (so that we can log based on when
+    // the log is sent not when it is recieved), we need a custom layout to deal with it
     log4js.addLayout('epochLayout', (config: log4js.Config) => {
         return (loggingEvent) => {
             const data = loggingEvent.data[0]
@@ -108,25 +115,30 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
         }
     })
 
-    frontendLogger = log4js.getLogger("frontend");
-    backendLogger = log4js.getLogger("backend");
+    frontendLogger = log4js.getLogger("frontend")
+    backendLogger = log4js.getLogger("backend")
 
-    // Log any logs that came through before logging was initialised
-    /* frontendLogger.info()
-    logBuffer.forEach(lb => frontendLogger.info(lb.message)) */
+    // Dispatch log message that arrived before setup
     initialised = true
-
-    logBuffer.forEach(logHelper);
+    logBuffer.forEach(logHelper)
+    logBuffer = []
 
     logInfo("Setup user logging")
 }
 
-// We export these log functions purely for logging within electron
-// Since there is a chance logging is uninitialised when logging within the
-// Electron process
-export function logHelper(log: BufferedLog) {
+/**
+ * Log the given buffered log 
+ * 
+ * If logging is initialised, sends the log straight to the frontend log4js logger. 
+ * If logging is not initialised yet, appends to a buffer which gets logged once
+ * log4js is initialised
+ * 
+ * @param log The log data
+ */
+function logHelper(log: BufferedLog) {
     if (initialised) {
 
+        // Inspect stack to find file 
         const err = new Error()
         const caller = err.stack?.split('\n').at(3) ?? "unknown"
         const file = caller.split("\\").at(-1) ?? "";
@@ -173,9 +185,9 @@ export default function registerLoggingIPC(){
 
     ipcMain.handle("logMessage", (_, {level, message, timestamp, source, file, line}: LogPayload) => {
         // backend logs from python come in with CRITICAL level, log4js calls it FATAL (like every other logger ever)
-        const resolvedLevel = level === "critical" ? "fatal" : level;
+        const resolvedLevel = level === "critical" ? "fatal" : level
         source === "backend" 
             ? backendLogger[resolvedLevel]({_epoch: timestamp, _file: file, _lineNo: line}, message) 
-            : frontendLogger[resolvedLevel]({_epoch: timestamp, _file: file, _lineNo: line}, message);
+            : frontendLogger[resolvedLevel]({_epoch: timestamp, _file: file, _lineNo: line}, message)
     })
 }

@@ -1,11 +1,11 @@
-// This file contains logs of disgusting typescript but it DOES
+// This file contains logs of disgusting hacky typescript but it DOES
 // make it so that accessing a setting which does not exist in default_settings.json 
-// prevents compilation so that's good
+// causes a build error so we should never crash from accessing non-existant settings
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { app, ipcMain } from 'electron';
 import { exit } from 'node:process';
+import { app, ipcMain } from 'electron';
 
 import Data from "../../data/default_settings.json"
 import { logDebug, logFatal, logInfo, logWarning } from './logging';
@@ -23,8 +23,8 @@ interface DefaultSetting<G extends SettingsGroup, S extends Setting<G>> {
   [k: string]: any
 }
 
-
-
+// Hack to create a type which MAY contain keys from the default_settings.json, and each of those keys
+// MAY contain any number of the settings listed in that section of default_settings.json
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
 };
@@ -34,7 +34,6 @@ interface Settings {
   version: string,
   settings: PartialSettings
 }
-
 
 let userSettings: Settings | null = null
 const defaultSettings: SettingsShape = Data
@@ -74,7 +73,6 @@ export function getUserConfiguration(): Settings{
   if (userSettings !== null) return userSettings
   logDebug("Fetching user settings")
 
-
   // Directories
   const userDir = app.getPath('userData');
   const config = path.join(userDir, 'settings.json');
@@ -95,8 +93,13 @@ export function getUserConfiguration(): Settings{
   exit(-1);
 }
 
+function getDefault<G extends SettingsGroup, S extends Setting<G>>(group: G, setting: S): SettingValue<G, S> {
+  const df = defaultSettings[group][setting] as DefaultSetting<G, S>
+  return df.default
+}
+
 /**
- * Get the given user setting
+ * Get the given user setting (or the default value from default_settings.json)
  * 
  * A method exists for this in the frontend (see the settings provider)
  * but this is useful to have if you need to access a setting in electron 
@@ -107,15 +110,15 @@ export function getUserConfiguration(): Settings{
  */
 export function getSetting<G extends SettingsGroup, S extends Setting<G>>(group: G, setting: S): SettingValue<G, S> {
 
-  const userConfig = getUserConfiguration().settings[group] as Partial<SettingsShape[G]> | undefined;
+  // Development settings only take effect in development!
+  if (process.env.NODE_ENV == "production" && group == "Development") return getDefault(group, setting)
+
+  //Get user setting or return default if it doesn't exist
+  const userConfig = getUserConfiguration().settings[group] as Partial<SettingsShape[G]>;
   const userSetting = userConfig?.[setting];
 
   if (userSetting) return userSetting as SettingValue<G, S>
-
-  // Fallback to the defaultSettings
-
-  const defaultSetting = defaultSettings[group][setting] as DefaultSetting<G, S>
-  return defaultSetting.default
+  return getDefault(group, setting)
 }
 
 export default function registerSettingsIPC(){

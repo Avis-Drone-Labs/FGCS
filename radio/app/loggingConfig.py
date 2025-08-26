@@ -1,5 +1,5 @@
-import sys
 import time
+import socket
 import logging
 
 from flask_socketio import SocketIO
@@ -22,7 +22,7 @@ class SocketIOHandler(logging.Handler):
                 "file": record.filename,
                 "line": record.lineno
             })
-        except:
+        except socket.error:
             self.handleError(record)
 
 

@@ -155,8 +155,8 @@ class MotorTestController:
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 logger.info(
-                    "Motor sequence test started for motors"
-                    + "->".join(range(num_motors))
+                    "Motor sequence test started for motors "
+                    + "->".join(str(i) for i in range(num_motors))
                 )
                 return {"success": True, "message": "Motor sequence test started"}
             else:

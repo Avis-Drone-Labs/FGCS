@@ -1,3 +1,4 @@
+import os
 import time
 import socket
 import logging
@@ -31,9 +32,14 @@ def setup_logging(conn: SocketIO, debug: bool = False) -> logging.Logger:
     fgcs_logger = logging.getLogger("fgcs")
 
     fgcs_logger.setLevel(logging.DEBUG if debug else logging.INFO)
-    fgcs_logger.addHandler(SocketIOHandler(conn))
 
     flask_logger = logging.getLogger("werkzeug")
 
     flask_logger.setLevel(logging.WARNING)
-    flask_logger.addHandler(SocketIOHandler(conn))
+
+    # Our test suite is stupid and all of them just check the last recieved message instead of filtering
+    # for the message they were expecting so we can't do socket logging in test environment
+
+    if os.environ.get("PYTEST_VERSION") is None:
+        fgcs_logger.addHandler(SocketIOHandler(conn))
+        flask_logger.addHandler(SocketIOHandler(conn))

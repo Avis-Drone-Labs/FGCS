@@ -26,7 +26,7 @@ const rootReducer = combineSlices(
   missionInfoSlice,
   statusTextSlice,
   notificationSlice,
-  loggingSlice
+  loggingSlice,
 )
 
 // Get the persisted state, we only want to take a couple of things from here.

@@ -172,7 +172,8 @@ export default function MotorTestPanel() {
                 return (
                   <p key={idx}>
                     {" "}
-                    Motor number: {mappedMotorNumber}, {frameTypeDirection[idx]}{" "}
+                    Motor number: {mappedMotorNumber},{" "}
+                    {frameTypeDirection[idx]}{" "}
                   </p>
                 )
               })}

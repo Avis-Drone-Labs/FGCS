@@ -73,7 +73,7 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
       shortcut: shortcut,
       macShortcut: macShortcut,
     })
-  } else{
+  } else {
     logWarning(`Attempting to add command that already exists: ${id}`)
   }
 }
@@ -81,8 +81,8 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
 export function RunCommand(id) {
   // Search for a command by id
 
-  var cmd = commands.find((entry) => entry.id == id);
-  
+  var cmd = commands.find((entry) => entry.id == id)
+
   if (cmd !== undefined) {
     cmd.command()
   } else {

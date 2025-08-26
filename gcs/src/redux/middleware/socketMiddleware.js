@@ -59,7 +59,7 @@ import { pushMessage } from "../slices/statusTextSlice.js"
 import { emitLog } from "../slices/loggingSlice.js"
 import { logDebug, logError, logInfo } from "../../helpers/logging.js"
 
-import process from "process";
+import process from "process"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -153,21 +153,26 @@ const socketMiddleware = (store) => {
 
           socket.socket.on = (event, callback) => {
             const wrappedCallback = (...args) => {
-              if (event != "log") logDebug(`Event "${event}" received by frontend with values (${args.map(a => typeof(a) == "object" ? JSON.stringify(a) : a).join(", ")})`);
-              callback(...args);
-            };
+              if (event != "log")
+                logDebug(
+                  `Event "${event}" received by frontend with values (${args.map((a) => (typeof a == "object" ? JSON.stringify(a) : a)).join(", ")})`,
+                )
+              callback(...args)
+            }
 
-            return originalOn(event, wrappedCallback);
-          };
+            return originalOn(event, wrappedCallback)
+          }
 
           const originalEmit = socket.socket.emit.bind(socket.socket)
 
           socket.socket.emit = (event, ...args) => {
-            logDebug(`Event "${event}" emitted by frontend with args (${args.join(", ")})`)
+            logDebug(
+              `Event "${event}" emitted by frontend with args (${args.join(", ")})`,
+            )
             return originalEmit(event, ...args)
           }
         }
-        
+
         // debug socket logging
         // handle socket connection events
         // EXAMPLE SOCKET.ON EVENT
@@ -183,9 +188,9 @@ const socketMiddleware = (store) => {
           logInfo(`Disconnected from socket via redux, ${socket.socket.id}`)
           store.dispatch(socketDisconnected())
         })
-        
+
         socket.socket.on("log", (msg) => {
-          store.dispatch(emitLog({...msg, source: "backend"}))
+          store.dispatch(emitLog({ ...msg, source: "backend" }))
         })
 
         /*

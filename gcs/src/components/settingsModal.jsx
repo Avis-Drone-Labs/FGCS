@@ -13,7 +13,7 @@ import { IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import DefaultSettings from "../../data/default_settings.json"
 
-import process from "process";
+import process from "process"
 
 const isValidNumber = (num, range) => {
   return (
@@ -128,17 +128,25 @@ function ExtendableNumberSetting({ settingName, range }) {
   )
 }
 
-function DirectorySetting({settingName}) {
+function DirectorySetting({ settingName }) {
   const { getSetting, setSetting } = useSettings()
 
   const setDirectory = async () => {
-    const dirHandle = await window.ipcRenderer.selectDirectory();
-    if (dirHandle !== null) setSetting(settingName, dirHandle);
+    const dirHandle = await window.ipcRenderer.selectDirectory()
+    if (dirHandle !== null) setSetting(settingName, dirHandle)
   }
 
   return (
     // <input type="file" webkitdirectory="true"/>
-    <div className="flex flex-col items-end">{getSetting(settingName)}<button className="bg-gray-300 rounded-sm text-black px-2 py-1 hover:bg-gray-400" onClick={setDirectory}>Choose Directory</button></div>
+    <div className="flex flex-col items-end">
+      {getSetting(settingName)}
+      <button
+        className="bg-gray-300 rounded-sm text-black px-2 py-1 hover:bg-gray-400"
+        onClick={setDirectory}
+      >
+        Choose Directory
+      </button>
+    </div>
   )
 }
 
@@ -163,9 +171,13 @@ function Setting({ settingName, df }) {
       ) : df.type == "option" ? (
         <OptionSetting settingName={settingName} options={df.options} />
       ) : df.type == "directory" ? (
-        <DirectorySetting settingName={settingName}/>
+        <DirectorySetting settingName={settingName} />
       ) : (
-        <TextSetting settingName={settingName} hidden={df.hidden || false} regex = {df.matches || null} />
+        <TextSetting
+          settingName={settingName}
+          hidden={df.hidden || false}
+          regex={df.matches || null}
+        />
       )}
     </div>
   )
@@ -176,7 +188,7 @@ function SettingsModal() {
 
   const { opened, close } = useSettings()
 
-  const settingsWithoutDev = settingTabs.filter(t => t !== "Development")
+  const settingsWithoutDev = settingTabs.filter((t) => t !== "Development")
 
   return (
     <Modal
@@ -202,16 +214,21 @@ function SettingsModal() {
         styles={{ list: { width: "15%" } }}
       >
         <Tabs.List>
-          {settingsWithoutDev.filter(t => t !== "Development").map((t) => {
-            return (
-              <Tabs.Tab key={t} value={t}>
-                {t}
-              </Tabs.Tab>
-            )
-          })}
+          {settingsWithoutDev
+            .filter((t) => t !== "Development")
+            .map((t) => {
+              return (
+                <Tabs.Tab key={t} value={t}>
+                  {t}
+                </Tabs.Tab>
+              )
+            })}
 
-          {process.env.NODE_ENV === "development" && <Tabs.Tab key={"Development"} value={"Development"} mt="auto">Development</Tabs.Tab>}
-
+          {process.env.NODE_ENV === "development" && (
+            <Tabs.Tab key={"Development"} value={"Development"} mt="auto">
+              Development
+            </Tabs.Tab>
+          )}
         </Tabs.List>
         {settingsWithoutDev.map((t) => {
           return (
@@ -232,22 +249,26 @@ function SettingsModal() {
           )
         })}
 
-        {process.env.NODE_ENV === "development" && 
-          <Tabs.Panel className="space-y-4" value="Development" key="Development">
-              {Object.keys(DefaultSettings["Development"]).map((s) => {
-                return (
-                  <Setting
-                    settingName={`Development.${s}`}
-                    df={DefaultSettings["Development"][s]}
-                    key={`Development.${s}`}
-                  />
-                )
-              })}
-              {Object.keys(DefaultSettings["Development"]).length == 0 && (
-                <p className="pl-4 pt-2">No settings available right now.</p>
-              )}
-            </Tabs.Panel>
-        }
+        {process.env.NODE_ENV === "development" && (
+          <Tabs.Panel
+            className="space-y-4"
+            value="Development"
+            key="Development"
+          >
+            {Object.keys(DefaultSettings["Development"]).map((s) => {
+              return (
+                <Setting
+                  settingName={`Development.${s}`}
+                  df={DefaultSettings["Development"][s]}
+                  key={`Development.${s}`}
+                />
+              )
+            })}
+            {Object.keys(DefaultSettings["Development"]).length == 0 && (
+              <p className="pl-4 pt-2">No settings available right now.</p>
+            )}
+          </Tabs.Panel>
+        )}
       </Tabs>
     </Modal>
   )

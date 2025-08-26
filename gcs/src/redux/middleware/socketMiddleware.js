@@ -153,7 +153,7 @@ const socketMiddleware = (store) => {
 
           socket.socket.on = (event, callback) => {
             const wrappedCallback = (...args) => {
-              if (event != "log") logDebug(`Event "${event}" recieved by frontend with values (${args.map(a => typeof(a) == "object" ? JSON.stringify(a) : a).join(", ")})`);
+              if (event != "log") logDebug(`Event "${event}" received by frontend with values (${args.map(a => typeof(a) == "object" ? JSON.stringify(a) : a).join(", ")})`);
               callback(...args);
             };
 

@@ -138,7 +138,7 @@ function DirectorySetting({settingName}) {
 
   return (
     // <input type="file" webkitdirectory="true"/>
-    <div className="flex flex-col items-end">{getSetting(settingName)}<button class="bg-gray-300 rounded-sm text-black px-2 py-1 hover:bg-gray-400" onClick={setDirectory}>Choose Directory</button></div>
+    <div className="flex flex-col items-end">{getSetting(settingName)}<button className="bg-gray-300 rounded-sm text-black px-2 py-1 hover:bg-gray-400" onClick={setDirectory}>Choose Directory</button></div>
   )
 }
 

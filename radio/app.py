@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     logger.info(f"Starting backend at {host}:{port}.")
     socketio.run(app, allow_unsafe_werkzeug=True, host=host, port=port)
-    
+
     if droneStatus.drone:
         droneStatus.drone.close()
         logger.info("Backend closed.")

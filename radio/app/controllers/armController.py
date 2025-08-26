@@ -13,9 +13,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("fgcs")
 
+
 class ArmController:
-    
-    
     def __init__(self, drone: Drone) -> None:
         """
         The Arm controller controls all arm/disarming operations.
@@ -66,7 +65,7 @@ class ArmController:
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
             return {"success": False, "message": "Could not arm, serial exception"}
-        
+
         logger.warning("Arm failed: unknown error")
         return {"success": False, "message": "Could not arm, command not accepted"}
 
@@ -108,10 +107,10 @@ class ArmController:
         except Exception as e:
             self.drone.is_listening = True
             logger.error(e, exc_info=True)
-            
+
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-                
+
             return {"success": False, "message": "Could not disarm, serial exception"}
 
         logger.warning("Disarm failed: unknown error")

@@ -1,7 +1,6 @@
 import copy
 import os
 import time
-import traceback
 from logging import Logger, getLogger
 from pathlib import Path
 from queue import Queue

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("fgcs")
 
+
 class MotorTestController:
     def __init__(self, drone: Drone) -> None:
         """
@@ -44,16 +45,12 @@ class MotorTestController:
         # self.drone.logger.info(f"Testing drone values: {data}")
         throttle = data.get("throttle", -1)
         if throttle is None or (not (0 <= throttle <= 100)):
-            logger.error(
-                f"Invalid value for motor test throttle, got {throttle}"
-            )
+            logger.error(f"Invalid value for motor test throttle, got {throttle}")
             return 0, 0, "Invalid value for throttle"
 
         duration = data.get("duration", -1)
         if duration is None or duration < 0:
-            logger.error(
-                f"Invalid value for motor test duration, got {duration}"
-            )
+            logger.error(f"Invalid value for motor test duration, got {duration}")
             return 0, 0, "Invalid value for duration"
 
         return throttle, duration, None
@@ -77,9 +74,7 @@ class MotorTestController:
         motor_instance = data.get("motorInstance", None)
 
         if motor_instance is None or motor_instance < 1:
-            logger.error(
-                f"Invalid value for motor instance, got {motor_instance}"
-            )
+            logger.error(f"Invalid value for motor instance, got {motor_instance}")
             return {"success": False, "message": "Invalid value for motorInstance"}
 
         self.drone.sendCommand(
@@ -140,9 +135,7 @@ class MotorTestController:
 
         num_motors = data.get("number_of_motors", None)
         if num_motors is None or num_motors < 1:
-            logger.error(
-                f"Invalid value for number of motors, got {num_motors}"
-            )
+            logger.error(f"Invalid value for number of motors, got {num_motors}")
             return {"success": False, "message": "Invalid value for number_of_motors"}
 
         self.drone.sendCommand(
@@ -161,7 +154,10 @@ class MotorTestController:
             self.drone.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
-                logger.info("Motor sequence test started for motors" + "->".join(range(num_motors)))
+                logger.info(
+                    "Motor sequence test started for motors"
+                    + "->".join(range(num_motors))
+                )
                 return {"success": True, "message": "Motor sequence test started"}
             else:
                 logger.error("Motor sequence test not started: command not accepted")
@@ -197,9 +193,7 @@ class MotorTestController:
         # Validate number of motors
         num_motors = data.get("number_of_motors", None)
         if num_motors is None or num_motors < 1:
-            logger.error(
-                f"Invalid value for number of motors, got {num_motors}"
-            )
+            logger.error(f"Invalid value for number of motors, got {num_motors}")
             return {"success": False, "message": "Invalid value for number_of_motors"}
 
         # Send all commands

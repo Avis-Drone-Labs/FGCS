@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("fgcs")
 
+
 class FrameController:
     def __init__(self, drone: Drone) -> None:
         """The frame class controls all frame class and type related actions

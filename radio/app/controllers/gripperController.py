@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("fgcs")
 
+
 class GripperController:
     def __init__(self, drone: Drone) -> None:
         """
@@ -130,7 +131,9 @@ class GripperController:
                     "message": f"Setting gripper to {action}",
                 }
             else:
-                logger.error(f"Could not set gripper state to {action}, command not accepted")
+                logger.error(
+                    f"Could not set gripper state to {action}, command not accepted"
+                )
                 return {
                     "success": False,
                     "message": "Setting gripper failed",

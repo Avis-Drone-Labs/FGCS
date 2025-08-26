@@ -20,8 +20,13 @@ def getComPort() -> str:
     while True:
         ports = list(list_ports.comports())
 
-        
-        logger.info("Available COM PORTS: \n" + "\n".join(f"\t[{i}]\t{port.name}: {port.description}" for i, port in enumerate(ports)))
+        logger.info(
+            "Available COM PORTS: \n"
+            + "\n".join(
+                f"\t[{i}]\t{port.name}: {port.description}"
+                for i, port in enumerate(ports)
+            )
+        )
 
         inp_port = input("Enter a port index to connect to: ")
         if not inp_port.isdigit():

@@ -16,6 +16,7 @@ import missionInfoSlice from "./slices/missionSlice"
 import statusTextSlice from "./slices/statusTextSlice"
 import notificationSlice from "./slices/notificationSlice"
 import loggingSlice from "./slices/loggingSlice"
+import loggingMiddleware from "./middleware/loggingMiddleware"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -39,7 +40,7 @@ export const store = configureStore({
     return getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat([socketMiddleware])
+    }).concat([socketMiddleware, loggingMiddleware])
   },
 })
 

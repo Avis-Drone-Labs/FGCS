@@ -541,7 +541,7 @@ const socketMiddleware = (store) => {
       }
     }
 
-    next(action)
+    return next(action)
   }
 }
 

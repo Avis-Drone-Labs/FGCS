@@ -12,7 +12,7 @@ class SocketIOHandler(logging.Handler):
         self.socket = sio
     
     def emit(self, record) -> None:
-        
+
         try:
             entry = self.format(record)
             self.socket.emit("log", {
@@ -33,8 +33,7 @@ def setup_logging(conn: SocketIO, debug: bool = False) -> logging.Logger:
     fgcs_logger.setLevel(logging.DEBUG if debug else logging.INFO)
     fgcs_logger.addHandler(SocketIOHandler(conn))
     
-    # Stream handler on debug mode only
-    
     flask_logger = logging.getLogger("werkzeug")
+    
     flask_logger.setLevel(logging.WARNING)
     flask_logger.addHandler(SocketIOHandler(conn))

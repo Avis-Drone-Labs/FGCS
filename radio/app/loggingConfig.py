@@ -37,7 +37,7 @@ def setup_logging(conn: SocketIO, debug: bool = False) -> None:
 
     flask_logger.setLevel(logging.WARNING)
 
-    # Our test suite is stupid and all of them just check the last recieved message instead of filtering
+    # Our test suite is stupid and all of them just check the last received message instead of filtering
     # for the message they were expecting so we can't do socket logging in test environment
 
     if os.environ.get("PYTEST_VERSION") is None:

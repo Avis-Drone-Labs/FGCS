@@ -59,6 +59,8 @@ import { pushMessage } from "../slices/statusTextSlice.js"
 import { emitLog } from "../slices/loggingSlice.js"
 import { logDebug, logError, logInfo } from "../../helpers/logging.js"
 
+import process from "process";
+
 const SocketEvents = Object.freeze({
   // socket.on events
   Connect: "connect",

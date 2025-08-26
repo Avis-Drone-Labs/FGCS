@@ -13,6 +13,8 @@ import { IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import DefaultSettings from "../../data/default_settings.json"
 
+import process from "process";
+
 const isValidNumber = (num, range) => {
   return (
     num &&

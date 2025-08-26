@@ -13,6 +13,8 @@ import { Commands } from "./spotlight/commandHandler"
 import SingleRunWrapper from "./SingleRunWrapper"
 import { SettingsProvider } from "../helpers/settingsProvider"
 
+import process from "process";
+
 // Routes
 import FLA from "../fla"
 import Graphs from "../graphs"

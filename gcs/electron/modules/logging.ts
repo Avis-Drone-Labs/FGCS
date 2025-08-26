@@ -93,11 +93,6 @@ export function setupLog4js(logToWorkspace: boolean, combineLogFiles: boolean, l
             }
         },
         categories: {
-            electron: {
-                appenders: appenders,
-                level: 'info',
-                enableCallStack: true
-            },
             frontend: {
                 appenders: appenders,
                 level: loggingLevel,

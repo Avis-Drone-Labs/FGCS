@@ -1,12 +1,12 @@
 "use client"
 
 import Webcam from "react-webcam"
-import { useSearchParams } from "react-router-dom"
 import { IconX } from "@tabler/icons-react"
 import { useRef } from "react"
 
 export default function CameraWindow() {
-  const [searchParams] = useSearchParams()
+  
+  const searchParams = new URLSearchParams(window.location.search);
 
   const videoRef = useRef(null)
   const deviceId = searchParams.get("deviceId", null)

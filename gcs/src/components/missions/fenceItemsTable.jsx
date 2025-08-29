@@ -10,11 +10,7 @@ import FenceItemsTableRow from "./fenceItemsTableRow"
 import { useSelector } from "react-redux"
 import { selectDrawingFenceItems } from "../../redux/slices/missionSlice"
 
-function FenceItemsTableNonMemo({
-  updateMissionItem,
-  deleteMissionItem,
-  updateMissionItemOrder,
-}) {
+function FenceItemsTableNonMemo() {
   const fenceItems = useSelector(selectDrawingFenceItems)
 
   return (
@@ -35,16 +31,8 @@ function FenceItemsTableNonMemo({
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {fenceItems.map((fenceItem) => {
-          return (
-            <FenceItemsTableRow
-              key={fenceItem.id}
-              fenceItem={fenceItem}
-              updateMissionItem={updateMissionItem}
-              deleteMissionItem={deleteMissionItem}
-              updateMissionItemOrder={updateMissionItemOrder}
-            />
-          )
+        {fenceItems.map((fenceItem, idx) => {
+          return <FenceItemsTableRow key={fenceItem.id} fenceItemIndex={idx} />
         })}
       </Table.Tbody>
     </Table>

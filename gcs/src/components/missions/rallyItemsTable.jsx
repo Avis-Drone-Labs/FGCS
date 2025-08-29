@@ -7,7 +7,7 @@ import { useSelector } from "react-redux"
 import { selectDrawingRallyItems } from "../../redux/slices/missionSlice"
 import RallyItemsTableRow from "./rallyItemsTableRow"
 
-function RallyItemsTableNonMemo({ updateRallyItem, deleteRallyItem }) {
+function RallyItemsTableNonMemo() {
   const rallyItems = useSelector(selectDrawingRallyItems)
 
   return (
@@ -28,15 +28,8 @@ function RallyItemsTableNonMemo({ updateRallyItem, deleteRallyItem }) {
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {rallyItems.map((rallyItem) => {
-          return (
-            <RallyItemsTableRow
-              key={rallyItem.id}
-              rallyItem={rallyItem}
-              updateRallyItem={updateRallyItem}
-              deleteRallyItem={deleteRallyItem}
-            />
-          )
+        {rallyItems.map((rallyItem, idx) => {
+          return <RallyItemsTableRow key={rallyItem.id} rallyItemIndex={idx} />
         })}
       </Table.Tbody>
     </Table>

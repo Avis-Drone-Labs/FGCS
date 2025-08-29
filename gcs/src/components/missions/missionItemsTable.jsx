@@ -11,12 +11,10 @@ import MissionItemsTableRow from "./missionItemsTableRow"
 import { useSelector } from "react-redux"
 import { selectDrawingMissionItems } from "../../redux/slices/missionSlice"
 
-function MissionItemsTableNonMemo({
-  updateMissionItem,
-  deleteMissionItem,
-  updateMissionItemOrder,
-}) {
+function MissionItemsTableNonMemo() {
   const missionItems = useSelector(selectDrawingMissionItems)
+
+  console.log(missionItems)
 
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
@@ -42,14 +40,10 @@ function MissionItemsTableNonMemo({
             return null
           }
 
+          console.log(missionItem)
+
           return (
-            <MissionItemsTableRow
-              key={missionItem.id}
-              missionItem={missionItem}
-              updateMissionItem={updateMissionItem}
-              deleteMissionItem={deleteMissionItem}
-              updateMissionItemOrder={updateMissionItemOrder}
-            />
+            <MissionItemsTableRow key={missionItem.id} missionItemIndex={idx} />
           )
         })}
       </Table.Tbody>

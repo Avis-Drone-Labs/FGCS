@@ -8,7 +8,9 @@ import React from "react"
 // Map and mantine imports
 import { Tooltip } from "@mantine/core"
 import { Marker } from "react-map-gl"
+import { useDispatch } from "react-redux"
 import { coordToInt } from "../../helpers/dataFormatters"
+import { updateDrawingItem } from "../../redux/slices/missionSlice"
 
 const MarkerPin = React.memo(
   ({
@@ -20,8 +22,9 @@ const MarkerPin = React.memo(
     tooltipText = null,
     showOnTop = false,
     draggable = false,
-    dragEndCallback = () => {},
   }) => {
+    const dispatch = useDispatch()
+
     return (
       <Marker
         latitude={lat}
@@ -29,11 +32,13 @@ const MarkerPin = React.memo(
         className={showOnTop && "z-10"}
         draggable={draggable}
         onDragEnd={(e) => {
-          dragEndCallback({
-            id: id,
-            x: coordToInt(e.lngLat.lat),
-            y: coordToInt(e.lngLat.lng),
-          })
+          dispatch(
+            updateDrawingItem({
+              id: id,
+              x: coordToInt(e.lngLat.lat),
+              y: coordToInt(e.lngLat.lng),
+            }),
+          )
         }}
       >
         <Tooltip disabled={tooltipText === null} label={tooltipText}>

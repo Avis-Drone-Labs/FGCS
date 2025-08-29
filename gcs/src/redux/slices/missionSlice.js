@@ -1,6 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit"
+import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
+import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
 import { socket } from "../../helpers/socket"
 
 const missionInfoSlice = createSlice({
@@ -62,115 +63,179 @@ const missionInfoSlice = createSlice({
     setHomePosition: (state, action) => {
       if (action.payload === state.homePosition) return
       state.homePosition = action.payload
+
+      if (
+        state.drawingItems.missionItems.length > 0 &&
+        isGlobalFrameHomeCommand(state.drawingItems.missionItems[0])
+      ) {
+        state.drawingItems.missionItems[0] = {
+          ...state.drawingItems.missionItems[0],
+          x: action.payload.lat,
+          y: action.payload.lon,
+        }
+      } else {
+        const newHomeItem = {
+          id: uuidv4(),
+          seq: 0, // Home position is always the first item
+          x: action.payload.lat,
+          y: action.payload.lon,
+          z: action.payload.alt || 0,
+          frame: getFrameKey("MAV_FRAME_GLOBAL"),
+          command: 16, // MAV_CMD_NAV_WAYPOINT
+          param1: 0,
+          param2: 0,
+          param3: 0,
+          param4: 0,
+          current: 1, // Set as current waypoint
+          autocontinue: 1,
+          target_component: state.targetInfo.target_component,
+          target_system: state.targetInfo.target_system,
+          mission_type: "mission",
+          mavpackettype: "MISSION_ITEM_INT",
+        }
+
+        state.drawingItems.missionItems = [
+          newHomeItem,
+          state.drawingItems.missionItems,
+        ]
+      }
     },
     setTargetInfo: (state, action) => {
       if (action.payload === state.targetInfo) return
       state.targetInfo = action.payload
     },
+    updateDrawingItem: (state, action) => {
+      const payload = action.payload
+      const _type = `${state.activeTab}Items`
+
+      console.log("This is happening")
+
+      const index = state.drawingItems[_type].findIndex(
+        (i) => i.id === payload.id,
+      )
+      if (index === -1) return
+
+      const currentItem = state.drawingItems[_type][index]
+
+      if (currentItem === payload) return
+
+      state.drawingItems[_type][index] = { ...currentItem, ...payload }
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
+    removeDrawingItem: (state, action) => {
+      const id = action.payload
+      const _type = `${state.activeTab}Items`
+
+      console.log("This is also happening")
+
+      const index = state.drawingItems[_type].findIndex((i) => i.id === id)
+      if (index === -1) return
+
+      state.drawingItems[_type] = state.drawingItems[_type]
+        .filter((s) => s.id != id)
+        .map((item, index) => {
+          return { ...item, seq: index }
+        })
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
+    reorderDrawingItem: (state, action) => {
+      const { id, increment } = action.payload
+      const _type = `${state.activeTab}Items`
+
+      console.log(`Reordering ${id} by ${increment}`)
+
+      const index = state.drawingItems[_type].findIndex((i) => i.id === id)
+      if (
+        index === -1 ||
+        (increment === -1 && index === 0) ||
+        (increment === 1 && index === state.drawingItems[_type].length - 1)
+      )
+        return // Wow this definitely needed to be a one liner it makes it very readable!
+      ;[
+        state.drawingItems[_type][index],
+        state.drawingItems[_type][index + increment],
+      ] = [
+        { ...state.drawingItems[_type][index + increment], seq: index },
+        { ...state.drawingItems[_type][index], seq: index + increment },
+      ]
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
+    createNewDrawingItem: (state, action) => {
+      const { x, y } = action.payload
+      const drawingItem = newMissionItem(x, y, state.targetInfo)
+
+      const _type = `${state.activeTab}Items`
+
+      drawingItem.seq = state.drawingItems[_type].length
+      drawingItem.command = { mission: 16, fence: 5004, rally: 5100 }[
+        state.activeTab
+      ]
+      drawingItem.mission_type = { mission: 0, fence: 1, rally: 2 }[
+        state.activeTab
+      ]
+
+      if (state.activeTab == "fence") {
+        drawingItem.param1 = 5
+        drawingItem.frame = getFrameKey("MAV_FRAME_GLOBAL")
+      }
+
+      state.drawingItems[_type].push(drawingItem)
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
+    clearDrawingItems: (state) => {
+      const _type = `${state.activeTab}Items`
+
+      if (state.activeTab[_type] == []) return
+
+      if (
+        state.activeTab == "mission" &&
+        state.drawingItems.missionItems.length > 0 &&
+        isGlobalFrameHomeCommand(state.drawingItems.missionItems[0])
+      ) {
+        state.drawingItems.missionItems = [state.drawingItems.missionItems[0]]
+      } else {
+        state.drawingItems[_type] = []
+      }
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
+    createFencePolygon: (state, action) => {
+      const items = action.payload
+
+      state.drawingItems.fenceItems = [
+        ...state.drawingItems.fenceItems,
+        ...items.map((item, index) => ({
+          ...item,
+          seq: state.drawingItems.fenceItems.length + index,
+        })),
+      ]
+      state.unwrittenChanges.fence = true
+    },
     setDrawingMissionItems: (state, action) => {
       if (action.payload === state.drawingItems.missionItems) return
       state.drawingItems.missionItems = action.payload
-    },
-    updateDrawingMissionItem: (state, action) => {
-      const index = state.drawingItems.missionItems.findIndex(
-        (i) => i.id === action.payload.id,
-      )
-
-      if (index === -1) return
-
-      const currentItem = state.drawingItems.missionItems[index]
-
-      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return
-
-      state.drawingItems.missionItems[index] = {
-        ...currentItem,
-        ...action.payload,
-      }
-    },
-    appendDrawingMissionItem: (state, action) => {
-      state.drawingItems.missionItems.push({
-        ...action.payload,
-        seq: state.drawingItems.missionItems.length,
-      })
-    },
-    deleteDrawingMissionItem: (state, action) => {
-      const updatedItems = state.drawingItems.missionItems.filter(
-        (item) => item.id !== action.payload,
-      )
-      state.drawingItems.missionItems = updatedItems.map((item, index) => ({
-        ...item,
-        seq: index, // Reassign seq based on the new order
-      }))
     },
     setDrawingFenceItems: (state, action) => {
       if (action.payload === state.drawingItems.fenceItems) return
       state.drawingItems.fenceItems = action.payload
     },
-    updateDrawingFenceItem: (state, action) => {
-      const index = state.drawingItems.fenceItems.findIndex(
-        (i) => i.id === action.payload.id,
-      )
-
-      if (index === -1) return
-
-      const currentItem = state.drawingItems.fenceItems[index]
-
-      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return
-
-      state.drawingItems.fenceItems[index] = {
-        ...currentItem,
-        ...action.payload,
-      }
-    },
-    appendDrawingFenceItem: (state, action) => {
-      state.drawingItems.fenceItems.push({
-        ...action.payload,
-        seq: state.drawingItems.fenceItems.length,
-      })
-    },
-    deleteDrawingFenceItem: (state, action) => {
-      const updatedItems = state.drawingItems.fenceItems.filter(
-        (item) => item.id !== action.payload,
-      )
-      state.drawingItems.fenceItems = updatedItems.map((item, index) => ({
-        ...item,
-        seq: index, // Reassign seq based on the new order
-      }))
-    },
     setDrawingRallyItems: (state, action) => {
       if (action.payload === state.drawingItems.rallyItems) return
       state.drawingItems.rallyItems = action.payload
-    },
-    updateDrawingRallyItem: (state, action) => {
-      const index = state.drawingItems.rallyItems.findIndex(
-        (i) => i.id === action.payload.id,
-      )
-
-      if (index === -1) return
-
-      const currentItem = state.drawingItems.rallyItems[index]
-
-      if (JSON.stringify(currentItem) === JSON.stringify(action.payload)) return
-
-      state.drawingItems.rallyItems[index] = {
-        ...currentItem,
-        ...action.payload,
-      }
-    },
-    appendDrawingRallyItem: (state, action) => {
-      state.drawingItems.rallyItems.push({
-        ...action.payload,
-        seq: state.drawingItems.rallyItems.length,
-      })
-    },
-    deleteDrawingRallyItem: (state, action) => {
-      const updatedItems = state.drawingItems.rallyItems.filter(
-        (item) => item.id !== action.payload,
-      )
-      state.drawingItems.rallyItems = updatedItems.map((item, index) => ({
-        ...item,
-        seq: index, // Reassign seq based on the new order
-      }))
     },
     setUnwrittenChanges: (state, action) => {
       if (action.payload === state.unwrittenChanges) return
@@ -187,6 +252,14 @@ const missionInfoSlice = createSlice({
     setMissionProgressData: (state, action) => {
       if (action.payload === state.missionProgressData) return
       state.missionProgressData = action.payload
+    },
+    resetMissionProgressData: (state) => {
+      if (
+        !state.missionProgressData.message &&
+        !state.missionProgressData.progress
+      )
+        return
+      state.missionProgressData = { message: "", progress: null }
     },
 
     // Emits
@@ -225,11 +298,34 @@ const missionInfoSlice = createSlice({
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
     selectDrawingRallyItems: (state) => state.drawingItems.rallyItems,
     selectUnwrittenChanges: (state) => state.unwrittenChanges,
+    selectFirstUnwrittenTab: (state) =>
+      Object.entries(state.unwrittenChanges).find(([, changed]) => changed),
     selectMissionProgressModal: (state) => state.modals.missionProgressModal,
     selectMissionProgressData: (state) => state.missionProgressData,
     selectActiveTab: (state) => state.activeTab,
   },
 })
+
+export const selectDrawingMissionItemByIdx = (index) =>
+  createSelector(
+    [missionInfoSlice.selectors.selectDrawingMissionItems],
+
+    (missionItems) => missionItems.at(index),
+  )
+
+export const selectDrawingFenceItemByIdx = (index) =>
+  createSelector(
+    [missionInfoSlice.selectors.selectDrawingFenceItems],
+
+    (fenceItems) => fenceItems.at(index),
+  )
+
+export const selectDrawingRallyItemByIdx = (index) =>
+  createSelector(
+    [missionInfoSlice.selectors.selectDrawingRallyItems],
+
+    (rallyItems) => rallyItems.at(index),
+  )
 
 export const addIdToItem = (missionItem) => {
   if (!missionItem.id) {
@@ -251,6 +347,33 @@ export const updateHomePositionBasedOnWaypoints = (waypoints) => {
   }
 }
 
+export const getFrameKey = (frame) =>
+  parseInt(
+    Object.keys(MAV_FRAME_LIST).find((key) => MAV_FRAME_LIST[key] == frame),
+  )
+
+export const newMissionItem = (x, y, targetInfo) => {
+  return {
+    id: uuidv4(),
+    seq: null,
+    x: x,
+    y: y,
+    z: 30,
+    frame: getFrameKey("MAV_FRAME_GLOBAL_RELATIVE_ALT"),
+    command: null,
+    param1: 0,
+    param2: 0,
+    param3: 0,
+    param4: 0,
+    current: 0,
+    autocontinue: 1,
+    target_component: targetInfo.target_component,
+    target_system: targetInfo.target_system,
+    mission_type: null,
+    mavpackettype: "MISSION_ITEM_INT",
+  }
+}
+
 export const {
   selectCurrentMission,
   selectCurrentMissionItems,
@@ -260,31 +383,31 @@ export const {
   selectDrawingFenceItems,
   selectDrawingRallyItems,
   selectUnwrittenChanges,
+  selectFirstUnwrittenTab,
   selectMissionProgressModal,
   selectMissionProgressData,
   selectActiveTab,
 } = missionInfoSlice.selectors
+
 export const {
   setCurrentMission,
   setCurrentMissionItems,
   setHomePosition,
   setTargetInfo,
+  updateDrawingItem,
+  removeDrawingItem,
+  reorderDrawingItem,
+  createNewDrawingItem,
+  clearDrawingItems,
+  createFencePolygon,
   setDrawingMissionItems,
   setDrawingFenceItems,
   setDrawingRallyItems,
-  updateDrawingMissionItem,
-  updateDrawingFenceItem,
-  updateDrawingRallyItem,
-  appendDrawingMissionItem,
-  appendDrawingFenceItem,
-  appendDrawingRallyItem,
-  deleteDrawingMissionItem,
-  deleteDrawingFenceItem,
-  deleteDrawingRallyItem,
   setUnwrittenChanges,
   setMissionProgressModal,
   setActiveTab,
   setMissionProgressData,
+  resetMissionProgressData,
   emitGetTargetInfo,
   emitGetCurrentMission,
   emitWriteCurrentMission,

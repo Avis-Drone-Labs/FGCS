@@ -44,16 +44,20 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 import {
   selectFlightModeString,
   selectGPS,
-  selectNavController,
 } from "../../redux/slices/droneInfoSlice"
 import {
+  clearDrawingItems,
+  createFencePolygon,
+  createNewDrawingItem,
+  getFrameKey,
   selectActiveTab,
   selectHomePosition,
+  setHomePosition,
 } from "../../redux/slices/missionSlice"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -67,19 +71,13 @@ function MapSectionNonMemo({
   rallyItems,
   onDragstart,
   markerDragEndCallback,
-  addNewMissionItem,
-  updateMissionHomePosition,
-  clearMissionItems,
-  addFencePolygon,
 }) {
   // Redux
+  const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const gpsData = useSelector(selectGPS)
-  const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
-  const navControllerOutputData = useSelector(selectNavController)
-  const desiredBearing = navControllerOutputData.nav_bearing
   const homePosition = useSelector(selectHomePosition)
-  const flightMode = useSelector(selectFlightModeString)
+  const flightModeString = useSelector(selectFlightModeString)
   const currentTab = useSelector(selectActiveTab)
 
   const [guidedModePinData] = useSessionStorage({
@@ -125,7 +123,7 @@ function MapSectionNonMemo({
   }, [connected])
 
   useEffect(() => {
-    // Check latest data point is valid
+    // Check latest gpsData point is valid
     if (
       isNaN(gpsData.lat) ||
       isNaN(gpsData.lon) ||
@@ -233,9 +231,10 @@ function MapSectionNonMemo({
       x: coordToInt(point.lat),
       y: coordToInt(point.lon),
       z: index,
+      frame: getFrameKey("MAV_FRAME_GLOBAL_RELATIVE_ALT"),
     }))
 
-    addFencePolygon(fenceItems)
+    dispatch(createFencePolygon(fenceItems))
     setPolygonPoints([])
     setPolygonDrawMode(false)
   }
@@ -318,7 +317,9 @@ function MapSectionNonMemo({
           if (polygonDrawMode) {
             addNewPolygonVertex(lat, lon)
           } else {
-            addNewMissionItem(lat, lon)
+            dispatch(
+              createNewDrawingItem({ x: coordToInt(lat), y: coordToInt(lon) }),
+            )
           }
         }}
         cursor="default"
@@ -330,10 +331,8 @@ function MapSectionNonMemo({
             <DroneMarker
               lat={position.latitude}
               lon={position.longitude}
-              heading={heading ?? 0}
               zoom={initialViewState.zoom}
               showHeadingLine={true}
-              desiredBearing={desiredBearing ?? 0}
             />
           )}
 
@@ -343,17 +342,9 @@ function MapSectionNonMemo({
           dragEndCallback={updatePolygonVertex}
         />
 
-        <MissionItems
-          missionItems={missionItems}
-          editable={currentTab === "mission"}
-          dragEndCallback={markerDragEndCallback}
-        />
+        <MissionItems missionItems={missionItems} />
 
-        <FenceItems
-          fenceItems={fenceItems}
-          editable={currentTab === "fence"}
-          dragEndCallback={markerDragEndCallback}
-        />
+        <FenceItems fenceItems={fenceItems} />
 
         {/* Show mission rally point */}
         {rallyItems.map((item, index) => {
@@ -372,7 +363,7 @@ function MapSectionNonMemo({
           )
         })}
 
-        {flightMode === "Guided" && guidedModePinData !== null && (
+        {flightModeString === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}
@@ -389,7 +380,13 @@ function MapSectionNonMemo({
             lat={intToCoord(homePosition.lat)}
             lon={intToCoord(homePosition.lon)}
             updateMissionHomePositionDragCb={({ x, y }) => {
-              updateMissionHomePosition(x, y)
+              dispatch(
+                setHomePosition({
+                  lat: coordToInt(x),
+                  lon: coordToInt(y),
+                  alt: 0.1,
+                }),
+              )
             }}
             lineTo={
               filteredMissionItems.length > 0 && [
@@ -444,15 +441,18 @@ function MapSectionNonMemo({
             <Divider />
             <ContextMenuItem
               onClick={() => {
-                updateMissionHomePosition(
-                  clickedGpsCoords.lat,
-                  clickedGpsCoords.lng,
+                dispatch(
+                  setHomePosition({
+                    lat: coordToInt(clickedGpsCoords.lat),
+                    lon: coordToInt(clickedGpsCoords.lng),
+                    alt: 0.1,
+                  }),
                 )
               }}
             >
               <p>Set home position</p>
             </ContextMenuItem>
-            <ContextMenuItem onClick={clearMissionItems}>
+            <ContextMenuItem onClick={() => dispatch(clearDrawingItems())}>
               <p>Clear mission</p>
             </ContextMenuItem>
             <Divider />

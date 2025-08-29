@@ -44,12 +44,6 @@ import {
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
 import {
-  appendDrawingFenceItem,
-  appendDrawingMissionItem,
-  appendDrawingRallyItem,
-  deleteDrawingFenceItem,
-  deleteDrawingMissionItem,
-  deleteDrawingRallyItem,
   emitExportMissionToFile,
   emitGetCurrentMission,
   emitGetTargetInfo,
@@ -72,9 +66,6 @@ import {
   setMissionProgressData,
   setMissionProgressModal,
   setUnwrittenChanges,
-  updateDrawingFenceItem,
-  updateDrawingMissionItem,
-  updateDrawingRallyItem,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -697,10 +688,6 @@ export default function Missions() {
                   fenceItems={fenceItems}
                   rallyItems={rallyItems}
                   markerDragEndCallback={updateMissionItem}
-                  addNewMissionItem={addNewMissionItem}
-                  updateMissionHomePosition={updateMissionHomePosition}
-                  clearMissionItems={clearMissionItems}
-                  addFencePolygon={addFencePolygon}
                 />
               </div>
 

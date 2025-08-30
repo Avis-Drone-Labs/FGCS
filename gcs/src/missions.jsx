@@ -29,9 +29,7 @@ import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
-import { coordToInt, intToCoord } from "./helpers/dataFormatters"
-import { isGlobalFrameHomeCommand } from "./helpers/filterMissions"
-import { MAV_FRAME_LIST } from "./helpers/mavlinkConstants"
+import { intToCoord } from "./helpers/dataFormatters"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -49,6 +47,7 @@ import {
   emitGetTargetInfo,
   emitImportMissionFromFile,
   emitWriteCurrentMission,
+  getFrameKey,
   selectActiveTab,
   selectDrawingFenceItems,
   selectDrawingMissionItems,
@@ -59,13 +58,8 @@ import {
   selectTargetInfo,
   selectUnwrittenChanges,
   setActiveTab,
-  setDrawingFenceItems,
-  setDrawingMissionItems,
-  setDrawingRallyItems,
-  setHomePosition,
   setMissionProgressData,
   setMissionProgressModal,
-  setUnwrittenChanges,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -81,7 +75,7 @@ function UnwrittenChangesWarning({ unwrittenChanges }) {
     <>
       {firstUnwrittenTab && (
         <p className="text-red-400 text-center">
-          You have unwritten {firstUnwrittenTab[0]} changes.
+          You have unwritten <b>{firstUnwrittenTab[0]}</b> changes.
         </p>
       )}
     </>
@@ -123,7 +117,6 @@ export default function Missions() {
   )
   const [currentPage] = useSessionStorage({ key: "currentPage" })
   const mapRef = useRef()
-  const newMissionItemAltitude = 30 // TODO: Make this configurable
 
   // Send some messages when file is loaded
   useEffect(() => {
@@ -150,60 +143,6 @@ export default function Missions() {
     )
   }
 
-  function addNewMissionItem(lat, lon) {
-    const newMissionItem = {
-      id: uuidv4(),
-      seq: null,
-      x: coordToInt(lat),
-      y: coordToInt(lon),
-      z: newMissionItemAltitude,
-      frame: parseInt(
-        Object.keys(MAV_FRAME_LIST).find(
-          (key) =>
-            MAV_FRAME_LIST[key] ===
-            (activeTabRef.current === "fence"
-              ? "MAV_FRAME_GLOBAL"
-              : "MAV_FRAME_GLOBAL_RELATIVE_ALT"),
-        ),
-      ),
-      command: null,
-      param1: activeTabRef.current === "fence" ? 5 : 0,
-      param2: 0,
-      param3: 0,
-      param4: 0,
-      current: 0,
-      autocontinue: 1,
-      target_component: targetInfo.target_component,
-      target_system: targetInfo.target_system,
-      mission_type: null,
-      mavpackettype: "MISSION_ITEM_INT",
-    }
-
-    if (activeTabRef.current === "mission") {
-      newMissionItem.command = 16 // MAV_CMD_NAV_WAYPOINT
-      newMissionItem.mission_type = 0 // Mission type
-
-      dispatch(appendDrawingMissionItem(newMissionItem))
-    } else if (activeTabRef.current === "fence") {
-      newMissionItem.command = 5004 // MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION
-      newMissionItem.mission_type = 1 // Fence type
-
-      dispatch(appendDrawingFenceItem(newMissionItem))
-    } else if (activeTabRef.current === "rally") {
-      newMissionItem.command = 5100 // MAV_CMD_NAV_RALLY_POINT
-      newMissionItem.mission_type = 2 // Rally type
-
-      dispatch(appendDrawingRallyItem(newMissionItem))
-    }
-
-    dispatch(
-      setUnwrittenChanges({
-        ...unwrittenChanges,
-        [activeTabRef.current]: true,
-      }),
-    )
-  }
-
   function createHomePositionItem() {
     if (!homePosition) {
       dispatch(queueErrorNotification("Home position is not set"))
@@ -216,11 +155,7 @@ export default function Missions() {
       x: homePosition.lat,
       y: homePosition.lon,
       z: homePosition.alt || 0,
-      frame: parseInt(
-        Object.keys(MAV_FRAME_LIST).find(
-          (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
-        ),
-      ),
+      frame: getFrameKey("MAV_FRAME_GLOBAL"),
       command: 16, // MAV_CMD_NAV_WAYPOINT
       param1: 0,
       param2: 0,
@@ -242,87 +177,6 @@ export default function Missions() {
     }
 
     return newHomeItem
-  }
-
-  function updateMissionItem(updatedMissionItem) {
-    if (activeTabRef.current === "mission") {
-      dispatch(updateDrawingMissionItem(updatedMissionItem))
-    } else if (activeTabRef.current === "fence") {
-      dispatch(updateDrawingFenceItem(updatedMissionItem))
-    } else if (activeTabRef.current === "rally") {
-      dispatch(updateDrawingRallyItem(updatedMissionItem))
-    } else {
-      return
-    }
-
-    dispatch(
-      setUnwrittenChanges({
-        ...unwrittenChanges,
-        [activeTabRef.current]: true,
-      }),
-    )
-  }
-
-  function deleteMissionItem(missionItemId) {
-    if (activeTabRef.current === "mission") {
-      dispatch(deleteDrawingMissionItem(missionItemId))
-    } else if (activeTabRef.current === "fence") {
-      dispatch(deleteDrawingFenceItem(missionItemId))
-    } else if (activeTabRef.current === "rally") {
-      dispatch(deleteDrawingRallyItem(missionItemId))
-    }
-
-    dispatch(
-      setUnwrittenChanges({
-        ...unwrittenChanges,
-        [activeTabRef.current]: true,
-      }),
-    )
-  }
-
-  function updateMissionItemOrder(missionItemId, indexIncrement) {
-    function updateItemOrder(prevItems) {
-      const currentIndex = prevItems.findIndex(
-        (item) => item.id === missionItemId,
-      )
-
-      // Ensure the item exists and the swap is within bounds
-      if (
-        currentIndex === -1 ||
-        (indexIncrement === -1 && currentIndex === 0) ||
-        (indexIncrement === 1 && currentIndex === prevItems.length - 1)
-      ) {
-        return prevItems // No changes if out of bounds
-      }
-
-      // Calculate the new index
-      const newIndex = currentIndex + indexIncrement
-
-      // Create a copy of the items array
-      const updatedItems = [...prevItems]
-
-      // Swap the items
-      const temp = updatedItems[currentIndex]
-      updatedItems[currentIndex] = updatedItems[newIndex]
-      updatedItems[newIndex] = temp
-
-      // Update the seq values
-      updatedItems[currentIndex] = {
-        ...updatedItems[currentIndex],
-        seq: currentIndex,
-      }
-      updatedItems[newIndex] = { ...updatedItems[newIndex], seq: newIndex }
-
-      return updatedItems
-    }
-
-    if (activeTabRef.current === "mission") {
-      dispatch(setDrawingMissionItems(updateItemOrder(missionItems)))
-      dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
-    } else if (activeTabRef.current === "fence") {
-      dispatch(setDrawingFenceItems(updateItemOrder(fenceItems)))
-      dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
-    }
   }
 
   function readMissionFromDrone() {
@@ -412,118 +266,6 @@ export default function Missions() {
         }),
       )
     }
-  }
-
-  function updateMissionHomePosition(lat, lon) {
-    const newHomePosition = {
-      lat: Number.isInteger(lat) ? lat : coordToInt(lat),
-      lon: Number.isInteger(lon) ? lon : coordToInt(lon),
-      alt: 0.1,
-    }
-    dispatch(setHomePosition(newHomePosition))
-
-    // Also update the first waypoint if it is a home position waypoint
-    if (missionItems.length > 0 && isGlobalFrameHomeCommand(missionItems[0])) {
-      // Check if the first item is a home position command
-      const updatedMissionItems = [...missionItems]
-      updatedMissionItems[0] = {
-        ...updatedMissionItems[0],
-        x: newHomePosition.lat,
-        y: newHomePosition.lon,
-      }
-      dispatch(setDrawingMissionItems(updatedMissionItems))
-    } else {
-      // If the first item is not a home position command, add a new home position item
-      const newHomeMissionItem = {
-        id: uuidv4(),
-        seq: 0,
-        x: newHomePosition.lat,
-        y: newHomePosition.lon,
-        z: 0.1,
-        frame: parseInt(
-          Object.keys(MAV_FRAME_LIST).find(
-            (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL",
-          ),
-        ),
-        command: 16, // MAV_CMD_NAV_WAYPOINT
-        param1: 0,
-        param2: 0,
-        param3: 0,
-        param4: 0,
-        current: 0,
-        autocontinue: 1,
-        target_component: targetInfo.target_component,
-        target_system: targetInfo.target_system,
-        mission_type: 0,
-        mavpackettype: "MISSION_ITEM_INT",
-      }
-      dispatch(setDrawingMissionItems([newHomeMissionItem, ...missionItems]))
-    }
-
-    dispatch(setUnwrittenChanges({ ...unwrittenChanges, mission: true }))
-  }
-
-  function clearMissionItems() {
-    if (activeTabRef.current === "mission") {
-      // Clear all mission items except the first if the first is a home position
-      if (
-        missionItems.length > 0 &&
-        isGlobalFrameHomeCommand(missionItems[0])
-      ) {
-        dispatch(setDrawingMissionItems([missionItems[0]]))
-      } else {
-        dispatch(setDrawingMissionItems([]))
-      }
-    } else if (activeTabRef.current === "fence") {
-      dispatch(setDrawingFenceItems([]))
-    } else if (activeTabRef.current === "rally") {
-      dispatch(setDrawingRallyItems([]))
-    }
-
-    dispatch(
-      setUnwrittenChanges({
-        ...unwrittenChanges,
-        [activeTabRef.current]: true,
-      }),
-    )
-  }
-
-  function addFencePolygon(newFenceItems) {
-    let seqNumber =
-      fenceItems.length > 0 ? fenceItems[fenceItems.length - 1].seq + 1 : 0
-
-    const newFenceMissionItems = newFenceItems.map((item) => {
-      const newFenceMissionItem = {
-        id: item.id,
-        seq: seqNumber,
-        x: item.x,
-        y: item.y,
-        z: item.z,
-        frame: parseInt(
-          Object.keys(MAV_FRAME_LIST).find(
-            (key) => MAV_FRAME_LIST[key] === "MAV_FRAME_GLOBAL_RELATIVE_ALT",
-          ),
-        ),
-        command: item.command,
-        param1: item.param1,
-        param2: item.param2,
-        param3: item.param3,
-        param4: item.param4,
-        current: 0,
-        autocontinue: 1,
-        target_component: targetInfo.target_component,
-        target_system: targetInfo.target_system,
-        mission_type: 1, // Fence type
-        mavpackettype: "MISSION_ITEM_INT",
-      }
-
-      seqNumber++
-
-      return newFenceMissionItem
-    })
-
-    dispatch(setDrawingFenceItems([...fenceItems, ...newFenceMissionItems]))
-    dispatch(setUnwrittenChanges({ ...unwrittenChanges, fence: true }))
   }
 
   return (
@@ -687,7 +429,6 @@ export default function Missions() {
                   missionItems={missionItems}
                   fenceItems={fenceItems}
                   rallyItems={rallyItems}
-                  markerDragEndCallback={updateMissionItem}
                 />
               </div>
 
@@ -725,24 +466,13 @@ export default function Missions() {
                   </Tabs.List>
 
                   <Tabs.Panel value="mission">
-                    <MissionItemsTable
-                      updateMissionItem={updateMissionItem}
-                      deleteMissionItem={deleteMissionItem}
-                      updateMissionItemOrder={updateMissionItemOrder}
-                    />
+                    <MissionItemsTable />
                   </Tabs.Panel>
                   <Tabs.Panel value="fence">
-                    <FenceItemsTable
-                      updateMissionItem={updateMissionItem}
-                      deleteMissionItem={deleteMissionItem}
-                      updateMissionItemOrder={updateMissionItemOrder}
-                    />
+                    <FenceItemsTable />
                   </Tabs.Panel>
                   <Tabs.Panel value="rally">
-                    <RallyItemsTable
-                      updateRallyItem={updateMissionItem}
-                      deleteRallyItem={deleteMissionItem}
-                    />
+                    <RallyItemsTable />
                   </Tabs.Panel>
                 </Tabs>
               </ResizableBox>

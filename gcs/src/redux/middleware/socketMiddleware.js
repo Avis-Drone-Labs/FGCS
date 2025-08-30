@@ -303,9 +303,7 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                console.log("update home current mission")
                 updateHomePositionBasedOnWaypoints(missionItemsWithIds)
-                console.log(missionItemsWithIds)
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({

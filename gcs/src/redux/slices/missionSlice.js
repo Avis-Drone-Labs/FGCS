@@ -90,13 +90,13 @@ const missionInfoSlice = createSlice({
           autocontinue: 1,
           target_component: state.targetInfo.target_component,
           target_system: state.targetInfo.target_system,
-          mission_type: "mission",
+          mission_type: 0,
           mavpackettype: "MISSION_ITEM_INT",
         }
 
         state.drawingItems.missionItems = [
           newHomeItem,
-          state.drawingItems.missionItems,
+          ...state.drawingItems.missionItems,
         ]
       }
     },
@@ -107,8 +107,6 @@ const missionInfoSlice = createSlice({
     updateDrawingItem: (state, action) => {
       const payload = action.payload
       const _type = `${state.activeTab}Items`
-
-      console.log("This is happening")
 
       const index = state.drawingItems[_type].findIndex(
         (i) => i.id === payload.id,
@@ -129,8 +127,6 @@ const missionInfoSlice = createSlice({
       const id = action.payload
       const _type = `${state.activeTab}Items`
 
-      console.log("This is also happening")
-
       const index = state.drawingItems[_type].findIndex((i) => i.id === id)
       if (index === -1) return
 
@@ -147,8 +143,6 @@ const missionInfoSlice = createSlice({
     reorderDrawingItem: (state, action) => {
       const { id, increment } = action.payload
       const _type = `${state.activeTab}Items`
-
-      console.log(`Reordering ${id} by ${increment}`)
 
       const index = state.drawingItems[_type].findIndex((i) => i.id === id)
       if (
@@ -219,6 +213,7 @@ const missionInfoSlice = createSlice({
       state.drawingItems.fenceItems = [
         ...state.drawingItems.fenceItems,
         ...items.map((item, index) => ({
+          ...newMissionItem(item.x, item.y, state.targetInfo),
           ...item,
           seq: state.drawingItems.fenceItems.length + index,
         })),

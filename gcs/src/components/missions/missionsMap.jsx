@@ -70,7 +70,6 @@ function MapSectionNonMemo({
   fenceItems,
   rallyItems,
   onDragstart,
-  markerDragEndCallback,
 }) {
   // Redux
   const dispatch = useDispatch()
@@ -232,6 +231,7 @@ function MapSectionNonMemo({
       y: coordToInt(point.lon),
       z: index,
       frame: getFrameKey("MAV_FRAME_GLOBAL_RELATIVE_ALT"),
+      mission_type: 1,
     }))
 
     dispatch(createFencePolygon(fenceItems))
@@ -358,7 +358,6 @@ function MapSectionNonMemo({
               text={`${item.seq}`}
               tooltipText={item.z ? `Alt: ${item.z}` : null}
               draggable={currentTab === "rally"}
-              dragEndCallback={markerDragEndCallback}
             />
           )
         })}

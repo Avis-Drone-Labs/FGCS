@@ -14,8 +14,6 @@ import { selectDrawingMissionItems } from "../../redux/slices/missionSlice"
 function MissionItemsTableNonMemo() {
   const missionItems = useSelector(selectDrawingMissionItems)
 
-  console.log(missionItems)
-
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>
@@ -39,8 +37,6 @@ function MissionItemsTableNonMemo() {
           if (idx === 0 && isGlobalFrameHomeCommand(missionItem)) {
             return null
           }
-
-          console.log(missionItem)
 
           return (
             <MissionItemsTableRow key={missionItem.id} missionItemIndex={idx} />

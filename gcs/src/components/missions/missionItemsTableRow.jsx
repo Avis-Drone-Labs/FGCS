@@ -70,8 +70,6 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
     )
   }
 
-  console.log(missionItem, missionItemIndex)
-
   return (
     <TableTr>
       <TableTd>{missionItem.seq}</TableTd>

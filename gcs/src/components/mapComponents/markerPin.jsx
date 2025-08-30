@@ -22,6 +22,7 @@ const MarkerPin = React.memo(
     tooltipText = null,
     showOnTop = false,
     draggable = false,
+    dragEndCallback = null,
   }) => {
     const dispatch = useDispatch()
 
@@ -32,13 +33,17 @@ const MarkerPin = React.memo(
         className={showOnTop && "z-10"}
         draggable={draggable}
         onDragEnd={(e) => {
-          dispatch(
-            updateDrawingItem({
-              id: id,
-              x: coordToInt(e.lngLat.lat),
-              y: coordToInt(e.lngLat.lng),
-            }),
-          )
+          if (dragEndCallback !== null) {
+            dragEndCallback({ x: e.lngLat.lat, y: e.lngLat.lng })
+          } else {
+            dispatch(
+              updateDrawingItem({
+                id: id,
+                x: coordToInt(e.lngLat.lat),
+                y: coordToInt(e.lngLat.lng),
+              }),
+            )
+          }
         }}
       >
         <Tooltip disabled={tooltipText === null} label={tooltipText}>

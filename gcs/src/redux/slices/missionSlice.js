@@ -131,7 +131,7 @@ const missionInfoSlice = createSlice({
       if (index === -1) return
 
       state.drawingItems[_type] = state.drawingItems[_type]
-        .filter((s) => s.id != id)
+        .filter((s) => s.id !== id)
         .map((item, index) => {
           return { ...item, seq: index }
         })
@@ -143,14 +143,16 @@ const missionInfoSlice = createSlice({
     reorderDrawingItem: (state, action) => {
       const { id, increment } = action.payload
       const _type = `${state.activeTab}Items`
-
       const index = state.drawingItems[_type].findIndex((i) => i.id === id)
+
       if (
         index === -1 ||
         (increment === -1 && index === 0) ||
         (increment === 1 && index === state.drawingItems[_type].length - 1)
-      )
-        return // Wow this definitely needed to be a one liner it makes it very readable!
+      ) {
+        return // Prevents reordering if index is out of bounds or at the edge of the list
+      }
+
       ;[
         state.drawingItems[_type][index],
         state.drawingItems[_type][index + increment],
@@ -191,7 +193,7 @@ const missionInfoSlice = createSlice({
     clearDrawingItems: (state) => {
       const _type = `${state.activeTab}Items`
 
-      if (state.activeTab[_type] == []) return
+      if (state.activeTab[_type].length === 0) return
 
       if (
         state.activeTab == "mission" &&

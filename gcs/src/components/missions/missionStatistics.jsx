@@ -12,6 +12,10 @@ import {
   isGlobalFrameHomeCommand,
 } from "../../helpers/filterMissions"
 
+// Redux
+import { useSelector } from "react-redux"
+import { selectDrawingMissionItems } from "../../redux/slices/missionSlice"
+
 function calculateMaxAltitude(missionItems) {
   missionItems = missionItems.filter(
     (item) => isGlobalFrameHomeCommand(item) === false,
@@ -168,7 +172,9 @@ function StatisticItem({ label, value, units, tooltip = null }) {
   )
 }
 
-export default function MissionStatistics({ missionItems }) {
+export default function MissionStatistics() {
+  const missionItems = useSelector(selectDrawingMissionItems)
+
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
   const [totalDistance, setTotalDistance] = useState(0)
   const [maxDistanceBetweenWaypoints, setMaxDistanceBetweenWaypoints] =
@@ -184,7 +190,13 @@ export default function MissionStatistics({ missionItems }) {
   }, [missionItems])
 
   useEffect(() => {
-    if (filteredMissionItems.length === 0) return
+    if (filteredMissionItems.length === 0) {
+      setTotalDistance(0)
+      setMaxAltitude(0)
+      setMaxDistanceBetweenWaypoints({ maxDistance: 0, points: null })
+      setMaxSlopeGradient({ maxGradient: 0, points: null })
+      return
+    }
 
     // Use unfiltered mission items
     setTotalDistance(calculateTotalDistance(missionItems))

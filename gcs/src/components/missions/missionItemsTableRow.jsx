@@ -10,7 +10,6 @@ import {
   TableTr,
 } from "@mantine/core"
 import { IconArrowDown, IconArrowUp, IconTrash } from "@tabler/icons-react"
-import { useEffect, useState } from "react"
 import {
   coordToInt,
   getPositionFrameName,
@@ -21,26 +20,24 @@ import {
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
+import {
+  removeDrawingItem,
+  reorderDrawingItem,
+  selectDrawingMissionItemByIdx,
+  updateDrawingItem,
+} from "../../redux/slices/missionSlice"
+
 const coordsFractionDigits = 9
 
-export default function MissionItemsTableRow({
-  aircraftType,
-  missionItem,
-  updateMissionItem,
-  deleteMissionItem,
-  updateMissionItemOrder,
-}) {
-  const [missionItemData, setMissionItemData] = useState(missionItem)
-
-  useEffect(() => {
-    setMissionItemData(missionItem)
-  }, [missionItem])
-
-  useEffect(() => {
-    if (JSON.stringify(missionItem) !== JSON.stringify(missionItemData)) {
-      updateMissionItem(missionItemData)
-    }
-  }, [missionItemData])
+export default function MissionItemsTableRow({ missionItemIndex }) {
+  const dispatch = useDispatch()
+  const aircraftType = useSelector(selectAircraftType)
+  const missionItem = useSelector(
+    selectDrawingMissionItemByIdx(missionItemIndex),
+  )
 
   function getDisplayCommandName(commandName) {
     if (commandName.startsWith("MAV_CMD_NAV_")) {
@@ -65,19 +62,21 @@ export default function MissionItemsTableRow({
   }
 
   function updateMissionItemData(key, newVal) {
-    setMissionItemData({
-      ...missionItemData,
-      [key]: newVal,
-    })
+    dispatch(
+      updateDrawingItem({
+        ...missionItem,
+        [key]: newVal,
+      }),
+    )
   }
 
   return (
     <TableTr>
-      <TableTd>{missionItemData.seq}</TableTd>
+      <TableTd>{missionItem.seq}</TableTd>
       <TableTd>
         <Select
           data={getAvailableCommands()}
-          value={missionItemData.command.toString()}
+          value={missionItem.command.toString()}
           onChange={(value) =>
             updateMissionItemData("command", parseInt(value))
           }
@@ -86,67 +85,71 @@ export default function MissionItemsTableRow({
       </TableTd>
       <TableTd>
         <NumberInput
-          value={missionItemData.param1}
+          value={missionItem.param1}
           onChange={(val) => updateMissionItemData("param1", val)}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={missionItemData.param2}
+          value={missionItem.param2}
           onChange={(val) => updateMissionItemData("param2", val)}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={missionItemData.param3}
+          value={missionItem.param3}
           onChange={(val) => updateMissionItemData("param3", val)}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={missionItemData.param4}
+          value={missionItem.param4}
           onChange={(val) => updateMissionItemData("param4", val)}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={intToCoord(missionItemData.x).toFixed(coordsFractionDigits)}
+          value={intToCoord(missionItem.x).toFixed(coordsFractionDigits)}
           onChange={(val) => updateMissionItemData("x", coordToInt(val))}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={intToCoord(missionItemData.y).toFixed(coordsFractionDigits)}
+          value={intToCoord(missionItem.y).toFixed(coordsFractionDigits)}
           onChange={(val) => updateMissionItemData("y", coordToInt(val))}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={missionItemData.z}
+          value={missionItem.z}
           onChange={(val) => updateMissionItemData("z", val)}
           hideControls
         />
       </TableTd>
-      <TableTd>{getPositionFrameName(missionItemData.frame)}</TableTd>
+      <TableTd>{getPositionFrameName(missionItem.frame)}</TableTd>
       <TableTd className="flex flex-row gap-2">
         <ActionIcon
-          onClick={() => updateMissionItemOrder(missionItemData.id, -1)}
+          onClick={() =>
+            dispatch(reorderDrawingItem({ id: missionItem.id, increment: -1 }))
+          }
         >
           <IconArrowUp size={20} />
         </ActionIcon>
         <ActionIcon
-          onClick={() => updateMissionItemOrder(missionItemData.id, 1)}
+          onClick={() =>
+            dispatch(reorderDrawingItem({ id: missionItem.id, increment: 1 }))
+          }
         >
           <IconArrowDown size={20} />
         </ActionIcon>
         <ActionIcon
-          onClick={() => deleteMissionItem(missionItemData.id)}
+          onClick={() => dispatch(removeDrawingItem(missionItem.id))}
           color="red"
         >
           <IconTrash size={20} />

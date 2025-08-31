@@ -18,15 +18,15 @@ import MarkerPin from "./markerPin"
 
 // Tailing styling
 import { useEffect, useState } from "react"
+import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { selectActiveTab } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function MissionItems({
-  missionItems,
-  editable = false,
-  dragEndCallback = () => {},
-}) {
+export default function MissionItems({ missionItems }) {
+  const editable = useSelector(selectActiveTab) === "mission"
+
   const [filteredMissionItems, setFilteredMissionItems] = useState(
     filterMissionItems(missionItems),
   )
@@ -117,7 +117,6 @@ export default function MissionItems({
             text={`${item.seq}`}
             tooltipText={item.z ? `Alt: ${item.z}` : null}
             draggable={editable}
-            dragEndCallback={dragEndCallback}
           />
         )
       })}

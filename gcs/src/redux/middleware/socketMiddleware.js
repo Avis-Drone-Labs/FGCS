@@ -292,10 +292,10 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMission,
           (msg) => {
-            if (msg.success) {
-              // Close modal
-              store.dispatch(setMissionProgressModal(false))
+            // Close modal
+            store.dispatch(setMissionProgressModal(false))
 
+            if (msg.success) {
               // Handle each mission item
               const storeState = store.getState()
               if (msg.mission_type === "mission") {
@@ -303,7 +303,6 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                console.log("update home current mission")
                 updateHomePositionBasedOnWaypoints(missionItemsWithIds)
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(

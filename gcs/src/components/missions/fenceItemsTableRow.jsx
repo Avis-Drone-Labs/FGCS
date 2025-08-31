@@ -10,13 +10,19 @@ import {
   TableTr,
 } from "@mantine/core"
 import { IconArrowDown, IconArrowUp, IconTrash } from "@tabler/icons-react"
-import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import {
   coordToInt,
   getPositionFrameName,
   intToCoord,
 } from "../../helpers/dataFormatters"
 import { FENCE_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
+import {
+  removeDrawingItem,
+  reorderDrawingItem,
+  selectDrawingFenceItemByIdx,
+  updateDrawingItem,
+} from "../../redux/slices/missionSlice"
 
 const coordsFractionDigits = 9
 
@@ -39,91 +45,85 @@ function getAvailableCommands() {
   }))
 }
 
-export default function FenceItemsTableRow({
-  fenceItem,
-  updateMissionItem,
-  deleteMissionItem,
-  updateMissionItemOrder,
-}) {
-  const [fenceItemData, setFenceItemData] = useState(fenceItem)
-
-  useEffect(() => {
-    setFenceItemData(fenceItem)
-  }, [fenceItem])
-
-  useEffect(() => {
-    if (JSON.stringify(fenceItem) !== JSON.stringify(fenceItemData)) {
-      updateMissionItem(fenceItemData)
-    }
-  }, [fenceItemData])
+export default function FenceItemsTableRow({ fenceItemIndex }) {
+  const dispatch = useDispatch()
+  const fenceItem = useSelector(selectDrawingFenceItemByIdx(fenceItemIndex))
 
   function updateFenceItemData(key, newVal) {
-    setFenceItemData({
-      ...fenceItemData,
-      [key]: newVal,
-    })
+    dispatch(
+      updateDrawingItem({
+        ...fenceItem,
+        [key]: newVal,
+      }),
+    )
   }
 
   return (
     <TableTr>
-      <TableTd>{fenceItemData.seq}</TableTd>
+      <TableTd>{fenceItem.seq}</TableTd>
       <TableTd>
         <Select
           data={getAvailableCommands()}
-          value={fenceItemData.command.toString()}
+          value={fenceItem.command.toString()}
           onChange={(value) => updateFenceItemData("command", parseInt(value))}
           allowDeselect={false}
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={fenceItemData.param1}
+          value={fenceItem.param1}
           onChange={(val) => updateFenceItemData("param1", val)}
           hideControls
         />
       </TableTd>
       <TableTd>
-        <NumberInput value={fenceItemData.param2} hideControls disabled />
+        <NumberInput value={fenceItem.param2} hideControls disabled />
       </TableTd>
       <TableTd>
-        <NumberInput value={fenceItemData.param3} hideControls disabled />
+        <NumberInput value={fenceItem.param3} hideControls disabled />
       </TableTd>
       <TableTd>
-        <NumberInput value={fenceItemData.param4} hideControls disabled />
+        <NumberInput value={fenceItem.param4} hideControls disabled />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={intToCoord(fenceItemData.x).toFixed(coordsFractionDigits)}
+          value={intToCoord(fenceItem.x).toFixed(coordsFractionDigits)}
           onChange={(val) => updateFenceItemData("x", coordToInt(val))}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={intToCoord(fenceItemData.y).toFixed(coordsFractionDigits)}
+          value={intToCoord(fenceItem.y).toFixed(coordsFractionDigits)}
           onChange={(val) => updateFenceItemData("y", coordToInt(val))}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={fenceItemData.z}
+          value={fenceItem.z}
           onChange={(val) => updateFenceItemData("z", val)}
           hideControls
         />
       </TableTd>
-      <TableTd>{getPositionFrameName(fenceItemData.frame)}</TableTd>
+      <TableTd>{getPositionFrameName(fenceItem.frame)}</TableTd>
       <TableTd className="flex flex-row gap-2">
         <ActionIcon
-          onClick={() => updateMissionItemOrder(fenceItemData.id, -1)}
+          onClick={() =>
+            dispatch(reorderDrawingItem({ id: fenceItem.id, increment: -1 }))
+          }
         >
           <IconArrowUp size={20} />
         </ActionIcon>
-        <ActionIcon onClick={() => updateMissionItemOrder(fenceItemData.id, 1)}>
+        <ActionIcon
+          onClick={() =>
+            dispatch(reorderDrawingItem({ id: fenceItem.id, increment: 1 }))
+          }
+        >
           <IconArrowDown size={20} />
         </ActionIcon>
         <ActionIcon
-          onClick={() => deleteMissionItem(fenceItemData.id)}
+          onClick={() => dispatch(removeDrawingItem(fenceItem.id))}
           color="red"
         >
           <IconTrash size={20} />

@@ -8,14 +8,14 @@ import "@mantine/spotlight/styles.css"
 import "@mantine/code-highlight/styles.css"
 import "@mantine/tiptap/styles.css"
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import CameraWindow from "./components/dashboard/webcam/webcam";
+import React from "react"
+import ReactDOM from "react-dom/client"
+import CameraWindow from "./components/dashboard/webcam/webcam"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <CameraWindow />
-  </React.StrictMode>
-);
+  </React.StrictMode>,
+)
 
 postMessage({ payload: "removeLoading" }, "*")

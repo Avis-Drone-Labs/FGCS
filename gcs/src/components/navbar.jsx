@@ -144,7 +144,6 @@ export default function Navbar() {
     AddCommand("disconnect_from_drone", disconnect)
   }, [])
 
-
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
 

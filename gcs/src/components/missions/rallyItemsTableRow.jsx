@@ -10,41 +10,35 @@ import {
   TableTr,
 } from "@mantine/core"
 import { IconTrash } from "@tabler/icons-react"
-import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import {
   coordToInt,
   getPositionFrameName,
   intToCoord,
 } from "../../helpers/dataFormatters"
+import {
+  removeDrawingItem,
+  selectDrawingRallyItemByIdx,
+  updateDrawingItem,
+} from "../../redux/slices/missionSlice"
 const coordsFractionDigits = 9
 
-export default function RallyItemsTableRow({
-  rallyItem,
-  updateRallyItem,
-  deleteRallyItem,
-}) {
-  const [rallyItemData, setRallyItemData] = useState(rallyItem)
-
-  useEffect(() => {
-    setRallyItemData(rallyItem)
-  }, [rallyItem])
-
-  useEffect(() => {
-    if (JSON.stringify(rallyItem) !== JSON.stringify(rallyItemData)) {
-      updateRallyItem(rallyItemData)
-    }
-  }, [rallyItemData])
+export default function RallyItemsTableRow({ rallyItemIndex }) {
+  const dispatch = useDispatch()
+  const rallyItem = useSelector(selectDrawingRallyItemByIdx(rallyItemIndex))
 
   function updateRallyItemData(key, newVal) {
-    setRallyItemData({
-      ...rallyItemData,
-      [key]: newVal,
-    })
+    dispatch(
+      updateDrawingItem({
+        ...rallyItem,
+        [key]: newVal,
+      }),
+    )
   }
 
   return (
     <TableTr>
-      <TableTd>{rallyItemData.seq}</TableTd>
+      <TableTd>{rallyItem.seq}</TableTd>
       <TableTd>
         <Select
           data={[{ value: "5100", label: "RALLY_POINT" }]}
@@ -54,42 +48,42 @@ export default function RallyItemsTableRow({
         />
       </TableTd>
       <TableTd>
-        <NumberInput value={rallyItemData.param1} hideControls disabled />
+        <NumberInput value={rallyItem.param1} hideControls disabled />
       </TableTd>
       <TableTd>
-        <NumberInput value={rallyItemData.param2} hideControls disabled />
+        <NumberInput value={rallyItem.param2} hideControls disabled />
       </TableTd>
       <TableTd>
-        <NumberInput value={rallyItemData.param3} hideControls disabled />
+        <NumberInput value={rallyItem.param3} hideControls disabled />
       </TableTd>
       <TableTd>
-        <NumberInput value={rallyItemData.param4} hideControls disabled />
+        <NumberInput value={rallyItem.param4} hideControls disabled />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={intToCoord(rallyItemData.x).toFixed(coordsFractionDigits)}
+          value={intToCoord(rallyItem.x).toFixed(coordsFractionDigits)}
           onChange={(val) => updateRallyItemData("x", coordToInt(val))}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={intToCoord(rallyItemData.y).toFixed(coordsFractionDigits)}
+          value={intToCoord(rallyItem.y).toFixed(coordsFractionDigits)}
           onChange={(val) => updateRallyItemData("y", coordToInt(val))}
           hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={rallyItemData.z}
+          value={rallyItem.z}
           onChange={(val) => updateRallyItemData("z", val)}
           hideControls
         />
       </TableTd>
-      <TableTd>{getPositionFrameName(rallyItemData.frame)}</TableTd>
+      <TableTd>{getPositionFrameName(rallyItem.frame)}</TableTd>
       <TableTd>
         <ActionIcon
-          onClick={() => deleteRallyItem(rallyItemData.id)}
+          onClick={() => dispatch(removeDrawingItem(rallyItem.id))}
           color="red"
         >
           <IconTrash size={20} />

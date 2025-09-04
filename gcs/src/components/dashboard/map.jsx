@@ -25,7 +25,6 @@ import { useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
-  selectNavController,
 } from "../../redux/slices/droneInfoSlice"
 import {
   selectCurrentMissionItems,
@@ -55,6 +54,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -62,19 +62,11 @@ const coordsFractionDigits = 7
 
 function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   // Redux
+  const connected = useSelector(selectConnectedToDrone)
   const gpsData = useSelector(selectGPS)
-  const navControllerOutputData = useSelector(selectNavController)
   const missionItems = useSelector(selectCurrentMissionItems)
   const homePosition = useSelector(selectHomePosition)
-  const flightMode = useSelector(selectFlightModeString)
-  const data = gpsData
-  const heading = gpsData.hdg ? gpsData.hdg / 100 : 0
-  const desiredBearing = navControllerOutputData.navBearing
-
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  const flightModeString = useSelector(selectFlightModeString)
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -133,13 +125,18 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   }, [connected])
 
   useEffect(() => {
-    // Check latest data point is valid
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
+    // Check latest gpsData point is valid
+    if (
+      isNaN(gpsData.lat) ||
+      isNaN(gpsData.lon) ||
+      gpsData.lon === 0 ||
+      gpsData.lat === 0
+    )
       return
 
     // Move drone icon on map
-    let lat = intToCoord(data.lat)
-    let lon = intToCoord(data.lon)
+    let lat = intToCoord(gpsData.lat)
+    let lon = intToCoord(gpsData.lon)
     setPosition({ latitude: lat, longitude: lon })
 
     if (!firstCenteredToDrone && passedRef.current !== null) {
@@ -149,7 +146,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       })
       setFirstCenteredToDrone(true)
     }
-  }, [data])
+  }, [gpsData])
 
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
@@ -273,10 +270,8 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             <DroneMarker
               lat={position.latitude}
               lon={position.longitude}
-              heading={heading ?? 0}
               zoom={initialViewState.zoom}
               showHeadingLine={true}
-              desiredBearing={desiredBearing ?? 0}
             />
           )}
 
@@ -325,7 +320,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           )
         })}
 
-        {flightMode === "Guided" && guidedModePinData !== null && (
+        {flightModeString === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}

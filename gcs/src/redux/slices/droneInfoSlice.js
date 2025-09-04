@@ -1,10 +1,10 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
+import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   MAV_STATE,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../helpers/mavlinkConstants"
-import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages"
 
 const droneInfoSlice = createSlice({
   name: "droneInfo",
@@ -137,9 +137,10 @@ const droneInfoSlice = createSlice({
     selectTelemetry: (state) => state.telemetryData,
 
     selectGPS: (state) => state.gpsData,
-    selectHeading: (state) => state.gpsData.hdg / 100,
+    selectHeading: (state) => (state.gpsData.hdg ? state.gpsData.hdg / 100 : 0),
 
     selectNavController: (state) => state.navControllerData,
+    selectDesiredBearing: (state) => state.navControllerData.navBearing,
 
     selectHeartbeat: (state) => state.heartbeatData,
     selectArmed: (state) => state.heartbeatData.baseMode & 128,
@@ -238,6 +239,7 @@ export const {
   selectTelemetry,
   selectGPS,
   selectNavController,
+  selectDesiredBearing,
   selectHeartbeat,
   selectArmed,
   selectPrearmEnabled,

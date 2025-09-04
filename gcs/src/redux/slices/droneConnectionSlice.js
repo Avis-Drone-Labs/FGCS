@@ -104,7 +104,9 @@ const droneConnectionSlice = createSlice({
 
     // Emits
     emitIsConnectedToDrone: () => {},
-    emitGetComPorts: () => {},
+    emitGetComPorts: (state) => {
+      state.fetching_com_ports = true
+    },
     emitDisconnectFromDrone: () => {},
     emitConnectToDrone: () => {},
     emitSetState: () => {},

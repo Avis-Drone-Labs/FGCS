@@ -6,7 +6,6 @@ import {
   emitGetHomePosition,
   emitIsConnectedToDrone,
   emitSetState,
-  setFetchingComPorts,
 } from "../slices/droneConnectionSlice"
 import {
   emitExportMissionToFile,
@@ -30,10 +29,7 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitGetComPorts,
-      callback: () => {
-        socket.socket.emit("get_com_ports")
-        store.dispatch(setFetchingComPorts(true))
-      },
+      callback: () => socket.socket.emit("get_com_ports"),
     },
     {
       emitter: emitDisconnectFromDrone,

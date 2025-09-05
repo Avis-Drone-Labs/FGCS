@@ -10,7 +10,10 @@ import { Tooltip } from "@mantine/core"
 import { Marker } from "react-map-gl"
 import { useDispatch } from "react-redux"
 import { coordToInt } from "../../helpers/dataFormatters"
-import { updateDrawingItem } from "../../redux/slices/missionSlice"
+import {
+  updateContextMenuState,
+  updateDrawingItem,
+} from "../../redux/slices/missionSlice"
 
 const MarkerPin = React.memo(
   ({
@@ -28,8 +31,20 @@ const MarkerPin = React.memo(
 
     return (
       <div
-        onContextMenu={() => {
-          console.log(`Right-click on marker with ID: ${id}`)
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          dispatch(
+            updateContextMenuState({
+              isOpen: true,
+              position: { x: e.nativeEvent.layerX, y: e.nativeEvent.layerY },
+              gpsCoords: { lat: lat, lng: lon },
+              markerId: id,
+            }),
+          )
         }}
       >
         <Marker

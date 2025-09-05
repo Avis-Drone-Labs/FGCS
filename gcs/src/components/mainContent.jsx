@@ -30,7 +30,6 @@ import ErrorBoundaryFallback from "./error/errorBoundary"
 import { initSocket } from "../redux/slices/socketSlice"
 
 export default function AppContent() {
-
   // Setup sockets for redux
   const dispatch = useDispatch()
   useEffect(() => {

@@ -2,7 +2,6 @@ import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
-import { socket } from "../../helpers/socket"
 
 const missionInfoSlice = createSlice({
   name: "missionInfo",
@@ -260,31 +259,11 @@ const missionInfoSlice = createSlice({
     },
 
     // Emits
-    emitGetTargetInfo: () => {
-      socket.emit("get_target_info")
-    },
-    emitGetCurrentMission: (state) => {
-      socket.emit("get_current_mission", { type: state.activeTab })
-    },
-    emitWriteCurrentMission: (_, action) => {
-      socket.emit("write_current_mission", {
-        type: action.payload.type,
-        items: action.payload.items,
-      })
-    },
-    emitImportMissionFromFile: (_, action) => {
-      socket.emit("import_mission_from_file", {
-        type: action.payload.type,
-        file_path: action.payload.file_path,
-      })
-    },
-    emitExportMissionToFile: (_, action) => {
-      socket.emit("export_mission_to_file", {
-        type: action.payload.type,
-        file_path: action.payload.file_path,
-        items: action.payload.items,
-      })
-    },
+    emitGetTargetInfo: () => {},
+    emitGetCurrentMission: () => {},
+    emitWriteCurrentMission: () => {},
+    emitImportMissionFromFile: () => {},
+    emitExportMissionToFile: () => {},
   },
   selectors: {
     selectCurrentMission: (state) => state.currentMission,

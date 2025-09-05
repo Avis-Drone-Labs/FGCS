@@ -5,8 +5,7 @@ import { IconX } from "@tabler/icons-react"
 import { useRef } from "react"
 
 export default function CameraWindow() {
-  
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(window.location.search)
 
   const videoRef = useRef(null)
   const deviceId = searchParams.get("deviceId", null)

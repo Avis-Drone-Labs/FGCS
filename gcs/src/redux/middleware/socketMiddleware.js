@@ -56,6 +56,7 @@ import {
   queueNotification,
 } from "../slices/notificationSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
+import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -506,11 +507,7 @@ const socketMiddleware = (store) => {
 
     // these actions handle emitting based on UI events
     // for each action type, emit socket and pass onto reducer
-    if (socket) {
-      if (emitIsConnectedToDrone.match(action)) {
-        socket.socket.emit("is_connected_to_drone")
-      }
-    }
+    handleEmitters(socket, store, action)
 
     next(action)
   }

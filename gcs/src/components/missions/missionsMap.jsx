@@ -35,7 +35,6 @@ import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import Polygon from "../mapComponents/polygon"
-import useContextMenu from "../mapComponents/useContextMenu"
 import Divider from "../toolbar/menus/divider"
 
 // Tailwind styling
@@ -45,7 +44,6 @@ import tailwindConfig from "../../../tailwind.config"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 import {
   selectFlightModeString,
   selectGPS,
@@ -55,9 +53,12 @@ import {
   createFencePolygon,
   createNewDrawingItem,
   getFrameKey,
+  removeDrawingItem,
   selectActiveTab,
+  selectContextMenu,
   selectHomePosition,
   setHomePosition,
+  updateContextMenuState,
 } from "../../redux/slices/missionSlice"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -73,11 +74,11 @@ function MapSectionNonMemo({
 }) {
   // Redux
   const dispatch = useDispatch()
-  const connected = useSelector(selectConnectedToDrone)
   const gpsData = useSelector(selectGPS)
   const homePosition = useSelector(selectHomePosition)
   const flightModeString = useSelector(selectFlightModeString)
   const currentTab = useSelector(selectActiveTab)
+  const contextMenuState = useSelector(selectContextMenu)
 
   const [guidedModePinData] = useSessionStorage({
     key: "guidedModePinData",
@@ -105,12 +106,6 @@ function MapSectionNonMemo({
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
-  const { clicked, setClicked, points, setPoints } = useContextMenu()
-  const [
-    contextMenuPositionCalculationInfo,
-    setContextMenuPositionCalculationInfo,
-  ] = useState()
-  const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
   const clipboard = useClipboard({ timeout: 500 })
 
@@ -118,8 +113,14 @@ function MapSectionNonMemo({
   const [polygonPoints, setPolygonPoints] = useState([])
 
   useEffect(() => {
-    return () => {}
-  }, [connected])
+    const closeContextMenu = () =>
+      dispatch(updateContextMenuState({ isOpen: false }))
+
+    document.addEventListener("click", closeContextMenu)
+    return () => {
+      document.removeEventListener("click", closeContextMenu)
+    }
+  }, [])
 
   useEffect(() => {
     // Check latest gpsData point is valid
@@ -143,32 +144,17 @@ function MapSectionNonMemo({
 
   useEffect(() => {
     if (contextMenuRef.current) {
-      const contextMenuWidth = Math.round(
-        contextMenuRef.current.getBoundingClientRect().width,
+      const boundingRect = contextMenuRef.current.getBoundingClientRect()
+      dispatch(
+        updateContextMenuState({
+          menuSize: {
+            width: Math.round(boundingRect.width),
+            height: Math.round(boundingRect.height),
+          },
+        }),
       )
-      const contextMenuHeight = Math.round(
-        contextMenuRef.current.getBoundingClientRect().height,
-      )
-      let x = contextMenuPositionCalculationInfo.clickedPoint.x
-      let y = contextMenuPositionCalculationInfo.clickedPoint.y
-
-      if (
-        contextMenuWidth + contextMenuPositionCalculationInfo.clickedPoint.x >
-        contextMenuPositionCalculationInfo.canvasSize.width
-      ) {
-        x = contextMenuPositionCalculationInfo.clickedPoint.x - contextMenuWidth
-      }
-      if (
-        contextMenuHeight + contextMenuPositionCalculationInfo.clickedPoint.y >
-        contextMenuPositionCalculationInfo.canvasSize.height
-      ) {
-        y =
-          contextMenuPositionCalculationInfo.clickedPoint.y - contextMenuHeight
-      }
-
-      setPoints({ x, y })
     }
-  }, [contextMenuPositionCalculationInfo])
+  }, [contextMenuRef.current])
 
   useEffect(() => {
     // center map on home point only on first instance of home point being
@@ -286,6 +272,17 @@ function MapSectionNonMemo({
         attributionControl={false}
         dragRotate={false}
         touchRotate={false}
+        onLoad={(e) => {
+          const canvas = e.target.getCanvas()
+          dispatch(
+            updateContextMenuState({
+              canvasSize: {
+                width: canvas.clientWidth,
+                height: canvas.clientHeight,
+              },
+            }),
+          )
+        }}
         onMoveEnd={(newViewState) =>
           setInitialViewState({
             latitude: newViewState.viewState.latitude,
@@ -296,21 +293,20 @@ function MapSectionNonMemo({
         onDragStart={onDragstart}
         onContextMenu={(e) => {
           e.preventDefault()
-          setClicked(true)
-          setClickedGpsCoords(e.lngLat)
-          setContextMenuPositionCalculationInfo({
-            clickedPoint: e.point,
-            canvasSize: {
-              height: e.originalEvent.target.clientHeight,
-              width: e.originalEvent.target.clientWidth,
-            },
-          })
+          dispatch(
+            updateContextMenuState({
+              isOpen: true,
+              position: e.point,
+              gpsCoords: e.lngLat,
+              markerId: null,
+            }),
+          )
         }}
         onMouseDown={() => {
-          setClicked(false)
+          dispatch(updateContextMenuState({ isOpen: false }))
         }}
         onClick={(e) => {
-          setClicked(false)
+          dispatch(updateContextMenuState({ isOpen: false }))
           let lat = e.lngLat.lat
           let lon = e.lngLat.lng
 
@@ -396,23 +392,26 @@ function MapSectionNonMemo({
           />
         )}
 
-        {clicked && (
+        {contextMenuState.isOpen && (
           <div
             ref={contextMenuRef}
             className="absolute bg-falcongrey-700 rounded-md p-1"
-            style={{ top: points.y, left: points.x }}
+            style={{
+              top: contextMenuState.position.y,
+              left: contextMenuState.position.x,
+            }}
           >
             <ContextMenuItem
               onClick={() => {
                 clipboard.copy(
-                  `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
+                  `${contextMenuState.gpsCoords.lat}, ${contextMenuState.gpsCoords.lng}`,
                 )
                 showNotification("Copied to clipboard")
               }}
             >
               <p>
-                {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
-                {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
+                {contextMenuState.gpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
+                {contextMenuState.gpsCoords.lng.toFixed(coordsFractionDigits)}
               </p>
               <svg
                 className="relative -right-1"
@@ -427,6 +426,21 @@ function MapSectionNonMemo({
                 />
               </svg>
             </ContextMenuItem>
+
+            {contextMenuState.markerId !== null &&
+              contextMenuState.markerId !== undefined && (
+                <>
+                  <Divider />
+                  <ContextMenuItem
+                    onClick={() =>
+                      dispatch(removeDrawingItem(contextMenuState.markerId))
+                    }
+                  >
+                    <p>Delete waypoint</p>
+                  </ContextMenuItem>
+                </>
+              )}
+
             <Divider />
             <ContextMenuItem onClick={zoomToDrone}>
               <p>Zoom to drone</p>
@@ -442,8 +456,8 @@ function MapSectionNonMemo({
               onClick={() => {
                 dispatch(
                   setHomePosition({
-                    lat: coordToInt(clickedGpsCoords.lat),
-                    lon: coordToInt(clickedGpsCoords.lng),
+                    lat: coordToInt(contextMenuState.gpsCoords.lat),
+                    lon: coordToInt(contextMenuState.gpsCoords.lng),
                     alt: 0.1,
                   }),
                 )

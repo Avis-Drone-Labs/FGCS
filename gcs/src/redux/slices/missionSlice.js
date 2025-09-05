@@ -199,7 +199,6 @@ const missionInfoSlice = createSlice({
     },
     clearDrawingItems: (state) => {
       const _type = `${state.activeTab}Items`
-      console.log(_type)
 
       if (state.drawingItems[_type].length === 0) return
 

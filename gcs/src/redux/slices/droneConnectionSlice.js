@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { socket } from "../../helpers/socket"
 
 export const ConnectionType = {
   Serial: "serial",
@@ -104,32 +103,15 @@ const droneConnectionSlice = createSlice({
     },
 
     // Emits
-    emitIsConnectedToDrone: () => {
-      socket.emit("is_connected_to_drone")
-    },
+    emitIsConnectedToDrone: () => {},
     emitGetComPorts: (state) => {
-      socket.emit("get_com_ports")
       state.fetching_com_ports = true
     },
-    emitDisconnectFromDrone: () => {
-      console.log("Disconnecting from drone")
-      socket.emit("disconnect_from_drone")
-    },
-    emitConnectToDrone: (_, action) => {
-      console.log("Attempting to connect to drone")
-      socket.emit("connect_to_drone", action.payload)
-    },
-    emitSetState: (_, action) => {
-      console.log(`Setting State to ${action.payload.state} from redux`)
-      socket.emit("set_state", action.payload)
-    },
-    emitGetHomePosition: () => {
-      socket.emit("get_home_position")
-    },
-    emitGetCurrentMission: () => {
-      console.log("Getting current mission from redux")
-      socket.emit("get_current_mission_all")
-    },
+    emitDisconnectFromDrone: () => {},
+    emitConnectToDrone: () => {},
+    emitSetState: () => {},
+    emitGetHomePosition: () => {},
+    emitGetCurrentMissionAll: () => {},
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -171,7 +153,7 @@ export const {
   emitConnectToDrone,
   emitSetState,
   emitGetHomePosition,
-  emitGetCurrentMission,
+  emitGetCurrentMissionAll,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,

@@ -4,15 +4,16 @@
 
 import { Table } from "@mantine/core"
 import React from "react"
+import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import MissionItemsTableRow from "./missionItemsTableRow"
 
-function MissionItemsTableNonMemo({
-  missionItems,
-  aircraftType,
-  updateMissionItem,
-  deleteMissionItem,
-  updateMissionItemOrder,
-}) {
+// Redux
+import { useSelector } from "react-redux"
+import { selectDrawingMissionItems } from "../../redux/slices/missionSlice"
+
+function MissionItemsTableNonMemo() {
+  const missionItems = useSelector(selectDrawingMissionItems)
+
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>
@@ -33,24 +34,12 @@ function MissionItemsTableNonMemo({
       <Table.Tbody>
         {missionItems.map((missionItem, idx) => {
           // Skip home location
-          if (
-            missionItem.command === 16 &&
-            missionItem.frame === 0 &&
-            missionItem.mission_type === 0
-          ) {
+          if (idx === 0 && isGlobalFrameHomeCommand(missionItem)) {
             return null
           }
 
           return (
-            <MissionItemsTableRow
-              key={missionItem.id}
-              index={idx}
-              aircraftType={aircraftType}
-              missionItem={missionItem}
-              updateMissionItem={updateMissionItem}
-              deleteMissionItem={deleteMissionItem}
-              updateMissionItemOrder={updateMissionItemOrder}
-            />
+            <MissionItemsTableRow key={missionItem.id} missionItemIndex={idx} />
           )
         })}
       </Table.Tbody>

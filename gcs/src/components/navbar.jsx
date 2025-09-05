@@ -68,6 +68,7 @@ import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
+import { useEffect } from "react"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
@@ -138,8 +139,10 @@ export default function Navbar() {
     dispatch(setConnectionModal(true))
   }
 
-  AddCommand("connect_to_drone", connectToDroneFromButton)
-  AddCommand("disconnect_from_drone", disconnect)
+  useEffect(() => {
+    AddCommand("connect_to_drone", connectToDroneFromButton)
+    AddCommand("disconnect_from_drone", disconnect)
+  }, [])
 
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"

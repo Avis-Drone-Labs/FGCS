@@ -205,7 +205,7 @@ def importMissionFromFile(data: ImportMissionFileType) -> None:
             "import_mission_result",
             {
                 "success": True,
-                "message": "Mission imported successfully.",
+                "message": result.get("message", ""),
                 "items": result.get("data", []),
                 "mission_type": mission_type,
             },

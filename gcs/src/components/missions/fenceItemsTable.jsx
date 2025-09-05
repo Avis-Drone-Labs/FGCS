@@ -6,12 +6,13 @@ import { Table } from "@mantine/core"
 import React from "react"
 import FenceItemsTableRow from "./fenceItemsTableRow"
 
-function FenceItemsTableNonMemo({
-  fenceItems,
-  updateMissionItem,
-  deleteMissionItem,
-  updateMissionItemOrder,
-}) {
+// Redux
+import { useSelector } from "react-redux"
+import { selectDrawingFenceItems } from "../../redux/slices/missionSlice"
+
+function FenceItemsTableNonMemo() {
+  const fenceItems = useSelector(selectDrawingFenceItems)
+
   return (
     <Table striped withTableBorder withColumnBorders stickyHeader>
       <Table.Thead>
@@ -31,16 +32,7 @@ function FenceItemsTableNonMemo({
       </Table.Thead>
       <Table.Tbody>
         {fenceItems.map((fenceItem, idx) => {
-          return (
-            <FenceItemsTableRow
-              key={fenceItem.id}
-              index={idx}
-              fenceItem={fenceItem}
-              updateMissionItem={updateMissionItem}
-              deleteMissionItem={deleteMissionItem}
-              updateMissionItemOrder={updateMissionItemOrder}
-            />
-          )
+          return <FenceItemsTableRow key={fenceItem.id} fenceItemIndex={idx} />
         })}
       </Table.Tbody>
     </Table>

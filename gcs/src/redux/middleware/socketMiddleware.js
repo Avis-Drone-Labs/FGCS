@@ -25,28 +25,38 @@ import {
 // socket factory
 import SocketFactory from "../../helpers/socket"
 import {
+  setAttitudeData,
+  setBatteryData,
+  setDroneAircraftType,
+  setExtraData,
+  setGpsData,
+  setGpsRawIntData,
+  setHeartbeatData,
+  setNavControllerOutput,
+  setOnboardControlSensorsEnabled,
+  setRSSIData,
+  setTelemetryData,
+} from "../slices/droneInfoSlice"
+import {
+  addIdToItem,
+  setCurrentMission,
+  setCurrentMissionItems,
+  setDrawingFenceItems,
+  setDrawingMissionItems,
+  setDrawingRallyItems,
+  setHomePosition,
+  setMissionProgressData,
+  setMissionProgressModal,
+  setTargetInfo,
+  setUnwrittenChanges,
+  updateHomePositionBasedOnWaypoints,
+} from "../slices/missionSlice"
+import {
   queueErrorNotification,
   queueNotification,
 } from "../slices/notificationSlice"
-import {
-  setCurrentMission,
-  setCurrentMissionItems,
-  setHomePosition,
-} from "../slices/missionSlice"
-import {
-  setDroneAircraftType,
-  setTelemetryData,
-  setAttitudeData,
-  setGpsData,
-  setNavControllerOutput,
-  setHeartbeatData,
-  setGpsRawIntData,
-  setBatteryData,
-  setOnboardControlSensorsEnabled,
-  setRSSIData,
-  setExtraData,
-} from "../slices/droneInfoSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
+import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -63,10 +73,19 @@ const DroneSpecificSocketEvents = Object.freeze({
   onArmDisarm: "arm_disarm",
   onSetCurrentFlightMode: "set_current_flight_mode_result",
   onNavResult: "nav_result",
-  onMissionControlResult: "mission_control_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+})
+
+const MissionSpecificSocketEvents = Object.freeze({
+  onMissionControlResult: "mission_control_result",
+  onWriteMissionResult: "write_mission_result",
+  onImportMissionResult: "import_mission_result",
+  onExportMissionResult: "export_mission_result",
   onCurrentMissionAll: "current_mission_all",
+  onCurrentMission: "current_mission",
+  onTargetInfo: "target_info",
+  onCurrentMissionProgress: "current_mission_progress",
 })
 
 const socketMiddleware = (store) => {
@@ -251,7 +270,188 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(
-          DroneSpecificSocketEvents.onMissionControlResult,
+          DroneSpecificSocketEvents.onHomePositionResult,
+          (msg) => {
+            store.dispatch(
+              msg.success
+                ? setHomePosition(msg.data)
+                : queueNotification({ type: "error", message: msg.message }),
+            )
+          },
+        )
+
+        /*
+          Missions
+        */
+        socket.socket.on(
+          MissionSpecificSocketEvents.onCurrentMissionAll,
+          (msg) => {
+            store.dispatch(setCurrentMissionItems(msg))
+          },
+        )
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onCurrentMission,
+          (msg) => {
+            // Close modal
+            store.dispatch(setMissionProgressModal(false))
+
+            if (msg.success) {
+              // Handle each mission item
+              const storeState = store.getState()
+              if (msg.mission_type === "mission") {
+                const missionItemsWithIds = []
+                for (let missionItem of msg.items) {
+                  missionItemsWithIds.push(addIdToItem(missionItem))
+                }
+                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    mission: false,
+                  }),
+                )
+              } else if (msg.mission_type === "fence") {
+                const fenceItemsWithIds = []
+                for (let fence of msg.items) {
+                  fenceItemsWithIds.push(addIdToItem(fence))
+                }
+                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    fence: false,
+                  }),
+                )
+              } else if (msg.mission_type === "rally") {
+                const rallyItemsWithIds = []
+                for (let rallyItem of msg.items) {
+                  rallyItemsWithIds.push(addIdToItem(rallyItem))
+                }
+                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    rally: false,
+                  }),
+                )
+              }
+
+              store.dispatch(
+                queueNotification({
+                  type: "success",
+                  message: `${msg.mission_type} read successfully`,
+                }),
+              )
+            } else {
+              store.dispatch(
+                queueNotification({ type: "error", message: msg.message }),
+              )
+            }
+          },
+        )
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onWriteMissionResult,
+          (msg) => {
+            store.dispatch(setMissionProgressModal(false))
+
+            const storeState = store.getState()
+            if (msg.success) {
+              store.dispatch(
+                queueNotification({ type: "success", message: msg.message }),
+              )
+              store.dispatch(
+                setUnwrittenChanges({
+                  ...storeState.missionInfo.unwrittenChanges,
+                  [storeState.missionInfo.activeTab]: false,
+                }),
+              )
+            } else {
+              store.dispatch(
+                queueNotification({ type: "error", message: msg.message }),
+              )
+            }
+          },
+        )
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onImportMissionResult,
+          (msg) => {
+            if (msg.success) {
+              const storeState = store.getState()
+
+              if (msg.mission_type === "mission") {
+                const missionItemsWithIds = []
+                for (let missionItem of msg.items) {
+                  missionItemsWithIds.push(addIdToItem(missionItem))
+                }
+                console.log("update home import mission")
+                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    mission: true,
+                  }),
+                )
+              } else if (msg.mission_type === "fence") {
+                const fenceItemsWithIds = []
+                for (let fence of msg.items) {
+                  fenceItemsWithIds.push(addIdToItem(fence))
+                }
+                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    fence: true,
+                  }),
+                )
+              } else if (msg.mission_type === "rally") {
+                const rallyItemsWithIds = []
+                for (let rallyItem of msg.items) {
+                  rallyItemsWithIds.push(addIdToItem(rallyItem))
+                }
+
+                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    rally: true,
+                  }),
+                )
+              }
+
+              store.dispatch(
+                queueNotification({ type: "success", message: msg.message }),
+              )
+            } else {
+              store.dispatch(
+                queueNotification({ type: "error", message: msg.message }),
+              )
+            }
+          },
+        )
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onMissionControlResult,
+          (msg) => {
+            store.dispatch(
+              queueNotification({
+                type: msg.success ? "success" : "error",
+                message: msg.message,
+              }),
+            )
+          },
+        )
+
+        socket.socket.on(MissionSpecificSocketEvents.onTargetInfo, (msg) => {
+          store.dispatch(setTargetInfo(msg))
+        })
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onExportMissionResult,
           (msg) => {
             store.dispatch(
               queueNotification({
@@ -263,23 +463,15 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
-          DroneSpecificSocketEvents.onHomePositionResult,
+          MissionSpecificSocketEvents.onCurrentMissionProgress,
           (msg) => {
-            store.dispatch(
-              msg.success
-                ? setHomePosition(msg.data)
-                : queueNotification({ type: "error", message: msg.message }),
-            )
+            store.dispatch(setMissionProgressData(msg))
           },
         )
 
-        socket.socket.on(
-          DroneSpecificSocketEvents.onCurrentMissionAll,
-          (msg) => {
-            store.dispatch(setCurrentMissionItems(msg))
-          },
-        )
-
+        /*
+          Generic Drone Date
+        */
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)
 
@@ -306,16 +498,16 @@ const socketMiddleware = (store) => {
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
+
+        Object.values(MissionSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
       }
     }
 
     // these actions handle emitting based on UI events
     // for each action type, emit socket and pass onto reducer
-    if (socket) {
-      if (emitIsConnectedToDrone.match(action)) {
-        socket.socket.emit("is_connected_to_drone")
-      }
-    }
+    handleEmitters(socket, store, action)
 
     next(action)
   }

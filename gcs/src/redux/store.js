@@ -84,5 +84,8 @@ store.subscribe(() => {
   local_storage.setItem("networkType", store_mut.droneConnection.network_type)
   local_storage.setItem("ip", store_mut.droneConnection.ip)
   local_storage.setItem("port", store_mut.droneConnection.port)
-  session_storage.setItem("connectedToDrone", store_mut.droneConnection.connected)
+  session_storage.setItem(
+    "connectedToDrone",
+    store_mut.droneConnection.connected,
+  )
 })

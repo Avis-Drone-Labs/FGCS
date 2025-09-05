@@ -18,9 +18,11 @@ import "maplibre-gl/dist/maplibre-gl.css"
 // Tailing styling
 import { circle } from "@turf/turf"
 import { Layer, Source } from "react-map-gl"
+import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { FENCE_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
+import { selectActiveTab } from "../../redux/slices/missionSlice"
 import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -42,11 +44,9 @@ const circleCommands = [
   getFenceCommandNumber("MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION"),
 ]
 
-export default function FenceItems({
-  fenceItems,
-  editable = false,
-  dragEndCallback = () => {},
-}) {
+export default function FenceItems({ fenceItems }) {
+  const editable = useSelector(selectActiveTab) === "fence"
+
   const [fencePolygonItems, setFencePolygonItems] = useState([])
   const [fenceCircleItems, setFenceCircleItems] = useState([])
 
@@ -75,7 +75,6 @@ export default function FenceItems({
             lon={intToCoord(item.y)}
             colour={tailwindColors.blue[400]}
             draggable={editable}
-            dragEndCallback={dragEndCallback}
           />
         )
       })}
@@ -133,7 +132,6 @@ export default function FenceItems({
             lon={intToCoord(item.y)}
             colour={tailwindColors.blue[400]}
             draggable={editable}
-            dragEndCallback={dragEndCallback}
           />
         )
       })}

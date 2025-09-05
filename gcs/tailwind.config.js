@@ -3,6 +3,7 @@ import containerQueries from '@tailwindcss/container-queries'
 export default {
   content: [
     './index.html',
+    './webcam.html',
     './src/**/*.{js,ts,jsx,tsx}',
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
   ],

@@ -4,7 +4,7 @@
  */
 
 // Native imports
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Tabs, Accordion, Button, Modal, TextInput } from "@mantine/core"
@@ -64,9 +64,10 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     // Show error message
     showErrorNotification("Name cannot be empty")
   }
-
+  useEffect(() => {
+    AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
+  }, [])
   // Add create new checklist as a spotlight command
-  AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
 
   const items = preFlightChecklistItems.map((item) => (
     <Accordion.Item

@@ -65,6 +65,7 @@ import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
+const resizeTableHeightPadding = 20 // To account for the handle height and some padding
 
 function UnwrittenChangesWarning({ unwrittenChanges }) {
   const firstUnwrittenTab = Object.entries(unwrittenChanges).find(
@@ -122,7 +123,10 @@ export default function Missions() {
 
   useEffect(() => {
     if (tabsListRef.current) {
-      setTableSectionHeight(300 - tabsListRef.current.clientHeight - 20)
+      // Set initial height of the table section when component mounts
+      setTableSectionHeight(
+        300 - tabsListRef.current.clientHeight - resizeTableHeightPadding,
+      )
     }
   }, [tabsListRef.current])
 
@@ -453,9 +457,10 @@ export default function Missions() {
                 }
                 className="relative bg-falcongrey-800 overflow-y-auto"
                 onResizeStop={(_, { size }) => {
-                  // 20 is to account for the handle height and some padding
                   setTableSectionHeight(
-                    size.height - tabsListRef.current.clientHeight - 20,
+                    size.height -
+                      tabsListRef.current.clientHeight -
+                      resizeTableHeightPadding,
                   )
                 }}
               >

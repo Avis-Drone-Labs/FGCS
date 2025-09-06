@@ -16,7 +16,7 @@ function MissionItemsTableNonMemo({ tableSectionHeight }) {
 
   return (
     <Table.ScrollContainer maxHeight={tableSectionHeight}>
-      <Table striped withTableBorder withColumnBorders stickyHeader>
+      <Table striped withColumnBorders stickyHeader>
         <Table.Thead>
           <Table.Tr>
             <Table.Th></Table.Th>

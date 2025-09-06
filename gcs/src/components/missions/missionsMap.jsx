@@ -395,7 +395,7 @@ function MapSectionNonMemo({
         {contextMenuState.isOpen && (
           <div
             ref={contextMenuRef}
-            className="absolute bg-falcongrey-700 rounded-md p-1"
+            className="absolute bg-falcongrey-700 rounded-md p-1 z-20"
             style={{
               top: contextMenuState.position.y,
               left: contextMenuState.position.x,

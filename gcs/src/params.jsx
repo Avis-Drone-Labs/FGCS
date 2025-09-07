@@ -26,7 +26,7 @@ import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   appendModifiedParams,
   emitRebootAutopilot,
-  emitRefreshParams,
+  resetParamState,
   selectAutoPilotRebootModalOpen,
   selectFetchingVars,
   selectFetchingVarsProgress,
@@ -71,38 +71,6 @@ export default function Params() {
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
 
   /**
-   * Resets the state of the parameters page to the initial states
-   */
-  function resetState() {
-    dispatch(setFetchingVars(false))
-    dispatch(setFetchingVarsProgress(0))
-    dispatch(setParams([]))
-    dispatch(setShownParams([]))
-    dispatch(setModifiedParams([]))
-    dispatch(setRebootData({}))
-    dispatch(setParamSearchValue(""))
-  }
-
-  /**
-   * Sends a request to the drone to reboot the autopilot
-   */
-  function rebootAutopilot() {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    resetState()
-  }
-
-  /**
-   * Refreshes the params on the drone then fetches them
-   */
-  function refreshParams() {
-    dispatch(setParams([]))
-    dispatch(setShownParams([]))
-    dispatch(emitRefreshParams())
-    dispatch(setFetchingVars(true))
-  }
-
-  /**
    * Checks if a parameter has been modified since the last save
    * @param {*} param the parameter to check
    * @returns true if the given parameter is in modifiedParams, otherwise false
@@ -145,7 +113,7 @@ export default function Params() {
   // Reset state if we loose connection
   useEffect(() => {
     if (!connected) {
-      resetState()
+      dispatch(resetParamState())
     }
 
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
@@ -171,13 +139,7 @@ export default function Params() {
     <Layout currentPage="params">
       {connected ? (
         <>
-          <AutopilotRebootModal
-            rebootData={rebootData}
-            opened={opened}
-            onClose={() => {
-              dispatch(setAutoPilotRebootModalOpen(false))
-            }}
-          />
+          <AutopilotRebootModal />
 
           {fetchingVars && (
             <Progress
@@ -189,13 +151,7 @@ export default function Params() {
 
           {Object.keys(params).length !== 0 && (
             <div className="w-full h-full contents">
-              <ParamsToolbar
-                searchValue={searchValue}
-                refreshCallback={refreshParams}
-                rebootCallback={rebootAutopilot}
-                modifiedCallback={() => dispatch(toggleShowModifiedParams())}
-                searchCallback={(value) => dispatch(setParamSearchValue(value))}
-              />
+              <ParamsToolbar />
 
               <div className="h-full w-2/3 mx-auto">
                 <AutoSizer>

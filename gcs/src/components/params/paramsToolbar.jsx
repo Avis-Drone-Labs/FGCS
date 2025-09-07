@@ -24,28 +24,41 @@ import resolveConfig from "tailwindcss/resolveConfig"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import {
+  emitRebootAutopilot,
+  emitRefreshParams,
+  emitSetMultipleParams,
+  resetParamState,
   selectModifiedParams,
+  selectParamSearchValue,
   selectShowModifiedParams,
+  setAutoPilotRebootModalOpen,
+  setFetchingVars,
+  setParams,
+  setParamSearchValue,
+  setShownParams,
+  toggleShowModifiedParams,
 } from "../../redux/slices/paramsSlice.js"
 
-export default function ParamsToolbar({
-  searchValue,
-  refreshCallback,
-  rebootCallback,
-  modifiedCallback,
-  searchCallback,
-}) {
-  /**
-   * Sets all the modified parameters to their new values on the drone
-   */
-  function saveModifiedParams() {
-    socket.emit("set_multiple_params", modifiedParams)
-  }
-
+export default function ParamsToolbar() {
+  const dispatch = useDispatch()
   const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
+  const searchValue = useSelector(selectParamSearchValue)
+
+  function refreshCallback() {
+    dispatch(setParams([]))
+    dispatch(setShownParams([]))
+    dispatch(emitRefreshParams())
+    dispatch(setFetchingVars(true))
+  }
+
+  function rebootCallback() {
+    dispatch(emitRebootAutopilot())
+    dispatch(setAutoPilotRebootModalOpen(true))
+    dispatch(resetParamState())
+  }
 
   return (
     <div className="flex justify-center space-x-4">
@@ -55,7 +68,7 @@ export default function ParamsToolbar({
       >
         <Button
           size="sm"
-          onClick={modifiedCallback}
+          onClick={() => dispatch(toggleShowModifiedParams())}
           color={tailwindColors.orange[600]}
         >
           {" "}
@@ -71,14 +84,14 @@ export default function ParamsToolbar({
         className="w-1/3"
         placeholder="Search by parameter name"
         value={searchValue}
-        onChange={(event) => searchCallback(event.currentTarget.value)}
+        onChange={(event) => dispatch(setParamSearchValue(event.currentTarget.value))}
       />
 
       <Button
         size="sm"
         rightSection={<IconPencil size={14} />}
         disabled={!modifiedParams.length}
-        onClick={saveModifiedParams}
+        onClick={() => dispatch(emitSetMultipleParams(modifiedParams))}
         color={tailwindColors.green[600]}
       >
         {" "}

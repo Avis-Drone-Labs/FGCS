@@ -10,11 +10,19 @@ import tailwindConfig from "../../../tailwind.config.js"
 import resolveConfig from "tailwindcss/resolveConfig"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function AutopilotRebootModal({ rebootData, opened, onClose }) {
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectAutoPilotRebootModalOpen, selectRebootData, setAutoPilotRebootModalOpen } from "../../redux/slices/paramsSlice.js"
+
+export default function AutopilotRebootModal() {
+  const dispatch = useDispatch()
+  const rebootData = useSelector(selectRebootData)
+  const opened = useSelector(selectAutoPilotRebootModalOpen)
+
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={() => dispatch(setAutoPilotRebootModalOpen(false))}
       title="Rebooting autopilot"
       closeOnClickOutside={false}
       closeOnEscape={false}

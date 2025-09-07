@@ -53,8 +53,8 @@ const droneInfoSlice = createSlice({
         graph_c: null,
         graph_d: null,
       },
-      lastGraphResultsMessage: false  // Last graph message that comes from incoming_msg
-    }
+      lastGraphResultsMessage: false, // Last graph message that comes from incoming_msg
+    },
   },
   reducers: {
     setHeartbeatData: (state, action) => {
@@ -149,7 +149,7 @@ const droneInfoSlice = createSlice({
       if (action.payload !== state.graphs.lastGraphResultsMessage) {
         state.graphs.lastGraphResultsMessage = action.payload
       }
-    }
+    },
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -179,7 +179,7 @@ const droneInfoSlice = createSlice({
     selectExtraDroneData: (state) => state.extraDroneData,
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
-    selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage
+    selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
   },
 })
 

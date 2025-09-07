@@ -8,21 +8,23 @@
 import { useEffect, useRef } from "react"
 
 // 3rd Party Imports
-import { useLocalStorage, usePrevious } from "@mantine/hooks"
+import { usePrevious } from "@mantine/hooks"
 
 // Custom components and helpers
 import GraphPanel from "./components/graphs/graphPanel.jsx"
 import MessageSelector from "./components/graphs/messageSelector.jsx"
 import Layout from "./components/layout"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
-import { dataFormatters } from "./helpers/dataFormatters.js"
 import { graphOptions } from "./helpers/realTimeGraphOptions.js"
-import { socket } from "./helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
-import { selectGraphValues, selectLastGraphMessage, setGraphValues } from "./redux/slices/droneInfoSlice.js"
+import {
+  selectGraphValues,
+  selectLastGraphMessage,
+  setGraphValues,
+} from "./redux/slices/droneInfoSlice.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"

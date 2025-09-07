@@ -54,13 +54,13 @@ const options = {
         unit: "second",
       },
       ticks: {
-        callback: function(value) {
+        callback: function (value) {
           // Only show every 10 seconds
           const timestamp = this.getLabelForValue(value)
           const date = new Date(timestamp)
           return date.getSeconds() % 10 === 0 ? date.toLocaleTimeString() : null
-        }
-      }
+        },
+      },
     },
   },
   elements: {

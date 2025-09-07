@@ -501,10 +501,11 @@ const socketMiddleware = (store) => {
           function getGraphDataFromMessage(msg, targetMessageKey) {
             const returnDataArray = []
             for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
-              const messageKey = storeState.droneInfo.graphs.selectedGraphs[graphKey]
+              const messageKey =
+                storeState.droneInfo.graphs.selectedGraphs[graphKey]
               if (messageKey && messageKey.includes(targetMessageKey)) {
                 const [, valueName] = messageKey.split(".")
-        
+
                 // Applying Data Formatters
                 let formatted_value = msg[valueName]
                 if (messageKey in dataFormatters) {
@@ -512,7 +513,7 @@ const socketMiddleware = (store) => {
                     msg[valueName].toFixed(3),
                   )
                 }
-        
+
                 returnDataArray.push({
                   data: { x: Date.now(), y: formatted_value },
                   graphKey: graphKey,
@@ -524,8 +525,11 @@ const socketMiddleware = (store) => {
             }
             return false
           }
-          store.dispatch(setLastGraphMessage(getGraphDataFromMessage(msg, msg.mavpackettype)))
-
+          store.dispatch(
+            setLastGraphMessage(
+              getGraphDataFromMessage(msg, msg.mavpackettype),
+            ),
+          )
         })
       } else {
         Object.values(DroneSpecificSocketEvents).map((event) =>

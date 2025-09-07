@@ -1,11 +1,12 @@
 /** @type {import('tailwindcss').Config} */
-import containerQueries from '@tailwindcss/container-queries'
+import containerQueries from "@tailwindcss/container-queries"
 export default {
   content: [
-    './index.html',
-    './webcam.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-    './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
+    "./index.html",
+    "./webcam.html",
+    "./aboutWindow.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -22,7 +23,7 @@ export default {
           200: "#F4B6B0",
           100: "#F2D2CF",
           50: "#F2E9E8",
-          DEFAULT: '#E74C3C',  // falconred-700
+          DEFAULT: "#E74C3C", // falconred-700
         },
         falcongrey: {
           950: "#111313",
@@ -36,13 +37,11 @@ export default {
           200: "#A1ABAD",
           100: "#BCC5C7",
           50: "#DEE8EA",
-          TRANSLUCENT: "#171a1bcc",  // falcongrey-900 at 80% transparency
-          DEFAULT: '#1C2021',  // falcongrey-800
+          TRANSLUCENT: "#171a1bcc", // falcongrey-900 at 80% transparency
+          DEFAULT: "#1C2021", // falcongrey-800
         },
       },
     },
   },
-  plugins: [
-    containerQueries,
-  ],
+  plugins: [containerQueries],
 }

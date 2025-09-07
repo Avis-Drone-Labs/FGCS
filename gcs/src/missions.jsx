@@ -65,6 +65,7 @@ import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
+const resizeTableHeightPadding = 20 // To account for the handle height and some padding
 
 function UnwrittenChangesWarning({ unwrittenChanges }) {
   const firstUnwrittenTab = Object.entries(unwrittenChanges).find(
@@ -106,6 +107,8 @@ export default function Missions() {
 
   // Need to keep a reference to the active tab to avoid stale closures
   const activeTabRef = useRef(activeTab)
+  const tabsListRef = useRef(null)
+  const [tableSectionHeight, setTableSectionHeight] = useState(300)
 
   // File import handling
   const [importFile, setImportFile] = useState(null)
@@ -117,6 +120,15 @@ export default function Missions() {
   )
   const [currentPage] = useSessionStorage({ key: "currentPage" })
   const mapRef = useRef()
+
+  useEffect(() => {
+    if (tabsListRef.current) {
+      // Set initial height of the table section when component mounts
+      setTableSectionHeight(
+        300 - tabsListRef.current.clientHeight - resizeTableHeightPadding,
+      )
+    }
+  }, [tabsListRef.current])
 
   // Send some messages when file is loaded
   useEffect(() => {
@@ -444,13 +456,20 @@ export default function Missions() {
                   <div className="w-full h-2 bg-falcongrey-900 hover:bg-falconred-500 cursor-row-resize absolute top-0 left-0 z-10"></div>
                 }
                 className="relative bg-falcongrey-800 overflow-y-auto"
+                onResizeStop={(_, { size }) => {
+                  setTableSectionHeight(
+                    size.height -
+                      tabsListRef.current.clientHeight -
+                      resizeTableHeightPadding,
+                  )
+                }}
               >
                 <Tabs
                   value={activeTab}
                   onChange={(value) => dispatch(setActiveTab(value))}
                   className="mt-2"
                 >
-                  <Tabs.List grow>
+                  <Tabs.List grow ref={tabsListRef}>
                     <Tabs.Tab
                       value="mission"
                       color={tailwindColors.yellow[400]}
@@ -466,13 +485,15 @@ export default function Missions() {
                   </Tabs.List>
 
                   <Tabs.Panel value="mission">
-                    <MissionItemsTable />
+                    <MissionItemsTable
+                      tableSectionHeight={tableSectionHeight}
+                    />
                   </Tabs.Panel>
                   <Tabs.Panel value="fence">
-                    <FenceItemsTable />
+                    <FenceItemsTable tableSectionHeight={tableSectionHeight} />
                   </Tabs.Panel>
                   <Tabs.Panel value="rally">
-                    <RallyItemsTable />
+                    <RallyItemsTable tableSectionHeight={tableSectionHeight} />
                   </Tabs.Panel>
                 </Tabs>
               </ResizableBox>

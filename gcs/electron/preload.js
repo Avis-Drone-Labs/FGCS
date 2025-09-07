@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   closeWebcamWindow: () => ipcRenderer.invoke("closeWebcamWindow"),
   onCameraWindowClose: (callback) =>
     ipcRenderer.on("webcam-closed", () => callback()),
+  openAboutWindow: () => ipcRenderer.invoke("openAboutWindow"),
+  closeAboutWindow: () => ipcRenderer.invoke("closeAboutWindow"),
 })
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.

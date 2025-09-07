@@ -14,7 +14,10 @@ import {
 
 // Redux
 import { useSelector } from "react-redux"
-import { selectDrawingMissionItems } from "../../redux/slices/missionSlice"
+import {
+  selectDrawingMissionItems,
+  selectHomePosition,
+} from "../../redux/slices/missionSlice"
 
 function calculateMaxAltitude(missionItems) {
   missionItems = missionItems.filter(
@@ -157,6 +160,34 @@ function calculateTotalDistance(missionItems) {
   return Math.round(totalDistance * 100) / 100
 }
 
+function calculateMaxTelemDistance(missionItems, homePosition) {
+  // Calculate the max distance from the home position
+  if (missionItems.length === 0 || !homePosition)
+    return { maxDistance: 0, point: null }
+
+  let maxDistance = 0
+  let maxDistancePoint = null
+
+  // Remove any waypoints without coordinates
+  missionItems = missionItems.filter((item) => item.x !== 0 && item.y !== 0)
+
+  for (const item of missionItems) {
+    const distanceFromHome = distance(
+      [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+      [intToCoord(item.y), intToCoord(item.x)],
+      { units: "meters" },
+    )
+
+    if (distanceFromHome > maxDistance) {
+      maxDistance = distanceFromHome
+      maxDistancePoint = item
+    }
+  }
+
+  maxDistance = Math.round(maxDistance * 100) / 100 // Round to two decimal places
+  return { maxDistance: maxDistance, point: maxDistancePoint }
+}
+
 function StatisticItem({ label, value, units, tooltip = null }) {
   const displayString = `${label}: ${value}${units || ""}`
   return (
@@ -174,6 +205,7 @@ function StatisticItem({ label, value, units, tooltip = null }) {
 
 export default function MissionStatistics() {
   const missionItems = useSelector(selectDrawingMissionItems)
+  const homePosition = useSelector(selectHomePosition)
 
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
   const [totalDistance, setTotalDistance] = useState(0)
@@ -183,6 +215,10 @@ export default function MissionStatistics() {
   const [maxSlopeGradient, setMaxSlopeGradient] = useState({
     maxGradient: 0,
     points: null,
+  })
+  const [maxTelemDistance, setMaxTelemDistance] = useState({
+    maxDistance: 0,
+    point: null,
   })
 
   useEffect(() => {
@@ -195,6 +231,7 @@ export default function MissionStatistics() {
       setMaxAltitude(0)
       setMaxDistanceBetweenWaypoints({ maxDistance: 0, points: null })
       setMaxSlopeGradient({ maxGradient: 0, points: null })
+      setMaxTelemDistance({ maxDistance: 0, point: null })
       return
     }
 
@@ -205,7 +242,10 @@ export default function MissionStatistics() {
       calculateMaxDistanceBetweenWaypoints(filteredMissionItems),
     )
     setMaxSlopeGradient(calculateMaxSlopeGradient(filteredMissionItems))
-  }, [filteredMissionItems])
+    setMaxTelemDistance(
+      calculateMaxTelemDistance(filteredMissionItems, homePosition),
+    )
+  }, [filteredMissionItems, homePosition])
 
   return (
     <>
@@ -228,6 +268,14 @@ export default function MissionStatistics() {
           `Between ${maxSlopeGradient.points[0]?.seq} and ${maxSlopeGradient.points[1]?.seq}`
         }
         units="%"
+      />
+      <StatisticItem
+        label="Max telem distance"
+        value={maxTelemDistance.maxDistance}
+        tooltip={
+          maxTelemDistance.point && `At waypoint ${maxTelemDistance.point.seq}`
+        }
+        units="m"
       />
     </>
   )

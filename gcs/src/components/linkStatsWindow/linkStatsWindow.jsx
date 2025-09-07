@@ -58,11 +58,15 @@ export default function LinkStatsWindow() {
             <Table.Tbody>
               <Table.Tr>
                 <Table.Td>{linkStats.total_packets_received}</Table.Td>
-                <Table.Td>{linkStats.avg_packets_received_per_sec}</Table.Td>
+                <Table.Td>
+                  {Math.round(linkStats.avg_packets_received_per_sec)}
+                </Table.Td>
                 <Table.Td>
                   {readableBytes(linkStats.total_bytes_received)}
                 </Table.Td>
-                <Table.Td>{linkStats.avg_bytes_received_per_sec}</Table.Td>
+                <Table.Td>
+                  {Math.round(linkStats.avg_bytes_received_per_sec)}
+                </Table.Td>
                 <Table.Td>{linkStats.total_receive_errors}</Table.Td>
                 <Table.Td>
                   {linkStats.total_packets_received > 0
@@ -94,9 +98,13 @@ export default function LinkStatsWindow() {
             <Table.Tbody>
               <Table.Tr>
                 <Table.Td>{linkStats.total_packets_sent}</Table.Td>
-                <Table.Td>{linkStats.avg_packets_sent_per_sec}</Table.Td>
+                <Table.Td>
+                  {Math.round(linkStats.avg_packets_sent_per_sec)}
+                </Table.Td>
                 <Table.Td>{readableBytes(linkStats.total_bytes_sent)}</Table.Td>
-                <Table.Td>{linkStats.avg_bytes_sent_per_sec}</Table.Td>
+                <Table.Td>
+                  {Math.round(linkStats.avg_bytes_sent_per_sec)}
+                </Table.Td>
                 <Table.Td></Table.Td>
               </Table.Tr>
             </Table.Tbody>

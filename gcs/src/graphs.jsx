@@ -20,8 +20,9 @@ import { graphOptions } from "./helpers/realTimeGraphOptions.js"
 import { socket } from "./helpers/socket"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
+import { selectGraphValues, setGraphValues } from "./redux/slices/droneInfoSlice.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -43,27 +44,29 @@ const graphColors = {
 }
 
 export default function Graphs() {
+  const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
+  const selectValues = useSelector(selectGraphValues)
 
-  const [selectValues, setSelectValues] = useLocalStorage({
-    key: "graphSelectedValues",
-    defaultValue: {
-      graph_a: null,
-      graph_b: null,
-      graph_c: null,
-      graph_d: null,
-    },
-    // modify the deserialization process to set values containing '/' to null
-    deserialize: (strValue) => {
-      const parsedValue = JSON.parse(strValue)
-      for (const key in parsedValue) {
-        if (parsedValue[key] && parsedValue[key].includes("/")) {
-          parsedValue[key] = null
-        }
-      }
-      return parsedValue
-    },
-  })
+  // const [selectValues, setSelectValues] = useLocalStorage({
+  //   key: "graphSelectedValues",
+  //   defaultValue: {
+  //     graph_a: null,
+  //     graph_b: null,
+  //     graph_c: null,
+  //     graph_d: null,
+  //   },
+  //   // modify the deserialization process to set values containing '/' to null
+  //   deserialize: (strValue) => {
+  //     const parsedValue = JSON.parse(strValue)
+  //     for (const key in parsedValue) {
+  //       if (parsedValue[key] && parsedValue[key].includes("/")) {
+  //         parsedValue[key] = null
+  //       }
+  //     }
+  //     return parsedValue
+  //   },
+  // })
 
   const previousSelectValues = usePrevious(selectValues)
 
@@ -79,6 +82,7 @@ export default function Graphs() {
       const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
       if (graphResults !== false) {
         graphResults.forEach((graphResult) => {
+          console.log(graphRefs[graphResult.graphKey]?.current.data.datasets[0].data)
           graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
             graphResult.data,
           )
@@ -136,7 +140,8 @@ export default function Graphs() {
 
   function updateSelectValues(values) {
     const updatedSelectValues = { ...selectValues, ...values }
-    setSelectValues(updatedSelectValues)
+    console.log(updatedSelectValues)
+    dispatch(setGraphValues(updatedSelectValues))
   }
 
   return (

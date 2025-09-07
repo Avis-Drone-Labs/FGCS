@@ -46,6 +46,12 @@ const droneInfoSlice = createSlice({
     extraDroneData: [
       ...defaultDataMessages, // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
     ],
+    graphs: {
+      graph_a: null,
+      graph_b: null,
+      graph_c: null,
+      graph_d: null
+    }
   },
   reducers: {
     setHeartbeatData: (state, action) => {
@@ -131,6 +137,11 @@ const droneInfoSlice = createSlice({
         state.rssi = action.payload
       }
     },
+    setGraphValues: (state, action) => {
+      if (action.payload !== state.graphs) {
+        state.graphs = action.payload
+      }
+    }
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -159,6 +170,7 @@ const droneInfoSlice = createSlice({
 
     selectExtraDroneData: (state) => state.extraDroneData,
     selectStatusText: (state) => state.statusText,
+    selectGraphValues: (state) => state.graphs
   },
 })
 
@@ -176,6 +188,7 @@ export const {
   setBatteryData,
   setOnboardControlSensorsEnabled,
   setRSSIData,
+  setGraphValues,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -252,6 +265,7 @@ export const {
   selectAircraftType,
   selectBatteryData,
   selectExtraDroneData,
+  selectGraphValues
 } = droneInfoSlice.selectors
 
 export default droneInfoSlice

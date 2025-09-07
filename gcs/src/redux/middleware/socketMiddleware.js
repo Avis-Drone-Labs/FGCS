@@ -493,6 +493,17 @@ const socketMiddleware = (store) => {
 
             store.dispatch(setExtraData(updatedExtraDroneData))
           }
+
+          // Handle graph messages
+          // const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
+          // if (graphResults !== false) {
+          //   graphResults.forEach((graphResult) => {
+          //     graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
+          //       graphResult.data,
+          //     )
+          //     graphRefs[graphResult.graphKey]?.current.update("quiet")
+          //   })
+          // }
         })
       } else {
         Object.values(DroneSpecificSocketEvents).map((event) =>

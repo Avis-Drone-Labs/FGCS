@@ -21,7 +21,6 @@ export default function FileMenu(props) {
       <MenuItem
         name="About FGCS"
         onClick={() => {
-          console.log("about window")
           window.ipcRenderer.openAboutWindow()
         }}
       />

@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from "electron"
+import { BrowserWindow, ipcMain, shell } from "electron"
 import path from "path"
 
 let aboutPopoutWin: BrowserWindow | null = null
@@ -30,19 +30,13 @@ export function openAboutPopout() {
     aboutPopoutWin?.loadFile(path.join(process.env.DIST, "aboutWindow.html"))
   }
 
-  // aboutPopoutWin.on('will-resize', (event, newBounds) => {
-  //     event.preventDefault();
+  // Open links in browser, not within the electron window.
+  // Note, links must have target="_blank"
+  aboutPopoutWin.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
 
-  //     const newWidth = newBounds.width;
-  //     const newHeight = Math.round((newWidth / aspect) + WEBCAM_TITLEBAR_HEIGHT);
-
-  //     aboutPopoutWin?.setBounds({
-  //         x: newBounds.x,
-  //         y: newBounds.y,
-  //         width: newWidth,
-  //         height: newHeight
-  //     });
-  // });
+    return { action: "deny" }
+  })
 
   // Windows doesn't consider maximising to be fullscreening so we must prevent default
   aboutPopoutWin.on("maximize", (e: Event) => {

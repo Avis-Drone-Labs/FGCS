@@ -17,6 +17,7 @@ import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
 // Tailing styling
+import { useSessionStorage } from "@mantine/hooks"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -25,7 +26,9 @@ import { selectActiveTab } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function MissionItems({ missionItems }) {
-  const editable = useSelector(selectActiveTab) === "mission"
+  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const editable =
+    useSelector(selectActiveTab) === "mission" && currentPage === "missions"
 
   const [filteredMissionItems, setFilteredMissionItems] = useState(
     filterMissionItems(missionItems),

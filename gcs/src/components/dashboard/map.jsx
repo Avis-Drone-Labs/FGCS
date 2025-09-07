@@ -44,7 +44,6 @@ import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
-import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import DroneMarker from "../mapComponents/droneMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
@@ -55,6 +54,7 @@ import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -277,35 +277,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
         <MissionItems missionItems={missionItems.mission_items} />
 
-        {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
-          return (
-            <MarkerPin
-              key={index}
-              lat={intToCoord(item.x)}
-              lon={intToCoord(item.y)}
-              colour={tailwindColors.blue[400]}
-            />
-          )
-        })}
-
-        {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
-          <DrawLineCoordinates
-            coordinates={[
-              ...missionItems.fence_items.map((item) => [
-                intToCoord(item.y),
-                intToCoord(item.x),
-              ]),
-              [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
-              ],
-            ]}
-            colour={tailwindColors.blue[200]}
-            lineProps={{ "line-dasharray": [2, 2] }}
-          />
-        )}
+        <FenceItems fenceItems={missionItems.fence_items} />
 
         {/* Show mission rally point */}
         {missionItems.rally_items.map((item, index) => {

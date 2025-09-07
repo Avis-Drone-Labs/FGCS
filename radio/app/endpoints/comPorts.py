@@ -55,11 +55,11 @@ def getComPort() -> None:
     socketio.emit("list_com_ports", droneStatus.correct_ports)
 
 
-def sendLinkDebugData(link_stats: LinkStatsType) -> None:
+def sendLinkDebugStats(link_stats: LinkStatsType) -> None:
     """
-    A callback function to send link debug data
+    A callback function to send link debug stats
     """
-    socketio.emit("link_debug_data", link_stats)
+    socketio.emit("link_debug_stats", link_stats)
 
 
 @socketio.on("connect_to_drone")
@@ -122,7 +122,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
         droneConnectStatusCb=droneConnectStatusCb,
-        linkDebugDataCb=sendLinkDebugData,
+        linkDebugStatsCb=sendLinkDebugStats,
     )
 
     if drone.connectionError is not None:

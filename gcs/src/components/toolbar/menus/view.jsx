@@ -15,6 +15,15 @@ export default function ViewMenu(props) {
       setMenusActive={props.setMenusActive}
     >
       <MenuItem
+        name="Connection Stats"
+        onClick={() => {
+          window.ipcRenderer.openLinkStatsWindow()
+        }}
+      />
+
+      <Divider />
+
+      <MenuItem
         name="Reload"
         shortcut="Ctrl + R"
         callback={() => window.ipcRenderer.send("reload")}
@@ -31,6 +40,7 @@ export default function ViewMenu(props) {
       />
 
       <Divider />
+
       <MenuItem
         name="Actual Size"
         shortcut="Ctrl + 0"
@@ -48,6 +58,7 @@ export default function ViewMenu(props) {
       />
 
       <Divider />
+
       <MenuItem
         name="Toggle Full Screen"
         shortcut="F11"

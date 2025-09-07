@@ -75,7 +75,7 @@ class Drone:
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
-        linkDebugDataCb: Optional[Callable] = None,
+        linkDebugStatsCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -95,7 +95,7 @@ class Drone:
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
         self.droneConnectStatusCb = droneConnectStatusCb
-        self.linkDebugDataCb = linkDebugDataCb
+        self.linkDebugStatsCb = linkDebugStatsCb
 
         self.connectionError: Optional[str] = None
 
@@ -545,9 +545,11 @@ class Drone:
                         current_line_number = 1
 
     def getLinkDebugData(self) -> None:
-        """While active, get link debug data every 0.25 seconds"""
+        """While active, get link debug data"""
+        refresh_rate_hz = 2
+
         if not hasattr(self, "_sliding_window"):
-            self._sliding_window = {
+            self._sliding_window: dict[str, list] = {
                 "packets_sent": [],
                 "bytes_sent": [],
                 "packets_received": [],
@@ -555,7 +557,7 @@ class Drone:
             }
 
         if not hasattr(self, "_last_link_stats"):
-            self._last_link_stats = {
+            self._last_link_stats: dict[str, Number] = {
                 "total_packets_sent": 0,
                 "total_bytes_sent": 0,
                 "total_packets_received": 0,
@@ -565,7 +567,7 @@ class Drone:
             }
 
         while self.is_active:
-            if self.linkDebugDataCb:
+            if self.linkDebugStatsCb:
                 try:
                     link_stats = {
                         "total_packets_sent": self.master.mav.total_packets_sent,
@@ -594,12 +596,12 @@ class Drone:
                         - self._last_link_stats["total_bytes_received"]
                     )
 
-                    # Keep only the last 4 readings (because loop is 0.25s)
+                    # Keep only the last x readings
                     for key in self._sliding_window:
-                        if len(self._sliding_window[key]) > 4:
+                        if len(self._sliding_window[key]) > refresh_rate_hz:
                             self._sliding_window[key].pop(0)
 
-                    # Calculate averages over the last 4 readings
+                    # Calculate averages over the last x readings
                     link_stats["avg_packets_sent_per_sec"] = sum(
                         self._sliding_window["packets_sent"]
                     ) / len(self._sliding_window["packets_sent"])
@@ -615,11 +617,11 @@ class Drone:
 
                     self._last_link_stats = copy.deepcopy(link_stats)
 
-                    self.linkDebugDataCb(link_stats)
+                    self.linkDebugStatsCb(link_stats)
                 except Exception as e:
                     self.logger.error(e, exc_info=True)
 
-            time.sleep(0.25)
+            time.sleep(1 / refresh_rate_hz)
 
     def startThread(self) -> None:
         """Starts the listener and sender threads."""

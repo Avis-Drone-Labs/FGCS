@@ -5,16 +5,11 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 // 3rd Party Imports
 import { Progress } from "@mantine/core"
-import {
-  useDebouncedValue,
-  useDisclosure,
-  useListState,
-  useToggle,
-} from "@mantine/hooks"
+import { useDebouncedValue } from "@mantine/hooks"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
 
@@ -24,22 +19,20 @@ import NoDroneConnected from "./components/noDroneConnected.jsx"
 import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification.js"
-import { socket } from "./helpers/socket.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   appendModifiedParams,
+  emitRebootAutopilot,
+  emitRefreshParams,
   selectAutoPilotRebootModalOpen,
   selectFetchingVars,
   selectFetchingVarsProgress,
   selectModifiedParams,
   selectParams,
+  selectParamSearchValue,
   selectRebootData,
   selectShowModifiedParams,
   selectShownParams,
@@ -48,6 +41,7 @@ import {
   setFetchingVarsProgress,
   setModifiedParams,
   setParams,
+  setParamSearchValue,
   setRebootData,
   setShownParams,
   toggleShowModifiedParams,
@@ -69,7 +63,7 @@ export default function Params() {
   const opened = useSelector(selectAutoPilotRebootModalOpen)
 
   // Searchbar states
-  const [searchValue, setSearchValue] = useState("")
+  const searchValue = useSelector(selectParamSearchValue)
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
 
   // Fetch progress states
@@ -86,14 +80,14 @@ export default function Params() {
     dispatch(setShownParams([]))
     dispatch(setModifiedParams([]))
     dispatch(setRebootData({}))
-    setSearchValue("")
+    dispatch(setParamSearchValue(""))
   }
 
   /**
    * Sends a request to the drone to reboot the autopilot
    */
   function rebootAutopilot() {
-    socket.emit("reboot_autopilot")
+    dispatch(emitRebootAutopilot())
     dispatch(setAutoPilotRebootModalOpen(true))
     resetState()
   }
@@ -104,7 +98,7 @@ export default function Params() {
   function refreshParams() {
     dispatch(setParams([]))
     dispatch(setShownParams([]))
-    socket.emit("refresh_params")
+    dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
   }
 
@@ -118,22 +112,6 @@ export default function Params() {
       return obj.param_id === param.param_id
     })
   }
-
-  // /**
-  //  * Updates the parameter value in the given useListState handler
-  //  *
-  //  * @param {*} handler
-  //  * @param {*} param
-  //  * @param {*} value
-  //  */
-  // function updateParamValue(handler, param, value) {
-  //   // TODO: THIS NEEDS MODIFYING BEFORE REDUX BECAUSE OF APPLY WHERE
-  //   // DON'T FORGET BEFORE MERGE!
-  //   handler.applyWhere(
-  //     (item) => item.param_id === param.param_id,
-  //     (item) => ({ ...item, param_value: value }),
-  //   )
-  // }
 
   /**
    * Adds a parameter to the list of parameters that have been modified since the
@@ -152,72 +130,28 @@ export default function Params() {
       )
     } else {
       // Otherwise add it to modified params
-      param.param_value = value
-      dispatch(appendModifiedParams(param))
+      dispatch(
+        appendModifiedParams({
+          param_id: param.param_id,
+          param_value: value,
+          param_type: param.param_type,
+        }),
+      )
     }
 
     dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
   }
 
+  // Reset state if we loose connection
   useEffect(() => {
-    // Updates the autopilot modal depending on the success of the reboot
-    socket.on("reboot_autopilot", (msg) => {
-      dispatch(setRebootData(msg))
-      if (msg.success) {
-        dispatch(setAutoPilotRebootModalOpen(false))
-      }
-    })
-
-    // Drone has lost connection
     if (!connected) {
       resetState()
-      return
     }
 
-    // Fetch params on connection to drone
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
       dispatch(setFetchingVars(true))
     }
-
-    // Update parameter states when params are received from drone
-    socket.on("params", (params) => {
-      dispatch(setParams(params))
-      dispatch(setShownParams(params))
-      dispatch(setFetchingVars(false))
-      dispatch(setFetchingVarsProgress(0))
-      setSearchValue("")
-    })
-
-    // Set fetch progress on update from drone
-    socket.on("param_request_update", (msg) => {
-      dispatch(
-        setFetchingVarsProgress(
-          (msg.current_param_index / msg.total_number_of_params) * 100,
-        ),
-      )
-    })
-
-    // Show success on saving modified params
-    socket.on("param_set_success", (msg) => {
-      showSuccessNotification(msg.message)
-      dispatch(setModifiedParams([]))
-    })
-
-    // Show error message on drone error
-    socket.on("params_error", (err) => {
-      showErrorNotification(err.message)
-      dispatch(setFetchingVars(false))
-    })
-
-    //
-    return () => {
-      socket.off("params")
-      socket.off("param_request_update")
-      socket.off("param_set_success")
-      socket.off("params_error")
-      socket.off("reboot_autopilot")
-    }
-  }, [connected]) // useEffect
+  }, [connected])
 
   useEffect(() => {
     if (!params) return
@@ -257,12 +191,10 @@ export default function Params() {
             <div className="w-full h-full contents">
               <ParamsToolbar
                 searchValue={searchValue}
-                modifiedParams={modifiedParams}
-                showModifiedParams={showModifiedParams}
                 refreshCallback={refreshParams}
                 rebootCallback={rebootAutopilot}
                 modifiedCallback={() => dispatch(toggleShowModifiedParams())}
-                searchCallback={setSearchValue}
+                searchCallback={(value) => dispatch(setParamSearchValue(value))}
               />
 
               <div className="h-full w-2/3 mx-auto">

@@ -23,10 +23,15 @@ import tailwindConfig from "../../../tailwind.config.js"
 import resolveConfig from "tailwindcss/resolveConfig"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+// Redux
+import { useSelector } from "react-redux"
+import {
+  selectModifiedParams,
+  selectShowModifiedParams,
+} from "../../redux/slices/paramsSlice.js"
+
 export default function ParamsToolbar({
   searchValue,
-  modifiedParams,
-  showModifiedParams,
   refreshCallback,
   rebootCallback,
   modifiedCallback,
@@ -38,6 +43,9 @@ export default function ParamsToolbar({
   function saveModifiedParams() {
     socket.emit("set_multiple_params", modifiedParams)
   }
+
+  const modifiedParams = useSelector(selectModifiedParams)
+  const showModifiedParams = useSelector(selectShowModifiedParams)
 
   return (
     <div className="flex justify-center space-x-4">

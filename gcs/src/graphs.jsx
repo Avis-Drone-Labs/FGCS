@@ -82,7 +82,6 @@ export default function Graphs() {
       const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
       if (graphResults !== false) {
         graphResults.forEach((graphResult) => {
-          console.log(graphRefs[graphResult.graphKey]?.current.data.datasets[0].data)
           graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
             graphResult.data,
           )
@@ -140,7 +139,6 @@ export default function Graphs() {
 
   function updateSelectValues(values) {
     const updatedSelectValues = { ...selectValues, ...values }
-    console.log(updatedSelectValues)
     dispatch(setGraphValues(updatedSelectValues))
   }
 

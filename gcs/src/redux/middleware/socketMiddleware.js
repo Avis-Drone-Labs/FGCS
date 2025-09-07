@@ -69,6 +69,7 @@ const SocketEvents = Object.freeze({
   // getComPorts: "get_com_ports",
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
+  linkDebugStats: "link_debug_stats",
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
@@ -236,6 +237,11 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
+        })
+
+        // Link stats
+        socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
+          window.ipcRenderer.updateLinkStats(msg)
         })
       }
     }

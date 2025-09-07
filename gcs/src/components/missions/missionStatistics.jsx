@@ -245,7 +245,7 @@ export default function MissionStatistics() {
     setMaxTelemDistance(
       calculateMaxTelemDistance(filteredMissionItems, homePosition),
     )
-  }, [filteredMissionItems])
+  }, [filteredMissionItems, homePosition])
 
   return (
     <>

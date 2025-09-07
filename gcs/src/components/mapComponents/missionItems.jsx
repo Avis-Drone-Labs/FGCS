@@ -16,7 +16,7 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
-// Tailing styling
+// Tailwind styling
 import { useSessionStorage } from "@mantine/hooks"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"

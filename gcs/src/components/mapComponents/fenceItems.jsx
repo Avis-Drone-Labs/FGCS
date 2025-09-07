@@ -15,7 +15,7 @@ import "maplibre-gl/dist/maplibre-gl.css"
 
 // Component imports
 
-// Tailing styling
+// Tailwind styling
 import { useSessionStorage } from "@mantine/hooks"
 import { circle } from "@turf/turf"
 import { Layer, Source } from "react-map-gl"

@@ -12,7 +12,11 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectAutoPilotRebootModalOpen, selectRebootData, setAutoPilotRebootModalOpen } from "../../redux/slices/paramsSlice.js"
+import {
+  selectAutoPilotRebootModalOpen,
+  selectRebootData,
+  setAutoPilotRebootModalOpen,
+} from "../../redux/slices/paramsSlice.js"
 
 export default function AutopilotRebootModal() {
   const dispatch = useDispatch()

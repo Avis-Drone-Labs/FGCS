@@ -15,9 +15,6 @@ import {
   IconTool,
 } from "@tabler/icons-react"
 
-// Custom helper, component and data imports
-import { socket } from "../../helpers/socket.js"
-
 // Styling imports
 import tailwindConfig from "../../../tailwind.config.js"
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -84,7 +81,9 @@ export default function ParamsToolbar() {
         className="w-1/3"
         placeholder="Search by parameter name"
         value={searchValue}
-        onChange={(event) => dispatch(setParamSearchValue(event.currentTarget.value))}
+        onChange={(event) =>
+          dispatch(setParamSearchValue(event.currentTarget.value))
+        }
       />
 
       <Button

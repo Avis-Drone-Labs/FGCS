@@ -14,7 +14,11 @@ import {
   emitImportMissionFromFile,
   emitWriteCurrentMission,
 } from "../slices/missionSlice"
-import { emitRebootAutopilot, emitRefreshParams, emitSetMultipleParams } from "../slices/paramsSlice"
+import {
+  emitRebootAutopilot,
+  emitRefreshParams,
+  emitSetMultipleParams,
+} from "../slices/paramsSlice"
 
 export function handleEmitters(socket, store, action) {
   if (!socket) return
@@ -115,8 +119,8 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitSetMultipleParams,
-      callback: () => socket.socket.emit("set_multiple_params", action.payload)
-    }
+      callback: () => socket.socket.emit("set_multiple_params", action.payload),
+    },
   ]
 
   for (const { emitter, callback } of emitHandlers) {

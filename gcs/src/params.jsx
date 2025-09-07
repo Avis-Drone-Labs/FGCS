@@ -25,26 +25,16 @@ import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   appendModifiedParams,
-  emitRebootAutopilot,
   resetParamState,
-  selectAutoPilotRebootModalOpen,
   selectFetchingVars,
   selectFetchingVarsProgress,
   selectModifiedParams,
   selectParams,
   selectParamSearchValue,
-  selectRebootData,
   selectShowModifiedParams,
   selectShownParams,
-  setAutoPilotRebootModalOpen,
   setFetchingVars,
-  setFetchingVarsProgress,
-  setModifiedParams,
-  setParams,
-  setParamSearchValue,
-  setRebootData,
   setShownParams,
-  toggleShowModifiedParams,
   updateParamValue,
 } from "./redux/slices/paramsSlice.js"
 
@@ -57,10 +47,6 @@ export default function Params() {
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
-
-  // Autopilot reboot states
-  const rebootData = useSelector(selectRebootData)
-  const opened = useSelector(selectAutoPilotRebootModalOpen)
 
   // Searchbar states
   const searchValue = useSelector(selectParamSearchValue)

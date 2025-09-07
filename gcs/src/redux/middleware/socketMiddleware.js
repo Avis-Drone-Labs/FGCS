@@ -77,6 +77,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavResult: "nav_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+  onRebootAutopilot: "reboot_autopilot",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -281,6 +282,13 @@ const socketMiddleware = (store) => {
             )
           },
         )
+
+        socket.socket.on(DroneSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          // setRebootData(msg)
+          // if (msg.success) {
+          //   close()
+          // }
+        })
 
         /*
           Missions

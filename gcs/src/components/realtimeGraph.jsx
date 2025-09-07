@@ -56,9 +56,9 @@ const options = {
       ticks: {
         callback: function (value) {
           // Only show every 10 seconds, avoid creating Date unless needed
-          const timestamp = this.getLabelForValue(value);
-          const date = new Date(timestamp);
-          return date.getSeconds() % 10 === 0 ? date.toLocaleTimeString() : null;
+          const timestamp = this.getLabelForValue(value)
+          const date = new Date(timestamp)
+          return date.getSeconds() % 10 === 0 ? date.toLocaleTimeString() : null
         },
       },
     },

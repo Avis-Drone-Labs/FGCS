@@ -62,7 +62,11 @@ if (droneConnection !== undefined) {
   if (droneConnection.port !== undefined) {
     store.dispatch(setPort(droneConnection.port))
   }
-  if (droneInfo !== undefined && droneInfo.graphs && droneInfo.graphs.selectedGraphs !== undefined) {
+  if (
+    droneInfo !== undefined &&
+    droneInfo.graphs &&
+    droneInfo.graphs.selectedGraphs !== undefined
+  ) {
     store.dispatch(setGraphValues(droneInfo.graphs.selectedGraphs))
   }
 }

@@ -31,41 +31,43 @@ import {
 import { socket } from "./helpers/socket.js"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
+import { appendModifiedParams, selectAutoPilotRebootModalOpen, selectFetchingVars, selectFetchingVarsProgress, selectModifiedParams, selectParams, selectRebootData, selectShowModifiedParams, selectShownParams, setAutoPilotRebootModalOpen, setFetchingVars, setFetchingVarsProgress, setParams, setRebootData, setShownParams, toggleShowModifiedParams } from "./redux/slices/paramsSlice.js"
 
 export default function Params() {
+  const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
 
   // Parameter states
-  const [params, paramsHandler] = useListState([])
-  const [shownParams, shownParamsHandler] = useListState([])
-  const [modifiedParams, modifiedParamsHandler] = useListState([])
-  const [showModifiedParams, showModifiedParamsToggle] = useToggle()
+  const params = useSelector(selectParams)
+  const shownParams = useSelector(selectShownParams)
+  const modifiedParams = useSelector(selectModifiedParams)
+  const showModifiedParams = useSelector(selectShowModifiedParams)
 
   // Autopilot reboot states
-  const [rebootData, setRebootData] = useState({})
-  const [opened, { open, close }] = useDisclosure(false)
+  const rebootData = useSelector(selectRebootData)
+  const opened = useSelector(selectAutoPilotRebootModalOpen)
 
   // Searchbar states
   const [searchValue, setSearchValue] = useState("")
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
 
   // Fetch progress states
-  const [fetchingVars, setFetchingVars] = useState(false)
-  const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
+  const fetchingVars = useSelector(selectFetchingVars)
+  const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
 
   /**
    * Resets the state of the parameters page to the initial states
    */
   function resetState() {
-    setFetchingVars(false)
-    setFetchingVarsProgress(0)
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
-    modifiedParamsHandler.setState([])
+    dispatch(setFetchingVars(false))
+    dispatch(setFetchingVarsProgress(0))
+    dispatch(setParams([]))
+    dispatch(setShownParams([]))
+    dispatch(selectModifiedParams([]))
+    dispatch(setRebootData({}))
     setSearchValue("")
-    setRebootData({})
   }
 
   /**
@@ -73,7 +75,7 @@ export default function Params() {
    */
   function rebootAutopilot() {
     socket.emit("reboot_autopilot")
-    open()
+    dispatch(setAutoPilotRebootModalOpen(true))
     resetState()
   }
 
@@ -81,10 +83,10 @@ export default function Params() {
    * Refreshes the params on the drone then fetches them
    */
   function refreshParams() {
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
+    dispatch(setParams([]))
+    dispatch(setShownParams([]))
     socket.emit("refresh_params")
-    setFetchingVars(true)
+    dispatch(setFetchingVars(true))
   }
 
   /**
@@ -106,6 +108,8 @@ export default function Params() {
    * @param {*} value
    */
   function updateParamValue(handler, param, value) {
+    // TODO: THIS NEEDS MODIFYING BEFORE REDUX BECAUSE OF APPLY WHERE
+    // DON'T FORGET BEFORE MERGE!
     handler.applyWhere(
       (item) => item.param_id === param.param_id,
       (item) => ({ ...item, param_value: value }),
@@ -124,22 +128,25 @@ export default function Params() {
     if (value === "") return
 
     // If param has already been modified since last save then update it
-    if (isModified(param)) updateParamValue(modifiedParamsHandler, param, value)
+    // TODO: THIS NEEDS TO BE EDITED BEFORE MERGE
+    // if (isModified(param)) updateParamValue(modifiedParamsHandler, param, value)
     else {
       // Otherwise add it to modified params
       param.param_value = value
-      modifiedParamsHandler.append(param)
+      dispatch(appendModifiedParams(param))
     }
 
-    updateParamValue(paramsHandler, param, value)
+    // TODO: THIS NEEDS MODIFYING BEFORE REDUX BECAUSE OF APPLY WHERE
+    // DON'T FORGET BEFORE MERGE!
+    // updateParamValue(paramsHandler, param, value)
   }
 
   useEffect(() => {
     // Updates the autopilot modal depending on the success of the reboot
     socket.on("reboot_autopilot", (msg) => {
-      setRebootData(msg)
+      dispatch(setRebootData(msg))
       if (msg.success) {
-        close()
+        dispatch(setAutoPilotRebootModalOpen(false))
       }
     })
 
@@ -151,35 +158,35 @@ export default function Params() {
 
     // Fetch params on connection to drone
     if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      setFetchingVars(true)
+      dispatch(setFetchingVars(true))
     }
 
-    // Update parameter states when params are receieved from drone
+    // Update parameter states when params are received from drone
     socket.on("params", (params) => {
-      paramsHandler.setState(params)
-      shownParamsHandler.setState(params)
-      setFetchingVars(false)
-      setFetchingVarsProgress(0)
+      dispatch(setParams(params))
+      dispatch(setShownParams(params))
+      dispatch(setFetchingVars(false))
+      dispatch(setFetchingVarsProgress(0))
       setSearchValue("")
     })
 
     // Set fetch progress on update from drone
     socket.on("param_request_update", (msg) => {
-      setFetchingVarsProgress(
+      dispatch(setFetchingVarsProgress(
         (msg.current_param_index / msg.total_number_of_params) * 100,
-      )
+      ))
     })
 
     // Show success on saving modified params
     socket.on("param_set_success", (msg) => {
       showSuccessNotification(msg.message)
-      modifiedParamsHandler.setState([])
+      dispatch(selectModifiedParams([]))
     })
 
     // Show error message on drone error
     socket.on("params_error", (err) => {
       showErrorNotification(err.message)
-      setFetchingVars(false)
+      dispatch(setFetchingVars(false))
     })
 
     //
@@ -203,7 +210,7 @@ export default function Params() {
     )
 
     // Show the filtered parameters
-    shownParamsHandler.setState(filteredParams)
+    dispatch(setShownParams(filteredParams))
   }, [debouncedSearchValue, showModifiedParams])
 
   return (
@@ -213,7 +220,7 @@ export default function Params() {
           <AutopilotRebootModal
             rebootData={rebootData}
             opened={opened}
-            onClose={close}
+            onClose={() => {dispatch(setAutoPilotRebootModalOpen(false))}}
           />
 
           {fetchingVars && (
@@ -232,7 +239,7 @@ export default function Params() {
                 showModifiedParams={showModifiedParams}
                 refreshCallback={refreshParams}
                 rebootCallback={rebootAutopilot}
-                modifiedCallback={showModifiedParamsToggle}
+                modifiedCallback={() => dispatch(toggleShowModifiedParams())}
                 searchCallback={setSearchValue}
               />
 

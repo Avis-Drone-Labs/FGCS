@@ -15,7 +15,6 @@ export function openAboutPopout() {
       show: false,
       title: "About FGCS",
       webPreferences: {
-        nodeIntegration: true,
         preload: path.join(__dirname, "preload.js"),
         contextIsolation: true,
       },

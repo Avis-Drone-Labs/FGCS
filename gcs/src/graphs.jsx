@@ -22,7 +22,7 @@ import { socket } from "./helpers/socket"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
-import { selectGraphValues, setGraphValues } from "./redux/slices/droneInfoSlice.js"
+import { selectGraphValues, selectLastGraphMessage, setGraphValues } from "./redux/slices/droneInfoSlice.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -47,26 +47,7 @@ export default function Graphs() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const selectValues = useSelector(selectGraphValues)
-
-  // const [selectValues, setSelectValues] = useLocalStorage({
-  //   key: "graphSelectedValues",
-  //   defaultValue: {
-  //     graph_a: null,
-  //     graph_b: null,
-  //     graph_c: null,
-  //     graph_d: null,
-  //   },
-  //   // modify the deserialization process to set values containing '/' to null
-  //   deserialize: (strValue) => {
-  //     const parsedValue = JSON.parse(strValue)
-  //     for (const key in parsedValue) {
-  //       if (parsedValue[key] && parsedValue[key].includes("/")) {
-  //         parsedValue[key] = null
-  //       }
-  //     }
-  //     return parsedValue
-  //   },
-  // })
+  const lastGraphMessage = useSelector(selectLastGraphMessage)
 
   const previousSelectValues = usePrevious(selectValues)
 
@@ -78,22 +59,15 @@ export default function Graphs() {
   }
 
   useEffect(() => {
-    socket.on("incoming_msg", (msg) => {
-      const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
-      if (graphResults !== false) {
-        graphResults.forEach((graphResult) => {
-          graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
-            graphResult.data,
-          )
-          graphRefs[graphResult.graphKey]?.current.update("quiet")
-        })
-      }
-    })
-
-    return () => {
-      socket.off("incoming_msg")
+    if (lastGraphMessage !== false) {
+      lastGraphMessage.forEach((graphResult) => {
+        graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
+          graphResult.data,
+        )
+        graphRefs[graphResult.graphKey]?.current.update("quiet")
+      })
     }
-  }, [selectValues])
+  }, [lastGraphMessage])
 
   useEffect(() => {
     if (!previousSelectValues) return
@@ -109,33 +83,6 @@ export default function Graphs() {
       }
     }
   }, [previousSelectValues])
-
-  function getGraphDataFromMessage(msg, targetMessageKey) {
-    const returnDataArray = []
-    for (let graphKey in selectValues) {
-      const messageKey = selectValues[graphKey]
-      if (messageKey && messageKey.includes(targetMessageKey)) {
-        const [, valueName] = messageKey.split(".")
-
-        // Applying Data Formatters
-        let formatted_value = msg[valueName]
-        if (messageKey in dataFormatters) {
-          formatted_value = dataFormatters[messageKey](
-            msg[valueName].toFixed(3),
-          )
-        }
-
-        returnDataArray.push({
-          data: { x: Date.now(), y: formatted_value },
-          graphKey: graphKey,
-        })
-      }
-    }
-    if (returnDataArray.length) {
-      return returnDataArray
-    }
-    return false
-  }
 
   function updateSelectValues(values) {
     const updatedSelectValues = { ...selectValues, ...values }

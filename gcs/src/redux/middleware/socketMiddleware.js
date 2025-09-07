@@ -32,6 +32,7 @@ import {
   setGpsData,
   setGpsRawIntData,
   setHeartbeatData,
+  setLastGraphMessage,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -57,6 +58,7 @@ import {
 } from "../slices/notificationSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
+import { dataFormatters } from "../../helpers/dataFormatters.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -493,6 +495,41 @@ const socketMiddleware = (store) => {
 
             store.dispatch(setExtraData(updatedExtraDroneData))
           }
+
+          // Handle graph messages
+          // Function to get the graph data from a message
+          function getGraphDataFromMessage(msg, targetMessageKey) {
+            const returnDataArray = []
+            for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
+              const messageKey =
+                storeState.droneInfo.graphs.selectedGraphs[graphKey]
+              if (messageKey && messageKey.includes(targetMessageKey)) {
+                const [, valueName] = messageKey.split(".")
+
+                // Applying Data Formatters
+                let formatted_value = msg[valueName]
+                if (messageKey in dataFormatters) {
+                  formatted_value = dataFormatters[messageKey](
+                    msg[valueName].toFixed(3),
+                  )
+                }
+
+                returnDataArray.push({
+                  data: { x: Date.now(), y: formatted_value },
+                  graphKey: graphKey,
+                })
+              }
+            }
+            if (returnDataArray.length) {
+              return returnDataArray
+            }
+            return false
+          }
+          store.dispatch(
+            setLastGraphMessage(
+              getGraphDataFromMessage(msg, msg.mavpackettype),
+            ),
+          )
         })
       } else {
         Object.values(DroneSpecificSocketEvents).map((event) =>

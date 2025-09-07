@@ -15,7 +15,8 @@ import "maplibre-gl/dist/maplibre-gl.css"
 
 // Component imports
 
-// Tailing styling
+// Tailwind styling
+import { useSessionStorage } from "@mantine/hooks"
 import { circle } from "@turf/turf"
 import { Layer, Source } from "react-map-gl"
 import { useSelector } from "react-redux"
@@ -45,7 +46,9 @@ const circleCommands = [
 ]
 
 export default function FenceItems({ fenceItems }) {
-  const editable = useSelector(selectActiveTab) === "fence"
+  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const editable =
+    useSelector(selectActiveTab) === "fence" && currentPage === "missions"
 
   const [fencePolygonItems, setFencePolygonItems] = useState([])
   const [fenceCircleItems, setFenceCircleItems] = useState([])

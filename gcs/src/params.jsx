@@ -33,7 +33,26 @@ import { socket } from "./helpers/socket.js"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
-import { appendModifiedParams, selectAutoPilotRebootModalOpen, selectFetchingVars, selectFetchingVarsProgress, selectModifiedParams, selectParams, selectRebootData, selectShowModifiedParams, selectShownParams, setAutoPilotRebootModalOpen, setFetchingVars, setFetchingVarsProgress, setParams, setRebootData, setShownParams, toggleShowModifiedParams } from "./redux/slices/paramsSlice.js"
+import {
+  appendModifiedParams,
+  selectAutoPilotRebootModalOpen,
+  selectFetchingVars,
+  selectFetchingVarsProgress,
+  selectModifiedParams,
+  selectParams,
+  selectRebootData,
+  selectShowModifiedParams,
+  selectShownParams,
+  setAutoPilotRebootModalOpen,
+  setFetchingVars,
+  setFetchingVarsProgress,
+  setModifiedParams,
+  setParams,
+  setRebootData,
+  setShownParams,
+  toggleShowModifiedParams,
+  updateParamValue,
+} from "./redux/slices/paramsSlice.js"
 
 export default function Params() {
   const dispatch = useDispatch()
@@ -65,7 +84,7 @@ export default function Params() {
     dispatch(setFetchingVarsProgress(0))
     dispatch(setParams([]))
     dispatch(setShownParams([]))
-    dispatch(selectModifiedParams([]))
+    dispatch(setModifiedParams([]))
     dispatch(setRebootData({}))
     setSearchValue("")
   }
@@ -90,7 +109,7 @@ export default function Params() {
   }
 
   /**
-   * Checks if a paramter has been modified since the last save
+   * Checks if a parameter has been modified since the last save
    * @param {*} param the parameter to check
    * @returns true if the given parameter is in modifiedParams, otherwise false
    */
@@ -100,21 +119,21 @@ export default function Params() {
     })
   }
 
-  /**
-   * Updates the parameter value in the given useListState handler
-   *
-   * @param {*} handler
-   * @param {*} param
-   * @param {*} value
-   */
-  function updateParamValue(handler, param, value) {
-    // TODO: THIS NEEDS MODIFYING BEFORE REDUX BECAUSE OF APPLY WHERE
-    // DON'T FORGET BEFORE MERGE!
-    handler.applyWhere(
-      (item) => item.param_id === param.param_id,
-      (item) => ({ ...item, param_value: value }),
-    )
-  }
+  // /**
+  //  * Updates the parameter value in the given useListState handler
+  //  *
+  //  * @param {*} handler
+  //  * @param {*} param
+  //  * @param {*} value
+  //  */
+  // function updateParamValue(handler, param, value) {
+  //   // TODO: THIS NEEDS MODIFYING BEFORE REDUX BECAUSE OF APPLY WHERE
+  //   // DON'T FORGET BEFORE MERGE!
+  //   handler.applyWhere(
+  //     (item) => item.param_id === param.param_id,
+  //     (item) => ({ ...item, param_value: value }),
+  //   )
+  // }
 
   /**
    * Adds a parameter to the list of parameters that have been modified since the
@@ -127,18 +146,17 @@ export default function Params() {
   function addToModifiedParams(value, param) {
     if (value === "") return
 
-    // If param has already been modified since last save then update it
-    // TODO: THIS NEEDS TO BE EDITED BEFORE MERGE
-    // if (isModified(param)) updateParamValue(modifiedParamsHandler, param, value)
-    else {
+    if (isModified(param)) {
+      dispatch(
+        updateParamValue({ param_id: param.param_id, param_value: value }),
+      )
+    } else {
       // Otherwise add it to modified params
       param.param_value = value
       dispatch(appendModifiedParams(param))
     }
 
-    // TODO: THIS NEEDS MODIFYING BEFORE REDUX BECAUSE OF APPLY WHERE
-    // DON'T FORGET BEFORE MERGE!
-    // updateParamValue(paramsHandler, param, value)
+    dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
   }
 
   useEffect(() => {
@@ -172,15 +190,17 @@ export default function Params() {
 
     // Set fetch progress on update from drone
     socket.on("param_request_update", (msg) => {
-      dispatch(setFetchingVarsProgress(
-        (msg.current_param_index / msg.total_number_of_params) * 100,
-      ))
+      dispatch(
+        setFetchingVarsProgress(
+          (msg.current_param_index / msg.total_number_of_params) * 100,
+        ),
+      )
     })
 
     // Show success on saving modified params
     socket.on("param_set_success", (msg) => {
       showSuccessNotification(msg.message)
-      dispatch(selectModifiedParams([]))
+      dispatch(setModifiedParams([]))
     })
 
     // Show error message on drone error
@@ -220,7 +240,9 @@ export default function Params() {
           <AutopilotRebootModal
             rebootData={rebootData}
             opened={opened}
-            onClose={() => {dispatch(setAutoPilotRebootModalOpen(false))}}
+            onClose={() => {
+              dispatch(setAutoPilotRebootModalOpen(false))
+            }}
           />
 
           {fetchingVars && (

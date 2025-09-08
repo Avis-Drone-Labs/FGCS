@@ -1,7 +1,7 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import logAnalyserSlice from "./logAnalyserSlice"
 import socketSlice from "./slices/socketSlice"
-import droneInfoSlice from "./slices/droneInfoSlice"
+import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 
 import socketMiddleware from "./middleware/socketMiddleware"
 import droneConnectionSlice, {
@@ -45,6 +45,7 @@ export const store = configureStore({
 })
 
 let droneConnection = persistedState.droneConnection
+let droneInfo = persistedState.droneInfo
 if (droneConnection !== undefined) {
   if (droneConnection.wireless !== undefined) {
     store.dispatch(setWireless(droneConnection.wireless))
@@ -63,6 +64,9 @@ if (droneConnection !== undefined) {
   }
   if (droneConnection.port !== undefined) {
     store.dispatch(setPort(droneConnection.port))
+  }
+  if (droneInfo !== undefined && droneInfo.graphs && droneInfo.graphs.selectedGraphs !== undefined) {
+    store.dispatch(setGraphValues(droneInfo.graphs.selectedGraphs))
   }
 }
 
@@ -87,6 +91,10 @@ store.subscribe(() => {
   local_storage.setItem("networkType", store_mut.droneConnection.network_type)
   local_storage.setItem("ip", store_mut.droneConnection.ip)
   local_storage.setItem("port", store_mut.droneConnection.port)
+  local_storage.setItem(
+    "selectedRealtimeGraphs",
+    store_mut.droneInfo.graphs.selectedGraphs,
+  )
   session_storage.setItem(
     "connectedToDrone",
     store_mut.droneConnection.connected,

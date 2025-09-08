@@ -3,11 +3,11 @@
 */
 
 // Local Imports
+import packageJson from "../../../../package.json"
+import { useSettings } from "../../../helpers/settings"
 import Divider from "./divider"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
-import packageJson from "../../../../package.json"
-import { useSettings } from "../../../helpers/settings"
 
 export default function FileMenu(props) {
   const { open } = useSettings()
@@ -20,8 +20,9 @@ export default function FileMenu(props) {
     >
       <MenuItem
         name="About FGCS"
-        link={true}
-        href="https://github.com/avis-drone-labs/fgcs"
+        onClick={() => {
+          window.ipcRenderer.openAboutWindow()
+        }}
       />
       <MenuItem name="Current Version" shortcut={packageJson.version} />
       <Divider />

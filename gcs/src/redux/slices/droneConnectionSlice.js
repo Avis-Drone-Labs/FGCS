@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { socket } from "../../helpers/socket"
 
 export const ConnectionType = {
   Serial: "serial",
@@ -104,28 +103,15 @@ const droneConnectionSlice = createSlice({
     },
 
     // Emits
-    emitIsConnectedToDrone: () => {
-      socket.emit("is_connected_to_drone")
-    },
+    emitIsConnectedToDrone: () => {},
     emitGetComPorts: (state) => {
-      socket.emit("get_com_ports")
       state.fetching_com_ports = true
     },
-    emitDisconnectFromDrone: () => {
-      socket.emit("disconnect_from_drone")
-    },
-    emitConnectToDrone: (_, action) => {
-      socket.emit("connect_to_drone", action.payload)
-    },
-    emitSetState: (_, action) => {
-      socket.emit("set_state", action.payload)
-    },
-    emitGetHomePosition: () => {
-      socket.emit("get_home_position")
-    },
-    emitGetCurrentMission: () => {
-      socket.emit("get_current_mission_all")
-    },
+    emitDisconnectFromDrone: () => {},
+    emitConnectToDrone: () => {},
+    emitSetState: () => {},
+    emitGetHomePosition: () => {},
+    emitGetCurrentMissionAll: () => {},
   },
   selectors: {
     selectConnecting: (state) => state.connecting,

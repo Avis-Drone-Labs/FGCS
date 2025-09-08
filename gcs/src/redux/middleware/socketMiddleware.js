@@ -32,6 +32,7 @@ import {
   setGpsData,
   setGpsRawIntData,
   setHeartbeatData,
+  setLastGraphMessage,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -60,6 +61,8 @@ import { emitLog } from "../slices/loggingSlice.js"
 import { logDebug, logError, logInfo } from "../../helpers/logging.js"
 
 import process from "process"
+import { handleEmitters } from "./emitters.js"
+import { dataFormatters } from "../../helpers/dataFormatters.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -70,6 +73,7 @@ const SocketEvents = Object.freeze({
   // getComPorts: "get_com_ports",
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
+  linkDebugStats: "link_debug_stats",
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
@@ -268,6 +272,11 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
+        })
+
+        // Link stats
+        socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
+          window.ipcRenderer.updateLinkStats(msg)
         })
       }
     }
@@ -527,6 +536,41 @@ const socketMiddleware = (store) => {
 
             store.dispatch(setExtraData(updatedExtraDroneData))
           }
+
+          // Handle graph messages
+          // Function to get the graph data from a message
+          function getGraphDataFromMessage(msg, targetMessageKey) {
+            const returnDataArray = []
+            for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
+              const messageKey =
+                storeState.droneInfo.graphs.selectedGraphs[graphKey]
+              if (messageKey && messageKey.includes(targetMessageKey)) {
+                const [, valueName] = messageKey.split(".")
+
+                // Applying Data Formatters
+                let formatted_value = msg[valueName]
+                if (messageKey in dataFormatters) {
+                  formatted_value = dataFormatters[messageKey](
+                    msg[valueName].toFixed(3),
+                  )
+                }
+
+                returnDataArray.push({
+                  data: { x: Date.now(), y: formatted_value },
+                  graphKey: graphKey,
+                })
+              }
+            }
+            if (returnDataArray.length) {
+              return returnDataArray
+            }
+            return false
+          }
+          store.dispatch(
+            setLastGraphMessage(
+              getGraphDataFromMessage(msg, msg.mavpackettype),
+            ),
+          )
         })
       } else {
         Object.values(DroneSpecificSocketEvents).map((event) =>
@@ -541,13 +585,9 @@ const socketMiddleware = (store) => {
 
     // these actions handle emitting based on UI events
     // for each action type, emit socket and pass onto reducer
-    if (socket) {
-      if (emitIsConnectedToDrone.match(action)) {
-        socket.socket.emit("is_connected_to_drone")
-      }
-    }
+    handleEmitters(socket, store, action)
 
-    return next(action)
+    next(action)
   }
 }
 

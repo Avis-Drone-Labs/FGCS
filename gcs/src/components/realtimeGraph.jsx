@@ -49,7 +49,21 @@ const options = {
   },
   scales: {
     x: {
-      type: "realtime",
+      type: "time",
+      time: {
+        unit: "second",
+      },
+      ticks: {
+        callback: function (value) {
+          // Only show every 10 seconds, avoid creating Date unless needed
+          const timestamp = this.getLabelForValue(value)
+          const seconds = Math.floor((timestamp / 1000) % 60)
+          if (seconds % 10 === 0) {
+            return new Date(timestamp).toLocaleTimeString()
+          }
+          return null
+        },
+      },
     },
   },
   elements: {

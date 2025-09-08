@@ -2,7 +2,6 @@ import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
-import { socket } from "../../helpers/socket"
 
 const missionInfoSlice = createSlice({
   name: "missionInfo",
@@ -46,6 +45,14 @@ const missionInfoSlice = createSlice({
       target_system: 255,
     },
     activeTab: "mission",
+    contextMenu: {
+      isOpen: false,
+      position: { x: 0, y: 0 },
+      menuSize: { width: 0, height: 0 },
+      canvasSize: { width: 0, height: 0 },
+      gpsCoords: { lat: 0, lng: 0 },
+      markerId: null,
+    },
   },
   reducers: {
     setCurrentMission: (state, action) => {
@@ -193,7 +200,7 @@ const missionInfoSlice = createSlice({
     clearDrawingItems: (state) => {
       const _type = `${state.activeTab}Items`
 
-      if (state.activeTab[_type].length === 0) return
+      if (state.drawingItems[_type].length === 0) return
 
       if (
         state.activeTab == "mission" &&
@@ -258,33 +265,46 @@ const missionInfoSlice = createSlice({
         return
       state.missionProgressData = { message: "", progress: null }
     },
+    updateContextMenuState: (state, action) => {
+      if (action.payload === state.contextMenu) return
+
+      // Update the position of the context menu to ensure it fits within the canvas
+
+      const updatedState = {
+        ...state.contextMenu,
+        ...action.payload,
+      }
+
+      const contextMenuWidth = updatedState.menuSize.width
+      const contextMenuHeight = updatedState.menuSize.height
+      let x = updatedState.position.x
+      let y = updatedState.position.y
+
+      if (
+        contextMenuWidth + updatedState.position.x >
+        updatedState.canvasSize.width
+      ) {
+        x = updatedState.position.x - contextMenuWidth
+      }
+      if (
+        contextMenuHeight + updatedState.position.y >
+        updatedState.canvasSize.height
+      ) {
+        y = updatedState.position.y - contextMenuHeight
+      }
+
+      state.contextMenu = {
+        ...updatedState,
+        position: { x: x, y: y },
+      }
+    },
 
     // Emits
-    emitGetTargetInfo: () => {
-      socket.emit("get_target_info")
-    },
-    emitGetCurrentMission: (state) => {
-      socket.emit("get_current_mission", { type: state.activeTab })
-    },
-    emitWriteCurrentMission: (_, action) => {
-      socket.emit("write_current_mission", {
-        type: action.payload.type,
-        items: action.payload.items,
-      })
-    },
-    emitImportMissionFromFile: (_, action) => {
-      socket.emit("import_mission_from_file", {
-        type: action.payload.type,
-        file_path: action.payload.file_path,
-      })
-    },
-    emitExportMissionToFile: (_, action) => {
-      socket.emit("export_mission_to_file", {
-        type: action.payload.type,
-        file_path: action.payload.file_path,
-        items: action.payload.items,
-      })
-    },
+    emitGetTargetInfo: () => {},
+    emitGetCurrentMission: () => {},
+    emitWriteCurrentMission: () => {},
+    emitImportMissionFromFile: () => {},
+    emitExportMissionToFile: () => {},
   },
   selectors: {
     selectCurrentMission: (state) => state.currentMission,
@@ -300,6 +320,7 @@ const missionInfoSlice = createSlice({
     selectMissionProgressModal: (state) => state.modals.missionProgressModal,
     selectMissionProgressData: (state) => state.missionProgressData,
     selectActiveTab: (state) => state.activeTab,
+    selectContextMenu: (state) => state.contextMenu,
   },
 })
 
@@ -384,6 +405,7 @@ export const {
   selectMissionProgressModal,
   selectMissionProgressData,
   selectActiveTab,
+  selectContextMenu,
 } = missionInfoSlice.selectors
 
 export const {
@@ -405,6 +427,7 @@ export const {
   setActiveTab,
   setMissionProgressData,
   resetMissionProgressData,
+  updateContextMenuState,
   emitGetTargetInfo,
   emitGetCurrentMission,
   emitWriteCurrentMission,

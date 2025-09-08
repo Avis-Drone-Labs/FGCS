@@ -1,8 +1,20 @@
-import { BrowserWindow, Menu, MenuItemConstructorOptions, MessageBoxOptions, app, dialog, ipcMain, nativeImage, shell } from 'electron'
-import { ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process'
-import fs from 'node:fs'
-import path from 'node:path'
-import packageInfo from '../package.json'
+import {
+  BrowserWindow,
+  Menu,
+  MenuItemConstructorOptions,
+  app,
+  dialog,
+  ipcMain,
+  shell,
+} from "electron"
+import {
+  ChildProcessWithoutNullStreams,
+  spawn,
+  spawnSync,
+} from "node:child_process"
+import fs from "node:fs"
+import path from "node:path"
+import packageInfo from "../package.json"
 
 // @ts-expect-error - no types available
 import openFile, { clearRecentFiles, getRecentFiles } from './fla'
@@ -18,28 +30,28 @@ import registerLoggingIPC, { setupLog4js, logFatal, logWarning, logInfo } from '
 // │ │ ├── main.js
 // │ │ └── preload.js
 // │
-process.env.DIST = path.join(__dirname, '../dist')
+process.env.DIST = path.join(__dirname, "../dist")
 process.env.VITE_PUBLIC = app.isPackaged
   ? process.env.DIST
-  : path.join(process.env.DIST, '../public')
+  : path.join(process.env.DIST, "../public")
 
 // Fix UI Scaling
-app.commandLine.appendSwitch('high-dpi-support', '1')
-app.commandLine.appendSwitch('force-device-scale-factor', '1')
+app.commandLine.appendSwitch("high-dpi-support", "1")
+app.commandLine.appendSwitch("force-device-scale-factor", "1")
 
 // Fix linux WebGL error (icl chatgpt made this)
-if (process.platform === 'linux') {
-  app.commandLine.appendSwitch('use-gl', 'desktop'); // force mesa
-  app.commandLine.appendSwitch('ignore-gpu-blacklist'); // allow iris, etc.
-  app.commandLine.appendSwitch('enable-webgl');
-  app.commandLine.appendSwitch('enable-webgl2-compute-context');
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("use-gl", "desktop") // force mesa
+  app.commandLine.appendSwitch("ignore-gpu-blacklist") // allow iris, etc.
+  app.commandLine.appendSwitch("enable-webgl")
+  app.commandLine.appendSwitch("enable-webgl2-compute-context")
 }
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
-const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
@@ -55,20 +67,34 @@ ipcMain.on('close', () => {closeWithBackend()})
 ipcMain.on('minimise', () => {getWindow()?.minimize()})
 ipcMain.on('maximise', () => {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
 
-ipcMain.on("reload", () => {getWindow()?.reload()})
-ipcMain.on("force_reload", () => {getWindow()?.webContents.reloadIgnoringCache()})
-ipcMain.on("toggle_developer_tools", () => {getWindow()?.webContents.toggleDevTools()})
-ipcMain.on("actual_size", () => {getWindow()?.webContents.setZoomFactor(1)})
-ipcMain.on("toggle_fullscreen", () => {getWindow()?.isFullScreen() ? getWindow()?.setFullScreen(false) : getWindow()?.setFullScreen(true)})
+ipcMain.on("reload", () => {
+  getWindow()?.reload()
+})
+ipcMain.on("force_reload", () => {
+  getWindow()?.webContents.reloadIgnoringCache()
+})
+ipcMain.on("toggle_developer_tools", () => {
+  getWindow()?.webContents.toggleDevTools()
+})
+ipcMain.on("actual_size", () => {
+  getWindow()?.webContents.setZoomFactor(1)
+})
+ipcMain.on("toggle_fullscreen", () => {
+  getWindow()?.isFullScreen()
+    ? getWindow()?.setFullScreen(false)
+    : getWindow()?.setFullScreen(true)
+})
 ipcMain.on("zoom_in", () => {
-  const window = getWindow()?.webContents;
+  const window = getWindow()?.webContents
   window?.setZoomFactor(window?.getZoomFactor() + 0.1)
 })
 ipcMain.on("zoom_out", () => {
-  const window = getWindow()?.webContents;
+  const window = getWindow()?.webContents
   window?.setZoomFactor(window?.getZoomFactor() - 0.1)
 })
-ipcMain.on("openFileInExplorer", (_event, filePath) => {shell.showItemInFolder(filePath)})
+ipcMain.on("openFileInExplorer", (_event, filePath) => {
+  shell.showItemInFolder(filePath)
+})
 
 ipcMain.handle('selectDirectory', async () => {
   const result = await dialog.showOpenDialog({
@@ -81,43 +107,45 @@ ipcMain.handle('selectDirectory', async () => {
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
+    icon: path.join(process.env.VITE_PUBLIC, "app_icon.ico"),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
     },
     show: false,
     alwaysOnTop: true,
     minWidth: 750,
     minHeight: 500,
-    titleBarStyle: 'hidden',
+    titleBarStyle: "hidden",
     frame: false,
   })
 
-  registerWebcamIPC(win);
+  registerWebcamIPC(win)
+  registerAboutIPC()
+  registerLinkStatsIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
   win.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
 
-    return { action: 'deny' }
+    return { action: "deny" }
   })
 
   // Test active push message to Renderer-process.
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
+  win.webContents.on("did-finish-load", () => {
+    win?.webContents.send("main-process-message", new Date().toLocaleString())
   })
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
     // win.loadFile('dist/index.html')
-    win.loadFile(path.join(process.env.DIST, 'index.html'))
+    win.loadFile(path.join(process.env.DIST, "index.html"))
   }
 
   // Swap to main window when ready
-  win.once('ready-to-show', () => {
+  win.once("ready-to-show", () => {
     loadingWin?.destroy()
     win?.maximize()
     // Window starts always on top so it opens even if loading window is hid
@@ -125,10 +153,9 @@ function createWindow() {
   })
 
   // Set Main Menu on Mac Only
-  if(process.platform === 'darwin'){
+  if (process.platform === "darwin") {
     setMainMenu()
   }
-
 }
 
 // For Mac only
@@ -138,58 +165,40 @@ function setMainMenu() {
       label: app.name,
       submenu: [
         {
-          label: 'About FGCS',
-          click: async () => {
-            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
-
-            const options: MessageBoxOptions = {
-              type: 'info',
-              buttons: [ 'OK','Report a bug',],
-              title: 'About FGCS',
-              message: 'FGCS Version: ' + app.getVersion(), // get version from package.json
-              detail: 'For more information, visit our GitHub page.',
-              icon: icon,
-              defaultId: 1,
-            };
-
-          const response = await dialog.showMessageBox(options);
-            if (response.response === 1) {
-              shell.openExternal(packageInfo.bugs.url)
-            }
+          label: "About FGCS",
+          click: () => {
+            openAboutPopout()
           },
         },
-        { type: 'separator' },
+        { type: "separator" },
         {
-          label: 'Report a bug',
+          label: "Report a bug",
           click: async () => {
-            await shell.openExternal(
-              packageInfo.bugs.url,
-            )
+            await shell.openExternal(packageInfo.bugs.url)
           },
         },
-        { type: 'separator' },
-        { role: 'quit' },
+        { type: "separator" },
+        { role: "quit" },
       ],
     },
     {
-      label: 'View',
+      label: "View",
       submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    }
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
   ]
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-
 
 function createLoadingWindow() {
   loadingWin = new BrowserWindow({
@@ -200,7 +209,7 @@ function createLoadingWindow() {
 
   // Resize and center window
   loadingWin.loadFile(
-    path.join(process.env.VITE_PUBLIC, 'window_loading_icon.svg'),
+    path.join(process.env.VITE_PUBLIC, "window_loading_icon.svg"),
   )
   loadingWin.setSize(300, 300, true)
   loadingWin.center()
@@ -215,12 +224,19 @@ function startBackend() {
   logInfo('Starting backend');
 
   // Add more platforms here
-  const backendPaths: Partial<Record<NodeJS.Platform, string>> ={
-    win32: 'extras/fgcs_backend.exe',
-    darwin: path.join(process.resourcesPath, '../extras', 'fgcs_backend.app', 'Contents', 'MacOS', 'fgcs_backend')
-  };
+  const backendPaths: Partial<Record<NodeJS.Platform, string>> = {
+    win32: "extras/fgcs_backend.exe",
+    darwin: path.join(
+      process.resourcesPath,
+      "../extras",
+      "fgcs_backend.app",
+      "Contents",
+      "MacOS",
+      "fgcs_backend",
+    ),
+  }
 
-  const backendPath = backendPaths[process.platform];
+  const backendPath = backendPaths[process.platform]
 
   if (!backendPath) {
     logFatal('Unsupported platform!');
@@ -248,7 +264,7 @@ function startBackend() {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 function closeWithBackend() {
-  if (process.platform !== 'darwin') {
+  if (process.platform !== "darwin") {
     app.quit()
     win = null
   }
@@ -256,10 +272,10 @@ function closeWithBackend() {
   logInfo('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
-  spawn('taskkill /f /im fgcs_backend.exe', { shell: true })
+  spawn("taskkill /f /im fgcs_backend.exe", { shell: true })
 }
-app.on('window-all-closed', () => {
-  closeWithBackend();
+app.on("window-all-closed", () => {
+  closeWithBackend()
 })
 
 // To ensure that the backend process is killed with Cmd + Q on macOS,
@@ -269,11 +285,13 @@ app.on('before-quit', () => {
     logInfo('Stopping backend')
     spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
-    destroyWebcamWindow();
+    destroyWebcamWindow()
+    destroyAboutWindow()
+    destroyLinkStatsWindow()
   }
-});
+})
 
-app.on('activate', () => {
+app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
@@ -292,10 +310,10 @@ app.whenReady().then(() => {
 
   createLoadingWindow()
   // Open file and Get Recent Logs
-  ipcMain.handle('fla:open-file', openFile)
-  ipcMain.handle('fla:get-recent-logs', async () => {
+  ipcMain.handle("fla:open-file", openFile)
+  ipcMain.handle("fla:get-recent-logs", async () => {
     try {
-      const recentLogs = getRecentFiles();
+      const recentLogs = getRecentFiles()
       if (!Array.isArray(recentLogs)) {
         throw new Error(
           `Expected recentLogs to be an array, but got ${typeof recentLogs}`,
@@ -316,22 +334,25 @@ app.whenReady().then(() => {
     }
   })
   // Clear recent logs
-  ipcMain.handle('fla:clear-recent-logs', clearRecentFiles)
+  ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Save mission file
-  ipcMain.handle('missions:get-save-mission-file-path', async (event, options) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (!window) {
-      throw new Error('No active window found')
-    }
-    const result = await dialog.showSaveDialog(window, options);
-    return result;
-  })
-
-  ipcMain.handle('app:get-node-env', () =>
-    app.isPackaged ? 'production' : 'development',
+  ipcMain.handle(
+    "missions:get-save-mission-file-path",
+    async (event, options) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      if (!window) {
+        throw new Error("No active window found")
+      }
+      const result = await dialog.showSaveDialog(window, options)
+      return result
+    },
   )
-  ipcMain.handle('app:get-version', () => app.getVersion())
+
+  ipcMain.handle("app:get-node-env", () =>
+    app.isPackaged ? "production" : "development",
+  )
+  ipcMain.handle("app:get-version", () => app.getVersion())
 
   if (app.isPackaged && pythonBackend === null) {
     startBackend()

@@ -75,6 +75,7 @@ class Drone:
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
+        linkDebugStatsCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -94,6 +95,7 @@ class Drone:
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
         self.droneConnectStatusCb = droneConnectStatusCb
+        self.linkDebugStatsCb = linkDebugStatsCb
 
         self.connectionError: Optional[str] = None
 
@@ -542,14 +544,95 @@ class Drone:
                         f.write(log_msg + "\n")
                         current_line_number = 1
 
+    def getLinkDebugData(self) -> None:
+        """While active, get link debug data"""
+        refresh_rate_hz = 2
+
+        if not hasattr(self, "_sliding_window"):
+            self._sliding_window: dict[str, list] = {
+                "packets_sent": [],
+                "bytes_sent": [],
+                "packets_received": [],
+                "bytes_received": [],
+            }
+
+        if not hasattr(self, "_last_link_stats"):
+            self._last_link_stats: dict[str, Number] = {
+                "total_packets_sent": 0,
+                "total_bytes_sent": 0,
+                "total_packets_received": 0,
+                "total_bytes_received": 0,
+                "total_receive_errors": 0,
+                "uptime": 0,
+            }
+
+        while self.is_active:
+            if self.linkDebugStatsCb:
+                try:
+                    link_stats = {
+                        "total_packets_sent": self.master.mav.total_packets_sent,
+                        "total_bytes_sent": self.master.mav.total_bytes_sent,
+                        "total_packets_received": self.master.mav.total_packets_received,
+                        "total_bytes_received": self.master.mav.total_bytes_received,
+                        "total_receive_errors": self.master.mav.total_receive_errors,
+                        "uptime": self.master.uptime,
+                    }
+
+                    # Update sliding window
+                    self._sliding_window["packets_sent"].append(
+                        link_stats["total_packets_sent"]
+                        - self._last_link_stats["total_packets_sent"]
+                    )
+                    self._sliding_window["bytes_sent"].append(
+                        link_stats["total_bytes_sent"]
+                        - self._last_link_stats["total_bytes_sent"]
+                    )
+                    self._sliding_window["packets_received"].append(
+                        link_stats["total_packets_received"]
+                        - self._last_link_stats["total_packets_received"]
+                    )
+                    self._sliding_window["bytes_received"].append(
+                        link_stats["total_bytes_received"]
+                        - self._last_link_stats["total_bytes_received"]
+                    )
+
+                    # Keep only the last x readings
+                    for key in self._sliding_window:
+                        if len(self._sliding_window[key]) > refresh_rate_hz:
+                            self._sliding_window[key].pop(0)
+
+                    # Calculate averages over the last x readings
+                    link_stats["avg_packets_sent_per_sec"] = sum(
+                        self._sliding_window["packets_sent"]
+                    ) / len(self._sliding_window["packets_sent"])
+                    link_stats["avg_bytes_sent_per_sec"] = sum(
+                        self._sliding_window["bytes_sent"]
+                    ) / len(self._sliding_window["bytes_sent"])
+                    link_stats["avg_packets_received_per_sec"] = sum(
+                        self._sliding_window["packets_received"]
+                    ) / len(self._sliding_window["packets_received"])
+                    link_stats["avg_bytes_received_per_sec"] = sum(
+                        self._sliding_window["bytes_received"]
+                    ) / len(self._sliding_window["bytes_received"])
+
+                    self._last_link_stats = copy.deepcopy(link_stats)
+
+                    self.linkDebugStatsCb(link_stats)
+                except Exception as e:
+                    self.logger.error(e, exc_info=True)
+
+            time.sleep(1 / refresh_rate_hz)
+
     def startThread(self) -> None:
         """Starts the listener and sender threads."""
         self.listener_thread = Thread(target=self.checkForMessages, daemon=True)
         self.sender_thread = Thread(target=self.executeMessages, daemon=True)
         self.log_thread = Thread(target=self.logMessages, daemon=True)
+        self.link_debug_data_thread = Thread(target=self.getLinkDebugData, daemon=True)
         self.listener_thread.start()
         self.sender_thread.start()
         self.log_thread.start()
+        self.link_debug_data_thread.start()
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""

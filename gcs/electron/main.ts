@@ -22,6 +22,9 @@ import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
 } from "./modules/aboutWindow"
+import registerLinkStatsIPC, {
+  destroyLinkStatsWindow,
+} from "./modules/linkStatsWindow"
 import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
 // The built directory structure
 //
@@ -193,6 +196,7 @@ function createWindow() {
 
   registerWebcamIPC(win)
   registerAboutIPC()
+  registerLinkStatsIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -343,6 +347,7 @@ function closeWithBackend() {
   }
   destroyWebcamWindow()
   destroyAboutWindow()
+  destroyLinkStatsWindow()
   console.log("Killing backend")
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
@@ -361,6 +366,7 @@ app.on("before-quit", () => {
     pythonBackend = null
     destroyWebcamWindow()
     destroyAboutWindow()
+    destroyLinkStatsWindow()
   }
 })
 

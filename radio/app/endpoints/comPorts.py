@@ -17,6 +17,19 @@ class ConnectionDataType(TypedDict):
     connectionType: str
 
 
+class LinkStatsType(TypedDict):
+    total_packets_sent: int
+    total_bytes_sent: int
+    total_packets_received: int
+    total_bytes_received: int
+    total_receive_errors: int
+    uptime: float
+    avg_packets_sent_per_sec: float
+    avg_bytes_sent_per_sec: float
+    avg_packets_received_per_sec: float
+    avg_bytes_received_per_sec: float
+
+
 @socketio.on("get_com_ports")
 def getComPort() -> None:
     """
@@ -40,6 +53,13 @@ def getComPort() -> None:
         port_name = f"{port_name}: {port.description}"
         droneStatus.correct_ports.append(port_name)
     socketio.emit("list_com_ports", droneStatus.correct_ports)
+
+
+def sendLinkDebugStats(link_stats: LinkStatsType) -> None:
+    """
+    A callback function to send link debug stats
+    """
+    socketio.emit("link_debug_stats", link_stats)
 
 
 @socketio.on("connect_to_drone")
@@ -102,6 +122,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
         droneConnectStatusCb=droneConnectStatusCb,
+        linkDebugStatsCb=sendLinkDebugStats,
     )
 
     if drone.connectionError is not None:

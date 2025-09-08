@@ -256,16 +256,18 @@ class NavController:
         )
 
         if loiter_radius_data.get("success"):
-            self.loiter_radius = loiter_radius_data.get("data").param_value
-            return {
-                "success": True,
-                "data": self.loiter_radius,
-            }
+            loiter_radius_data = loiter_radius_data.get("data")
+            if loiter_radius_data is not None:
+                self.loiter_radius = loiter_radius_data.param_value
+                return {
+                    "success": True,
+                    "data": self.loiter_radius,
+                }
         else:
             self.drone.logger.error(loiter_radius_data.get("message"))
             return {
                 "success": False,
-                "message": loiter_radius_data.get("message"),
+                "message": loiter_radius_data.get("message", ""),
             }
 
     def setLoiterRadius(self, radius: float) -> Response:
@@ -291,5 +293,5 @@ class NavController:
         else:
             return {
                 "success": False,
-                "message": f"Loiter radius set to {radius}m",
+                "message": f"Failed to set loiter radius set to {radius}m",
             }

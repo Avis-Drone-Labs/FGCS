@@ -302,17 +302,18 @@ const socketMiddleware = (store) => {
                 : queueNotification({ type: "error", message: msg.message }),
             )
           },
+        )
+
+        socket.socket.on(
+          DroneSpecificSocketEvents.onSetLoiterRadiusResult,
+          (msg) => {
+            store.dispatch(
+              msg.success
+                ? queueNotification({ type: "success", message: msg.message })
+                : queueNotification({ type: "error", message: msg.message }),
+            )
+          },
         ),
-          socket.socket.on(
-            DroneSpecificSocketEvents.onSetLoiterRadiusResult,
-            (msg) => {
-              store.dispatch(
-                msg.success
-                  ? queueNotification({ type: "success", message: msg.message })
-                  : queueNotification({ type: "error", message: msg.message }),
-              )
-            },
-          ),
           /*
           Missions
         */

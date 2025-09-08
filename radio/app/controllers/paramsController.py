@@ -62,7 +62,6 @@ class ParamsController:
                     "data": response,
                 }
             else:
-                print(response)
                 self.drone.is_listening = True
                 return {
                     "success": False,

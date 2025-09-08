@@ -6,7 +6,7 @@ import { app, ipcMain } from "electron";
 
 import * as log4js from "log4js";
 
-// @ts-ignore
+// @ts-expect-error Log4js layouts provides no types
 import * as layouts from "log4js/lib/layouts";
 
 let frontendLogger: log4js.Logger

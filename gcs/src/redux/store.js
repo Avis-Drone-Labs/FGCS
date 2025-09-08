@@ -17,6 +17,7 @@ import statusTextSlice from "./slices/statusTextSlice"
 import notificationSlice from "./slices/notificationSlice"
 import loggingSlice from "./slices/loggingSlice"
 import loggingMiddleware from "./middleware/loggingMiddleware"
+import { registerLoggingStore } from "../helpers/logging"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -69,6 +70,8 @@ if (droneConnection !== undefined) {
     store.dispatch(setGraphValues(droneInfo.graphs.selectedGraphs))
   }
 }
+
+registerLoggingStore(store)
 
 // Update states when a new message comes in, probably inefficient
 // TODO: In the future we should check to see if the variables have changed before updating

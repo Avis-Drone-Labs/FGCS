@@ -1,4 +1,6 @@
 export function consoleLogHandler(msg) {
+
+  console.log(msg.level)
   console.log(`[${msg.level}] [${msg.timestamp}] ${msg.message}`)
 }
 

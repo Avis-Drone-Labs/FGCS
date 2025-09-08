@@ -1,5 +1,10 @@
 import { emitLog } from "../redux/slices/loggingSlice"
-import { store } from "../redux/store"
+
+let dispatch;
+
+export function registerLoggingStore(store) {
+  dispatch = store.dispatch;
+}
 
 function logHelper(level, msg) {
   const err = new Error()
@@ -9,7 +14,7 @@ function logHelper(level, msg) {
   const fileName = file.slice(0, file.indexOf(":"))
   const lineNo = caller.split(":").at(-2)
 
-  store.dispatch(
+  dispatch(
     emitLog({
       message: msg,
       level: level,

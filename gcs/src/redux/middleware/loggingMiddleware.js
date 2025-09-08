@@ -9,7 +9,7 @@ const loggingMiddleware = (store) => (next) => (action) => {
         timestamp: action.payload.timestamp ?? Date.now() / 1000,
         level: action.payload.level.toLowerCase(),
       })
-    })
+  })
   }
 
   return result

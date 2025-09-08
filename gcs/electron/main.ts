@@ -21,6 +21,8 @@ import openFile, { clearRecentFiles, getRecentFiles } from './fla'
 import registerSettingsIPC, { getSetting } from './modules/settings'
 import registerWebcamIPC, { destroyWebcamWindow } from './modules/webcam'
 import registerLoggingIPC, { setupLog4js, logFatal, logWarning, logInfo } from './modules/logging'
+import registerAboutIPC, { destroyAboutWindow, openAboutPopout } from "./modules/aboutWindow"
+import registerLinkStatsIPC, { destroyLinkStatsWindow } from "./modules/linkStatsWindow"
 // The built directory structure
 //
 // ├─┬─┬ dist

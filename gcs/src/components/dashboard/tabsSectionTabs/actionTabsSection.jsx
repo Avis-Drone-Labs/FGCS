@@ -4,10 +4,10 @@
  */
 
 // Native
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // Mantine
-import { Button, NumberInput, Popover, Tabs, Select } from "@mantine/core"
+import { Button, NumberInput, Popover, Select, Tabs } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
 // Mavlink
@@ -17,16 +17,20 @@ import {
 } from "../../../helpers/mavlinkConstants"
 
 // Helper
+import { useDispatch, useSelector } from "react-redux"
 import { socket } from "../../../helpers/socket"
+import {
+  selectArmed,
+  setLoiterRadius,
+} from "../../../redux/slices/droneInfoSlice"
 import { NoConnectionMsg } from "../tabsSection"
-import { useSelector } from "react-redux"
-import { selectArmed } from "../../../redux/slices/droneInfoSlice"
 
 export default function ActionTabsSection({
   connected,
   tabPadding,
   currentFlightModeNumber,
   aircraftType,
+  currentLoiterRadius,
 }) {
   return (
     <Tabs.Panel value="actions">
@@ -35,6 +39,8 @@ export default function ActionTabsSection({
           <NoConnectionMsg message="No actions are available right now. Connect a drone to begin" />
         ) : (
           <div className="flex flex-col gap-y-2">
+            {/** Loiter Radius */}
+            <LoiterRadiusAction currentLoiterRadius={currentLoiterRadius} />
             {/** Flight Mode */}
             <FlightModeAction
               aircraftType={aircraftType}
@@ -167,6 +173,50 @@ const ArmTakeoffLandAction = () => {
           Land
         </Button>
       </div>
+    </>
+  )
+}
+
+const LoiterRadiusAction = ({ currentLoiterRadius }) => {
+  const dispatch = useDispatch()
+  const [newLoiterRadius, setNewLoiterRadius] = useState(currentLoiterRadius) // Default to AUTO mode
+
+  useEffect(() => {
+    setNewLoiterRadius(currentLoiterRadius)
+  }, [currentLoiterRadius])
+
+  function sendNewLoiterRadius(radius) {
+    if (radius === null || radius === currentLoiterRadius || radius < 0) {
+      return
+    }
+    socket.emit("set_loiter_radius", { radius })
+    dispatch(setLoiterRadius(radius))
+  }
+
+  return (
+    <>
+      {currentLoiterRadius !== null && (
+        <div className="flex flex-wrap flex-cols gap-2">
+          <NumberInput
+            placeholder="Loiter radius (m)"
+            value={newLoiterRadius}
+            onChange={setNewLoiterRadius}
+            min={0}
+            allowNegative={false}
+            hideControls
+            data-autofocus
+            suffix="m"
+            decimalScale={2}
+          />
+
+          <Button
+            onClick={() => sendNewLoiterRadius(newLoiterRadius)}
+            className="grow"
+          >
+            Set Loiter Radius
+          </Button>
+        </div>
+      )}
     </>
   )
 }

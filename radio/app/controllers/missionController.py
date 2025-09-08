@@ -215,6 +215,8 @@ class MissionController:
                 blocking=True,
                 timeout=2,
             )
+            self.drone.is_listening = True
+
             if response:
                 if response.mission_type != mission_type:
                     self.drone.logger.error(
@@ -234,7 +236,6 @@ class MissionController:
                         f"Received count of {response.count} waypoints", 0.0
                     )
 
-                self.drone.is_listening = True
                 for i in range(0, response.count):
                     retry_count = 0
                     while retry_count < 3:
@@ -274,7 +275,6 @@ class MissionController:
                     "data": loader.wpoints,
                 }
             else:
-                self.drone.is_listening = True
                 self.drone.logger.error(
                     f"No response received for mission count for mission type {mission_type}."
                 )

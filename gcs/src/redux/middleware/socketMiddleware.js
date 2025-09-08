@@ -11,6 +11,7 @@ import {
 import {
   emitGetComPorts,
   emitGetHomePosition,
+  emitGetLoiterRadius,
   emitIsConnectedToDrone,
   emitSetState,
   setComPorts,
@@ -23,6 +24,7 @@ import {
 } from "../slices/droneConnectionSlice"
 
 // socket factory
+import { dataFormatters } from "../../helpers/dataFormatters.js"
 import SocketFactory from "../../helpers/socket"
 import {
   setAttitudeData,
@@ -33,6 +35,7 @@ import {
   setGpsRawIntData,
   setHeartbeatData,
   setLastGraphMessage,
+  setLoiterRadius,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -58,7 +61,6 @@ import {
 } from "../slices/notificationSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
-import { dataFormatters } from "../../helpers/dataFormatters.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -78,6 +80,8 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavResult: "nav_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+  onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
+  onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -237,6 +241,7 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
+          store.dispatch(emitGetLoiterRadius())
         })
 
         // Link stats
@@ -288,15 +293,35 @@ const socketMiddleware = (store) => {
           },
         )
 
-        /*
+        socket.socket.on(
+          DroneSpecificSocketEvents.onGetLoiterRadiusResult,
+          (msg) => {
+            store.dispatch(
+              msg.success
+                ? setLoiterRadius(msg.data)
+                : queueNotification({ type: "error", message: msg.message }),
+            )
+          },
+        ),
+          socket.socket.on(
+            DroneSpecificSocketEvents.onSetLoiterRadiusResult,
+            (msg) => {
+              store.dispatch(
+                msg.success
+                  ? queueNotification({ type: "success", message: msg.message })
+                  : queueNotification({ type: "error", message: msg.message }),
+              )
+            },
+          ),
+          /*
           Missions
         */
-        socket.socket.on(
-          MissionSpecificSocketEvents.onCurrentMissionAll,
-          (msg) => {
-            store.dispatch(setCurrentMissionItems(msg))
-          },
-        )
+          socket.socket.on(
+            MissionSpecificSocketEvents.onCurrentMissionAll,
+            (msg) => {
+              store.dispatch(setCurrentMissionItems(msg))
+            },
+          )
 
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMission,

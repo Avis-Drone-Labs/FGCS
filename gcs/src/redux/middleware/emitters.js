@@ -4,6 +4,7 @@ import {
   emitGetComPorts,
   emitGetCurrentMissionAll,
   emitGetHomePosition,
+  emitGetLoiterRadius,
   emitIsConnectedToDrone,
   emitSetState,
 } from "../slices/droneConnectionSlice"
@@ -50,6 +51,10 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitGetCurrentMissionAll,
       callback: () => socket.socket.emit("get_current_mission_all"),
+    },
+    {
+      emitter: emitGetLoiterRadius,
+      callback: () => socket.socket.emit("get_loiter_radius"),
     },
 
     /*

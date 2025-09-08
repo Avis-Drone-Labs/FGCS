@@ -256,12 +256,20 @@ class NavController:
         )
 
         if loiter_radius_data.get("success"):
-            loiter_radius_data = loiter_radius_data.get("data")
-            if loiter_radius_data is not None:
-                self.loiter_radius = loiter_radius_data.param_value
+            loiter_radius_param = loiter_radius_data.get("data")
+            if loiter_radius_param is not None:
+                self.loiter_radius = loiter_radius_param.param_value
                 return {
                     "success": True,
                     "data": self.loiter_radius,
+                }
+            else:
+                self.drone.logger.error(
+                    "Loiter radius parameter found, but parametvalue not found"
+                )
+                return {
+                    "success": False,
+                    "message": "Loiter radius parameter found, but parameter value not found",
                 }
         else:
             self.drone.logger.error(loiter_radius_data.get("message"))

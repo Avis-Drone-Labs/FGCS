@@ -69,7 +69,7 @@ function NumberSetting({ settingName, range }) {
 
 const generateId = () => Math.random().toString(36).slice(8)
 
-function ExtendableNumberSetting({ settingName, range }) {
+function ExtendableNumberSetting({ settingName, range, suffix }) {
   const { getSetting, setSetting } = useSettings()
 
   const [values, setValues] = useState(
@@ -109,7 +109,7 @@ function ExtendableNumberSetting({ settingName, range }) {
               if (!isValidNumber(num, range)) return
               updateValue(id, parseInt(num))
             }}
-            suffix="m"
+            suffix={suffix}
           />
         </div>
       ))}
@@ -138,6 +138,7 @@ function Setting({ settingName, df }) {
         <ExtendableNumberSetting
           settingName={settingName}
           range={df.range || null}
+          suffix={df.suffix}
         />
       ) : df.type == "number" ? (
         <NumberSetting settingName={settingName} range={df.range || null} />

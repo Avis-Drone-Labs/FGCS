@@ -24,7 +24,6 @@ import {
   setLoiterRadius,
 } from "../../../redux/slices/droneInfoSlice"
 import { NoConnectionMsg } from "../tabsSection"
-import { IconMagnet } from "@tabler/icons-react"
 
 export default function ActionTabsSection({
   connected,

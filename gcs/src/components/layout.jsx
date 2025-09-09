@@ -20,6 +20,7 @@ import { socket } from "../helpers/socket"
 import { useDispatch, useSelector } from "react-redux"
 import {
   emitGetCurrentMissionAll,
+  emitGetLoiterRadius,
   emitSetState,
   selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice"
@@ -70,6 +71,7 @@ export default function Layout({ children, currentPage }) {
     dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
       dispatch(emitGetCurrentMissionAll())
+      dispatch(emitGetLoiterRadius())
     }
   }, [currentPage, connectedToDrone])
 

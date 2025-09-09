@@ -21,6 +21,9 @@ class NavController:
         """
         self.drone = drone
 
+        self.loiter_radius_param_type = mavutil.mavlink.MAV_PARAM_TYPE_INT16
+        self.loiter_radius = 80.0  # Default loiter radius
+
     def getHomePosition(self) -> Response:
         """
         Request the current home position from the drone.
@@ -33,7 +36,7 @@ class NavController:
 
         try:
             response = self.drone.master.recv_match(
-                type="HOME_POSITION", blocking=True, timeout=3
+                type="HOME_POSITION", blocking=True, timeout=1.5
             )
             self.drone.is_listening = True
 
@@ -241,4 +244,62 @@ class NavController:
             return {
                 "success": False,
                 "message": "Could not reposition, serial exception",
+            }
+
+    def getLoiterRadius(self) -> Response:
+        """
+        Get the loiter radius of the drone.
+        """
+
+        loiter_radius_data = self.drone.paramsController.getSingleParam(
+            "WP_LOITER_RAD", timeout=1.5
+        )
+
+        if loiter_radius_data.get("success"):
+            loiter_radius_param = loiter_radius_data.get("data")
+            if loiter_radius_param is not None:
+                self.loiter_radius = loiter_radius_param.param_value
+                return {
+                    "success": True,
+                    "data": self.loiter_radius,
+                }
+            else:
+                self.drone.logger.error(
+                    "Loiter radius parameter found, but parametvalue not found"
+                )
+                return {
+                    "success": False,
+                    "message": "Loiter radius parameter found, but parameter value not found",
+                }
+        else:
+            self.drone.logger.error(loiter_radius_data.get("message"))
+            return {
+                "success": False,
+                "message": loiter_radius_data.get("message", ""),
+            }
+
+    def setLoiterRadius(self, radius: float) -> Response:
+        """
+        Set the loiter radius of the drone.
+
+        Args:
+            radius (float): The loiter radius in meters
+        """
+
+        param_set_success = self.drone.paramsController.setParam(
+            "WP_LOITER_RAD", radius, self.loiter_radius_param_type
+        )
+
+        if param_set_success:
+            self.drone.logger.info(f"Loiter radius set to {radius}m")
+            self.loiter_radius = radius
+
+            return {
+                "success": True,
+                "message": f"Loiter radius set to {radius}m",
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Failed to set loiter radius set to {radius}m",
             }

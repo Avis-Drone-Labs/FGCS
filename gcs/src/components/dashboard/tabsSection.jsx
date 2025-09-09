@@ -1,4 +1,4 @@
-/* 
+/*
   Tabs section. This will be a part of the resizable info box located in the bottom half. This
   contains tabs like data, action, missions, and camera.
 */
@@ -7,19 +7,19 @@
 import { Tabs } from "@mantine/core"
 
 // Tab Components
-import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
-import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
+import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
+import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
 
 // Redux
 import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 import {
   selectAircraftType,
   selectNavController,
 } from "../../redux/slices/droneInfoSlice"
-import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 
 export default function TabsSection({ currentFlightModeNumber }) {
   const connected = useSelector(selectConnectedToDrone)
@@ -46,6 +46,7 @@ export default function TabsSection({ currentFlightModeNumber }) {
         tabPadding={tabPadding}
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}
+        currentLoiterRadius={navControllerOutputData.loiterRadius}
       ></ActionTabsSection>
 
       {/* Mission */}

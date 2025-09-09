@@ -28,6 +28,7 @@ const droneInfoSlice = createSlice({
     navControllerData: {
       navBearing: 0.0,
       wpDist: 0.0,
+      loiterRadius: 80.0,
     },
     heartbeatData: {
       baseMode: 0,
@@ -53,7 +54,7 @@ const droneInfoSlice = createSlice({
         graph_c: null,
         graph_d: null,
       },
-      lastGraphResultsMessage: false, // Last graph message that comes from incoming_msg
+      lastGraphResultsMessage: false,
     },
   },
   reducers: {
@@ -150,6 +151,11 @@ const droneInfoSlice = createSlice({
         state.graphs.lastGraphResultsMessage = action.payload
       }
     },
+    setLoiterRadius: (state, action) => {
+      if (action.payload !== state.navControllerData.loiterRadius) {
+        state.navControllerData.loiterRadius = action.payload
+      }
+    },
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -199,6 +205,7 @@ export const {
   setRSSIData,
   setGraphValues,
   setLastGraphMessage,
+  setLoiterRadius,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch

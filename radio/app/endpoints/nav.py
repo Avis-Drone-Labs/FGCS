@@ -15,6 +15,10 @@ class RepositionDataType(TypedDict):
     alt: int
 
 
+class LoiterRadiusDataType(TypedDict):
+    radius: float
+
+
 @socketio.on("get_home_position")
 def getHomePosition() -> None:
     """
@@ -125,3 +129,57 @@ def reposition(data: RepositionDataType) -> None:
     result = droneStatus.drone.navController.reposition(lat, lon, alt)
 
     socketio.emit("nav_reposition_result", result)
+
+
+@socketio.on("get_loiter_radius")
+def getLoiterRadius() -> None:
+    """
+    Gets the loiter radius of the drone, only works when the dashboard page is loaded.
+    """
+    if droneStatus.state not in ["dashboard"]:
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the dashboard screen to get the loiter radius."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="get loiter radius")
+
+    result = droneStatus.drone.navController.getLoiterRadius()
+
+    socketio.emit("nav_get_loiter_radius_result", result)
+
+
+@socketio.on("set_loiter_radius")
+def setLoiterRadius(data: LoiterRadiusDataType) -> None:
+    """
+    Sets the loiter radius of the drone, only works when the dashboard page is loaded.
+    """
+    if droneStatus.state != "dashboard":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the dashboard screen to set the loiter radius."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="set loiter radius")
+
+    radius = data.get("radius", None)
+    if radius is None or radius < 0:
+        socketio.emit(
+            "params_error",
+            {"message": f"Loiter radius must be a positive number, got {radius}."},
+        )
+        return
+
+    result = droneStatus.drone.navController.setLoiterRadius(radius)
+
+    socketio.emit("nav_set_loiter_radius_result", result)

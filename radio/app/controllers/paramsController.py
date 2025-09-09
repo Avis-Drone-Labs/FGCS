@@ -40,6 +40,7 @@ class ParamsController:
             Response: The response from the retrieval of the specific parameter
         """
         self.drone.is_listening = False
+        time.sleep(0.1)  # Give some time to stop listening
         failure_message = f"Failed to get parameter {param_name}"
 
         self.drone.master.mav.param_request_read_send(

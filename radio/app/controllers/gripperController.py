@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 import serial
 from app.customTypes import Response
-from app.utils import commandAccepted
+from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -73,6 +73,7 @@ class GripperController:
 
         return False
 
+    @sendingCommandLock
     def setGripper(self, action: str) -> Response:
         """
         Sets the gripper to either release or grab.

@@ -39,8 +39,9 @@ export default function ActionTabsSection({
           <NoConnectionMsg message="No actions are available right now. Connect a drone to begin" />
         ) : (
           <div className="flex flex-col gap-y-2">
-            {/** Loiter Radius */}
-            <LoiterRadiusAction currentLoiterRadius={currentLoiterRadius} />
+            {aircraftType === 1 && (
+              <LoiterRadiusAction currentLoiterRadius={currentLoiterRadius} />
+            )}
             {/** Flight Mode */}
             <FlightModeAction
               aircraftType={aircraftType}

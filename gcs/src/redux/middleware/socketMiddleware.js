@@ -228,7 +228,7 @@ const socketMiddleware = (store) => {
         // Flags that the drone is connected
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
-          if (msg.aircraft_type != 1 && msg.aircraft_type != 2) {
+          if (msg.aircraft_type !== 1 && msg.aircraft_type !== 2) {
             store.dispatch(
               queueErrorNotification(
                 "Aircraft not of type quadcopter or plane",
@@ -241,7 +241,9 @@ const socketMiddleware = (store) => {
 
           store.dispatch(emitSetState({ state: "dashboard" }))
           store.dispatch(emitGetHomePosition())
-          store.dispatch(emitGetLoiterRadius())
+          if (msg.aircraft_type === 1) {
+            store.dispatch(emitGetLoiterRadius())
+          }
         })
 
         // Link stats

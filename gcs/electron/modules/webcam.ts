@@ -1,5 +1,6 @@
 import path from "path";
 import { BrowserWindow, ipcMain } from "electron";
+import { logInfo, logWarning } from "./logging";
 
 let webcamPopoutWin: BrowserWindow | null = null
 
@@ -43,7 +44,7 @@ export function openWebcamPopout(videoStreamId: string, name: string, aspect: nu
             fullscreenable: false,
         });
     } else{
-        console.warn("HOW ARE YOU CREATEING 2 WEBCAM WINDOWS TELL ME")
+        logWarning("Somehow creating multiple webcams. This should not be happening")
     }
 
     loadWebcam(videoStreamId, name);
@@ -75,7 +76,7 @@ export function openWebcamPopout(videoStreamId: string, name: string, aspect: nu
 }
 
 export function closeWebcamPopout(mainWindow: BrowserWindow | null){
-    console.log("Destroying webcam window")
+    logInfo("Destroying webcam window")
     destroyWebcamWindow();
     mainWindow?.webContents.send("webcam-closed");
 }

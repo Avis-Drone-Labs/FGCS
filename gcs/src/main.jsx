@@ -21,6 +21,7 @@ import { CustomMantineTheme } from "./components/customMantineTheme.jsx"
 // Redux
 import { store } from "./redux/store.js"
 import { Provider } from "react-redux"
+import { logInfo } from "./helpers/logging.js"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
@@ -38,5 +39,5 @@ postMessage({ payload: "removeLoading" }, "*")
 
 // Use contextBridge
 window.ipcRenderer.on("main-process-message", (_event, message) => {
-  console.log(message)
+  logInfo(message)
 })

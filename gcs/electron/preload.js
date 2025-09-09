@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   closeWebcamWindow: () => ipcRenderer.invoke("closeWebcamWindow"),
   onCameraWindowClose: (callback) =>
     ipcRenderer.on("webcam-closed", () => callback()),
+  pushLog: (msg) => ipcRenderer.invoke("logMessage", msg),
+  selectDirectory: () => ipcRenderer.invoke('selectDirectory'),
   openAboutWindow: () => ipcRenderer.invoke("openAboutWindow"),
   closeAboutWindow: () => ipcRenderer.invoke("closeAboutWindow"),
   openLinkStatsWindow: () => ipcRenderer.invoke("openLinkStatsWindow"),

@@ -13,6 +13,8 @@ import { IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import DefaultSettings from "../../data/default_settings.json"
 
+import process from "process"
+
 const isValidNumber = (num, range) => {
   return (
     num &&
@@ -21,13 +23,14 @@ const isValidNumber = (num, range) => {
   )
 }
 
-function TextSetting({ settingName, hidden }) {
+function TextSetting({ settingName, hidden, regex = null }) {
   const { getSetting, setSetting } = useSettings()
   return (
     <Input
       value={getSetting(settingName)}
       onChange={(e) => setSetting(settingName, e.currentTarget.value)}
       type={hidden ? "password" : "text"}
+      pattern={regex === null ? "" : regex}
     />
   )
 }
@@ -125,6 +128,28 @@ function ExtendableNumberSetting({ settingName, range }) {
   )
 }
 
+function DirectorySetting({ settingName }) {
+  const { getSetting, setSetting } = useSettings()
+
+  const setDirectory = async () => {
+    const dirHandle = await window.ipcRenderer.selectDirectory()
+    if (dirHandle !== null) setSetting(settingName, dirHandle)
+  }
+
+  return (
+    // <input type="file" webkitdirectory="true"/>
+    <div className="flex flex-col items-end">
+      {getSetting(settingName)}
+      <button
+        className="bg-gray-300 rounded-sm text-black px-2 py-1 hover:bg-gray-400"
+        onClick={setDirectory}
+      >
+        Choose Directory
+      </button>
+    </div>
+  )
+}
+
 function Setting({ settingName, df }) {
   return (
     <div
@@ -145,8 +170,14 @@ function Setting({ settingName, df }) {
         <BoolSetting settingName={settingName} options={df.options} />
       ) : df.type == "option" ? (
         <OptionSetting settingName={settingName} options={df.options} />
+      ) : df.type == "directory" ? (
+        <DirectorySetting settingName={settingName} />
       ) : (
-        <TextSetting settingName={settingName} hidden={df.hidden || false} />
+        <TextSetting
+          settingName={settingName}
+          hidden={df.hidden || false}
+          regex={df.matches || null}
+        />
       )}
     </div>
   )
@@ -156,6 +187,8 @@ function SettingsModal() {
   const settingTabs = Object.keys(DefaultSettings)
 
   const { opened, close } = useSettings()
+
+  const settingsWithoutDev = settingTabs.filter((t) => t !== "Development")
 
   return (
     <Modal
@@ -181,15 +214,23 @@ function SettingsModal() {
         styles={{ list: { width: "15%" } }}
       >
         <Tabs.List>
-          {settingTabs.map((t) => {
-            return (
-              <Tabs.Tab key={t} value={t}>
-                {t}
-              </Tabs.Tab>
-            )
-          })}
+          {settingsWithoutDev
+            .filter((t) => t !== "Development")
+            .map((t) => {
+              return (
+                <Tabs.Tab key={t} value={t}>
+                  {t}
+                </Tabs.Tab>
+              )
+            })}
+
+          {process.env.NODE_ENV === "development" && (
+            <Tabs.Tab key={"Development"} value={"Development"} mt="auto">
+              Development
+            </Tabs.Tab>
+          )}
         </Tabs.List>
-        {settingTabs.map((t) => {
+        {settingsWithoutDev.map((t) => {
           return (
             <Tabs.Panel className="space-y-4" value={t} key={t}>
               {Object.keys(DefaultSettings[t]).map((s) => {
@@ -207,6 +248,27 @@ function SettingsModal() {
             </Tabs.Panel>
           )
         })}
+
+        {process.env.NODE_ENV === "development" && (
+          <Tabs.Panel
+            className="space-y-4"
+            value="Development"
+            key="Development"
+          >
+            {Object.keys(DefaultSettings["Development"]).map((s) => {
+              return (
+                <Setting
+                  settingName={`Development.${s}`}
+                  df={DefaultSettings["Development"][s]}
+                  key={`Development.${s}`}
+                />
+              )
+            })}
+            {Object.keys(DefaultSettings["Development"]).length == 0 && (
+              <p className="pl-4 pt-2">No settings available right now.</p>
+            )}
+          </Tabs.Panel>
+        )}
       </Tabs>
     </Modal>
   )

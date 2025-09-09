@@ -1,5 +1,7 @@
 from pymavlink import mavutil, mavwp
 
+from app import logger
+
 
 def uploadMission(file_name, mission_type, master):
     with open(file_name, "r") as f:
@@ -74,4 +76,4 @@ def uploadMission(file_name, mission_type, master):
 
         master.mav.send(loader.wp(msg.seq))
 
-    print(f"Uploaded {mission_type} with {loader.count()} items")
+    logger.info(f"Uploaded {mission_type} with {loader.count()} items")

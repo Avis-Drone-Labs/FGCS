@@ -1,7 +1,6 @@
 import copy
 import os
 import time
-import traceback
 from logging import Logger, getLogger
 from pathlib import Path
 from queue import Queue
@@ -99,7 +98,7 @@ class Drone:
 
         self.connectionError: Optional[str] = None
 
-        self.logger.debug("Trying to setup master")
+        self.logger.info("Setting up master")
 
         if not Drone.checkBaudrateValid(baud):
             self.connectionError = (
@@ -111,13 +110,11 @@ class Drone:
             self.sendConnectionStatusUpdate("Connecting to drone")
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
-            self.logger.exception(traceback.format_exc())
             self.master = None
+            self.logger.error(str(e))
             if isinstance(e, SerialException):
-                self.logger.error(str(e))
                 self.connectionError = "Could not connect to drone, invalid port."
             elif isinstance(e, ConnectionRefusedError):
-                self.logger.error(str(e))
                 self.connectionError = "Could not connect to drone, connection refused."
             else:
                 self.connectionError = str(e)

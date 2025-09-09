@@ -60,6 +60,10 @@ import {
   queueNotification,
 } from "../slices/notificationSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
+import { emitLog } from "../slices/loggingSlice.js"
+import { logDebug, logError, logInfo } from "../../helpers/logging.js"
+
+import process from "process"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -151,19 +155,50 @@ const socketMiddleware = (store) => {
           ========================
         */
 
+        // In development mode, hook socket on and emit so that we can debug log every time we recieve / send a socket message
+        if (process.env.NODE_ENV === "development") {
+          const originalOn = socket.socket.on.bind(socket.socket)
+
+          socket.socket.on = (event, callback) => {
+            const wrappedCallback = (...args) => {
+              if (event != "log")
+                logDebug(
+                  `Event "${event}" received by frontend with values (${args.map((a) => (typeof a == "object" ? JSON.stringify(a) : a)).join(", ")})`,
+                )
+              callback(...args)
+            }
+
+            return originalOn(event, wrappedCallback)
+          }
+
+          const originalEmit = socket.socket.emit.bind(socket.socket)
+
+          socket.socket.emit = (event, ...args) => {
+            logDebug(
+              `Event "${event}" emitted by frontend with args (${args.join(", ")})`,
+            )
+            return originalEmit(event, ...args)
+          }
+        }
+
+        // debug socket logging
         // handle socket connection events
         // EXAMPLE SOCKET.ON EVENT
         socket.socket.on(SocketEvents.Connect, () => {
           // DISPATCH ALL ACTIONS HERE
           // SINCE IT'S MIDDLEWARE, OTHER FUNCTIONS CAN ALSO BE CALLED
-          console.log(`Connected to socket from redux, ${socket.socket.id}`)
+          logInfo(`Connected to socket from redux, ${socket.socket.id}`)
           store.dispatch(socketConnected())
           store.dispatch(emitIsConnectedToDrone())
         })
 
         socket.socket.on(SocketEvents.Disconnect, () => {
-          console.log(`Disconnected from socket via redux, ${socket.socket.id}`)
+          logInfo(`Disconnected from socket via redux, ${socket.socket.id}`)
           store.dispatch(socketDisconnected())
+        })
+
+        socket.socket.on("log", (msg) => {
+          store.dispatch(emitLog({ ...msg, source: "backend" }))
         })
 
         /*
@@ -214,7 +249,7 @@ const socketMiddleware = (store) => {
 
         // Flags an error with the com port
         socket.socket.on("connection_error", (msg) => {
-          console.log("Connection error: " + msg.message)
+          logError("Connection error: " + msg.message)
           store.dispatch(queueErrorNotification(msg.message))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnected(false))

@@ -17,15 +17,12 @@ import path from "node:path"
 import packageInfo from "../package.json"
 
 // @ts-expect-error - no types available
-import openFile, { clearRecentFiles, getRecentFiles } from "./fla"
-import registerAboutIPC, {
-  destroyAboutWindow,
-  openAboutPopout,
-} from "./modules/aboutWindow"
-import registerLinkStatsIPC, {
-  destroyLinkStatsWindow,
-} from "./modules/linkStatsWindow"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
+import openFile, { clearRecentFiles, getRecentFiles } from './fla'
+import registerSettingsIPC, { getSetting } from './modules/settings'
+import registerWebcamIPC, { destroyWebcamWindow } from './modules/webcam'
+import registerLoggingIPC, { setupLog4js, logFatal, logWarning, logInfo } from './modules/logging'
+import registerAboutIPC, { destroyAboutWindow, openAboutPopout } from "./modules/aboutWindow"
+import registerLinkStatsIPC, { destroyLinkStatsWindow } from "./modules/linkStatsWindow"
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -64,91 +61,13 @@ function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }
 
-// Settings logic
+registerLoggingIPC();
+registerSettingsIPC();
 
-interface Settings {
-  version: string
-  settings: object
-}
-
-let userSettings: Settings | null = null
-
-function saveUserConfiguration(settings: Settings) {
-  userSettings = settings
-  fs.writeFileSync(
-    path.join(app.getPath("userData"), "settings.json"),
-    JSON.stringify(userSettings, null, 2),
-    "utf-8",
-  )
-}
-
-/**
- * Checks the application version within the loaded user settings and updates if it is outdated
- * @param configPath The path to the configuration file
- * @returns
- */
-function checkAppVersion(configPath: string) {
-  if (userSettings === null) {
-    console.warn(
-      "Attempting to check app version when user settings have not been loaded",
-    )
-    return
-  }
-
-  if (userSettings.version == app.getVersion()) return
-
-  userSettings.version = app.getVersion()
-  fs.writeFileSync(configPath, JSON.stringify(userSettings))
-}
-
-/**
- * Called when the application requests user settings
- *
- * @returns
- */
-function getUserConfiguration() {
-  // Return the already loaded user settings if loaded
-  console.log("Fetching user settings!")
-  if (userSettings !== null) return userSettings
-
-  // Directories
-  const userDir = app.getPath("userData")
-  const config = path.join(userDir, "settings.json")
-
-  // Write version and blank settings to user config if doesn't exist
-  if (!fs.existsSync(config)) {
-    console.log("Generating user settings")
-    userSettings = { version: app.getVersion(), settings: {} }
-    fs.writeFileSync(config, JSON.stringify(userSettings))
-  } else {
-    console.log("Reading user settings from config file " + config)
-    userSettings = JSON.parse(fs.readFileSync(config, "utf-8"))
-    checkAppVersion(config)
-  }
-  return userSettings
-}
-
-ipcMain.handle("getSettings", () => {
-  return getUserConfiguration()
-})
-ipcMain.handle("setSettings", (_, settings) => {
-  saveUserConfiguration(settings)
-})
-
-ipcMain.handle("isMac", () => {
-  return process.platform == "darwin"
-})
-ipcMain.on("close", () => {
-  closeWithBackend()
-})
-ipcMain.on("minimise", () => {
-  getWindow()?.minimize()
-})
-ipcMain.on("maximise", () => {
-  getWindow()?.isMaximized()
-    ? getWindow()?.unmaximize()
-    : getWindow()?.maximize()
-})
+ipcMain.handle("isMac", () => { return process.platform == "darwin" })
+ipcMain.on('close', () => {closeWithBackend()})
+ipcMain.on('minimise', () => {getWindow()?.minimize()})
+ipcMain.on('maximise', () => {getWindow()?.isMaximized() ? getWindow()?.unmaximize() : getWindow()?.maximize()})
 
 ipcMain.on("reload", () => {
   getWindow()?.reload()
@@ -178,6 +97,15 @@ ipcMain.on("zoom_out", () => {
 ipcMain.on("openFileInExplorer", (_event, filePath) => {
   shell.showItemInFolder(filePath)
 })
+
+ipcMain.handle('selectDirectory', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory'],
+    defaultPath: app.getAppPath()
+  });
+  if (result.canceled) return null;
+  return result.filePaths[0];
+});
 
 function createWindow() {
   win = new BrowserWindow({
@@ -291,11 +219,11 @@ function createLoadingWindow() {
 
 function startBackend() {
   if (pythonBackend) {
-    console.log("Backend already running")
-    return
+    logWarning('Backend already running');
+    return;
   }
 
-  console.log("Starting backend")
+  logInfo('Starting backend');
 
   // Add more platforms here
   const backendPaths: Partial<Record<NodeJS.Platform, string>> = {
@@ -313,28 +241,25 @@ function startBackend() {
   const backendPath = backendPaths[process.platform]
 
   if (!backendPath) {
-    console.error("Unsupported platform!")
-    return
+    logFatal('Unsupported platform!');
+    return;
   }
 
-  console.log(`Starting backend: ${backendPath}`)
-  pythonBackend = spawn(backendPath)
+  logInfo(`Starting backend: ${backendPath}`);
+  pythonBackend = spawn(backendPath);
 
   // pythonBackend.stdout.on('data', (data) => console.log(`Backend stdout: ${data}`));
   // pythonBackend.stderr.on('data', (data) => console.error(`Backend stderr: ${data}`));
 
-  pythonBackend.on("close", (code) => {
-    console.log(`Backend process exited with code ${code}`)
-    pythonBackend = null
-  })
+  pythonBackend.on('close', (code) => {
+    logInfo(`Backend process exited with code ${code}`);
+    pythonBackend = null;
+  });
 
-  pythonBackend.on("error", (error) => {
-    console.error("Failed to start backend:", error)
-    dialog.showErrorBox(
-      "Backend Error",
-      `Failed to start backend: ${error.message}`,
-    )
-  })
+  pythonBackend.on('error', (error) => {
+    logFatal('Failed to start backend: ' + error);
+    dialog.showErrorBox('Backend Error', `Failed to start backend: ${error.message}`);
+  });
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -346,9 +271,7 @@ function closeWithBackend() {
     win = null
   }
   destroyWebcamWindow()
-  destroyAboutWindow()
-  destroyLinkStatsWindow()
-  console.log("Killing backend")
+  logInfo('Killing backend')
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn("taskkill /f /im fgcs_backend.exe", { shell: true })
@@ -359,10 +282,10 @@ app.on("window-all-closed", () => {
 
 // To ensure that the backend process is killed with Cmd + Q on macOS,
 // listen to the before-quit event.
-app.on("before-quit", () => {
-  if (process.platform === "darwin" && pythonBackend) {
-    console.log("Stopping backend")
-    spawnSync("pkill", ["-f", "fgcs_backend"])
+app.on('before-quit', () => {
+  if(process.platform === 'darwin' && pythonBackend){
+    logInfo('Stopping backend')
+    spawnSync('pkill', ['-f', 'fgcs_backend']);
     pythonBackend = null
     destroyWebcamWindow()
     destroyAboutWindow()
@@ -379,6 +302,14 @@ app.on("activate", () => {
 })
 
 app.whenReady().then(() => {
+  
+  setupLog4js(
+    getSetting("Development", "logToWorkingDirectory"),
+    getSetting("Development", "combineLogs"),
+    getSetting("Development", "loggingFormat"),
+    getSetting("Development", "loggingLevel")
+  );
+
   createLoadingWindow()
   // Open file and Get Recent Logs
   ipcMain.handle("fla:open-file", openFile)

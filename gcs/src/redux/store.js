@@ -15,6 +15,9 @@ import droneConnectionSlice, {
 import missionInfoSlice from "./slices/missionSlice"
 import statusTextSlice from "./slices/statusTextSlice"
 import notificationSlice from "./slices/notificationSlice"
+import loggingSlice from "./slices/loggingSlice"
+import loggingMiddleware from "./middleware/loggingMiddleware"
+import { registerLoggingStore } from "../helpers/logging"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -24,6 +27,7 @@ const rootReducer = combineSlices(
   missionInfoSlice,
   statusTextSlice,
   notificationSlice,
+  loggingSlice,
 )
 
 // Get the persisted state, we only want to take a couple of things from here.
@@ -37,7 +41,7 @@ export const store = configureStore({
     return getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat([socketMiddleware])
+    }).concat([socketMiddleware, loggingMiddleware])
   },
 })
 
@@ -70,6 +74,8 @@ if (droneConnection !== undefined) {
     store.dispatch(setGraphValues(droneInfo.graphs.selectedGraphs))
   }
 }
+
+registerLoggingStore(store)
 
 // Update states when a new message comes in, probably inefficient
 // TODO: In the future we should check to see if the variables have changed before updating

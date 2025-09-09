@@ -3,12 +3,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import serial
+import logging
+
 from app.customTypes import Response
 from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
     from app.drone import Drone
+
+logger = logging.getLogger("fgcs")
 
 
 class GripperController:
@@ -23,9 +27,9 @@ class GripperController:
         self.params = {}
 
         if (gripperEnabled := self.getEnabled()) is None:
-            self.drone.logger.warning("Could not get gripper state from drone.")
+            logger.warning("Could not get gripper state from drone.")
         elif gripperEnabled is False:
-            self.drone.logger.warning("Gripper is not enabled.")
+            logger.warning("Gripper is not enabled.")
         else:
             self.params = {
                 "gripAutoclose": self.drone.paramsController.getSingleParam(
@@ -62,7 +66,7 @@ class GripperController:
             param_name="GRIP_ENABLE"
         )
         if not (gripper_enabled_response.get("success")):
-            self.drone.logger.warning(
+            logger.error(
                 f"Gripper state could not be fetched from drone: {gripper_enabled_response.get('message')}"
             )
             return None
@@ -84,13 +88,13 @@ class GripperController:
             Response
         """
         if (gripperEnabled := self.getEnabled()) is None:
-            self.drone.logger.warning("Could not get gripper state from drone.")
+            logger.warning("Could not get gripper state from drone.")
             return {
                 "success": False,
                 "message": "Could not get gripper state from drone.",
             }
         elif gripperEnabled is False:
-            self.drone.logger.error("Gripper is not enabled")
+            logger.warning("Gripper is not enabled")
             return {
                 "success": False,
                 "message": "Gripper is not enabled",
@@ -121,17 +125,22 @@ class GripperController:
             self.drone.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
+                logger.info(f"Sucessfully set gripper state to {action}")
                 return {
                     "success": True,
                     "message": f"Setting gripper to {action}",
                 }
             else:
+                logger.error(
+                    f"Could not set gripper state to {action}, command not accepted"
+                )
                 return {
                     "success": False,
                     "message": "Setting gripper failed",
                 }
-        except serial.serialutil.SerialException:
+        except serial.serialutil.SerialException as e:
             self.drone.is_listening = True
+            logger.error(e, exc_info=True)
             return {
                 "success": False,
                 "message": "Setting gripper failed, serial exception",

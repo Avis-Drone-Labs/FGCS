@@ -3,17 +3,10 @@ import logging
 from flask import Flask
 from flask_socketio import SocketIO
 
-logging.basicConfig(level=logging.DEBUG)
-
-logger = logging.getLogger("fgcs")
-logger.setLevel(logging.DEBUG)
-
-flask_logger = logging.getLogger("werkzeug")
-flask_logger.setLevel(logging.INFO)
-
+from app.loggingConfig import setup_logging
 
 socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
-
+logger = logging.getLogger("fgcs")
 
 def create_app(debug: bool = False) -> Flask:
     """
@@ -22,6 +15,8 @@ def create_app(debug: bool = False) -> Flask:
     Args:
         debug: Boolean value for if the debugging should be True or False
     """
+    
+    
     from app.endpoints import endpoints
 
     app = Flask(__name__)
@@ -30,6 +25,8 @@ def create_app(debug: bool = False) -> Flask:
 
     app.register_blueprint(endpoints)
 
-    logger.info("Initialising app")
     socketio.init_app(app)
+    setup_logging(socketio, debug)
+    
+    logger.info("Initialising app")
     return app

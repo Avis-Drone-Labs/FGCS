@@ -13,6 +13,8 @@ import { Commands } from "./spotlight/commandHandler"
 import SingleRunWrapper from "./SingleRunWrapper"
 import { SettingsProvider } from "../helpers/settingsProvider"
 
+import process from "process"
+
 // Routes
 import FLA from "../fla"
 import Graphs from "../graphs"
@@ -28,11 +30,20 @@ import { ErrorBoundary } from "react-error-boundary"
 import AlertProvider from "./dashboard/alertProvider"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 import { initSocket } from "../redux/slices/socketSlice"
+import { registerHandler } from "../redux/slices/loggingSlice"
+import { consoleLogHandler, electronLogHandler } from "../helpers/logHandlers"
 
 export default function AppContent() {
   // Setup sockets for redux
   const dispatch = useDispatch()
   useEffect(() => {
+    // Only add console log handler in dev mode
+    if (process.env.NODE_ENV === "development") {
+      dispatch(registerHandler(consoleLogHandler))
+    }
+
+    dispatch(registerHandler(electronLogHandler))
+
     dispatch(initSocket())
   }, [])
 

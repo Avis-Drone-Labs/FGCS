@@ -28,7 +28,7 @@ const droneInfoSlice = createSlice({
     navControllerData: {
       navBearing: 0.0,
       wpDist: 0.0,
-      loiterRadius: 80.0, // Default loiter radius
+      loiterRadius: 80.0,
     },
     heartbeatData: {
       baseMode: 0,
@@ -54,7 +54,7 @@ const droneInfoSlice = createSlice({
         graph_c: null,
         graph_d: null,
       },
-      lastGraphResultsMessage: false, // Last graph message that comes from incoming_msg
+      lastGraphResultsMessage: false,
     },
   },
   reducers: {

@@ -24,6 +24,7 @@ import {
   setLoiterRadius,
 } from "../../../redux/slices/droneInfoSlice"
 import { NoConnectionMsg } from "../tabsSection"
+import { IconMagnet } from "@tabler/icons-react"
 
 export default function ActionTabsSection({
   connected,
@@ -207,6 +208,13 @@ const LoiterRadiusAction = ({ currentLoiterRadius }) => {
             data-autofocus
             suffix="m"
             decimalScale={2}
+            className="grow"
+            // Below is the cursed solution to fixing the misalignment between Mantine's
+            // OWN components. It's a magic number of 40 as Mantine's Select component has
+            // a 34px RHS icon and without it the NumberInput is 6px wider than select for uhhhh
+            // unknown reasons. Thanks Mantine :D
+            rightSection={<div />}
+            rightSectionWidth="40px"
           />
 
           <Button

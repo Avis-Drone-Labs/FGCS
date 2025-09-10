@@ -641,10 +641,10 @@ class Drone:
         self.log_thread.start()
         self.link_debug_data_thread.start()
 
-    @sendingCommandLock
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
         self.is_listening = False
+        self.sending_command_lock.acquire()
 
         self.sendCommand(
             mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
@@ -656,6 +656,7 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.sending_command_lock.release()
 
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 import serial
 from app.customTypes import Response
-from app.utils import commandAccepted, sendingCommandLock
+from app.utils import commandAccepted
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -73,7 +73,6 @@ class GripperController:
 
         return False
 
-    @sendingCommandLock
     def setGripper(self, action: str) -> Response:
         """
         Sets the gripper to either release or grab.
@@ -104,6 +103,7 @@ class GripperController:
             }
 
         self.drone.is_listening = False
+        self.drone.sending_command_lock.acquire()
 
         self.drone.sendCommand(
             mavutil.mavlink.MAV_CMD_DO_GRIPPER,
@@ -120,6 +120,7 @@ class GripperController:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
 
             self.drone.is_listening = True
+            self.drone.sending_command_lock.release()
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
                 return {
@@ -133,6 +134,7 @@ class GripperController:
                 }
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
+            self.drone.sending_command_lock.release()
             return {
                 "success": False,
                 "message": "Setting gripper failed, serial exception",

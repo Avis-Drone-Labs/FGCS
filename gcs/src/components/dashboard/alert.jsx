@@ -5,6 +5,7 @@ import { useAlerts } from "./alertProvider"
 
 export const AlertCategory = {
   Altitude: "Altitude",
+  Battery: "Battery",
   Speed: "Speed",
 }
 

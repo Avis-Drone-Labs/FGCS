@@ -86,7 +86,7 @@
     "@vitejs/plugin-react": "^4.0.4",
     "@vitest/browser": "^2.0.5",
     "autoprefixer": "^10.4.16",
-    "electron": "^26.1.0",
+    "electron": "^38.0.0",
     "electron-builder": "^24.6.4",
     "eslint": "^8.48.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -95,7 +95,7 @@
     "postcss-preset-mantine": "^1.12.0",
     "postcss-simple-vars": "^7.0.1",
     "typescript": "^5.2.2",
-    "vite": "^4.5.3",
+    "vite": "^7.1.5",
     "vite-plugin-electron": "^0.14.0",
     "vite-plugin-electron-renderer": "^0.14.5"
   },

@@ -31,7 +31,11 @@ if (Test-Path ..\gcs\extras) {
 Move-Item .\dist\fgcs_backend\ ..\gcs\extras
 
 Write-Output "Building frontend"
-Set-Location ../gcs
+Set-Location ../gcs/data
+python generate_param_definitions.py
+Write-Output "Generated param definitions"
+
+Set-Location ../
 yarn
 yarn version --new-version $Version --no-git-tag-version --no-commit-hooks
 yarn build
@@ -40,4 +44,3 @@ Write-Output "Going back to building\windows from gcs"
 Set-Location ..\building\windows
 
 Write-Output "Done!"
-

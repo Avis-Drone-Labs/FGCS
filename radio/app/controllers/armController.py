@@ -4,7 +4,7 @@ import time
 from typing import TYPE_CHECKING
 
 from app.customTypes import Response
-from app.utils import commandAccepted
+from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -21,6 +21,7 @@ class ArmController:
         """
         self.drone = drone
 
+    @sendingCommandLock
     def arm(self, force: bool = False) -> Response:
         """
         Arm the drone.
@@ -63,6 +64,7 @@ class ArmController:
             return {"success": False, "message": "Could not arm, serial exception"}
         return {"success": False, "message": "Could not arm, command not accepted"}
 
+    @sendingCommandLock
     def disarm(self, force: bool = False) -> Response:
         """
         Disarm the drone.

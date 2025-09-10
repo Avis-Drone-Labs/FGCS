@@ -15,12 +15,14 @@ param_defs = [
     ],
 ]
 
-if os.path.exists("temp.pdef.json.xz"):
-    os.remove("temp.pdef.json.xz")
+temp_file_name = "temp.pdef.json.xz"
+
+if os.path.exists(temp_file_name):
+    os.remove(temp_file_name)
 
 for url, output_filename in param_defs:
-    urlretrieve(url, "temp.pdef.json.xz")
-    with lzma.open("temp.pdef.json.xz") as f:
+    urlretrieve(url, temp_file_name)
+    with lzma.open(temp_file_name) as f:
         data = f.read()
         json_data = json.loads(data)
 
@@ -36,7 +38,7 @@ for url, output_filename in param_defs:
 
         json.dump(sorted_params, f)
 
-if os.path.exists("temp.pdef.json.xz"):
-    os.remove("temp.pdef.json.xz")
+if os.path.exists(temp_file_name):
+    os.remove(temp_file_name)
 
 print("Generated param definition files")

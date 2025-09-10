@@ -3,6 +3,7 @@ from flask_socketio.test_client import SocketIOTestClient
 from . import falcon_test
 
 
+# @pytest.mark.skip(reason="Test fails due to reboot_autopilot not functional")
 @falcon_test()
 def test_reboot_success(socketio_client: SocketIOTestClient):
     """

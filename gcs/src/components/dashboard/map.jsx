@@ -25,11 +25,9 @@ import { useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
-} from "../../redux/slices/droneInfoSlice"
-import {
-  selectCurrentMissionItems,
   selectHomePosition,
-} from "../../redux/slices/missionSlice"
+} from "../../redux/slices/droneInfoSlice"
+import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
@@ -65,7 +63,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const connected = useSelector(selectConnectedToDrone)
   const gpsData = useSelector(selectGPS)
   const missionItems = useSelector(selectCurrentMissionItems)
-  const homePosition = useSelector(selectHomePosition)
+  const homePosition = useSelector(selectHomePosition) // use actual home position
   const flightModeString = useSelector(selectFlightModeString)
 
   const [position, setPosition] = useState(null)
@@ -304,18 +302,20 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
         )}
 
         {/* Show home position */}
-        {homePosition !== null && (
-          <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
-          />
-        )}
+        {homePosition !== null &&
+          homePosition.lat !== 0 &&
+          homePosition.lon !== 0 && (
+            <HomeMarker
+              lat={intToCoord(homePosition.lat)}
+              lon={intToCoord(homePosition.lon)}
+              lineTo={
+                filteredMissionItems.length > 0 && [
+                  intToCoord(filteredMissionItems[0].y),
+                  intToCoord(filteredMissionItems[0].x),
+                ]
+              }
+            />
+          )}
 
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
           <form

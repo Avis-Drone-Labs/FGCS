@@ -16,7 +16,7 @@ import {
 import { useSelector } from "react-redux"
 import {
   selectDrawingMissionItems,
-  selectHomePosition,
+  selectPlannedHomePosition,
 } from "../../redux/slices/missionSlice"
 
 function calculateMaxAltitude(missionItems) {
@@ -205,7 +205,7 @@ function StatisticItem({ label, value, units, tooltip = null }) {
 
 export default function MissionStatistics() {
   const missionItems = useSelector(selectDrawingMissionItems)
-  const homePosition = useSelector(selectHomePosition)
+  const plannedHomePosition = useSelector(selectPlannedHomePosition)
 
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
   const [totalDistance, setTotalDistance] = useState(0)
@@ -243,9 +243,9 @@ export default function MissionStatistics() {
     )
     setMaxSlopeGradient(calculateMaxSlopeGradient(filteredMissionItems))
     setMaxTelemDistance(
-      calculateMaxTelemDistance(filteredMissionItems, homePosition),
+      calculateMaxTelemDistance(filteredMissionItems, plannedHomePosition),
     )
-  }, [filteredMissionItems, homePosition])
+  }, [filteredMissionItems, plannedHomePosition])
 
   return (
     <>

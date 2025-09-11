@@ -1,7 +1,7 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import logAnalyserSlice from "./logAnalyserSlice"
-import socketSlice from "./slices/socketSlice"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
+import socketSlice from "./slices/socketSlice"
 
 import socketMiddleware from "./middleware/socketMiddleware"
 import droneConnectionSlice, {
@@ -12,9 +12,9 @@ import droneConnectionSlice, {
   setPort,
   setWireless,
 } from "./slices/droneConnectionSlice"
-import missionInfoSlice from "./slices/missionSlice"
-import statusTextSlice from "./slices/statusTextSlice"
+import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import notificationSlice from "./slices/notificationSlice"
+import statusTextSlice from "./slices/statusTextSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -71,6 +71,12 @@ if (droneConnection !== undefined) {
   }
 }
 
+if (persistedState.missionInfo?.plannedHomePosition !== undefined) {
+  store.dispatch(
+    setPlannedHomePosition(persistedState.missionInfo.plannedHomePosition),
+  )
+}
+
 // Update states when a new message comes in, probably inefficient
 // TODO: In the future we should check to see if the variables have changed before updating
 store.subscribe(() => {
@@ -99,5 +105,11 @@ store.subscribe(() => {
   session_storage.setItem(
     "connectedToDrone",
     store_mut.droneConnection.connected,
+  )
+
+  // Store the planned home position for use in the map when no drone is connected
+  local_storage.setItem(
+    "plannedHomePosition",
+    JSON.stringify(store_mut.missionInfo.plannedHomePosition),
   )
 })

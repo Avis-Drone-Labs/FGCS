@@ -57,27 +57,15 @@ export default function Params() {
   const fetchingVars = useSelector(selectFetchingVars)
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
 
-  /**
-   * Checks if a parameter has been modified since the last save
-   * @param {*} param the parameter to check
-   * @returns true if the given parameter is in modifiedParams, otherwise false
-   */
+  // Checks if a parameter has been modified since the last save
   function isModified(param) {
     return modifiedParams.find((obj) => {
       return obj.param_id === param.param_id
     })
   }
 
-  /**
-   * Adds a parameter to the list of parameters that have been modified since the
-   * last save
-   *
-   * @param {*} value
-   * @param {*} param
-   * @returns
-   */
+  // Adds a parameter to the list of parameters that have been modified since the last save
   function addToModifiedParams(value, param) {
-    console.log("Adding To Modified Params", value)
     if (value === "") return
 
     if (isModified(param)) {

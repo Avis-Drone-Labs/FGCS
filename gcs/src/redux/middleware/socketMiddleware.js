@@ -62,7 +62,6 @@ import {
 } from "../slices/notificationSlice"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
-import { dataFormatters } from "../../helpers/dataFormatters.js"
 import {
   setAutoPilotRebootModalOpen,
   setFetchingVars,

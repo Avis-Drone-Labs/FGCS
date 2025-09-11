@@ -19,9 +19,9 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
   const shownParams = useSelector(selectShownParams)
   const param = shownParams[index]
 
+  // Try to handle floats because mantine handles keys internally as strings 
+  // Which leads to floating point rounding errors
   function sanitiseInput(value, toString = false) {
-    // Try to handle floats because mantine handles keys internally as strings 
-    // Which leads to floating point rounding errors
     let sanitisedValue = value
     if (!isNaN(value) && value.trim() !== "") {
       sanitisedValue = value.includes(".") ? parseFloat(value) : parseInt(value)
@@ -30,20 +30,22 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
     return toString ? `${sanitisedValue}` : sanitisedValue
   }
 
-  if (paramDef?.Values) {
-    let t = sanitiseInput(`${param.param_value}`, true)
-    if (param.param_id == 'ACRO_RP_RATE_TC') {
-      console.log("Value Input", t, param)
+  function cleanFloat(value, decimals = 3) {
+    if (typeof value === "number") {
+      return Number(value.toFixed(decimals));
     }
+    if (!isNaN(value)) {
+      return Number(parseFloat(value).toFixed(decimals));
+    }
+    return value;
+  }
+
+  if (paramDef?.Values) {
     return (
       <Select // Values input
         className={className}
-        value={t}
-        onChange={(value) => {
-          let sanitisedValue = sanitiseInput(value)
-          console.log("CHANGING TO ", sanitisedValue, typeof(sanitisedValue))
-          onChange(value, param)}
-        }
+        value={`${cleanFloat(param.param_value)}`}
+        onChange={(value) => onChange(sanitiseInput(value), param)}
         data={Object.keys(paramDef?.Values).map((key) => ({
           value: `${key}`,
           label: `${key}: ${paramDef?.Values[key]}`,

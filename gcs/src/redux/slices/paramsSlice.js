@@ -51,19 +51,15 @@ const paramsSlice = createSlice({
     },
     appendModifiedParams: (state, action) => {
       state.modifiedParams = state.modifiedParams.concat(action.payload)
-      console.log("Appending Param", action.payload.param_value, state.modifiedParams)
     },
     updateParamValue: (state, action) => {
-      console.log("Updating the ACTUAL param to be", action.payload.param_value)
       state.params = state.params.map((item) =>
         item.param_id === action.payload.param_id
           ? { ...item, param_value: action.payload.param_value }
           : item,
       )
-      console.log("The result of the ACTUAL param is", state.params.find((item) => item.param_id === action.payload.param_id))
     },
     updateModifiedParamValue: (state, action) => {
-      console.log("Modifying param")
       state.modifiedParams = state.modifiedParams.map((item) => 
         item.param_id === action.payload.param_id
           ? { ...item, param_value: action.payload.param_value }

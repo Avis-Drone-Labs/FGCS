@@ -60,7 +60,7 @@ const paramsSlice = createSlice({
       )
     },
     updateModifiedParamValue: (state, action) => {
-      state.modifiedParams = state.modifiedParams.map((item) => 
+      state.modifiedParams = state.modifiedParams.map((item) =>
         item.param_id === action.payload.param_id
           ? { ...item, param_value: action.payload.param_value }
           : item,

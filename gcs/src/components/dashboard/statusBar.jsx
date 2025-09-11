@@ -14,7 +14,10 @@ import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"
-import { selectBatteryData, selectTelemetry } from "../../redux/slices/droneInfoSlice"
+import {
+  selectBatteryData,
+  selectTelemetry,
+} from "../../redux/slices/droneInfoSlice"
 
 // Helper imports
 import { socket } from "../../helpers/socket"
@@ -101,8 +104,11 @@ export default function StatusBar(props) {
     const batteryAlertPercentages = getSetting("Dashboard.batteryAlert") ?? []
     batteryAlertPercentages.sort((a1, a2) => a1 - a2)
 
-    batteryData.forEach(battery => {
-      for (const [i, batteryAlertPercentage] of batteryAlertPercentages.entries()) {
+    batteryData.forEach((battery) => {
+      for (const [
+        i,
+        batteryAlertPercentage,
+      ] of batteryAlertPercentages.entries()) {
         if (battery.battery_remaining < batteryAlertPercentage) {
           dispatchAlert({
             category: AlertCategory.Battery,
@@ -112,9 +118,13 @@ export default function StatusBar(props) {
                 : i == batteryAlertPercentages.length - 1
                   ? AlertSeverity.Yellow
                   : AlertSeverity.Orange,
-            jsx: <>Caution! You've dropped below {batteryAlertPercentage}% battery</>
+            jsx: (
+              <>
+                Caution! You've dropped below {batteryAlertPercentage}% battery
+              </>
+            ),
           })
-          return;
+          return
         }
       }
     })

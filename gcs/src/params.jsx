@@ -70,7 +70,10 @@ export default function Params() {
 
     if (isModified(param)) {
       dispatch(
-        updateModifiedParamValue({ param_id: param.param_id, param_value: value }),
+        updateModifiedParamValue({
+          param_id: param.param_id,
+          param_value: value,
+        }),
       )
     } else {
       // Otherwise add it to modified params

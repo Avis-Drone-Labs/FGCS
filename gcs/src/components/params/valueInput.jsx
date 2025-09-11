@@ -19,7 +19,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
   const shownParams = useSelector(selectShownParams)
   const param = shownParams[index]
 
-  // Try to handle floats because mantine handles keys internally as strings 
+  // Try to handle floats because mantine handles keys internally as strings
   // Which leads to floating point rounding errors
   function sanitiseInput(value, toString = false) {
     let sanitisedValue = value
@@ -32,12 +32,12 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
 
   function cleanFloat(value, decimals = 3) {
     if (typeof value === "number") {
-      return Number(value.toFixed(decimals));
+      return Number(value.toFixed(decimals))
     }
     if (!isNaN(value)) {
-      return Number(parseFloat(value).toFixed(decimals));
+      return Number(parseFloat(value).toFixed(decimals))
     }
-    return value;
+    return value
   }
 
   if (paramDef?.Values) {

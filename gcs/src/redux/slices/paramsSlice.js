@@ -72,7 +72,7 @@ const paramsSlice = createSlice({
       state.params = []
       state.shownParams = []
       state.modifiedParams = []
-      state.rebootData = []
+      state.rebootData = {}
       state.searchValue = ""
     },
 

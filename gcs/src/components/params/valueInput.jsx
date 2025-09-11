@@ -23,8 +23,8 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
   // Which leads to floating point rounding errors
   function sanitiseInput(value, toString = false) {
     let sanitisedValue = value
-    if (!isNaN(value) && value.trim() !== "") {
-      sanitisedValue = value.includes(".") ? parseFloat(value) : parseInt(value)
+    if (!isNaN(value) && String(value).trim() !== "") {
+      sanitisedValue = String(value).includes(".") ? parseFloat(value) : parseInt(value)
     }
 
     return toString ? `${sanitisedValue}` : sanitisedValue

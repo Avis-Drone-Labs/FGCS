@@ -469,7 +469,7 @@ function MapSectionNonMemo({
                 )
               }}
             >
-              <p>Set home position</p>
+              <p>Set planned home position</p>
             </ContextMenuItem>
             <ContextMenuItem onClick={() => dispatch(clearDrawingItems())}>
               <p>Clear mission</p>

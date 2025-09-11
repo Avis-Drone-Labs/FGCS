@@ -53,7 +53,7 @@ import {
   setMissionProgressModal,
   setTargetInfo,
   setUnwrittenChanges,
-  updatePlannedHomePositionBasedOnWaypoints,
+  updatePlannedHomePositionBasedOnWaypointsThunk,
 } from "../slices/missionSlice"
 import {
   queueErrorNotification,
@@ -341,7 +341,7 @@ const socketMiddleware = (store) => {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
                 store.dispatch(
-                  updatePlannedHomePositionBasedOnWaypoints(
+                  updatePlannedHomePositionBasedOnWaypointsThunk(
                     missionItemsWithIds,
                   ),
                 )
@@ -428,7 +428,7 @@ const socketMiddleware = (store) => {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
                 store.dispatch(
-                  updatePlannedHomePositionBasedOnWaypoints(
+                  updatePlannedHomePositionBasedOnWaypointsThunk(
                     missionItemsWithIds,
                   ),
                 )

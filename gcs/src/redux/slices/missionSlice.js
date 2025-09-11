@@ -352,7 +352,7 @@ export const addIdToItem = (missionItem) => {
   return missionItem
 }
 
-export const updatePlannedHomePositionBasedOnWaypoints =
+export const updatePlannedHomePositionBasedOnWaypointsThunk =
   (waypoints) => (dispatch) => {
     if (waypoints.length > 0) {
       const potentialHomeLocation = waypoints[0]

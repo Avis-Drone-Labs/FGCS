@@ -69,11 +69,12 @@ if (droneConnection !== undefined) {
   ) {
     store.dispatch(setGraphValues(droneInfo.graphs.selectedGraphs))
   }
-  if (persistedState.missionInfo.plannedHomePosition !== undefined) {
-    store.dispatch(
-      setPlannedHomePosition(persistedState.missionInfo.plannedHomePosition),
-    )
-  }
+}
+
+if (persistedState.missionInfo?.plannedHomePosition !== undefined) {
+  store.dispatch(
+    setPlannedHomePosition(persistedState.missionInfo.plannedHomePosition),
+  )
 }
 
 // Update states when a new message comes in, probably inefficient

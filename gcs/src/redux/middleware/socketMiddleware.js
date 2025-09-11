@@ -11,6 +11,7 @@ import {
 import {
   emitGetComPorts,
   emitGetHomePosition,
+  emitGetLoiterRadius,
   emitIsConnectedToDrone,
   emitSetState,
   setComPorts,
@@ -23,6 +24,7 @@ import {
 } from "../slices/droneConnectionSlice"
 
 // socket factory
+import { dataFormatters } from "../../helpers/dataFormatters.js"
 import SocketFactory from "../../helpers/socket"
 import {
   setAttitudeData,
@@ -32,7 +34,9 @@ import {
   setGpsData,
   setGpsRawIntData,
   setHeartbeatData,
+  setHomePosition,
   setLastGraphMessage,
+  setLoiterRadius,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -45,12 +49,11 @@ import {
   setDrawingFenceItems,
   setDrawingMissionItems,
   setDrawingRallyItems,
-  setHomePosition,
   setMissionProgressData,
   setMissionProgressModal,
   setTargetInfo,
   setUnwrittenChanges,
-  updateHomePositionBasedOnWaypoints,
+  updatePlannedHomePositionBasedOnWaypointsThunk,
 } from "../slices/missionSlice"
 import {
   queueErrorNotification,
@@ -89,6 +92,8 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavResult: "nav_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+  onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
+  onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
 })
 
 const ParamSpecificSocketEvents = Object.freeze({
@@ -243,7 +248,7 @@ const socketMiddleware = (store) => {
         // Flags that the drone is connected
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
-          if (msg.aircraft_type != 1 && msg.aircraft_type != 2) {
+          if (msg.aircraft_type !== 1 && msg.aircraft_type !== 2) {
             store.dispatch(
               queueErrorNotification(
                 "Aircraft not of type quadcopter or plane",
@@ -255,7 +260,10 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnectionModal(false))
 
           store.dispatch(emitSetState({ state: "dashboard" }))
-          store.dispatch(emitGetHomePosition())
+          store.dispatch(emitGetHomePosition()) // use actual home position
+          if (msg.aircraft_type === 1) {
+            store.dispatch(emitGetLoiterRadius())
+          }
         })
 
         // Link stats
@@ -301,7 +309,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             store.dispatch(
               msg.success
-                ? setHomePosition(msg.data)
+                ? setHomePosition(msg.data) // use actual home position
                 : queueNotification({ type: "error", message: msg.message }),
             )
           },
@@ -347,11 +355,35 @@ const socketMiddleware = (store) => {
           Missions
         */
         socket.socket.on(
-          MissionSpecificSocketEvents.onCurrentMissionAll,
+          DroneSpecificSocketEvents.onGetLoiterRadiusResult,
           (msg) => {
-            store.dispatch(setCurrentMissionItems(msg))
+            store.dispatch(
+              msg.success
+                ? setLoiterRadius(msg.data)
+                : queueNotification({ type: "error", message: msg.message }),
+            )
           },
         )
+
+        socket.socket.on(
+          DroneSpecificSocketEvents.onSetLoiterRadiusResult,
+          (msg) => {
+            store.dispatch(
+              msg.success
+                ? queueNotification({ type: "success", message: msg.message })
+                : queueNotification({ type: "error", message: msg.message }),
+            )
+          },
+        ),
+          /*
+          Missions
+        */
+          socket.socket.on(
+            MissionSpecificSocketEvents.onCurrentMissionAll,
+            (msg) => {
+              store.dispatch(setCurrentMissionItems(msg))
+            },
+          )
 
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMission,
@@ -367,7 +399,11 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(
+                  updatePlannedHomePositionBasedOnWaypointsThunk(
+                    missionItemsWithIds,
+                  ),
+                )
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({
@@ -450,8 +486,11 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                console.log("update home import mission")
-                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(
+                  updatePlannedHomePositionBasedOnWaypointsThunk(
+                    missionItemsWithIds,
+                  ),
+                )
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({

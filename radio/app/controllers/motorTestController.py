@@ -9,7 +9,7 @@ from app.customTypes import (
     MotorTestThrottleDurationAndNumber,
     Response,
 )
-from app.utils import commandAccepted
+from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -55,6 +55,7 @@ class MotorTestController:
 
         return throttle, duration, None
 
+    @sendingCommandLock
     def testOneMotor(self, data: MotorTestAllValues) -> Response:
         """
         Test a single motor.
@@ -121,6 +122,7 @@ class MotorTestController:
                 "message": f"Motor test for motor {motor_letter} not started, serial exception",
             }
 
+    @sendingCommandLock
     def testMotorSequence(self, data: MotorTestThrottleDurationAndNumber) -> Response:
         """
         Test a sequence of motors.
@@ -174,6 +176,7 @@ class MotorTestController:
                 "message": "Motor sequence test not started, serial exception",
             }
 
+    @sendingCommandLock
     def testAllMotors(self, data: MotorTestThrottleDurationAndNumber) -> Response:
         """
         Test all motors.

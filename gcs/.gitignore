@@ -35,3 +35,7 @@ yarn.lock
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Generated parameter files
+gen_apm_params_def_copter.json
+gen_apm_params_def_plane.json

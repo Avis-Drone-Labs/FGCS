@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import serial
 from app.customTypes import Number, Response
-from app.utils import commandAccepted
+from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil, mavwp
 
 if TYPE_CHECKING:
@@ -161,6 +161,7 @@ class MissionController:
             },
         }
 
+    @sendingCommandLock
     def getMissionItems(
         self,
         mission_type: int,
@@ -215,6 +216,8 @@ class MissionController:
                 blocking=True,
                 timeout=2,
             )
+            self.drone.is_listening = True
+
             if response:
                 if response.mission_type != mission_type:
                     self.drone.logger.error(
@@ -234,7 +237,6 @@ class MissionController:
                         f"Received count of {response.count} waypoints", 0.0
                     )
 
-                self.drone.is_listening = True
                 for i in range(0, response.count):
                     retry_count = 0
                     while retry_count < 3:
@@ -274,7 +276,6 @@ class MissionController:
                     "data": loader.wpoints,
                 }
             else:
-                self.drone.is_listening = True
                 self.drone.logger.error(
                     f"No response received for mission count for mission type {mission_type}."
                 )
@@ -282,7 +283,6 @@ class MissionController:
                     "success": False,
                     "message": failure_message,
                 }
-
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
             return {
@@ -311,6 +311,7 @@ class MissionController:
         failure_message = f"Failed to get mission item {item_number + 1}/{mission_count} for mission type {mission_type}"
 
         self.drone.is_listening = False
+        # The sending_command_lock is held by the caller function getMissionItems
 
         self.drone.master.mav.mission_request_int_send(
             self.drone.target_system,
@@ -356,6 +357,7 @@ class MissionController:
                 "message": f"{failure_message}, serial exception",
             }
 
+    @sendingCommandLock
     def startMission(self) -> Response:
         """
         Start the mission on the drone.
@@ -391,6 +393,7 @@ class MissionController:
                 "message": "Failed to start mission, serial exception",
             }
 
+    @sendingCommandLock
     def restartMission(self) -> Response:
         """
         Restarts the mission on the drone.
@@ -426,6 +429,7 @@ class MissionController:
                 "message": "Failed to restart mission, serial exception",
             }
 
+    @sendingCommandLock
     def clearMission(self, mission_type: int) -> Response:
         """
         Clears the specified mission type from the drone.
@@ -438,6 +442,7 @@ class MissionController:
             return mission_type_check
 
         self.drone.is_listening = False
+
         self.drone.master.mav.mission_clear_all_send(
             self.drone.target_system,
             self.drone.target_component,
@@ -575,6 +580,7 @@ class MissionController:
             }
 
         self.drone.is_listening = False
+        self.drone.sending_command_lock.acquire()
 
         self.drone.master.mav.mission_count_send(
             self.drone.target_system,
@@ -592,6 +598,7 @@ class MissionController:
                 )
                 if not response:
                     self.drone.is_listening = True
+                    self.drone.sending_command_lock.release()
 
                     return {
                         "success": False,
@@ -601,6 +608,8 @@ class MissionController:
                     self.drone.logger.error(
                         f"Error uploading mission, mission ack response: {response.type}"
                     )
+                    self.drone.is_listening = True
+                    self.drone.sending_command_lock.release()
                     return {
                         "success": False,
                         "message": "Could not upload mission, received mission acknowledgement error",
@@ -628,6 +637,7 @@ class MissionController:
                             timeout=2,
                         )
                         self.drone.is_listening = True
+                        self.drone.sending_command_lock.release()
 
                         if (
                             mission_ack_response
@@ -641,6 +651,7 @@ class MissionController:
                                 self.fenceLoader = new_loader
                             else:
                                 self.rallyLoader = new_loader
+
                             return {
                                 "success": True,
                                 "message": "Mission uploaded successfully",
@@ -655,6 +666,7 @@ class MissionController:
                             }
         except serial.serialutil.SerialException:
             self.drone.is_listening = True
+            self.drone.sending_command_lock.release()
             return {
                 "success": False,
                 "message": "Could not upload mission, serial exception",

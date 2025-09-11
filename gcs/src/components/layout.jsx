@@ -20,9 +20,12 @@ import { socket } from "../helpers/socket"
 import { useDispatch, useSelector } from "react-redux"
 import {
   emitGetCurrentMissionAll,
+  emitGetHomePosition,
+  emitGetLoiterRadius,
   emitSetState,
   selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice"
+import { selectAircraftTypeString } from "../redux/slices/droneInfoSlice"
 import {
   notificationShown,
   selectNotificationQueue,
@@ -32,6 +35,7 @@ export default function Layout({ children, currentPage }) {
   const dispatch = useDispatch()
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const notificationQueue = useSelector(selectNotificationQueue)
+  const aircraftTypeString = useSelector(selectAircraftTypeString)
 
   // Change current page, there's a single comma because javascript has weird syntax
   // we don't care about the first variable.
@@ -70,6 +74,10 @@ export default function Layout({ children, currentPage }) {
     dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
       dispatch(emitGetCurrentMissionAll())
+      dispatch(emitGetHomePosition()) // use actual home position
+      if (aircraftTypeString === "Plane") {
+        dispatch(emitGetLoiterRadius())
+      }
     }
   }, [currentPage, connectedToDrone])
 

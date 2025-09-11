@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import serial
 from app.customTypes import Response
-from app.utils import commandAccepted
+from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -21,6 +21,10 @@ class NavController:
         """
         self.drone = drone
 
+        self.loiter_radius_param_type = mavutil.mavlink.MAV_PARAM_TYPE_INT16
+        self.loiter_radius = 80.0  # Default loiter radius
+
+    @sendingCommandLock
     def getHomePosition(self) -> Response:
         """
         Request the current home position from the drone.
@@ -33,12 +37,12 @@ class NavController:
 
         try:
             response = self.drone.master.recv_match(
-                type="HOME_POSITION", blocking=True, timeout=3
+                type="HOME_POSITION", blocking=True, timeout=1.5
             )
             self.drone.is_listening = True
 
             if response:
-                self.drone.logger.info(f"Home position received, {response}")
+                self.drone.logger.info("Home position received")
 
                 home_position = {
                     "lat": response.latitude,
@@ -65,6 +69,7 @@ class NavController:
                 "message": "Could not get home position, serial exception",
             }
 
+    @sendingCommandLock
     def setHomePosition(self, lat: float, lon: float, alt: float) -> Response:
         """
         Set the home point of the drone.
@@ -130,12 +135,14 @@ class NavController:
             return guidedModeSetResult
 
         self.drone.is_listening = False
+        self.drone.sending_command_lock.acquire()
 
         self.drone.sendCommand(mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, param7=alt)
 
         try:
             response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
             self.drone.is_listening = True
+            self.drone.sending_command_lock.release()
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF):
                 self.drone.is_listening = True
@@ -154,6 +161,7 @@ class NavController:
                 "message": "Could not takeoff, serial exception",
             }
 
+    @sendingCommandLock
     def land(self) -> Response:
         """
         Tells the drone to land.
@@ -202,24 +210,25 @@ class NavController:
 
         self.drone.is_listening = False
 
-        self.drone.master.mav.set_position_target_global_int_send(
-            0,
-            self.drone.target_system,
-            self.drone.target_component,
-            mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-            65016,  # Bitmask to ignore all values except for x, y and z
-            int(lat * 1e7),
-            int(lon * 1e7),
-            alt,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
+        with self.drone.sending_command_lock:
+            self.drone.master.mav.set_position_target_global_int_send(
+                0,
+                self.drone.target_system,
+                self.drone.target_component,
+                mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                65016,  # Bitmask to ignore all values except for x, y and z
+                int(lat * 1e7),
+                int(lon * 1e7),
+                alt,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
 
         self.drone.logger.info(f"Reposition command sent to {lat}, {lon}, {alt}m")
 
@@ -241,4 +250,61 @@ class NavController:
             return {
                 "success": False,
                 "message": "Could not reposition, serial exception",
+            }
+
+    def getLoiterRadius(self) -> Response:
+        """
+        Get the loiter radius of the drone.
+        """
+        loiter_radius_data = self.drone.paramsController.getSingleParam(
+            "WP_LOITER_RAD", timeout=1.5
+        )
+
+        if loiter_radius_data.get("success"):
+            loiter_radius_param = loiter_radius_data.get("data")
+            if loiter_radius_param is not None:
+                self.loiter_radius = loiter_radius_param.param_value
+                return {
+                    "success": True,
+                    "data": self.loiter_radius,
+                }
+            else:
+                self.drone.logger.error(
+                    "Loiter radius parameter found, but parametvalue not found"
+                )
+                return {
+                    "success": False,
+                    "message": "Loiter radius parameter found, but parameter value not found",
+                }
+        else:
+            self.drone.logger.error(loiter_radius_data.get("message"))
+            return {
+                "success": False,
+                "message": loiter_radius_data.get("message", ""),
+            }
+
+    def setLoiterRadius(self, radius: float) -> Response:
+        """
+        Set the loiter radius of the drone.
+
+        Args:
+            radius (float): The loiter radius in meters
+        """
+
+        param_set_success = self.drone.paramsController.setParam(
+            "WP_LOITER_RAD", radius, self.loiter_radius_param_type
+        )
+
+        if param_set_success:
+            self.drone.logger.info(f"Loiter radius set to {radius}m")
+            self.loiter_radius = radius
+
+            return {
+                "success": True,
+                "message": f"Loiter radius set to {radius}m",
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Failed to set loiter radius set to {radius}m",
             }

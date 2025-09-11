@@ -6,7 +6,7 @@ from logging import Logger, getLogger
 from pathlib import Path
 from queue import Queue
 from secrets import token_hex
-from threading import Thread
+from threading import Lock, Thread
 from typing import Callable, Dict, List, Optional
 
 import serial
@@ -23,7 +23,7 @@ from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
 from app.customTypes import Number, Response, VehicleType
-from app.utils import commandAccepted, getVehicleType
+from app.utils import commandAccepted, getVehicleType, sendingCommandLock
 
 # Constants
 
@@ -166,6 +166,11 @@ class Drone:
         self.sendConnectionStatusUpdate("Cleaned temp logs")
 
         self.is_active = True
+        self.is_listening = False
+
+        # To ensure that only one command is sent at a time and we wait for a
+        # response before sending another command, a thread-safe lock is used
+        self.sending_command_lock = Lock()
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
 
@@ -371,6 +376,7 @@ class Drone:
         else:
             self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRED[stream])
 
+    @sendingCommandLock
     def sendDataStreamRequestMessage(self, stream: int, rate: int) -> None:
         """Send a request for a specific data stream.
 
@@ -386,6 +392,7 @@ class Drone:
             1,
         )
 
+    @sendingCommandLock
     def stopAllDataStreams(self) -> None:
         """Stop all data streams"""
         self.master.mav.request_data_stream_send(
@@ -637,6 +644,8 @@ class Drone:
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
         self.is_listening = False
+        self.sending_command_lock.acquire()
+
         self.sendCommand(
             mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
             param1=1,  #  Autpilot
@@ -647,6 +656,7 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.sending_command_lock.release()
 
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
@@ -660,6 +670,7 @@ class Drone:
             self.logger.debug("Rebooting")
             self.close()
 
+    @sendingCommandLock
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.
 
@@ -680,14 +691,21 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
                 return {"success": True, "message": f"Setting servo to {pwm_value}"}
-
             else:
-                return {"success": False, "message": "Setting servo failed"}
+                self.logger.error(
+                    f"Failed to set servo {servo_instance} to {pwm_value}"
+                )
+                return {
+                    "success": False,
+                    "message": f"Failed to set servo {servo_instance} to {pwm_value}",
+                }
 
         except serial.serialutil.SerialException:
+            self.is_listening = True
             return {
                 "success": False,
                 "message": "Setting servo failed, serial exception",

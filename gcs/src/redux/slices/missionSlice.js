@@ -35,7 +35,7 @@ const missionInfoSlice = createSlice({
     modals: {
       missionProgressModal: false,
     },
-    homePosition: {
+    plannedHomePosition: {
       lat: 0,
       lon: 0,
       alt: 0,
@@ -67,9 +67,9 @@ const missionInfoSlice = createSlice({
         return
       state.currentMissionItems = action.payload
     },
-    setHomePosition: (state, action) => {
-      if (action.payload === state.homePosition) return
-      state.homePosition = action.payload
+    setPlannedHomePosition: (state, action) => {
+      if (action.payload === state.plannedHomePosition) return
+      state.plannedHomePosition = action.payload
 
       if (
         state.drawingItems.missionItems.length > 0 &&
@@ -309,7 +309,7 @@ const missionInfoSlice = createSlice({
   selectors: {
     selectCurrentMission: (state) => state.currentMission,
     selectCurrentMissionItems: (state) => state.currentMissionItems,
-    selectHomePosition: (state) => state.homePosition,
+    selectPlannedHomePosition: (state) => state.plannedHomePosition,
     selectTargetInfo: (state) => state.targetInfo,
     selectDrawingMissionItems: (state) => state.drawingItems.missionItems,
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
@@ -352,18 +352,21 @@ export const addIdToItem = (missionItem) => {
   return missionItem
 }
 
-export const updateHomePositionBasedOnWaypoints = (waypoints) => {
-  if (waypoints.length > 0) {
-    const potentialHomeLocation = waypoints[0]
-    if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-      setHomePosition({
-        lat: potentialHomeLocation.x,
-        lon: potentialHomeLocation.y,
-        alt: potentialHomeLocation.z,
-      })
+export const updatePlannedHomePositionBasedOnWaypointsThunk =
+  (waypoints) => (dispatch) => {
+    if (waypoints.length > 0) {
+      const potentialHomeLocation = waypoints[0]
+      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+        dispatch(
+          setPlannedHomePosition({
+            lat: potentialHomeLocation.x,
+            lon: potentialHomeLocation.y,
+            alt: potentialHomeLocation.z,
+          }),
+        )
+      }
     }
   }
-}
 
 export const getFrameKey = (frame) =>
   parseInt(
@@ -395,7 +398,7 @@ export const newMissionItem = (x, y, targetInfo) => {
 export const {
   selectCurrentMission,
   selectCurrentMissionItems,
-  selectHomePosition,
+  selectPlannedHomePosition,
   selectTargetInfo,
   selectDrawingMissionItems,
   selectDrawingFenceItems,
@@ -411,7 +414,7 @@ export const {
 export const {
   setCurrentMission,
   setCurrentMissionItems,
-  setHomePosition,
+  setPlannedHomePosition,
   setTargetInfo,
   updateDrawingItem,
   removeDrawingItem,

@@ -25,9 +25,15 @@ const droneInfoSlice = createSlice({
       alt: 0.0,
       relativeAlt: 0.0,
     },
+    homePosition: {
+      lat: 0,
+      lon: 0,
+      alt: 0,
+    },
     navControllerData: {
       navBearing: 0.0,
       wpDist: 0.0,
+      loiterRadius: 80.0,
     },
     heartbeatData: {
       baseMode: 0,
@@ -53,7 +59,7 @@ const droneInfoSlice = createSlice({
         graph_c: null,
         graph_d: null,
       },
-      lastGraphResultsMessage: false, // Last graph message that comes from incoming_msg
+      lastGraphResultsMessage: false,
     },
   },
   reducers: {
@@ -112,6 +118,11 @@ const droneInfoSlice = createSlice({
         state.gpsData = action.payload
       }
     },
+    setHomePosition: (state, action) => {
+      if (action.payload !== state.homePosition) {
+        state.homePosition = action.payload
+      }
+    },
     setAttitudeData: (state, action) => {
       if (action.payload !== state.attitudeData) {
         state.attitudeData = action.payload
@@ -150,6 +161,11 @@ const droneInfoSlice = createSlice({
         state.graphs.lastGraphResultsMessage = action.payload
       }
     },
+    setLoiterRadius: (state, action) => {
+      if (action.payload !== state.navControllerData.loiterRadius) {
+        state.navControllerData.loiterRadius = action.payload
+      }
+    },
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -157,6 +173,8 @@ const droneInfoSlice = createSlice({
 
     selectGPS: (state) => state.gpsData,
     selectHeading: (state) => (state.gpsData.hdg ? state.gpsData.hdg / 100 : 0),
+
+    selectHomePosition: (state) => state.homePosition,
 
     selectNavController: (state) => state.navControllerData,
     selectDesiredBearing: (state) => state.navControllerData.navBearing,
@@ -191,6 +209,7 @@ export const {
   setDroneAircraftType,
   setTelemetryData,
   setGpsData,
+  setHomePosition,
   setAttitudeData,
   setNavControllerOutput,
   setGpsRawIntData,
@@ -199,6 +218,7 @@ export const {
   setRSSIData,
   setGraphValues,
   setLastGraphMessage,
+  setLoiterRadius,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -261,6 +281,7 @@ export const {
   selectAttitude,
   selectTelemetry,
   selectGPS,
+  selectHomePosition,
   selectNavController,
   selectDesiredBearing,
   selectHeartbeat,

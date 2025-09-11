@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List, Union
 
 import serial
 from app.customTypes import Response
-from app.utils import commandAccepted
+from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 
 if TYPE_CHECKING:
@@ -126,6 +126,7 @@ class FlightModesController:
                 "message": f"Failed to set flight mode {mode_number} to {mode_name}",
             }
 
+    @sendingCommandLock
     def setCurrentFlightMode(self, flightMode: int) -> Response:
         """
         Sends a Mavlink message to the drone for setting its current flight mode

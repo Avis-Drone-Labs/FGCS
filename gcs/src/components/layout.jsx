@@ -74,7 +74,7 @@ export default function Layout({ children, currentPage }) {
     dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
       dispatch(emitGetCurrentMissionAll())
-      dispatch(emitGetHomePosition())
+      dispatch(emitGetHomePosition()) // use actual home position
       if (aircraftTypeString === "Plane") {
         dispatch(emitGetLoiterRadius())
       }

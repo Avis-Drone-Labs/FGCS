@@ -34,6 +34,7 @@ import {
   setGpsData,
   setGpsRawIntData,
   setHeartbeatData,
+  setHomePosition,
   setLastGraphMessage,
   setLoiterRadius,
   setNavControllerOutput,
@@ -48,12 +49,11 @@ import {
   setDrawingFenceItems,
   setDrawingMissionItems,
   setDrawingRallyItems,
-  setHomePosition,
   setMissionProgressData,
   setMissionProgressModal,
   setTargetInfo,
   setUnwrittenChanges,
-  updateHomePositionBasedOnWaypoints,
+  updatePlannedHomePositionBasedOnWaypoints,
 } from "../slices/missionSlice"
 import {
   queueErrorNotification,
@@ -240,7 +240,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnectionModal(false))
 
           store.dispatch(emitSetState({ state: "dashboard" }))
-          store.dispatch(emitGetHomePosition())
+          store.dispatch(emitGetHomePosition()) // use actual home position
           if (msg.aircraft_type === 1) {
             store.dispatch(emitGetLoiterRadius())
           }
@@ -289,7 +289,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             store.dispatch(
               msg.success
-                ? setHomePosition(msg.data)
+                ? setHomePosition(msg.data) // use actual home position
                 : queueNotification({ type: "error", message: msg.message }),
             )
           },
@@ -340,7 +340,11 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(
+                  updatePlannedHomePositionBasedOnWaypoints(
+                    missionItemsWithIds,
+                  ),
+                )
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({
@@ -423,8 +427,11 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                console.log("update home import mission")
-                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+                store.dispatch(
+                  updatePlannedHomePositionBasedOnWaypoints(
+                    missionItemsWithIds,
+                  ),
+                )
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({

@@ -33,10 +33,7 @@ import { intToCoord } from "./helpers/dataFormatters"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import {
-  emitGetHomePosition,
-  selectConnectedToDrone,
-} from "./redux/slices/droneConnectionSlice"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -52,9 +49,9 @@ import {
   selectDrawingFenceItems,
   selectDrawingMissionItems,
   selectDrawingRallyItems,
-  selectHomePosition,
   selectMissionProgressData,
   selectMissionProgressModal,
+  selectPlannedHomePosition,
   selectTargetInfo,
   selectUnwrittenChanges,
   setActiveTab,
@@ -88,7 +85,7 @@ export default function Missions() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const targetInfo = useSelector(selectTargetInfo)
-  const homePosition = useSelector(selectHomePosition)
+  const plannedHomePosition = useSelector(selectPlannedHomePosition)
   const activeTab = useSelector(selectActiveTab)
 
   // Mission items
@@ -132,7 +129,6 @@ export default function Missions() {
 
   // Send some messages when file is loaded
   useEffect(() => {
-    dispatch(emitGetHomePosition())
     dispatch(emitGetTargetInfo())
   }, [currentPage])
 
@@ -155,18 +151,18 @@ export default function Missions() {
     )
   }
 
-  function createHomePositionItem() {
-    if (!homePosition) {
-      dispatch(queueErrorNotification("Home position is not set"))
+  function createPlannedHomePositionItem() {
+    if (!plannedHomePosition) {
+      dispatch(queueErrorNotification("Planned home position is not set"))
       return
     }
 
     const newHomeItem = {
       id: uuidv4(),
       seq: 0, // Home position is always the first item
-      x: homePosition.lat,
-      y: homePosition.lon,
-      z: homePosition.alt || 0,
+      x: plannedHomePosition.lat,
+      y: plannedHomePosition.lon,
+      z: plannedHomePosition.alt || 0,
       frame: getFrameKey("MAV_FRAME_GLOBAL"),
       command: 16, // MAV_CMD_NAV_WAYPOINT
       param1: 0,
@@ -245,9 +241,9 @@ export default function Missions() {
       } else if (activeTabRef.current === "fence") {
         items = [...fenceItems]
 
-        const newHomeItem = createHomePositionItem()
-        if (newHomeItem) {
-          items.unshift(newHomeItem) // Add home item at the beginning
+        const newPlannedHomeItem = createPlannedHomePositionItem()
+        if (newPlannedHomeItem) {
+          items.unshift(newPlannedHomeItem) // Add planned home item at the beginning
         }
 
         // Ensure all sequence values are updated
@@ -258,9 +254,9 @@ export default function Missions() {
       } else if (activeTabRef.current === "rally") {
         items = [...rallyItems]
 
-        const newHomeItem = createHomePositionItem()
-        if (newHomeItem) {
-          items.unshift(newHomeItem) // Add home item at the beginning
+        const newPlannedHomeItem = createPlannedHomePositionItem()
+        if (newPlannedHomeItem) {
+          items.unshift(newPlannedHomeItem) // Add planned home item at the beginning
         }
 
         // Ensure all sequence values are updated
@@ -400,11 +396,20 @@ export default function Missions() {
 
                 <div className="flex flex-col gap-2">
                   <p className="font-bold">
-                    Home location{" "}
+                    Planned home location{" "}
                     <span>
                       <Tooltip
                         className="inline"
-                        label="The home location is written to a mission save file."
+                        label={
+                          <>
+                            <p className="text-wrap max-w-80">
+                              The planned home location is used to approximate
+                              the starting location of the mission. The
+                              dashboard displays the <i>actual</i> home location
+                              used by the drone.
+                            </p>
+                          </>
+                        }
                       >
                         <IconInfoCircle size={20} />
                       </Tooltip>
@@ -412,13 +417,13 @@ export default function Missions() {
                   </p>
                   <p>
                     Lat:{" "}
-                    {intToCoord(homePosition?.lat).toFixed(
+                    {intToCoord(plannedHomePosition?.lat).toFixed(
                       coordsFractionDigits,
                     )}
                   </p>
                   <p>
                     Lon:{" "}
-                    {intToCoord(homePosition?.lon).toFixed(
+                    {intToCoord(plannedHomePosition?.lon).toFixed(
                       coordsFractionDigits,
                     )}
                   </p>

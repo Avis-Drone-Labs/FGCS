@@ -25,6 +25,11 @@ const droneInfoSlice = createSlice({
       alt: 0.0,
       relativeAlt: 0.0,
     },
+    homePosition: {
+      lat: 0,
+      lon: 0,
+      alt: 0,
+    },
     navControllerData: {
       navBearing: 0.0,
       wpDist: 0.0,
@@ -113,6 +118,11 @@ const droneInfoSlice = createSlice({
         state.gpsData = action.payload
       }
     },
+    setHomePosition: (state, action) => {
+      if (action.payload !== state.homePosition) {
+        state.homePosition = action.payload
+      }
+    },
     setAttitudeData: (state, action) => {
       if (action.payload !== state.attitudeData) {
         state.attitudeData = action.payload
@@ -164,6 +174,8 @@ const droneInfoSlice = createSlice({
     selectGPS: (state) => state.gpsData,
     selectHeading: (state) => (state.gpsData.hdg ? state.gpsData.hdg / 100 : 0),
 
+    selectHomePosition: (state) => state.homePosition,
+
     selectNavController: (state) => state.navControllerData,
     selectDesiredBearing: (state) => state.navControllerData.navBearing,
 
@@ -197,6 +209,7 @@ export const {
   setDroneAircraftType,
   setTelemetryData,
   setGpsData,
+  setHomePosition,
   setAttitudeData,
   setNavControllerOutput,
   setGpsRawIntData,
@@ -268,6 +281,7 @@ export const {
   selectAttitude,
   selectTelemetry,
   selectGPS,
+  selectHomePosition,
   selectNavController,
   selectDesiredBearing,
   selectHeartbeat,

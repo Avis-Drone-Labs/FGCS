@@ -110,6 +110,6 @@ store.subscribe(() => {
   // Store the planned home position for use in the map when no drone is connected
   local_storage.setItem(
     "plannedHomePosition",
-    store_mut.missionInfo.plannedHomePosition,
+    JSON.stringify(store_mut.missionInfo.plannedHomePosition),
   )
 })

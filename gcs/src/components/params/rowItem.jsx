@@ -7,18 +7,22 @@ import { memo, useEffect, useState } from "react"
 
 // 3rd party imports
 import { ScrollArea, Tooltip } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
 
 // Custom components, helpers and data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
 import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import ValueInput from "./valueInput"
 
-const RowItem = memo(({ param, style, onChange }) => {
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
+// Redux
+import { useSelector } from "react-redux"
+import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
+import { selectShownParams } from "../../redux/slices/paramsSlice"
+
+const RowItem = memo(({ index, style, onChange }) => {
+  const aircraftType = useSelector(selectAircraftType)
+  const shownParams = useSelector(selectShownParams)
   const [paramDef, setParamDef] = useState({})
+  const param = shownParams[index]
 
   useEffect(() => {
     if (aircraftType === 1) {
@@ -35,7 +39,7 @@ const RowItem = memo(({ param, style, onChange }) => {
       </Tooltip>
 
       <ValueInput
-        param={param}
+        index={index}
         paramDef={paramDef}
         onChange={onChange}
         className="w-3/12"

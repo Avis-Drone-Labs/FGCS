@@ -8,16 +8,42 @@
 // 3rd party imports
 import { NumberInput, Select } from "@mantine/core"
 
-// custom components, helpers and data
+// Custom components, helpers and data
 import BitmaskSelect from "./bitmaskSelect"
 
-export default function ValueInput({ param, paramDef, onChange, className }) {
+// Redux
+import { useSelector } from "react-redux"
+import { selectShownParams } from "../../redux/slices/paramsSlice"
+
+export default function ValueInput({ index, paramDef, onChange, className }) {
+  const shownParams = useSelector(selectShownParams)
+  const param = shownParams[index]
+
+  function sanitiseInput(value, toString = false) {
+    // Try to handle floats because mantine handles keys internally as strings 
+    // Which leads to floating point rounding errors
+    let sanitisedValue = value
+    if (!isNaN(value) && value.trim() !== "") {
+      sanitisedValue = value.includes(".") ? parseFloat(value) : parseInt(value)
+    }
+
+    return toString ? `${sanitisedValue}` : sanitisedValue
+  }
+
   if (paramDef?.Values) {
+    let t = sanitiseInput(`${param.param_value}`, true)
+    if (param.param_id == 'ACRO_RP_RATE_TC') {
+      console.log("Value Input", t, param)
+    }
     return (
       <Select // Values input
         className={className}
-        value={`${param.param_value}`}
-        onChange={(value) => onChange(value, param)}
+        value={t}
+        onChange={(value) => {
+          let sanitisedValue = sanitiseInput(value)
+          console.log("CHANGING TO ", sanitisedValue, typeof(sanitisedValue))
+          onChange(value, param)}
+        }
         data={Object.keys(paramDef?.Values).map((key) => ({
           value: `${key}`,
           label: `${key}: ${paramDef?.Values[key]}`,

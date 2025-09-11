@@ -35,6 +35,7 @@ import {
   selectShownParams,
   setFetchingVars,
   setShownParams,
+  updateModifiedParamValue,
   updateParamValue,
 } from "./redux/slices/paramsSlice.js"
 
@@ -76,11 +77,12 @@ export default function Params() {
    * @returns
    */
   function addToModifiedParams(value, param) {
+    console.log("Adding To Modified Params", value)
     if (value === "") return
 
     if (isModified(param)) {
       dispatch(
-        updateParamValue({ param_id: param.param_id, param_value: value }),
+        updateModifiedParamValue({ param_id: param.param_id, param_value: value }),
       )
     } else {
       // Otherwise add it to modified params
@@ -119,7 +121,7 @@ export default function Params() {
 
     // Show the filtered parameters
     dispatch(setShownParams(filteredParams))
-  }, [debouncedSearchValue, showModifiedParams])
+  }, [debouncedSearchValue, showModifiedParams, params, modifiedParams])
 
   return (
     <Layout currentPage="params">
@@ -148,7 +150,6 @@ export default function Params() {
                       itemSize={120}
                       itemCount={shownParams.length}
                       itemData={{
-                        params: shownParams,
                         onChange: addToModifiedParams,
                       }}
                     >

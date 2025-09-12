@@ -69,7 +69,20 @@ const missionInfoSlice = createSlice({
     },
     setPlannedHomePosition: (state, action) => {
       if (action.payload === state.plannedHomePosition) return
-      state.plannedHomePosition = action.payload
+
+      // Ensure that lat, lon, and alt (if provided) are numbers
+      if (
+        ("lat" in action.payload && typeof action.payload.lat !== "number") ||
+        ("lon" in action.payload && typeof action.payload.lon !== "number") ||
+        ("alt" in action.payload && typeof action.payload.alt !== "number")
+      ) {
+        return
+      }
+
+      state.plannedHomePosition = {
+        ...state.plannedHomePosition,
+        ...action.payload,
+      }
 
       if (
         state.drawingItems.missionItems.length > 0 &&
@@ -77,16 +90,16 @@ const missionInfoSlice = createSlice({
       ) {
         state.drawingItems.missionItems[0] = {
           ...state.drawingItems.missionItems[0],
-          x: action.payload.lat,
-          y: action.payload.lon,
+          x: state.plannedHomePosition.lat,
+          y: state.plannedHomePosition.lon,
         }
       } else {
         const newHomeItem = {
           id: uuidv4(),
           seq: 0, // Home position is always the first item
-          x: action.payload.lat,
-          y: action.payload.lon,
-          z: action.payload.alt || 0,
+          x: state.plannedHomePosition.lat,
+          y: state.plannedHomePosition.lon,
+          z: state.plannedHomePosition.alt || 0,
           frame: getFrameKey("MAV_FRAME_GLOBAL"),
           command: 16, // MAV_CMD_NAV_WAYPOINT
           param1: 0,

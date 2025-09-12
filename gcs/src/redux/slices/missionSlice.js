@@ -77,6 +77,10 @@ const missionInfoSlice = createSlice({
         ("lon" in action.payload && typeof action.payload.lon !== "number") ||
         ("alt" in action.payload && typeof action.payload.alt !== "number")
       ) {
+        console.error(
+          "Latitude, Longitude, and Altitude must be numbers. Got: ",
+          action.payload,
+        )
         return
       }
 
@@ -88,6 +92,10 @@ const missionInfoSlice = createSlice({
           (action.payload.lon < coordToInt(-180) ||
             action.payload.lon > coordToInt(180)))
       ) {
+        console.error(
+          "Latitude must be between -90 and 90, Longitude must be between -180 and 180. Got: ",
+          action.payload,
+        )
         return
       }
 

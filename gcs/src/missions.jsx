@@ -66,6 +66,10 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const coordsFractionDigits = 7
 const resizeTableHeightPadding = 20 // To account for the handle height and some padding
 
+function isInputNumber(value) {
+  return value === "" || value === null || isNaN(Number(value))
+}
+
 function UnwrittenChangesWarning({ unwrittenChanges }) {
   const firstUnwrittenTab = Object.entries(unwrittenChanges).find(
     ([, changed]) => changed,
@@ -121,13 +125,13 @@ export default function Missions() {
   const mapRef = useRef()
 
   const [plannedHomeLatInput, setPlannedHomeLatInput] = useState(
-    intToCoord(plannedHomePosition?.lat).toFixed(coordsFractionDigits),
+    intToCoord(plannedHomePosition?.lat ?? 0).toFixed(coordsFractionDigits),
   )
   const [plannedHomeLonInput, setPlannedHomeLonInput] = useState(
-    intToCoord(plannedHomePosition?.lon).toFixed(coordsFractionDigits),
+    intToCoord(plannedHomePosition?.lon ?? 0).toFixed(coordsFractionDigits),
   )
   const [plannedHomeAltInput, setPlannedHomeAltInput] = useState(
-    plannedHomePosition?.alt,
+    plannedHomePosition?.alt ?? 0.1,
   )
 
   useEffect(() => {
@@ -448,11 +452,7 @@ export default function Missions() {
                     value={plannedHomeLatInput}
                     onChange={(val) => setPlannedHomeLatInput(val)}
                     onBlur={() => {
-                      if (
-                        plannedHomeLatInput === "" ||
-                        plannedHomeLatInput === null ||
-                        isNaN(Number(plannedHomeLatInput))
-                      ) {
+                      if (isInputNumber(plannedHomeLatInput)) {
                         setPlannedHomeLatInput(
                           intToCoord(plannedHomePosition?.lat).toFixed(
                             coordsFractionDigits,
@@ -469,11 +469,7 @@ export default function Missions() {
                     value={plannedHomeLonInput}
                     onChange={(val) => setPlannedHomeLonInput(val)}
                     onBlur={() => {
-                      if (
-                        plannedHomeLonInput === "" ||
-                        plannedHomeLonInput === null ||
-                        isNaN(Number(plannedHomeLonInput))
-                      ) {
+                      if (isInputNumber(plannedHomeLonInput)) {
                         setPlannedHomeLonInput(
                           intToCoord(plannedHomePosition?.lon).toFixed(
                             coordsFractionDigits,
@@ -490,11 +486,7 @@ export default function Missions() {
                     value={plannedHomeAltInput}
                     onChange={(val) => setPlannedHomeAltInput(val)}
                     onBlur={() => {
-                      if (
-                        plannedHomeAltInput === "" ||
-                        plannedHomeAltInput === null ||
-                        isNaN(Number(plannedHomeAltInput))
-                      ) {
+                      if (isInputNumber(plannedHomeAltInput)) {
                         setPlannedHomeAltInput(plannedHomePosition?.alt)
                       }
                     }}

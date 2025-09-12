@@ -155,7 +155,6 @@ export default function Missions() {
   }, [activeTab])
 
   useEffect(() => {
-    console.log(plannedHomePosition?.lat)
     setPlannedHomeLatInput(
       intToCoord(plannedHomePosition?.lat).toFixed(coordsFractionDigits),
     )
@@ -492,11 +491,7 @@ export default function Missions() {
                         plannedHomeAltInput === null ||
                         isNaN(Number(plannedHomeAltInput))
                       ) {
-                        setPlannedHomeAltInput(
-                          intToCoord(plannedHomePosition?.alt).toFixed(
-                            coordsFractionDigits,
-                          ),
-                        )
+                        setPlannedHomeAltInput(plannedHomePosition?.alt)
                       }
                     }}
                     min={0.1}

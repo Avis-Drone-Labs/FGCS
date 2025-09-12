@@ -1,5 +1,6 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
+import { coordToInt } from "../../helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
 
@@ -75,6 +76,17 @@ const missionInfoSlice = createSlice({
         ("lat" in action.payload && typeof action.payload.lat !== "number") ||
         ("lon" in action.payload && typeof action.payload.lon !== "number") ||
         ("alt" in action.payload && typeof action.payload.alt !== "number")
+      ) {
+        return
+      }
+
+      if (
+        ("lat" in action.payload &&
+          (action.payload.lat < coordToInt(-90) ||
+            action.payload.lat > coordToInt(90))) ||
+        ("lon" in action.payload &&
+          (action.payload.lon < coordToInt(-180) ||
+            action.payload.lon > coordToInt(180)))
       ) {
         return
       }

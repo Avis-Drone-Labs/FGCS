@@ -460,6 +460,8 @@ export default function Missions() {
                         )
                       }
                     }}
+                    min={-90}
+                    max={90}
                     hideControls
                   />
                   <NumberInput
@@ -479,6 +481,8 @@ export default function Missions() {
                         )
                       }
                     }}
+                    min={-180}
+                    max={180}
                     hideControls
                   />
                   <NumberInput

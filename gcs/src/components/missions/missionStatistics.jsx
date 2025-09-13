@@ -202,7 +202,7 @@ function calculateMaxTelemDistance(missionItems, homePosition) {
   missionItems = missionItems.filter(
     (item) =>
       (item.x !== 0 && item.y !== 0) ||
-      isGlobalFrameHomeCommand(item) === false,
+      isGlobalFrameHomeCommand(item),
   )
 
   for (const item of missionItems) {

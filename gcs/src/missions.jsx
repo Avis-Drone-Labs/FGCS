@@ -377,7 +377,7 @@ export default function Missions() {
               }
               className="relative bg-falcongrey-800 overflow-y-auto"
             >
-              <div className="flex flex-col gap-8 p-4">
+              <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-4">
                   <UnwrittenChangesWarning
                     unwrittenChanges={unwrittenChanges}
@@ -462,6 +462,7 @@ export default function Missions() {
                     }}
                     min={-90}
                     max={90}
+                    step={0.000001}
                     hideControls
                   />
                   <NumberInput
@@ -479,6 +480,7 @@ export default function Missions() {
                     }}
                     min={-180}
                     max={180}
+                    step={0.000001}
                     hideControls
                   />
                   <NumberInput

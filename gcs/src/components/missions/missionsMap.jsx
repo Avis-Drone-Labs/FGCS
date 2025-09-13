@@ -385,7 +385,6 @@ function MapSectionNonMemo({
                 setPlannedHomePosition({
                   lat: coordToInt(x),
                   lon: coordToInt(y),
-                  alt: 0.1,
                 }),
               )
             }}
@@ -464,7 +463,6 @@ function MapSectionNonMemo({
                   setPlannedHomePosition({
                     lat: coordToInt(contextMenuState.gpsCoords.lat),
                     lon: coordToInt(contextMenuState.gpsCoords.lng),
-                    alt: 0.1,
                   }),
                 )
               }}

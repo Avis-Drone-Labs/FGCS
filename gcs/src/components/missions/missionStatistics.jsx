@@ -27,13 +27,25 @@ function calculateMaxAltitude(missionItems) {
   return Math.max(...missionItems.map((item) => item.z || 0), 0)
 }
 
-function calculateMaxDistanceBetweenWaypoints(missionItems) {
-  missionItems = missionItems.filter(
-    (item) => isGlobalFrameHomeCommand(item) === false,
-  )
+function calculateMaxDistanceBetweenWaypoints(missionItems, homePosition) {
   if (missionItems.length < 2) return 0
   let maxDistance = 0
   let maxDistancePoints = []
+
+  // Swap the coords of the first position with the home position if it exists
+  if (
+    isGlobalFrameHomeCommand(missionItems[0]) &&
+    homePosition &&
+    missionItems[1].command === 22
+  ) {
+    const newFirstPoint = {
+      ...missionItems[1],
+      x: homePosition.lat,
+      y: homePosition.lon,
+      z: homePosition.alt,
+    }
+    missionItems = [newFirstPoint, ...missionItems.slice(1)]
+  }
 
   // Remove any waypoints without coordinates
   missionItems = missionItems.filter((item) => item.x !== 0 && item.y !== 0)
@@ -60,22 +72,24 @@ function calculateMaxDistanceBetweenWaypoints(missionItems) {
   return { maxDistance: maxDistance, points: maxDistancePoints }
 }
 
-function calculateMaxSlopeGradient(missionItems) {
-  const homeCommand = isGlobalFrameHomeCommand(missionItems[0])
-    ? missionItems[0]
-    : null
-  if (homeCommand) {
-    missionItems = missionItems.slice(1) // Remove home command if it exists
-  }
-
+function calculateMaxSlopeGradient(missionItems, homePosition) {
   if (missionItems.length < 2) return 0
   let maxGradient = 0
   let maxDistancePoints = []
 
-  // If the first command is a takeoff command, use the coordinates from the home location
-  if (homeCommand && missionItems[0].command === 22) {
-    missionItems[0].x = homeCommand.x
-    missionItems[0].y = homeCommand.y
+  // Swap the coords of the first position with the home position if it exists
+  if (
+    isGlobalFrameHomeCommand(missionItems[0]) &&
+    homePosition &&
+    missionItems[1].command === 22
+  ) {
+    const newFirstPoint = {
+      ...missionItems[1],
+      x: homePosition.lat,
+      y: homePosition.lon,
+      z: homePosition.alt,
+    }
+    missionItems = [newFirstPoint, ...missionItems.slice(1)]
   }
 
   for (let i = 0; i < missionItems.length - 1; i++) {
@@ -106,13 +120,29 @@ function calculateMaxSlopeGradient(missionItems) {
   return { maxGradient: maxGradient, points: maxDistancePoints }
 }
 
-function calculateTotalDistance(missionItems) {
+function calculateTotalDistance(missionItems, homePosition) {
   // This function should calculate the total distance of the waypoints,
   // ignoring any waypoints without coordinates. If the jump command (177) is present,
   // then the distance for all of the jump waypoints for the number of laps should
   // be calculated as well.
   let totalDistance = 0
   let lastPoint = null
+
+  // Swap the coords of the first position with the home position if it exists
+  if (
+    missionItems.length > 1 &&
+    isGlobalFrameHomeCommand(missionItems[0]) &&
+    homePosition &&
+    missionItems[1].command === 22
+  ) {
+    const newFirstPoint = {
+      ...missionItems[1],
+      x: homePosition.lat,
+      y: homePosition.lon,
+      z: homePosition.alt,
+    }
+    missionItems = [newFirstPoint, ...missionItems.slice(1)]
+  }
 
   for (let i = 0; i < missionItems.length; i++) {
     const item = missionItems[i]
@@ -168,8 +198,12 @@ function calculateMaxTelemDistance(missionItems, homePosition) {
   let maxDistance = 0
   let maxDistancePoint = null
 
-  // Remove any waypoints without coordinates
-  missionItems = missionItems.filter((item) => item.x !== 0 && item.y !== 0)
+  // Remove any waypoints without coordinates and the home location
+  missionItems = missionItems.filter(
+    (item) =>
+      (item.x !== 0 && item.y !== 0) ||
+      isGlobalFrameHomeCommand(item) === false,
+  )
 
   for (const item of missionItems) {
     const distanceFromHome = distance(
@@ -236,12 +270,14 @@ export default function MissionStatistics() {
     }
 
     // Use unfiltered mission items
-    setTotalDistance(calculateTotalDistance(missionItems))
+    setTotalDistance(calculateTotalDistance(missionItems, plannedHomePosition))
     setMaxAltitude(calculateMaxAltitude(filteredMissionItems))
     setMaxDistanceBetweenWaypoints(
-      calculateMaxDistanceBetweenWaypoints(filteredMissionItems),
+      calculateMaxDistanceBetweenWaypoints(missionItems, plannedHomePosition),
     )
-    setMaxSlopeGradient(calculateMaxSlopeGradient(filteredMissionItems))
+    setMaxSlopeGradient(
+      calculateMaxSlopeGradient(missionItems, plannedHomePosition),
+    )
     setMaxTelemDistance(
       calculateMaxTelemDistance(filteredMissionItems, plannedHomePosition),
     )

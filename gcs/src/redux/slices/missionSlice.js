@@ -119,6 +119,7 @@ const missionInfoSlice = createSlice({
           ...state.drawingItems.missionItems[0],
           x: state.plannedHomePosition.lat,
           y: state.plannedHomePosition.lon,
+          z: state.plannedHomePosition.alt || 0,
         }
       } else {
         const newHomeItem = {

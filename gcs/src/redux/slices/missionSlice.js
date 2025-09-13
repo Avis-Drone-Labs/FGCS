@@ -280,17 +280,8 @@ const missionInfoSlice = createSlice({
       state.modals.updatePlannedHomePositionFromLoadModal = action.payload
     },
     setUpdatePlannedHomePositionFromLoadData: (state, action) => {
-      if (action.payload.waypoints.length > 0) {
-        const potentialHomeLocation = action.payload.waypoints[0]
-        if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-          state.updatePlannedHomePositionFromLoadData = {
-            lat: potentialHomeLocation.x,
-            lon: potentialHomeLocation.y,
-            alt: potentialHomeLocation.z,
-            from: action.payload.from, // "file" or "drone"
-          }
-        }
-      }
+      if (action.payload === state.updatePlannedHomePositionFromLoadData) return
+      state.updatePlannedHomePositionFromLoadData = action.payload
     },
     resetUpdatePlannedHomePositionFromLoadData: (state) => {
       state.updatePlannedHomePositionFromLoadData = {

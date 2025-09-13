@@ -25,6 +25,7 @@ import {
 
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"
+import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import SocketFactory from "../../helpers/socket"
 import {
   setAttitudeData,
@@ -341,13 +342,25 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                store.dispatch(
-                  setUpdatePlannedHomePositionFromLoadData({
-                    waypoints: missionItemsWithIds,
-                    from: "drone",
-                  }),
-                )
-                store.dispatch(setUpdatePlannedHomePositionFromLoadModal(true))
+
+                // Check if first item is a home location, then open modal to
+                // select whether to update planned home position
+                if (missionItemsWithIds.length > 0) {
+                  const potentialHomeLocation = missionItemsWithIds[0]
+                  if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadData({
+                        lat: potentialHomeLocation.x,
+                        lon: potentialHomeLocation.y,
+                        alt: potentialHomeLocation.z,
+                        from: "drone",
+                      }),
+                    )
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadModal(true),
+                    )
+                  }
+                }
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({
@@ -430,13 +443,25 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                store.dispatch(
-                  setUpdatePlannedHomePositionFromLoadData({
-                    waypoints: missionItemsWithIds,
-                    from: "file",
-                  }),
-                )
-                store.dispatch(setUpdatePlannedHomePositionFromLoadModal(true))
+
+                // Check if first item is a home location, then open modal to
+                // select whether to update planned home position
+                if (missionItemsWithIds.length > 0) {
+                  const potentialHomeLocation = missionItemsWithIds[0]
+                  if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadData({
+                        lat: potentialHomeLocation.x,
+                        lon: potentialHomeLocation.y,
+                        alt: potentialHomeLocation.z,
+                        from: "file",
+                      }),
+                    )
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadModal(true),
+                    )
+                  }
+                }
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({

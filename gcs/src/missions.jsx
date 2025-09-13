@@ -16,6 +16,7 @@ import {
   Button,
   Divider,
   FileButton,
+  Group,
   Modal,
   Progress,
   Tabs,
@@ -45,6 +46,7 @@ import {
   emitImportMissionFromFile,
   emitWriteCurrentMission,
   getFrameKey,
+  resetUpdatePlannedHomePositionFromLoadData,
   selectActiveTab,
   selectDrawingFenceItems,
   selectDrawingMissionItems,
@@ -54,9 +56,13 @@ import {
   selectPlannedHomePosition,
   selectTargetInfo,
   selectUnwrittenChanges,
+  selectUpdatePlannedHomePositionFromLoadData,
+  selectUpdatePlannedHomePositionFromLoadModal,
   setActiveTab,
   setMissionProgressData,
   setMissionProgressModal,
+  setUpdatePlannedHomePositionFromLoadModal,
+  updatePlannedHomePositionBasedOnLoadedWaypointsThunk,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -95,6 +101,12 @@ export default function Missions() {
   const unwrittenChanges = useSelector(selectUnwrittenChanges)
   const missionProgressModalOpened = useSelector(selectMissionProgressModal)
   const missionProgressModalData = useSelector(selectMissionProgressData)
+  const updatePlannedHomePositionFromLoadModalOpened = useSelector(
+    selectUpdatePlannedHomePositionFromLoadModal,
+  )
+  const updatePlannedHomePositionFromLoadModalData = useSelector(
+    selectUpdatePlannedHomePositionFromLoadData,
+  )
 
   // Other states
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
@@ -309,6 +321,48 @@ export default function Missions() {
                 className="w-full mx-auto my-auto"
               />
             )}
+        </div>
+      </Modal>
+
+      <Modal
+        opened={updatePlannedHomePositionFromLoadModalOpened}
+        onClose={() =>
+          dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
+        }
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        withCloseButton={false}
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <div className="flex flex-col items-center justify-center gap-4">
+          <p className="text-center">
+            Update the planned home position to the home position loaded from
+            the {updatePlannedHomePositionFromLoadModalData?.from}?
+          </p>
+
+          <Group gap="xl">
+            <Button
+              size="sm"
+              onClick={() => {
+                dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
+                dispatch(resetUpdatePlannedHomePositionFromLoadData())
+              }}
+            >
+              No
+            </Button>
+            <Button
+              size="sm"
+              onClick={() =>
+                dispatch(updatePlannedHomePositionBasedOnLoadedWaypointsThunk())
+              }
+            >
+              Yes
+            </Button>
+          </Group>
         </div>
       </Modal>
 

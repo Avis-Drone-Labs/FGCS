@@ -53,7 +53,8 @@ import {
   setMissionProgressModal,
   setTargetInfo,
   setUnwrittenChanges,
-  updatePlannedHomePositionBasedOnWaypointsThunk,
+  setUpdatePlannedHomePositionFromLoadData,
+  setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
   queueErrorNotification,
@@ -341,10 +342,12 @@ const socketMiddleware = (store) => {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
                 store.dispatch(
-                  updatePlannedHomePositionBasedOnWaypointsThunk(
-                    missionItemsWithIds,
-                  ),
+                  setUpdatePlannedHomePositionFromLoadData({
+                    waypoints: missionItemsWithIds,
+                    from: "drone",
+                  }),
                 )
+                store.dispatch(setUpdatePlannedHomePositionFromLoadModal(true))
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({
@@ -428,10 +431,12 @@ const socketMiddleware = (store) => {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
                 store.dispatch(
-                  updatePlannedHomePositionBasedOnWaypointsThunk(
-                    missionItemsWithIds,
-                  ),
+                  setUpdatePlannedHomePositionFromLoadData({
+                    waypoints: missionItemsWithIds,
+                    from: "file",
+                  }),
                 )
+                store.dispatch(setUpdatePlannedHomePositionFromLoadModal(true))
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({

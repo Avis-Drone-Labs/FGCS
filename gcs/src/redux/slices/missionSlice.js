@@ -32,8 +32,15 @@ const missionInfoSlice = createSlice({
       message: "",
       progress: null,
     },
+    updatePlannedHomePositionFromLoadData: {
+      lat: null,
+      lon: null,
+      alt: null,
+      from: "", // "file" or "drone"
+    },
     modals: {
       missionProgressModal: false,
+      updatePlannedHomePositionFromLoadModal: false,
     },
     plannedHomePosition: {
       lat: 0,
@@ -265,6 +272,34 @@ const missionInfoSlice = createSlice({
         return
       state.missionProgressData = { message: "", progress: null }
     },
+    setUpdatePlannedHomePositionFromLoadModal: (state, action) => {
+      if (
+        action.payload === state.modals.updatePlannedHomePositionFromLoadModal
+      )
+        return
+      state.modals.updatePlannedHomePositionFromLoadModal = action.payload
+    },
+    setUpdatePlannedHomePositionFromLoadData: (state, action) => {
+      if (action.payload.waypoints.length > 0) {
+        const potentialHomeLocation = action.payload.waypoints[0]
+        if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+          state.updatePlannedHomePositionFromLoadData = {
+            lat: potentialHomeLocation.x,
+            lon: potentialHomeLocation.y,
+            alt: potentialHomeLocation.z,
+            from: action.payload.from, // "file" or "drone"
+          }
+        }
+      }
+    },
+    resetUpdatePlannedHomePositionFromLoadData: (state) => {
+      state.updatePlannedHomePositionFromLoadData = {
+        lat: null,
+        lon: null,
+        alt: null,
+        from: "", // "file" or "drone"
+      }
+    },
     updateContextMenuState: (state, action) => {
       if (action.payload === state.contextMenu) return
 
@@ -310,6 +345,10 @@ const missionInfoSlice = createSlice({
     selectCurrentMission: (state) => state.currentMission,
     selectCurrentMissionItems: (state) => state.currentMissionItems,
     selectPlannedHomePosition: (state) => state.plannedHomePosition,
+    selectUpdatePlannedHomePositionFromLoadModal: (state) =>
+      state.modals.updatePlannedHomePositionFromLoadModal,
+    selectUpdatePlannedHomePositionFromLoadData: (state) =>
+      state.updatePlannedHomePositionFromLoadData,
     selectTargetInfo: (state) => state.targetInfo,
     selectDrawingMissionItems: (state) => state.drawingItems.missionItems,
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
@@ -352,20 +391,18 @@ export const addIdToItem = (missionItem) => {
   return missionItem
 }
 
-export const updatePlannedHomePositionBasedOnWaypointsThunk =
-  (waypoints) => (dispatch) => {
-    if (waypoints.length > 0) {
-      const potentialHomeLocation = waypoints[0]
-      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-        dispatch(
-          setPlannedHomePosition({
-            lat: potentialHomeLocation.x,
-            lon: potentialHomeLocation.y,
-            alt: potentialHomeLocation.z,
-          }),
-        )
-      }
-    }
+export const updatePlannedHomePositionBasedOnLoadedWaypointsThunk =
+  () => (dispatch, getState) => {
+    const { updatePlannedHomePositionFromLoadData } = getState().missionInfo
+    dispatch(
+      setPlannedHomePosition({
+        lat: updatePlannedHomePositionFromLoadData.lat,
+        lon: updatePlannedHomePositionFromLoadData.lon,
+        alt: updatePlannedHomePositionFromLoadData.alt,
+      }),
+    )
+    dispatch(resetUpdatePlannedHomePositionFromLoadData())
+    dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
   }
 
 export const getFrameKey = (frame) =>
@@ -399,6 +436,8 @@ export const {
   selectCurrentMission,
   selectCurrentMissionItems,
   selectPlannedHomePosition,
+  selectUpdatePlannedHomePositionFromLoadModal,
+  selectUpdatePlannedHomePositionFromLoadData,
   selectTargetInfo,
   selectDrawingMissionItems,
   selectDrawingFenceItems,
@@ -415,6 +454,9 @@ export const {
   setCurrentMission,
   setCurrentMissionItems,
   setPlannedHomePosition,
+  setUpdatePlannedHomePositionFromLoadModal,
+  setUpdatePlannedHomePositionFromLoadData,
+  resetUpdatePlannedHomePositionFromLoadData,
   setTargetInfo,
   updateDrawingItem,
   removeDrawingItem,

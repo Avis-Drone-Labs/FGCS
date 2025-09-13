@@ -62,9 +62,9 @@ import {
   setActiveTab,
   setMissionProgressData,
   setMissionProgressModal,
+  setPlannedHomePosition,
   setUpdatePlannedHomePositionFromLoadModal,
   updatePlannedHomePositionBasedOnLoadedWaypointsThunk,
-  setPlannedHomePosition,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -376,7 +376,46 @@ export default function Missions() {
             the {updatePlannedHomePositionFromLoadModalData?.from || "source"}?
           </p>
 
-          <Group gap="xl">
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-row justify-between w-full">
+              <div className="flex flex-col items-center flex-1">
+                <span className="font-bold">Current</span>
+                <span>
+                  Lat:{" "}
+                  {intToCoord(plannedHomePosition?.lat).toFixed(
+                    coordsFractionDigits,
+                  ) ?? "-"}
+                </span>
+                <span>
+                  Lon:{" "}
+                  {intToCoord(plannedHomePosition?.lon).toFixed(
+                    coordsFractionDigits,
+                  ) ?? "-"}
+                </span>
+                <span>Alt: {plannedHomePosition?.alt ?? "-"}</span>
+              </div>
+              <div className="flex flex-col items-center flex-1">
+                <span className="font-bold">New</span>
+                <span>
+                  Lat:{" "}
+                  {intToCoord(
+                    updatePlannedHomePositionFromLoadModalData?.lat,
+                  ).toFixed(coordsFractionDigits) ?? "-"}
+                </span>
+                <span>
+                  Lon:{" "}
+                  {intToCoord(
+                    updatePlannedHomePositionFromLoadModalData?.lon,
+                  ).toFixed(coordsFractionDigits) ?? "-"}
+                </span>
+                <span>
+                  Alt: {updatePlannedHomePositionFromLoadModalData?.alt ?? "-"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Group gap="xl" justify="space-between">
             <Button
               size="sm"
               onClick={() => {

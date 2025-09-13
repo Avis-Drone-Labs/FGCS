@@ -347,7 +347,19 @@ const socketMiddleware = (store) => {
                 // select whether to update planned home position
                 if (missionItemsWithIds.length > 0) {
                   const potentialHomeLocation = missionItemsWithIds[0]
-                  if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+                  const currentPlannedHomeLocation =
+                    storeState.missionInfo.plannedHomePosition
+
+                  // Check if the potential home location is different from the current planned home location
+                  if (
+                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
+                    (potentialHomeLocation.x !==
+                      currentPlannedHomeLocation.lat ||
+                      potentialHomeLocation.y !==
+                        currentPlannedHomeLocation.lon ||
+                      potentialHomeLocation.z !==
+                        currentPlannedHomeLocation.alt)
+                  ) {
                     store.dispatch(
                       setUpdatePlannedHomePositionFromLoadData({
                         lat: potentialHomeLocation.x,
@@ -448,7 +460,19 @@ const socketMiddleware = (store) => {
                 // select whether to update planned home position
                 if (missionItemsWithIds.length > 0) {
                   const potentialHomeLocation = missionItemsWithIds[0]
-                  if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
+                  const currentPlannedHomeLocation =
+                    storeState.missionInfo.plannedHomePosition
+
+                  // Check if the potential home location is different from the current planned home location
+                  if (
+                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
+                    (potentialHomeLocation.x !==
+                      currentPlannedHomeLocation.lat ||
+                      potentialHomeLocation.y !==
+                        currentPlannedHomeLocation.lon ||
+                      potentialHomeLocation.z !==
+                        currentPlannedHomeLocation.alt)
+                  ) {
                     store.dispatch(
                       setUpdatePlannedHomePositionFromLoadData({
                         lat: potentialHomeLocation.x,

@@ -280,7 +280,11 @@ const missionInfoSlice = createSlice({
       state.modals.updatePlannedHomePositionFromLoadModal = action.payload
     },
     setUpdatePlannedHomePositionFromLoadData: (state, action) => {
-      if (action.payload === state.updatePlannedHomePositionFromLoadData) return
+      if (
+        JSON.stringify(action.payload) ===
+        JSON.stringify(state.updatePlannedHomePositionFromLoadData)
+      )
+        return
       state.updatePlannedHomePositionFromLoadData = action.payload
     },
     resetUpdatePlannedHomePositionFromLoadData: (state) => {

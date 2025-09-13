@@ -341,7 +341,7 @@ export default function Missions() {
         <div className="flex flex-col items-center justify-center gap-4">
           <p className="text-center">
             Update the planned home position to the home position loaded from
-            the {updatePlannedHomePositionFromLoadModalData?.from}?
+            the {updatePlannedHomePositionFromLoadModalData?.from || "source"}?
           </p>
 
           <Group gap="xl">

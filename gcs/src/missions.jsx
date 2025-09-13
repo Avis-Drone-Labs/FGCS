@@ -18,6 +18,7 @@ import {
   FileButton,
   Group,
   Modal,
+  NumberInput,
   Progress,
   Tabs,
   Tooltip,
@@ -30,7 +31,7 @@ import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
-import { intToCoord } from "./helpers/dataFormatters"
+import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -63,12 +64,17 @@ import {
   setMissionProgressModal,
   setUpdatePlannedHomePositionFromLoadModal,
   updatePlannedHomePositionBasedOnLoadedWaypointsThunk,
+  setPlannedHomePosition,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 const resizeTableHeightPadding = 20 // To account for the handle height and some padding
+
+function isInputNumber(value) {
+  return value === "" || value === null || isNaN(Number(value))
+}
 
 function UnwrittenChangesWarning({ unwrittenChanges }) {
   const firstUnwrittenTab = Object.entries(unwrittenChanges).find(
@@ -130,6 +136,16 @@ export default function Missions() {
   const [currentPage] = useSessionStorage({ key: "currentPage" })
   const mapRef = useRef()
 
+  const [plannedHomeLatInput, setPlannedHomeLatInput] = useState(
+    intToCoord(plannedHomePosition?.lat ?? 0).toFixed(coordsFractionDigits),
+  )
+  const [plannedHomeLonInput, setPlannedHomeLonInput] = useState(
+    intToCoord(plannedHomePosition?.lon ?? 0).toFixed(coordsFractionDigits),
+  )
+  const [plannedHomeAltInput, setPlannedHomeAltInput] = useState(
+    plannedHomePosition?.alt ?? 0.1,
+  )
+
   useEffect(() => {
     if (tabsListRef.current) {
       // Set initial height of the table section when component mounts
@@ -153,6 +169,22 @@ export default function Missions() {
   useEffect(() => {
     activeTabRef.current = activeTab
   }, [activeTab])
+
+  useEffect(() => {
+    setPlannedHomeLatInput(
+      intToCoord(plannedHomePosition?.lat).toFixed(coordsFractionDigits),
+    )
+  }, [plannedHomePosition?.lat])
+
+  useEffect(() => {
+    setPlannedHomeLonInput(
+      intToCoord(plannedHomePosition?.lon).toFixed(coordsFractionDigits),
+    )
+  }, [plannedHomePosition?.lon])
+
+  useEffect(() => {
+    setPlannedHomeAltInput(plannedHomePosition?.alt)
+  }, [plannedHomePosition?.alt])
 
   function resetMissionProgressModalData() {
     dispatch(
@@ -399,7 +431,7 @@ export default function Missions() {
               }
               className="relative bg-falcongrey-800 overflow-y-auto"
             >
-              <div className="flex flex-col gap-8 p-4">
+              <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-4">
                   <UnwrittenChangesWarning
                     unwrittenChanges={unwrittenChanges}
@@ -450,7 +482,7 @@ export default function Missions() {
 
                 <div className="flex flex-col gap-2">
                   <p className="font-bold">
-                    Planned home location{" "}
+                    Planned home{" "}
                     <span>
                       <Tooltip
                         className="inline"
@@ -469,23 +501,75 @@ export default function Missions() {
                       </Tooltip>
                     </span>
                   </p>
-                  <p>
-                    Lat:{" "}
-                    {intToCoord(plannedHomePosition?.lat).toFixed(
-                      coordsFractionDigits,
-                    )}
-                  </p>
-                  <p>
-                    Lon:{" "}
-                    {intToCoord(plannedHomePosition?.lon).toFixed(
-                      coordsFractionDigits,
-                    )}
-                  </p>
+                  <NumberInput
+                    label="Lat"
+                    value={plannedHomeLatInput}
+                    onChange={(val) => setPlannedHomeLatInput(val)}
+                    onBlur={() => {
+                      if (isInputNumber(plannedHomeLatInput)) {
+                        setPlannedHomeLatInput(
+                          intToCoord(plannedHomePosition?.lat).toFixed(
+                            coordsFractionDigits,
+                          ),
+                        )
+                      }
+                    }}
+                    min={-90}
+                    max={90}
+                    step={0.000001}
+                    hideControls
+                  />
+                  <NumberInput
+                    label="Lon"
+                    value={plannedHomeLonInput}
+                    onChange={(val) => setPlannedHomeLonInput(val)}
+                    onBlur={() => {
+                      if (isInputNumber(plannedHomeLonInput)) {
+                        setPlannedHomeLonInput(
+                          intToCoord(plannedHomePosition?.lon).toFixed(
+                            coordsFractionDigits,
+                          ),
+                        )
+                      }
+                    }}
+                    min={-180}
+                    max={180}
+                    step={0.000001}
+                    hideControls
+                  />
+                  <NumberInput
+                    label="Alt"
+                    value={plannedHomeAltInput}
+                    onChange={(val) => setPlannedHomeAltInput(val)}
+                    onBlur={() => {
+                      if (isInputNumber(plannedHomeAltInput)) {
+                        setPlannedHomeAltInput(plannedHomePosition?.alt)
+                      }
+                    }}
+                    min={0.1}
+                    allowNegative={false}
+                    hideControls
+                  />
+                  <Button
+                    className="mt-2"
+                    onClick={() =>
+                      dispatch(
+                        setPlannedHomePosition({
+                          lat: coordToInt(plannedHomeLatInput),
+                          lon: coordToInt(plannedHomeLonInput),
+                          alt: plannedHomeAltInput,
+                        }),
+                      )
+                    }
+                  >
+                    Save planned home
+                  </Button>
                 </div>
 
                 <Divider className="my-1" />
 
                 <div className="flex flex-col gap-2">
+                  <p className="font-bold">Mission statistics</p>
                   <MissionStatistics />
                 </div>
               </div>

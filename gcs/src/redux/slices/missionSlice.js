@@ -1,5 +1,6 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
+import { coordToInt } from "../../helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
 
@@ -76,7 +77,39 @@ const missionInfoSlice = createSlice({
     },
     setPlannedHomePosition: (state, action) => {
       if (action.payload === state.plannedHomePosition) return
-      state.plannedHomePosition = action.payload
+
+      // Ensure that lat, lon, and alt (if provided) are numbers
+      if (
+        ("lat" in action.payload && typeof action.payload.lat !== "number") ||
+        ("lon" in action.payload && typeof action.payload.lon !== "number") ||
+        ("alt" in action.payload && typeof action.payload.alt !== "number")
+      ) {
+        console.error(
+          "Latitude, Longitude, and Altitude must be numbers. Got: ",
+          action.payload,
+        )
+        return
+      }
+
+      if (
+        ("lat" in action.payload &&
+          (action.payload.lat < coordToInt(-90) ||
+            action.payload.lat > coordToInt(90))) ||
+        ("lon" in action.payload &&
+          (action.payload.lon < coordToInt(-180) ||
+            action.payload.lon > coordToInt(180)))
+      ) {
+        console.error(
+          "Latitude must be between -90 and 90, Longitude must be between -180 and 180. Got: ",
+          action.payload,
+        )
+        return
+      }
+
+      state.plannedHomePosition = {
+        ...state.plannedHomePosition,
+        ...action.payload,
+      }
 
       if (
         state.drawingItems.missionItems.length > 0 &&
@@ -84,16 +117,16 @@ const missionInfoSlice = createSlice({
       ) {
         state.drawingItems.missionItems[0] = {
           ...state.drawingItems.missionItems[0],
-          x: action.payload.lat,
-          y: action.payload.lon,
+          x: state.plannedHomePosition.lat,
+          y: state.plannedHomePosition.lon,
         }
       } else {
         const newHomeItem = {
           id: uuidv4(),
           seq: 0, // Home position is always the first item
-          x: action.payload.lat,
-          y: action.payload.lon,
-          z: action.payload.alt || 0,
+          x: state.plannedHomePosition.lat,
+          y: state.plannedHomePosition.lon,
+          z: state.plannedHomePosition.alt || 0,
           frame: getFrameKey("MAV_FRAME_GLOBAL"),
           command: 16, // MAV_CMD_NAV_WAYPOINT
           param1: 0,

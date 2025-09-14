@@ -6,7 +6,7 @@
 import { memo, useEffect, useState } from "react"
 
 // 3rd party imports
-import { ScrollArea, Tooltip } from "@mantine/core"
+import { ActionIcon, ScrollArea, Tooltip } from "@mantine/core"
 
 // Custom components, helpers and data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
@@ -14,16 +14,37 @@ import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import ValueInput from "./valueInput"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
-import { selectShownParams } from "../../redux/slices/paramsSlice"
-import { IconInfoCircle } from "@tabler/icons-react"
+import {
+  deleteModifiedParam,
+  selectModifiedParams,
+  selectShownParams,
+} from "../../redux/slices/paramsSlice"
+import { IconArrowBack, IconInfoCircle } from "@tabler/icons-react"
 
-const RowItem = memo(({ index, style, onChange }) => {
+const RowItem = memo(({ index, style }) => {
+  const dispatch = useDispatch()
   const aircraftType = useSelector(selectAircraftType)
   const shownParams = useSelector(selectShownParams)
+  const modifiedParams = useSelector(selectModifiedParams)
   const [paramDef, setParamDef] = useState({})
   const param = shownParams[index]
+  const hasBeenModified = modifiedParams.find(
+    (item) => item.param_id == param.param_id,
+  )
+
+  function removeModified(param) {
+    let initial_value = modifiedParams.find(
+      (item) => item.param_id == param.param_id,
+    ).initial_value
+    dispatch(
+      deleteModifiedParam({
+        param_id: param.param_id,
+        initial_value: initial_value,
+      }),
+    )
+  }
 
   useEffect(() => {
     if (aircraftType === 1) {
@@ -35,9 +56,9 @@ const RowItem = memo(({ index, style, onChange }) => {
 
   return (
     <div style={style} className="flex flex-row items-center space-x-4">
-      <div className="flex flex-row w-56 gap-x-2">
+      <div className="flex flex-row w-2/12 gap-x-2">
         <Tooltip label={paramDef?.DisplayName} position="top-start">
-          <p className="w-min">{param.param_id}</p>
+          <p>{param.param_id}</p>
         </Tooltip>
 
         {paramDef?.Values && paramDef?.Range && (
@@ -47,9 +68,8 @@ const RowItem = memo(({ index, style, onChange }) => {
               <div className="text-wrap max-w-80">
                 {Object.keys(paramDef?.Values).map((key) => {
                   return (
-                    <p>
-                      {key}:{" "}
-                      {paramDef?.Values[key]}
+                    <p key={key}>
+                      {key}: {paramDef?.Values[key]}
                     </p>
                   )
                 })}
@@ -61,12 +81,23 @@ const RowItem = memo(({ index, style, onChange }) => {
         )}
       </div>
 
-      <ValueInput
-        index={index}
-        paramDef={paramDef}
-        onChange={onChange}
-        className="w-3/12"
-      />
+      <div className="flex items-end w-4/12 justify-between gap-x-4">
+        <ValueInput index={index} paramDef={paramDef} className="grow" />
+        {hasBeenModified && (
+          <Tooltip
+            label={`Reset to initial value of ${modifiedParams.find((item) => item.param_id == param.param_id).initial_value}`}
+          >
+            <ActionIcon
+              size="lg"
+              color="red"
+              variant="light"
+              onClick={() => removeModified(param)}
+            >
+              <IconArrowBack />
+            </ActionIcon>
+          </Tooltip>
+        )}
+      </div>
 
       <div className="w-1/2">
         <ScrollArea.Autosize className="max-h-24">

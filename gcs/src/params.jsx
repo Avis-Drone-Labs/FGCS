@@ -24,7 +24,6 @@ import { Row } from "./components/params/row.jsx"
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
-  appendModifiedParams,
   resetParamState,
   selectFetchingVars,
   selectFetchingVarsProgress,
@@ -35,8 +34,6 @@ import {
   selectShownParams,
   setFetchingVars,
   setShownParams,
-  updateModifiedParamValue,
-  updateParamValue,
 } from "./redux/slices/paramsSlice.js"
 
 export default function Params() {
@@ -56,38 +53,6 @@ export default function Params() {
   // Fetch progress states
   const fetchingVars = useSelector(selectFetchingVars)
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
-
-  // Checks if a parameter has been modified since the last save
-  function isModified(param) {
-    return modifiedParams.find((obj) => {
-      return obj.param_id === param.param_id
-    })
-  }
-
-  // Adds a parameter to the list of parameters that have been modified since the last save
-  function addToModifiedParams(value, param) {
-    if (value === "") return
-
-    if (isModified(param)) {
-      dispatch(
-        updateModifiedParamValue({
-          param_id: param.param_id,
-          param_value: value,
-        }),
-      )
-    } else {
-      // Otherwise add it to modified params
-      dispatch(
-        appendModifiedParams({
-          param_id: param.param_id,
-          param_value: value,
-          param_type: param.param_type,
-        }),
-      )
-    }
-
-    dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
-  }
 
   // Reset state if we loose connection
   useEffect(() => {
@@ -140,9 +105,6 @@ export default function Params() {
                       width={width}
                       itemSize={120}
                       itemCount={shownParams.length}
-                      itemData={{
-                        onChange: addToModifiedParams,
-                      }}
                     >
                       {Row}
                     </FixedSizeList>

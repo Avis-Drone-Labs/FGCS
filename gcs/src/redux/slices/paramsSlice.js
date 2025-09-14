@@ -52,6 +52,12 @@ const paramsSlice = createSlice({
     },
     appendModifiedParams: (state, action) => {
       state.modifiedParams = state.modifiedParams.concat(action.payload)
+
+      // Delete where initial_value and param_value are the same, this is the case when someone deletes the input and puts it in again
+      // as the same - very niche case but can happen
+      state.modifiedParams = state.modifiedParams.filter(
+        (item) => item.initial_value !== item.param_value,
+      )
     },
     updateParamValue: (state, action) => {
       state.params = state.params.map((item) =>
@@ -61,9 +67,25 @@ const paramsSlice = createSlice({
       )
     },
     updateModifiedParamValue: (state, action) => {
+      // Update param_value
       state.modifiedParams = state.modifiedParams.map((item) =>
         item.param_id === action.payload.param_id
           ? { ...item, param_value: action.payload.param_value }
+          : item,
+      )
+
+      // Delete where initial_value and param_value are the same
+      state.modifiedParams = state.modifiedParams.filter(
+        (item) => item.initial_value !== item.param_value,
+      )
+    },
+    deleteModifiedParam: (state, action) => {
+      state.modifiedParams = state.modifiedParams.filter(
+        (item) => item.param_id !== action.payload.param_id,
+      )
+      state.params = state.params.map((item) =>
+        item.param_id === action.payload.param_id
+          ? { ...item, param_value: action.payload.initial_value }
           : item,
       )
     },
@@ -108,6 +130,7 @@ export const {
   appendModifiedParams,
   updateParamValue,
   updateModifiedParamValue,
+  deleteModifiedParam,
   resetParamState,
   emitRebootAutopilot,
   emitRefreshParams,

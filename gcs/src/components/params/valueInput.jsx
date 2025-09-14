@@ -12,11 +12,19 @@ import { NumberInput, Select } from "@mantine/core"
 import BitmaskSelect from "./bitmaskSelect"
 
 // Redux
-import { useSelector } from "react-redux"
-import { selectShownParams } from "../../redux/slices/paramsSlice"
+import { useDispatch, useSelector } from "react-redux"
+import {
+  appendModifiedParams,
+  selectModifiedParams,
+  selectShownParams,
+  updateModifiedParamValue,
+  updateParamValue,
+} from "../../redux/slices/paramsSlice"
 
-export default function ValueInput({ index, paramDef, onChange, className }) {
+export default function ValueInput({ index, paramDef, className }) {
+  const dispatch = useDispatch()
   const shownParams = useSelector(selectShownParams)
+  const modifiedParams = useSelector(selectModifiedParams)
   const param = shownParams[index]
 
   // Try to handle floats because mantine handles keys internally as strings
@@ -42,12 +50,45 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
     return value
   }
 
+  // Checks if a parameter has been modified since the last save
+  function isModified(param) {
+    return modifiedParams.find((obj) => {
+      return obj.param_id === param.param_id
+    })
+  }
+
+  // Adds a parameter to the list of parameters that have been modified since the last save
+  function addToModifiedParams(value, param) {
+    if (value === "") return
+
+    if (isModified(param)) {
+      dispatch(
+        updateModifiedParamValue({
+          param_id: param.param_id,
+          param_value: value,
+        }),
+      )
+    } else {
+      // Otherwise add it to modified params
+      dispatch(
+        appendModifiedParams({
+          param_id: param.param_id,
+          param_value: value,
+          param_type: param.param_type,
+          initial_value: param.param_value,
+        }),
+      )
+    }
+
+    dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
+  }
+
   if (paramDef?.Values && !paramDef?.Range) {
     return (
       <Select // Values input
         className={className}
         value={`${cleanFloat(param.param_value)}`}
-        onChange={(value) => onChange(sanitiseInput(value), param)}
+        onChange={(value) => addToModifiedParams(sanitiseInput(value), param)}
         data={Object.keys(paramDef?.Values).map((key) => ({
           value: `${key}`,
           label: `${key}: ${paramDef?.Values[key]}`,
@@ -62,7 +103,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
       <BitmaskSelect // Bitmask input
         className={className}
         value={param.param_value}
-        onChange={onChange}
+        onChange={addToModifiedParams}
         param={param}
         options={paramDef?.Bitmask}
       />
@@ -79,7 +120,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
           : ""
       }
       value={param.param_value}
-      onChange={(value) => onChange(value, param)}
+      onChange={(value) => addToModifiedParams(value, param)}
       decimalScale={5}
       hideControls
       min={paramDef?.Range ? paramDef?.Range.low : null}

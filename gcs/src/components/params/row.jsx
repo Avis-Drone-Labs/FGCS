@@ -6,6 +6,6 @@
 // Custom components, helpers and data
 import RowItem from "./rowItem"
 
-export const Row = ({ data, index, style }) => {
-  return <RowItem index={index} style={style} onChange={data.onChange} />
+export const Row = ({ index, style }) => {
+  return <RowItem index={index} style={style} />
 }

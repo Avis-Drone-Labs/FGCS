@@ -39,6 +39,7 @@ import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
+import UpdatePlannedHomePositionModal from "./components/missions/updatePlannedHomePositionModal"
 import {
   emitExportMissionToFile,
   emitGetCurrentMission,
@@ -66,7 +67,7 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 const coordsFractionDigits = 7
 const resizeTableHeightPadding = 20 // To account for the handle height and some padding
 
-function isInputNumber(value) {
+function isInvalidInputNumber(value) {
   return value === "" || value === null || isNaN(Number(value))
 }
 
@@ -344,6 +345,8 @@ export default function Missions() {
         </div>
       </Modal>
 
+      <UpdatePlannedHomePositionModal />
+
       {/* Banner to let people know that things are still under development */}
       {showWarningBanner && (
         <div className="bg-falconred-700 flex flex-row items-center justify-between w-full">
@@ -452,7 +455,7 @@ export default function Missions() {
                     value={plannedHomeLatInput}
                     onChange={(val) => setPlannedHomeLatInput(val)}
                     onBlur={() => {
-                      if (isInputNumber(plannedHomeLatInput)) {
+                      if (isInvalidInputNumber(plannedHomeLatInput)) {
                         setPlannedHomeLatInput(
                           intToCoord(plannedHomePosition?.lat).toFixed(
                             coordsFractionDigits,
@@ -470,7 +473,7 @@ export default function Missions() {
                     value={plannedHomeLonInput}
                     onChange={(val) => setPlannedHomeLonInput(val)}
                     onBlur={() => {
-                      if (isInputNumber(plannedHomeLonInput)) {
+                      if (isInvalidInputNumber(plannedHomeLonInput)) {
                         setPlannedHomeLonInput(
                           intToCoord(plannedHomePosition?.lon).toFixed(
                             coordsFractionDigits,
@@ -488,7 +491,7 @@ export default function Missions() {
                     value={plannedHomeAltInput}
                     onChange={(val) => setPlannedHomeAltInput(val)}
                     onBlur={() => {
-                      if (isInputNumber(plannedHomeAltInput)) {
+                      if (isInvalidInputNumber(plannedHomeAltInput)) {
                         setPlannedHomeAltInput(plannedHomePosition?.alt)
                       }
                     }}

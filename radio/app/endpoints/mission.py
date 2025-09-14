@@ -1,3 +1,5 @@
+from typing import Any
+
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
@@ -105,7 +107,7 @@ def getCurrentMissionAll() -> None:
 
     result = droneStatus.drone.missionController.getCurrentMissionAll()
 
-    data = result.get("data", {})
+    data: dict[str, Any] = result.get("data", {})
     if not isinstance(data, dict):
         data = {}
 

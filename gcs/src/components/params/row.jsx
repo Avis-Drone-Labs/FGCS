@@ -6,8 +6,6 @@
 // Custom components, helpers and data
 import RowItem from "./rowItem"
 
-export const Row = ({ data, index, style }) => {
-  const param = data.params[index]
-
-  return <RowItem param={param} style={style} onChange={data.onChange} />
+export const Row = ({ index, style }) => {
+  return <RowItem index={index} style={style} />
 }

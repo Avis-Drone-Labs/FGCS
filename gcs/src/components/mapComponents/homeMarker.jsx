@@ -28,6 +28,7 @@ export default function HomeMarker({
   return (
     <>
       <MarkerPin
+        id="home"
         lat={lat}
         lon={lon}
         colour={tailwindColors.green[400]}

@@ -31,12 +31,12 @@ const RowItem = memo(({ index, style }) => {
   const [paramDef, setParamDef] = useState({})
   const param = shownParams[index]
   const hasBeenModified = modifiedParams.find(
-    (item) => item.param_id == param.param_id,
+    (item) => item.param_id === param.param_id,
   )
 
   function removeModified(param) {
     let initial_value = modifiedParams.find(
-      (item) => item.param_id == param.param_id,
+      (item) => item.param_id === param.param_id,
     ).initial_value
     dispatch(
       deleteModifiedParam({
@@ -85,7 +85,7 @@ const RowItem = memo(({ index, style }) => {
         <ValueInput index={index} paramDef={paramDef} className="grow" />
         {hasBeenModified && (
           <Tooltip
-            label={`Reset to previous value of ${modifiedParams.find((item) => item.param_id == param.param_id).initial_value}`}
+            label={`Reset to previous value of ${modifiedParams.find((item) => item.param_id === param.param_id).initial_value}`}
           >
             <ActionIcon
               size="lg"

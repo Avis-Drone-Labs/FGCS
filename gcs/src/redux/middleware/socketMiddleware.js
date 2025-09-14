@@ -324,7 +324,6 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
-          console.log(msg)
           store.dispatch(setParams(msg))
           store.dispatch(setShownParams(msg))
           store.dispatch(setFetchingVars(false))

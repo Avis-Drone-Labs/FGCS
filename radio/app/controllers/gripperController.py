@@ -88,7 +88,7 @@ class GripperController:
             Response
         """
         if (gripperEnabled := self.getEnabled()) is None:
-            logger.warning("Could not get gripper state from drone.")
+            logger.error("Could not get gripper state from drone.")
             return {
                 "success": False,
                 "message": "Could not get gripper state from drone.",

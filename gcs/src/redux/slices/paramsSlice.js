@@ -24,6 +24,7 @@ const paramsSlice = createSlice({
     },
     setParams: (state, action) => {
       if (action.payload === state.params) return
+      if (state.params.length > 0 && action.payload.length > 0) return // Ignore unless the params have been reset or we are reseting to []
       state.params = action.payload
     },
     setShownParams: (state, action) => {

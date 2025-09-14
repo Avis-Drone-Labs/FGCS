@@ -24,7 +24,9 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
   function sanitiseInput(value, toString = false) {
     let sanitisedValue = value
     if (!isNaN(value) && String(value).trim() !== "") {
-      sanitisedValue = String(value).includes(".") ? parseFloat(value) : parseInt(value)
+      sanitisedValue = String(value).includes(".")
+        ? parseFloat(value)
+        : parseInt(value)
     }
 
     return toString ? `${sanitisedValue}` : sanitisedValue

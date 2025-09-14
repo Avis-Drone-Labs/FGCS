@@ -32,6 +32,7 @@ import {
   selectShowModifiedParams,
   setAutoPilotRebootModalOpen,
   setFetchingVars,
+  setModifiedParams,
   setParams,
   setParamSearchValue,
   setShownParams,
@@ -46,6 +47,7 @@ export default function ParamsToolbar() {
 
   function refreshCallback() {
     dispatch(setParams([]))
+    dispatch(setModifiedParams([]))
     dispatch(setShownParams([]))
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))

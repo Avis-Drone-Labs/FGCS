@@ -45,11 +45,11 @@ const RowItem = memo(({ index, style, onChange }) => {
             className="self-center"
             label={
               <div className="text-wrap max-w-80">
-                {Object.keys(paramDef?.Values).map((key, index) => {
+                {Object.keys(paramDef?.Values).map((key) => {
                   return (
                     <p>
                       {key}:{" "}
-                      {paramDef?.Values[Object.keys(paramDef?.Values)[index]]}
+                      {paramDef?.Values[key]}
                     </p>
                   )
                 })}

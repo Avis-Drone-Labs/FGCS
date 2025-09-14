@@ -15,23 +15,9 @@ import BitmaskSelect from "./bitmaskSelect"
 import { useSelector } from "react-redux"
 import { selectShownParams } from "../../redux/slices/paramsSlice"
 
-const PARAM_INPUT_ENUM = {
-  Number: 0,
-  Select: 1,
-  BitMask: 2,
-}
-
 export default function ValueInput({ index, paramDef, onChange, className }) {
   const shownParams = useSelector(selectShownParams)
   const param = shownParams[index]
-
-  // Select param enum type
-  let paramInputType = PARAM_INPUT_ENUM.Number
-  if (paramDef?.Values && !paramDef?.Range) {
-    paramInputType = PARAM_INPUT_ENUM.Select
-  } else if (paramDef?.Range && !paramDef?.Values) {
-    paramInputType = PARAM_INPUT_ENUM.BitMask
-  }
 
   // Try to handle floats because mantine handles keys internally as strings
   // Which leads to floating point rounding errors
@@ -56,7 +42,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
     return value
   }
 
-  if (paramInputType == PARAM_INPUT_ENUM.Select) {
+  if (paramDef?.Values && !paramDef?.Range) {
     return (
       <Select // Values input
         className={className}
@@ -71,7 +57,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
     )
   }
 
-  if (paramInputType == PARAM_INPUT_ENUM.Select) {
+  if (paramDef?.Range && !paramDef?.Values) {
     return (
       <BitmaskSelect // Bitmask input
         className={className}

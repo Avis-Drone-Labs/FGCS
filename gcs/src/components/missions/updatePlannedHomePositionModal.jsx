@@ -1,4 +1,4 @@
-import { Button, Group, Modal } from "@mantine/core"
+import { Button, Modal } from "@mantine/core"
 import { useDispatch, useSelector } from "react-redux"
 import { intToCoord } from "../../helpers/dataFormatters"
 import {
@@ -43,13 +43,20 @@ export default function UpdatePlannedHomePositionModal() {
     if (coord === compare) return <span>{coord}</span>
 
     // Loop through each digit and highlight it and the rest of the string red
-    let differentIndex = 0;
+    let differentIndex = 0
     for (let i = 0; i < coord.length; i++) {
       differentIndex = i
       if (coord[i] !== compare[i]) break
     }
     coord = coord.toString()
-    return <><span>{coord.slice(0, differentIndex)}</span><span className="text-falconred-600 font-bold">{coord.slice(differentIndex)}</span></>
+    return (
+      <>
+        <span>{coord.slice(0, differentIndex)}</span>
+        <span className="text-falconred-600 font-bold">
+          {coord.slice(differentIndex)}
+        </span>
+      </>
+    )
   }
 
   return (
@@ -67,7 +74,8 @@ export default function UpdatePlannedHomePositionModal() {
     >
       <div className="flex flex-col items-center justify-center gap-4">
         <p>
-          Would you like to update the planned home position to the home position loaded from the{" "}
+          Would you like to update the planned home position to the home
+          position loaded from the{" "}
           {updatePlannedHomePositionFromLoadModalData?.from || "source"}?
         </p>
 

@@ -309,20 +309,6 @@ export default function Missions() {
     }
   }
 
-  function differenceBetweenCoordsStyling(coord, compare) {
-    if (!coord) return <span>-</span>
-    if (coord === compare) return <span>{coord}</span>
-
-    // Loop through each digit and highlight it and the rest of the string red
-    let differentIndex = 0;
-    for (let i = 0; i < coord.length; i++) {
-      differentIndex = i
-      if (coord[i] !== compare[i]) break
-    }
-    coord = coord.toString()
-    return <><span>{coord.slice(0, differentIndex)}</span><span className="text-falconred-600 font-bold">{coord.slice(differentIndex)}</span></>
-  }
-
   return (
     <Layout currentPage="missions">
       <Modal

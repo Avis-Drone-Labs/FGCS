@@ -60,7 +60,6 @@ import { pushMessage } from "../slices/statusTextSlice.js"
 import { emitLog } from "../slices/loggingSlice.js"
 import { logDebug, logError, logInfo } from "../../helpers/logging.js"
 
-import process from "process"
 import { handleEmitters } from "./emitters.js"
 import { dataFormatters } from "../../helpers/dataFormatters.js"
 
@@ -152,7 +151,7 @@ const socketMiddleware = (store) => {
         */
 
         // In development mode, hook socket on and emit so that we can debug log every time we recieve / send a socket message
-        if (process.env.NODE_ENV === "development") {
+        if (window.ipcRenderer.isDev()) {
           const originalOn = socket.socket.on.bind(socket.socket)
 
           socket.socket.on = (event, callback) => {

@@ -13,8 +13,6 @@ import { Commands } from "./spotlight/commandHandler"
 import SingleRunWrapper from "./SingleRunWrapper"
 import { SettingsProvider } from "../helpers/settingsProvider"
 
-import process from "process"
-
 // Routes
 import FLA from "../fla"
 import Graphs from "../graphs"
@@ -38,7 +36,7 @@ export default function AppContent() {
   const dispatch = useDispatch()
   useEffect(() => {
     // Only add console log handler in dev mode
-    if (process.env.NODE_ENV === "development") {
+    if (window.ipcRenderer.isDev()) {
       dispatch(registerHandler(consoleLogHandler))
     }
 

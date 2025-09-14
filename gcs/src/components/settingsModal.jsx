@@ -13,8 +13,6 @@ import { IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import DefaultSettings from "../../data/default_settings.json"
 
-import process from "process"
-
 const isValidNumber = (num, range) => {
   return (
     num &&
@@ -224,7 +222,7 @@ function SettingsModal() {
               )
             })}
 
-          {process.env.NODE_ENV === "development" && (
+          {window.ipcRenderer.isDev() && (
             <Tabs.Tab key={"Development"} value={"Development"} mt="auto">
               Development
             </Tabs.Tab>
@@ -249,7 +247,7 @@ function SettingsModal() {
           )
         })}
 
-        {process.env.NODE_ENV === "development" && (
+        {window.ipcRenderer.isDev() && (
           <Tabs.Panel
             className="space-y-4"
             value="Development"

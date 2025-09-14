@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   getSaveMissionFilePath: (options) =>
     ipcRenderer.invoke("missions:get-save-mission-file-path", options),
   getNodeEnv: () => ipcRenderer.invoke("app:get-node-env"),
+  isDev: () => ipcRenderer.invoke("app:get-node-env") != "production",
   getVersion: () => ipcRenderer.invoke("app:get-version"),
   getSettings: () => ipcRenderer.invoke("getSettings"),
   saveSettings: (settings) => ipcRenderer.invoke("setSettings", settings),

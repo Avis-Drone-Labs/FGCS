@@ -153,7 +153,7 @@ class ParamsController:
             param_id = param.get("param_id", None)
             param_value = param.get("param_value", None)
             param_type = param.get("param_type", None)
-            del param["initial_value"]  # Remove initial value if it exists
+            param.pop("initial_value", None)  # Remove initial value if it exists
 
             if param_id is None or param_value is None or param_type is None:
                 self.drone.logger.error(f"Invalid parameter data: {param}, skipping")

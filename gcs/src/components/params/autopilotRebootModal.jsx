@@ -6,8 +6,8 @@
 import { Button, Loader, Modal } from "@mantine/core"
 
 // Styling imports
-import tailwindConfig from "../../../tailwind.config.js"
 import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
@@ -48,7 +48,7 @@ export default function AutopilotRebootModal() {
                   {rebootData.message} You will need to reconnect.
                 </p>
                 <Button
-                  onClick={close}
+                  onClick={() => dispatch(setAutoPilotRebootModalOpen(false))}
                   color={tailwindColors.red[600]}
                   className="mt-4"
                 >

@@ -82,11 +82,6 @@ const paramsSlice = createSlice({
       state.modifiedParams = state.modifiedParams.filter(
         (item) => item.param_id !== action.payload.param_id,
       )
-      // state.params = state.params.map((item) =>
-      //   item.param_id === action.payload.param_id
-      //     ? { ...item, param_value: action.payload.initial_value }
-      //     : item,
-      // )
     },
     resetParamState: (state) => {
       state.fetchingVars = false

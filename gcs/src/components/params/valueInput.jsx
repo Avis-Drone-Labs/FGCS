@@ -84,8 +84,6 @@ export default function ValueInput({ index, paramDef, className }) {
         }),
       )
     }
-
-    // dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
   }
 
   if (paramDef?.Values && !paramDef?.Range) {

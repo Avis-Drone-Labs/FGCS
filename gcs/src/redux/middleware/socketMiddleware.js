@@ -71,6 +71,7 @@ import {
   setParamSearchValue,
   setRebootData,
   setShownParams,
+  updateParamValue,
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
@@ -345,6 +346,10 @@ const socketMiddleware = (store) => {
         socket.socket.on(ParamSpecificSocketEvents.onParamSetSuccess, (msg) => {
           store.dispatch(queueSuccessNotification(msg.message))
           store.dispatch(setModifiedParams([]))
+          // Update the param in the params list also
+          for (let param of msg.data) {
+            store.dispatch(updateParamValue(param))
+          }
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {

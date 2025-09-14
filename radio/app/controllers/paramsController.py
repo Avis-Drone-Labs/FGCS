@@ -134,7 +134,7 @@ class ParamsController:
                 self.drone.logger.error("Serial exception while getting all params")
                 return
 
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
+    def setMultipleParams(self, params_list: list[IncomingParam]) -> Response:
         """
         Sets multiple parameters on the drone.
 
@@ -145,21 +145,34 @@ class ParamsController:
             bool: True if all parameters were set, False if any failed
         """
         if not params_list:
-            return False
+            return {"success": False, "message": "No parameters to set"}
+
+        params_set_successfully = []
 
         for param in params_list:
             param_id = param.get("param_id", None)
             param_value = param.get("param_value", None)
             param_type = param.get("param_type", None)
+            del param["initial_value"]  # Remove initial value if it exists
+
             if param_id is None or param_value is None or param_type is None:
                 self.drone.logger.error(f"Invalid parameter data: {param}, skipping")
                 continue
 
             done = self.setParam(param_id, param_value, param_type)
             if not done:
-                return False
+                return {
+                    "success": False,
+                    "message": f"Failed to set parameter {param_id}",
+                }
+            else:
+                params_set_successfully.append(param)
 
-        return True
+        return {
+            "success": True,
+            "message": "All parameters set successfully",
+            "data": params_set_successfully,
+        }
 
     @sendingCommandLock
     def setParam(

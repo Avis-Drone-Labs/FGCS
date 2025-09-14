@@ -21,6 +21,7 @@ import {
   deleteModifiedParam,
   selectModifiedParams,
   selectShownParams,
+  selectSingleParam,
 } from "../../redux/slices/paramsSlice"
 
 const RowItem = memo(({ index, style }) => {
@@ -30,6 +31,9 @@ const RowItem = memo(({ index, style }) => {
   const modifiedParams = useSelector(selectModifiedParams)
   const [paramDef, setParamDef] = useState({})
   const param = shownParams[index]
+  const paramPreviousValue = useSelector((state) =>
+    selectSingleParam(state, param.param_id),
+  )
   const hasBeenModified = modifiedParams.find(
     (item) => item.param_id === param.param_id,
   )
@@ -85,7 +89,7 @@ const RowItem = memo(({ index, style }) => {
         <ValueInput index={index} paramDef={paramDef} className="grow" />
         {hasBeenModified && (
           <Tooltip
-            label={`Reset to previous value of ${modifiedParams.find((item) => item.param_id === param.param_id).initial_value}`}
+            label={`Reset to previous value of ${paramPreviousValue.param_value}`}
           >
             <ActionIcon
               size="lg"

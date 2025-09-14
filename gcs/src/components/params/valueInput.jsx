@@ -18,14 +18,19 @@ import {
   selectModifiedParams,
   selectShownParams,
   updateModifiedParamValue,
-  updateParamValue,
 } from "../../redux/slices/paramsSlice"
 
 export default function ValueInput({ index, paramDef, className }) {
   const dispatch = useDispatch()
-  const shownParams = useSelector(selectShownParams)
+  const params = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
-  const param = shownParams[index]
+  const param = params[index]
+  const hasBeenModified = modifiedParams.find(
+    (item) => item.param_id === param.param_id,
+  )
+  const param_value = hasBeenModified
+    ? hasBeenModified.param_value
+    : param.param_value
 
   // Try to handle floats because mantine handles keys internally as strings
   // Which leads to floating point rounding errors
@@ -80,14 +85,14 @@ export default function ValueInput({ index, paramDef, className }) {
       )
     }
 
-    dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
+    // dispatch(updateParamValue({ param_id: param.param_id, param_value: value }))
   }
 
   if (paramDef?.Values && !paramDef?.Range) {
     return (
       <Select // Values input
         className={className}
-        value={`${cleanFloat(param.param_value)}`}
+        value={`${cleanFloat(param_value)}`}
         onChange={(value) => addToModifiedParams(sanitiseInput(value), param)}
         data={Object.keys(paramDef?.Values).map((key) => ({
           value: `${key}`,
@@ -102,7 +107,7 @@ export default function ValueInput({ index, paramDef, className }) {
     return (
       <BitmaskSelect // Bitmask input
         className={className}
-        value={param.param_value}
+        value={param_value}
         onChange={addToModifiedParams}
         param={param}
         options={paramDef?.Bitmask}
@@ -119,7 +124,7 @@ export default function ValueInput({ index, paramDef, className }) {
           ? `${paramDef?.Range.low} - ${paramDef?.Range.high}`
           : ""
       }
-      value={param.param_value}
+      value={param_value}
       onChange={(value) => addToModifiedParams(value, param)}
       decimalScale={5}
       hideControls

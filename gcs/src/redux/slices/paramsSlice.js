@@ -82,11 +82,11 @@ const paramsSlice = createSlice({
       state.modifiedParams = state.modifiedParams.filter(
         (item) => item.param_id !== action.payload.param_id,
       )
-      state.params = state.params.map((item) =>
-        item.param_id === action.payload.param_id
-          ? { ...item, param_value: action.payload.initial_value }
-          : item,
-      )
+      // state.params = state.params.map((item) =>
+      //   item.param_id === action.payload.param_id
+      //     ? { ...item, param_value: action.payload.initial_value }
+      //     : item,
+      // )
     },
     resetParamState: (state) => {
       state.fetchingVars = false
@@ -107,6 +107,9 @@ const paramsSlice = createSlice({
     selectRebootData: (state) => state.rebootData,
     selectAutoPilotRebootModalOpen: (state) => state.autoPilotRebootModalOpen,
     selectParams: (state) => state.params,
+    selectSingleParam(state, param_id) {
+      return state.params.find((param) => param.param_id === param_id)
+    },
     selectShownParams: (state) => state.shownParams,
     selectModifiedParams: (state) => state.modifiedParams,
     selectShowModifiedParams: (state) => state.showModifiedParams,
@@ -139,6 +142,7 @@ export const {
   selectRebootData,
   selectAutoPilotRebootModalOpen,
   selectParams,
+  selectSingleParam,
   selectShownParams,
   selectModifiedParams,
   selectFetchingVars,

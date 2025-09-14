@@ -52,7 +52,6 @@ export default function CheckListArea({
 
   function generateCheckboxList(defaultCheck = false) {
     // Go from string to list, does not return
-    logInfo(checkBoxListString)
     var final = []
     checkBoxListString
       .split("<li><p>")

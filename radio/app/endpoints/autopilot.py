@@ -23,7 +23,7 @@ def rebootAutopilot() -> None:
     socketio.emit("disconnected_from_drone")
     droneStatus.drone.rebootAutopilot()
 
-    while droneStatus.drone is not None and droneStatus.drone.is_active:
+    while droneStatus.drone is not None and droneStatus.drone.is_active.is_set():
         time.sleep(0.05)
 
     tries = 0

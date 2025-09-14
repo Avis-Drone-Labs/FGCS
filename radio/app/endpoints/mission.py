@@ -1,3 +1,5 @@
+from typing import Any
+
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
@@ -105,12 +107,16 @@ def getCurrentMissionAll() -> None:
 
     result = droneStatus.drone.missionController.getCurrentMissionAll()
 
+    data: dict[str, Any] = result.get("data", {})
+    if not isinstance(data, dict):
+        data = {}
+
     socketio.emit(
         "current_mission_all",
         {
-            "mission_items": result.get("data", {}).get("mission_items", []),
-            "fence_items": result.get("data", {}).get("fence_items", []),
-            "rally_items": result.get("data", {}).get("rally_items", []),
+            "mission_items": data.get("mission_items", []),
+            "fence_items": data.get("fence_items", []),
+            "rally_items": data.get("rally_items", []),
         },
     )
 

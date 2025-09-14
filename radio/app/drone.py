@@ -672,11 +672,11 @@ class Drone:
         self.is_active.clear()
         self.is_listening = False
 
-        self.listener_thread.join()
-        self.sender_thread.join()
-        self.log_thread.join()
-        self.link_debug_data_thread.join()
-        self.heartbeat_thread.join()
+        self.listener_thread.join(timeout=3)
+        self.sender_thread.join(timeout=3)
+        self.log_thread.join(timeout=3)
+        self.link_debug_data_thread.join(timeout=3)
+        self.heartbeat_thread.join(timeout=3)
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""

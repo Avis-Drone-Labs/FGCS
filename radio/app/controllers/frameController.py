@@ -49,6 +49,6 @@ class FrameController:
             frame_class_data = frame_class_result.get("data")
             if frame_class_data:
                 self.frame_class = frame_class_data.param_value
-            logger.info(f"Found current frame class: {self.frame_class}")
+            logger.debug(f"Found current frame class: {self.frame_class}")
         else:
             logger.error(frame_class_result.get("message"))

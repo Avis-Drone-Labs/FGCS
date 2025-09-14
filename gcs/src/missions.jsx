@@ -320,6 +320,20 @@ export default function Missions() {
     }
   }
 
+  function differenceBetweenCoordsStyling(coord, compare) {
+    if (!coord) return <span>-</span>
+    if (coord === compare) return <span>{coord}</span>
+
+    // Loop through each digit and highlight it and the rest of the string red
+    let differentIndex = 0;
+    for (let i = 0; i < coord.length; i++) {
+      differentIndex = i
+      if (coord[i] !== compare[i]) break
+    }
+    coord = coord.toString()
+    return <><span>{coord.slice(0, differentIndex)}</span><span className="text-falconred-600 font-bold">{coord.slice(differentIndex)}</span></>
+  }
+
   return (
     <Layout currentPage="missions">
       <Modal
@@ -371,51 +385,52 @@ export default function Missions() {
         }}
       >
         <div className="flex flex-col items-center justify-center gap-4">
-          <p className="text-center">
-            Update the planned home position to the home position loaded from
+          <p className="">
+            Would you like to update the planned home position to the home position loaded from
             the {updatePlannedHomePositionFromLoadModalData?.from || "source"}?
           </p>
 
           <div className="flex flex-col gap-2 w-full">
             <div className="flex flex-row justify-between w-full">
-              <div className="flex flex-col items-center flex-1">
+              <div className="flex flex-col flex-1">
                 <span className="font-bold">Current</span>
                 <span>
-                  Lat:{" "}
-                  {intToCoord(plannedHomePosition?.lat).toFixed(
-                    coordsFractionDigits,
-                  ) ?? "-"}
+                  Lat: {differenceBetweenCoordsStyling(
+                    intToCoord(plannedHomePosition?.lat).toFixed(coordsFractionDigits),
+                    intToCoord(updatePlannedHomePositionFromLoadModalData?.lat).toFixed(coordsFractionDigits)
+                  )}
                 </span>
                 <span>
-                  Lon:{" "}
-                  {intToCoord(plannedHomePosition?.lon).toFixed(
-                    coordsFractionDigits,
-                  ) ?? "-"}
+                  Lon: {differenceBetweenCoordsStyling(
+                    intToCoord(plannedHomePosition?.lon).toFixed(coordsFractionDigits),
+                    intToCoord(updatePlannedHomePositionFromLoadModalData?.lon).toFixed(coordsFractionDigits)
+                  )}
                 </span>
-                <span>Alt: {plannedHomePosition?.alt ?? "-"}</span>
+                <span>Alt: {differenceBetweenCoordsStyling(plannedHomePosition?.alt, updatePlannedHomePositionFromLoadModalData?.alt)}</span>
               </div>
-              <div className="flex flex-col items-center flex-1">
+              <div className="flex flex-col text-right flex-1">
                 <span className="font-bold">New</span>
                 <span>
-                  Lat:{" "}
-                  {intToCoord(
-                    updatePlannedHomePositionFromLoadModalData?.lat,
-                  ).toFixed(coordsFractionDigits) ?? "-"}
+                  Lat: {differenceBetweenCoordsStyling(
+                    intToCoord(updatePlannedHomePositionFromLoadModalData?.lat).toFixed(coordsFractionDigits),
+                    intToCoord(plannedHomePosition?.lat).toFixed(coordsFractionDigits)
+                  )}
                 </span>
                 <span>
-                  Lon:{" "}
-                  {intToCoord(
-                    updatePlannedHomePositionFromLoadModalData?.lon,
-                  ).toFixed(coordsFractionDigits) ?? "-"}
+                  Lon: {differenceBetweenCoordsStyling(
+                    intToCoord(updatePlannedHomePositionFromLoadModalData?.lon).toFixed(coordsFractionDigits), 
+                    intToCoord(plannedHomePosition?.lon).toFixed(coordsFractionDigits)
+                  )}
                 </span>
                 <span>
-                  Alt: {updatePlannedHomePositionFromLoadModalData?.alt ?? "-"}
+                  Alt: {differenceBetweenCoordsStyling(updatePlannedHomePositionFromLoadModalData?.alt, plannedHomePosition?.alt)}
                 </span>
               </div>
             </div>
           </div>
 
-          <Group gap="xl" justify="space-between">
+          <div className="flex w-full justify-between">
+          {/* <Group gap="xl" justify="space-between"> */}
             <Button
               size="sm"
               onClick={() => {
@@ -433,7 +448,8 @@ export default function Missions() {
             >
               Yes
             </Button>
-          </Group>
+          {/* </Group> */}
+          </div>
         </div>
       </Modal>
 

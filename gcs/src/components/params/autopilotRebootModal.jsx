@@ -6,15 +6,27 @@
 import { Button, Loader, Modal } from "@mantine/core"
 
 // Styling imports
-import tailwindConfig from "../../../tailwind.config.js"
 import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function AutopilotRebootModal({ rebootData, opened, onClose }) {
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  selectAutoPilotRebootModalOpen,
+  selectRebootData,
+  setAutoPilotRebootModalOpen,
+} from "../../redux/slices/paramsSlice.js"
+
+export default function AutopilotRebootModal() {
+  const dispatch = useDispatch()
+  const rebootData = useSelector(selectRebootData)
+  const opened = useSelector(selectAutoPilotRebootModalOpen)
+
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={() => dispatch(setAutoPilotRebootModalOpen(false))}
       title="Rebooting autopilot"
       closeOnClickOutside={false}
       closeOnEscape={false}
@@ -36,7 +48,7 @@ export default function AutopilotRebootModal({ rebootData, opened, onClose }) {
                   {rebootData.message} You will need to reconnect.
                 </p>
                 <Button
-                  onClick={close}
+                  onClick={() => dispatch(setAutoPilotRebootModalOpen(false))}
                   color={tailwindColors.red[600]}
                   className="mt-4"
                 >

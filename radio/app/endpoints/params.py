@@ -25,13 +25,11 @@ def set_multiple_params(params_list: List[Any]) -> None:
     if not droneStatus.drone:
         return
 
-    success = droneStatus.drone.paramsController.setMultipleParams(params_list)
-    if success:
-        socketio.emit(
-            "param_set_success", {"message": "Parameters saved successfully."}
-        )
+    response = droneStatus.drone.paramsController.setMultipleParams(params_list)
+    if response.get("success"):
+        socketio.emit("param_set_success", response)
     else:
-        socketio.emit("params_error", {"message": "Failed to save parameters."})
+        socketio.emit("params_error", response)
 
 
 @socketio.on("refresh_params")

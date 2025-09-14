@@ -60,7 +60,19 @@ import {
 import {
   queueErrorNotification,
   queueNotification,
+  queueSuccessNotification,
 } from "../slices/notificationSlice"
+import {
+  setAutoPilotRebootModalOpen,
+  setFetchingVars,
+  setFetchingVarsProgress,
+  setModifiedParams,
+  setParams,
+  setParamSearchValue,
+  setRebootData,
+  setShownParams,
+  updateParamValue,
+} from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
@@ -84,6 +96,14 @@ const DroneSpecificSocketEvents = Object.freeze({
   onIncomingMsg: "incoming_msg",
   onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
   onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
+})
+
+const ParamSpecificSocketEvents = Object.freeze({
+  onRebootAutopilot: "reboot_autopilot",
+  onParamsMessage: "params",
+  onParamRequestUpdate: "param_request_update",
+  onParamSetSuccess: "param_set_success",
+  onParamError: "params_error",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -297,6 +317,49 @@ const socketMiddleware = (store) => {
           },
         )
 
+        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          store.dispatch(setRebootData(msg))
+          if (msg.success) {
+            store.dispatch(setAutoPilotRebootModalOpen(false))
+          }
+        })
+
+        socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
+          store.dispatch(setParams(msg))
+          store.dispatch(setShownParams(msg))
+          store.dispatch(setFetchingVars(false))
+          store.dispatch(setFetchingVarsProgress(0))
+          store.dispatch(setParamSearchValue(""))
+        })
+
+        socket.socket.on(
+          ParamSpecificSocketEvents.onParamRequestUpdate,
+          (msg) => {
+            store.dispatch(
+              setFetchingVarsProgress(
+                (msg.current_param_index / msg.total_number_of_params) * 100,
+              ),
+            )
+          },
+        )
+
+        socket.socket.on(ParamSpecificSocketEvents.onParamSetSuccess, (msg) => {
+          store.dispatch(queueSuccessNotification(msg.message))
+          store.dispatch(setModifiedParams([]))
+          // Update the param in the params list also
+          for (let param of msg.data) {
+            store.dispatch(updateParamValue(param))
+          }
+        })
+
+        socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
+          store.dispatch(queueErrorNotification(msg.message))
+          store.dispatch(setFetchingVars(false))
+        })
+
+        /*
+          Missions
+        */
         socket.socket.on(
           DroneSpecificSocketEvents.onGetLoiterRadiusResult,
           (msg) => {
@@ -627,10 +690,13 @@ const socketMiddleware = (store) => {
           )
         })
       } else {
+        // Turn off socket events
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-
+        Object.values(ParamSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
         Object.values(MissionSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )

@@ -55,7 +55,7 @@ class ArmController:
                 self.drone.logger.debug("Waiting for arm")
                 while not self.drone.armed:
                     time.sleep(0.05)
-                logger.debug("Armed successfully")
+                logger.info("Armed successfully")
                 return {"success": True, "message": "Armed successfully"}
             else:
                 logger.warning("Arm failed: command not accepted")

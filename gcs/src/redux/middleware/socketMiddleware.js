@@ -151,21 +151,7 @@ const socketMiddleware = (store) => {
         */
 
         // In development mode, hook socket on and emit so that we can debug log every time we recieve / send a socket message
-        if (window.ipcRenderer.isDev()) {
-          const originalOn = socket.socket.on.bind(socket.socket)
-
-          socket.socket.on = (event, callback) => {
-            const wrappedCallback = (...args) => {
-              if (event != "log")
-                logDebug(
-                  `Event "${event}" received by frontend with values (${args.map((a) => (typeof a == "object" ? JSON.stringify(a) : a)).join(", ")})`,
-                )
-              callback(...args)
-            }
-
-            return originalOn(event, wrappedCallback)
-          }
-
+        if (window.ipcRenderer.isDev()) {   
           const originalEmit = socket.socket.emit.bind(socket.socket)
 
           socket.socket.emit = (event, ...args) => {

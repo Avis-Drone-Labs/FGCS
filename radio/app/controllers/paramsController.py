@@ -148,10 +148,11 @@ class ParamsController:
             return False
 
         for param in params_list:
-            param_id = param.get("param_id")
-            param_value = param.get("param_value")
-            param_type = param.get("param_type")
-            if not param_id or not param_value or not param_type:
+            param_id = param.get("param_id", None)
+            param_value = param.get("param_value", None)
+            param_type = param.get("param_type", None)
+            if param_id is None or param_value is None or param_type is None:
+                self.drone.logger.error(f"Invalid parameter data: {param}, skipping")
                 continue
 
             done = self.setParam(param_id, param_value, param_type)

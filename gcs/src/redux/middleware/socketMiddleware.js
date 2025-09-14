@@ -62,8 +62,6 @@ import {
   queueNotification,
   queueSuccessNotification,
 } from "../slices/notificationSlice"
-import { pushMessage } from "../slices/statusTextSlice.js"
-import { handleEmitters } from "./emitters.js"
 import {
   setAutoPilotRebootModalOpen,
   setFetchingVars,
@@ -74,6 +72,8 @@ import {
   setRebootData,
   setShownParams,
 } from "../slices/paramsSlice.js"
+import { pushMessage } from "../slices/statusTextSlice.js"
+import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -324,6 +324,7 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
+          console.log(msg)
           store.dispatch(setParams(msg))
           store.dispatch(setShownParams(msg))
           store.dispatch(setFetchingVars(false))

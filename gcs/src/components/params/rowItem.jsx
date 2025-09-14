@@ -14,6 +14,7 @@ import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import ValueInput from "./valueInput"
 
 // Redux
+import { IconArrowBack, IconInfoCircle } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
 import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
 import {
@@ -21,7 +22,6 @@ import {
   selectModifiedParams,
   selectShownParams,
 } from "../../redux/slices/paramsSlice"
-import { IconArrowBack, IconInfoCircle } from "@tabler/icons-react"
 
 const RowItem = memo(({ index, style }) => {
   const dispatch = useDispatch()
@@ -57,7 +57,7 @@ const RowItem = memo(({ index, style }) => {
   return (
     <div style={style} className="flex flex-row items-center space-x-4">
       <div className="flex flex-row w-2/12 gap-x-2">
-        <Tooltip label={paramDef?.DisplayName} position="top-start">
+        <Tooltip label={paramDef?.DisplayName ?? null} position="top-start">
           <p>{param.param_id}</p>
         </Tooltip>
 
@@ -85,7 +85,7 @@ const RowItem = memo(({ index, style }) => {
         <ValueInput index={index} paramDef={paramDef} className="grow" />
         {hasBeenModified && (
           <Tooltip
-            label={`Reset to initial value of ${modifiedParams.find((item) => item.param_id == param.param_id).initial_value}`}
+            label={`Reset to previous value of ${modifiedParams.find((item) => item.param_id == param.param_id).initial_value}`}
           >
             <ActionIcon
               size="lg"

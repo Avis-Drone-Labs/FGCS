@@ -16,8 +16,8 @@ import {
 } from "@tabler/icons-react"
 
 // Styling imports
-import tailwindConfig from "../../../tailwind.config.js"
 import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux

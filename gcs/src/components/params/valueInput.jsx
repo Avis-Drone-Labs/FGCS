@@ -98,7 +98,7 @@ export default function ValueInput({ index, paramDef, className }) {
     )
   }
 
-  if (paramDef?.BitMask) {
+  if (paramDef?.Bitmask) {
     return (
       <BitmaskSelect // Bitmask input
         className={className}

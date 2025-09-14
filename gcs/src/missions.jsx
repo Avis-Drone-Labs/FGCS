@@ -16,7 +16,6 @@ import {
   Button,
   Divider,
   FileButton,
-  Group,
   Modal,
   NumberInput,
   Progress,
@@ -40,6 +39,7 @@ import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
+import UpdatePlannedHomePositionModal from "./components/missions/updatePlannedHomePositionModal"
 import {
   emitExportMissionToFile,
   emitGetCurrentMission,
@@ -47,7 +47,6 @@ import {
   emitImportMissionFromFile,
   emitWriteCurrentMission,
   getFrameKey,
-  resetUpdatePlannedHomePositionFromLoadData,
   selectActiveTab,
   selectDrawingFenceItems,
   selectDrawingMissionItems,
@@ -57,14 +56,10 @@ import {
   selectPlannedHomePosition,
   selectTargetInfo,
   selectUnwrittenChanges,
-  selectUpdatePlannedHomePositionFromLoadData,
-  selectUpdatePlannedHomePositionFromLoadModal,
   setActiveTab,
   setMissionProgressData,
   setMissionProgressModal,
   setPlannedHomePosition,
-  setUpdatePlannedHomePositionFromLoadModal,
-  updatePlannedHomePositionBasedOnLoadedWaypointsThunk,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -107,12 +102,6 @@ export default function Missions() {
   const unwrittenChanges = useSelector(selectUnwrittenChanges)
   const missionProgressModalOpened = useSelector(selectMissionProgressModal)
   const missionProgressModalData = useSelector(selectMissionProgressData)
-  const updatePlannedHomePositionFromLoadModalOpened = useSelector(
-    selectUpdatePlannedHomePositionFromLoadModal,
-  )
-  const updatePlannedHomePositionFromLoadModalData = useSelector(
-    selectUpdatePlannedHomePositionFromLoadData,
-  )
 
   // Other states
   const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
@@ -356,86 +345,7 @@ export default function Missions() {
         </div>
       </Modal>
 
-      <Modal
-        opened={updatePlannedHomePositionFromLoadModalOpened}
-        onClose={() =>
-          dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
-        }
-        closeOnClickOutside={false}
-        closeOnEscape={false}
-        withCloseButton={false}
-        centered
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 3,
-        }}
-      >
-        <div className="flex flex-col items-center justify-center gap-4">
-          <p className="text-center">
-            Update the planned home position to the home position loaded from
-            the {updatePlannedHomePositionFromLoadModalData?.from || "source"}?
-          </p>
-
-          <div className="flex flex-col gap-2 w-full">
-            <div className="flex flex-row justify-between w-full">
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-bold">Current</span>
-                <span>
-                  Lat:{" "}
-                  {intToCoord(plannedHomePosition?.lat).toFixed(
-                    coordsFractionDigits,
-                  ) ?? "-"}
-                </span>
-                <span>
-                  Lon:{" "}
-                  {intToCoord(plannedHomePosition?.lon).toFixed(
-                    coordsFractionDigits,
-                  ) ?? "-"}
-                </span>
-                <span>Alt: {plannedHomePosition?.alt ?? "-"}</span>
-              </div>
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-bold">New</span>
-                <span>
-                  Lat:{" "}
-                  {intToCoord(
-                    updatePlannedHomePositionFromLoadModalData?.lat,
-                  ).toFixed(coordsFractionDigits) ?? "-"}
-                </span>
-                <span>
-                  Lon:{" "}
-                  {intToCoord(
-                    updatePlannedHomePositionFromLoadModalData?.lon,
-                  ).toFixed(coordsFractionDigits) ?? "-"}
-                </span>
-                <span>
-                  Alt: {updatePlannedHomePositionFromLoadModalData?.alt ?? "-"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <Group gap="xl" justify="space-between">
-            <Button
-              size="sm"
-              onClick={() => {
-                dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
-                dispatch(resetUpdatePlannedHomePositionFromLoadData())
-              }}
-            >
-              No
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                dispatch(updatePlannedHomePositionBasedOnLoadedWaypointsThunk())
-              }
-            >
-              Yes
-            </Button>
-          </Group>
-        </div>
-      </Modal>
+      <UpdatePlannedHomePositionModal />
 
       {/* Banner to let people know that things are still under development */}
       {showWarningBanner && (

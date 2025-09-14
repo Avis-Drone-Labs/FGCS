@@ -1,6 +1,5 @@
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
-from serial.tools.list_ports_common import ListPortInfo
 
 from . import falcon_test
 
@@ -16,10 +15,6 @@ def run_once_after_all_tests():
 
     assert droneStatus.drone is not None
     VALID_DRONE_PORT = droneStatus.drone.port
-
-    # Get the connection string
-    if isinstance(VALID_DRONE_PORT, ListPortInfo):
-        VALID_DRONE_PORT = VALID_DRONE_PORT.device
 
     droneStatus.drone.logger.info(f"Found drone running on port {VALID_DRONE_PORT}")
     yield

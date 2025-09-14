@@ -105,12 +105,16 @@ def getCurrentMissionAll() -> None:
 
     result = droneStatus.drone.missionController.getCurrentMissionAll()
 
+    data = result.get("data", {})
+    if not isinstance(data, dict):
+        data = {}
+
     socketio.emit(
         "current_mission_all",
         {
-            "mission_items": result.get("data", {}).get("mission_items") or [],
-            "fence_items": result.get("data", {}).get("fence_items") or [],
-            "rally_items": result.get("data", {}).get("rally_items") or [],
+            "mission_items": data.get("mission_items", []),
+            "fence_items": data.get("fence_items", []),
+            "rally_items": data.get("rally_items", []),
         },
     )
 

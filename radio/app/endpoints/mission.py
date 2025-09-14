@@ -108,9 +108,9 @@ def getCurrentMissionAll() -> None:
     socketio.emit(
         "current_mission_all",
         {
-            "mission_items": result.get("data", {}).get("mission_items", []),
-            "fence_items": result.get("data", {}).get("fence_items", []),
-            "rally_items": result.get("data", {}).get("rally_items", []),
+            "mission_items": result.get("data", {}).get("mission_items") or [],
+            "fence_items": result.get("data", {}).get("fence_items") or [],
+            "rally_items": result.get("data", {}).get("rally_items") or [],
         },
     )
 

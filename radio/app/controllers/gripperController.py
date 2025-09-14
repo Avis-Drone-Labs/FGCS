@@ -94,7 +94,7 @@ class GripperController:
                 "message": "Could not get gripper state from drone.",
             }
         elif gripperEnabled is False:
-            logger.warning("Gripper is not enabled")
+            logger.warning("Could not set gripper, it is not enabled")
             return {
                 "success": False,
                 "message": "Gripper is not enabled",

@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import socket
 import logging
@@ -41,5 +42,10 @@ def setup_logging(conn: SocketIO, debug: bool = False) -> None:
     # for the message they were expecting so we can't do socket logging in test environment
 
     if os.environ.get("PYTEST_VERSION") is None:
-        fgcs_logger.addHandler(SocketIOHandler(conn))
-        flask_logger.addHandler(SocketIOHandler(conn))
+        handler = SocketIOHandler(conn)
+    else:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s'))
+    
+    fgcs_logger.addHandler(handler)
+    flask_logger.addHandler(handler)

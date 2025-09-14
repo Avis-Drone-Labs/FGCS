@@ -1,17 +1,15 @@
 import sys
+
 import pytest
-from typing import Union
-
-from serial.tools import list_ports
-from serial.tools.list_ports_common import ListPortInfo
-
 from app import droneStatus
 from app.drone import Drone
+from serial.tools import list_ports
+
 from . import socketio_client
 from .conftest import setupDrone
 from .helpers import send_and_recieve
 
-VALID_DRONE_PORT: Union[str, ListPortInfo]
+VALID_DRONE_PORT: str
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -23,9 +21,6 @@ def run_once_after_all_tests():
     global VALID_DRONE_PORT
     VALID_DRONE_PORT = droneStatus.drone.port
 
-    # Get the connection string
-    if isinstance(VALID_DRONE_PORT, ListPortInfo):
-        VALID_DRONE_PORT = VALID_DRONE_PORT.device
     droneStatus.drone.logger.info(f"Found drone running on port {VALID_DRONE_PORT}")
     yield
 

@@ -58,6 +58,7 @@ import {
   selectContextMenu,
   selectPlannedHomePosition,
   setPlannedHomePosition,
+  setPlannedHomePositionToDronesHomePositionThunk,
   updateContextMenuState,
 } from "../../redux/slices/missionSlice"
 
@@ -385,7 +386,6 @@ function MapSectionNonMemo({
                 setPlannedHomePosition({
                   lat: coordToInt(x),
                   lon: coordToInt(y),
-                  alt: 0.1,
                 }),
               )
             }}
@@ -432,9 +432,9 @@ function MapSectionNonMemo({
                 />
               </svg>
             </ContextMenuItem>
-
             {contextMenuState.markerId !== null &&
-              contextMenuState.markerId !== undefined && (
+              contextMenuState.markerId !== undefined &&
+              contextMenuState.markerId !== "home" && (
                 <>
                   <Divider />
                   <ContextMenuItem
@@ -446,7 +446,6 @@ function MapSectionNonMemo({
                   </ContextMenuItem>
                 </>
               )}
-
             <Divider />
             <ContextMenuItem onClick={zoomToDrone}>
               <p>Zoom to drone</p>
@@ -458,19 +457,28 @@ function MapSectionNonMemo({
               <p>Zoom to planned home</p>
             </ContextMenuItem>
             <Divider />
-            <ContextMenuItem
-              onClick={() => {
-                dispatch(
-                  setPlannedHomePosition({
-                    lat: coordToInt(contextMenuState.gpsCoords.lat),
-                    lon: coordToInt(contextMenuState.gpsCoords.lng),
-                    alt: 0.1,
-                  }),
-                )
-              }}
-            >
-              <p>Set planned home position</p>
-            </ContextMenuItem>
+            {contextMenuState?.markerId === "home" ? (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(setPlannedHomePositionToDronesHomePositionThunk())
+                }}
+              >
+                <p>Set planned home to drone's home position</p>
+              </ContextMenuItem>
+            ) : (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(
+                    setPlannedHomePosition({
+                      lat: coordToInt(contextMenuState.gpsCoords.lat),
+                      lon: coordToInt(contextMenuState.gpsCoords.lng),
+                    }),
+                  )
+                }}
+              >
+                <p>Set planned home position</p>
+              </ContextMenuItem>
+            )}
             <ContextMenuItem onClick={() => dispatch(clearDrawingItems())}>
               <p>Clear mission</p>
             </ContextMenuItem>

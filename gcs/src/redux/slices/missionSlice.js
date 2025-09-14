@@ -1,5 +1,6 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
+import { coordToInt } from "../../helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
 
@@ -32,8 +33,15 @@ const missionInfoSlice = createSlice({
       message: "",
       progress: null,
     },
+    updatePlannedHomePositionFromLoadData: {
+      lat: null,
+      lon: null,
+      alt: null,
+      from: "", // "file" or "drone"
+    },
     modals: {
       missionProgressModal: false,
+      updatePlannedHomePositionFromLoadModal: false,
     },
     plannedHomePosition: {
       lat: 0,
@@ -69,7 +77,39 @@ const missionInfoSlice = createSlice({
     },
     setPlannedHomePosition: (state, action) => {
       if (action.payload === state.plannedHomePosition) return
-      state.plannedHomePosition = action.payload
+
+      // Ensure that lat, lon, and alt (if provided) are numbers
+      if (
+        ("lat" in action.payload && typeof action.payload.lat !== "number") ||
+        ("lon" in action.payload && typeof action.payload.lon !== "number") ||
+        ("alt" in action.payload && typeof action.payload.alt !== "number")
+      ) {
+        console.error(
+          "Latitude, Longitude, and Altitude must be numbers. Got: ",
+          action.payload,
+        )
+        return
+      }
+
+      if (
+        ("lat" in action.payload &&
+          (action.payload.lat < coordToInt(-90) ||
+            action.payload.lat > coordToInt(90))) ||
+        ("lon" in action.payload &&
+          (action.payload.lon < coordToInt(-180) ||
+            action.payload.lon > coordToInt(180)))
+      ) {
+        console.error(
+          "Latitude must be between -90 and 90, Longitude must be between -180 and 180. Got: ",
+          action.payload,
+        )
+        return
+      }
+
+      state.plannedHomePosition = {
+        ...state.plannedHomePosition,
+        ...action.payload,
+      }
 
       if (
         state.drawingItems.missionItems.length > 0 &&
@@ -77,16 +117,17 @@ const missionInfoSlice = createSlice({
       ) {
         state.drawingItems.missionItems[0] = {
           ...state.drawingItems.missionItems[0],
-          x: action.payload.lat,
-          y: action.payload.lon,
+          x: state.plannedHomePosition.lat,
+          y: state.plannedHomePosition.lon,
+          z: state.plannedHomePosition.alt || 0,
         }
       } else {
         const newHomeItem = {
           id: uuidv4(),
           seq: 0, // Home position is always the first item
-          x: action.payload.lat,
-          y: action.payload.lon,
-          z: action.payload.alt || 0,
+          x: state.plannedHomePosition.lat,
+          y: state.plannedHomePosition.lon,
+          z: state.plannedHomePosition.alt || 0,
           frame: getFrameKey("MAV_FRAME_GLOBAL"),
           command: 16, // MAV_CMD_NAV_WAYPOINT
           param1: 0,
@@ -265,6 +306,29 @@ const missionInfoSlice = createSlice({
         return
       state.missionProgressData = { message: "", progress: null }
     },
+    setUpdatePlannedHomePositionFromLoadModal: (state, action) => {
+      if (
+        action.payload === state.modals.updatePlannedHomePositionFromLoadModal
+      )
+        return
+      state.modals.updatePlannedHomePositionFromLoadModal = action.payload
+    },
+    setUpdatePlannedHomePositionFromLoadData: (state, action) => {
+      if (
+        JSON.stringify(action.payload) ===
+        JSON.stringify(state.updatePlannedHomePositionFromLoadData)
+      )
+        return
+      state.updatePlannedHomePositionFromLoadData = action.payload
+    },
+    resetUpdatePlannedHomePositionFromLoadData: (state) => {
+      state.updatePlannedHomePositionFromLoadData = {
+        lat: null,
+        lon: null,
+        alt: null,
+        from: "", // "file" or "drone"
+      }
+    },
     updateContextMenuState: (state, action) => {
       if (action.payload === state.contextMenu) return
 
@@ -310,6 +374,10 @@ const missionInfoSlice = createSlice({
     selectCurrentMission: (state) => state.currentMission,
     selectCurrentMissionItems: (state) => state.currentMissionItems,
     selectPlannedHomePosition: (state) => state.plannedHomePosition,
+    selectUpdatePlannedHomePositionFromLoadModal: (state) =>
+      state.modals.updatePlannedHomePositionFromLoadModal,
+    selectUpdatePlannedHomePositionFromLoadData: (state) =>
+      state.updatePlannedHomePositionFromLoadData,
     selectTargetInfo: (state) => state.targetInfo,
     selectDrawingMissionItems: (state) => state.drawingItems.missionItems,
     selectDrawingFenceItems: (state) => state.drawingItems.fenceItems,
@@ -352,19 +420,41 @@ export const addIdToItem = (missionItem) => {
   return missionItem
 }
 
-export const updatePlannedHomePositionBasedOnWaypointsThunk =
-  (waypoints) => (dispatch) => {
-    if (waypoints.length > 0) {
-      const potentialHomeLocation = waypoints[0]
-      if (isGlobalFrameHomeCommand(potentialHomeLocation)) {
-        dispatch(
-          setPlannedHomePosition({
-            lat: potentialHomeLocation.x,
-            lon: potentialHomeLocation.y,
-            alt: potentialHomeLocation.z,
-          }),
-        )
-      }
+export const updatePlannedHomePositionBasedOnLoadedWaypointsThunk =
+  () => (dispatch, getState) => {
+    const { updatePlannedHomePositionFromLoadData } = getState().missionInfo
+    dispatch(
+      setPlannedHomePosition({
+        lat: updatePlannedHomePositionFromLoadData.lat,
+        lon: updatePlannedHomePositionFromLoadData.lon,
+        alt: updatePlannedHomePositionFromLoadData.alt,
+      }),
+    )
+    dispatch(resetUpdatePlannedHomePositionFromLoadData())
+    dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
+  }
+
+export const setPlannedHomePositionToDronesHomePositionThunk =
+  () => (dispatch, getState) => {
+    const droneHomePosition = getState().droneInfo.homePosition
+    if (
+      droneHomePosition &&
+      typeof droneHomePosition.lat === "number" &&
+      typeof droneHomePosition.lon === "number" &&
+      typeof droneHomePosition.alt === "number"
+    ) {
+      dispatch(
+        setPlannedHomePosition({
+          lat: droneHomePosition.lat,
+          lon: droneHomePosition.lon,
+          alt: droneHomePosition.alt,
+        }),
+      )
+    } else {
+      console.error(
+        "Drone home position is not available or invalid. Got: ",
+        droneHomePosition,
+      )
     }
   }
 
@@ -399,6 +489,8 @@ export const {
   selectCurrentMission,
   selectCurrentMissionItems,
   selectPlannedHomePosition,
+  selectUpdatePlannedHomePositionFromLoadModal,
+  selectUpdatePlannedHomePositionFromLoadData,
   selectTargetInfo,
   selectDrawingMissionItems,
   selectDrawingFenceItems,
@@ -415,6 +507,9 @@ export const {
   setCurrentMission,
   setCurrentMissionItems,
   setPlannedHomePosition,
+  setUpdatePlannedHomePositionFromLoadModal,
+  setUpdatePlannedHomePositionFromLoadData,
+  resetUpdatePlannedHomePositionFromLoadData,
   setTargetInfo,
   updateDrawingItem,
   removeDrawingItem,

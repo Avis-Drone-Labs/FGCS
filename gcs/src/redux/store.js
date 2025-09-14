@@ -74,6 +74,18 @@ if (droneConnection !== undefined) {
 }
 
 if (persistedState.missionInfo?.plannedHomePosition !== undefined) {
+  // Validate the loaded planned home position, if invalid reset to 0,0,0
+  if (
+    !("lat" in persistedState.missionInfo.plannedHomePosition) ||
+    typeof persistedState.missionInfo.plannedHomePosition.lat !== "number" ||
+    !("lon" in persistedState.missionInfo.plannedHomePosition) ||
+    typeof persistedState.missionInfo.plannedHomePosition.lon !== "number" ||
+    !("alt" in persistedState.missionInfo.plannedHomePosition) ||
+    typeof persistedState.missionInfo.plannedHomePosition.alt !== "number"
+  ) {
+    persistedState.missionInfo.plannedHomePosition = { lat: 0, lon: 0, alt: 0 }
+  }
+
   store.dispatch(
     setPlannedHomePosition(persistedState.missionInfo.plannedHomePosition),
   )

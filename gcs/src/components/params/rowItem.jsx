@@ -17,6 +17,7 @@ import ValueInput from "./valueInput"
 import { useSelector } from "react-redux"
 import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
 import { selectShownParams } from "../../redux/slices/paramsSlice"
+import { IconInfoCircle } from "@tabler/icons-react"
 
 const RowItem = memo(({ index, style, onChange }) => {
   const aircraftType = useSelector(selectAircraftType)
@@ -34,9 +35,26 @@ const RowItem = memo(({ index, style, onChange }) => {
 
   return (
     <div style={style} className="flex flex-row items-center space-x-4">
-      <Tooltip label={paramDef?.DisplayName}>
-        <p className="w-56">{param.param_id}</p>
-      </Tooltip>
+      <div className="flex flex-row w-56 gap-x-2">
+        <Tooltip label={paramDef?.DisplayName} position="top-start">
+          <p className="w-min">{param.param_id}</p>
+        </Tooltip>
+
+        {(paramDef?.Values && paramDef?.Range) && 
+          <Tooltip
+            className="self-center"
+            label={
+              <div className="text-wrap max-w-80">
+                {Object.keys(paramDef?.Values).map((key, index) => {
+                  return <p>{key}: {paramDef?.Values[Object.keys(paramDef?.Values)[index]]}</p>
+                })}
+              </div>
+            }
+          >
+            <IconInfoCircle size={20} />
+          </Tooltip>
+        }
+      </div>
 
       <ValueInput
         index={index}
@@ -44,6 +62,7 @@ const RowItem = memo(({ index, style, onChange }) => {
         onChange={onChange}
         className="w-3/12"
       />
+
 
       <div className="w-1/2">
         <ScrollArea.Autosize className="max-h-24">

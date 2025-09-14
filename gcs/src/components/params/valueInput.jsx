@@ -6,7 +6,7 @@
 */
 
 // 3rd party imports
-import { NumberInput, Select } from "@mantine/core"
+import { NumberInput, Select, Tooltip } from "@mantine/core"
 
 // Custom components, helpers and data
 import BitmaskSelect from "./bitmaskSelect"
@@ -14,10 +14,25 @@ import BitmaskSelect from "./bitmaskSelect"
 // Redux
 import { useSelector } from "react-redux"
 import { selectShownParams } from "../../redux/slices/paramsSlice"
+import { IconInfoCircle } from "@tabler/icons-react"
+
+const PARAM_INPUT_ENUM = {
+  Number: 0,
+  Select: 1,
+  BitMask: 2
+}
 
 export default function ValueInput({ index, paramDef, onChange, className }) {
   const shownParams = useSelector(selectShownParams)
   const param = shownParams[index]
+  
+  // Select param enum type
+  let paramInputType = PARAM_INPUT_ENUM.Number
+  if (paramDef?.Values && !paramDef?.Range) {
+    paramInputType = PARAM_INPUT_ENUM.Select
+  } else if (paramDef?.Range && !paramDef?.Values) {
+    paramInputType = PARAM_INPUT_ENUM.BitMask
+  }
 
   // Try to handle floats because mantine handles keys internally as strings
   // Which leads to floating point rounding errors
@@ -42,7 +57,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
     return value
   }
 
-  if (paramDef?.Values) {
+  if (paramInputType == PARAM_INPUT_ENUM.Select) {
     return (
       <Select // Values input
         className={className}
@@ -57,7 +72,7 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
     )
   }
 
-  if (paramDef?.Bitmask) {
+  if (paramInputType == PARAM_INPUT_ENUM.Select) {
     return (
       <BitmaskSelect // Bitmask input
         className={className}
@@ -82,6 +97,8 @@ export default function ValueInput({ index, paramDef, onChange, className }) {
       onChange={(value) => onChange(value, param)}
       decimalScale={5}
       hideControls
+      min={paramDef?.Range ? paramDef?.Range.low : null}
+      max={paramDef?.Range ? paramDef?.Range.high : null}
       suffix={paramDef?.Units}
     />
   )

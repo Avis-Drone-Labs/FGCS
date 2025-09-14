@@ -6,7 +6,7 @@
 */
 
 // 3rd party imports
-import { NumberInput, Select, Tooltip } from "@mantine/core"
+import { NumberInput, Select } from "@mantine/core"
 
 // Custom components, helpers and data
 import BitmaskSelect from "./bitmaskSelect"
@@ -14,18 +14,17 @@ import BitmaskSelect from "./bitmaskSelect"
 // Redux
 import { useSelector } from "react-redux"
 import { selectShownParams } from "../../redux/slices/paramsSlice"
-import { IconInfoCircle } from "@tabler/icons-react"
 
 const PARAM_INPUT_ENUM = {
   Number: 0,
   Select: 1,
-  BitMask: 2
+  BitMask: 2,
 }
 
 export default function ValueInput({ index, paramDef, onChange, className }) {
   const shownParams = useSelector(selectShownParams)
   const param = shownParams[index]
-  
+
   // Select param enum type
   let paramInputType = PARAM_INPUT_ENUM.Number
   if (paramDef?.Values && !paramDef?.Range) {

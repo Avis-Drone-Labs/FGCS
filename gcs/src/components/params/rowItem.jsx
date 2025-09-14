@@ -40,20 +40,25 @@ const RowItem = memo(({ index, style, onChange }) => {
           <p className="w-min">{param.param_id}</p>
         </Tooltip>
 
-        {(paramDef?.Values && paramDef?.Range) && 
+        {paramDef?.Values && paramDef?.Range && (
           <Tooltip
             className="self-center"
             label={
               <div className="text-wrap max-w-80">
                 {Object.keys(paramDef?.Values).map((key, index) => {
-                  return <p>{key}: {paramDef?.Values[Object.keys(paramDef?.Values)[index]]}</p>
+                  return (
+                    <p>
+                      {key}:{" "}
+                      {paramDef?.Values[Object.keys(paramDef?.Values)[index]]}
+                    </p>
+                  )
                 })}
               </div>
             }
           >
             <IconInfoCircle size={20} />
           </Tooltip>
-        }
+        )}
       </div>
 
       <ValueInput
@@ -62,7 +67,6 @@ const RowItem = memo(({ index, style, onChange }) => {
         onChange={onChange}
         className="w-3/12"
       />
-
 
       <div className="w-1/2">
         <ScrollArea.Autosize className="max-h-24">

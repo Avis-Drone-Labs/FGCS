@@ -434,6 +434,18 @@ export const updatePlannedHomePositionBasedOnLoadedWaypointsThunk =
     dispatch(setUpdatePlannedHomePositionFromLoadModal(false))
   }
 
+export const setPlannedHomePositionToDronesHomePositionThunk =
+  () => (dispatch, getState) => {
+    const droneHomePosition = getState().droneInfo.homePosition
+    dispatch(
+      setPlannedHomePosition({
+        lat: droneHomePosition.lat,
+        lon: droneHomePosition.lon,
+        alt: droneHomePosition.alt,
+      }),
+    )
+  }
+
 export const getFrameKey = (frame) =>
   parseInt(
     Object.keys(MAV_FRAME_LIST).find((key) => MAV_FRAME_LIST[key] == frame),

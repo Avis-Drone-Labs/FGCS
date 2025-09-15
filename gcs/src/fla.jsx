@@ -23,8 +23,14 @@ import { useSelector, useDispatch } from "react-redux"
 import _ from "lodash"
 
 // Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config.js"
+import {
+  tailwindColors,
+  ignoredMessages,
+  ignoredKeys,
+  colorPalette,
+  colorInputSwatch,
+} from "./components/fla/constants"
+import { hexToRgba, gpsToUTC, getUnit } from "./components/fla/utils"
 
 // Custom components and helpers
 import moment from "moment"
@@ -51,60 +57,14 @@ import {
   setUtcAvailable,
   setMessageFilters,
   setMessageMeans,
-  setChartData,
   setCustomColors,
   setColorIndex,
   setAircraftType,
   setCanSavePreset,
-} from "./redux/logAnalyserSlice.js"
+} from "./redux/slices/logAnalyserSlice.js"
 import SavePresetModal from "./components/fla/savePresetModal.jsx"
 
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-// Helper function to convert hex color to rgba
-function hexToRgba(hex, alpha) {
-  const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
-  return `rgba(${r},${g},${b},${alpha})`
-}
-
-const ignoredMessages = [
-  "ERR",
-  "EV",
-  "MSG",
-  "VER",
-  "TIMESYNC",
-  "PARAM_VALUE",
-  "units",
-  "format",
-  "aircraftType",
-]
-const ignoredKeys = ["TimeUS", "function", "source", "result", "time_boot_ms"]
-const colorPalette = [
-  "#36a2eb",
-  "#ff6383",
-  "#fe9e40",
-  "#4ade80",
-  "#ffcd57",
-  "#4cbfc0",
-  "#9966ff",
-  "#c8cbce",
-]
-const colorInputSwatch = [
-  "#f5f5f5",
-  "#868e96",
-  "#fa5252",
-  "#e64980",
-  "#be4bdb",
-  "#7950f2",
-  "#4c6ef5",
-  "#228be6",
-  "#15aabf",
-  "#12b886",
-  "#40c057",
-  "#82c91e",
-  "#fab005",
-  "#fd7e14",
-]
+// helpers and constants are imported from ./components/fla/{constants,utils}
 
 export default function FLA() {
   // ====================================================
@@ -131,7 +91,6 @@ export default function FLA() {
     utcAvailable,
     messageFilters,
     messageMeans,
-    chartData,
     customColors,
     colorIndex,
     aircraftType,
@@ -143,6 +102,7 @@ export default function FLA() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [opened, { open, close }] = useDisclosure(false)
+  const [localChartData, setLocalChartData] = useState({ datasets: [] })
 
   // Redux dispatch functions
   const updateFile = (newFile) => dispatch(setFile(newFile))
@@ -161,7 +121,6 @@ export default function FLA() {
     dispatch(setMessageFilters(newMessageFilters))
   const updateMessageMeans = (newMessageMeans) =>
     dispatch(setMessageMeans(newMessageMeans))
-  const updateChartData = (newChartData) => dispatch(setChartData(newChartData))
   const updateCustomColors = (newCustomColors) =>
     dispatch(setCustomColors(newCustomColors))
   const updateColorIndex = (newColorIndex) =>
@@ -383,19 +342,7 @@ export default function FLA() {
     }
   }
 
-  function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
-    // GPS epoch starts at 1980-01-06 00:00:00 UTC
-    const gpsEpoch = new Date(Date.UTC(1980, 0, 6))
-
-    // Calculate total milliseconds since Unix epoch
-    const totalMs =
-      gpsEpoch.getTime() +
-      gpsWeek * 604_800_000 + // Convert weeks to milliseconds
-      gms - // Add GPS milliseconds
-      leapSeconds * 1_000 // Subtract leap seconds
-
-    return new Date(totalMs)
-  }
+  // gpsToUTC is provided by utils
 
   // Get a list of the recent FGCS telemetry logs
   async function getFgcsLogs() {
@@ -418,7 +365,7 @@ export default function FLA() {
   function resetState() {
     updateFile(null)
     updateLogMessages(null)
-    updateChartData({ datasets: [] })
+    setLocalChartData({ datasets: [] })
     updateMessageFilters(null)
     updateCustomColors({})
     updateUtcAvailable(false)
@@ -540,10 +487,11 @@ export default function FLA() {
     })
 
     let newColors = {}
+    let colorCount = 0
 
-    Object.keys(filter.filters).map((categoryName) => {
+    Object.keys(filter.filters).forEach((categoryName) => {
       if (Object.keys(messageFilters).includes(categoryName)) {
-        filter.filters[categoryName].map((field) => {
+        filter.filters[categoryName].forEach((field) => {
           if (!(field in messageFilters[categoryName])) {
             showErrorNotification(
               `Your log file does not include ${categoryName}/${field} data`,
@@ -557,15 +505,15 @@ export default function FLA() {
             newColors[`${categoryName}/${field}`] =
               colorPalette[Object.keys(newColors).length % colorPalette.length]
           }
-
-          // Update the color index
-          updateColorIndex(Object.keys(newColors).length)
+          colorCount++
         })
       } else {
         showErrorNotification(`Your log file does not include ${categoryName}`)
       }
     })
 
+    // Update the color index
+    updateColorIndex(colorCount)
     // Update customColors with the newColors
     updateCustomColors(newColors)
     updateMessageFilters(newFilters)
@@ -703,23 +651,7 @@ export default function FLA() {
   // 6. Utility Functions
   // ====================================================
 
-  function getUnit(messageName, fieldName) {
-    if (messageName.includes("ESC")) {
-      messageName = "ESC"
-    }
-
-    if (messageName in formatMessages) {
-      const formatMessage = formatMessages[messageName]
-      const fieldIndex = formatMessage.fields.indexOf(fieldName)
-      if (fieldIndex !== -1 && formatMessage.units) {
-        const unitId = formatMessage.units[fieldIndex]
-        if (unitId in units) {
-          return units[unitId]
-        }
-      }
-    }
-    return "UNKNOWN"
-  }
+  // getUnit provided by utils; pass formatMessages and units where needed
 
   // ====================================================
   // 7. Effect Hooks
@@ -758,7 +690,12 @@ export default function FLA() {
             if (category[fieldName]) {
               const label = `${categoryName}/${fieldName}`
               const color = customColors[label]
-              const unit = getUnit(categoryName, fieldName)
+              const unit = getUnit(
+                categoryName,
+                fieldName,
+                formatMessages,
+                units,
+              )
               acc.push({
                 label: label,
                 yAxisID: unit,
@@ -774,7 +711,7 @@ export default function FLA() {
         return acc
       }, [])
 
-    updateChartData({ datasets: datasets })
+    setLocalChartData({ datasets: datasets })
   }, [messageFilters, customColors])
 
   // ======================================================
@@ -987,7 +924,7 @@ export default function FLA() {
             {/* Graph column */}
             <div className="w-full h-full pr-4 min-w-0 flex flex-col">
               <Graph
-                data={chartData}
+                data={localChartData}
                 events={logEvents}
                 flightModes={flightModeMessages}
                 graphConfig={utcAvailable ? fgcsOptions : dataflashOptions}
@@ -998,13 +935,15 @@ export default function FLA() {
 
               {/* Plots Setup */}
               <div className="grid grid-cols-5 gap-4 pt-4">
-                {chartData.datasets.map((item) => (
+                {localChartData.datasets.map((item) => (
                   <Fragment key={item.label}>
                     <ChartDataCard
                       item={item}
                       unit={getUnit(
                         item.label.split("/")[0],
                         item.label.split("/")[1],
+                        formatMessages,
+                        units,
                       )}
                       messageMeans={messageMeans}
                       colorInputSwatch={colorInputSwatch}

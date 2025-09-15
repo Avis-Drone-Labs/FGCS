@@ -1,5 +1,5 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
-import logAnalyserSlice from "./logAnalyserSlice"
+import logAnalyserSlice from "./slices/logAnalyserSlice"
 import socketSlice from "./slices/socketSlice"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 

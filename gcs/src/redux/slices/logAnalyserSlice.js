@@ -50,9 +50,6 @@ const logAnalyserSlice = createSlice({
     setMessageMeans: (state, action) => {
       state.messageMeans = action.payload
     },
-    setChartData: (state, action) => {
-      state.chartData = action.payload
-    },
     setCustomColors: (state, action) => {
       state.customColors = action.payload
     },
@@ -79,7 +76,6 @@ export const {
   setLogType,
   setMessageFilters,
   setMessageMeans,
-  setChartData,
   setCustomColors,
   setColorIndex,
   setAircraftType,

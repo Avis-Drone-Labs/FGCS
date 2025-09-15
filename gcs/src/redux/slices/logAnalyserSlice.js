@@ -63,6 +63,22 @@ const logAnalyserSlice = createSlice({
       state.canSavePreset = action.payload
     },
   },
+  selectors: {
+    selectFile: (state) => state.file,
+    selectUnits: (state) => state.units,
+    selectFormatMessages: (state) => state.formatMessages,
+    selectLogMessages: (state) => state.logMessages,
+    selectLogEvents: (state) => state.logEvents,
+    selectFlightModeMessages: (state) => state.flightModeMessages,
+    selectLogType: (state) => state.logType,
+    selectUtcAvailable: (state) => state.utcAvailable,
+    selectMessageFilters: (state) => state.messageFilters,
+    selectMessageMeans: (state) => state.messageMeans,
+    selectCustomColors: (state) => state.customColors,
+    selectColorIndex: (state) => state.colorIndex,
+    selectAircraftType: (state) => state.aircraftType,
+    selectCanSavePreset: (state) => state.canSavePreset,
+  },
 })
 
 export const {
@@ -81,5 +97,22 @@ export const {
   setAircraftType,
   setCanSavePreset,
 } = logAnalyserSlice.actions
+
+export const {
+  selectFile,
+  selectUnits,
+  selectFormatMessages,
+  selectLogMessages,
+  selectLogEvents,
+  selectFlightModeMessages,
+  selectLogType,
+  selectUtcAvailable,
+  selectMessageFilters,
+  selectMessageMeans,
+  selectCustomColors,
+  selectColorIndex,
+  selectAircraftType,
+  selectCanSavePreset,
+} = logAnalyserSlice.selectors
 
 export default logAnalyserSlice

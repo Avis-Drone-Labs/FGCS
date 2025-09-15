@@ -61,6 +61,22 @@ import {
   setColorIndex,
   setAircraftType,
   setCanSavePreset,
+
+  // Selectors
+  selectFile,
+  selectUnits,
+  selectFormatMessages,
+  selectLogMessages,
+  selectLogEvents,
+  selectFlightModeMessages,
+  selectLogType,
+  selectUtcAvailable,
+  selectMessageFilters,
+  selectMessageMeans,
+  selectCustomColors,
+  selectColorIndex,
+  selectAircraftType,
+  selectCanSavePreset,
 } from "./redux/slices/logAnalyserSlice.js"
 import SavePresetModal from "./components/fla/savePresetModal.jsx"
 
@@ -80,22 +96,20 @@ export default function FLA() {
 
   // Redux state
   const dispatch = useDispatch()
-  const {
-    file,
-    units,
-    formatMessages,
-    logMessages,
-    logEvents,
-    flightModeMessages,
-    logType,
-    utcAvailable,
-    messageFilters,
-    messageMeans,
-    customColors,
-    colorIndex,
-    aircraftType,
-    canSavePreset,
-  } = useSelector((state) => state.logAnalyser)
+  const file = useSelector(selectFile)
+  const units = useSelector(selectUnits)
+  const formatMessages = useSelector(selectFormatMessages)
+  const logMessages = useSelector(selectLogMessages)
+  const logEvents = useSelector(selectLogEvents)
+  const flightModeMessages = useSelector(selectFlightModeMessages)
+  const logType = useSelector(selectLogType)
+  const utcAvailable = useSelector(selectUtcAvailable)
+  const messageFilters = useSelector(selectMessageFilters)
+  const messageMeans = useSelector(selectMessageMeans)
+  const customColors = useSelector(selectCustomColors)
+  const colorIndex = useSelector(selectColorIndex)
+  const aircraftType = useSelector(selectAircraftType)
+  const canSavePreset = useSelector(selectCanSavePreset)
 
   // Local states
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)

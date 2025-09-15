@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.utils import notConnectedError
 
 
@@ -25,7 +25,7 @@ def getCurrentMission(data: CurrentMissionType) -> None:
                 "message": "You must be on the dashboard or missions screen to get the current mission."
             },
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -42,7 +42,7 @@ def getCurrentMission(data: CurrentMissionType) -> None:
                 "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
             },
         )
-        logger.error(f"Could not get mission items for {mission_type} type.")
+        fgcs_logger.error(f"Could not get mission items for {mission_type} type.")
         return
 
     result = droneStatus.drone.missionController.getCurrentMission(
@@ -50,7 +50,7 @@ def getCurrentMission(data: CurrentMissionType) -> None:
     )
 
     if not result.get("success"):
-        logger.error(result.get("message"))
+        fgcs_logger.error(result.get("message"))
         socketio.emit("current_mission", result)
         return
 
@@ -72,7 +72,7 @@ def getCurrentMissionAll() -> None:
                 "message": "You must be on the dashboard or missions screen to get the current mission."
             },
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -100,7 +100,7 @@ def controlMission(data: ControlMissionType) -> None:
             "params_error",
             {"message": "You must be on the dashboard screen to control a mission."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -113,7 +113,7 @@ def controlMission(data: ControlMissionType) -> None:
             "params_error",
             {"message": f"Invalid action for controlling the mission, got {action}."},
         )
-        logger.debug(f"Invalid action for controlling the mission: {action}")
+        fgcs_logger.debug(f"Invalid action for controlling the mission: {action}")
         return
 
     if action == "start":

@@ -1,5 +1,5 @@
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 
 
 @socketio.on("connect")
@@ -7,7 +7,7 @@ def connection() -> None:
     """
     Simply handle a client connections
     """
-    logger.debug("Client connected!")
+    fgcs_logger.debug("Client connected!")
 
 
 @socketio.on("disconnect")
@@ -19,7 +19,7 @@ def disconnect() -> None:
         droneStatus.drone.close()
     droneStatus.drone = None
     droneStatus.state = None
-    logger.debug("Client disconnected!")
+    fgcs_logger.debug("Client disconnected!")
 
 
 @socketio.on("is_connected_to_drone")

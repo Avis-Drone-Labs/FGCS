@@ -1,5 +1,5 @@
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.utils import droneErrorCb
 
 
@@ -13,12 +13,12 @@ def gripperEnabled() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the gripper."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
         droneErrorCb("You must be connected to the drone to access the gripper.")
-        logger.warning("Attempted to get gripper state when drone is None.")
+        fgcs_logger.warning("Attempted to get gripper state when drone is None.")
         return
     enabled = droneStatus.drone.gripperController.getEnabled()
     droneErrorCb(
@@ -39,12 +39,12 @@ def setGripper(action: str) -> None:
             "params_error",
             {"message": "You must be on the config screen to access the gripper."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
         droneErrorCb("You must be connected to the drone to access the gripper.")
-        logger.warning("Attempted to set gripper value when drone is None.")
+        fgcs_logger.warning("Attempted to set gripper value when drone is None.")
         return
 
     if action not in ["release", "grab"]:

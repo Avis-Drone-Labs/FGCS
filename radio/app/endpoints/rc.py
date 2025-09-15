@@ -1,5 +1,5 @@
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.utils import notConnectedError
 
 
@@ -13,7 +13,7 @@ def getRcConfig() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the RC config."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import fgcs_logger, socketio
 from app.customTypes import SetFlightModeValueAndNumber
 from app.utils import droneErrorCb, notConnectedError
 
@@ -20,7 +20,7 @@ def getFlightModeConfig() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -48,7 +48,7 @@ def setFlightMode(data: SetFlightModeValueAndNumber) -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -77,7 +77,7 @@ def refreshFlightModeData() -> None:
             "params_error",
             {"message": "You must be on the config screen to access the flight modes."},
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:
@@ -109,7 +109,7 @@ def setCurrentFlightMode(data: SetCurrentFlightModeType) -> None:
                 "message": "You must be on the dashboard screen to set the current flight mode."
             },
         )
-        logger.debug(f"Current state: {droneStatus.state}")
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
 
     if not droneStatus.drone:

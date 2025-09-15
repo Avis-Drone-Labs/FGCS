@@ -9,11 +9,14 @@ import {
 import ContextMenuItem from "./contextMenuItem"
 
 function getMissionCommandIdByName(name) {
-  return parseInt(
-    Object.keys(COPTER_MISSION_ITEM_COMMANDS_LIST).find(
-      (key) => COPTER_MISSION_ITEM_COMMANDS_LIST[key] === name,
-    ),
+  const key = Object.keys(COPTER_MISSION_ITEM_COMMANDS_LIST).find(
+    (k) => COPTER_MISSION_ITEM_COMMANDS_LIST[k] === name,
   )
+  if (key === undefined) {
+    // Command name not found; return null to indicate error
+    return null
+  }
+  return parseInt(key)
 }
 
 const defaultCommandAltitude = 30 // TODO: make this user configurable
@@ -50,7 +53,7 @@ export default function ContextMenuSpecificCommandItems() {
               command: getMissionCommandIdByName("MAV_CMD_NAV_TAKEOFF"),
               x: 0,
               y: 0,
-              z: 30,
+              z: defaultCommandAltitude,
             })
           }
         >

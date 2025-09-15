@@ -241,6 +241,11 @@ const missionInfoSlice = createSlice({
     createNewSpecificMissionItem: (state, action) => {
       const { x, y, z, command } = action.payload
 
+      if (!command) {
+        console.error("Invalid command for new mission item:", action.payload)
+        return
+      }
+
       const drawingItem = newMissionItem(x, y, state.targetInfo)
       const _type = `${state.activeTab}Items`
 

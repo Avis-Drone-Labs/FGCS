@@ -1,9 +1,6 @@
 import { useDispatch, useSelector } from "react-redux"
 import { coordToInt } from "../../helpers/dataFormatters"
-import {
-  COPTER_MISSION_ITEM_COMMANDS_LIST,
-  FENCE_ITEM_COMMANDS_LIST,
-} from "../../helpers/mavlinkConstants"
+import { COPTER_MISSION_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
 import {
   createNewSpecificMissionItem,
   selectActiveTab,
@@ -19,16 +16,6 @@ function getMissionCommandIdByName(name) {
   )
 }
 
-function getFenceCommandIdByName(name) {
-  return parseInt(
-    Object.keys(FENCE_ITEM_COMMANDS_LIST).find(
-      (key) => FENCE_ITEM_COMMANDS_LIST[key] === name,
-    ),
-  )
-}
-
-const RALLY_POINT = 5100
-
 const defaultCommandAltitude = 30 // TODO: make this user configurable
 
 export default function ContextMenuSpecificCommandItems() {
@@ -39,6 +26,8 @@ export default function ContextMenuSpecificCommandItems() {
   function addSpecificMissionItem(commandData) {
     dispatch(createNewSpecificMissionItem(commandData))
   }
+
+  // TODO: Add support for loiter commands in sub-menu, as well as modal input for parameters e.g. takeoff altitude
 
   if (activeTab === "mission") {
     return (
@@ -95,59 +84,5 @@ export default function ContextMenuSpecificCommandItems() {
         </ContextMenuItem>
       </>
     )
-  } else if (activeTab === "fence") {
-    return (
-      <>
-        <ContextMenuItem
-          onClick={() =>
-            addSpecificMissionItem({
-              command: getFenceCommandIdByName(
-                "MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION",
-              ),
-              x: coordToInt(contextMenuState.gpsCoords.lat),
-              y: coordToInt(contextMenuState.gpsCoords.lng),
-              z: 0,
-              frame: "MAV_FRAME_GLOBAL",
-              params: { param1: 5 },
-            })
-          }
-        >
-          <p>Add circle inclusion</p>
-        </ContextMenuItem>
-        <ContextMenuItem
-          onClick={() =>
-            addSpecificMissionItem({
-              command: getFenceCommandIdByName(
-                "MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION",
-              ),
-              x: coordToInt(contextMenuState.gpsCoords.lat),
-              y: coordToInt(contextMenuState.gpsCoords.lng),
-              z: 0,
-              frame: "MAV_FRAME_GLOBAL",
-              params: { param1: 5 },
-            })
-          }
-        >
-          <p>Add circle exclusion</p>
-        </ContextMenuItem>
-      </>
-    )
-  } else if (activeTab === "rally") {
-    return (
-      <ContextMenuItem
-        onClick={() =>
-          addSpecificMissionItem({
-            command: RALLY_POINT,
-            x: coordToInt(contextMenuState.gpsCoords.lat),
-            y: coordToInt(contextMenuState.gpsCoords.lng),
-            z: defaultCommandAltitude,
-          })
-        }
-      >
-        <p>Add rally point</p>
-      </ContextMenuItem>
-    )
-  } else {
-    return null
   }
 }

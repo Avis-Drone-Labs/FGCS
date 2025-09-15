@@ -51,7 +51,7 @@ import {
 import {
   clearDrawingItems,
   createFencePolygon,
-  createNewDrawingItem,
+  createNewDefaultDrawingItem,
   getFrameKey,
   removeDrawingItem,
   selectActiveTab,
@@ -61,6 +61,7 @@ import {
   setPlannedHomePositionToDronesHomePositionThunk,
   updateContextMenuState,
 } from "../../redux/slices/missionSlice"
+import ContextMenuSpecificCommandItems from "../mapComponents/contextMenuSpecificCommandItems"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -321,7 +322,7 @@ function MapSectionNonMemo({
             addNewPolygonVertex(lat, lon)
           } else {
             dispatch(
-              createNewDrawingItem({ x: coordToInt(lat), y: coordToInt(lon) }),
+              createNewDefaultDrawingItem({ x: coordToInt(lat), y: coordToInt(lon) }),
             )
           }
         }}
@@ -446,6 +447,7 @@ function MapSectionNonMemo({
                   </ContextMenuItem>
                 </>
               )}
+            <ContextMenuSpecificCommandItems />
             <Divider />
             <ContextMenuItem onClick={zoomToDrone}>
               <p>Zoom to drone</p>

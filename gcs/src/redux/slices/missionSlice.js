@@ -213,7 +213,7 @@ const missionInfoSlice = createSlice({
         [state.activeTab]: true,
       }
     },
-    createNewDrawingItem: (state, action) => {
+    createNewDefaultDrawingItem: (state, action) => {
       const { x, y } = action.payload
       const drawingItem = newMissionItem(x, y, state.targetInfo)
 
@@ -230,6 +230,33 @@ const missionInfoSlice = createSlice({
       if (state.activeTab == "fence") {
         drawingItem.param1 = 5
         drawingItem.frame = getFrameKey("MAV_FRAME_GLOBAL")
+      }
+
+      state.drawingItems[_type].push(drawingItem)
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
+    createNewSpecificMissionItem: (state, action) => {
+      const { x, y, z, command } = action.payload
+
+      const drawingItem = newMissionItem(x, y, state.targetInfo)
+      const _type = `${state.activeTab}Items`
+
+      drawingItem.seq = state.drawingItems[_type].length
+      drawingItem.z = z
+      drawingItem.command = command
+      drawingItem.mission_type = { mission: 0, fence: 1, rally: 2 }[
+        state.activeTab
+      ]
+      if (action.payload.frame) {
+        drawingItem.frame = getFrameKey(action.payload.frame)
+      }
+      if (action.payload.params) {
+        Object.keys(action.payload.params).forEach((key) => {
+          drawingItem[key] = action.payload.params[key]
+        })
       }
 
       state.drawingItems[_type].push(drawingItem)
@@ -514,7 +541,8 @@ export const {
   updateDrawingItem,
   removeDrawingItem,
   reorderDrawingItem,
-  createNewDrawingItem,
+  createNewDefaultDrawingItem,
+  createNewSpecificMissionItem,
   clearDrawingItems,
   createFencePolygon,
   setDrawingMissionItems,

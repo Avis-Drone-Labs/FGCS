@@ -155,7 +155,7 @@ export function buildDefaultMessageFilters(loadedLogMessages) {
         const fieldsState = {}
 
         // Set all field states to false if they're not ignored
-        loadedLogMessages["format"][key].fields.map((field) => {
+        loadedLogMessages["format"][key].fields.forEach((field) => {
           if (!ignoredKeys.includes(field)) {
             fieldsState[field] = false
           }

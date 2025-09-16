@@ -25,12 +25,19 @@ import _ from "lodash"
 // Styling imports
 import {
   tailwindColors,
-  ignoredMessages,
-  ignoredKeys,
   colorPalette,
   colorInputSwatch,
 } from "./components/fla/constants"
-import { hexToRgba, gpsToUTC, getUnit } from "./components/fla/utils"
+import {
+  hexToRgba,
+  getUnit,
+  calcGPSOffset,
+  convertTimeUStoUTC,
+  processFlightModes,
+  buildDefaultMessageFilters,
+  calculateMeanValues,
+  sortObjectByKeys,
+} from "./components/fla/utils"
 
 // Custom components and helpers
 import moment from "moment"
@@ -149,214 +156,91 @@ export default function FLA() {
   // ====================================================
 
   async function loadFile() {
-    // If log messages have already been set from prev session, don't load again
-    if (file != null && logMessages === null) {
+    // Early return if conditions not met
+    if (file == null || logMessages !== null) return
+
+    try {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
 
-      let gpsOffset = null // To store the offset between TimeUS and TimeUTC
-
-      if (result.success) {
-        // Load messages into states
-        setLoadingFile(false)
-        const loadedLogMessages = result.messages
-
-        if (loadedLogMessages === null) {
-          showErrorNotification("Error loading file, no messages found.")
-          return
-        }
-
-        updateLogType(result.logType)
-
-        updateAircraftType(loadedLogMessages.aircraftType)
-
-        delete loadedLogMessages.aircraftType // Remove aircraftType so it's not iterated upon later
-
-        updateLogMessages(loadedLogMessages)
-
-        if (result.logType === "dataflash") {
-          updateFlightModeMessages(loadedLogMessages.MODE)
-        } else if (result.logType === "fgcs_telemetry") {
-          updateUtcAvailable(true)
-          // Get the heartbeat messages only where index is the first or last or the mode changes
-          const modeMessages = []
-          for (let i = 0; i < loadedLogMessages.HEARTBEAT.length; i++) {
-            const msg = loadedLogMessages.HEARTBEAT[i]
-            if (
-              modeMessages.length === 0 ||
-              i === loadedLogMessages.HEARTBEAT.length - 1
-            ) {
-              modeMessages.push(msg)
-            } else {
-              const lastMsg = modeMessages[modeMessages.length - 1]
-              if (lastMsg.custom_mode !== msg.custom_mode) {
-                modeMessages.push(msg)
-              }
-            }
-          }
-          updateFlightModeMessages(modeMessages)
-        }
-
-        if ("units" in loadedLogMessages) {
-          updateUnits(loadedLogMessages["units"])
-        }
-
-        if ("format" in loadedLogMessages) {
-          updateFormatMessages(loadedLogMessages["format"])
-        }
-
-        // Set the default state to false for all message filters
-        const logMessageFilterDefaultState = {}
-        Object.keys(loadedLogMessages["format"])
-          .sort()
-          .forEach((key) => {
-            if (
-              Object.keys(loadedLogMessages).includes(key) &&
-              !ignoredMessages.includes(key)
-            ) {
-              const fieldsState = {}
-
-              // Set all field states to false if they're not ignored
-              loadedLogMessages["format"][key].fields.map((field) => {
-                if (!ignoredKeys.includes(field)) {
-                  fieldsState[field] = false
-                }
-              })
-              logMessageFilterDefaultState[key] = fieldsState
-            }
-          })
-
-        if (loadedLogMessages["ESC"]) {
-          // Load each ESC data into its own array
-          loadedLogMessages["ESC"].map((escData) => {
-            const newEscData = {
-              ...escData,
-              name: `ESC${escData["Instance"] + 1}`,
-            }
-            loadedLogMessages[newEscData.name] = (
-              loadedLogMessages[newEscData.name] || []
-            ).concat([newEscData])
-            // Add filter state for new ESC
-            if (!logMessageFilterDefaultState[newEscData.name])
-              logMessageFilterDefaultState[newEscData.name] = {
-                ...logMessageFilterDefaultState["ESC"],
-              }
-          })
-
-          // Remove old ESC motor data
-          delete loadedLogMessages["ESC"]
-          delete logMessageFilterDefaultState["ESC"]
-        }
-
-        let tempLoadedLogMessages = { ...loadedLogMessages }
-
-        if (
-          "GPS" in loadedLogMessages &&
-          result.logType === "dataflash" &&
-          gpsOffset === null
-        ) {
-          const messageObj = tempLoadedLogMessages["GPS"][0] // Get the first GPS message
-
-          // Calculate the offset
-          if (messageObj.GWk !== undefined && messageObj.GMS !== undefined) {
-            const utcTime = gpsToUTC(messageObj.GWk, messageObj.GMS)
-            gpsOffset = utcTime.getTime() - messageObj.TimeUS / 1000
-          }
-
-          // Loop through all messages and replace TimeUS with UTC
-          Object.keys(tempLoadedLogMessages).forEach((key) => {
-            if (key !== "format" && key !== "units") {
-              tempLoadedLogMessages[key] = tempLoadedLogMessages[key].map(
-                (message) => {
-                  return {
-                    ...message,
-                    TimeUS: message.TimeUS / 1000 + gpsOffset, // Add the new property
-                  }
-                },
-              )
-            }
-          })
-          updateUtcAvailable(true)
-          updateFlightModeMessages(tempLoadedLogMessages.MODE)
-        }
-
-        if (loadedLogMessages["BAT"]) {
-          let tempMsgFormat = { ...loadedLogMessages["format"] }
-
-          // Load each BATT data into its own array
-          loadedLogMessages["BAT"].map((battData) => {
-            // Check for both "Inst" and "Instance" keys
-            const instanceValue = battData["Instance"] ?? battData["Inst"]
-            const battName = `BAT${(instanceValue ?? 0) + 1}`
-
-            // Initialize the array if it doesn't exist
-            if (!tempLoadedLogMessages[battName]) {
-              tempLoadedLogMessages[battName] = []
-            }
-
-            tempLoadedLogMessages[battName].push({
-              ...battData,
-              name: battName,
-              TimeUS: battData.TimeUS / 1000 + gpsOffset,
-            })
-
-            // Add filter state for new BATT
-            if (!logMessageFilterDefaultState[battName])
-              logMessageFilterDefaultState[battName] = {
-                ...logMessageFilterDefaultState["BAT"],
-              }
-
-            // Add format state for new BATT
-            if (!tempMsgFormat[battName])
-              tempMsgFormat[battName] = {
-                ...tempMsgFormat["BAT"],
-                name: battName,
-              }
-
-            tempLoadedLogMessages["format"] = tempMsgFormat
-          })
-
-          // Remove old BATT motor data
-          delete tempLoadedLogMessages["BAT"]
-          delete tempLoadedLogMessages["format"]["BAT"]
-          delete logMessageFilterDefaultState["BAT"]
-          updateLogMessages(tempLoadedLogMessages)
-          updateFormatMessages(tempLoadedLogMessages["format"])
-        }
-
-        // Sort new filters
-        const sortedLogMessageFilterState = Object.keys(
-          logMessageFilterDefaultState,
-        )
-          .sort()
-          .reduce((acc, c) => {
-            acc[c] = logMessageFilterDefaultState[c]
-            return acc
-          }, {})
-
-        updateMessageFilters(sortedLogMessageFilterState)
-        calculateMeanValues(loadedLogMessages)
-
-        // Set event logs for the event lines on graph
-        if ("EV" in loadedLogMessages) {
-          updateLogEvents(
-            loadedLogMessages["EV"].map((event) => ({
-              time: event.TimeUS,
-              message: logEventIds[event.Id],
-            })),
-          )
-        }
-
-        // Close modal and show success message
-        showSuccessNotification(`${file.name} loaded successfully`)
-      } else {
+      if (!result.success) {
         showErrorNotification("Error loading file, file not found. Reload.")
-        setLoadingFile(false)
+        return
       }
+
+      await processLoadedFile(result)
+      showSuccessNotification(`${file.name} loaded successfully`)
+      
+    } catch (error) {
+      showErrorNotification("Error loading file: " + error.message)
+    } finally {
+      setLoadingFile(false)
     }
   }
 
-  // gpsToUTC is provided by utils
+  async function processLoadedFile(result) {
+    const loadedLogMessages = result.messages
+
+    if (!loadedLogMessages) {
+      showErrorNotification("Error loading file, no messages found.")
+      return
+    }
+
+    // 1. Update log and aircraft type
+    updateLogType(result.logType)
+    updateAircraftType(loadedLogMessages.aircraftType)
+    delete loadedLogMessages.aircraftType
+    updateLogMessages(loadedLogMessages)
+
+    // 2. Update format and units
+    if ("units" in loadedLogMessages) updateUnits(loadedLogMessages["units"])
+    if ("format" in loadedLogMessages) updateFormatMessages(loadedLogMessages["format"])
+
+    // 3. Process flight modes and set UTC availability
+    const flightModeMessages = processFlightModes(result, loadedLogMessages)
+    updateFlightModeMessages(flightModeMessages)
+    if (result.logType === "fgcs_telemetry") updateUtcAvailable(true)
+
+    // 4. Build default message filters. Hover over function name for details.
+    let logMessageFilterDefaultState = buildDefaultMessageFilters(loadedLogMessages)
+
+    // 5. Expand ESC into separate array based on instance
+    const { updatedMessages: messagesWithESC, updatedFilters: filtersWithESC } = 
+    expandESCMessages(loadedLogMessages, logMessageFilterDefaultState)
+
+    // 6. Convert TimeUS to TimeUTC if GPS data is available (for dataflash logs)
+    let tempLoadedLogMessages = { ...messagesWithESC }
+    let gpsOffset = null
+    if (messagesWithESC.GPS && result.logType === "dataflash") {
+      gpsOffset = calcGPSOffset(messagesWithESC)
+      if (gpsOffset !== null) {
+        tempLoadedLogMessages = convertTimeUStoUTC(tempLoadedLogMessages, gpsOffset)
+        updateUtcAvailable(true)
+        updateFlightModeMessages(tempLoadedLogMessages.MODE)
+      }
+    }
+
+    // 7. Expand BAT data into separate arrays based on instance.
+    const { updatedMessages: finalMessages, updatedFilters: finalFilters, updatedFormats } = 
+    expandBATMessages(messagesWithESC, tempLoadedLogMessages, filtersWithESC, gpsOffset)
+
+    // 8. Update Redux
+    updateLogMessages(finalMessages)
+    updateFormatMessages(updatedFormats)
+    updateMessageFilters(sortObjectByKeys(finalFilters))
+
+    // 9. Calculate and set means and set event logs for the event lines on graph
+    const means = calculateMeanValues(loadedLogMessages)
+    updateMessageMeans(means)
+    if ("EV" in loadedLogMessages) {
+      updateLogEvents(
+        loadedLogMessages["EV"].map((event) => ({
+          time: event.TimeUS,
+          message: logEventIds[event.Id],
+        })),
+      )
+    }
+  }
 
   // Get a list of the recent FGCS telemetry logs
   async function getFgcsLogs() {
@@ -367,6 +251,98 @@ export default function FLA() {
   async function clearFgcsLogs() {
     await window.ipcRenderer.clearRecentLogs()
     getFgcsLogs()
+  }
+
+  /**
+   * Expands ESC messages into separate arrays based on Instance
+   * @param {Object} logMessages - Messages to expand
+   * @param {Object} filterState - Filter state to update
+   * @returns {Object} { updatedMessages, updatedFilters }
+   */
+  function expandESCMessages(logMessages, filterState) {
+    if (!logMessages["ESC"]) {
+      return { updatedMessages: logMessages, updatedFilters: filterState }
+    }
+
+    const updatedMessages = { ...logMessages }
+    const updatedFilters = { ...filterState }
+
+    logMessages["ESC"].forEach((escData) => {
+      const newEscData = {
+        ...escData,
+        name: `ESC${escData["Instance"] + 1}`,
+      }
+      updatedMessages[newEscData.name] = (
+        updatedMessages[newEscData.name] || []
+      ).concat([newEscData])
+      
+      if (!updatedFilters[newEscData.name]) {
+        updatedFilters[newEscData.name] = { ...filterState["ESC"] }
+      }
+    })
+
+    delete updatedMessages["ESC"]
+    delete updatedFilters["ESC"]
+
+    return { updatedMessages, updatedFilters }
+  }
+
+  /**
+   * Expands BAT messages into separate arrays based on Instance
+   * @param {Object} logMessages - Original messages
+   * @param {Object} tempMessages - Time-converted messages
+   * @param {Object} filterState - Filter state to update
+   * @param {number|null} gpsOffset - GPS offset for time conversion
+   * @returns {Object} { updatedMessages, updatedFilters, updatedFormats }
+   */
+  function expandBATMessages(logMessages, tempMessages, filterState, gpsOffset) {
+    if (!logMessages["BAT"]) {
+      return { 
+        updatedMessages: tempMessages, 
+        updatedFilters: filterState,
+        updatedFormats: logMessages["format"]
+      }
+    }
+
+    const updatedMessages = { ...tempMessages }
+    const updatedFilters = { ...filterState }
+    const updatedFormats = { ...logMessages["format"] }
+
+    logMessages["BAT"].forEach((battData) => {
+      const instanceValue = battData["Instance"] ?? battData["Inst"]
+      const battName = `BAT${(instanceValue ?? 0) + 1}`
+
+      if (!updatedMessages[battName]) {
+        updatedMessages[battName] = []
+      }
+
+      const timeUS = gpsOffset !== null 
+        ? battData.TimeUS / 1000 + gpsOffset 
+        : battData.TimeUS
+
+      updatedMessages[battName].push({
+        ...battData,
+        name: battName,
+        TimeUS: timeUS,
+      })
+
+      if (!updatedFilters[battName]) {
+        updatedFilters[battName] = { ...filterState["BAT"] }
+      }
+
+      if (!updatedFormats[battName]) {
+        updatedFormats[battName] = {
+          ...updatedFormats["BAT"],
+          name: battName,
+        }
+      }
+    })
+
+    delete updatedMessages["BAT"]
+    delete updatedFormats["BAT"]
+    delete updatedFilters["BAT"]
+
+    return { updatedMessages, updatedFilters, updatedFormats }
   }
 
   // Close file
@@ -390,68 +366,7 @@ export default function FLA() {
   }
 
   // ====================================================
-  // 3. Data Processing Functions
-  // ====================================================
-
-  function calculateMeanValues(loadedLogMessages) {
-    // Loop over all fields and precalculate min, max, mean
-    let rawValues = {}
-    if (loadedLogMessages !== null) {
-      // Putting all raw data into a list
-      Object.keys(loadedLogMessages).forEach((key) => {
-        if (!ignoredMessages.includes(key)) {
-          let messageData = loadedLogMessages[key]
-          let messageDataMeans = {}
-
-          messageData.map((message) => {
-            Object.keys(message).forEach((dataPointKey) => {
-              let dataPoint = message[dataPointKey]
-              if (dataPointKey != dataPoint && dataPointKey != "name") {
-                if (messageDataMeans[dataPointKey] == undefined) {
-                  messageDataMeans[dataPointKey] = [dataPoint]
-                } else {
-                  messageDataMeans[dataPointKey].push(dataPoint)
-                }
-              }
-            })
-          })
-
-          rawValues[key] = messageDataMeans
-        }
-      })
-
-      // Looping over each list and finding min, max, mean
-      let means = {}
-      Object.keys(rawValues).forEach((key) => {
-        means[key] = {}
-        let messageData = rawValues[key]
-        Object.keys(messageData).forEach((messageKey) => {
-          let messageValues = messageData[messageKey]
-          let min = messageValues.reduce(
-            (x, y) => Math.min(x, y),
-            Number.NEGATIVE_INFINITY,
-          )
-          let max = messageValues.reduce(
-            (x, y) => Math.max(x, y),
-            Number.NEGATIVE_INFINITY,
-          )
-          let mean =
-            messageValues.reduce((acc, curr) => acc + curr, 0) /
-            messageValues.length
-
-          means[`${key}/${messageKey}`] = {
-            mean: mean.toFixed(2),
-            max: max.toFixed(2),
-            min: min.toFixed(2),
-          }
-        })
-      })
-      updateMessageMeans(means)
-    }
-  }
-
-  // ====================================================
-  // 4. Filter and Preset Management
+  // 3. Filter and Preset Management
   // ====================================================
 
   // Turn on/off all filters
@@ -652,7 +567,7 @@ export default function FLA() {
   }
 
   // ====================================================
-  // 5. Color Management
+  // 4. Color Management
   // ====================================================
 
   function changeColor(label, color) {
@@ -662,13 +577,7 @@ export default function FLA() {
   }
 
   // ====================================================
-  // 6. Utility Functions
-  // ====================================================
-
-  // getUnit provided by utils; pass formatMessages and units where needed
-
-  // ====================================================
-  // 7. Effect Hooks
+  // 5. Effect Hooks
   // ====================================================
 
   // Ensure file is loaded when selected
@@ -729,7 +638,7 @@ export default function FLA() {
   }, [messageFilters, customColors])
 
   // ======================================================
-  // 8. Render
+  // 6. Render
   // ======================================================
 
   return (

@@ -7,6 +7,9 @@ import PresetAccordionItem from "./fla/presetAccordionItem"
 import MessageAccordionItem from "./fla/messageAccordionItem"
 import { getUnit } from "./fla/utils"
 
+/**
+ * Main display component for the Falcon Log Analyser (FLA).
+ */
 export default function FlaMainDisplay({
   file,
   closeLogFile,

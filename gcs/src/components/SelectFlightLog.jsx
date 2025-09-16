@@ -1,4 +1,3 @@
-import React from "react"
 import {
   Button,
   Divider,
@@ -8,7 +7,9 @@ import {
 } from "@mantine/core"
 import moment from "moment"
 
-// Accept props for recent logs, loading, handlers, etc.
+/**
+ * Initial FLA screen for selecting or uploading a flight log file.
+ */
 export default function SelectFlightLog({
   recentFgcsLogs,
   loadingFile,

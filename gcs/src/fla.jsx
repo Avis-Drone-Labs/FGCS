@@ -5,29 +5,15 @@
 */
 
 // Base imports
-import { Fragment, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import {
-  Accordion,
-  Button,
-  Divider,
-  FileButton,
-  LoadingOverlay,
-  Progress,
-  ScrollArea,
-  Tooltip,
-} from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 import { useSelector, useDispatch } from "react-redux"
 import _ from "lodash"
 
 // Styling imports
-import {
-  tailwindColors,
-  colorPalette,
-  colorInputSwatch,
-} from "./components/fla/constants"
+import { colorPalette, colorInputSwatch } from "./components/fla/constants"
 import {
   hexToRgba,
   getUnit,
@@ -40,15 +26,12 @@ import {
 } from "./components/fla/utils"
 
 // Custom components and helpers
-import moment from "moment"
-import ChartDataCard from "./components/fla/chartDataCard.jsx"
-import Graph from "./components/fla/graph"
 import { dataflashOptions, fgcsOptions } from "./components/fla/graphConfigs.js"
 import { logEventIds } from "./components/fla/logEventIds.js"
-import MessageAccordionItem from "./components/fla/messageAccordionItem.jsx"
-import PresetAccordionItem from "./components/fla/presetAccordionItem.jsx"
 import { usePresetCategories } from "./components/fla/presetCategories.js"
 import Layout from "./components/layout.jsx"
+import SelectFlightLog from "./components/SelectFlightLog"
+import FlaMainDisplay from "./components/FlaMainDisplay"
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -85,9 +68,6 @@ import {
   selectAircraftType,
   selectCanSavePreset,
 } from "./redux/slices/logAnalyserSlice.js"
-import SavePresetModal from "./components/fla/savePresetModal.jsx"
-
-// helpers and constants are imported from ./components/fla/{constants,utils}
 
 export default function FLA() {
   // ====================================================
@@ -170,7 +150,6 @@ export default function FLA() {
 
       await processLoadedFile(result)
       showSuccessNotification(`${file.name} loaded successfully`)
-      
     } catch (error) {
       showErrorNotification("Error loading file: " + error.message)
     } finally {
@@ -194,7 +173,8 @@ export default function FLA() {
 
     // 2. Update format and units
     if ("units" in loadedLogMessages) updateUnits(loadedLogMessages["units"])
-    if ("format" in loadedLogMessages) updateFormatMessages(loadedLogMessages["format"])
+    if ("format" in loadedLogMessages)
+      updateFormatMessages(loadedLogMessages["format"])
 
     // 3. Process flight modes and set UTC availability
     const flightModeMessages = processFlightModes(result, loadedLogMessages)
@@ -202,11 +182,12 @@ export default function FLA() {
     if (result.logType === "fgcs_telemetry") updateUtcAvailable(true)
 
     // 4. Build default message filters. Hover over function name for details.
-    let logMessageFilterDefaultState = buildDefaultMessageFilters(loadedLogMessages)
+    let logMessageFilterDefaultState =
+      buildDefaultMessageFilters(loadedLogMessages)
 
     // 5. Expand ESC into separate array based on instance
-    const { updatedMessages: messagesWithESC, updatedFilters: filtersWithESC } = 
-    expandESCMessages(loadedLogMessages, logMessageFilterDefaultState)
+    const { updatedMessages: messagesWithESC, updatedFilters: filtersWithESC } =
+      expandESCMessages(loadedLogMessages, logMessageFilterDefaultState)
 
     // 6. Convert TimeUS to TimeUTC if GPS data is available (for dataflash logs)
     let tempLoadedLogMessages = { ...messagesWithESC }
@@ -214,15 +195,26 @@ export default function FLA() {
     if (messagesWithESC.GPS && result.logType === "dataflash") {
       gpsOffset = calcGPSOffset(messagesWithESC)
       if (gpsOffset !== null) {
-        tempLoadedLogMessages = convertTimeUStoUTC(tempLoadedLogMessages, gpsOffset)
+        tempLoadedLogMessages = convertTimeUStoUTC(
+          tempLoadedLogMessages,
+          gpsOffset,
+        )
         updateUtcAvailable(true)
         updateFlightModeMessages(tempLoadedLogMessages.MODE)
       }
     }
 
     // 7. Expand BAT data into separate arrays based on instance.
-    const { updatedMessages: finalMessages, updatedFilters: finalFilters, updatedFormats } = 
-    expandBATMessages(messagesWithESC, tempLoadedLogMessages, filtersWithESC, gpsOffset)
+    const {
+      updatedMessages: finalMessages,
+      updatedFilters: finalFilters,
+      updatedFormats,
+    } = expandBATMessages(
+      messagesWithESC,
+      tempLoadedLogMessages,
+      filtersWithESC,
+      gpsOffset,
+    )
 
     // 8. Update Redux
     updateLogMessages(finalMessages)
@@ -264,7 +256,7 @@ export default function FLA() {
       updatedMessages[newEscData.name] = (
         updatedMessages[newEscData.name] || []
       ).concat([newEscData])
-      
+
       if (!updatedFilters[newEscData.name]) {
         updatedFilters[newEscData.name] = { ...filterState["ESC"] }
       }
@@ -284,12 +276,17 @@ export default function FLA() {
    * @param {number|null} gpsOffset - GPS offset for time conversion
    * @returns {Object} { updatedMessages, updatedFilters, updatedFormats }
    */
-  function expandBATMessages(logMessages, tempMessages, filterState, gpsOffset) {
+  function expandBATMessages(
+    logMessages,
+    tempMessages,
+    filterState,
+    gpsOffset,
+  ) {
     if (!logMessages["BAT"]) {
-      return { 
-        updatedMessages: tempMessages, 
+      return {
+        updatedMessages: tempMessages,
         updatedFilters: filterState,
-        updatedFormats: logMessages["format"]
+        updatedFormats: logMessages["format"],
       }
     }
 
@@ -305,9 +302,10 @@ export default function FLA() {
         updatedMessages[battName] = []
       }
 
-      const timeUS = gpsOffset !== null 
-        ? battData.TimeUS / 1000 + gpsOffset 
-        : battData.TimeUS
+      const timeUS =
+        gpsOffset !== null
+          ? battData.TimeUS / 1000 + gpsOffset
+          : battData.TimeUS
 
       updatedMessages[battName].push({
         ...battData,
@@ -441,9 +439,7 @@ export default function FLA() {
       }
     })
 
-    // Update the color index
     updateColorIndex(colorCount)
-    // Update customColors with the newColors
     updateCustomColors(newColors)
     updateMessageFilters(newFilters)
     // Don't allow saving if we just selected an existing preset
@@ -452,29 +448,22 @@ export default function FLA() {
 
   function selectMessageFilter(event, messageName, fieldName) {
     let newFilters = _.cloneDeep(messageFilters)
-    newFilters[messageName][fieldName] = event.currentTarget.checked
-
-    // Create a deep copy of customColors
     let newColors = _.cloneDeep(customColors)
 
-    // if unchecked remove custom color
-    if (!newFilters[messageName][fieldName]) {
-      delete newColors[`${messageName}/${fieldName}`]
+    const checked = event.currentTarget.checked
+    newFilters[messageName][fieldName] = checked
 
-      // Update customColors with the modified copy
-      updateCustomColors(newColors)
-    }
-    // Else assign a color
-    else {
+    if (!checked) {
+      delete newColors[`${messageName}/${fieldName}`]
+    } else {
       if (!newColors[`${messageName}/${fieldName}`]) {
         newColors[`${messageName}/${fieldName}`] =
           colorPalette[colorIndex % colorPalette.length]
         updateColorIndex((colorIndex + 1) % colorPalette.length)
       }
-
-      // Update customColors with the modified copy
-      updateCustomColors(newColors)
     }
+
+    updateCustomColors(newColors)
     updateMessageFilters(newFilters)
 
     // Then check if we should allow saving preset
@@ -644,247 +633,44 @@ export default function FLA() {
   return (
     <Layout currentPage="fla">
       {logMessages === null ? (
-        // Open flight logs section
-        <div className="flex flex-col items-center justify-center h-full mx-auto">
-          <div className="flex flex-row items-center justify-center gap-8">
-            <div className="flex flex-col gap-4">
-              <FileButton
-                color={tailwindColors.blue[600]}
-                variant="filled"
-                onChange={updateFile}
-                accept={[".log", ".ftlog"]}
-                loading={loadingFile}
-              >
-                {(props) => <Button {...props}>Analyse a log</Button>}
-              </FileButton>
-              <Button
-                color={tailwindColors.red[600]}
-                variant="filled"
-                onClick={clearFgcsLogs}
-              >
-                Clear Logs
-              </Button>
-            </div>
-            <Divider size="sm" orientation="vertical" />
-            <div className="relative">
-              <LoadingOverlay
-                visible={recentFgcsLogs === null || loadingFile}
-              />
-              <div className="flex flex-col items-center gap-2">
-                <p className="font-bold">Recent FGCS telemetry logs</p>
-                <ScrollArea h={250} offsetScrollbars>
-                  {recentFgcsLogs !== null &&
-                    recentFgcsLogs.map((log, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
-                        onClick={() => updateFile(log)}
-                      >
-                        <p>{log.name} </p>
-                        <div className="flex flex-row gap-2">
-                          <p className="text-sm text-gray-400">
-                            {moment(
-                              log.timestamp.toISOString(),
-                              "YYYY-MM-DD_HH-mm-ss",
-                            ).fromNow()}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            {Math.round(log.size / 1024)}KB
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </ScrollArea>
-              </div>
-            </div>
-          </div>
-
-          {loadingFile && (
-            <Progress
-              value={loadingFileProgress}
-              className="w-full my-4"
-              color={tailwindColors.green[500]}
-            />
-          )}
-        </div>
+        <SelectFlightLog
+          recentFgcsLogs={recentFgcsLogs}
+          loadingFile={loadingFile}
+          loadingFileProgress={loadingFileProgress}
+          updateFile={updateFile}
+          clearFgcsLogs={clearFgcsLogs}
+        />
       ) : (
-        // Graphs section
-        <>
-          <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-y-auto overflow-x-hidden">
-            {/* Message selection column */}
-            <div className="w-1/4 pb-6">
-              <div className="flex flex-col mb-2 text-sm gap-y-2">
-                <div className="flex flex-row justify-between">
-                  <Tooltip label={file.path}>
-                    <div className="px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block">
-                      File Name:
-                      <span
-                        className="ml-2 text-white underline cursor-pointer"
-                        onClick={() => {
-                          window.ipcRenderer.send(
-                            "openFileInExplorer",
-                            file.path,
-                          )
-                        }}
-                      >
-                        {file.name}
-                      </span>
-                    </div>
-                  </Tooltip>
-                  <Button
-                    className="ml-2"
-                    size="sm"
-                    color={tailwindColors.red[500]}
-                    onClick={closeLogFile}
-                  >
-                    Close file
-                  </Button>
-                </div>
-                <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
-                  <div className="whitespace-nowrap">Aircraft Type:</div>
-                  <div className="text-white ml-auto truncate max-w-[200px]">
-                    {aircraftType ? aircraftType : "No Aircraft Type"}
-                  </div>
-                </div>
-              </div>
-
-              <ScrollArea className="h-full max-h-[90%]">
-                <Accordion multiple={true}>
-                  {/* Presets */}
-                  <Accordion.Item key="presets" value="presets">
-                    <Accordion.Control className="rounded-md">
-                      Presets
-                    </Accordion.Control>
-                    <Accordion.Panel>
-                      <Accordion multiple={true}>
-                        {/* Custom Presets */}
-                        {presetCategories["custom_" + logType]?.map(
-                          (category) => {
-                            return (
-                              <Fragment key={category.name}>
-                                <PresetAccordionItem
-                                  key={category.name}
-                                  category={category}
-                                  selectPresetFunc={selectPreset}
-                                  aircraftType={aircraftType}
-                                  deleteCustomPreset={handleDeleteCustomPreset}
-                                />
-                              </Fragment>
-                            )
-                          },
-                        )}
-                        {/* Default Presets */}
-                        {presetCategories[logType]?.map((category) => {
-                          // Filter out presets with unavailable keys or fields
-                          const filteredCategory = {
-                            ...category,
-                            filters: category.filters.filter((filter) =>
-                              Object.keys(filter.filters).every((key) => {
-                                // Check if the key exists in logMessages
-                                if (!logMessages[key]) return false
-
-                                // Check if the required fields exist in logMessages["format"][key].fields
-                                const requiredFields = filter.filters[key]
-                                const availableFields =
-                                  logMessages["format"]?.[key]?.fields || []
-                                return requiredFields.every((field) =>
-                                  availableFields.includes(field),
-                                )
-                              }),
-                            ),
-                          }
-
-                          // Skip categories with no valid filters
-                          if (filteredCategory.filters.length === 0) {
-                            return null
-                          }
-
-                          return (
-                            <Fragment key={category.name}>
-                              <PresetAccordionItem
-                                key={category.name}
-                                category={filteredCategory}
-                                selectPresetFunc={selectPreset}
-                                aircraftType={aircraftType}
-                              />
-                            </Fragment>
-                          )
-                        })}
-                      </Accordion>
-                    </Accordion.Panel>
-                  </Accordion.Item>
-
-                  {/* All messages */}
-                  <Accordion.Item
-                    key="messages"
-                    value="messages"
-                    styles={{ item: { borderBottom: "none" } }}
-                  >
-                    <Accordion.Control className="rounded-md">
-                      Messages
-                    </Accordion.Control>
-                    <Accordion.Panel>
-                      <Accordion multiple={true}>
-                        {Object.keys(messageFilters).map((messageName, idx) => {
-                          return (
-                            <Fragment key={idx}>
-                              <MessageAccordionItem
-                                key={idx}
-                                messageName={messageName}
-                                messageFilters={messageFilters}
-                                selectMessageFilterFunc={selectMessageFilter}
-                              />
-                            </Fragment>
-                          )
-                        })}
-                      </Accordion>
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                </Accordion>
-              </ScrollArea>
-            </div>
-
-            {/* Graph column */}
-            <div className="w-full h-full pr-4 min-w-0 flex flex-col">
-              <Graph
-                data={localChartData}
-                events={logEvents}
-                flightModes={flightModeMessages}
-                graphConfig={utcAvailable ? fgcsOptions : dataflashOptions}
-                clearFilters={clearFilters}
-                canSavePreset={canSavePreset}
-                openPresetModal={open}
-              />
-
-              {/* Plots Setup */}
-              <div className="grid grid-cols-5 gap-4 pt-4">
-                {localChartData.datasets.map((item) => (
-                  <Fragment key={item.label}>
-                    <ChartDataCard
-                      item={item}
-                      unit={getUnit(
-                        item.label.split("/")[0],
-                        item.label.split("/")[1],
-                        formatMessages,
-                        units,
-                      )}
-                      messageMeans={messageMeans}
-                      colorInputSwatch={colorInputSwatch}
-                      changeColorFunc={changeColor}
-                      removeDatasetFunc={removeDataset}
-                    />
-                  </Fragment>
-                ))}
-              </div>
-
-              <SavePresetModal
-                opened={opened}
-                close={close}
-                onSave={handleSaveCustomPreset}
-              />
-            </div>
-          </div>
-        </>
+        <FlaMainDisplay
+          file={file}
+          closeLogFile={closeLogFile}
+          aircraftType={aircraftType}
+          logType={logType}
+          presetCategories={presetCategories}
+          selectPreset={selectPreset}
+          handleDeleteCustomPreset={handleDeleteCustomPreset}
+          logMessages={logMessages}
+          messageFilters={messageFilters}
+          selectMessageFilter={selectMessageFilter}
+          localChartData={localChartData}
+          logEvents={logEvents}
+          flightModeMessages={flightModeMessages}
+          utcAvailable={utcAvailable}
+          fgcsOptions={fgcsOptions}
+          dataflashOptions={dataflashOptions}
+          clearFilters={clearFilters}
+          canSavePreset={canSavePreset}
+          open={open}
+          messageMeans={messageMeans}
+          colorInputSwatch={colorInputSwatch}
+          changeColor={changeColor}
+          removeDataset={removeDataset}
+          opened={opened}
+          close={close}
+          handleSaveCustomPreset={handleSaveCustomPreset}
+          formatMessages={formatMessages}
+          units={units}
+        />
       )}
     </Layout>
   )

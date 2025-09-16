@@ -33,12 +33,12 @@ export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
 }
 
 /**
- * Expands ESC messages into separate arrays based on Instance
- * @param {Object} messageName - The name of the message
- * @param {Object} fieldName - The name of the field
- * @param {Object} formatMessages - The format messages
- * @param {Object} units - The units
- * @returns {Object} - The expanded messages
+ * Retrieves the unit for a given message field.
+ * @param {string} messageName - The name of the message.
+ * @param {string} fieldName - The name of the field within the message.
+ * @param {Object} formatMessages - An object containing message format definitions.
+ * @param {Object} units - An object mapping unit IDs to unit names.
+ * @returns {string} - The unit name for the specified field, or "UNKNOWN" if not found.
  */
 export function getUnit(
   messageName,

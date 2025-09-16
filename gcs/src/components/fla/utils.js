@@ -228,18 +228,18 @@ export function calcGPSOffset(loadedLogMessages) {
  * @returns {Object} Messages with TimeUS converted to UTC
  */
 export function convertTimeUStoUTC(logMessages, gpsOffset) {
-  const convertedMessages = { ...logMessages }
-  
-  Object.keys(convertedMessages).forEach((key) => {
-    if (key !== "format" && key !== "units") {
+  const convertedMessages = { ...logMessages };
+
+  Object.keys(convertedMessages)
+    .filter((key) => key !== "format" && key !== "units")
+    .forEach((key) => {
       convertedMessages[key] = convertedMessages[key].map((message) => ({
         ...message,
         TimeUS: message.TimeUS / 1000 + gpsOffset,
-      }))
-    }
-  })
-  
-  return convertedMessages
+      }));
+    });
+
+  return convertedMessages;
 }
 
 /**

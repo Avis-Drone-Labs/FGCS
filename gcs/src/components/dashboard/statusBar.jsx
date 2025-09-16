@@ -14,7 +14,10 @@ import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"
-import { selectTelemetry } from "../../redux/slices/droneInfoSlice"
+import {
+  selectBatteryData,
+  selectTelemetry,
+} from "../../redux/slices/droneInfoSlice"
 
 // Helper imports
 import { socket } from "../../helpers/socket"
@@ -38,6 +41,7 @@ export function StatusSection({ icon, value, tooltip }) {
 export default function StatusBar(props) {
   const [time, setTime] = useState(moment())
   const updateClock = useInterval(() => setTime(moment()), 1000)
+  const batteryData = useSelector(selectBatteryData)
   const telemetryData = useSelector(selectTelemetry)
 
   // Start clock
@@ -95,6 +99,36 @@ export default function StatusBar(props) {
 
     dismissAlert(AlertCategory.Altitude)
   }, [telemetryData.alt])
+
+  useEffect(() => {
+    const batteryAlertPercentages = getSetting("Dashboard.batteryAlert") ?? []
+    batteryAlertPercentages.sort((a1, a2) => a1 - a2)
+
+    batteryData.forEach((battery) => {
+      for (const [
+        i,
+        batteryAlertPercentage,
+      ] of batteryAlertPercentages.entries()) {
+        if (battery.battery_remaining < batteryAlertPercentage) {
+          dispatchAlert({
+            category: AlertCategory.Battery,
+            severity:
+              i == 0
+                ? AlertSeverity.Red
+                : i == batteryAlertPercentages.length - 1
+                  ? AlertSeverity.Yellow
+                  : AlertSeverity.Orange,
+            jsx: (
+              <>
+                Caution! You've dropped below {batteryAlertPercentage}% battery
+              </>
+            ),
+          })
+          return
+        }
+      }
+    })
+  }, [batteryData])
 
   return (
     <div className={`${props.className} flex flex-col items-end`}>

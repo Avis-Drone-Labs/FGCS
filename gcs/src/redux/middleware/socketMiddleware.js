@@ -25,6 +25,7 @@ import {
 
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"
+import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import SocketFactory from "../../helpers/socket"
 import {
   setAttitudeData,
@@ -34,6 +35,7 @@ import {
   setGpsData,
   setGpsRawIntData,
   setHeartbeatData,
+  setHomePosition,
   setLastGraphMessage,
   setLoiterRadius,
   setNavControllerOutput,
@@ -48,17 +50,29 @@ import {
   setDrawingFenceItems,
   setDrawingMissionItems,
   setDrawingRallyItems,
-  setHomePosition,
   setMissionProgressData,
   setMissionProgressModal,
   setTargetInfo,
   setUnwrittenChanges,
-  updateHomePositionBasedOnWaypoints,
+  setUpdatePlannedHomePositionFromLoadData,
+  setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
   queueErrorNotification,
   queueNotification,
+  queueSuccessNotification,
 } from "../slices/notificationSlice"
+import {
+  setAutoPilotRebootModalOpen,
+  setFetchingVars,
+  setFetchingVarsProgress,
+  setModifiedParams,
+  setParams,
+  setParamSearchValue,
+  setRebootData,
+  setShownParams,
+  updateParamValue,
+} from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
@@ -82,6 +96,14 @@ const DroneSpecificSocketEvents = Object.freeze({
   onIncomingMsg: "incoming_msg",
   onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
   onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
+})
+
+const ParamSpecificSocketEvents = Object.freeze({
+  onRebootAutopilot: "reboot_autopilot",
+  onParamsMessage: "params",
+  onParamRequestUpdate: "param_request_update",
+  onParamSetSuccess: "param_set_success",
+  onParamError: "params_error",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -228,7 +250,7 @@ const socketMiddleware = (store) => {
         // Flags that the drone is connected
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
-          if (msg.aircraft_type != 1 && msg.aircraft_type != 2) {
+          if (msg.aircraft_type !== 1 && msg.aircraft_type !== 2) {
             store.dispatch(
               queueErrorNotification(
                 "Aircraft not of type quadcopter or plane",
@@ -240,8 +262,10 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnectionModal(false))
 
           store.dispatch(emitSetState({ state: "dashboard" }))
-          store.dispatch(emitGetHomePosition())
-          store.dispatch(emitGetLoiterRadius())
+          store.dispatch(emitGetHomePosition()) // use actual home position
+          if (msg.aircraft_type === 1) {
+            store.dispatch(emitGetLoiterRadius())
+          }
         })
 
         // Link stats
@@ -287,12 +311,55 @@ const socketMiddleware = (store) => {
           (msg) => {
             store.dispatch(
               msg.success
-                ? setHomePosition(msg.data)
+                ? setHomePosition(msg.data) // use actual home position
                 : queueNotification({ type: "error", message: msg.message }),
             )
           },
         )
 
+        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          store.dispatch(setRebootData(msg))
+          if (msg.success) {
+            store.dispatch(setAutoPilotRebootModalOpen(false))
+          }
+        })
+
+        socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
+          store.dispatch(setParams(msg))
+          store.dispatch(setShownParams(msg))
+          store.dispatch(setFetchingVars(false))
+          store.dispatch(setFetchingVarsProgress(0))
+          store.dispatch(setParamSearchValue(""))
+        })
+
+        socket.socket.on(
+          ParamSpecificSocketEvents.onParamRequestUpdate,
+          (msg) => {
+            store.dispatch(
+              setFetchingVarsProgress(
+                (msg.current_param_index / msg.total_number_of_params) * 100,
+              ),
+            )
+          },
+        )
+
+        socket.socket.on(ParamSpecificSocketEvents.onParamSetSuccess, (msg) => {
+          store.dispatch(queueSuccessNotification(msg.message))
+          store.dispatch(setModifiedParams([]))
+          // Update the param in the params list also
+          for (let param of msg.data) {
+            store.dispatch(updateParamValue(param))
+          }
+        })
+
+        socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
+          store.dispatch(queueErrorNotification(msg.message))
+          store.dispatch(setFetchingVars(false))
+        })
+
+        /*
+          Missions
+        */
         socket.socket.on(
           DroneSpecificSocketEvents.onGetLoiterRadiusResult,
           (msg) => {
@@ -338,7 +405,37 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+
+                // Check if first item is a home location, then open modal to
+                // select whether to update planned home position
+                if (missionItemsWithIds.length > 0) {
+                  const potentialHomeLocation = missionItemsWithIds[0]
+                  const currentPlannedHomeLocation =
+                    storeState.missionInfo.plannedHomePosition
+
+                  // Check if the potential home location is different from the current planned home location
+                  if (
+                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
+                    (potentialHomeLocation.x !==
+                      currentPlannedHomeLocation.lat ||
+                      potentialHomeLocation.y !==
+                        currentPlannedHomeLocation.lon ||
+                      potentialHomeLocation.z !==
+                        currentPlannedHomeLocation.alt)
+                  ) {
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadData({
+                        lat: potentialHomeLocation.x,
+                        lon: potentialHomeLocation.y,
+                        alt: potentialHomeLocation.z,
+                        from: "drone",
+                      }),
+                    )
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadModal(true),
+                    )
+                  }
+                }
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({
@@ -421,8 +518,37 @@ const socketMiddleware = (store) => {
                 for (let missionItem of msg.items) {
                   missionItemsWithIds.push(addIdToItem(missionItem))
                 }
-                console.log("update home import mission")
-                updateHomePositionBasedOnWaypoints(missionItemsWithIds)
+
+                // Check if first item is a home location, then open modal to
+                // select whether to update planned home position
+                if (missionItemsWithIds.length > 0) {
+                  const potentialHomeLocation = missionItemsWithIds[0]
+                  const currentPlannedHomeLocation =
+                    storeState.missionInfo.plannedHomePosition
+
+                  // Check if the potential home location is different from the current planned home location
+                  if (
+                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
+                    (potentialHomeLocation.x !==
+                      currentPlannedHomeLocation.lat ||
+                      potentialHomeLocation.y !==
+                        currentPlannedHomeLocation.lon ||
+                      potentialHomeLocation.z !==
+                        currentPlannedHomeLocation.alt)
+                  ) {
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadData({
+                        lat: potentialHomeLocation.x,
+                        lon: potentialHomeLocation.y,
+                        alt: potentialHomeLocation.z,
+                        from: "file",
+                      }),
+                    )
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadModal(true),
+                    )
+                  }
+                }
                 store.dispatch(setDrawingMissionItems(missionItemsWithIds))
                 store.dispatch(
                   setUnwrittenChanges({
@@ -564,10 +690,13 @@ const socketMiddleware = (store) => {
           )
         })
       } else {
+        // Turn off socket events
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-
+        Object.values(ParamSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
         Object.values(MissionSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )

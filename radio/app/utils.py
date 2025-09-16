@@ -215,3 +215,17 @@ def getVehicleType(typeId: int) -> int:
         return VehicleType.MULTIROTOR.value
     else:
         return VehicleType.UNKNOWN.value
+
+
+def sendingCommandLock(func):
+    """A decorator to ensure that only one command is sent at a time."""
+
+    def wrapper(self, *args, **kwargs):
+        lock = getattr(self, "drone", self).sending_command_lock
+        lock.acquire()
+        try:
+            return func(self, *args, **kwargs)
+        finally:
+            lock.release()
+
+    return wrapper

@@ -17,6 +17,7 @@ import {
   Divider,
   FileButton,
   Modal,
+  NumberInput,
   Progress,
   Tabs,
   Tooltip,
@@ -29,18 +30,16 @@ import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import NoDroneConnected from "./components/noDroneConnected"
-import { intToCoord } from "./helpers/dataFormatters"
+import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import {
-  emitGetHomePosition,
-  selectConnectedToDrone,
-} from "./redux/slices/droneConnectionSlice"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
+import UpdatePlannedHomePositionModal from "./components/missions/updatePlannedHomePositionModal"
 import {
   emitExportMissionToFile,
   emitGetCurrentMission,
@@ -52,20 +51,25 @@ import {
   selectDrawingFenceItems,
   selectDrawingMissionItems,
   selectDrawingRallyItems,
-  selectHomePosition,
   selectMissionProgressData,
   selectMissionProgressModal,
+  selectPlannedHomePosition,
   selectTargetInfo,
   selectUnwrittenChanges,
   setActiveTab,
   setMissionProgressData,
   setMissionProgressModal,
+  setPlannedHomePosition,
 } from "./redux/slices/missionSlice"
 import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 const resizeTableHeightPadding = 20 // To account for the handle height and some padding
+
+function isInvalidInputNumber(value) {
+  return value === "" || value === null || isNaN(Number(value))
+}
 
 function UnwrittenChangesWarning({ unwrittenChanges }) {
   const firstUnwrittenTab = Object.entries(unwrittenChanges).find(
@@ -88,7 +92,7 @@ export default function Missions() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const targetInfo = useSelector(selectTargetInfo)
-  const homePosition = useSelector(selectHomePosition)
+  const plannedHomePosition = useSelector(selectPlannedHomePosition)
   const activeTab = useSelector(selectActiveTab)
 
   // Mission items
@@ -121,6 +125,16 @@ export default function Missions() {
   const [currentPage] = useSessionStorage({ key: "currentPage" })
   const mapRef = useRef()
 
+  const [plannedHomeLatInput, setPlannedHomeLatInput] = useState(
+    intToCoord(plannedHomePosition?.lat ?? 0).toFixed(coordsFractionDigits),
+  )
+  const [plannedHomeLonInput, setPlannedHomeLonInput] = useState(
+    intToCoord(plannedHomePosition?.lon ?? 0).toFixed(coordsFractionDigits),
+  )
+  const [plannedHomeAltInput, setPlannedHomeAltInput] = useState(
+    plannedHomePosition?.alt ?? 0.1,
+  )
+
   useEffect(() => {
     if (tabsListRef.current) {
       // Set initial height of the table section when component mounts
@@ -132,7 +146,6 @@ export default function Missions() {
 
   // Send some messages when file is loaded
   useEffect(() => {
-    dispatch(emitGetHomePosition())
     dispatch(emitGetTargetInfo())
   }, [currentPage])
 
@@ -146,6 +159,22 @@ export default function Missions() {
     activeTabRef.current = activeTab
   }, [activeTab])
 
+  useEffect(() => {
+    setPlannedHomeLatInput(
+      intToCoord(plannedHomePosition?.lat).toFixed(coordsFractionDigits),
+    )
+  }, [plannedHomePosition?.lat])
+
+  useEffect(() => {
+    setPlannedHomeLonInput(
+      intToCoord(plannedHomePosition?.lon).toFixed(coordsFractionDigits),
+    )
+  }, [plannedHomePosition?.lon])
+
+  useEffect(() => {
+    setPlannedHomeAltInput(plannedHomePosition?.alt)
+  }, [plannedHomePosition?.alt])
+
   function resetMissionProgressModalData() {
     dispatch(
       setMissionProgressData({
@@ -155,18 +184,18 @@ export default function Missions() {
     )
   }
 
-  function createHomePositionItem() {
-    if (!homePosition) {
-      dispatch(queueErrorNotification("Home position is not set"))
+  function createPlannedHomePositionItem() {
+    if (!plannedHomePosition) {
+      dispatch(queueErrorNotification("Planned home position is not set"))
       return
     }
 
     const newHomeItem = {
       id: uuidv4(),
       seq: 0, // Home position is always the first item
-      x: homePosition.lat,
-      y: homePosition.lon,
-      z: homePosition.alt || 0,
+      x: plannedHomePosition.lat,
+      y: plannedHomePosition.lon,
+      z: plannedHomePosition.alt || 0,
       frame: getFrameKey("MAV_FRAME_GLOBAL"),
       command: 16, // MAV_CMD_NAV_WAYPOINT
       param1: 0,
@@ -245,9 +274,9 @@ export default function Missions() {
       } else if (activeTabRef.current === "fence") {
         items = [...fenceItems]
 
-        const newHomeItem = createHomePositionItem()
-        if (newHomeItem) {
-          items.unshift(newHomeItem) // Add home item at the beginning
+        const newPlannedHomeItem = createPlannedHomePositionItem()
+        if (newPlannedHomeItem) {
+          items.unshift(newPlannedHomeItem) // Add planned home item at the beginning
         }
 
         // Ensure all sequence values are updated
@@ -258,9 +287,9 @@ export default function Missions() {
       } else if (activeTabRef.current === "rally") {
         items = [...rallyItems]
 
-        const newHomeItem = createHomePositionItem()
-        if (newHomeItem) {
-          items.unshift(newHomeItem) // Add home item at the beginning
+        const newPlannedHomeItem = createPlannedHomePositionItem()
+        if (newPlannedHomeItem) {
+          items.unshift(newPlannedHomeItem) // Add planned home item at the beginning
         }
 
         // Ensure all sequence values are updated
@@ -316,6 +345,8 @@ export default function Missions() {
         </div>
       </Modal>
 
+      <UpdatePlannedHomePositionModal />
+
       {/* Banner to let people know that things are still under development */}
       {showWarningBanner && (
         <div className="bg-falconred-700 flex flex-row items-center justify-between w-full">
@@ -349,7 +380,7 @@ export default function Missions() {
               }
               className="relative bg-falcongrey-800 overflow-y-auto"
             >
-              <div className="flex flex-col gap-8 p-4">
+              <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-4">
                   <UnwrittenChangesWarning
                     unwrittenChanges={unwrittenChanges}
@@ -400,33 +431,94 @@ export default function Missions() {
 
                 <div className="flex flex-col gap-2">
                   <p className="font-bold">
-                    Home location{" "}
+                    Planned home{" "}
                     <span>
                       <Tooltip
                         className="inline"
-                        label="The home location is written to a mission save file."
+                        label={
+                          <>
+                            <p className="text-wrap max-w-80">
+                              The planned home location is used to approximate
+                              the starting location of the mission. The
+                              dashboard displays the <i>actual</i> home location
+                              used by the drone.
+                            </p>
+                          </>
+                        }
                       >
                         <IconInfoCircle size={20} />
                       </Tooltip>
                     </span>
                   </p>
-                  <p>
-                    Lat:{" "}
-                    {intToCoord(homePosition?.lat).toFixed(
-                      coordsFractionDigits,
-                    )}
-                  </p>
-                  <p>
-                    Lon:{" "}
-                    {intToCoord(homePosition?.lon).toFixed(
-                      coordsFractionDigits,
-                    )}
-                  </p>
+                  <NumberInput
+                    label="Lat"
+                    value={plannedHomeLatInput}
+                    onChange={(val) => setPlannedHomeLatInput(val)}
+                    onBlur={() => {
+                      if (isInvalidInputNumber(plannedHomeLatInput)) {
+                        setPlannedHomeLatInput(
+                          intToCoord(plannedHomePosition?.lat).toFixed(
+                            coordsFractionDigits,
+                          ),
+                        )
+                      }
+                    }}
+                    min={-90}
+                    max={90}
+                    step={0.000001}
+                    hideControls
+                  />
+                  <NumberInput
+                    label="Lon"
+                    value={plannedHomeLonInput}
+                    onChange={(val) => setPlannedHomeLonInput(val)}
+                    onBlur={() => {
+                      if (isInvalidInputNumber(plannedHomeLonInput)) {
+                        setPlannedHomeLonInput(
+                          intToCoord(plannedHomePosition?.lon).toFixed(
+                            coordsFractionDigits,
+                          ),
+                        )
+                      }
+                    }}
+                    min={-180}
+                    max={180}
+                    step={0.000001}
+                    hideControls
+                  />
+                  <NumberInput
+                    label="Alt"
+                    value={plannedHomeAltInput}
+                    onChange={(val) => setPlannedHomeAltInput(val)}
+                    onBlur={() => {
+                      if (isInvalidInputNumber(plannedHomeAltInput)) {
+                        setPlannedHomeAltInput(plannedHomePosition?.alt)
+                      }
+                    }}
+                    min={0.1}
+                    allowNegative={false}
+                    hideControls
+                  />
+                  <Button
+                    className="mt-2"
+                    onClick={() =>
+                      dispatch(
+                        setPlannedHomePosition({
+                          lat: coordToInt(plannedHomeLatInput),
+                          lon: coordToInt(plannedHomeLonInput),
+                          alt: plannedHomeAltInput,
+                        }),
+                      )
+                    }
+                  >
+                    Save planned home
+                  </Button>
                 </div>
 
                 <Divider className="my-1" />
 
                 <div className="flex flex-col gap-2">
+                  <p className="font-bold">Mission statistics</p>
                   <MissionStatistics />
                 </div>
               </div>

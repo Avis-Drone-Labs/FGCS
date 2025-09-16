@@ -4,9 +4,9 @@ import time
 import traceback
 from logging import Logger, getLogger
 from pathlib import Path
-from queue import Queue
+from queue import Empty, Queue
 from secrets import token_hex
-from threading import Thread
+from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional
 
 import serial
@@ -23,7 +23,7 @@ from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
 from app.customTypes import Number, Response, VehicleType
-from app.utils import commandAccepted, getVehicleType
+from app.utils import commandAccepted, getVehicleType, sendingCommandLock
 
 # Constants
 
@@ -165,7 +165,13 @@ class Drone:
 
         self.sendConnectionStatusUpdate("Cleaned temp logs")
 
-        self.is_active = True
+        self.is_active = Event()
+        self.is_active.set()
+        self.is_listening = False
+
+        # To ensure that only one command is sent at a time and we wait for a
+        # response before sending another command, a thread-safe lock is used
+        self.sending_command_lock = Lock()
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
 
@@ -371,6 +377,7 @@ class Drone:
         else:
             self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRED[stream])
 
+    @sendingCommandLock
     def sendDataStreamRequestMessage(self, stream: int, rate: int) -> None:
         """Send a request for a specific data stream.
 
@@ -386,6 +393,7 @@ class Drone:
             1,
         )
 
+    @sendingCommandLock
     def stopAllDataStreams(self) -> None:
         """Stop all data streams"""
         self.master.mav.request_data_stream_send(
@@ -427,7 +435,7 @@ class Drone:
 
     def checkForMessages(self) -> None:
         """Check for messages from the drone and add them to the message queue."""
-        while self.is_active:
+        while self.is_active.is_set():
             if not self.is_listening:
                 time.sleep(0.05)  # Sleep a bit to not clog up processing usage
                 continue
@@ -448,8 +456,7 @@ class Drone:
                 self.logger.error(e, exc_info=True)
                 if self.droneDisconnectCb:
                     self.droneDisconnectCb()
-                self.is_listening = False
-                self.is_active = False
+                self.close()
                 break
             except Exception as e:
                 # Log any other unexpected exception
@@ -491,10 +498,12 @@ class Drone:
 
     def executeMessages(self) -> None:
         """Executes message listeners based on messages from the message queue."""
-        while self.is_active:
+        while self.is_active.is_set():
             try:
-                q = self.message_queue.get()
+                q = self.message_queue.get(timeout=1)
                 self.message_listeners[q[0]](q[1])
+            except Empty:
+                continue
             except KeyError as e:
                 self.logger.error(
                     f"Could not execute message (likely due to backend abruptly stopping): {e}"
@@ -504,45 +513,52 @@ class Drone:
         """A thread to log messages into a temp FTLog file from the log queue."""
         current_line_number = 0
 
-        while self.is_active:
-            log_msg = self.log_message_queue.get()
-            if log_msg:
-                # Check if a temp log file has been created yet, if not create one
-                if self.current_log_file is None:
-                    self.current_log_file = self.log_directory.joinpath(
-                        f"tmp_first_{token_hex(8)}.ftlog"
-                    )
-                    self.log_file_names.append(self.current_log_file)
-                    with open(self.current_log_file, "w") as f:
-                        f.write(
-                            f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
+        while self.is_active.is_set():
+            try:
+                log_msg = self.log_message_queue.get(timeout=1)
+                if log_msg:
+                    # Check if a temp log file has been created yet, if not create one
+                    if self.current_log_file is None:
+                        self.current_log_file = self.log_directory.joinpath(
+                            f"tmp_first_{token_hex(8)}.ftlog"
                         )
+                        self.log_file_names.append(self.current_log_file)
+                        with open(self.current_log_file, "w") as f:
+                            f.write(
+                                f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
+                            )
 
-                # Write the incoming telemetry message to the temp log file
-                if current_line_number < LOG_LINE_LIMIT:
-                    with open(self.current_log_file, "a") as current_log_file_handler:
-                        current_log_file_handler.write(log_msg + "\n")
-                        current_line_number += 1
-                else:
-                    # If the current log file has reached the line limit, create a new temp log file
-                    next_log_file_name = self.log_directory.joinpath(
-                        f"tmp_{token_hex(8)}.ftlog"
-                    )
-                    with open(self.current_log_file, "a") as current_log_file_handler:
-                        # Write the next file name to the current log file
-                        current_log_file_handler.write(
-                            f"==NEXT_FILE=={str(next_log_file_name)}==END==\n"
+                    # Write the incoming telemetry message to the temp log file
+                    if current_line_number < LOG_LINE_LIMIT:
+                        with open(
+                            self.current_log_file, "a"
+                        ) as current_log_file_handler:
+                            current_log_file_handler.write(log_msg + "\n")
+                            current_line_number += 1
+                    else:
+                        # If the current log file has reached the line limit, create a new temp log file
+                        next_log_file_name = self.log_directory.joinpath(
+                            f"tmp_{token_hex(8)}.ftlog"
                         )
+                        with open(
+                            self.current_log_file, "a"
+                        ) as current_log_file_handler:
+                            # Write the next file name to the current log file
+                            current_log_file_handler.write(
+                                f"==NEXT_FILE=={str(next_log_file_name)}==END==\n"
+                            )
 
-                    self.current_log_file = next_log_file_name
-                    self.log_file_names.append(self.current_log_file)
+                        self.current_log_file = next_log_file_name
+                        self.log_file_names.append(self.current_log_file)
 
-                    with open(self.current_log_file, "w") as f:
-                        f.write(
-                            f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
-                        )
-                        f.write(log_msg + "\n")
-                        current_line_number = 1
+                        with open(self.current_log_file, "w") as f:
+                            f.write(
+                                f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
+                            )
+                            f.write(log_msg + "\n")
+                            current_line_number = 1
+            except Empty:
+                continue
 
     def getLinkDebugData(self) -> None:
         """While active, get link debug data"""
@@ -566,7 +582,7 @@ class Drone:
                 "uptime": 0,
             }
 
-        while self.is_active:
+        while self.is_active.is_set():
             if self.linkDebugStatsCb:
                 try:
                     link_stats = {
@@ -623,23 +639,53 @@ class Drone:
 
             time.sleep(1 / refresh_rate_hz)
 
+    def sendHeartbeatMessage(self) -> None:
+        """Sends a heartbeat message to the drone every second."""
+        while self.is_active.is_set():
+            try:
+                self.master.mav.heartbeat_send(
+                    mavutil.mavlink.MAV_TYPE_GCS,
+                    mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                    0,
+                    0,
+                    0,
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to send heartbeat: {e}", exc_info=True)
+            time.sleep(1)
+
     def startThread(self) -> None:
         """Starts the listener and sender threads."""
         self.listener_thread = Thread(target=self.checkForMessages, daemon=True)
         self.sender_thread = Thread(target=self.executeMessages, daemon=True)
         self.log_thread = Thread(target=self.logMessages, daemon=True)
         self.link_debug_data_thread = Thread(target=self.getLinkDebugData, daemon=True)
+        self.heartbeat_thread = Thread(target=self.sendHeartbeatMessage, daemon=True)
         self.listener_thread.start()
         self.sender_thread.start()
         self.log_thread.start()
         self.link_debug_data_thread.start()
+        self.heartbeat_thread.start()
+
+    def stopAllThreads(self) -> None:
+        """Stops all threads."""
+        self.is_active.clear()
+        self.is_listening = False
+
+        self.listener_thread.join(timeout=3)
+        self.sender_thread.join(timeout=3)
+        self.log_thread.join(timeout=3)
+        self.link_debug_data_thread.join(timeout=3)
+        self.heartbeat_thread.join(timeout=3)
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
         self.is_listening = False
+        self.sending_command_lock.acquire()
+
         self.sendCommand(
             mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-            param1=1,  #  Autpilot
+            param1=1,  #  Autopilot
             param2=0,  #  Companion
             param3=0,  # Component action
             param4=0,  # Component ID
@@ -647,6 +693,7 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.sending_command_lock.release()
 
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
@@ -660,6 +707,7 @@ class Drone:
             self.logger.debug("Rebooting")
             self.close()
 
+    @sendingCommandLock
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.
 
@@ -680,14 +728,21 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
                 return {"success": True, "message": f"Setting servo to {pwm_value}"}
-
             else:
-                return {"success": False, "message": "Setting servo failed"}
+                self.logger.error(
+                    f"Failed to set servo {servo_instance} to {pwm_value}"
+                )
+                return {
+                    "success": False,
+                    "message": f"Failed to set servo {servo_instance} to {pwm_value}",
+                }
 
         except serial.serialutil.SerialException:
+            self.is_listening = True
             return {
                 "success": False,
                 "message": "Setting servo failed, serial exception",
@@ -797,7 +852,7 @@ class Drone:
             self.removeMessageListener(message_id)
 
         self.stopAllDataStreams()
-        self.is_active = False
+        self.stopAllThreads()
         self.master.close()
 
         if len(self.log_file_names) == 0:

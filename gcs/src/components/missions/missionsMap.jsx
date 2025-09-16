@@ -56,8 +56,9 @@ import {
   removeDrawingItem,
   selectActiveTab,
   selectContextMenu,
-  selectHomePosition,
-  setHomePosition,
+  selectPlannedHomePosition,
+  setPlannedHomePosition,
+  setPlannedHomePositionToDronesHomePositionThunk,
   updateContextMenuState,
 } from "../../redux/slices/missionSlice"
 
@@ -75,7 +76,7 @@ function MapSectionNonMemo({
   // Redux
   const dispatch = useDispatch()
   const gpsData = useSelector(selectGPS)
-  const homePosition = useSelector(selectHomePosition)
+  const plannedHomePosition = useSelector(selectPlannedHomePosition)
   const flightModeString = useSelector(selectFlightModeString)
   const currentTab = useSelector(selectActiveTab)
   const contextMenuState = useSelector(selectContextMenu)
@@ -101,7 +102,7 @@ function MapSectionNonMemo({
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
-  const previousHomePositionValue = usePrevious(homePosition)
+  const previousPlannedHomePositionValue = usePrevious(plannedHomePosition)
 
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
@@ -161,20 +162,23 @@ function MapSectionNonMemo({
     // received from the drone
     if (
       passedRef.current &&
-      homePosition !== null &&
-      previousHomePositionValue === null
+      plannedHomePosition !== null &&
+      previousPlannedHomePositionValue === null
     ) {
       setInitialViewState({
-        latitude: intToCoord(homePosition.lat),
-        longitude: intToCoord(homePosition.lon),
+        latitude: intToCoord(plannedHomePosition.lat),
+        longitude: intToCoord(plannedHomePosition.lon),
         zoom: initialViewState.zoom,
       })
       passedRef.current.getMap().flyTo({
-        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        center: [
+          intToCoord(plannedHomePosition.lon),
+          intToCoord(plannedHomePosition.lat),
+        ],
         zoom: initialViewState.zoom,
       })
     }
-  }, [homePosition])
+  }, [plannedHomePosition])
 
   function addNewPolygonVertex(lat, lon) {
     if (!polygonDrawMode) return
@@ -254,10 +258,13 @@ function MapSectionNonMemo({
     }
   }
 
-  function zoomToHome() {
-    if (passedRef.current && homePosition) {
+  function zoomToPlannedHome() {
+    if (passedRef.current && plannedHomePosition) {
       passedRef.current.getMap().flyTo({
-        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        center: [
+          intToCoord(plannedHomePosition.lon),
+          intToCoord(plannedHomePosition.lat),
+        ],
         zoom: 17,
       })
     }
@@ -370,16 +377,15 @@ function MapSectionNonMemo({
         )}
 
         {/* Show home position */}
-        {homePosition !== null && (
+        {plannedHomePosition !== null && (
           <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
+            lat={intToCoord(plannedHomePosition.lat)}
+            lon={intToCoord(plannedHomePosition.lon)}
             updateMissionHomePositionDragCb={({ x, y }) => {
               dispatch(
-                setHomePosition({
+                setPlannedHomePosition({
                   lat: coordToInt(x),
                   lon: coordToInt(y),
-                  alt: 0.1,
                 }),
               )
             }}
@@ -426,9 +432,9 @@ function MapSectionNonMemo({
                 />
               </svg>
             </ContextMenuItem>
-
             {contextMenuState.markerId !== null &&
-              contextMenuState.markerId !== undefined && (
+              contextMenuState.markerId !== undefined &&
+              contextMenuState.markerId !== "home" && (
                 <>
                   <Divider />
                   <ContextMenuItem
@@ -440,7 +446,6 @@ function MapSectionNonMemo({
                   </ContextMenuItem>
                 </>
               )}
-
             <Divider />
             <ContextMenuItem onClick={zoomToDrone}>
               <p>Zoom to drone</p>
@@ -448,23 +453,32 @@ function MapSectionNonMemo({
             <ContextMenuItem onClick={zoomToMission}>
               <p>Zoom to mission</p>
             </ContextMenuItem>
-            <ContextMenuItem onClick={zoomToHome}>
-              <p>Zoom to home</p>
+            <ContextMenuItem onClick={zoomToPlannedHome}>
+              <p>Zoom to planned home</p>
             </ContextMenuItem>
             <Divider />
-            <ContextMenuItem
-              onClick={() => {
-                dispatch(
-                  setHomePosition({
-                    lat: coordToInt(contextMenuState.gpsCoords.lat),
-                    lon: coordToInt(contextMenuState.gpsCoords.lng),
-                    alt: 0.1,
-                  }),
-                )
-              }}
-            >
-              <p>Set home position</p>
-            </ContextMenuItem>
+            {contextMenuState?.markerId === "home" ? (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(setPlannedHomePositionToDronesHomePositionThunk())
+                }}
+              >
+                <p>Set planned home to drone's home position</p>
+              </ContextMenuItem>
+            ) : (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(
+                    setPlannedHomePosition({
+                      lat: coordToInt(contextMenuState.gpsCoords.lat),
+                      lon: coordToInt(contextMenuState.gpsCoords.lng),
+                    }),
+                  )
+                }}
+              >
+                <p>Set planned home position</p>
+              </ContextMenuItem>
+            )}
             <ContextMenuItem onClick={() => dispatch(clearDrawingItems())}>
               <p>Clear mission</p>
             </ContextMenuItem>

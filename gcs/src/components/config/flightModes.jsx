@@ -178,7 +178,7 @@ export default function FlightModes() {
             {flightModes.map((flightModeNumber, idx) => (
               <Select
                 key={idx}
-                label={`Flight mode ${idx}`}
+                label={`Flight mode ${idx + 1}`}
                 description={`PWM: ${FLIGHT_MODE_PWM_VALUES[idx][0]}${FLIGHT_MODE_PWM_VALUES[idx][1] === undefined ? "+" : `-${FLIGHT_MODE_PWM_VALUES[idx][1]}`}`}
                 value={flightModeNumber.toString()}
                 onChange={(value) => changeFlightMode(idx, value)}

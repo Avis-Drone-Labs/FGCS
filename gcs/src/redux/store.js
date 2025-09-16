@@ -2,6 +2,7 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import logAnalyserSlice from "./slices/logAnalyserSlice"
 import socketSlice from "./slices/socketSlice"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
+import socketSlice from "./slices/socketSlice"
 
 import socketMiddleware from "./middleware/socketMiddleware"
 import droneConnectionSlice, {
@@ -12,9 +13,10 @@ import droneConnectionSlice, {
   setPort,
   setWireless,
 } from "./slices/droneConnectionSlice"
-import missionInfoSlice from "./slices/missionSlice"
-import statusTextSlice from "./slices/statusTextSlice"
+import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import notificationSlice from "./slices/notificationSlice"
+import paramsSlice from "./slices/paramsSlice"
+import statusTextSlice from "./slices/statusTextSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -24,6 +26,7 @@ const rootReducer = combineSlices(
   missionInfoSlice,
   statusTextSlice,
   notificationSlice,
+  paramsSlice,
 )
 
 // Get the persisted state, we only want to take a couple of things from here.
@@ -71,6 +74,24 @@ if (droneConnection !== undefined) {
   }
 }
 
+if (persistedState.missionInfo?.plannedHomePosition !== undefined) {
+  // Validate the loaded planned home position, if invalid reset to 0,0,0
+  if (
+    !("lat" in persistedState.missionInfo.plannedHomePosition) ||
+    typeof persistedState.missionInfo.plannedHomePosition.lat !== "number" ||
+    !("lon" in persistedState.missionInfo.plannedHomePosition) ||
+    typeof persistedState.missionInfo.plannedHomePosition.lon !== "number" ||
+    !("alt" in persistedState.missionInfo.plannedHomePosition) ||
+    typeof persistedState.missionInfo.plannedHomePosition.alt !== "number"
+  ) {
+    persistedState.missionInfo.plannedHomePosition = { lat: 0, lon: 0, alt: 0 }
+  }
+
+  store.dispatch(
+    setPlannedHomePosition(persistedState.missionInfo.plannedHomePosition),
+  )
+}
+
 // Update states when a new message comes in, probably inefficient
 // TODO: In the future we should check to see if the variables have changed before updating
 store.subscribe(() => {
@@ -99,5 +120,11 @@ store.subscribe(() => {
   session_storage.setItem(
     "connectedToDrone",
     store_mut.droneConnection.connected,
+  )
+
+  // Store the planned home position for use in the map when no drone is connected
+  local_storage.setItem(
+    "plannedHomePosition",
+    JSON.stringify(store_mut.missionInfo.plannedHomePosition),
   )
 })

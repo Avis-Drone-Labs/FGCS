@@ -242,17 +242,6 @@ export default function FLA() {
     }
   }
 
-  // Get a list of the recent FGCS telemetry logs
-  async function getFgcsLogs() {
-    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
-  }
-
-  // Clear the list of recent FGCS telemetry logs
-  async function clearFgcsLogs() {
-    await window.ipcRenderer.clearRecentLogs()
-    getFgcsLogs()
-  }
-
   /**
    * Expands ESC messages into separate arrays based on Instance
    * @param {Object} logMessages - Messages to expand
@@ -343,6 +332,17 @@ export default function FLA() {
     delete updatedFilters["BAT"]
 
     return { updatedMessages, updatedFilters, updatedFormats }
+  }
+
+  // Get a list of the recent FGCS telemetry logs
+  async function getFgcsLogs() {
+    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+  }
+
+  // Clear the list of recent FGCS telemetry logs
+  async function clearFgcsLogs() {
+    await window.ipcRenderer.clearRecentLogs()
+    getFgcsLogs()
   }
 
   // Close file

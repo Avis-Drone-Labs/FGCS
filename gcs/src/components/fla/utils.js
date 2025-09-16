@@ -1,10 +1,23 @@
 import { ignoredMessages, ignoredKeys } from "./constants"
 
+/**
+ * Converts a hex color string to an RGBA color string.
+ * @param {string} hex - The hex color string.
+ * @param {number} alpha - The alpha value (0-1).
+ * @returns {string} - The RGBA color string.
+ */
 export function hexToRgba(hex, alpha) {
   const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
   return `rgba(${r},${g},${b},${alpha})`
 }
 
+/**
+ * Converts GPS time to UTC time.
+ * @param {number} gpsWeek - The GPS week number.
+ * @param {number} gms - The GPS milliseconds.
+ * @param {number} leapSeconds - The number of leap seconds to account for.
+ * @returns {Date} - The corresponding UTC date.
+ */
 export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
   // GPS epoch starts at 1980-01-06 00:00:00 UTC
   const gpsEpoch = new Date(Date.UTC(1980, 0, 6))
@@ -19,6 +32,14 @@ export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
   return new Date(totalMs)
 }
 
+/**
+ * Expands ESC messages into separate arrays based on Instance
+ * @param {Object} messageName - The name of the message
+ * @param {Object} fieldName - The name of the field
+ * @param {Object} formatMessages - The format messages
+ * @param {Object} units - The units
+ * @returns {Object} - The expanded messages
+ */
 export function getUnit(
   messageName,
   fieldName,

@@ -25,7 +25,7 @@ function loadWebcam(id: string = "", name: string = "") {
     webcamPopoutWin?.loadURL(VITE_DEV_SERVER_URL + params)
   else
     webcamPopoutWin?.loadFile(path.join(process.env.DIST, "webcam.html"), {
-      search: `?deviceId=${id}&deviceName=${name}`,
+      search: id && name ? `?deviceId=${id}&deviceName=${name}` : "",
     })
 }
 

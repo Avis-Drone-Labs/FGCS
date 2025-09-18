@@ -6,7 +6,7 @@
     "name": "Avis-Drone-Labs"
   },
   "private": true,
-  "version": "0.1.9-alpha",
+  "version": "0.1.10-alpha-dev1",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
   "githubLink": "https://github.com/Avis-Drone-Labs/FGCS",
@@ -98,7 +98,8 @@
     "typescript": "^5.2.2",
     "vite": "^4.5.3",
     "vite-plugin-electron": "^0.14.0",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vite-plugin-static-copy": "^3.1.2"
   },
   "resolutions": {
     "strip-ansi": "6.0.1",

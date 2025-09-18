@@ -3,6 +3,8 @@ import path from "path"
 
 let webcamPopoutWin: BrowserWindow | null = null
 
+const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
+
 const MIN_WEBCAM_HEIGHT: number = 100
 const WEBCAM_TITLEBAR_HEIGHT: number = 28
 
@@ -14,7 +16,6 @@ const WEBCAM_TITLEBAR_HEIGHT: number = 28
  * @param name The name of the device
  */
 function loadWebcam(id: string = "", name: string = "") {
-  const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
   const params: string =
     id && name
       ? "webcam.html?deviceId=" + id + "&deviceName=" + name
@@ -24,7 +25,7 @@ function loadWebcam(id: string = "", name: string = "") {
     webcamPopoutWin?.loadURL(VITE_DEV_SERVER_URL + params)
   else
     webcamPopoutWin?.loadFile(path.join(process.env.DIST, "webcam.html"), {
-      hash: params,
+      search: `?deviceId=${id}&deviceName=${name}`,
     })
 }
 

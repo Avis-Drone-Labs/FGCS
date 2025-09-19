@@ -4,8 +4,10 @@ import {
   LoadingOverlay,
   Progress,
   ScrollArea,
+  FileInput
 } from "@mantine/core"
 import moment from "moment"
+import { useRef } from "react";
 
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
@@ -17,29 +19,40 @@ export default function SelectFlightLog({
   updateFile,
   clearFgcsLogs,
 }) {
+  const fileInputRef = useRef(null);
+
+  function readableBytes(bytes) {
+    if (bytes === 0) return "0"
+    const i = Math.floor(Math.log(bytes) / Math.log(1024))
+    const sizes = ["B", "KB", "MB", "GB"]
+
+    return (
+      (Math.round((bytes / Math.pow(1024, i)) * 100) / 100).toFixed(2) +
+      "" +
+      sizes[i]
+    )
+  }
+
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
         <div className="flex flex-col gap-4">
           {/* File selection */}
-          <input
-            type="file"
+          <FileInput
+            ref={fileInputRef}
             accept=".log,.ftlog"
             style={{ display: "none" }}
-            id="flight-log-upload"
-            onChange={(e) => updateFile(e.target.files[0])}
+            onChange={updateFile}
             disabled={loadingFile}
           />
-          <label htmlFor="flight-log-upload">
-            <Button
-              component="span"
-              color="blue"
-              variant="filled"
-              loading={loadingFile}
-            >
-              Analyse a log
-            </Button>
-          </label>
+          <Button
+            color="blue"
+            variant="filled"
+            loading={loadingFile}
+            onClick={() => fileInputRef.current.click()}
+          >
+            Analyse a log
+          </Button>
           <Button color="red" variant="filled" onClick={clearFgcsLogs}>
             Clear Logs
           </Button>
@@ -66,7 +79,7 @@ export default function SelectFlightLog({
                         ).fromNow()}
                       </p>
                       <p className="text-sm text-gray-400">
-                        {Math.round(log.size / 1024)}KB
+                        {readableBytes(log.size)}
                       </p>
                     </div>
                   </div>

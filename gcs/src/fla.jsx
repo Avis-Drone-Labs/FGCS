@@ -5,7 +5,7 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 
 // 3rd Party Imports
 import { useDisclosure } from "@mantine/hooks"
@@ -13,7 +13,7 @@ import { useSelector, useDispatch } from "react-redux"
 import _ from "lodash"
 
 // Styling imports
-import { colorPalette, colorInputSwatch } from "./components/fla/constants"
+import { colorPalette } from "./components/fla/constants"
 import {
   hexToRgba,
   getUnit,
@@ -30,8 +30,8 @@ import { dataflashOptions, fgcsOptions } from "./components/fla/graphConfigs.js"
 import { logEventIds } from "./components/fla/logEventIds.js"
 import { usePresetCategories } from "./components/fla/presetCategories.js"
 import Layout from "./components/layout.jsx"
-import SelectFlightLog from "./components/SelectFlightLog"
-import FlaMainDisplay from "./components/FlaMainDisplay"
+import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
+import FlaMainDisplay from "./components/fla/FlaMainDisplay.jsx"
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -57,16 +57,11 @@ import {
   selectUnits,
   selectFormatMessages,
   selectLogMessages,
-  selectLogEvents,
-  selectFlightModeMessages,
   selectLogType,
-  selectUtcAvailable,
   selectMessageFilters,
-  selectMessageMeans,
   selectCustomColors,
   selectColorIndex,
   selectAircraftType,
-  selectCanSavePreset,
 } from "./redux/slices/logAnalyserSlice.js"
 
 export default function FLA() {
@@ -87,16 +82,11 @@ export default function FLA() {
   const units = useSelector(selectUnits)
   const formatMessages = useSelector(selectFormatMessages)
   const logMessages = useSelector(selectLogMessages)
-  const logEvents = useSelector(selectLogEvents)
-  const flightModeMessages = useSelector(selectFlightModeMessages)
   const logType = useSelector(selectLogType)
-  const utcAvailable = useSelector(selectUtcAvailable)
   const messageFilters = useSelector(selectMessageFilters)
-  const messageMeans = useSelector(selectMessageMeans)
   const customColors = useSelector(selectCustomColors)
   const colorIndex = useSelector(selectColorIndex)
   const aircraftType = useSelector(selectAircraftType)
-  const canSavePreset = useSelector(selectCanSavePreset)
 
   // Local states
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
@@ -104,6 +94,34 @@ export default function FLA() {
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [opened, { open, close }] = useDisclosure(false)
   const [localChartData, setLocalChartData] = useState({ datasets: [] })
+  const filteredDefaultPresets = useMemo(() => {
+    if (!presetCategories || !logType || !logMessages) {
+      return []
+    }
+    return (
+      presetCategories[logType]
+        ?.map((category) => {
+          // Filter out presets with unavailable keys or fields
+          const filteredCategory = {
+            ...category,
+            filters: category.filters.filter((filter) =>
+              Object.keys(filter.filters).every((key) => {
+                // Check if the key exists in logMessages
+                if (!logMessages[key]) return false
+                const requiredFields = filter.filters[key]
+                const availableFields =
+                  logMessages["format"]?.[key]?.fields || []
+                return requiredFields.every((field) =>
+                  availableFields.includes(field),
+                )
+              }),
+            ),
+          }
+          return filteredCategory
+        })
+        .filter((category) => category.filters.length > 0) || []
+    )
+  }, [presetCategories, logType, logMessages])
 
   // Redux dispatch functions
   const updateFile = (newFile) => dispatch(setFile(newFile))
@@ -137,7 +155,7 @@ export default function FLA() {
 
   async function loadFile() {
     // Early return if conditions not met
-    if (file == null || logMessages !== null) return
+    if (file === null || logMessages !== null) return
 
     try {
       setLoadingFile(true)
@@ -642,34 +660,22 @@ export default function FLA() {
         />
       ) : (
         <FlaMainDisplay
-          file={file}
           closeLogFile={closeLogFile}
-          aircraftType={aircraftType}
-          logType={logType}
           presetCategories={presetCategories}
           selectPreset={selectPreset}
           handleDeleteCustomPreset={handleDeleteCustomPreset}
-          logMessages={logMessages}
-          messageFilters={messageFilters}
           selectMessageFilter={selectMessageFilter}
           localChartData={localChartData}
-          logEvents={logEvents}
-          flightModeMessages={flightModeMessages}
-          utcAvailable={utcAvailable}
           fgcsOptions={fgcsOptions}
           dataflashOptions={dataflashOptions}
           clearFilters={clearFilters}
-          canSavePreset={canSavePreset}
           open={open}
-          messageMeans={messageMeans}
-          colorInputSwatch={colorInputSwatch}
           changeColor={changeColor}
           removeDataset={removeDataset}
           opened={opened}
           close={close}
           handleSaveCustomPreset={handleSaveCustomPreset}
-          formatMessages={formatMessages}
-          units={units}
+          filteredDefaultPresets={filteredDefaultPresets}
         />
       )}
     </Layout>

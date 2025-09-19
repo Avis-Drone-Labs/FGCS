@@ -1,23 +1,10 @@
 import { ignoredMessages, ignoredKeys } from "./constants"
 
-/**
- * Converts a hex color string to an RGBA color string.
- * @param {string} hex - The hex color string.
- * @param {number} alpha - The alpha value (0-1).
- * @returns {string} - The RGBA color string.
- */
 export function hexToRgba(hex, alpha) {
   const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))
   return `rgba(${r},${g},${b},${alpha})`
 }
 
-/**
- * Converts GPS time to UTC time.
- * @param {number} gpsWeek - The GPS week number.
- * @param {number} gms - The GPS milliseconds.
- * @param {number} leapSeconds - The number of leap seconds to account for.
- * @returns {Date} - The corresponding UTC date.
- */
 export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
   // GPS epoch starts at 1980-01-06 00:00:00 UTC
   const gpsEpoch = new Date(Date.UTC(1980, 0, 6))
@@ -34,11 +21,6 @@ export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
 
 /**
  * Retrieves the unit for a given message field.
- * @param {string} messageName - The name of the message.
- * @param {string} fieldName - The name of the field within the message.
- * @param {Object} formatMessages - An object containing message format definitions.
- * @param {Object} units - An object mapping unit IDs to unit names.
- * @returns {string} - The unit name for the specified field, or "UNKNOWN" if not found.
  */
 export function getUnit(
   messageName,
@@ -46,6 +28,7 @@ export function getUnit(
   formatMessages = {},
   units = {},
 ) {
+  // TODO: Find out why this is here
   if (messageName.includes("ESC")) {
     messageName = "ESC"
   }
@@ -65,9 +48,6 @@ export function getUnit(
 
 /**
  * Calculates the mean, min, and max values for each field in the loaded log messages.
- * @param {*} loadedLogMessages
- * @returns An object containing mean, min, and max for each field in the log messages.
- * 
  * Structure: 
  * { "MESSAGE_TYPE/FIELD_NAME": { mean: value, min: value, max: value }, ... }
  */
@@ -107,7 +87,7 @@ export function calculateMeanValues(loadedLogMessages) {
       const messageValues = messageData[messageKey]
       // Safeguard for empty arrays
       if (messageValues.length === 0) return;
-      
+
       const min = Math.min(...messageValues)
       const max = Math.max(...messageValues)
       const mean =
@@ -126,11 +106,6 @@ export function calculateMeanValues(loadedLogMessages) {
 
 /**
  * Builds a default message filter configuration object with all fields set to false.
- *
- * Creates a hierarchical filter structure where each valid message type contains
- * all of its available fields initialized to false (filtered out). This provides
- * a starting state where all message fields are hidden by default, allowing users
- * to selectively enable the fields they want to display.
  * @example
  * // Returns something like:
  * // {
@@ -141,32 +116,22 @@ export function calculateMeanValues(loadedLogMessages) {
 export function buildDefaultMessageFilters(loadedLogMessages) {
   const logMessageFilterDefaultState = {}
   Object.keys(loadedLogMessages["format"])
+    // Only include messages that are within the log and are not ignored
+    .filter((key) => Object.keys(loadedLogMessages).includes(key) && !ignoredMessages.includes(key))
     .sort()
     .forEach((key) => {
-      if (
-        Object.keys(loadedLogMessages).includes(key) &&
-        !ignoredMessages.includes(key)
-      ) {
-        const fieldsState = {}
-
-        // Set all field states to false if they're not ignored
-        loadedLogMessages["format"][key].fields.forEach((field) => {
-          if (!ignoredKeys.includes(field)) {
-            fieldsState[field] = false
-          }
-        })
-        logMessageFilterDefaultState[key] = fieldsState
-      }
+      const fieldsState = {}
+      // Set all field states to false if they're not ignored
+      loadedLogMessages["format"][key].fields.forEach((field) => {
+        if (!ignoredKeys.includes(field)) {
+          fieldsState[field] = false
+        }
+      })
+      logMessageFilterDefaultState[key] = fieldsState
     })
   return logMessageFilterDefaultState
 }
 
-/**
- * Processes flight mode messages based on log type
- * @param {Object} result - Result from file loading
- * @param {Object} loadedLogMessages - Loaded log messages
- * @returns {Array} Flight mode messages
- */
 export function processFlightModes(result, loadedLogMessages) {
   if (result.logType === "dataflash") {
     return loadedLogMessages.MODE
@@ -239,8 +204,6 @@ export function convertTimeUStoUTC(logMessages, gpsOffset) {
 
 /**
  * Sorts object keys alphabetically
- * @param {Object} obj - Object to sort
- * @returns {Object} New object with sorted keys
  */
 export function sortObjectByKeys(obj) {
   return Object.keys(obj)

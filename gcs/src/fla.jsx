@@ -93,6 +93,7 @@ export default function FLA() {
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [opened, { open, close }] = useDisclosure(false)
   const [localChartData, setLocalChartData] = useState({ datasets: [] })
+  // use memo such that this is calculated only when necessary
   const filteredDefaultPresets = useMemo(() => {
     if (!presetCategories || !logType || !logMessages) {
       return []

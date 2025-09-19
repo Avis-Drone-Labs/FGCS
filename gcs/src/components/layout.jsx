@@ -12,6 +12,7 @@ import { Notifications } from "@mantine/notifications"
 // Helpers and custom component imports
 import {
   showErrorNotification,
+  showInfoNotification,
   showSuccessNotification,
 } from "../helpers/notification"
 import { socket } from "../helpers/socket"
@@ -58,9 +59,14 @@ export default function Layout({ children, currentPage }) {
   // Show queued notifications
   useEffect(() => {
     if (notificationQueue.length !== 0) {
-      ;(notificationQueue[0].type === "error"
-        ? showErrorNotification
-        : showSuccessNotification)(notificationQueue[0].message)
+      const message = notificationQueue[0].message
+      if (notificationQueue[0].type === "error") {
+        showErrorNotification(message)
+      } else if (notificationQueue[0].type === "success") {
+        showSuccessNotification(message)
+      } else {
+        showInfoNotification(message)
+      }
       dispatch(notificationShown())
     }
   }, [notificationQueue, dispatch])

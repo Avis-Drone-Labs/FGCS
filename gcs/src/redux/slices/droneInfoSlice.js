@@ -52,6 +52,11 @@ const droneInfoSlice = createSlice({
     extraDroneData: [
       ...defaultDataMessages, // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
     ],
+    guidedModePinData: {
+      lat: 0, // Stored in coords not int
+      lon: 0, // Stored in coords not int
+      alt: 0,
+    },
     graphs: {
       selectedGraphs: {
         graph_a: null,
@@ -166,6 +171,9 @@ const droneInfoSlice = createSlice({
         state.navControllerData.loiterRadius = action.payload
       }
     },
+    setGuidedModePinData: (state, action) => {
+      state.guidedModePinData = action.payload
+    },
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -194,6 +202,7 @@ const droneInfoSlice = createSlice({
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
 
+    selectGuidedModePinData: (state) => state.guidedModePinData,
     selectExtraDroneData: (state) => state.extraDroneData,
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
@@ -219,6 +228,7 @@ export const {
   setGraphValues,
   setLastGraphMessage,
   setLoiterRadius,
+  setGuidedModePinData,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -295,6 +305,7 @@ export const {
   selectFlightMode,
   selectAircraftType,
   selectBatteryData,
+  selectGuidedModePinData,
   selectExtraDroneData,
   selectGraphValues,
   selectLastGraphMessage,

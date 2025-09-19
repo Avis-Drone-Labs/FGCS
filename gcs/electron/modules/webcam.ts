@@ -51,7 +51,7 @@ export function openWebcamPopout(
       fullscreenable: false,
     })
   } else {
-    console.warn("HOW ARE YOU CREATEING 2 WEBCAM WINDOWS TELL ME")
+    console.warn("2nd webcam window requested, ignoring")
   }
 
   loadWebcam(videoStreamId, name)

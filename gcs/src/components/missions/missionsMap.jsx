@@ -10,12 +10,7 @@
 import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import {
-  useClipboard,
-  useLocalStorage,
-  usePrevious,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useClipboard, useLocalStorage, usePrevious } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
@@ -47,6 +42,7 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
+  selectGuidedModePinData,
 } from "../../redux/slices/droneInfoSlice"
 import {
   clearDrawingItems,
@@ -81,11 +77,7 @@ function MapSectionNonMemo({
   const flightModeString = useSelector(selectFlightModeString)
   const currentTab = useSelector(selectActiveTab)
   const contextMenuState = useSelector(selectContextMenu)
-
-  const [guidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
+  const guidedModePinData = useSelector(selectGuidedModePinData)
 
   const [position, setPosition] = useState(null)
   const { getSetting } = useSettings()
@@ -322,7 +314,10 @@ function MapSectionNonMemo({
             addNewPolygonVertex(lat, lon)
           } else {
             dispatch(
-              createNewDefaultDrawingItem({ x: coordToInt(lat), y: coordToInt(lon) }),
+              createNewDefaultDrawingItem({
+                x: coordToInt(lat),
+                y: coordToInt(lon),
+              }),
             )
           }
         }}

@@ -11,12 +11,7 @@ import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
 import { Button, Divider, Modal, NumberInput } from "@mantine/core"
-import {
-  useClipboard,
-  useDisclosure,
-  useLocalStorage,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useClipboard, useDisclosure, useLocalStorage } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
@@ -25,6 +20,7 @@ import { useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
+  selectGuidedModePinData,
   selectHomePosition,
 } from "../../redux/slices/droneInfoSlice"
 import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
@@ -32,11 +28,7 @@ import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
-import {
-  showErrorNotification,
-  showNotification,
-  showSuccessNotification,
-} from "../../helpers/notification"
+import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
 import { socket } from "../../helpers/socket"
 
@@ -51,7 +43,6 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -60,11 +51,11 @@ const coordsFractionDigits = 7
 
 function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   // Redux
-  const connected = useSelector(selectConnectedToDrone)
   const gpsData = useSelector(selectGPS)
   const missionItems = useSelector(selectCurrentMissionItems)
   const homePosition = useSelector(selectHomePosition) // use actual home position
   const flightModeString = useSelector(selectFlightModeString)
+  const guidedModePinData = useSelector(selectGuidedModePinData)
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -101,26 +92,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
-
-  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
-
-  useEffect(() => {
-    socket.on("nav_reposition_result", (msg) => {
-      if (!msg.success) {
-        showErrorNotification(msg.message)
-      } else {
-        showSuccessNotification(msg.message)
-        setGuidedModePinData(msg.data)
-      }
-    })
-
-    return () => {
-      socket.off("nav_reposition_result")
-    }
-  }, [connected])
 
   useEffect(() => {
     // Check latest gpsData point is valid

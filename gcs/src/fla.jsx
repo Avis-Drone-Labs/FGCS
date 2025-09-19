@@ -26,7 +26,6 @@ import {
 } from "./components/fla/utils"
 
 // Custom components and helpers
-import { dataflashOptions, fgcsOptions } from "./components/fla/graphConfigs.js"
 import { logEventIds } from "./components/fla/logEventIds.js"
 import { usePresetCategories } from "./components/fla/presetCategories.js"
 import Layout from "./components/layout.jsx"
@@ -666,8 +665,6 @@ export default function FLA() {
           handleDeleteCustomPreset={handleDeleteCustomPreset}
           selectMessageFilter={selectMessageFilter}
           localChartData={localChartData}
-          fgcsOptions={fgcsOptions}
-          dataflashOptions={dataflashOptions}
           clearFilters={clearFilters}
           open={open}
           changeColor={changeColor}

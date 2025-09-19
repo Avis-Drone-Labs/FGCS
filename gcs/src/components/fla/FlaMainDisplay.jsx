@@ -8,6 +8,7 @@ import MessageAccordionItem from "./messageAccordionItem"
 import { getUnit } from "./utils"
 import { colorInputSwatch } from "./constants"
 import { useSelector } from "react-redux"
+import { dataflashOptions, fgcsOptions } from "./components/fla/graphConfigs.js"
 import {
   selectFile,
   selectAircraftType,
@@ -32,8 +33,6 @@ export default function FlaMainDisplay({
   handleDeleteCustomPreset,
   selectMessageFilter,
   localChartData,
-  fgcsOptions,
-  dataflashOptions,
   clearFilters,
   open,
   changeColor,

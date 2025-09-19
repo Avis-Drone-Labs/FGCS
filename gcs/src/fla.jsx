@@ -245,7 +245,7 @@ export default function FLA() {
     if ("EV" in loadedLogMessages) {
       updateLogEvents(
         loadedLogMessages["EV"].map((event) => ({
-          time: event.TimeUS,
+          time:  gpsOffset !== null ? (event.TimeUS / 1000 + gpsOffset) : event.TimeUS,
           message: logEventIds[event.Id],
         })),
       )

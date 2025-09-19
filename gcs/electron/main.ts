@@ -226,6 +226,10 @@ function createWindow() {
     win?.setAlwaysOnTop(false)
   })
 
+  win.on("close", () => {
+    closeWithBackend()
+  })
+
   // Set Main Menu on Mac Only
   if (process.platform === "darwin") {
     setMainMenu()
@@ -341,10 +345,7 @@ function startBackend() {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 function closeWithBackend() {
-  if (process.platform !== "darwin") {
-    app.quit()
-    win = null
-  }
+  // Always close all popout windows first
   destroyWebcamWindow()
   destroyAboutWindow()
   destroyLinkStatsWindow()
@@ -352,7 +353,12 @@ function closeWithBackend() {
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
   spawn("taskkill /f /im fgcs_backend.exe", { shell: true })
+  if (process.platform !== "darwin") {
+    app.quit()
+    win = null
+  }
 }
+
 app.on("window-all-closed", () => {
   closeWithBackend()
 })

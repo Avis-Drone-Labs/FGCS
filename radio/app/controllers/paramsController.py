@@ -30,7 +30,7 @@ class ParamsController:
         self.getAllParamsThread: Optional[Thread] = None
 
     @sendingCommandLock
-    def getSingleParam(self, param_name: str, timeout: Optional[float] = 3) -> Response:
+    def getSingleParam(self, param_name: str, timeout: float = 3) -> Response:
         """
         Gets a specific parameter value.
 
@@ -56,8 +56,9 @@ class ParamsController:
             start_time = time.time()
             response = None
             while time.time() - start_time < timeout:
+                # timeout of 0.2 to recv_match to allow checking the overall timeout and not block forever
                 msg = self.drone.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=0.5
+                    type="PARAM_VALUE", blocking=True, timeout=0.2
                 )
 
                 if msg is None:

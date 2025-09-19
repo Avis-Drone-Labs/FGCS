@@ -1,5 +1,5 @@
 /*
-  Notification system. This contains all the styles for each type of notification in an 
+  Notification system. This contains all the styles for each type of notification in an
   easy to use wrapper.
 */
 
@@ -32,6 +32,15 @@ export function showSuccessNotification(message) {
     title: "Success",
     message: message,
     color: tailwindColors.green[600],
+    ...notificationTheme,
+  })
+}
+
+export function showInfoNotification(message) {
+  notifications.show({
+    title: "Info",
+    message: message,
+    color: tailwindColors.blue[600],
     ...notificationTheme,
   })
 }

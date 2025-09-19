@@ -16,7 +16,7 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
@@ -28,7 +28,6 @@ import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
-import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
 import { socket } from "../../helpers/socket"
 
@@ -43,6 +42,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { queueInfoNotification } from "../../redux/slices/notificationSlice"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -51,6 +51,7 @@ const coordsFractionDigits = 7
 
 function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   // Redux
+  const dispatch = useDispatch()
   const gpsData = useSelector(selectGPS)
   const missionItems = useSelector(selectCurrentMissionItems)
   const homePosition = useSelector(selectHomePosition) // use actual home position
@@ -335,7 +336,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
                 clipboard.copy(
                   `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
                 )
-                showNotification("Copied to clipboard")
+                dispatch(queueInfoNotification("Copied to clipboard"))
               }}
             >
               <div className="w-full flex justify-between gap-2">

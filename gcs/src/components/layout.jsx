@@ -60,7 +60,6 @@ export default function Layout({ children, currentPage }) {
   useEffect(() => {
     if (notificationQueue.length !== 0) {
       const message = notificationQueue[0].message
-      console.log(message)
       if (notificationQueue[0].type === "error") {
         showErrorNotification(message)
       } else if (notificationQueue[0].type === "success") {

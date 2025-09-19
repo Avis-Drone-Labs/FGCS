@@ -7,6 +7,7 @@ import {
   emitGetLoiterRadius,
   emitIsConnectedToDrone,
   emitSetState,
+  setState,
 } from "../slices/droneConnectionSlice"
 import {
   emitExportMissionToFile,
@@ -47,7 +48,10 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitSetState,
-      callback: () => socket.socket.emit("set_state", action.payload),
+      callback: () => {
+        store.dispatch(setState(action.payload)) // Update Redux state
+        socket.socket.emit("set_state", action.payload) // Emit to socket
+      },
     },
     {
       emitter: emitGetHomePosition,

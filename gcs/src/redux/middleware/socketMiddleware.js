@@ -261,11 +261,18 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          store.dispatch(emitSetState({ state: "dashboard" }))
-          store.dispatch(emitGetHomePosition()) // use actual home position
-          if (msg.aircraft_type === 1) {
-            store.dispatch(emitGetLoiterRadius())
+          const currentState = store.getState().droneConnection
+          store.dispatch(emitSetState(currentState))
+
+          if (["dashboard", "missions"].includes(currentState.state)) {
+            store.dispatch(emitGetHomePosition()) // fetch the actual home position of the drone
+            if (msg.aircraft_type === 1) {
+              store.dispatch(emitGetLoiterRadius())
+            }
           }
+
+          store.dispatch(setRebootData({}))
+          store.dispatch(setAutoPilotRebootModalOpen(false))
         })
 
         // Link stats
@@ -319,8 +326,11 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
           store.dispatch(setRebootData(msg))
+          console.log("Reboot data received:", msg)
           if (msg.success) {
             store.dispatch(setAutoPilotRebootModalOpen(false))
+            queueSuccessNotification(msg.message)
+            store.dispatch(setRebootData({}))
           }
         })
 

@@ -328,7 +328,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setRebootData(msg))
           if (msg.success) {
             store.dispatch(setAutoPilotRebootModalOpen(false))
-            queueSuccessNotification(msg.message)
+            store.dispatch(queueSuccessNotification(msg.message))
             store.dispatch(setRebootData({}))
           }
         })

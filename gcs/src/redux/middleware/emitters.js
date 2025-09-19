@@ -49,8 +49,8 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetState,
       callback: () => {
-        store.dispatch(setState(action.payload)) // Update Redux state
-        socket.socket.emit("set_state", action.payload) // Emit to socket
+        store.dispatch(setState(action.payload))
+        socket.socket.emit("set_state", action.payload)
       },
     },
     {

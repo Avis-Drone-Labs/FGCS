@@ -1,4 +1,4 @@
-import React, { Fragment } from "react"
+import { Fragment } from "react"
 import { Button, Tooltip, ScrollArea, Accordion } from "@mantine/core"
 import Graph from "./graph"
 import ChartDataCard from "./chartDataCard"
@@ -12,7 +12,6 @@ import {
   selectFile,
   selectAircraftType,
   selectLogType,
-  selectLogMessages,
   selectMessageFilters,
   selectLogEvents,
   selectFlightModeMessages,

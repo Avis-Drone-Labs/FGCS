@@ -12,6 +12,9 @@ const notificationSlice = createSlice({
     queueNotification: (state, action) => {
       state.notifications.push(action.payload)
     },
+    queueInfoNotification: (state, action) => {
+      state.notifications.push({ type: "info", message: action.payload })
+    },
     queueErrorNotification: (state, action) => {
       state.notifications.push({ type: "error", message: action.payload })
     },
@@ -27,6 +30,7 @@ const notificationSlice = createSlice({
 export const {
   notificationShown,
   queueNotification,
+  queueInfoNotification,
   queueErrorNotification,
   queueSuccessNotification,
 } = notificationSlice.actions

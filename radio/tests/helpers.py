@@ -1,8 +1,9 @@
-import pytest
 from typing import Optional, Union
+
+import pytest
+from app import droneStatus, logger
 from serial.serialutil import SerialException
 
-from app import droneStatus, logger
 from . import socketio_client
 
 
@@ -121,17 +122,17 @@ class NoAcknowledgementMessage:
             droneStatus.drone.master.recv_match = self.old_recv
 
 
-class RecvMsgReturnsFalse:
+class RecvMsgReturnsNone:
     @staticmethod
     def recv_match_false(
         condition=None, type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
+    ) -> None:
+        return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
             self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = RecvMsgReturnsFalse.recv_match_false
+            droneStatus.drone.master.recv_match = RecvMsgReturnsNone.recv_match_false
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
@@ -167,8 +168,10 @@ def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> 
     dict
         The data recieved from the client
     """
-    socketio_client.emit(endpoint, args) if args is not None else socketio_client.emit(
-        endpoint
+    (
+        socketio_client.emit(endpoint, args)
+        if args is not None
+        else socketio_client.emit(endpoint)
     )
     return socketio_client.get_received()[0]["args"][0]
 

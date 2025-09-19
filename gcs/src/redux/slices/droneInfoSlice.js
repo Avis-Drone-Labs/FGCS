@@ -54,7 +54,7 @@ const droneInfoSlice = createSlice({
     ],
     guidedModePinData: {
       lat: 0, // Stored in coords not int
-      lon: 0, // Stores in coords not int
+      lon: 0, // Stored in coords not int
       alt: 0,
     },
     graphs: {

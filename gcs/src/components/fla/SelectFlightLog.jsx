@@ -1,13 +1,12 @@
 import {
   Button,
   Divider,
+  FileButton,
   LoadingOverlay,
   Progress,
   ScrollArea,
-  FileInput
 } from "@mantine/core"
 import moment from "moment"
-import { useRef } from "react";
 import { readableBytes } from "./utils"
 
 /**
@@ -20,28 +19,18 @@ export default function SelectFlightLog({
   updateFile,
   clearFgcsLogs,
 }) {
-  const fileInputRef = useRef(null);
-
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
         <div className="flex flex-col gap-4">
           {/* File selection */}
-          <FileInput
-            ref={fileInputRef}
-            accept=".log,.ftlog"
-            style={{ display: "none" }}
-            onChange={updateFile}
-            disabled={loadingFile}
-          />
-          <Button
-            color="blue"
-            variant="filled"
-            loading={loadingFile}
-            onClick={() => fileInputRef.current.click()}
-          >
-            Analyse a log
-          </Button>
+          <FileButton onChange={updateFile} accept=".log,.ftlog">
+            {(props) => (
+              <Button {...props} loading={loadingFile}>
+                Analyse a log
+              </Button>
+            )}
+          </FileButton>
           <Button color="red" variant="filled" onClick={clearFgcsLogs}>
             Clear Logs
           </Button>

@@ -326,7 +326,6 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
           store.dispatch(setRebootData(msg))
-          console.log("Reboot data received:", msg)
           if (msg.success) {
             store.dispatch(setAutoPilotRebootModalOpen(false))
             queueSuccessNotification(msg.message)

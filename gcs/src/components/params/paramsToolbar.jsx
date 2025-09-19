@@ -55,7 +55,6 @@ export default function ParamsToolbar() {
 
   function rebootCallback() {
     dispatch(emitRebootAutopilot())
-    console.log("Opening reboot modal from reboot callback")
     dispatch(setAutoPilotRebootModalOpen(true))
     dispatch(resetParamState())
   }

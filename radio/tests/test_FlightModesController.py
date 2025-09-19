@@ -4,7 +4,7 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import FakeTCP, ParamSetTimeout, RecvMsgReturnsFalse, SetAircraftType
+from .helpers import FakeTCP, ParamSetTimeout, RecvMsgReturnsNone, SetAircraftType
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -41,7 +41,7 @@ def test_getFlightModes_success(client: SocketIOTestClient, droneStatus):
 
 @falcon_test(pass_drone_status=True)
 def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
-    with RecvMsgReturnsFalse():
+    with RecvMsgReturnsNone():
         droneStatus.drone.flightModesController.getFlightModes()
         assert len(droneStatus.drone.flightModesController.flight_modes) == 6
         for items in droneStatus.drone.flightModesController.flight_modes:
@@ -50,7 +50,7 @@ def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
 
 @falcon_test(pass_drone_status=True)
 def test_getFlightModeChannel_failure(client: SocketIOTestClient, droneStatus):
-    with RecvMsgReturnsFalse():
+    with RecvMsgReturnsNone():
         droneStatus.drone.flightModesController.getFlightModeChannel()
         assert droneStatus.drone.flightModesController.flight_mode_channel == "UNKNOWN"
 
@@ -68,7 +68,7 @@ def test_setCurrentFlightMode(client: SocketIOTestClient, droneStatus):
         assert response.get("success") is False
         assert response.get("message") == "Could not set flight mode, serial exception"
 
-    with RecvMsgReturnsFalse():
+    with RecvMsgReturnsNone():
         response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
         assert response.get("success") is False
         assert response.get("message") == "Could not set flight mode"

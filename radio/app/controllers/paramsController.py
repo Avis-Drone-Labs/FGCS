@@ -30,7 +30,7 @@ class ParamsController:
         self.getAllParamsThread: Optional[Thread] = None
 
     @sendingCommandLock
-    def getSingleParam(self, param_name: str, timeout: Optional[float] = 5) -> Response:
+    def getSingleParam(self, param_name: str, timeout: float = 3) -> Response:
         """
         Gets a specific parameter value.
 
@@ -53,18 +53,29 @@ class ParamsController:
         )
 
         try:
-            response = self.drone.master.recv_match(
-                type="PARAM_VALUE", blocking=True, timeout=timeout
-            )
+            start_time = time.time()
+            response = None
+            while time.time() - start_time < timeout:
+                # timeout of 0.2 to recv_match to allow checking the overall timeout and not block forever
+                msg = self.drone.master.recv_match(
+                    type="PARAM_VALUE", blocking=True, timeout=0.2
+                )
 
-            if response and response.param_id == param_name:
-                self.drone.is_listening = True
+                if msg is None:
+                    continue
+
+                if msg.param_id == param_name:
+                    response = msg
+                    break
+
+            self.drone.is_listening = True
+            if response:
                 return {
                     "success": True,
                     "data": response,
                 }
             else:
-                self.drone.is_listening = True
+                self.drone.logger.error(f"Did not receive {param_name} within timeout")
                 return {
                     "success": False,
                     "message": f"{failure_message}, timed out",

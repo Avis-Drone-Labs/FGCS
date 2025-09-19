@@ -8,6 +8,7 @@ import {
 } from "@mantine/core"
 import moment from "moment"
 import { useRef } from "react";
+import { readableBytes } from "./utils"
 
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
@@ -20,18 +21,6 @@ export default function SelectFlightLog({
   clearFgcsLogs,
 }) {
   const fileInputRef = useRef(null);
-
-  function readableBytes(bytes) {
-    if (bytes === 0) return "0"
-    const i = Math.floor(Math.log(bytes) / Math.log(1024))
-    const sizes = ["B", "KB", "MB", "GB"]
-
-    return (
-      (Math.round((bytes / Math.pow(1024, i)) * 100) / 100).toFixed(2) +
-      "" +
-      sizes[i]
-    )
-  }
 
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">

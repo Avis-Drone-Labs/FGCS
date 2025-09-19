@@ -8,7 +8,7 @@ import MessageAccordionItem from "./messageAccordionItem"
 import { getUnit } from "./utils"
 import { colorInputSwatch } from "./constants"
 import { useSelector } from "react-redux"
-import { dataflashOptions, fgcsOptions } from "./components/fla/graphConfigs.js"
+import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
 import {
   selectFile,
   selectAircraftType,
@@ -42,6 +42,8 @@ export default function FlaMainDisplay({
   handleSaveCustomPreset,
   filteredDefaultPresets,
 }) {
+
+  // Redux selectors
   const file = useSelector(selectFile)
   const aircraftType = useSelector(selectAircraftType)
   const logType = useSelector(selectLogType)

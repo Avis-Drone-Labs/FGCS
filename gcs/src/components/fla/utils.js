@@ -48,7 +48,7 @@ export function getUnit(
 
 /**
  * Calculates the mean, min, and max values for each field in the loaded log messages.
- * Structure: 
+ * Structure:
  * { "MESSAGE_TYPE/FIELD_NAME": { mean: value, min: value, max: value }, ... }
  */
 export function calculateMeanValues(loadedLogMessages) {
@@ -57,22 +57,22 @@ export function calculateMeanValues(loadedLogMessages) {
   const rawValues = {}
   // Putting all raw data into a list
   Object.keys(loadedLogMessages)
-  .filter((key) => !ignoredMessages.includes(key))
-  .forEach((key) => {
+    .filter((key) => !ignoredMessages.includes(key))
+    .forEach((key) => {
       const messageData = loadedLogMessages[key]
       const messageDataMeans = {}
 
       messageData.forEach((message) => {
         Object.keys(message)
-        .filter((dataPointKey) => dataPointKey != "name")
-        .forEach((dataPointKey) => {
-          const dataPoint = message[dataPointKey]
-          if (messageDataMeans[dataPointKey] === undefined) {
-            messageDataMeans[dataPointKey] = [dataPoint]
-          } else {
-            messageDataMeans[dataPointKey].push(dataPoint)
-          }
-        })
+          .filter((dataPointKey) => dataPointKey != "name")
+          .forEach((dataPointKey) => {
+            const dataPoint = message[dataPointKey]
+            if (messageDataMeans[dataPointKey] === undefined) {
+              messageDataMeans[dataPointKey] = [dataPoint]
+            } else {
+              messageDataMeans[dataPointKey].push(dataPoint)
+            }
+          })
       })
 
       rawValues[key] = messageDataMeans
@@ -86,7 +86,7 @@ export function calculateMeanValues(loadedLogMessages) {
     Object.keys(messageData).forEach((messageKey) => {
       const messageValues = messageData[messageKey]
       // Safeguard for empty arrays
-      if (messageValues.length === 0) return;
+      if (messageValues.length === 0) return
 
       const min = Math.min(...messageValues)
       const max = Math.max(...messageValues)
@@ -117,7 +117,11 @@ export function buildDefaultMessageFilters(loadedLogMessages) {
   const logMessageFilterDefaultState = {}
   Object.keys(loadedLogMessages["format"])
     // Only include messages that are within the log and are not ignored
-    .filter((key) => Object.keys(loadedLogMessages).includes(key) && !ignoredMessages.includes(key))
+    .filter(
+      (key) =>
+        Object.keys(loadedLogMessages).includes(key) &&
+        !ignoredMessages.includes(key),
+    )
     .sort()
     .forEach((key) => {
       const fieldsState = {}
@@ -188,7 +192,7 @@ export function calcGPSOffset(loadedLogMessages) {
  * @returns {Object} Messages with TimeUS converted to UTC
  */
 export function convertTimeUStoUTC(logMessages, gpsOffset) {
-  const convertedMessages = { ...logMessages };
+  const convertedMessages = { ...logMessages }
 
   Object.keys(convertedMessages)
     .filter((key) => key !== "format" && key !== "units")
@@ -196,10 +200,10 @@ export function convertTimeUStoUTC(logMessages, gpsOffset) {
       convertedMessages[key] = convertedMessages[key].map((message) => ({
         ...message,
         TimeUS: message.TimeUS / 1000 + gpsOffset,
-      }));
-    });
+      }))
+    })
 
-  return convertedMessages;
+  return convertedMessages
 }
 
 /**
@@ -212,4 +216,16 @@ export function sortObjectByKeys(obj) {
       acc[key] = obj[key]
       return acc
     }, {})
+}
+
+export function readableBytes(bytes) {
+  if (bytes === 0) return "0"
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  const sizes = ["B", "KB", "MB", "GB"]
+
+  return (
+    (Math.round((bytes / Math.pow(1024, i)) * 100) / 100).toFixed(2) +
+    "" +
+    sizes[i]
+  )
 }

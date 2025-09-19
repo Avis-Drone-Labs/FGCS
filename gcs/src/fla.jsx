@@ -432,7 +432,6 @@ export default function FLA() {
     })
 
     let newColors = {}
-    let colorCount = 0
 
     Object.keys(filter.filters).forEach((categoryName) => {
       if (Object.keys(messageFilters).includes(categoryName)) {
@@ -450,14 +449,13 @@ export default function FLA() {
             newColors[`${categoryName}/${field}`] =
               colorPalette[Object.keys(newColors).length % colorPalette.length]
           }
-          colorCount++
         })
       } else {
         showErrorNotification(`Your log file does not include ${categoryName}`)
       }
     })
 
-    updateColorIndex(colorCount)
+    updateColorIndex(Object.keys(newColors).length % colorPalette.length) // limited by palette length
     updateCustomColors(newColors)
     updateMessageFilters(newFilters)
     // Don't allow saving if we just selected an existing preset

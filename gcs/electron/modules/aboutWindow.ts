@@ -58,6 +58,9 @@ export function destroyAboutWindow() {
 }
 
 export default function registerAboutIPC() {
+  ipcMain.removeHandler("openAboutWindow")
+  ipcMain.removeHandler("closeAboutWindow")
+
   ipcMain.handle("openAboutWindow", () => {
     openAboutPopout()
   })

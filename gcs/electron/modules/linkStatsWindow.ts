@@ -50,6 +50,10 @@ export function destroyLinkStatsWindow() {
 }
 
 export default function registerLinkStatsIPC() {
+  ipcMain.removeHandler("openLinkStatsWindow")
+  ipcMain.removeHandler("closeLinkStatsWindow")
+  ipcMain.removeHandler("update-link-stats")
+
   ipcMain.handle("openLinkStatsWindow", () => {
     openLinkStatsWindow()
   })

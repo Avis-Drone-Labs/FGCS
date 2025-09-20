@@ -246,18 +246,6 @@ export const selectAttitudeDeg = createSelector(
   },
 )
 
-export const selectFlightModeString = createSelector(
-  [
-    droneInfoSlice.selectors.selectFlightMode,
-    droneInfoSlice.selectors.selectAircraftTypeString,
-  ],
-  (flightMode, aircraftType) => {
-    //TODO: aircraftType should be in local storage apparently (for some reason?)
-    const flightModeMap = getFlightModeMap(aircraftType)
-    return flightModeMap[flightMode] || "UNKNOWN"
-  },
-)
-
 export const selectAlt = createSelector(
   [droneInfoSlice.selectors.selectGPS],
   ({ alt, relativeAlt }) => {
@@ -276,6 +264,15 @@ export const selectAircraftTypeString = createSelector(
       default:
         return "Unknown"
     }
+  },
+)
+
+export const selectFlightModeString = createSelector(
+  [droneInfoSlice.selectors.selectFlightMode, selectAircraftTypeString],
+  (flightMode, aircraftType) => {
+    //TODO: aircraftType should be in local storage apparently (for some reason?)
+    const flightModeMap = getFlightModeMap(aircraftType)
+    return flightModeMap[flightMode] || "UNKNOWN"
   },
 )
 

@@ -32,9 +32,9 @@ import Layout from "./components/layout.jsx"
 import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
 import FlaMainDisplay from "./components/fla/FlaMainDisplay.jsx"
 import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification.js"
+  queueErrorNotification,
+  queueSuccessNotification,
+} from "./redux/slices/notificationSlice.js"
 import {
   setFile,
   setUnits,
@@ -148,6 +148,10 @@ export default function FLA() {
     dispatch(setAircraftType(newAircraftType))
   const updateCanSavePreset = (newCanSavePreset) =>
     dispatch(setCanSavePreset(newCanSavePreset))
+  const dispatchErrorNotification = (message) =>
+    dispatch(queueErrorNotification(message))
+  const dispatchSuccessNotification = (message) =>
+    dispatch(queueSuccessNotification(message))
 
   // ====================================================
   // 2. File Management Functions
@@ -162,14 +166,14 @@ export default function FLA() {
       const result = await window.ipcRenderer.loadFile(file.path)
 
       if (!result.success) {
-        showErrorNotification("Error loading file, file not found. Reload.")
+        dispatchErrorNotification("Error loading file, file not found. Reload.")
         return
       }
 
       await processLoadedFile(result)
-      showSuccessNotification(`${file.name} loaded successfully`)
+      dispatchSuccessNotification(`${file.name} loaded successfully`)
     } catch (error) {
-      showErrorNotification("Error loading file: " + error.message)
+      dispatchErrorNotification("Error loading file: " + error.message)
     } finally {
       setLoadingFile(false)
     }
@@ -179,7 +183,7 @@ export default function FLA() {
     const loadedLogMessages = result.messages
 
     if (!loadedLogMessages) {
-      showErrorNotification("Error loading file, no messages found.")
+      dispatchErrorNotification("Error loading file, no messages found.")
       return
     }
 
@@ -437,7 +441,7 @@ export default function FLA() {
       if (Object.keys(messageFilters).includes(categoryName)) {
         filter.filters[categoryName].forEach((field) => {
           if (!(field in messageFilters[categoryName])) {
-            showErrorNotification(
+            dispatchErrorNotification(
               `Your log file does not include ${categoryName}/${field} data`,
             )
             return
@@ -451,7 +455,7 @@ export default function FLA() {
           }
         })
       } else {
-        showErrorNotification(`Your log file does not include ${categoryName}`)
+        dispatchErrorNotification(`Your log file does not include ${categoryName}`)
       }
     })
 
@@ -513,18 +517,18 @@ export default function FLA() {
 
       if (!existingPreset) {
         saveCustomPreset(newPreset, logType)
-        showSuccessNotification(
+        dispatchSuccessNotification(
           `Custom preset "${presetName}" saved successfully`,
         )
         close()
         updateCanSavePreset(false)
       } else {
         if (existingPreset.name === presetName) {
-          showErrorNotification(
+          dispatchErrorNotification(
             `The name "${presetName}" is in use. Please choose a different name.`,
           )
         } else {
-          showErrorNotification(
+          dispatchErrorNotification(
             `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
           )
           close()
@@ -566,7 +570,7 @@ export default function FLA() {
     }
 
     deleteCustomPreset(presetName, logType)
-    showSuccessNotification(
+    dispatchSuccessNotification(
       `Custom preset "${presetName}" deleted successfully`,
     )
   }

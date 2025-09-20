@@ -58,6 +58,15 @@ Create a new Python virtual environment using `python -m venv venv`. This can th
 3. Install requirements `pip install -r requirements.txt`
 4. `python app.py`
 
+### Parameter Definitions (Optional)
+
+To generate the latest parameter definitions for drone parameters:
+
+1. `cd gcs/data`
+2. `python generate_param_definitions.py`
+
+This will download and generate the latest parameter definition files for ArduCopter and ArduPlane from the ArduPilot project. These files help the frontend display parameter descriptions and metadata.
+
 </details>
 
 ---
@@ -85,27 +94,117 @@ We currently don't have instructions or releases for mac or linux, we will in fu
 
 <details><summary>Running tests</summary>
 
-## Backend
+## Backend Tests
 
-For running Python tests, first make sure you're in the `radio` directory. By default the tests will attempt to connect to the simulator running within Docker. To run the tests simply run `pytest`. To use a physical device connected to your computer, you can use `pytest --fc -s` and a prompt will display to select the correct COM port for the device.
+For running Python tests, first make sure you're in the `radio` directory and your virtual environment is activated.
+
+### Prerequisites
+1. Ensure you have pytest installed: `pip install pytest`
+2. Have a running SITL simulator or physical drone connected
+
+### Test Options
+
+**Option 1: Using Docker SITL (Recommended)**
+1. Start the SITL simulator: `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`
+2. Run tests: `pytest`
+
+**Option 2: Using Physical Device**
+1. Connect your drone via USB/serial
+2. Run tests with device selection: `pytest --fc -s`
+3. Select the correct COM port when prompted
+
+**Option 3: Run Specific Test Categories**
+```bash
+pytest tests/test_params.py          # Parameter-related tests
+pytest tests/test_mission.py         # Mission planning tests
+pytest tests/test_arm.py            # Arming/disarming tests
+pytest -v                          # Verbose output
+pytest -k "test_name"               # Run specific test
+```
+
+## Frontend Tests
+
+Frontend tests use Playwright for end-to-end testing:
+
+1. `cd gcs`
+2. Install dependencies: `yarn`
+3. Install Playwright browsers: `npx playwright install`
+4. Run tests: `yarn test` or `npx playwright test`
+
+Note: Frontend tests are currently minimal and being expanded.
 
 </details>
 
-<details><summary>SITL with Docker</summary>
+<details><summary>SITL Simulator Setup</summary>
 
-To run the SITL simulator within Docker, first pull the docker image with `docker pull kushmakkapati/ardupilot_sitl`. Once pulled, you can start the container with `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl`. This will expose port 5760 for you to connect to over TCP on 127.0.0.1 (the connection string is `tcp:127.0.0.1:5760`). You can also open up port 5763 for running other scripts on the simulator whilst a GCS is connected.
+The Software-in-the-Loop (SITL) simulator allows you to test FGCS without physical hardware.
 
-By default the vehicle type will be ArduCopter, however you can tell the SITL to use a custom vehicle by providing it as a named argument at the end of the run command, e.g. `docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane`. You can also set the starting LAT, LON, ALT and DIR using the named arguments.
+## Quick Start with Docker
 
-If you want to upload a custom parameter file or custom mission waypoint to the simulator then you must have a `custom_params.parm` or `mission.txt` file in your current working directory. These can then be uploaded to the simulator on run by specifying a bind mount with `-v .:/sitl_setup/custom` (note that the destination path must be `sitl_setup/custom`). E.g. `docker run -it --rm -p 5760:5760 -p 5763:5763 -v .:/sitl_setup/custom ardupilot_sitl VEHICLE=ArduPlane`.
+1. **Pull the SITL image:**
+   ```bash
+   docker pull kushmakkapati/ardupilot_sitl
+   ```
 
-Note: Steps to push an updated image to docker hub:
+2. **Start basic simulator (ArduCopter):**
+   ```bash
+   docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
+   ```
 
-```plaintext
-docker build . -t ardupilot_sitl
-docker tag ardupilot_sitl:latest kushmakkapati/ardupilot_sitl:latest
-docker push kushmakkapati/ardupilot_sitl:latest
+3. **Connect FGCS to simulator:**
+   - Backend connection string: `tcp:127.0.0.1:5760`
+   - This exposes the MAVLink connection on port 5760
+
+## Advanced SITL Configuration
+
+### Different Vehicle Types
+```bash
+# ArduPlane
+docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane
+
+# ArduRover  
+docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduRover
+
+# ArduSub
+docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduSub
 ```
+
+### Custom Starting Location
+```bash
+docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl \
+  VEHICLE=ArduCopter LAT=-35.363261 LON=149.165230 ALT=584 DIR=353
+```
+
+### Multiple Ports (for concurrent connections)
+```bash
+docker run -it --rm -p 5760:5760 -p 5763:5763 kushmakkapati/ardupilot_sitl
+```
+
+### Custom Parameters and Missions
+1. **Create files in your working directory:**
+   - `custom_params.parm` - Custom parameter file
+   - `mission.txt` - Mission waypoints file
+
+2. **Mount files into container:**
+   ```bash
+   docker run -it --rm -p 5760:5760 -p 5763:5763 \
+     -v .:/sitl_setup/custom kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane
+   ```
+
+## Alternative SITL Setup (without Docker)
+
+If you prefer to install ArduPilot SITL natively:
+
+1. **Install ArduPilot SITL** (follow [ArduPilot documentation](https://ardupilot.org/dev/docs/setting-up-sitl-on-linux.html))
+2. **Start simulator:**
+   ```bash
+   sim_vehicle.py -v ArduCopter --console --map --out=127.0.0.1:5760
+   ```
+
+## Connecting FGCS to SITL
+
+1. Start the backend with connection string: `tcp:127.0.0.1:5760`
+2. Or use the GUI connection dialog in FGCS to connect to `tcp:127.0.0.1:5760`
 
 </details>
 
@@ -156,6 +255,20 @@ We have an `.env` file located in `gcs/.env`. To change the host and port for th
 > Note: The default host and port is `http://127.0.0.1:4237`. 
 
 </details>
+
+---
+
+---
+
+## 📚 Documentation
+
+For developers and advanced users, comprehensive technical documentation is available:
+
+- **[📖 Complete Documentation Index](docs/README.md)** - Overview of all documentation
+- **[🚀 Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Setup, workflow, and best practices
+- **[🔧 Backend Architecture](docs/BACKEND_ARCHITECTURE.md)** - Controllers, endpoints, and MAVLink
+- **[🖥️ Frontend Architecture](docs/FRONTEND_ARCHITECTURE.md)** - Redux, components, and popout windows
+- **[📡 MAVLink Communication](docs/MAVLINK_COMMUNICATION.md)** - Drone communication and command lock
 
 ---
 

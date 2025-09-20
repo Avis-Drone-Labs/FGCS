@@ -249,7 +249,8 @@ export default function FLA() {
     if ("EV" in loadedLogMessages) {
       updateLogEvents(
         loadedLogMessages["EV"].map((event) => ({
-          time:  gpsOffset !== null ? (event.TimeUS / 1000 + gpsOffset) : event.TimeUS,
+          time:
+            gpsOffset !== null ? event.TimeUS / 1000 + gpsOffset : event.TimeUS,
           message: logEventIds[event.Id],
         })),
       )
@@ -455,7 +456,9 @@ export default function FLA() {
           }
         })
       } else {
-        dispatchErrorNotification(`Your log file does not include ${categoryName}`)
+        dispatchErrorNotification(
+          `Your log file does not include ${categoryName}`,
+        )
       }
     })
 

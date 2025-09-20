@@ -29,6 +29,8 @@ const initialState = {
   network_type: "tcp", // local
   ip: "127.0.0.1", // local
   port: "5760", // local
+
+  state: "dashboard",
 }
 
 const droneConnectionSlice = createSlice({
@@ -101,6 +103,11 @@ const droneConnectionSlice = createSlice({
         state.wireless = action.payload
       }
     },
+    setState: (state, action) => {
+      if (action.payload !== state.state) {
+        state.state = action.payload
+      }
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -128,6 +135,7 @@ const droneConnectionSlice = createSlice({
     selectConnectionModal: (state) => state.connection_modal,
     selectConnectionStatus: (state) => state.connection_status,
     selectWireless: (state) => state.wireless,
+    selectState: (state) => state.state,
   },
 })
 
@@ -146,6 +154,7 @@ export const {
   setConnectionModal,
   setConnectionStatus,
   setWireless,
+  setState,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -171,6 +180,7 @@ export const {
   selectConnectionModal,
   selectConnectionStatus,
   selectWireless,
+  selectState,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

@@ -34,6 +34,7 @@ import {
   setExtraData,
   setGpsData,
   setGpsRawIntData,
+  setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
   setLastGraphMessage,
@@ -94,6 +95,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavResult: "nav_result",
   onHomePositionResult: "home_position_result",
   onIncomingMsg: "incoming_msg",
+  onNavRepositionResult: "nav_reposition_result",
   onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
   onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
 })
@@ -261,11 +263,19 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          store.dispatch(emitSetState({ state: "dashboard" }))
-          store.dispatch(emitGetHomePosition()) // use actual home position
-          if (msg.aircraft_type === 1) {
-            store.dispatch(emitGetLoiterRadius())
+          const currentState = store.getState().droneConnection
+          store.dispatch(emitSetState(currentState))
+
+          if (["dashboard", "missions"].includes(currentState.state)) {
+            store.dispatch(emitGetHomePosition()) // fetch the actual home position of the drone
+            if (msg.aircraft_type === 1) {
+              store.dispatch(emitGetLoiterRadius())
+            }
           }
+
+          store.dispatch(setGuidedModePinData({ lat: 0, lon: 0, alt: 0 }))
+          store.dispatch(setRebootData({}))
+          store.dispatch(setAutoPilotRebootModalOpen(false))
         })
 
         // Link stats
@@ -321,6 +331,8 @@ const socketMiddleware = (store) => {
           store.dispatch(setRebootData(msg))
           if (msg.success) {
             store.dispatch(setAutoPilotRebootModalOpen(false))
+            store.dispatch(queueSuccessNotification(msg.message))
+            store.dispatch(setRebootData({}))
           }
         })
 
@@ -357,9 +369,18 @@ const socketMiddleware = (store) => {
           store.dispatch(setFetchingVars(false))
         })
 
-        /*
-          Missions
-        */
+        socket.socket.on(
+          DroneSpecificSocketEvents.onNavRepositionResult,
+          (msg) => {
+            if (msg.success) {
+              store.dispatch(queueSuccessNotification(msg.message))
+              store.dispatch(setGuidedModePinData(msg.data))
+            } else {
+              store.dispatch(queueErrorNotification(msg.message))
+            }
+          },
+        )
+
         socket.socket.on(
           DroneSpecificSocketEvents.onGetLoiterRadiusResult,
           (msg) => {
@@ -380,16 +401,17 @@ const socketMiddleware = (store) => {
                 : queueNotification({ type: "error", message: msg.message }),
             )
           },
-        ),
-          /*
+        )
+
+        /*
           Missions
         */
-          socket.socket.on(
-            MissionSpecificSocketEvents.onCurrentMissionAll,
-            (msg) => {
-              store.dispatch(setCurrentMissionItems(msg))
-            },
-          )
+        socket.socket.on(
+          MissionSpecificSocketEvents.onCurrentMissionAll,
+          (msg) => {
+            store.dispatch(setCurrentMissionItems(msg))
+          },
+        )
 
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMission,
@@ -630,7 +652,7 @@ const socketMiddleware = (store) => {
         )
 
         /*
-          Generic Drone Date
+          Generic Drone Data
         */
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
           incomingMessageHandler(msg)

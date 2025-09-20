@@ -10,12 +10,7 @@
 import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import {
-  useClipboard,
-  useLocalStorage,
-  usePrevious,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useClipboard, useLocalStorage, usePrevious } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
@@ -47,11 +42,12 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
+  selectGuidedModePinData,
 } from "../../redux/slices/droneInfoSlice"
 import {
   clearDrawingItems,
   createFencePolygon,
-  createNewDrawingItem,
+  createNewDefaultDrawingItem,
   getFrameKey,
   removeDrawingItem,
   selectActiveTab,
@@ -61,6 +57,7 @@ import {
   setPlannedHomePositionToDronesHomePositionThunk,
   updateContextMenuState,
 } from "../../redux/slices/missionSlice"
+import ContextMenuSpecificCommandItems from "../mapComponents/contextMenuSpecificCommandItems"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -80,11 +77,7 @@ function MapSectionNonMemo({
   const flightModeString = useSelector(selectFlightModeString)
   const currentTab = useSelector(selectActiveTab)
   const contextMenuState = useSelector(selectContextMenu)
-
-  const [guidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
+  const guidedModePinData = useSelector(selectGuidedModePinData)
 
   const [position, setPosition] = useState(null)
   const { getSetting } = useSettings()
@@ -321,7 +314,10 @@ function MapSectionNonMemo({
             addNewPolygonVertex(lat, lon)
           } else {
             dispatch(
-              createNewDrawingItem({ x: coordToInt(lat), y: coordToInt(lon) }),
+              createNewDefaultDrawingItem({
+                x: coordToInt(lat),
+                y: coordToInt(lon),
+              }),
             )
           }
         }}
@@ -446,6 +442,7 @@ function MapSectionNonMemo({
                   </ContextMenuItem>
                 </>
               )}
+            <ContextMenuSpecificCommandItems />
             <Divider />
             <ContextMenuItem onClick={zoomToDrone}>
               <p>Zoom to drone</p>

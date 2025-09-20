@@ -1,7 +1,8 @@
 import os
+from pathlib import Path
+
 import app.droneStatus as droneStatus
 from app import create_app, socketio
-from pathlib import Path
 from dotenv import load_dotenv
 
 app = create_app(debug=True)
@@ -20,7 +21,6 @@ if __name__ == "__main__":
         host = "127.0.0.1"
 
     print("Starting backend.")
-    print(host)
     socketio.run(app, allow_unsafe_werkzeug=True, host=host, port=port)
     if droneStatus.drone:
         droneStatus.drone.close()

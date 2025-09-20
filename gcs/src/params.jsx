@@ -81,10 +81,10 @@ export default function Params() {
 
   return (
     <Layout currentPage="params">
+      <AutopilotRebootModal />
+
       {connected ? (
         <>
-          <AutopilotRebootModal />
-
           {fetchingVars && (
             <Progress
               radius="xs"

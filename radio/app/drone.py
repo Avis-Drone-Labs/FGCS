@@ -99,7 +99,7 @@ class Drone:
 
         self.connectionError: Optional[str] = None
 
-        self.logger.debug("Trying to setup master")
+        self.logger.debug(f"Trying to setup master with port {port} and baud {baud}")
 
         if not Drone.checkBaudrateValid(baud):
             self.connectionError = (

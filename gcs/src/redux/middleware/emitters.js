@@ -164,7 +164,9 @@ export function handleEmitters(socket, store, action) {
       callback: () => {
         const controlAction = action.payload.action
         if (!["start", "restart"].includes(controlAction))
-          return console.error("Invalid control mission action")
+          return console.error(
+            `Invalid control mission action, got ${controlAction}`,
+          )
 
         socket.socket.emit("control_mission", {
           action: controlAction,

@@ -141,61 +141,6 @@ Controls gripper/payload release mechanisms including:
 - Safety interlocks
 - Payload management operations
 
-## API Endpoints
-
-### HTTP Endpoints (`app/endpoints/`)
-
-The backend exposes RESTful endpoints organized by functionality:
-
-#### Connection Management
-- Connection port listing and selection
-- Drone connection establishment and termination
-- Connection status monitoring
-
-#### Parameters  
-- Parameter retrieval (individual and bulk)
-- Parameter modification and validation
-- Parameter list refresh and caching
-
-#### Mission Planning
-- Mission upload and download operations
-- Mission item management
-- Mission execution control
-
-#### Flight Operations
-- Arming and disarming commands
-- Flight mode changes and status
-- Flight mode availability queries
-
-#### Motor Testing
-- Individual and bulk motor testing
-- Motor test safety controls
-- Test status monitoring
-
-#### Navigation
-- Guided mode navigation commands
-- Position and velocity control
-- Movement validation and limits
-
-### Socket.IO Events
-
-Real-time communication uses Socket.IO events:
-
-#### Outgoing Events (Backend → Frontend)
-- `drone_status` - Current drone state and telemetry
-- `parameter_update` - Parameter value changes
-- `mission_progress` - Mission execution updates
-- `connection_status` - Connection state changes
-- `error_message` - Error notifications
-
-#### Incoming Events (Frontend → Backend)
-- `connect_drone` - Request drone connection
-- `disconnect_drone` - Request disconnection
-- `arm_drone` - Arm request
-- `set_flight_mode` - Flight mode change
-- `upload_mission` - Mission upload
-- `set_parameter` - Parameter change
-
 ## Error Handling and Logging
 
 ### Logging System
@@ -253,26 +198,6 @@ class DroneStatus:
 - Parameter fetching runs in separate threads
 - MAVLink message handling is thread-safe
 - Socket.IO events are handled asynchronously
-
-## Performance Considerations
-
-### Message Rate Limiting
-- Data streams configured with appropriate rates
-- Critical messages (attitude) at 10Hz
-- Status messages at 2-3Hz
-- Parameter operations are throttled
-
-### Memory Management
-- Parameter cache with size limits
-- Message history with rotation
-- Connection cleanup on disconnect
-- Garbage collection for large operations
-
-### Connection Optimization
-- Heartbeat monitoring
-- Automatic reconnection logic
-- Connection health checks
-- Bandwidth usage monitoring
 
 ## Security Considerations
 

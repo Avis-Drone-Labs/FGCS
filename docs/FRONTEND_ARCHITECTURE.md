@@ -55,157 +55,29 @@ export const store = configureStore({
 })
 ```
 
-### Key Redux Slices
+### Redux Architecture Overview
 
-#### 1. Drone Connection Slice (`droneConnectionSlice.js`)
+The application uses Redux Toolkit with multiple slices to manage different aspects of the application state:
 
-Manages connection state and parameters:
+#### State Organization
+- **Connection Management**: Handles drone connection status, port selection, and network configuration
+- **Drone Data**: Manages real-time telemetry data including attitude, GPS, battery, and system status
+- **Mission Planning**: Stores mission waypoints, upload progress, and execution state
+- **Parameters**: Manages drone parameter data, modifications, and synchronization
+- **Socket Communication**: Handles Socket.IO connection state and event management
+- **UI State**: Manages notifications, status messages, and user interface state
 
-```javascript
-const initialState = {
-  // Connection status
-  connecting: false,
-  connected: false,
-  connection_modal: false,
-  connection_status: null,
+#### Redux Patterns
+- **Slice-based Organization**: Each major feature area has its own slice with dedicated actions and reducers
+- **Memoized Selectors**: Performance-optimized selectors using `createSelector` for derived state
+- **Real-time Updates**: Socket.IO events automatically dispatch Redux actions to update state
+- **Async Operations**: Socket.IO middleware handles async communication with the backend
+- **State Normalization**: Complex data structures are normalized for efficient updates and lookups
 
-  // Connection parameters
-  wireless: true,
-  baudrate: "9600",
-  connection_type: ConnectionType.Serial,
-  
-  // COM ports
-  fetching_com_ports: false,
-  com_ports: [],
-  selected_com_ports: null,
-  
-  // Network parameters
-  network_type: "tcp",
-  ip: "127.0.0.1", 
-  port: "5760",
-  
-  // Application state
-  state: "dashboard",
-}
-```
-
-**Key Actions:**
-- `setConnecting()` / `setConnected()` - Connection state
-- `setComPorts()` / `setSelectedComPorts()` - Serial port management
-- `setIp()` / `setPort()` - Network connection settings
-- `emitConnectToDrone()` / `emitDisconnectFromDrone()` - Socket.IO events
-
-**Usage Pattern:**
-Components connect to the Redux store using standard hooks and selectors to access connection state and trigger connection actions. The slice provides both state management and Socket.IO event emission capabilities.
-
-#### 2. Drone Info Slice (`droneInfoSlice.js`)
-
-Stores all drone telemetry and status data:
-
-```javascript
-const initialState = {
-  attitudeData: { roll: 0.0, pitch: 0.0, yaw: 0.0 },
-  telemetryData: { airspeed: 0.0, groundspeed: 0.0 },
-  gpsData: { lat: 0.0, lon: 0.0, hdg: 0.0, alt: 0.0, relativeAlt: 0.0 },
-  homePosition: { lat: 0, lon: 0, alt: 0 },
-  heartbeatData: { baseMode: 0, customMode: 0, systemStatus: 0 },
-  batteryData: [],
-  guidedModePinData: { lat: 0, lon: 0, alt: 0 },
-  // ... additional telemetry fields
-}
-```
-
-**Key Actions:**
-- `setAttitudeData()` - Roll, pitch, yaw updates
-- `setGpsData()` - GPS position and status
-- `setHeartbeatData()` - Flight mode and arming status
-- `setBatteryData()` - Battery voltage and current
-- `setGuidedModePinData()` - Guided mode target coordinates
-
-**Memoized Selectors:**
-```javascript
-// Convert attitude from radians to degrees
-export const selectAttitudeDeg = createSelector(
-  [selectAttitude],
-  ({ roll, pitch, yaw }) => ({
-    roll: roll * (180 / Math.PI),
-    pitch: pitch * (180 / Math.PI), 
-    yaw: yaw * (180 / Math.PI),
-  })
-)
-
-// Convert GPS coordinates from integers
-export const selectDroneCoords = createSelector(
-  [selectGPS],
-  ({ lat, lon }) => ({ lat: lat * 1e-7, lon: lon * 1e-7 })
-)
-
-// Get flight mode string based on aircraft type
-export const selectFlightModeString = createSelector(
-  [selectFlightMode, selectAircraftType],
-  (flightMode, aircraftType) => {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[flightMode]
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[flightMode]
-    }
-    return "UNKNOWN"
-  }
-)
-```
-
-#### 3. Mission Slice (`missionSlice.js`)
-
-Handles mission planning data:
-
-```javascript
-const initialState = {
-  mission: [],              // Mission waypoints
-  currentMissionItem: 0,    // Active waypoint
-  uploadProgress: 0,        // Upload progress percentage
-  downloading: false,       // Download state
-  uploading: false,         // Upload state
-}
-```
-
-**Key Actions:**
-- `setMission()` - Complete mission data
-- `addMissionItem()` / `removeMissionItem()` - Individual waypoints
-- `setCurrentMissionItem()` - Active waypoint tracking
-- `setUploadProgress()` - Mission upload progress
-
-#### 4. Parameters Slice (`paramsSlice.js`)
-
-Manages drone parameter data:
-
-```javascript
-const initialState = {
-  params: [],               // All parameters
-  modifiedParams: [],       // Changed parameters
-  fetchingParams: false,    // Loading state
-  uploadingParams: false,   // Upload state
-  searchFilter: "",         // Parameter search
-}
-```
-
-**Key Actions:**
-- `setParams()` - All parameter data
-- `updateParam()` - Single parameter change
-- `setModifiedParams()` - Track changes
-- `setFetchingParams()` - Loading state management
-
-#### 5. Socket Slice (`socketSlice.js`)
-
-Manages Socket.IO connection state:
-
-```javascript
-const initialState = {
-  connected: false,
-  connecting: false,
-  error: null,
-  lastMessage: null,
-}
-```
+#### Data Flow
+1. **User Actions** → Redux Actions → State Updates → Component Re-renders
+2. **Socket Events** → Middleware → Redux Actions → State Updates → UI Updates  
+3. **Component Events** → Action Creators → Backend API/Socket → Response → State Updates
 
 ### Data Flow Patterns
 

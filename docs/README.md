@@ -19,25 +19,14 @@ This directory contains comprehensive technical documentation for the Falcon Gro
 
 - **[Backend Architecture](BACKEND_ARCHITECTURE.md)** - Backend system design and components
   - Controllers architecture and usage
-  - API endpoints documentation
   - Drone state management
   - Error handling and logging
-  - Performance considerations
-
-- **[MAVLink Communication](MAVLINK_COMMUNICATION.md)** - Drone communication protocol
-  - MAVLink message flow
-  - Command lock system
-  - Parameter operations
-  - Mission upload/download
-  - Error handling and recovery
-  - Connection management
 
 ### 🖥️ Frontend Documentation
 
 - **[Frontend Architecture](FRONTEND_ARCHITECTURE.md)** - Frontend system design
-  - Redux state management
+  - Redux state management overview
   - Component organization patterns
-  - Data flow and fetching
   - Popout window system
   - Electron integration
 
@@ -49,14 +38,13 @@ This directory contains comprehensive technical documentation for the Falcon Gro
 3. Review architecture docs for understanding the codebase
 
 ### Understanding the System
-- **Backend Developers**: Start with [Backend Architecture](BACKEND_ARCHITECTURE.md) and [MAVLink Communication](MAVLINK_COMMUNICATION.md)
+- **Backend Developers**: Start with [Backend Architecture](BACKEND_ARCHITECTURE.md)
 - **Frontend Developers**: Begin with [Frontend Architecture](FRONTEND_ARCHITECTURE.md)
 - **Full Stack**: Review all architecture documents
 
 ### Common Tasks
 - **Adding a new controller**: See Backend Architecture → Controllers section
 - **Creating new Redux slice**: See Frontend Architecture → Redux section
-- **Adding API endpoints**: See Backend Architecture → Endpoints section
 - **Creating popout windows**: See Frontend Architecture → Popout Windows section
 - **Testing changes**: See Development Guide → Testing section
 
@@ -95,14 +83,14 @@ This directory contains comprehensive technical documentation for the Falcon Gro
 │  │  │   Manager   │◄──►│  - Params       │   │ │
 │  │  │             │    │  - Mission      │   │ │
 │  │  │ - Connection│    │  - Arm/Disarm   │   │ │
-│  │  │ - MAVLink   │    │  - Flight Mode  │   │ │
+│  │  │ - Protocol  │    │  - Flight Mode  │   │ │
 │  │  │ - Streams   │    │  - Motors       │   │ │
 │  │  │ - Commands  │    │  - Navigation   │   │ │
 │  │  └─────────────┘    └─────────────────┘   │ │
 │  └─────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────┘
                            │
-                      MAVLink Protocol
+                    Drone Protocol
                            │
 ┌─────────────────────────────────────────────────┐
 │                    Drone                        │
@@ -119,12 +107,11 @@ This directory contains comprehensive technical documentation for the Falcon Gro
 
 ## Key Concepts
 
-### MAVLink Communication
-- **Heartbeat**: Regular status updates from drone
-- **Data Streams**: Continuous telemetry (attitude, GPS, battery)
-- **Commands**: Control instructions (arm, mode change, mission)
-- **Parameters**: Configuration values
-- **Mission Items**: Waypoints and commands
+### Drone Communication
+- **Real-time Telemetry**: Continuous data streams (attitude, GPS, battery)
+- **Command Processing**: Control instructions (arm, mode change, mission)
+- **Parameter Management**: Configuration values and settings
+- **Mission Control**: Waypoints and automated flight plans
 
 ### State Management
 - **Redux Store**: Centralized application state

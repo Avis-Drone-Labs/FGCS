@@ -92,7 +92,7 @@ export default function FLA() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [opened, { open, close }] = useDisclosure(false)
-  const [localChartData, setLocalChartData] = useState({ datasets: [] })
+  const [chartData, setLocalChartData] = useState({ datasets: [] })
   // use memo such that this is calculated only when necessary
   const filteredDefaultPresets = useMemo(() => {
     if (!presetCategories || !logType || !logMessages) {
@@ -663,7 +663,7 @@ export default function FLA() {
           selectPreset={selectPreset}
           handleDeleteCustomPreset={handleDeleteCustomPreset}
           selectMessageFilter={selectMessageFilter}
-          localChartData={localChartData}
+          chartData={chartData}
           clearFilters={clearFilters}
           open={open}
           changeColor={changeColor}

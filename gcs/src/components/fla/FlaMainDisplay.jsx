@@ -32,7 +32,7 @@ export default function FlaMainDisplay({
   selectPreset,
   handleDeleteCustomPreset,
   selectMessageFilter,
-  localChartData,
+  chartData,
   clearFilters,
   open,
   changeColor,
@@ -156,7 +156,7 @@ export default function FlaMainDisplay({
       {/* Graph column */}
       <div className="w-full h-full pr-4 min-w-0 flex flex-col">
         <Graph
-          data={localChartData}
+          data={chartData}
           events={logEvents}
           flightModes={flightModeMessages}
           graphConfig={utcAvailable ? fgcsOptions : dataflashOptions}
@@ -166,7 +166,7 @@ export default function FlaMainDisplay({
         />
         {/* Plots Setup */}
         <div className="grid grid-cols-5 gap-4 pt-4">
-          {localChartData.datasets.map((item) => (
+          {chartData.datasets.map((item) => (
             <Fragment key={item.label}>
               <ChartDataCard
                 item={item}

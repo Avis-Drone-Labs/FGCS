@@ -24,75 +24,34 @@ connection_string = "udp:127.0.0.1:14550"
 ```
 
 ### Connection Establishment
-```python
-class Drone:
-    def __init__(self, port: str, baud: int = 57600, wireless: bool = False):
-        # Create MAVLink connection
-        self.master = mavutil.mavlink_connection(
-            port, 
-            baud=baud,
-            source_system=255,      # GCS system ID
-            source_component=0,     # GCS component ID
-            retries=3,
-            timeout=5
-        )
-        
-        # Wait for initial heartbeat
-        self.master.wait_heartbeat()
-        
-        # Store target system/component IDs
-        self.target_system = self.master.target_system
-        self.target_component = self.master.target_component
-```
+
+The drone connection process involves:
+- Creating a MAVLink connection using PyMAVLink
+- Configuring system and component IDs for ground control station
+- Setting connection parameters (timeout, retries)
+- Waiting for initial heartbeat from the drone
+- Storing target system and component identifiers for communication
 
 ## Data Streams and Message Flow
 
 ### Incoming Data Processing
 
-The drone continuously processes incoming MAVLink messages:
-
-```python
-def messageListener(self):
-    """Main message processing loop"""
-    while self.is_listening:
-        try:
-            # Receive message with timeout
-            msg = self.master.recv_match(blocking=False, timeout=0.1)
-            if msg is None:
-                continue
-                
-            # Process message based on type
-            self.processMessage(msg)
-            
-        except Exception as e:
-            self.logger.error(f"Message processing error: {e}")
-```
+The drone continuously processes incoming MAVLink messages through a dedicated message listener that:
+- Receives messages with appropriate timeouts
+- Routes messages to specific handlers based on message type
+- Handles communication errors and connection issues
+- Maintains message processing statistics and logs
 
 ### Message Type Handling
 
-Different message types are processed for various purposes:
-
-```python
-def processMessage(self, msg):
-    """Process incoming MAVLink messages"""
-    msg_type = msg.get_type()
-    
-    if msg_type == 'HEARTBEAT':
-        self.handleHeartbeat(msg)
-    elif msg_type == 'SYS_STATUS':
-        self.handleSystemStatus(msg)
-    elif msg_type == 'ATTITUDE':
-        self.handleAttitude(msg)
-    elif msg_type == 'GPS_RAW_INT':
-        self.handleGPS(msg)
-    elif msg_type == 'PARAM_VALUE':
-        self.paramsController.handleParamValue(msg)
-    elif msg_type == 'COMMAND_ACK':
-        self.handleCommandAck(msg)
-    elif msg_type == 'MISSION_ACK':
-        self.missionController.handleMissionAck(msg)
-    # ... additional message types
-```
+Different message types are processed by routing them to appropriate handlers:
+- HEARTBEAT messages for connection health and system status
+- SYS_STATUS for system health and battery information
+- ATTITUDE for roll, pitch, yaw data
+- GPS_RAW_INT for position and navigation data
+- PARAM_VALUE for parameter management
+- COMMAND_ACK for command acknowledgments
+- MISSION_ACK for mission operation responses
 
 ### Key Message Types
 
@@ -100,156 +59,55 @@ def processMessage(self, msg):
 - Sent every 1 second by drone
 - Contains system status, flight mode, armed state
 - Used for connection health monitoring
-
-```python
-def handleHeartbeat(self, msg):
-    self.last_heartbeat = time.time()
-    self.armed = (msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED) != 0
-    self.flight_mode = self.getFlightMode(msg.custom_mode)
-    self.vehicle_type = msg.type
-```
+- Provides vehicle type and system capability information
 
 #### ATTITUDE
 - Roll, pitch, yaw angles and rates
 - Updated at 10Hz for smooth display
 - Critical for flight display instruments
-
-```python
-def handleAttitude(self, msg):
-    attitude_data = {
-        'roll': math.degrees(msg.roll),
-        'pitch': math.degrees(msg.pitch), 
-        'yaw': math.degrees(msg.yaw),
-        'rollspeed': msg.rollspeed,
-        'pitchspeed': msg.pitchspeed,
-        'yawspeed': msg.yawspeed
-    }
-    self.emit('attitude_update', attitude_data)
-```
+- Provides angular velocities for advanced control
 
 #### GPS_RAW_INT
 - GPS position, altitude, satellite count
 - GPS fix status and accuracy metrics
 - Updated at 2-3Hz
-
-```python
-def handleGPS(self, msg):
-    gps_data = {
-        'lat': msg.lat / 1e7,  # Convert to degrees
-        'lon': msg.lon / 1e7,
-        'alt': msg.alt / 1000,  # Convert to meters
-        'satellites_visible': msg.satellites_visible,
-        'fix_type': msg.fix_type,
-        'hdop': msg.eph / 100.0  # Horizontal dilution of precision
-    }
-    self.emit('gps_update', gps_data)
-```
+- Includes precision indicators and fix quality
 
 #### SYS_STATUS
-- Battery voltage and current
+- Battery voltage and current monitoring
 - System health and error flags
 - Sensor present/enabled/health status
-
-```python
-def handleSystemStatus(self, msg):
-    system_status = {
-        'voltage_battery': msg.voltage_battery / 1000.0,  # mV to V
-        'current_battery': msg.current_battery / 100.0,   # cA to A
-        'battery_remaining': msg.battery_remaining,        # %
-        'load': msg.load / 10.0,                          # %
-        'errors_count': msg.errors_count1
-    }
-    self.emit('system_status_update', system_status)
-```
+- CPU load and system performance metrics
 
 ## Command Lock System
 
-The command lock system prevents conflicting commands and ensures safe operation:
+The command lock system prevents conflicting commands and ensures safe operation through:
 
 ### Lock Mechanism
 
-```python
-class Drone:
-    def __init__(self):
-        self.command_lock = threading.Lock()
-        self.command_timeout = 5.0  # seconds
-        self.pending_commands = {}
-        self.command_sequence = 0
-```
+The system uses threading locks and command sequencing to ensure:
+- Only one command executes at a time
+- Commands have unique identifiers and timeouts
+- Pending commands are tracked and monitored
+- Failed or timed-out commands are properly handled
 
-### Sending Commands with Lock
+### Command Processing Flow
 
-```python
-def sendCommand(self, command_type, **kwargs):
-    """Send MAVLink command with lock protection"""
-    with self.command_lock:
-        try:
-            # Generate unique command sequence
-            self.command_sequence += 1
-            seq = self.command_sequence
-            
-            # Create command based on type
-            if command_type == 'ARM':
-                msg = self.master.mav.command_long_encode(
-                    self.target_system,
-                    self.target_component,
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-                    0,  # confirmation
-                    1 if kwargs.get('arm', True) else 0,  # arm/disarm
-                    0, 0, 0, 0, 0, 0  # unused parameters
-                )
-            elif command_type == 'SET_MODE':
-                msg = self.master.mav.set_mode_encode(
-                    self.target_system,
-                    mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                    kwargs['custom_mode']
-                )
-            # ... additional command types
-            
-            # Send command
-            self.master.mav.send(msg)
-            
-            # Track pending command
-            self.pending_commands[seq] = {
-                'type': command_type,
-                'timestamp': time.time(),
-                'timeout': self.command_timeout,
-                'callback': kwargs.get('callback')
-            }
-            
-            return seq
-            
-        except Exception as e:
-            self.logger.error(f"Command send failed: {e}")
-            return None
-```
+Commands are processed with safety mechanisms including:
+- Thread-safe command queuing
+- Unique sequence number generation
+- Command type validation and parameter checking
+- Timeout monitoring and recovery
+- Acknowledgment tracking and response handling
 
 ### Command Acknowledgment Handling
 
-```python
-def handleCommandAck(self, msg):
-    """Process command acknowledgments"""
-    command = msg.command
-    result = msg.result
-    
-    # Find pending command
-    for seq, cmd_info in list(self.pending_commands.items()):
-        if self.isMatchingCommand(cmd_info, command):
-            # Remove from pending
-            del self.pending_commands[seq]
-            
-            # Process result
-            if result == mavutil.mavlink.MAV_RESULT_ACCEPTED:
-                self.logger.info(f"Command {command} accepted")
-                if cmd_info.get('callback'):
-                    cmd_info['callback'](True, None)
-            else:
-                error_msg = self.getCommandErrorMessage(result)
-                self.logger.error(f"Command {command} failed: {error_msg}")
-                if cmd_info.get('callback'):
-                    cmd_info['callback'](False, error_msg)
-            break
-```
+The system processes command acknowledgments to ensure reliable command execution:
+- Matching acknowledgments with pending commands
+- Processing command success/failure results
+- Handling timeout scenarios and retries
+- Executing completion callbacks
+- Logging command execution results
 
 ### Command Timeout Handling
 

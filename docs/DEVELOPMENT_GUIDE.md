@@ -167,38 +167,13 @@ ruff check --fix .
 - Maximum line length: 88 characters
 - Use f-strings for string formatting
 
-Example:
-```python
-from typing import Optional, List
-from app.customTypes import Response
-
-class ParamsController:
-    """Controller for managing drone parameters."""
-    
-    def setParam(
-        self, 
-        param_name: str, 
-        param_value: float, 
-        param_type: int,
-        retries: int = 3
-    ) -> bool:
-        """
-        Set a drone parameter value.
-        
-        Args:
-            param_name: Parameter identifier
-            param_value: New parameter value
-            param_type: MAVLink parameter type
-            retries: Number of retry attempts
-            
-        Returns:
-            True if parameter was set successfully
-        """
-        for attempt in range(retries):
-            # Implementation here
-            pass
-        return False
-```
+Example conventions include:
+- Use type hints for all function parameters and return values
+- Follow PEP 8 naming conventions (snake_case for functions/variables)
+- Use docstrings for classes and public methods
+- Maximum line length: 88 characters
+- Use f-strings for string formatting
+- Proper error handling with try/except blocks
 
 ### JavaScript/TypeScript Code Style
 
@@ -223,33 +198,7 @@ yarn lint:fix
 - Prefer const over let, avoid var
 - Use arrow functions for callbacks
 - Use meaningful component and variable names
-
-Example:
-```javascript
-import { useSelector, useDispatch } from 'react-redux'
-import { selectConnectedToDrone, emitConnectToDrone } from '../redux/slices/droneConnectionSlice'
-
-function ConnectionButton() {
-  const dispatch = useDispatch()
-  const isConnected = useSelector(selectConnectedToDrone)
-  
-  const handleConnect = () => {
-    dispatch(emitConnectToDrone())
-  }
-  
-  return (
-    <button 
-      onClick={handleConnect}
-      disabled={isConnected}
-      className="connection-button"
-    >
-      {isConnected ? 'Connected' : 'Connect'}
-    </button>
-  )
-}
-
-export default ConnectionButton
-```
+- Follow React hooks rules and patterns
 
 ## Testing
 
@@ -330,57 +279,30 @@ def send_and_receive(client, emit_event, emit_data, receive_event, timeout=5):
 
 ### Frontend Testing
 
-Frontend tests use **Playwright** for end-to-end testing:
+Frontend testing infrastructure is currently being developed. The testing framework will support:
 
 ```bash
 cd gcs
 
-# Install Playwright browsers
-npx playwright install
-
-# Run tests
+# Run tests (when available)
 yarn test
 
-# Run tests in headed mode
-yarn test:headed
+# Run specific component tests
+yarn test:component
 
-# Run specific test
-npx playwright test dashboard.spec.ts
-
-# Generate test report
-npx playwright show-report
+# Run integration tests  
+yarn test:integration
 ```
 
 #### Writing Frontend Tests
 
-Example test file:
-```typescript
-import { test, expect } from '@playwright/test'
+Frontend tests will focus on:
+- Component rendering and behavior
+- User interaction workflows
+- Integration between components and state management
+- Critical user paths and error scenarios
 
-test.describe('Dashboard', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5173')
-  })
-  
-  test('should display connection status', async ({ page }) => {
-    // Check if connection indicator is visible
-    const connectionStatus = page.locator('[data-testid="connection-status"]')
-    await expect(connectionStatus).toBeVisible()
-    
-    // Should show disconnected state initially
-    await expect(connectionStatus).toHaveText('Disconnected')
-  })
-  
-  test('should open connection modal', async ({ page }) => {
-    // Click connect button
-    await page.click('[data-testid="connect-button"]')
-    
-    // Check if modal opens
-    const modal = page.locator('[data-testid="connection-modal"]')
-    await expect(modal).toBeVisible()
-  })
-})
-```
+Test files should be located in the `gcs/tests/` directory and follow naming conventions that match the components or features being tested.
 
 ### Test Data and Fixtures
 

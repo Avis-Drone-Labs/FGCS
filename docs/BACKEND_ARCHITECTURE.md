@@ -72,15 +72,11 @@ DATASTREAM_RATES_WIRED = {
 Controllers encapsulate specific drone functionality and handle related MAVLink commands:
 
 ### Parameters Controller (`paramsController.py`)
-Manages drone parameter operations:
-
-```python
-class ParamsController:
-    def getSingleParam(self, param_name: str) -> Response
-    def getAllParams(self) -> None  
-    def setParam(self, param_name: str, param_value: Number, param_type: int) -> bool
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> bool
-```
+Manages drone parameter operations and provides methods for:
+- Retrieving individual parameters
+- Fetching all parameters from drone
+- Setting single or multiple parameter values
+- Parameter validation and type checking
 
 **Key Features:**
 - Thread-based parameter fetching to avoid blocking
@@ -89,146 +85,97 @@ class ParamsController:
 - Parameter persistence and backup
 
 ### Arm Controller (`armController.py`)
-Handles drone arming/disarming:
-
-```python
-class ArmController:
-    def arm(self) -> bool
-    def disarm(self) -> bool
-    def checkArmingStatus(self) -> dict
-```
-
-**Safety Features:**
+Handles drone arming and disarming operations with safety features including:
 - Pre-arm safety checks
-- Arming state validation
+- Arming state validation  
 - Emergency disarm capabilities
+- Arming status monitoring
 
 ### Flight Modes Controller (`flightModesController.py`)
-Manages flight mode changes:
-
-```python
-class FlightModesController:
-    def setFlightMode(self, mode: str) -> bool
-    def getCurrentFlightMode(self) -> str
-    def getAvailableFlightModes(self) -> list
-```
-
-**Supported Modes:**
+Manages flight mode changes and supports various flight modes including:
 - MANUAL, STABILIZE, ALTHOLD, LOITER
-- AUTO, GUIDED, RTL, LAND
+- AUTO, GUIDED, RTL, LAND  
 - Vehicle-specific modes (Copter/Plane/Rover)
 
+Provides functionality for setting flight modes, retrieving current mode, and listing available modes for the connected vehicle type.
+
 ### Mission Controller (`missionController.py`)
-Handles mission planning and execution:
-
-```python
-class MissionController:
-    def uploadMission(self, mission_items: list) -> bool
-    def downloadMission(self) -> list
-    def clearMission(self) -> bool
-    def setCurrentMissionItem(self, seq: int) -> bool
-```
-
-**Mission Features:**
+Handles mission planning and execution with features including:
 - Waypoint validation and optimization
 - Mission upload/download with progress tracking
 - Real-time mission execution monitoring
 - Support for complex mission commands
 
 ### Motor Test Controller (`motorTestController.py`)
-Provides motor testing capabilities:
-
-```python
-class MotorTestController:
-    def testMotor(self, motor_id: int, throttle: int, duration: int) -> bool
-    def testAllMotors(self, throttle: int, duration: int) -> bool
-    def stopMotorTest(self) -> bool
-```
-
-**Safety Features:**
+Provides motor testing capabilities with safety features including:
 - Throttle limits and validation
 - Duration limits
 - Emergency stop functionality
 - Pre-flight motor diagnostics
 
 ### Navigation Controller (`navController.py`)
-Handles guided mode navigation:
-
-```python
-class NavController:
-    def guidedMoveTo(self, lat: float, lon: float, alt: float) -> bool
-    def guidedMoveBy(self, north: float, east: float, down: float) -> bool
-    def setGuidedVelocity(self, vx: float, vy: float, vz: float) -> bool
-```
+Handles guided mode navigation including:
+- Waypoint navigation commands
+- Relative movement operations
+- Velocity control in guided mode
+- Position and movement validation
 
 ### RC Controller (`rcController.py`)
-Manages radio control inputs and channel mapping:
-
-```python
-class RcController:
-    def getRcChannels(self) -> dict
-    def overrideRcChannels(self, channels: dict) -> bool
-    def clearRcOverride(self) -> bool
-```
+Manages radio control inputs and channel mapping including:
+- Channel value monitoring
+- RC override capabilities
+- Channel mapping configuration
+- Input validation and safety limits
 
 ### Frame Controller (`frameController.py`)
-Handles vehicle frame configuration:
-
-```python
-class FrameController:
-    def getFrameType(self) -> str
-    def setFrameType(self, frame_type: str) -> bool
-    def getFrameConfig(self) -> dict
-```
+Handles vehicle frame configuration including:
+- Frame type detection and setting
+- Frame-specific parameter management
+- Configuration validation
+- Vehicle-specific optimizations
 
 ### Gripper Controller (`gripperController.py`)
-Controls gripper/payload release mechanisms:
-
-```python
-class GripperController:
-    def gripperGrab(self) -> bool
-    def gripperRelease(self) -> bool
-    def gripperStatus(self) -> dict
-```
+Controls gripper/payload release mechanisms including:
+- Gripper actuation commands
+- Status monitoring
+- Safety interlocks
+- Payload management operations
 
 ## API Endpoints
 
 ### HTTP Endpoints (`app/endpoints/`)
 
-The backend exposes RESTful endpoints for various operations:
+The backend exposes RESTful endpoints organized by functionality:
 
-#### Connection Management (`endpoints/connections.py`)
-- `GET /api/connections` - List available connection ports
-- `POST /api/connections` - Establish drone connection
-- `DELETE /api/connections` - Disconnect from drone
+#### Connection Management
+- Connection port listing and selection
+- Drone connection establishment and termination
+- Connection status monitoring
 
-#### Parameters (`endpoints/params.py`)
-- `GET /api/params` - Get all parameters
-- `GET /api/params/<param_name>` - Get specific parameter
-- `POST /api/params` - Set parameter values
-- `POST /api/params/refresh` - Refresh parameter list
+#### Parameters  
+- Parameter retrieval (individual and bulk)
+- Parameter modification and validation
+- Parameter list refresh and caching
 
-#### Mission Planning (`endpoints/mission.py`)
-- `GET /api/mission` - Download current mission
-- `POST /api/mission` - Upload new mission
-- `DELETE /api/mission` - Clear mission
-- `PUT /api/mission/current/<seq>` - Set current mission item
+#### Mission Planning
+- Mission upload and download operations
+- Mission item management
+- Mission execution control
 
-#### Flight Operations (`endpoints/flightMode.py`, `endpoints/arm.py`)
-- `POST /api/arm` - Arm the drone
-- `POST /api/disarm` - Disarm the drone
-- `POST /api/flight-mode` - Change flight mode
-- `GET /api/flight-modes` - Get available flight modes
+#### Flight Operations
+- Arming and disarming commands
+- Flight mode changes and status
+- Flight mode availability queries
 
-#### Motor Testing (`endpoints/motors.py`)
-- `POST /api/motors/test` - Test individual motor
-- `POST /api/motors/test-all` - Test all motors
-- `POST /api/motors/stop` - Stop motor tests
+#### Motor Testing
+- Individual and bulk motor testing
+- Motor test safety controls
+- Test status monitoring
 
-#### Navigation (`endpoints/nav.py`)
-- `POST /api/nav/guided/moveto` - Move to coordinates
-- `POST /api/nav/guided/moveby` - Move by offset
-- `POST /api/nav/guided/velocity` - Set velocity
+#### Navigation
+- Guided mode navigation commands
+- Position and velocity control
+- Movement validation and limits
 
 ### Socket.IO Events
 

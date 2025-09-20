@@ -96,25 +96,7 @@ const initialState = {
 - `emitConnectToDrone()` / `emitDisconnectFromDrone()` - Socket.IO events
 
 **Usage Pattern:**
-```javascript
-import { useSelector, useDispatch } from 'react-redux'
-import { setConnected, emitConnectToDrone, selectConnectedToDrone } from '../redux/slices/droneConnectionSlice'
-
-function ConnectionComponent() {
-  const dispatch = useDispatch()
-  const connected = useSelector(selectConnectedToDrone)
-  
-  const handleConnect = () => {
-    dispatch(emitConnectToDrone())
-  }
-  
-  return (
-    <button onClick={handleConnect} disabled={connected}>
-      {connected ? 'Connected' : 'Connect'}
-    </button>
-  )
-}
-```
+Components connect to the Redux store using standard hooks and selectors to access connection state and trigger connection actions. The slice provides both state management and Socket.IO event emission capabilities.
 
 #### 2. Drone Info Slice (`droneInfoSlice.js`)
 

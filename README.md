@@ -124,14 +124,7 @@ pytest -k "test_name"               # Run specific test
 
 ## Frontend Tests
 
-Frontend tests use Playwright for end-to-end testing:
-
-1. `cd gcs`
-2. Install dependencies: `yarn`
-3. Install Playwright browsers: `npx playwright install`
-4. Run tests: `yarn test` or `npx playwright test`
-
-Note: Frontend tests are currently minimal and being expanded.
+Frontend tests are currently being developed. Basic test infrastructure is in place using standard testing frameworks.
 
 </details>
 

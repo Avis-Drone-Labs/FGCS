@@ -74,13 +74,13 @@ DATASTREAM_RATES_WIRED = {
 
 ### 4. The Command Lock
 
-The command lock is a thread synchronization mechanism (typically implemented using Python’s `threading.Lock`) that ensures only one command is sent to the drone at a time. This is crucial because the MAVLink protocol and many autopilot firmwares expect commands to be sent and acknowledged sequentially. Sending multiple commands simultaneously can lead to race conditions, command collisions, or unexpected drone behavior.
+The command lock is a thread synchronization mechanism (typically implemented using Python’s `threading.Lock`) that ensures only one command is sent to the drone at a time. This is crucial because the MAVLink protocol and ArduPilot expect commands to be sent and acknowledged sequentially. Sending multiple commands simultaneously can lead to race conditions, command collisions, or unexpected drone behavior.
 
 **In practice:**
-Whenever a controller needs to send a command to the drone (e.g., change mode, set a parameter, arm/disarm), it acquires the command lock, sends the command, waits for a response, and then releases the lock. This guarantees orderly and reliable communication with the drone. This can be achieved either manually by aquiring and releasing the lock, or by using the `sendingCommandLock` decorator.
+Whenever a controller needs to send a command to the drone (e.g., change mode, set a parameter, arm/disarm), it acquires the command lock, sends the command, waits for a response, and then releases the lock. This guarantees orderly and reliable communication with the drone. This can be achieved either manually by acquiring and releasing the lock, or by using the `sendingCommandLock` decorator.
 
 **Note:**
-If you aquire a lock inside a function which then uses another function which aquires the lock as well this will lead to the program halting. Ensure that the lock is released before any other function aquires it.
+If you acquire a lock inside a function which then uses another function which acquires the lock as well this will lead to the program halting. Ensure that the lock is released before any other function acquires it.
 
 ## Controllers Architecture
 

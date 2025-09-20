@@ -13,7 +13,7 @@ The FGCS frontend is an Electron application built with React, Vite, and Redux T
 
 ## Project Structure
 
-``` basg
+``` bash
 gcs/
 ├── electron/           # Electron related files
 │   ├── modules/        # Popout windows

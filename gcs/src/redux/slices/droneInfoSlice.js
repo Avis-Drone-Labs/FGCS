@@ -1,10 +1,6 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages"
-import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
-  MAV_STATE,
-  PLANE_MODES_FLIGHT_MODE_MAP,
-} from "../../helpers/mavlinkConstants"
+import { getFlightModeMap, MAV_STATE } from "../../helpers/mavlinkConstants"
 
 const droneInfoSlice = createSlice({
   name: "droneInfo",
@@ -253,16 +249,12 @@ export const selectAttitudeDeg = createSelector(
 export const selectFlightModeString = createSelector(
   [
     droneInfoSlice.selectors.selectFlightMode,
-    droneInfoSlice.selectors.selectAircraftType,
+    droneInfoSlice.selectors.selectAircraftTypeString,
   ],
   (flightMode, aircraftType) => {
     //TODO: aircraftType should be in local storage apparently (for some reason?)
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP[flightMode]
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP[flightMode]
-    }
-    return "UNKNOWN"
+    const flightModeMap = getFlightModeMap(aircraftType)
+    return flightModeMap[flightMode] || "UNKNOWN"
   },
 )
 

@@ -30,7 +30,6 @@ import { AddCommand } from "./spotlight/commandHandler.js"
 
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
-import { showErrorNotification } from "../helpers/notification.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -65,10 +64,11 @@ import {
 import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 
 // Styling imports
+import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { useEffect } from "react"
+import { queueErrorNotification } from "../redux/slices/notificationSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
@@ -110,7 +110,7 @@ export default function Navbar() {
       )
     } else if (type === ConnectionType.Network) {
       if (ip === "" || port === "") {
-        showErrorNotification("IP Address and Port cannot be empty")
+        dispatch(queueErrorNotification("IP Address and Port cannot be empty"))
         return
       }
       const networkString = `${networkType}:${ip}:${port}`

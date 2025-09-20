@@ -15,7 +15,6 @@ import {
   showInfoNotification,
   showSuccessNotification,
 } from "../helpers/notification"
-import { socket } from "../helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -44,17 +43,6 @@ export default function Layout({ children, currentPage }) {
     key: "currentPage",
     defaultValue: "dashboard",
   })
-
-  // Handle drone errors
-  useEffect(() => {
-    socket.on("drone_error", (err) => {
-      showErrorNotification(err.message)
-    })
-
-    return () => {
-      socket.off("drone_error")
-    }
-  }, [])
 
   // Show queued notifications
   useEffect(() => {

@@ -20,11 +20,11 @@ import {
 } from "../../redux/slices/droneInfoSlice"
 
 // Helper imports
-import { socket } from "../../helpers/socket"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import AlertSection, { AlertCategory, AlertSeverity } from "./alert"
 import { useSettings } from "../../helpers/settings"
+import AlertSection, { AlertCategory, AlertSeverity } from "./alert"
 
+import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { useAlerts } from "./alertProvider"
 
 export function StatusSection({ icon, value, tooltip }) {
@@ -39,6 +39,7 @@ export function StatusSection({ icon, value, tooltip }) {
 }
 
 export default function StatusBar(props) {
+  const isConnectedToSocket = useSelector(selectIsConnectedToSocket)
   const [time, setTime] = useState(moment())
   const updateClock = useInterval(() => setTime(moment()), 1000)
   const batteryData = useSelector(selectBatteryData)
@@ -138,10 +139,10 @@ export default function StatusBar(props) {
       >
         {props.children}
         <StatusSection
-          icon={socket.connected ? <IconNetwork /> : <IconNetworkOff />}
+          icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}
           value=""
           tooltip={
-            socket.connected
+            isConnectedToSocket
               ? "Connected to socket"
               : "Disconnected from socket"
           }

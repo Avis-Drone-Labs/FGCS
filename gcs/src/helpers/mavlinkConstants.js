@@ -76,6 +76,15 @@ export const COPTER_MODES_FLIGHT_MODE_MAP = {
   27: "UNKNOWN",
 }
 
+export function getFlightModeMap(aircraftType) {
+  if (aircraftType === "Plane") {
+    return PLANE_MODES_FLIGHT_MODE_MAP
+  } else if (aircraftType === "Copter") {
+    return COPTER_MODES_FLIGHT_MODE_MAP
+  }
+  return {}
+}
+
 export const GPS_FIX_TYPES = [
   "NO GPS",
   "NO FIX",

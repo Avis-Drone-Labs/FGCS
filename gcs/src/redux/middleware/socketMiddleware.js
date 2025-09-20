@@ -90,6 +90,7 @@ const SocketEvents = Object.freeze({
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
+  onDroneError: "drone_error",
   onArmDisarm: "arm_disarm",
   onSetCurrentFlightMode: "set_current_flight_mode_result",
   onNavResult: "nav_result",
@@ -288,11 +289,12 @@ const socketMiddleware = (store) => {
     if (setConnected.match(action)) {
       // Setup socket listeners on drone connection
       if (action.payload) {
+        socket.socket.on(DroneSpecificSocketEvents.onDroneError, (msg) => {
+          store.dispatch(queueErrorNotification(msg.message))
+        })
+
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
-          if (!msg.success)
-            store.dispatch(
-              queueNotification({ type: "error", message: msg.message }),
-            )
+          if (!msg.success) store.dispatch(queueErrorNotification(msg.message))
         })
 
         socket.socket.on(
@@ -322,7 +324,7 @@ const socketMiddleware = (store) => {
             store.dispatch(
               msg.success
                 ? setHomePosition(msg.data) // use actual home position
-                : queueNotification({ type: "error", message: msg.message }),
+                : queueErrorNotification(msg.message),
             )
           },
         )
@@ -387,7 +389,7 @@ const socketMiddleware = (store) => {
             store.dispatch(
               msg.success
                 ? setLoiterRadius(msg.data)
-                : queueNotification({ type: "error", message: msg.message }),
+                : queueErrorNotification(msg.message),
             )
           },
         )
@@ -396,9 +398,10 @@ const socketMiddleware = (store) => {
           DroneSpecificSocketEvents.onSetLoiterRadiusResult,
           (msg) => {
             store.dispatch(
-              msg.success
-                ? queueNotification({ type: "success", message: msg.message })
-                : queueNotification({ type: "error", message: msg.message }),
+              queueNotification({
+                type: msg.success ? "success" : "error",
+                message: msg.message,
+              }),
             )
           },
         )

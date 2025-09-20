@@ -119,7 +119,13 @@ const droneConnectionSlice = createSlice({
     emitSetState: () => {},
     emitGetHomePosition: () => {},
     emitGetCurrentMissionAll: () => {},
+    emitSetLoiterRadius: () => {},
     emitGetLoiterRadius: () => {},
+    emitReposition: () => {},
+    emitArmDisarm: () => {},
+    emitTakeoff: () => {},
+    emitLand: () => {},
+    emitSetCurrentFlightMode: () => {},
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -164,7 +170,13 @@ export const {
   emitSetState,
   emitGetHomePosition,
   emitGetCurrentMissionAll,
+  emitSetLoiterRadius,
   emitGetLoiterRadius,
+  emitReposition,
+  emitArmDisarm,
+  emitTakeoff,
+  emitLand,
+  emitSetCurrentFlightMode,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,

@@ -93,9 +93,10 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
 
   const autoFlightModeNumber = useMemo(() => {
     const flightModeMap = getFlightModeMap(aircraftType)
-    return parseInt(
-      Object.keys(flightModeMap).find((key) => flightModeMap[key] === "Auto"),
+    const key = Object.keys(flightModeMap).find(
+      (key) => flightModeMap[key] === "Auto",
     )
+    return key !== undefined ? parseInt(key) : null
   }, [aircraftType])
 
   return (
@@ -107,6 +108,7 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
             setNewFlightMode(autoFlightModeNumber)
           }}
           className="grow"
+          disabled={autoFlightModeNumber === null}
         >
           Auto mode
         </Button>

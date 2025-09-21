@@ -16,7 +16,7 @@ import {
 import { Octokit } from "octokit"
 import semverGt from "semver/functions/gt"
 
-// Redix
+// Redux
 import { useDispatch } from "react-redux"
 import { queueErrorNotification } from "../redux/slices/notificationSlice.js"
 

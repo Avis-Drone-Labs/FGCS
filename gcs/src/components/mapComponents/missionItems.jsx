@@ -18,38 +18,43 @@ import MarkerPin from "./markerPin"
 
 // Tailwind styling
 import { useSessionStorage } from "@mantine/hooks"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import { selectActiveTab } from "../../redux/slices/missionSlice"
+import { selectHomePosition } from "../../redux/slices/droneInfoSlice"
+import {
+  selectActiveTab,
+  selectPlannedHomePosition,
+} from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function MissionItems({ missionItems }) {
   const [currentPage] = useSessionStorage({ key: "currentPage" })
   const editable =
     useSelector(selectActiveTab) === "mission" && currentPage === "missions"
+  const plannedHomePosition = useSelector(selectPlannedHomePosition)
+  const currentHomePosition = useSelector(selectHomePosition)
+  const homePosition =
+    currentPage === "missions" ? plannedHomePosition : currentHomePosition
 
-  const [filteredMissionItems, setFilteredMissionItems] = useState(
-    filterMissionItems(missionItems),
+  const filteredMissionItems = useMemo(
+    () => filterMissionItems(missionItems),
+    [missionItems],
   )
-  const [listOfLineCoords, setListOfLineCoords] = useState([])
-  const [listOfDottedLineCoords, setListOfDottedLineCoords] = useState([])
 
-  useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems))
+  const takeoffWaypoint = useMemo(() => {
+    return missionItems.find((item) => item.command === 22)
   }, [missionItems])
 
-  useEffect(() => {
-    const { solid: solidLineCoords, dotted: dottedLineCoords } =
-      getListOfLineCoordinates(filteredMissionItems)
+  const { solid: listOfLineCoords, dotted: listOfDottedLineCoords } = useMemo(
+    () => getListOfLineCoordinates(filteredMissionItems, homePosition),
+    [filteredMissionItems, homePosition],
+  )
 
-    setListOfLineCoords(solidLineCoords)
-    setListOfDottedLineCoords(dottedLineCoords)
-  }, [filteredMissionItems])
-
-  function getListOfLineCoordinates(filteredMissionItems) {
-    if (filteredMissionItems.length === 0) return { solid: [], dotted: [] }
+  function getListOfLineCoordinates(filteredMissionItems, homePosition) {
+    if (filteredMissionItems.length === 0 || !homePosition)
+      return { solid: [], dotted: [] }
 
     const lineCoordsList = []
     const dottedLineCoordsList = []
@@ -63,16 +68,33 @@ export default function MissionItems({ missionItems }) {
         ? filteredMissionItems
         : filteredMissionItems.slice(0, landCommandIndex + 1)
 
+    // Use home as the starting point
+    const homeCoord = [
+      intToCoord(homePosition.lon),
+      intToCoord(homePosition.lat),
+    ]
+    if (
+      takeoffWaypoint !== undefined &&
+      takeoffWaypoint.seq < itemsToProcess[0].seq
+    ) {
+      // If there is a takeoff waypoint before the first displayed waypoint, draw a solid line from the home position (takeoff point)
+      lineCoordsList.push(homeCoord)
+    } else {
+      // Draw a dotted line from the home position to the first displayed waypoint
+      dottedLineCoordsList.push(homeCoord)
+      dottedLineCoordsList.push([
+        intToCoord(itemsToProcess[0].y),
+        intToCoord(itemsToProcess[0].x),
+      ])
+    }
+
     itemsToProcess.forEach((item) => {
       lineCoordsList.push([intToCoord(item.y), intToCoord(item.x)])
     })
 
-    // Join the last item to first item if aircraft does not land, with a
-    // dotted line
+    // Join the last item to first item if aircraft does not land, with a dotted line
     if (
-      ![21, 189].includes(
-        itemsToProcess[itemsToProcess.length - 1].command, // Use itemsToProcess here
-      )
+      ![21, 189].includes(itemsToProcess[itemsToProcess.length - 1].command)
     ) {
       dottedLineCoordsList.push([
         intToCoord(itemsToProcess[0].y), // Use itemsToProcess here
@@ -103,6 +125,8 @@ export default function MissionItems({ missionItems }) {
       lineCoordsList.push([intToCoord(nextItem.y), intToCoord(nextItem.x)])
     })
 
+    console.log({ lineCoordsList, dottedLineCoordsList })
+
     return { solid: lineCoordsList, dotted: dottedLineCoordsList }
   }
 
@@ -128,12 +152,13 @@ export default function MissionItems({ missionItems }) {
       <DrawLineCoordinates
         coordinates={listOfLineCoords}
         colour={tailwindColors.yellow[400]}
+        lineProps={{ "line-width": 2 }}
       />
 
       <DrawLineCoordinates
         coordinates={listOfDottedLineCoords}
         colour={tailwindColors.yellow[400]}
-        lineProps={{ "line-dasharray": [2, 2] }}
+        lineProps={{ "line-width": 2, "line-dasharray": [4, 6] }}
       />
     </>
   )

@@ -119,7 +119,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   }, [gpsData])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItems.missionItems))
   }, [missionItems])
 
   useEffect(() => {
@@ -245,12 +245,12 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             />
           )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems missionItems={missionItems.missionItems} />
 
-        <FenceItems fenceItems={missionItems.fence_items} />
+        <FenceItems fenceItems={missionItems.fenceItems} />
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {missionItems.rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}

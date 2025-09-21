@@ -137,14 +137,20 @@ class MissionController:
         _mission_items = self.getMissionItems(mission_type=TYPE_MISSION)
         if _mission_items.get("success"):
             mission_items = _mission_items.get("data", [])
+        else:
+            return _mission_items
 
         _fence_items = self.getMissionItems(mission_type=TYPE_FENCE)
         if _fence_items.get("success"):
             fence_items = _fence_items.get("data", [])
+        else:
+            return _fence_items
 
         _rally_items = self.getMissionItems(mission_type=TYPE_RALLY)
         if _rally_items.get("success"):
             rally_items = _rally_items.get("data", [])
+        else:
+            return _rally_items
 
         return {
             "success": True,

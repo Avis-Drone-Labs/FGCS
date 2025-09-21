@@ -399,8 +399,18 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMissionAll,
           (msg) => {
-            store.dispatch(setCurrentMissionItems(msg))
-            store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
+            if (!msg.success) {
+              store.dispatch(queueErrorNotification(msg.message))
+            } else {
+              store.dispatch(
+                setCurrentMissionItems({
+                  missionItems: msg.mission_items,
+                  fenceItems: msg.fence_items,
+                  rallyItems: msg.rally_items,
+                }),
+              )
+              store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
+            }
             store.dispatch(closeDashboardMissionFetchingNotificationThunk())
           },
         )

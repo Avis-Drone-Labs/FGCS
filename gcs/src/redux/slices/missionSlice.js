@@ -17,10 +17,9 @@ const missionInfoSlice = createSlice({
       seq: 0,
     },
     currentMissionItems: {
-      // These should be camelCase etc but its easier to keep it as snake_case
-      mission_items: [],
-      fence_items: [],
-      rally_items: [],
+      missionItems: [],
+      fenceItems: [],
+      rallyItems: [],
     },
     drawingItems: {
       // This is for the missions page, used locally and then will update currentMissionItems on save

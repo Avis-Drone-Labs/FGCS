@@ -27,6 +27,7 @@ import {
   selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice"
 import { selectAircraftTypeString } from "../redux/slices/droneInfoSlice"
+import { selectShouldFetchAllMissionsOnDashboard } from "../redux/slices/missionSlice"
 import {
   notificationShown,
   selectNotificationQueue,
@@ -37,6 +38,9 @@ export default function Layout({ children, currentPage }) {
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const notificationQueue = useSelector(selectNotificationQueue)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
+  const shouldFetchAllMissionsOnDashboard = useSelector(
+    selectShouldFetchAllMissionsOnDashboard,
+  )
 
   // Change current page, there's a single comma because javascript has weird syntax
   // we don't care about the first variable.
@@ -79,8 +83,12 @@ export default function Layout({ children, currentPage }) {
 
     dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
-      dispatch(emitGetCurrentMissionAll())
       dispatch(emitGetHomePosition()) // use actual home position
+
+      if (shouldFetchAllMissionsOnDashboard) {
+        dispatch(emitGetCurrentMissionAll())
+      }
+
       if (aircraftTypeString === "Plane") {
         dispatch(emitGetLoiterRadius())
       }

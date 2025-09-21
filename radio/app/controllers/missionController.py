@@ -135,21 +135,15 @@ class MissionController:
         rally_items: List[Any] = []
 
         _mission_items = self.getMissionItems(mission_type=TYPE_MISSION)
-        if not _mission_items.get("success"):
-            self.drone.logger.warning(_mission_items.get("message"))
-        else:
+        if _mission_items.get("success"):
             mission_items = _mission_items.get("data", [])
 
         _fence_items = self.getMissionItems(mission_type=TYPE_FENCE)
-        if not _fence_items.get("success"):
-            self.drone.logger.warning(_fence_items.get("message"))
-        else:
+        if _fence_items.get("success"):
             fence_items = _fence_items.get("data", [])
 
         _rally_items = self.getMissionItems(mission_type=TYPE_RALLY)
-        if not _rally_items.get("success"):
-            self.drone.logger.warning(_rally_items.get("message"))
-        else:
+        if _rally_items.get("success"):
             rally_items = _rally_items.get("data", [])
 
         return {

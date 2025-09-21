@@ -3,6 +3,10 @@ import { v4 as uuidv4 } from "uuid"
 import { coordToInt } from "../../helpers/dataFormatters"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions"
 import { MAV_FRAME_LIST } from "../../helpers/mavlinkConstants"
+import {
+  closeLoadingNotification,
+  showLoadingNotification,
+} from "../../helpers/notification"
 
 const missionInfoSlice = createSlice({
   name: "missionInfo",
@@ -61,6 +65,8 @@ const missionInfoSlice = createSlice({
       gpsCoords: { lat: 0, lng: 0 },
       markerId: null,
     },
+    shouldFetchAllMissionsOnDashboard: true, // bool so that the dashboard can refresh its data when switched to if needed
+    dashboardMissionFetchingNotificationId: null,
   },
   reducers: {
     setCurrentMission: (state, action) => {
@@ -394,6 +400,15 @@ const missionInfoSlice = createSlice({
         position: { x: x, y: y },
       }
     },
+    setShouldFetchAllMissionsOnDashboard: (state, action) => {
+      if (action.payload === state.shouldFetchAllMissionsOnDashboard) return
+      state.shouldFetchAllMissionsOnDashboard = action.payload
+    },
+    setDashboardMissionFetchingNotificationId: (state, action) => {
+      if (action.payload === state.dashboardMissionFetchingNotificationId)
+        return
+      state.dashboardMissionFetchingNotificationId = action.payload
+    },
 
     // Emits
     emitGetTargetInfo: () => {},
@@ -421,6 +436,10 @@ const missionInfoSlice = createSlice({
     selectMissionProgressData: (state) => state.missionProgressData,
     selectActiveTab: (state) => state.activeTab,
     selectContextMenu: (state) => state.contextMenu,
+    selectShouldFetchAllMissionsOnDashboard: (state) =>
+      state.shouldFetchAllMissionsOnDashboard,
+    selectDashboardMissionFetchingNotificationId: (state) =>
+      state.dashboardMissionFetchingNotificationId,
   },
 })
 
@@ -490,6 +509,28 @@ export const setPlannedHomePositionToDronesHomePositionThunk =
     }
   }
 
+export const showDashboardMissionFetchingNotificationThunk =
+  () => (dispatch) => {
+    const notificationId = showLoadingNotification(
+      "Fetching the mission",
+      "Fetching the mission from the drone",
+    )
+    dispatch(setDashboardMissionFetchingNotificationId(notificationId))
+  }
+
+export const closeDashboardMissionFetchingNotificationThunk =
+  () => (dispatch, getState) => {
+    const { dashboardMissionFetchingNotificationId } = getState().missionInfo
+    if (dashboardMissionFetchingNotificationId) {
+      closeLoadingNotification(
+        dashboardMissionFetchingNotificationId,
+        "Mission fetched",
+        "Successfully fetched the mission from the drone",
+      )
+    }
+    dispatch(setDashboardMissionFetchingNotificationId(null))
+  }
+
 export const getFrameKey = (frame) =>
   parseInt(
     Object.keys(MAV_FRAME_LIST).find((key) => MAV_FRAME_LIST[key] == frame),
@@ -533,6 +574,8 @@ export const {
   selectMissionProgressData,
   selectActiveTab,
   selectContextMenu,
+  selectShouldFetchAllMissionsOnDashboard,
+  selectDashboardMissionFetchingNotificationId,
 } = missionInfoSlice.selectors
 
 export const {
@@ -564,6 +607,8 @@ export const {
   emitWriteCurrentMission,
   emitImportMissionFromFile,
   emitExportMissionToFile,
+  setShouldFetchAllMissionsOnDashboard,
+  setDashboardMissionFetchingNotificationId,
 } = missionInfoSlice.actions
 
 export default missionInfoSlice

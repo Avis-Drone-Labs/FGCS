@@ -10,10 +10,7 @@ import {
 // drone actions
 import {
   emitGetComPorts,
-  emitGetHomePosition,
-  emitGetLoiterRadius,
   emitIsConnectedToDrone,
-  emitSetState,
   setComPorts,
   setConnected,
   setConnecting,
@@ -46,6 +43,7 @@ import {
 } from "../slices/droneInfoSlice"
 import {
   addIdToItem,
+  closeDashboardMissionFetchingNotificationThunk,
   setCurrentMission,
   setCurrentMissionItems,
   setDrawingFenceItems,
@@ -53,6 +51,7 @@ import {
   setDrawingRallyItems,
   setMissionProgressData,
   setMissionProgressModal,
+  setShouldFetchAllMissionsOnDashboard,
   setTargetInfo,
   setUnwrittenChanges,
   setUpdatePlannedHomePositionFromLoadData,
@@ -263,19 +262,10 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          const currentState = store.getState().droneConnection
-          store.dispatch(emitSetState(currentState))
-
-          if (["dashboard", "missions"].includes(currentState.state)) {
-            store.dispatch(emitGetHomePosition()) // fetch the actual home position of the drone
-            if (msg.aircraft_type === 1) {
-              store.dispatch(emitGetLoiterRadius())
-            }
-          }
-
           store.dispatch(setGuidedModePinData({ lat: 0, lon: 0, alt: 0 }))
           store.dispatch(setRebootData({}))
           store.dispatch(setAutoPilotRebootModalOpen(false))
+          store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
         })
 
         // Link stats
@@ -410,6 +400,8 @@ const socketMiddleware = (store) => {
           MissionSpecificSocketEvents.onCurrentMissionAll,
           (msg) => {
             store.dispatch(setCurrentMissionItems(msg))
+            store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
+            store.dispatch(closeDashboardMissionFetchingNotificationThunk())
           },
         )
 

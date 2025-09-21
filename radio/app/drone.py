@@ -6,7 +6,7 @@ from logging import Logger, getLogger
 from pathlib import Path
 from queue import Empty, Queue
 from secrets import token_hex
-from threading import Event, Lock, Thread
+from threading import Event, Lock, Thread, current_thread
 from typing import Callable, Dict, List, Optional
 
 import serial
@@ -672,11 +672,17 @@ class Drone:
         self.is_active.clear()
         self.is_listening = False
 
-        self.listener_thread.join(timeout=3)
-        self.sender_thread.join(timeout=3)
-        self.log_thread.join(timeout=3)
-        self.link_debug_data_thread.join(timeout=3)
-        self.heartbeat_thread.join(timeout=3)
+        this_thread = current_thread()
+
+        for thread in [
+            getattr(self, "listener_thread", None),
+            getattr(self, "sender_thread", None),
+            getattr(self, "log_thread", None),
+            getattr(self, "link_debug_data_thread", None),
+            getattr(self, "heartbeat_thread", None),
+        ]:
+            if thread is not None and thread.is_alive() and thread is not this_thread:
+                thread.join(timeout=3)
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""

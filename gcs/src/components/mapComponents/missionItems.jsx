@@ -48,13 +48,12 @@ export default function MissionItems({ missionItems }) {
   }, [missionItems])
 
   const { solid: listOfLineCoords, dotted: listOfDottedLineCoords } = useMemo(
-    () => getListOfLineCoordinates(filteredMissionItems, homePosition),
-    [filteredMissionItems, homePosition],
+    () => getListOfLineCoordinates(filteredMissionItems),
+    [filteredMissionItems, homePosition, takeoffWaypoint],
   )
 
-  function getListOfLineCoordinates(filteredMissionItems, homePosition) {
-    if (filteredMissionItems.length === 0 || !homePosition)
-      return { solid: [], dotted: [] }
+  function getListOfLineCoordinates(filteredMissionItems) {
+    if (filteredMissionItems.length === 0) return { solid: [], dotted: [] }
 
     const lineCoordsList = []
     const dottedLineCoordsList = []
@@ -69,23 +68,25 @@ export default function MissionItems({ missionItems }) {
         : filteredMissionItems.slice(0, landCommandIndex + 1)
 
     // Use home as the starting point
-    const homeCoord = [
-      intToCoord(homePosition.lon),
-      intToCoord(homePosition.lat),
-    ]
-    if (
-      takeoffWaypoint !== undefined &&
-      takeoffWaypoint.seq < itemsToProcess[0].seq
-    ) {
-      // If there is a takeoff waypoint before the first displayed waypoint, draw a solid line from the home position (takeoff point)
-      lineCoordsList.push(homeCoord)
-    } else {
-      // Draw a dotted line from the home position to the first displayed waypoint
-      dottedLineCoordsList.push(homeCoord)
-      dottedLineCoordsList.push([
-        intToCoord(itemsToProcess[0].y),
-        intToCoord(itemsToProcess[0].x),
-      ])
+    if (homePosition) {
+      const homeCoord = [
+        intToCoord(homePosition.lon),
+        intToCoord(homePosition.lat),
+      ]
+      if (
+        takeoffWaypoint !== undefined &&
+        takeoffWaypoint.seq < itemsToProcess[0].seq // If the takeoff waypoint is before the first displayed waypoint
+      ) {
+        // If there is a takeoff waypoint before the first displayed waypoint, draw a solid line from the home position (takeoff point)
+        lineCoordsList.push(homeCoord)
+      } else {
+        // Draw a dotted line from the home position to the first displayed waypoint
+        dottedLineCoordsList.push(homeCoord)
+        dottedLineCoordsList.push([
+          intToCoord(itemsToProcess[0].y),
+          intToCoord(itemsToProcess[0].x),
+        ])
+      }
     }
 
     itemsToProcess.forEach((item) => {
@@ -124,8 +125,6 @@ export default function MissionItems({ missionItems }) {
       ])
       lineCoordsList.push([intToCoord(nextItem.y), intToCoord(nextItem.x)])
     })
-
-    console.log({ lineCoordsList, dottedLineCoordsList })
 
     return { solid: lineCoordsList, dotted: dottedLineCoordsList }
   }

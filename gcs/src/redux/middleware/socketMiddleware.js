@@ -264,10 +264,10 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          const currentState = store.getState().droneConnection
-          store.dispatch(emitSetState(currentState))
+          const currentPage = store.getState().droneConnection.currentPage
+          store.dispatch(emitSetState(currentPage))
 
-          if (["dashboard", "missions"].includes(currentState.state)) {
+          if (["dashboard", "missions"].includes(currentPage)) {
             store.dispatch(emitGetHomePosition()) // fetch the actual home position of the drone
             if (msg.aircraft_type === 1) {
               store.dispatch(emitGetLoiterRadius())

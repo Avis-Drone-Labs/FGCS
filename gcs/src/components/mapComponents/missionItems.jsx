@@ -17,16 +17,16 @@ import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
 // Tailwind styling
-import { useSessionStorage } from "@mantine/hooks"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import { selectActiveTab } from "../../redux/slices/missionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function MissionItems({ missionItems }) {
-  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const currentPage = useSelector(selectCurrentPage)
   const editable =
     useSelector(selectActiveTab) === "mission" && currentPage === "missions"
 

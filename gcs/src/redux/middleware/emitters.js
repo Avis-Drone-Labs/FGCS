@@ -13,7 +13,7 @@ import {
   emitSetLoiterRadius,
   emitSetState,
   emitTakeoff,
-  setState,
+  setCurrentPage,
 } from "../slices/droneConnectionSlice"
 import {
   emitControlMission,
@@ -56,8 +56,12 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetState,
       callback: () => {
-        store.dispatch(setState(action.payload))
-        socket.socket.emit("set_state", action.payload)
+        store.dispatch(setCurrentPage(action.payload))
+        const storeState = store.getState()
+        const isDroneConnected = storeState.droneConnection.connected
+        if (isDroneConnected) {
+          socket.socket.emit("set_state", { state: action.payload })
+        }
       },
     },
     {

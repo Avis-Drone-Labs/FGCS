@@ -133,7 +133,7 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
 
         <Button
           onClick={() => {
-            dispatch(emitGetCurrentMissionAll)
+            dispatch(emitGetCurrentMissionAll())
           }}
           className="grow"
         >

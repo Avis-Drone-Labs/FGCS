@@ -45,6 +45,7 @@ import {
   selectConnectionModal,
   selectConnectionStatus,
   selectConnectionType,
+  selectCurrentPage,
   selectFetchingComPorts,
   selectIp,
   selectNetworkType,
@@ -93,10 +94,7 @@ export default function Navbar() {
 
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
-  const [currentPage] = useSessionStorage({
-    key: "currentPage",
-    defaultValue: "dashboard",
-  })
+  const currentPage = useSelector(selectCurrentPage)
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {

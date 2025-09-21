@@ -6,7 +6,6 @@
 import { useEffect } from "react"
 
 // 3rd Party Imports
-import { useSessionStorage } from "@mantine/hooks"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
@@ -37,13 +36,6 @@ export default function Layout({ children, currentPage }) {
   const notificationQueue = useSelector(selectNotificationQueue)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
 
-  // Change current page, there's a single comma because javascript has weird syntax
-  // we don't care about the first variable.
-  const [, setCurrentPageInMemory] = useSessionStorage({
-    key: "currentPage",
-    defaultValue: "dashboard",
-  })
-
   // Show queued notifications
   useEffect(() => {
     if (notificationQueue.length !== 0) {
@@ -61,11 +53,10 @@ export default function Layout({ children, currentPage }) {
 
   // Handle switching to states
   useEffect(() => {
-    setCurrentPageInMemory(currentPage)
+    dispatch(emitSetState(currentPage))
 
     if (!connectedToDrone) return
 
-    dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
       dispatch(emitGetCurrentMissionAll())
       dispatch(emitGetHomePosition()) // use actual home position

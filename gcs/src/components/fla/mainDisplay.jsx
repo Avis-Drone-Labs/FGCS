@@ -13,7 +13,6 @@ import { useSelector } from "react-redux"
 import {
   selectFile,
   selectAircraftType,
-  selectCanSavePreset,
   selectMessageMeans,
   selectFormatMessages,
   selectUnits,

@@ -9,10 +9,8 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { useSelector, useDispatch } from "react-redux"
-import _ from "lodash"
 
 // Styling imports
-import { colorPalette } from "./components/fla/constants"
 import {
   hexToRgba,
   getUnit,
@@ -32,7 +30,6 @@ import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
 import MainDisplay from "./components/fla/mainDisplay.jsx"
 import {
   queueErrorNotification,
-  queueSuccessNotification,
 } from "./redux/slices/notificationSlice.js"
 import {
   setFile,
@@ -51,7 +48,6 @@ import {
   setCanSavePreset,
 
   // Selectors
-  selectFile,
   selectUnits,
   selectFormatMessages,
   selectLogMessages,
@@ -99,34 +95,10 @@ export default function FLA() {
     dispatch(setCanSavePreset(newCanSavePreset))
   const dispatchErrorNotification = (message) =>
     dispatch(queueErrorNotification(message))
-  const dispatchSuccessNotification = (message) =>
-    dispatch(queueSuccessNotification(message))
 
   // ====================================================
   // 2. File Management Functions
   // ====================================================
-
-  async function loadFile() {
-    // Early return if conditions not met
-    if (file === null || logMessages !== null) return
-
-    try {
-      setLoadingFile(true)
-      const result = await window.ipcRenderer.loadFile(file.path)
-
-      if (!result.success) {
-        dispatchErrorNotification("Error loading file, file not found. Reload.")
-        return
-      }
-
-      await processLoadedFile(result)
-      dispatchSuccessNotification(`${file.name} loaded successfully`)
-    } catch (error) {
-      dispatchErrorNotification("Error loading file: " + error.message)
-    } finally {
-      setLoadingFile(false)
-    }
-  }
 
   async function processLoadedFile(result) {
     const loadedLogMessages = result.messages

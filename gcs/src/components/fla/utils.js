@@ -64,7 +64,7 @@ export function calculateMeanValues(loadedLogMessages) {
 
       messageData.forEach((message) => {
         Object.keys(message)
-          .filter((dataPointKey) => dataPointKey != "name")
+          .filter((dataPointKey) => dataPointKey !== "name")
           .forEach((dataPointKey) => {
             const dataPoint = message[dataPointKey]
             if (messageDataMeans[dataPointKey] === undefined) {

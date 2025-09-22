@@ -115,7 +115,6 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
     const hasSelectedFilters = Object.values(messageFilters).some((category) =>
       Object.values(category).some((isSelected) => isSelected),
     )
-    console.log("Has selected filters:", hasSelectedFilters)
 
     // If so, check if they match the filters of the preset to be deleted
     if (hasSelectedFilters) {

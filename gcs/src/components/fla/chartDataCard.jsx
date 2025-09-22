@@ -1,21 +1,22 @@
 /*
-  A custom component for each message card (seen at the bottom of the screen on FLA).
-  This holds information about the colour of the line, and its mean, max, min.
+A custom component for each message card (seen at the bottom of the screen on FLA).
+This holds information about the colour of the line, and its mean, max, min.
 */
+
+import { colorInputSwatch } from "./constants.js"
 
 // 3rd Party Imports
 import { ActionIcon, Box, ColorInput } from "@mantine/core"
 import { IconPaint, IconTrash } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
-import _ from "lodash"
 
 // Redux imports
 import {
+  selectCustomColors,
+  selectMessageFilters,
+  setCanSavePreset,
   setCustomColors,
   setMessageFilters,
-  setCanSavePreset,
-  selectMessageFilters,
-  selectCustomColors,
 } from "../../redux/slices/logAnalyserSlice.js"
 
 // Styling imports
@@ -24,48 +25,36 @@ import tailwindConfig from "../../../tailwind.config.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function ChartDataCard({
-  item,
-  unit,
-  messageMeans,
-  colorInputSwatch,
-}) {
+export default function ChartDataCard({ item, unit, messageMeans }) {
   const dispatch = useDispatch()
   const messageFilters = useSelector(selectMessageFilters)
   const customColors = useSelector(selectCustomColors)
 
-  const updateMessageFilters = (newMessageFilters) =>
-    dispatch(setMessageFilters(newMessageFilters))
-  const updateCustomColors = (newCustomColors) =>
-    dispatch(setCustomColors(newCustomColors))
-  const updateCanSavePreset = (newCanSavePreset) =>
-    dispatch(setCanSavePreset(newCanSavePreset))
-
   // Change the color of the line
   function changeColor(label, color) {
-    let newColors = _.cloneDeep(customColors)
+    let newColors = structuredClone(customColors)
     newColors[label] = color
-    updateCustomColors(newColors)
+    dispatch(setCustomColors(newColors))
   }
 
   // Turn off only one filter at a time
   function removeDataset(label) {
     let [categoryName, fieldName] = label.split("/")
-    let newFilters = _.cloneDeep(messageFilters)
+    let newFilters = structuredClone(messageFilters)
     if (
       newFilters[categoryName] &&
       newFilters[categoryName][fieldName] !== undefined
     ) {
       newFilters[categoryName][fieldName] = false
     }
-    let newColors = _.cloneDeep(customColors)
+    let newColors = structuredClone(customColors)
     delete newColors[label]
-    updateCustomColors(newColors)
-    updateMessageFilters(newFilters)
+    dispatch(setCustomColors(newColors))
+    dispatch(setMessageFilters(newFilters))
     if (Object.keys(newColors).length === 0) {
-      updateCanSavePreset(false)
+      dispatch(setCanSavePreset(false))
     } else {
-      updateCanSavePreset(true)
+      dispatch(setCanSavePreset(true))
     }
   }
 

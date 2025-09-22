@@ -1,4 +1,4 @@
-import { ignoredMessages, ignoredKeys } from "./constants"
+import { ignoredKeys, ignoredMessages } from "./constants"
 
 export function hexToRgba(hex, alpha) {
   const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16))

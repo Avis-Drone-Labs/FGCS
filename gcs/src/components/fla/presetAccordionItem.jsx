@@ -6,11 +6,11 @@
 // 3rd Party Imports
 import {
   Accordion,
-  Button,
   ActionIcon,
+  Button,
   Tooltip as MantineTooltip,
 } from "@mantine/core"
-import { IconTrash, IconInfoCircle } from "@tabler/icons-react"
+import { IconInfoCircle, IconTrash } from "@tabler/icons-react"
 import _ from "lodash"
 import { colorPalette } from "./constants.js"
 
@@ -18,22 +18,22 @@ import { colorPalette } from "./constants.js"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 
+import { useMemo } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import {
+  selectAircraftType,
+  // Selectors
+  selectLogType,
+  selectMessageFilters,
+  setCanSavePreset,
+  setColorIndex,
+  setCustomColors,
+  setMessageFilters,
+} from "../../redux/slices/logAnalyserSlice.js"
 import {
   queueErrorNotification,
   queueSuccessNotification,
 } from "../../redux/slices/notificationSlice.js"
-import {
-  setMessageFilters,
-  setCustomColors,
-  setColorIndex,
-  setCanSavePreset,
-
-  // Selectors
-  selectLogType,
-  selectMessageFilters,
-  selectAircraftType,
-} from "../../redux/slices/logAnalyserSlice.js"
-import { useSelector, useDispatch } from "react-redux"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -45,32 +45,16 @@ function toTitleCase(str) {
 }
 
 export default function PresetAccordionItem({ category, deleteCustomPreset }) {
-  // Redux selectors
-  const aircraftType = useSelector(selectAircraftType)
-
-  // Redux state
+  // Redux
   const dispatch = useDispatch()
+  const aircraftType = useSelector(selectAircraftType)
   const logType = useSelector(selectLogType)
   const messageFilters = useSelector(selectMessageFilters)
-
-  // Redux dispatch functions
-  const updateMessageFilters = (newMessageFilters) =>
-    dispatch(setMessageFilters(newMessageFilters))
-  const updateCustomColors = (newCustomColors) =>
-    dispatch(setCustomColors(newCustomColors))
-  const updateColorIndex = (newColorIndex) =>
-    dispatch(setColorIndex(newColorIndex))
-  const updateCanSavePreset = (newCanSavePreset) =>
-    dispatch(setCanSavePreset(newCanSavePreset))
-  const dispatchErrorNotification = (message) =>
-    dispatch(queueErrorNotification(message))
-  const dispatchSuccessNotification = (message) =>
-    dispatch(queueSuccessNotification(message))
 
   // Preset selection
   function selectPreset(preset) {
     // Reset all filters
-    let newFilters = _.cloneDeep(messageFilters)
+    let newFilters = structuredClone(messageFilters)
     Object.keys(newFilters).forEach((categoryName) => {
       const category = newFilters[categoryName]
       Object.keys(category).forEach((fieldName) => {
@@ -83,8 +67,10 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
       if (Object.keys(messageFilters).includes(categoryName)) {
         preset.filters[categoryName].forEach((field) => {
           if (!(field in messageFilters[categoryName])) {
-            dispatchErrorNotification(
-              `Your log file does not include ${categoryName}/${field} data`,
+            dispatch(
+              queueErrorNotification(
+                `Your log file does not include ${categoryName}/${field} data`,
+              ),
             )
             return
           }
@@ -97,17 +83,19 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
           }
         })
       } else {
-        dispatchErrorNotification(
-          `Your log file does not include ${categoryName}`,
+        dispatch(
+          queueErrorNotification(
+            `Your log file does not include ${categoryName}`,
+          ),
         )
       }
     })
 
-    updateColorIndex(Object.keys(newColors).length % colorPalette.length) // limited by palette length
-    updateCustomColors(newColors)
-    updateMessageFilters(newFilters)
+    dispatch(setColorIndex(Object.keys(newColors).length % colorPalette.length)) // limited by palette length
+    dispatch(setCustomColors(newColors))
+    dispatch(setMessageFilters(newFilters))
     // Don't allow saving if we just selected an existing preset
-    updateCanSavePreset(false)
+    dispatch(setCanSavePreset(false))
   }
 
   function handleDeleteCustomPreset(presetName) {
@@ -147,24 +135,33 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
       )
 
       if (matchesSelectedPresets) {
-        updateCanSavePreset(true)
+        dispatch(setCanSavePreset(true))
       }
     }
 
     deleteCustomPreset(presetName, logType)
-    dispatchSuccessNotification(
-      `Custom preset "${presetName}" deleted successfully`,
+    dispatch(
+      queueSuccessNotification(
+        `Custom preset "${presetName}" deleted successfully`,
+      ),
     )
   }
 
   // Filter out presets that don't match the current aircraft type
-  const filteredPresets = category.presets.filter(
-    (preset) =>
-      preset.aircraftType === undefined ||
-      preset.aircraftType.includes(aircraftType),
+  const filteredPresets = useMemo(
+    () =>
+      category.presets.filter(
+        (preset) =>
+          preset.aircraftType === undefined ||
+          preset.aircraftType.includes(aircraftType),
+      ),
+    [category.presets, aircraftType],
   )
 
-  const isCustomPreset = category.name === "Custom Presets"
+  const isCustomPreset = useMemo(
+    () => category.name === "Custom Presets",
+    [category.name],
+  )
 
   return (
     <Accordion.Item value={category.name}>

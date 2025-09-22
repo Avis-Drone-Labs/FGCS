@@ -8,7 +8,7 @@ as graph annotations to show events or different flight modes.
 import { useEffect, useRef, useState } from "react"
 
 // 3rd party imports
-import { ActionIcon, Tooltip as MantineTooltip, Button } from "@mantine/core"
+import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
 import { useToggle } from "@mantine/hooks"
 import {
   IconCapture,
@@ -36,19 +36,18 @@ import createColormap from "colormap"
 import { Line } from "react-chartjs-2"
 
 // Redux imports
-import {
-  setMessageFilters,
-  setCustomColors,
-  setColorIndex,
-  setCanSavePreset,
-  selectMessageFilters,
-  selectLogEvents,
-  selectFlightModeMessages,
-  selectUtcAvailable,
-  selectCanSavePreset,
-} from "../../redux/slices/logAnalyserSlice.js"
 import { useDispatch, useSelector } from "react-redux"
-import _ from "lodash"
+import {
+  selectCanSavePreset,
+  selectFlightModeMessages,
+  selectLogEvents,
+  selectMessageFilters,
+  selectUtcAvailable,
+  setCanSavePreset,
+  setColorIndex,
+  setCustomColors,
+  setMessageFilters,
+} from "../../redux/slices/logAnalyserSlice.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -93,42 +92,33 @@ ChartJS.register(
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Graph({ data, openPresetModal }) {
+  // Redux state
+  const dispatch = useDispatch()
+  const messageFilters = useSelector(selectMessageFilters)
   const utcAvailable = useSelector(selectUtcAvailable)
   const events = useSelector(selectLogEvents)
   const flightModes = useSelector(selectFlightModeMessages)
   const canSavePreset = useSelector(selectCanSavePreset)
+
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
   })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
 
-  // Redux state
-  const dispatch = useDispatch()
-  const messageFilters = useSelector(selectMessageFilters)
-
-  const updateMessageFilters = (newMessageFilters) =>
-    dispatch(setMessageFilters(newMessageFilters))
-  const updateCustomColors = (newCustomColors) =>
-    dispatch(setCustomColors(newCustomColors))
-  const updateColorIndex = (newColorIndex) =>
-    dispatch(setColorIndex(newColorIndex))
-  const updateCanSavePreset = (newCanSavePreset) =>
-    dispatch(setCanSavePreset(newCanSavePreset))
-
   // Turn on/off all filters
   function clearFilters() {
-    let newFilters = _.cloneDeep(messageFilters)
+    let newFilters = structuredClone(messageFilters)
     Object.keys(newFilters).forEach((categoryName) => {
       const category = newFilters[categoryName]
       Object.keys(category).forEach((fieldName) => {
         newFilters[categoryName][fieldName] = false
       })
     })
-    updateMessageFilters(newFilters)
-    updateCustomColors({})
-    updateColorIndex(0)
-    updateCanSavePreset(false)
+    dispatch(setMessageFilters(newFilters))
+    dispatch(setCustomColors({}))
+    dispatch(setColorIndex(0))
+    dispatch(setCanSavePreset(false))
   }
 
   function downloadUpscaledImage(originalDataURI, wantedWidth, wantedHeight) {

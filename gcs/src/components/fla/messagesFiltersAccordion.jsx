@@ -8,22 +8,21 @@
 // 3rd Party Imports
 import { Accordion, Checkbox } from "@mantine/core"
 import { useDispatch, useSelector } from "react-redux"
-import _ from "lodash"
 
 // Helper imports
 import { logMessageDescriptions } from "../../helpers/logMessageDescriptions.js"
 
 // Local imports
-import { colorPalette } from "./constants.js"
 import {
-  selectMessageFilters,
-  selectCustomColors,
   selectColorIndex,
-  setMessageFilters,
-  setCustomColors,
-  setColorIndex,
+  selectCustomColors,
+  selectMessageFilters,
   setCanSavePreset,
+  setColorIndex,
+  setCustomColors,
+  setMessageFilters,
 } from "../../redux/slices/logAnalyserSlice.js"
+import { colorPalette } from "./constants.js"
 
 export default function MessagesFiltersAccordion() {
   const dispatch = useDispatch()
@@ -32,24 +31,11 @@ export default function MessagesFiltersAccordion() {
   const customColors = useSelector(selectCustomColors)
   const colorIndex = useSelector(selectColorIndex)
 
-  const updateMessageFilters = (filters) => {
-    dispatch(setMessageFilters(filters))
-  }
-  const updateCustomColors = (colors) => {
-    dispatch(setCustomColors(colors))
-  }
-  const updateColorIndex = (index) => {
-    dispatch(setColorIndex(index))
-  }
-  const updateCanSavePreset = (canSave) => {
-    dispatch(setCanSavePreset(canSave))
-  }
-
   if (!messageFilters) return null
 
   function selectMessageFilter(event, messageName, fieldName) {
-    let newFilters = _.cloneDeep(messageFilters)
-    let newColors = _.cloneDeep(customColors)
+    let newFilters = structuredClone(messageFilters)
+    let newColors = structuredClone(customColors)
 
     const checked = event.currentTarget.checked
     newFilters[messageName][fieldName] = checked
@@ -60,19 +46,19 @@ export default function MessagesFiltersAccordion() {
       if (!newColors[`${messageName}/${fieldName}`]) {
         newColors[`${messageName}/${fieldName}`] =
           colorPalette[colorIndex % colorPalette.length]
-        updateColorIndex((colorIndex + 1) % colorPalette.length)
+        dispatch(setColorIndex((colorIndex + 1) % colorPalette.length))
       }
     }
 
-    updateCustomColors(newColors)
-    updateMessageFilters(newFilters)
+    dispatch(setCustomColors(newColors))
+    dispatch(setMessageFilters(newFilters))
 
     // Then check if we should allow saving preset
     // Only enable save if there are selected filters
     const hasSelectedFilters = Object.values(newFilters).some((category) =>
       Object.values(category).some((isSelected) => isSelected),
     )
-    updateCanSavePreset(hasSelectedFilters)
+    dispatch(setCanSavePreset(hasSelectedFilters))
   }
 
   return (

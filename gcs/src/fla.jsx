@@ -8,56 +8,52 @@
 import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { useSelector, useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 
 // Styling imports
 import {
-  hexToRgba,
-  getUnit,
-  calcGPSOffset,
-  convertTimeUStoUTC,
-  processFlightModes,
   buildDefaultMessageFilters,
+  calcGPSOffset,
   calculateMeanValues,
+  convertTimeUStoUTC,
+  getUnit,
+  hexToRgba,
+  processFlightModes,
   sortObjectByKeys,
 } from "./components/fla/utils"
 
 // Custom components and helpers
 import { logEventIds } from "./components/fla/logEventIds.js"
 
-import Layout from "./components/layout.jsx"
 import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
 import MainDisplay from "./components/fla/mainDisplay.jsx"
+import Layout from "./components/layout.jsx"
 import {
-  queueErrorNotification,
-} from "./redux/slices/notificationSlice.js"
-import {
-  setFile,
-  setUnits,
-  setFormatMessages,
-  setLogMessages,
-  setLogEvents,
-  setFlightModeMessages,
-  setLogType,
-  setUtcAvailable,
-  setMessageFilters,
-  setMessageMeans,
-  setCustomColors,
-  setColorIndex,
-  setAircraftType,
-  setCanSavePreset,
-
-  // Selectors
-  selectUnits,
+  selectCustomColors,
   selectFormatMessages,
   selectLogMessages,
   selectMessageFilters,
-  selectCustomColors,
+  // Selectors
+  selectUnits,
+  setAircraftType,
+  setCanSavePreset,
+  setColorIndex,
+  setCustomColors,
+  setFile,
+  setFlightModeMessages,
+  setFormatMessages,
+  setLogEvents,
+  setLogMessages,
+  setLogType,
+  setMessageFilters,
+  setMessageMeans,
+  setUnits,
+  setUtcAvailable,
 } from "./redux/slices/logAnalyserSlice.js"
+import { queueErrorNotification } from "./redux/slices/notificationSlice.js"
 
 export default function FLA() {
-
-  // Redux state
+  // Redux
   const dispatch = useDispatch()
   const units = useSelector(selectUnits)
   const formatMessages = useSelector(selectFormatMessages)
@@ -68,61 +64,33 @@ export default function FLA() {
   // Local states
   const [chartData, setLocalChartData] = useState({ datasets: [] })
 
-  // Redux dispatch functions
-  const updateFile = (newFile) => dispatch(setFile(newFile))
-  const updateUnits = (newUnits) => dispatch(setUnits(newUnits))
-  const updateFormatMessages = (newFormatMessages) =>
-    dispatch(setFormatMessages(newFormatMessages))
-  const updateLogMessages = (newLogMessages) =>
-    dispatch(setLogMessages(newLogMessages))
-  const updateLogEvents = (newLogEvents) => dispatch(setLogEvents(newLogEvents))
-  const updateFlightModeMessages = (newFlightModeMessages) =>
-    dispatch(setFlightModeMessages(newFlightModeMessages))
-  const updateLogType = (newLogType) => dispatch(setLogType(newLogType))
-  const updateUtcAvailable = (newUtcAvailable) =>
-    dispatch(setUtcAvailable(newUtcAvailable))
-  const updateMessageFilters = (newMessageFilters) =>
-    dispatch(setMessageFilters(newMessageFilters))
-  const updateMessageMeans = (newMessageMeans) =>
-    dispatch(setMessageMeans(newMessageMeans))
-  const updateCustomColors = (newCustomColors) =>
-    dispatch(setCustomColors(newCustomColors))
-  const updateColorIndex = (newColorIndex) =>
-    dispatch(setColorIndex(newColorIndex))
-  const updateAircraftType = (newAircraftType) =>
-    dispatch(setAircraftType(newAircraftType))
-  const updateCanSavePreset = (newCanSavePreset) =>
-    dispatch(setCanSavePreset(newCanSavePreset))
-  const dispatchErrorNotification = (message) =>
-    dispatch(queueErrorNotification(message))
-
-  // ====================================================
-  // 2. File Management Functions
-  // ====================================================
-
+  /**
+   * Process the entire log file
+   */
   async function processLoadedFile(result) {
     const loadedLogMessages = result.messages
 
     if (!loadedLogMessages) {
-      dispatchErrorNotification("Error loading file, no messages found.")
+      dispatch(queueErrorNotification("Error loading file, no messages found."))
       return
     }
 
     // 1. Update log and aircraft type
-    updateLogType(result.logType)
-    updateAircraftType(loadedLogMessages.aircraftType)
+    dispatch(setLogType(result.logType))
+    dispatch(setAircraftType(loadedLogMessages.aircraftType))
     delete loadedLogMessages.aircraftType
-    updateLogMessages(loadedLogMessages)
+    dispatch(setLogMessages(loadedLogMessages))
 
     // 2. Update format and units
-    if ("units" in loadedLogMessages) updateUnits(loadedLogMessages["units"])
+    if ("units" in loadedLogMessages)
+      dispatch(setUnits(loadedLogMessages["units"]))
     if ("format" in loadedLogMessages)
-      updateFormatMessages(loadedLogMessages["format"])
+      dispatch(setFormatMessages(loadedLogMessages["format"]))
 
     // 3. Process flight modes and set UTC availability
     const flightModeMessages = processFlightModes(result, loadedLogMessages)
-    updateFlightModeMessages(flightModeMessages)
-    if (result.logType === "fgcs_telemetry") updateUtcAvailable(true)
+    dispatch(setFlightModeMessages(flightModeMessages))
+    if (result.logType === "fgcs_telemetry") dispatch(setUtcAvailable(true))
 
     // 4. Build default message filters. Hover over function name for details.
     let logMessageFilterDefaultState =
@@ -142,8 +110,8 @@ export default function FLA() {
           tempLoadedLogMessages,
           gpsOffset,
         )
-        updateUtcAvailable(true)
-        updateFlightModeMessages(tempLoadedLogMessages.MODE)
+        dispatch(setUtcAvailable(true))
+        dispatch(setFlightModeMessages(tempLoadedLogMessages.MODE))
       }
     }
 
@@ -160,20 +128,24 @@ export default function FLA() {
     )
 
     // 8. Update Redux
-    updateLogMessages(finalMessages)
-    updateFormatMessages(updatedFormats)
-    updateMessageFilters(sortObjectByKeys(finalFilters))
+    dispatch(setLogMessages(finalMessages))
+    dispatch(setFormatMessages(updatedFormats))
+    dispatch(setMessageFilters(sortObjectByKeys(finalFilters)))
 
     // 9. Calculate and set means and set event logs for the event lines on graph
     const means = calculateMeanValues(loadedLogMessages)
-    updateMessageMeans(means)
+    dispatch(setMessageMeans(means))
     if ("EV" in loadedLogMessages) {
-      updateLogEvents(
-        loadedLogMessages["EV"].map((event) => ({
-          time:
-            gpsOffset !== null ? event.TimeUS / 1000 + gpsOffset : event.TimeUS,
-          message: logEventIds[event.Id],
-        })),
+      dispatch(
+        setLogEvents(
+          loadedLogMessages["EV"].map((event) => ({
+            time:
+              gpsOffset !== null
+                ? event.TimeUS / 1000 + gpsOffset
+                : event.TimeUS,
+            message: logEventIds[event.Id],
+          })),
+        ),
       )
     }
   }
@@ -270,16 +242,16 @@ export default function FLA() {
 
   // Close file
   function closeLogFile() {
-    updateFile(null)
-    updateLogMessages(null)
+    dispatch(setFile(null))
+    dispatch(setLogMessages(null))
     setLocalChartData({ datasets: [] })
-    updateMessageFilters(null)
-    updateCustomColors({})
-    updateUtcAvailable(false)
-    updateColorIndex(0)
-    updateLogEvents(null)
-    updateLogType("dataflash")
-    updateCanSavePreset(false)
+    dispatch(setMessageFilters(null))
+    dispatch(setCustomColors({}))
+    dispatch(setUtcAvailable(false))
+    dispatch(setColorIndex(0))
+    dispatch(setLogEvents(null))
+    dispatch(setLogType("dataflash"))
+    dispatch(setCanSavePreset(false))
   }
 
   // Update datasets based on the message filters constantly

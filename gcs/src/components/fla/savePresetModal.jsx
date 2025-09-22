@@ -2,47 +2,37 @@
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config.js"
 // Third party imports
+import { Button, Group, Modal, TextInput } from "@mantine/core"
 import { useState } from "react"
-import { Modal, TextInput, Button, Group } from "@mantine/core"
 
 // Redux imports
 import { useDispatch, useSelector } from "react-redux"
 import {
+  selectAircraftType,
   selectLogType,
   selectMessageFilters,
-  selectAircraftType,
   setCanSavePreset,
 } from "../../redux/slices/logAnalyserSlice.js"
 import {
-  queueSuccessNotification,
   queueErrorNotification,
+  queueSuccessNotification,
 } from "../../redux/slices/notificationSlice.js"
 
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 export default function SavePresetModal({
-  opened,
-  close,
+  isSavePresetModalOpen,
+  closeSavePresetModal,
   saveCustomPreset,
   findExistingPreset,
 }) {
-  const [presetName, setPresetName] = useState("")
-  const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-  // Redux selectors
+  // Redux
+  const dispatch = useDispatch()
   const logType = useSelector(selectLogType)
   const messageFilters = useSelector(selectMessageFilters)
   const aircraftType = useSelector(selectAircraftType)
 
-  // Redux state
-  const dispatch = useDispatch()
-  const updateCanSavePreset = (canSave) => {
-    dispatch(setCanSavePreset(canSave))
-  }
-  const dispatchSuccessNotification = (message) => {
-    dispatch(queueSuccessNotification(message))
-  }
-  const dispatchErrorNotification = (message) => {
-    dispatch(queueErrorNotification(message))
-  }
+  const [presetName, setPresetName] = useState("")
 
   // Function to handle saving a custom preset
   function handleSaveCustomPreset(presetName) {
@@ -73,22 +63,28 @@ export default function SavePresetModal({
 
       if (!existingPreset) {
         saveCustomPreset(newPreset, logType)
-        dispatchSuccessNotification(
-          `Custom preset "${presetName}" saved successfully`,
+        dispatch(
+          queueSuccessNotification(
+            `Custom preset "${presetName}" saved successfully`,
+          ),
         )
-        close()
-        updateCanSavePreset(false)
+        closeSavePresetModal()
+        dispatch(setCanSavePreset(false))
       } else {
         if (existingPreset.name === presetName) {
-          dispatchErrorNotification(
-            `The name "${presetName}" is in use. Please choose a different name.`,
+          dispatch(
+            queueErrorNotification(
+              `The name "${presetName}" is in use. Please choose a different name.`,
+            ),
           )
         } else {
-          dispatchErrorNotification(
-            `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
+          dispatch(
+            queueErrorNotification(
+              `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
+            ),
           )
-          close()
-          updateCanSavePreset(false)
+          closeSavePresetModal()
+          dispatch(setCanSavePreset(false))
         }
       }
     }
@@ -96,10 +92,10 @@ export default function SavePresetModal({
 
   return (
     <Modal
-      opened={opened}
+      opened={isSavePresetModalOpen}
       onClose={() => {
         setPresetName("")
-        close()
+        closeSavePresetModal()
       }}
       title="Save Preset"
       centered
@@ -129,7 +125,7 @@ export default function SavePresetModal({
             color={tailwindColors.red[500]}
             onClick={() => {
               setPresetName("")
-              close()
+              closeSavePresetModal()
             }}
           >
             Close

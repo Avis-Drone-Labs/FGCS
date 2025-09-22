@@ -1,22 +1,21 @@
-import { Fragment } from "react"
-import { Button, Tooltip, ScrollArea, Accordion } from "@mantine/core"
+import { Accordion, Button, ScrollArea, Tooltip } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
-import Graph from "./graph.jsx"
-import ChartDataCard from "./chartDataCard.jsx"
-import SavePresetModal from "./savePresetModal.jsx"
-import MessagesFiltersAccordion from "./messagesFiltersAccordion.jsx"
-import PresetsAccordion from "./presetsAccordion.jsx"
-import { usePresetCategories } from "./presetCategories.js"
-import { getUnit } from "./utils.js"
-import { colorInputSwatch } from "./constants.js"
+import { Fragment } from "react"
 import { useSelector } from "react-redux"
 import {
-  selectFile,
   selectAircraftType,
-  selectMessageMeans,
+  selectFile,
   selectFormatMessages,
+  selectMessageMeans,
   selectUnits,
 } from "../../redux/slices/logAnalyserSlice.js"
+import ChartDataCard from "./chartDataCard.jsx"
+import Graph from "./graph.jsx"
+import MessagesFiltersAccordion from "./messagesFiltersAccordion.jsx"
+import { usePresetCategories } from "./presetCategories.js"
+import PresetsAccordion from "./presetsAccordion.jsx"
+import SavePresetModal from "./savePresetModal.jsx"
+import { getUnit } from "./utils.js"
 
 /**
  * Main display component for the Falcon Log Analyser (FLA).
@@ -124,14 +123,13 @@ export default function MainDisplay({ closeLogFile, chartData }) {
                   units,
                 )}
                 messageMeans={messageMeans}
-                colorInputSwatch={colorInputSwatch}
               />
             </Fragment>
           ))}
         </div>
         <SavePresetModal
-          opened={isSavePresetModalOpen}
-          close={closeSavePresetModal}
+          isSavePresetModalOpen={isSavePresetModalOpen}
+          closeSavePresetModal={closeSavePresetModal}
           saveCustomPreset={saveCustomPreset}
           findExistingPreset={findExistingPreset}
         />

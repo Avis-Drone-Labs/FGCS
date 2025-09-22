@@ -7,24 +7,72 @@ import {
   ScrollArea,
 } from "@mantine/core"
 import moment from "moment"
+import { useEffect, useState } from "react"
+import { useDispatch } from "react-redux"
 import { readableBytes } from "./utils"
+import {
+  queueErrorNotification,
+  queueSuccessNotification,
+} from "../../redux/slices/notificationSlice.js"
+import { setFile } from "../../redux/slices/logAnalyserSlice.js"
 
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
  */
-export default function SelectFlightLog({
-  recentFgcsLogs,
-  loadingFile,
-  loadingFileProgress,
-  updateFile,
-  clearFgcsLogs,
-}) {
+export default function SelectFlightLog({ processLoadedFile }) {
+  const dispatch = useDispatch()
+  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
+  const [loadingFile, setLoadingFile] = useState(false)
+  const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+
+  const dispatchErrorNotification = (message) =>
+    dispatch(queueErrorNotification(message))
+  const dispatchSuccessNotification = (message) =>
+    dispatch(queueSuccessNotification(message))
+
+  async function getFgcsLogs() {
+    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+  }
+
+  async function clearFgcsLogs() {
+    await window.ipcRenderer.clearRecentLogs()
+    getFgcsLogs()
+  }
+
+  async function handleFile(file) {
+    if (!file) return
+    try {
+      dispatch(setFile(file))
+      setLoadingFile(true)
+      const result = await window.ipcRenderer.loadFile(file.path)
+      if (!result.success) {
+        dispatchErrorNotification("Error loading file, file not found. Reload.")
+        return
+      }
+      await processLoadedFile(result)
+      dispatchSuccessNotification(`${file.name} loaded successfully`)
+    } catch (error) {
+      dispatchErrorNotification("Error loading file: " + error.message)
+    } finally {
+      setLoadingFile(false)
+    }
+  }
+
+  useEffect(() => {
+    const onProgress = (evt, message) => setLoadingFileProgress(message.percent)
+    window.ipcRenderer.on("fla:log-parse-progress", onProgress)
+    getFgcsLogs()
+    return () => {
+      window.ipcRenderer.removeAllListeners(["fla:log-parse-progress"])
+    }
+  }, [])
+
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
         <div className="flex flex-col gap-4">
           {/* File selection */}
-          <FileButton onChange={updateFile} accept=".log,.ftlog">
+          <FileButton onChange={handleFile} accept=".log,.ftlog">
             {(props) => (
               <Button {...props} loading={loadingFile}>
                 Analyse a log
@@ -46,7 +94,7 @@ export default function SelectFlightLog({
                   <div
                     key={idx}
                     className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
-                    onClick={() => updateFile(log)}
+                    onClick={() => handleFile(log)}
                   >
                     <p>{log.name} </p>
                     <div className="flex flex-row gap-2">

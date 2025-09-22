@@ -6,6 +6,17 @@
 // 3rd Party Imports
 import { ActionIcon, Box, ColorInput } from "@mantine/core"
 import { IconPaint, IconTrash } from "@tabler/icons-react"
+import { useDispatch, useSelector } from "react-redux"
+import _ from "lodash"
+
+// Redux imports
+import {
+  setCustomColors,
+  setMessageFilters,
+  setCanSavePreset,
+  selectMessageFilters,
+  selectCustomColors,
+} from "../../redux/slices/logAnalyserSlice.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -18,9 +29,46 @@ export default function ChartDataCard({
   unit,
   messageMeans,
   colorInputSwatch,
-  changeColorFunc,
-  removeDatasetFunc,
 }) {
+  const dispatch = useDispatch()
+  const messageFilters = useSelector(selectMessageFilters)
+  const customColors = useSelector(selectCustomColors)
+
+  const updateMessageFilters = (newMessageFilters) =>
+    dispatch(setMessageFilters(newMessageFilters))
+  const updateCustomColors = (newCustomColors) =>
+    dispatch(setCustomColors(newCustomColors))
+  const updateCanSavePreset = (newCanSavePreset) =>
+    dispatch(setCanSavePreset(newCanSavePreset))
+
+  // Change the color of the line
+  function changeColor(label, color) {
+    let newColors = _.cloneDeep(customColors)
+    newColors[label] = color
+    updateCustomColors(newColors)
+  }
+
+  // Turn off only one filter at a time
+  function removeDataset(label) {
+    let [categoryName, fieldName] = label.split("/")
+    let newFilters = _.cloneDeep(messageFilters)
+    if (
+      newFilters[categoryName] &&
+      newFilters[categoryName][fieldName] !== undefined
+    ) {
+      newFilters[categoryName][fieldName] = false
+    }
+    let newColors = _.cloneDeep(customColors)
+    delete newColors[label]
+    updateCustomColors(newColors)
+    updateMessageFilters(newFilters)
+    if (Object.keys(newColors).length === 0) {
+      updateCanSavePreset(false)
+    } else {
+      updateCanSavePreset(true)
+    }
+  }
+
   return (
     <div className="inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200">
       {/* Title and Delete Button */}
@@ -31,7 +79,7 @@ export default function ChartDataCard({
         <ActionIcon
           variant="subtle"
           color={tailwindColors.red[500]}
-          onClick={() => removeDatasetFunc(item.label)}
+          onClick={() => removeDataset(item.label)}
         >
           <IconTrash size={18} />
         </ActionIcon>
@@ -47,7 +95,7 @@ export default function ChartDataCard({
         withEyeDropper={false}
         value={item.borderColor}
         rightSection={<IconPaint size={16} />}
-        onChangeEnd={(color) => changeColorFunc(item.label, color)}
+        onChangeEnd={(color) => changeColor(item.label, color)}
       />
 
       {/* Min, max, min */}

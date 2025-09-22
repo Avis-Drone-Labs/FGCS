@@ -1,60 +1,47 @@
 import { Fragment } from "react"
 import { Button, Tooltip, ScrollArea, Accordion } from "@mantine/core"
-import Graph from "./graph"
-import ChartDataCard from "./chartDataCard"
-import SavePresetModal from "./savePresetModal"
-import PresetAccordionItem from "./presetAccordionItem"
-import MessageAccordionItem from "./messageAccordionItem"
-import { getUnit } from "./utils"
-import { colorInputSwatch } from "./constants"
+import { useDisclosure } from "@mantine/hooks"
+import Graph from "./graph.jsx"
+import ChartDataCard from "./chartDataCard.jsx"
+import SavePresetModal from "./savePresetModal.jsx"
+import MessagesFiltersAccordion from "./messagesFiltersAccordion.jsx"
+import PresetsAccordion from "./presetsAccordion.jsx"
+import { usePresetCategories } from "./presetCategories.js"
+import { getUnit } from "./utils.js"
+import { colorInputSwatch } from "./constants.js"
 import { useSelector } from "react-redux"
-import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
 import {
   selectFile,
   selectAircraftType,
-  selectLogType,
-  selectMessageFilters,
-  selectLogEvents,
-  selectFlightModeMessages,
-  selectUtcAvailable,
   selectCanSavePreset,
   selectMessageMeans,
   selectFormatMessages,
   selectUnits,
-} from "../../redux/slices/logAnalyserSlice"
+} from "../../redux/slices/logAnalyserSlice.js"
 
 /**
  * Main display component for the Falcon Log Analyser (FLA).
  */
-export default function FlaMainDisplay({
-  closeLogFile,
-  presetCategories,
-  selectPreset,
-  handleDeleteCustomPreset,
-  selectMessageFilter,
-  chartData,
-  clearFilters,
-  open,
-  changeColor,
-  removeDataset,
-  opened,
-  close,
-  handleSaveCustomPreset,
-  filteredDefaultPresets,
-}) {
-
+export default function MainDisplay({ closeLogFile, chartData }) {
   // Redux selectors
   const file = useSelector(selectFile)
   const aircraftType = useSelector(selectAircraftType)
-  const logType = useSelector(selectLogType)
-  const messageFilters = useSelector(selectMessageFilters)
-  const logEvents = useSelector(selectLogEvents)
-  const flightModeMessages = useSelector(selectFlightModeMessages)
-  const utcAvailable = useSelector(selectUtcAvailable)
-  const canSavePreset = useSelector(selectCanSavePreset)
   const messageMeans = useSelector(selectMessageMeans)
   const formatMessages = useSelector(selectFormatMessages)
   const units = useSelector(selectUnits)
+
+  // Shared presets state for all children (presets + modal)
+  const {
+    presetCategories,
+    saveCustomPreset,
+    deleteCustomPreset,
+    findExistingPreset,
+  } = usePresetCategories()
+
+  const [
+    isSavePresetModalOpen,
+    { open: openSavePresetModal, close: closeSavePresetModal },
+  ] = useDisclosure(false)
 
   return (
     <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-y-auto overflow-x-hidden">
@@ -87,7 +74,7 @@ export default function FlaMainDisplay({
           <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
             <div className="whitespace-nowrap">Aircraft Type:</div>
             <div className="text-white ml-auto truncate max-w-[200px]">
-              {aircraftType ? aircraftType : "No Aircraft Type"}
+              {aircraftType ?? "No Aircraft Type"}
             </div>
           </div>
         </div>
@@ -99,34 +86,14 @@ export default function FlaMainDisplay({
                 Presets
               </Accordion.Control>
               <Accordion.Panel>
-                <Accordion multiple={true}>
-                  {/* Custom Presets */}
-                  {presetCategories["custom_" + logType]?.map((category) => (
-                    <Fragment key={category.name}>
-                      <PresetAccordionItem
-                        key={category.name}
-                        category={category}
-                        selectPresetFunc={selectPreset}
-                        aircraftType={aircraftType}
-                        deleteCustomPreset={handleDeleteCustomPreset}
-                      />
-                    </Fragment>
-                  ))}
-                  {/* Default Presets */}
-                  {filteredDefaultPresets.map((category) => (
-                    <Fragment key={category.name}>
-                      <PresetAccordionItem
-                        key={category.name}
-                        category={category}
-                        selectPresetFunc={selectPreset}
-                        aircraftType={aircraftType}
-                      />
-                    </Fragment>
-                  ))}
-                </Accordion>
+                <PresetsAccordion
+                  presetCategories={presetCategories}
+                  deleteCustomPreset={deleteCustomPreset}
+                />
               </Accordion.Panel>
             </Accordion.Item>
-            {/* All messages */}
+
+            {/* All messages (checkboxes in accordions) */}
             <Accordion.Item
               key="messages"
               value="messages"
@@ -136,18 +103,7 @@ export default function FlaMainDisplay({
                 Messages
               </Accordion.Control>
               <Accordion.Panel>
-                <Accordion multiple={true}>
-                  {Object.keys(messageFilters).map((messageName, idx) => (
-                    <Fragment key={idx}>
-                      <MessageAccordionItem
-                        key={idx}
-                        messageName={messageName}
-                        messageFilters={messageFilters}
-                        selectMessageFilterFunc={selectMessageFilter}
-                      />
-                    </Fragment>
-                  ))}
-                </Accordion>
+                <MessagesFiltersAccordion />
               </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
@@ -155,15 +111,7 @@ export default function FlaMainDisplay({
       </div>
       {/* Graph column */}
       <div className="w-full h-full pr-4 min-w-0 flex flex-col">
-        <Graph
-          data={chartData}
-          events={logEvents}
-          flightModes={flightModeMessages}
-          graphConfig={utcAvailable ? fgcsOptions : dataflashOptions}
-          clearFilters={clearFilters}
-          canSavePreset={canSavePreset}
-          openPresetModal={open}
-        />
+        <Graph data={chartData} openPresetModal={openSavePresetModal} />
         {/* Plots Setup */}
         <div className="grid grid-cols-5 gap-4 pt-4">
           {chartData.datasets.map((item) => (
@@ -178,16 +126,15 @@ export default function FlaMainDisplay({
                 )}
                 messageMeans={messageMeans}
                 colorInputSwatch={colorInputSwatch}
-                changeColorFunc={changeColor}
-                removeDatasetFunc={removeDataset}
               />
             </Fragment>
           ))}
         </div>
         <SavePresetModal
-          opened={opened}
-          close={close}
-          onSave={handleSaveCustomPreset}
+          opened={isSavePresetModalOpen}
+          close={closeSavePresetModal}
+          saveCustomPreset={saveCustomPreset}
+          findExistingPreset={findExistingPreset}
         />
       </div>
     </div>

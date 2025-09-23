@@ -6,12 +6,12 @@
 import MarkerPin from "./markerPin"
 
 import { useSelector } from "react-redux"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import { selectActiveTab } from "../../redux/slices/missionSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

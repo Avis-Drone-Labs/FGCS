@@ -4,6 +4,14 @@
   items which should not be displayed on the map as markers or not have lines
   connecting them.
 */
+import { useMemo } from "react"
+import { useSelector } from "react-redux"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
+import { selectHomePosition } from "../../redux/slices/droneInfoSlice"
+import {
+  selectActiveTab,
+  selectPlannedHomePosition,
+} from "../../redux/slices/missionSlice"
 
 // Helper imports
 import { intToCoord } from "../../helpers/dataFormatters"
@@ -17,12 +25,8 @@ import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
 // Tailwind styling
-import { useEffect, useState } from "react"
-import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
-import { selectActiveTab } from "../../redux/slices/missionSlice"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 

@@ -18,13 +18,13 @@ import {
   selectBatteryData,
   selectTelemetry,
 } from "../../redux/slices/droneInfoSlice"
+import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
 // Helper imports
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { useSettings } from "../../helpers/settings"
 import AlertSection, { AlertCategory, AlertSeverity } from "./alert"
 
-import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { useAlerts } from "./alertProvider"
 
 export function StatusSection({ icon, value, tooltip }) {

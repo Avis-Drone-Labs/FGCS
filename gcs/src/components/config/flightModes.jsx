@@ -7,13 +7,14 @@
 */
 // Base imports
 import { useEffect, useMemo, useState } from "react"
+import { useSelector } from "react-redux"
+import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
 
 // 3rd party imports
 import { Button, LoadingOverlay, Select } from "@mantine/core"
 import { useListState, useSessionStorage } from "@mantine/hooks"
 
 // Helper javascript files
-import { useSelector } from "react-redux"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   getFlightModeMap,
@@ -25,7 +26,6 @@ import {
   showSuccessNotification,
 } from "../../helpers/notification"
 import { socket } from "../../helpers/socket"
-import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
 
 const FLIGHT_MODE_PWM_VALUES = [
   [0, 1230],

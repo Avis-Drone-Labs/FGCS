@@ -13,7 +13,6 @@ import { useLocalStorage } from "@mantine/hooks"
 // Mavlink
 import { getFlightModeMap } from "../../../helpers/mavlinkConstants"
 
-// Helper
 import { useDispatch, useSelector } from "react-redux"
 import {
   emitArmDisarm,
@@ -26,6 +25,7 @@ import {
   selectArmed,
   setLoiterRadius,
 } from "../../../redux/slices/droneInfoSlice"
+
 import { NoConnectionMsg } from "../tabsSection"
 
 export default function ActionTabsSection({

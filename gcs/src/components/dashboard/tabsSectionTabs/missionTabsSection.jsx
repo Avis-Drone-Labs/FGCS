@@ -13,7 +13,6 @@ import {
   MISSION_STATES,
 } from "../../../helpers/mavlinkConstants"
 
-// Helper
 import { useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {

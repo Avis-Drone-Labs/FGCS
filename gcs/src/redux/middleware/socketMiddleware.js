@@ -10,10 +10,7 @@ import {
 // drone actions
 import {
   emitGetComPorts,
-  emitGetHomePosition,
-  emitGetLoiterRadius,
   emitIsConnectedToDrone,
-  emitSetState,
   setComPorts,
   setConnected,
   setConnecting,
@@ -46,6 +43,7 @@ import {
 } from "../slices/droneInfoSlice"
 import {
   addIdToItem,
+  closeDashboardMissionFetchingNotificationThunk,
   setCurrentMission,
   setCurrentMissionItems,
   setDrawingFenceItems,
@@ -53,6 +51,7 @@ import {
   setDrawingRallyItems,
   setMissionProgressData,
   setMissionProgressModal,
+  setShouldFetchAllMissionsOnDashboard,
   setTargetInfo,
   setUnwrittenChanges,
   setUpdatePlannedHomePositionFromLoadData,
@@ -264,19 +263,10 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          const currentPage = store.getState().droneConnection.currentPage
-          store.dispatch(emitSetState(currentPage))
-
-          if (["dashboard", "missions"].includes(currentPage)) {
-            store.dispatch(emitGetHomePosition()) // fetch the actual home position of the drone
-            if (msg.aircraft_type === 1) {
-              store.dispatch(emitGetLoiterRadius())
-            }
-          }
-
           store.dispatch(setGuidedModePinData({ lat: 0, lon: 0, alt: 0 }))
           store.dispatch(setRebootData({}))
           store.dispatch(setAutoPilotRebootModalOpen(false))
+          store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
         })
 
         // Link stats
@@ -412,7 +402,19 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMissionAll,
           (msg) => {
-            store.dispatch(setCurrentMissionItems(msg))
+            if (!msg.success) {
+              store.dispatch(queueErrorNotification(msg.message))
+            } else {
+              store.dispatch(
+                setCurrentMissionItems({
+                  missionItems: msg.mission_items,
+                  fenceItems: msg.fence_items,
+                  rallyItems: msg.rally_items,
+                }),
+              )
+              store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
+            }
+            store.dispatch(closeDashboardMissionFetchingNotificationThunk())
           },
         )
 

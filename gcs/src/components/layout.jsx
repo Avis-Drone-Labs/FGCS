@@ -25,6 +25,7 @@ import {
   selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice"
 import { selectAircraftTypeString } from "../redux/slices/droneInfoSlice"
+import { selectShouldFetchAllMissionsOnDashboard } from "../redux/slices/missionSlice"
 import {
   notificationShown,
   selectNotificationQueue,
@@ -35,6 +36,9 @@ export default function Layout({ children, currentPage }) {
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const notificationQueue = useSelector(selectNotificationQueue)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
+  const shouldFetchAllMissionsOnDashboard = useSelector(
+    selectShouldFetchAllMissionsOnDashboard,
+  )
 
   // Show queued notifications
   useEffect(() => {
@@ -58,8 +62,12 @@ export default function Layout({ children, currentPage }) {
     if (!connectedToDrone) return
 
     if (currentPage.toLowerCase() == "dashboard") {
-      dispatch(emitGetCurrentMissionAll())
       dispatch(emitGetHomePosition()) // use actual home position
+
+      if (shouldFetchAllMissionsOnDashboard) {
+        dispatch(emitGetCurrentMissionAll())
+      }
+
       if (aircraftTypeString === "Plane") {
         dispatch(emitGetLoiterRadius())
       }

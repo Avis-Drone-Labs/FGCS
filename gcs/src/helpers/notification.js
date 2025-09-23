@@ -53,3 +53,28 @@ export function showNotification(title, message) {
     ...notificationTheme,
   })
 }
+
+export function showLoadingNotification(title, message) {
+  const id = notifications.show({
+    title: title,
+    message: message,
+    loading: true,
+    autoClose: false,
+    withCloseButton: false,
+    ...notificationTheme,
+  })
+
+  return id
+}
+
+export function closeLoadingNotification(id, title, message) {
+  notifications.update({
+    id: id,
+    title: title,
+    message: message,
+    loading: false,
+    autoClose: 2000,
+    color: tailwindColors.green[600],
+    ...notificationTheme,
+  })
+}

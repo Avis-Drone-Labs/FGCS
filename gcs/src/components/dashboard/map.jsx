@@ -272,12 +272,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             <HomeMarker
               lat={intToCoord(homePosition.lat)}
               lon={intToCoord(homePosition.lon)}
-              lineTo={
-                filteredMissionItems.length > 0 && [
-                  intToCoord(filteredMissionItems[0].y),
-                  intToCoord(filteredMissionItems[0].x),
-                ]
-              }
             />
           )}
 

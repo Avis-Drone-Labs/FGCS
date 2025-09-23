@@ -237,6 +237,9 @@ export default function FLA() {
     delete updatedFormats["BAT"]
     delete updatedFilters["BAT"]
 
+    // Update logMessages["format"] too
+    updatedMessages["format"] = updatedFormats
+
     return { updatedMessages, updatedFilters, updatedFormats }
   }
 

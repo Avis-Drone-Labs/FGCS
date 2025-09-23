@@ -22,6 +22,8 @@ import {
   emitGetTargetInfo,
   emitImportMissionFromFile,
   emitWriteCurrentMission,
+  setShouldFetchAllMissionsOnDashboard,
+  showDashboardMissionFetchingNotificationThunk,
 } from "../slices/missionSlice"
 import {
   emitRebootAutopilot,
@@ -70,7 +72,10 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitGetCurrentMissionAll,
-      callback: () => socket.socket.emit("get_current_mission_all"),
+      callback: () => {
+        socket.socket.emit("get_current_mission_all")
+        store.dispatch(showDashboardMissionFetchingNotificationThunk())
+      },
     },
     {
       emitter: emitSetLoiterRadius,
@@ -142,6 +147,7 @@ export function handleEmitters(socket, store, action) {
           type: action.payload.type,
           items: action.payload.items,
         })
+        store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
       },
     },
     {

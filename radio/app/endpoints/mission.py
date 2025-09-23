@@ -107,6 +107,10 @@ def getCurrentMissionAll() -> None:
 
     result = droneStatus.drone.missionController.getCurrentMissionAll()
 
+    if not result.get("success"):
+        socketio.emit("current_mission_all", result)
+        return
+
     data: dict[str, Any] = result.get("data", {})
     if not isinstance(data, dict):
         data = {}
@@ -114,6 +118,7 @@ def getCurrentMissionAll() -> None:
     socketio.emit(
         "current_mission_all",
         {
+            "success": True,
             "mission_items": data.get("mission_items", []),
             "fence_items": data.get("fence_items", []),
             "rally_items": data.get("rally_items", []),

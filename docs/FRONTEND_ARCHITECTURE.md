@@ -40,7 +40,6 @@ import missionSlice from './slices/missionSlice'
 import paramsSlice from './slices/paramsSlice'
 import socketSlice from './slices/socketSlice'
 import statusTextSlice from './slices/statusTextSlice'
-import notificationSlice from './slices/notificationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -50,7 +49,6 @@ export const store = configureStore({
     params: paramsSlice.reducer,
     socket: socketSlice.reducer,
     statusText: statusTextSlice.reducer,
-    notifications: notificationSlice.reducer,
   },
 })
 ```

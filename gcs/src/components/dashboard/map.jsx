@@ -41,8 +41,8 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { showInfoNotification } from "../../helpers/notification"
 import { emitReposition } from "../../redux/slices/droneConnectionSlice"
-import { queueInfoNotification } from "../../redux/slices/notificationSlice"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -328,7 +328,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
                 clipboard.copy(
                   `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
                 )
-                dispatch(queueInfoNotification("Copied to clipboard"))
+                showInfoNotification("Copied to clipboard")
               }}
             >
               <div className="w-full flex justify-between gap-2">

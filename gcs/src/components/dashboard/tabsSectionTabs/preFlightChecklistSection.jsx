@@ -13,21 +13,16 @@ import { useLocalStorage } from "@mantine/hooks"
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
 
-// Redux
-import { useDispatch } from "react-redux"
-import { queueErrorNotification } from "../../../redux/slices/notificationSlice.js"
-
 // Other
 import { AddCommand } from "../../spotlight/commandHandler.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
+import { showErrorNotification } from "../../../helpers/notification.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function PreFlightChecklistTab({ tabPadding }) {
-  const dispatch = useDispatch()
-
   const [preFlightChecklistItems, setPreFlightChecklistItems] = useLocalStorage(
     { key: "preFlightCheckList", defaultValue: [] },
   )
@@ -69,7 +64,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     }
 
     // Show error message
-    dispatch(queueErrorNotification("Name cannot be empty"))
+    showErrorNotification("Name cannot be empty")
   }
   useEffect(() => {
     AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))

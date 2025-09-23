@@ -9,11 +9,6 @@ import { useEffect } from "react"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
-import {
-  showErrorNotification,
-  showInfoNotification,
-  showSuccessNotification,
-} from "../helpers/notification"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -26,34 +21,14 @@ import {
 } from "../redux/slices/droneConnectionSlice"
 import { selectAircraftTypeString } from "../redux/slices/droneInfoSlice"
 import { selectShouldFetchAllMissionsOnDashboard } from "../redux/slices/missionSlice"
-import {
-  notificationShown,
-  selectNotificationQueue,
-} from "../redux/slices/notificationSlice"
 
 export default function Layout({ children, currentPage }) {
   const dispatch = useDispatch()
   const connectedToDrone = useSelector(selectConnectedToDrone)
-  const notificationQueue = useSelector(selectNotificationQueue)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
   const shouldFetchAllMissionsOnDashboard = useSelector(
     selectShouldFetchAllMissionsOnDashboard,
   )
-
-  // Show queued notifications
-  useEffect(() => {
-    if (notificationQueue.length !== 0) {
-      const message = notificationQueue[0].message
-      if (notificationQueue[0].type === "error") {
-        showErrorNotification(message)
-      } else if (notificationQueue[0].type === "success") {
-        showSuccessNotification(message)
-      } else {
-        showInfoNotification(message)
-      }
-      dispatch(notificationShown())
-    }
-  }, [notificationQueue, dispatch])
 
   // Handle switching to states
   useEffect(() => {

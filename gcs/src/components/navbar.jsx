@@ -69,7 +69,7 @@ import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { queueErrorNotification } from "../redux/slices/notificationSlice.js"
+import { showErrorNotification } from "../helpers/notification.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
@@ -108,7 +108,7 @@ export default function Navbar() {
       )
     } else if (type === ConnectionType.Network) {
       if (ip === "" || port === "") {
-        dispatch(queueErrorNotification("IP Address and Port cannot be empty"))
+        showErrorNotification("IP Address and Port cannot be empty")
         return
       }
       const networkString = `${networkType}:${ip}:${port}`

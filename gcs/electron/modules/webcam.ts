@@ -101,6 +101,9 @@ export function destroyWebcamWindow() {
 }
 
 export default function registerWebcamIPC(mainWindow: BrowserWindow) {
+  ipcMain.removeHandler("openWebcamWindow")
+  ipcMain.removeHandler("closeWebcamWindow")
+
   ipcMain.handle("openWebcamWindow", (_, videoStreamId, name, aspect) => {
     openWebcamPopout(videoStreamId, name, aspect)
   })

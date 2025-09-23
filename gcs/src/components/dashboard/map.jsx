@@ -29,7 +29,6 @@ import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 import { useSettings } from "../../helpers/settings"
-import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
@@ -42,6 +41,7 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { emitReposition } from "../../redux/slices/droneConnectionSlice"
 import { queueInfoNotification } from "../../redux/slices/notificationSlice"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
@@ -150,14 +150,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       setPoints({ x, y })
     }
   }, [contextMenuPositionCalculationInfo])
-
-  function reposition() {
-    socket.emit("reposition", {
-      lat: clickedGpsCoords.lat,
-      lon: clickedGpsCoords.lng,
-      alt: repositionAltitude,
-    })
-  }
 
   function zoomToDrone() {
     if (passedRef.current && position) {
@@ -280,12 +272,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             <HomeMarker
               lat={intToCoord(homePosition.lat)}
               lon={intToCoord(homePosition.lon)}
-              lineTo={
-                filteredMissionItems.length > 0 && [
-                  intToCoord(filteredMissionItems[0].y),
-                  intToCoord(filteredMissionItems[0].x),
-                ]
-              }
             />
           )}
 
@@ -294,7 +280,13 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             className="flex flex-col space-y-2"
             onSubmit={(e) => {
               e.preventDefault()
-              reposition()
+              dispatch(
+                emitReposition({
+                  lat: clickedGpsCoords.lat,
+                  lon: clickedGpsCoords.lng,
+                  alt: repositionAltitude,
+                }),
+              )
               close()
             }}
           >

@@ -415,6 +415,7 @@ const missionInfoSlice = createSlice({
     emitWriteCurrentMission: () => {},
     emitImportMissionFromFile: () => {},
     emitExportMissionToFile: () => {},
+    emitControlMission: () => {},
   },
   selectors: {
     selectCurrentMission: (state) => state.currentMission,
@@ -608,6 +609,7 @@ export const {
   emitExportMissionToFile,
   setShouldFetchAllMissionsOnDashboard,
   setDashboardMissionFetchingNotificationId,
+  emitControlMission,
 } = missionInfoSlice.actions
 
 export default missionInfoSlice

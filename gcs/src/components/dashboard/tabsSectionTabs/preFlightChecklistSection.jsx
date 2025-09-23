@@ -7,20 +7,27 @@
 import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Tabs, Accordion, Button, Modal, TextInput } from "@mantine/core"
+import { Accordion, Button, Modal, Tabs, TextInput } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
-import { showErrorNotification } from "../../../helpers/notification.js"
+
+// Redux
+import { useDispatch } from "react-redux"
+import { queueErrorNotification } from "../../../redux/slices/notificationSlice.js"
+
+// Other
+import { AddCommand } from "../../spotlight/commandHandler.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
-import { AddCommand } from "../../spotlight/commandHandler.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function PreFlightChecklistTab({ tabPadding }) {
+  const dispatch = useDispatch()
+
   const [preFlightChecklistItems, setPreFlightChecklistItems] = useLocalStorage(
     { key: "preFlightCheckList", defaultValue: [] },
   )
@@ -62,7 +69,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     }
 
     // Show error message
-    showErrorNotification("Name cannot be empty")
+    dispatch(queueErrorNotification("Name cannot be empty"))
   }
   useEffect(() => {
     AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))

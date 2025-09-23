@@ -6,19 +6,18 @@
   each mode.
 */
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useSelector } from "react-redux"
+import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
 
 // 3rd party imports
 import { Button, LoadingOverlay, Select } from "@mantine/core"
-import {
-  useListState,
-  useLocalStorage,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useListState, useSessionStorage } from "@mantine/hooks"
 
 // Helper javascript files
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
+  getFlightModeMap,
   MAV_AUTOPILOT_INVALID,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../helpers/mavlinkConstants"
@@ -43,16 +42,6 @@ export default function FlightModes() {
     defaultValue: false,
   })
 
-  function getCurrentFlightMap(currentFlightState) {
-    if (currentFlightState === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP
-    } else if (currentFlightState === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP
-    }
-
-    return {}
-  }
-
   const [flightModes, flightModesHandler] = useListState([
     "UNKNOWN",
     "UNKNOWN",
@@ -63,19 +52,21 @@ export default function FlightModes() {
   ])
   const [flightModeChannel, setFlightModeChannel] = useState("UNKNOWN")
   const [currentFlightMode, setCurrentFlightMode] = useState("UNKNOWN")
-  const [aircraftType] = useLocalStorage({
-    key: "aircraftType",
-  })
   const [currentPwmValue, setCurrentPwmValue] = useState(0)
   const [refreshingFlightModeData, setRefreshingFlightModeData] =
     useState(false)
 
-  const flightModesSelectValuesMap = Object.keys(
-    getCurrentFlightMap(aircraftType),
-  ).map((mappedFlightModeNumber) => ({
-    value: mappedFlightModeNumber.toString(),
-    label: getCurrentFlightMap(aircraftType)[mappedFlightModeNumber],
-  }))
+  const aircraftType = useSelector(selectAircraftTypeString)
+
+  const flightModeSelectDataMap = useMemo(() => {
+    const flightModeMap = getFlightModeMap(aircraftType)
+    return Object.keys(flightModeMap).map((key) => {
+      return {
+        value: key,
+        label: flightModeMap[key],
+      }
+    })
+  }, [aircraftType])
 
   useEffect(() => {
     if (!connected) {
@@ -182,7 +173,7 @@ export default function FlightModes() {
                 description={`PWM: ${FLIGHT_MODE_PWM_VALUES[idx][0]}${FLIGHT_MODE_PWM_VALUES[idx][1] === undefined ? "+" : `-${FLIGHT_MODE_PWM_VALUES[idx][1]}`}`}
                 value={flightModeNumber.toString()}
                 onChange={(value) => changeFlightMode(idx, value)}
-                data={flightModesSelectValuesMap}
+                data={flightModeSelectDataMap}
                 classNames={
                   isFlightModeActive(idx) ? { input: "!text-lime-400" } : {}
                 }

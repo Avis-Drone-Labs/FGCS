@@ -34,7 +34,10 @@ import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import {
+  selectConnectedToDrone,
+  selectCurrentPage,
+} from "./redux/slices/droneConnectionSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -122,7 +125,7 @@ export default function Missions() {
   const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
     "Mission progress update",
   )
-  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const currentPage = useSelector(selectCurrentPage)
   const mapRef = useRef()
 
   const [plannedHomeLatInput, setPlannedHomeLatInput] = useState(

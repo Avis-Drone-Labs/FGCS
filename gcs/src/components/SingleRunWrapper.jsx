@@ -16,23 +16,26 @@ import {
 import { Octokit } from "octokit"
 import semverGt from "semver/functions/gt"
 
-// Custom helpers
-import { showErrorNotification } from "../helpers/notification.js"
+// Redux
+import { useDispatch } from "react-redux"
+import { queueErrorNotification } from "../redux/slices/notificationSlice.js"
+
+// Other
+import { useSettings } from "../helpers/settings.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { useSettings } from "../helpers/settings.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const octokit = new Octokit({})
 
 export default function SingleRunWrapper({ children }) {
+  const dispatch = useDispatch()
   const [opened, { open, close }] = useDisclosure(false)
   const [fgcsOutOfDateInfo, setFgcsOutOfDateInfo] = useState(null)
-  // eslint-disable-next-line no-unused-vars
-  const [outOfDate, setOutOfDate] = useSessionStorage({
+  const [, setOutOfDate] = useSessionStorage({
     key: "outOfDate",
     defaultValue: false,
   })
@@ -76,8 +79,10 @@ export default function SingleRunWrapper({ children }) {
           setOutOfDate(true)
         }
       } else {
-        showErrorNotification(
-          "Failed to check for updates. Please check your internet connection.",
+        dispatch(
+          queueErrorNotification(
+            "Failed to check for updates. Please check your internet connection and try again later.",
+          ),
         )
       }
     }

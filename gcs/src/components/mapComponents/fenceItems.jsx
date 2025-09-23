@@ -16,13 +16,13 @@ import "maplibre-gl/dist/maplibre-gl.css"
 // Component imports
 
 // Tailwind styling
-import { useSessionStorage } from "@mantine/hooks"
 import { circle } from "@turf/turf"
 import { Layer, Source } from "react-map-gl"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { FENCE_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import { selectActiveTab } from "../../redux/slices/missionSlice"
 import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
@@ -46,7 +46,7 @@ const circleCommands = [
 ]
 
 export default function FenceItems({ fenceItems }) {
-  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const currentPage = useSelector(selectCurrentPage)
   const editable =
     useSelector(selectActiveTab) === "fence" && currentPage === "missions"
 

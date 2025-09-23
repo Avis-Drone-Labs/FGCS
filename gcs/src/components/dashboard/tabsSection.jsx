@@ -17,13 +17,13 @@ import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
 import { useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 import {
-  selectAircraftType,
+  selectAircraftTypeString,
   selectNavController,
 } from "../../redux/slices/droneInfoSlice"
 
 export default function TabsSection({ currentFlightModeNumber }) {
   const connected = useSelector(selectConnectedToDrone)
-  const aircraftType = useSelector(selectAircraftType)
+  const aircraftType = useSelector(selectAircraftTypeString)
   const navControllerOutputData = useSelector(selectNavController)
   const tabPadding = "pt-6 pb-4"
 

@@ -9,16 +9,21 @@ import { Button, Tabs } from "@mantine/core"
 
 // Mavlink
 import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
+  getFlightModeMap,
   MISSION_STATES,
-  PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../../helpers/mavlinkConstants"
 
-// Helper
-import { socket } from "../../../helpers/socket"
+import { useMemo } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import {
+  emitGetCurrentMissionAll,
+  emitSetCurrentFlightMode,
+} from "../../../redux/slices/droneConnectionSlice"
+import {
+  emitControlMission,
+  selectCurrentMission,
+} from "../../../redux/slices/missionSlice"
 import { NoConnectionMsg } from "../tabsSection"
-import { useSelector } from "react-redux"
-import { selectCurrentMission } from "../../../redux/slices/missionSlice"
 
 export default function MissionTabsSection({
   connected,
@@ -76,31 +81,22 @@ const MissionInfo = ({ navControllerOutputData }) => {
 }
 
 const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
+  const dispatch = useDispatch()
   // this is repeated code, will be updated after socket functionality is changed
   function setNewFlightMode(modeNumber) {
     if (modeNumber === null || modeNumber === currentFlightModeNumber) {
       return
     }
-    socket.emit("set_current_flight_mode", { newFlightMode: modeNumber })
+    dispatch(emitSetCurrentFlightMode({ newFlightMode: modeNumber }))
   }
 
-  function controlMission(action) {
-    socket.emit("control_mission", { action })
-  }
-
-  function getFlightModeMap() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP
-    }
-
-    return {}
-  }
-
-  function readCurrentMission() {
-    socket.emit("get_current_mission_all")
-  }
+  const autoFlightModeNumber = useMemo(() => {
+    const flightModeMap = getFlightModeMap(aircraftType)
+    const key = Object.keys(flightModeMap).find(
+      (key) => flightModeMap[key] === "Auto",
+    )
+    return key !== undefined ? parseInt(key) : null
+  }, [aircraftType])
 
   return (
     <>
@@ -108,15 +104,10 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
         {/** Auto Mode */}
         <Button
           onClick={() => {
-            setNewFlightMode(
-              parseInt(
-                Object.keys(getFlightModeMap()).find(
-                  (key) => getFlightModeMap()[key] === "Auto",
-                ),
-              ),
-            )
+            setNewFlightMode(autoFlightModeNumber)
           }}
           className="grow"
+          disabled={autoFlightModeNumber === null}
         >
           Auto mode
         </Button>
@@ -124,7 +115,7 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
         {/** Start Mission */}
         <Button
           onClick={() => {
-            controlMission("start")
+            dispatch(emitControlMission({ action: "start" }))
           }}
           className="grow"
         >
@@ -134,14 +125,19 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
         {/** Restart Mission */}
         <Button
           onClick={() => {
-            controlMission("restart")
+            dispatch(emitControlMission({ action: "restart" }))
           }}
           className="grow"
         >
           Restart Mission
         </Button>
 
-        <Button onClick={readCurrentMission} className="grow">
+        <Button
+          onClick={() => {
+            dispatch(emitGetCurrentMissionAll())
+          }}
+          className="grow"
+        >
           Read mission
         </Button>
       </div>

@@ -3,7 +3,6 @@
 */
 
 // Component imports
-import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
 import { useSessionStorage } from "@mantine/hooks"
@@ -20,7 +19,6 @@ export default function HomeMarker({
   lat,
   lon,
   updateMissionHomePositionDragCb,
-  lineTo = null,
 }) {
   const [currentPage] = useSessionStorage({ key: "currentPage" })
   const activeTab = useSelector(selectActiveTab)
@@ -42,12 +40,6 @@ export default function HomeMarker({
             : null
         }
       />
-      {lineTo !== null && (
-        <DrawLineCoordinates
-          coordinates={[[lon, lat], lineTo]}
-          colour={tailwindColors.yellow[400]}
-        />
-      )}
     </>
   )
 }

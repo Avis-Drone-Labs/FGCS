@@ -6,7 +6,6 @@
 import { useEffect } from "react"
 
 // 3rd Party Imports
-import { useSessionStorage } from "@mantine/hooks"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
@@ -15,7 +14,6 @@ import {
   showInfoNotification,
   showSuccessNotification,
 } from "../helpers/notification"
-import { socket } from "../helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -38,24 +36,6 @@ export default function Layout({ children, currentPage }) {
   const notificationQueue = useSelector(selectNotificationQueue)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
 
-  // Change current page, there's a single comma because javascript has weird syntax
-  // we don't care about the first variable.
-  const [, setCurrentPageInMemory] = useSessionStorage({
-    key: "currentPage",
-    defaultValue: "dashboard",
-  })
-
-  // Handle drone errors
-  useEffect(() => {
-    socket.on("drone_error", (err) => {
-      showErrorNotification(err.message)
-    })
-
-    return () => {
-      socket.off("drone_error")
-    }
-  }, [])
-
   // Show queued notifications
   useEffect(() => {
     if (notificationQueue.length !== 0) {
@@ -73,11 +53,10 @@ export default function Layout({ children, currentPage }) {
 
   // Handle switching to states
   useEffect(() => {
-    setCurrentPageInMemory(currentPage)
+    dispatch(emitSetState(currentPage))
 
     if (!connectedToDrone) return
 
-    dispatch(emitSetState({ state: currentPage }))
     if (currentPage.toLowerCase() == "dashboard") {
       dispatch(emitGetCurrentMissionAll())
       dispatch(emitGetHomePosition()) // use actual home position

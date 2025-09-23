@@ -4,25 +4,28 @@
  */
 
 // Native
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 // Mantine
 import { Button, NumberInput, Popover, Select, Tabs } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
 // Mavlink
-import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
-  PLANE_MODES_FLIGHT_MODE_MAP,
-} from "../../../helpers/mavlinkConstants"
+import { getFlightModeMap } from "../../../helpers/mavlinkConstants"
 
-// Helper
 import { useDispatch, useSelector } from "react-redux"
-import { socket } from "../../../helpers/socket"
+import {
+  emitArmDisarm,
+  emitLand,
+  emitSetCurrentFlightMode,
+  emitSetLoiterRadius,
+  emitTakeoff,
+} from "../../../redux/slices/droneConnectionSlice"
 import {
   selectArmed,
   setLoiterRadius,
 } from "../../../redux/slices/droneInfoSlice"
+
 import { NoConnectionMsg } from "../tabsSection"
 
 export default function ActionTabsSection({
@@ -39,7 +42,7 @@ export default function ActionTabsSection({
           <NoConnectionMsg message="No actions are available right now. Connect a drone to begin" />
         ) : (
           <div className="flex flex-col gap-y-2">
-            {aircraftType === 1 && (
+            {aircraftType === "Plane" && (
               <LoiterRadiusAction currentLoiterRadius={currentLoiterRadius} />
             )}
             {/** Flight Mode */}
@@ -57,6 +60,7 @@ export default function ActionTabsSection({
 }
 
 const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
+  const dispatch = useDispatch()
   const [newFlightModeNumber, setNewFlightModeNumber] = useState(3) // Default to AUTO mode
 
   // flight mode handling
@@ -64,18 +68,18 @@ const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
     if (modeNumber === null || modeNumber === currentFlightModeNumber) {
       return
     }
-    socket.emit("set_current_flight_mode", { newFlightMode: modeNumber })
+    dispatch(emitSetCurrentFlightMode({ newFlightMode: modeNumber }))
   }
 
-  function getFlightModeMap() {
-    if (aircraftType === 1) {
-      return PLANE_MODES_FLIGHT_MODE_MAP
-    } else if (aircraftType === 2) {
-      return COPTER_MODES_FLIGHT_MODE_MAP
-    }
-
-    return {}
-  }
+  const flightModeSelectDataMap = useMemo(() => {
+    const flightModeMap = getFlightModeMap(aircraftType)
+    return Object.keys(flightModeMap).map((key) => {
+      return {
+        value: key,
+        label: flightModeMap[key],
+      }
+    })
+  }, [aircraftType])
 
   return (
     <>
@@ -86,12 +90,7 @@ const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
             onChange={(value) => {
               setNewFlightModeNumber(parseInt(value))
             }}
-            data={Object.keys(getFlightModeMap()).map((key) => {
-              return {
-                value: key,
-                label: getFlightModeMap()[key],
-              }
-            })}
+            data={flightModeSelectDataMap}
             className="grow"
           />
 
@@ -108,6 +107,7 @@ const FlightModeAction = ({ aircraftType, currentFlightModeNumber }) => {
 }
 
 const ArmTakeoffLandAction = () => {
+  const dispatch = useDispatch()
   const [takeoffAltitude, setTakeoffAltitude] = useLocalStorage({
     key: "takeoffAltitude",
     defaultValue: 10,
@@ -116,15 +116,7 @@ const ArmTakeoffLandAction = () => {
 
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
-    socket.emit("arm_disarm", { arm: arm, force: force })
-  }
-
-  function takeoff() {
-    socket.emit("takeoff", { alt: takeoffAltitude })
-  }
-
-  function land() {
-    socket.emit("land")
+    dispatch(emitArmDisarm({ arm: arm, force: force }))
   }
 
   return (
@@ -156,7 +148,7 @@ const ArmTakeoffLandAction = () => {
             />
             <Button
               onClick={() => {
-                takeoff()
+                dispatch(emitTakeoff({ alt: takeoffAltitude }))
               }}
             >
               Takeoff
@@ -167,7 +159,7 @@ const ArmTakeoffLandAction = () => {
         {/** Land Button */}
         <Button
           onClick={() => {
-            land()
+            dispatch(emitLand())
           }}
           className="grow"
         >
@@ -190,7 +182,7 @@ const LoiterRadiusAction = ({ currentLoiterRadius }) => {
     if (radius === null || radius === currentLoiterRadius || radius < 0) {
       return
     }
-    socket.emit("set_loiter_radius", { radius })
+    dispatch(emitSetLoiterRadius(radius))
     dispatch(setLoiterRadius(radius))
   }
 

@@ -5,8 +5,8 @@
 // Component imports
 import MarkerPin from "./markerPin"
 
-import { useSessionStorage } from "@mantine/hooks"
 import { useSelector } from "react-redux"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import { selectActiveTab } from "../../redux/slices/missionSlice"
 
 // Tailwind styling
@@ -20,7 +20,7 @@ export default function HomeMarker({
   lon,
   updateMissionHomePositionDragCb,
 }) {
-  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const currentPage = useSelector(selectCurrentPage)
   const activeTab = useSelector(selectActiveTab)
 
   return (

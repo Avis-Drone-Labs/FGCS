@@ -30,7 +30,6 @@ import { AddCommand } from "./spotlight/commandHandler.js"
 
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
-import { showErrorNotification } from "../helpers/notification.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -46,6 +45,7 @@ import {
   selectConnectionModal,
   selectConnectionStatus,
   selectConnectionType,
+  selectCurrentPage,
   selectFetchingComPorts,
   selectIp,
   selectNetworkType,
@@ -65,10 +65,11 @@ import {
 import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 
 // Styling imports
+import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { useEffect } from "react"
+import { showErrorNotification } from "../helpers/notification.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
@@ -93,10 +94,7 @@ export default function Navbar() {
 
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
-  const [currentPage] = useSessionStorage({
-    key: "currentPage",
-    defaultValue: "dashboard",
-  })
+  const currentPage = useSelector(selectCurrentPage)
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {

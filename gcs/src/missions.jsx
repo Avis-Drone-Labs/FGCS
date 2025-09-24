@@ -34,12 +34,16 @@ import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import {
+  selectConnectedToDrone,
+  selectCurrentPage,
+} from "./redux/slices/droneConnectionSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
 import UpdatePlannedHomePositionModal from "./components/missions/updatePlannedHomePositionModal"
+import { showErrorNotification } from "./helpers/notification"
 import {
   emitExportMissionToFile,
   emitGetCurrentMission,
@@ -61,7 +65,6 @@ import {
   setMissionProgressModal,
   setPlannedHomePosition,
 } from "./redux/slices/missionSlice"
-import { queueErrorNotification } from "./redux/slices/notificationSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -122,7 +125,7 @@ export default function Missions() {
   const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
     "Mission progress update",
   )
-  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const currentPage = useSelector(selectCurrentPage)
   const mapRef = useRef()
 
   const [plannedHomeLatInput, setPlannedHomeLatInput] = useState(
@@ -186,7 +189,7 @@ export default function Missions() {
 
   function createPlannedHomePositionItem() {
     if (!plannedHomePosition) {
-      dispatch(queueErrorNotification("Planned home position is not set"))
+      showErrorNotification("Planned home position is not set")
       return
     }
 

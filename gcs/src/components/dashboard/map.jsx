@@ -29,7 +29,6 @@ import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 import { useSettings } from "../../helpers/settings"
-import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
@@ -42,7 +41,8 @@ import useContextMenu from "../mapComponents/useContextMenu"
 import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-import { queueInfoNotification } from "../../redux/slices/notificationSlice"
+import { showInfoNotification } from "../../helpers/notification"
+import { emitReposition } from "../../redux/slices/droneConnectionSlice"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -119,7 +119,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   }, [gpsData])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItems.missionItems))
   }, [missionItems])
 
   useEffect(() => {
@@ -150,14 +150,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       setPoints({ x, y })
     }
   }, [contextMenuPositionCalculationInfo])
-
-  function reposition() {
-    socket.emit("reposition", {
-      lat: clickedGpsCoords.lat,
-      lon: clickedGpsCoords.lng,
-      alt: repositionAltitude,
-    })
-  }
 
   function zoomToDrone() {
     if (passedRef.current && position) {
@@ -245,12 +237,12 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             />
           )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems missionItems={missionItems.missionItems} />
 
-        <FenceItems fenceItems={missionItems.fence_items} />
+        <FenceItems fenceItems={missionItems.fenceItems} />
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {missionItems.rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}
@@ -280,12 +272,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             <HomeMarker
               lat={intToCoord(homePosition.lat)}
               lon={intToCoord(homePosition.lon)}
-              lineTo={
-                filteredMissionItems.length > 0 && [
-                  intToCoord(filteredMissionItems[0].y),
-                  intToCoord(filteredMissionItems[0].x),
-                ]
-              }
             />
           )}
 
@@ -294,7 +280,13 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             className="flex flex-col space-y-2"
             onSubmit={(e) => {
               e.preventDefault()
-              reposition()
+              dispatch(
+                emitReposition({
+                  lat: clickedGpsCoords.lat,
+                  lon: clickedGpsCoords.lng,
+                  alt: repositionAltitude,
+                }),
+              )
               close()
             }}
           >
@@ -336,7 +328,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
                 clipboard.copy(
                   `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
                 )
-                dispatch(queueInfoNotification("Copied to clipboard"))
+                showInfoNotification("Copied to clipboard")
               }}
             >
               <div className="w-full flex justify-between gap-2">

@@ -1,4 +1,5 @@
 import {
+  emitArmDisarm,
   emitConnectToDrone,
   emitDisconnectFromDrone,
   emitGetComPorts,
@@ -6,15 +7,23 @@ import {
   emitGetHomePosition,
   emitGetLoiterRadius,
   emitIsConnectedToDrone,
+  emitLand,
+  emitReposition,
+  emitSetCurrentFlightMode,
+  emitSetLoiterRadius,
   emitSetState,
-  setState,
+  emitTakeoff,
+  setCurrentPage,
 } from "../slices/droneConnectionSlice"
 import {
+  emitControlMission,
   emitExportMissionToFile,
   emitGetCurrentMission,
   emitGetTargetInfo,
   emitImportMissionFromFile,
   emitWriteCurrentMission,
+  setShouldFetchAllMissionsOnDashboard,
+  showDashboardMissionFetchingNotificationThunk,
 } from "../slices/missionSlice"
 import {
   emitRebootAutopilot,
@@ -49,8 +58,12 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetState,
       callback: () => {
-        store.dispatch(setState(action.payload))
-        socket.socket.emit("set_state", action.payload)
+        store.dispatch(setCurrentPage(action.payload))
+        const storeState = store.getState()
+        const isDroneConnected = storeState.droneConnection.connected
+        if (isDroneConnected) {
+          socket.socket.emit("set_state", { state: action.payload })
+        }
       },
     },
     {
@@ -59,11 +72,54 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitGetCurrentMissionAll,
-      callback: () => socket.socket.emit("get_current_mission_all"),
+      callback: () => {
+        socket.socket.emit("get_current_mission_all")
+        store.dispatch(showDashboardMissionFetchingNotificationThunk())
+      },
+    },
+    {
+      emitter: emitSetLoiterRadius,
+      callback: () =>
+        socket.socket.emit("set_loiter_radius", {
+          radius: action.payload,
+        }),
     },
     {
       emitter: emitGetLoiterRadius,
       callback: () => socket.socket.emit("get_loiter_radius"),
+    },
+    {
+      emitter: emitReposition,
+      callback: () =>
+        socket.socket.emit("reposition", {
+          lat: action.payload.lat,
+          lon: action.payload.lon,
+          alt: action.payload.alt,
+        }),
+    },
+    {
+      emitter: emitArmDisarm,
+      callback: () =>
+        socket.socket.emit("arm_disarm", {
+          arm: action.payload.arm,
+          force: action.payload.force,
+        }),
+    },
+    {
+      emitter: emitTakeoff,
+      callback: () =>
+        socket.socket.emit("takeoff", { alt: action.payload.alt }),
+    },
+    {
+      emitter: emitLand,
+      callback: () => socket.socket.emit("land"),
+    },
+    {
+      emitter: emitSetCurrentFlightMode,
+      callback: () =>
+        socket.socket.emit("set_current_flight_mode", {
+          newFlightMode: action.payload.newFlightMode,
+        }),
     },
 
     /*
@@ -91,6 +147,7 @@ export function handleEmitters(socket, store, action) {
           type: action.payload.type,
           items: action.payload.items,
         })
+        store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
       },
     },
     {
@@ -109,6 +166,20 @@ export function handleEmitters(socket, store, action) {
           type: action.payload.type,
           file_path: action.payload.file_path,
           items: action.payload.items,
+        })
+      },
+    },
+    {
+      emitter: emitControlMission,
+      callback: () => {
+        const controlAction = action.payload.action
+        if (!["start", "restart"].includes(controlAction))
+          return console.error(
+            `Invalid control mission action, got ${controlAction}`,
+          )
+
+        socket.socket.emit("control_mission", {
+          action: controlAction,
         })
       },
     },

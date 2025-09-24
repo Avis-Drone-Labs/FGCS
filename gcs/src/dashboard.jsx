@@ -195,8 +195,8 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconGps />}
-            value={`(${lat !== undefined ? lat.toFixed(6) : 0}, ${
-              lon !== undefined ? lon.toFixed(6) : 0
+            value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${
+              lon !== undefined ? lon.toFixed(7) : 0
             })`}
             tooltip="GPS (lat, lon)"
           />

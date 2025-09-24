@@ -10,10 +10,7 @@ import {
 // drone actions
 import {
   emitGetComPorts,
-  emitGetHomePosition,
-  emitGetLoiterRadius,
   emitIsConnectedToDrone,
-  emitSetState,
   setComPorts,
   setConnected,
   setConnecting,
@@ -26,6 +23,10 @@ import {
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
   setAttitudeData,
@@ -46,6 +47,7 @@ import {
 } from "../slices/droneInfoSlice"
 import {
   addIdToItem,
+  closeDashboardMissionFetchingNotificationThunk,
   setCurrentMission,
   setCurrentMissionItems,
   setDrawingFenceItems,
@@ -53,16 +55,12 @@ import {
   setDrawingRallyItems,
   setMissionProgressData,
   setMissionProgressModal,
+  setShouldFetchAllMissionsOnDashboard,
   setTargetInfo,
   setUnwrittenChanges,
   setUpdatePlannedHomePositionFromLoadData,
   setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
-import {
-  queueErrorNotification,
-  queueNotification,
-  queueSuccessNotification,
-} from "../slices/notificationSlice"
 import {
   setAutoPilotRebootModalOpen,
   setFetchingVars,
@@ -90,6 +88,7 @@ const SocketEvents = Object.freeze({
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
+  onDroneError: "drone_error",
   onArmDisarm: "arm_disarm",
   onSetCurrentFlightMode: "set_current_flight_mode_result",
   onNavResult: "nav_result",
@@ -239,7 +238,7 @@ const socketMiddleware = (store) => {
         // Flags an error with the com port
         socket.socket.on("connection_error", (msg) => {
           console.log("Connection error: " + msg.message)
-          store.dispatch(queueErrorNotification(msg.message))
+          showErrorNotification(msg.message)
           store.dispatch(setConnecting(false))
           store.dispatch(setConnected(false))
         })
@@ -253,29 +252,16 @@ const socketMiddleware = (store) => {
         socket.socket.on("connected_to_drone", (msg) => {
           store.dispatch(setDroneAircraftType(msg.aircraft_type)) // There are two aircraftTypes, make sure to not use FLA one haha :D
           if (msg.aircraft_type !== 1 && msg.aircraft_type !== 2) {
-            store.dispatch(
-              queueErrorNotification(
-                "Aircraft not of type quadcopter or plane",
-              ),
-            )
+            showErrorNotification("Aircraft not of type quadcopter or plane")
           }
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          const currentState = store.getState().droneConnection
-          store.dispatch(emitSetState(currentState))
-
-          if (["dashboard", "missions"].includes(currentState.state)) {
-            store.dispatch(emitGetHomePosition()) // fetch the actual home position of the drone
-            if (msg.aircraft_type === 1) {
-              store.dispatch(emitGetLoiterRadius())
-            }
-          }
-
           store.dispatch(setGuidedModePinData({ lat: 0, lon: 0, alt: 0 }))
           store.dispatch(setRebootData({}))
           store.dispatch(setAutoPilotRebootModalOpen(false))
+          store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
         })
 
         // Link stats
@@ -288,42 +274,37 @@ const socketMiddleware = (store) => {
     if (setConnected.match(action)) {
       // Setup socket listeners on drone connection
       if (action.payload) {
+        socket.socket.on(DroneSpecificSocketEvents.onDroneError, (msg) => {
+          showErrorNotification(msg.message)
+        })
+
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
-          if (!msg.success)
-            store.dispatch(
-              queueNotification({ type: "error", message: msg.message }),
-            )
+          if (!msg.success) showErrorNotification(msg.message)
         })
 
         socket.socket.on(
           DroneSpecificSocketEvents.onSetCurrentFlightMode,
           (msg) => {
-            store.dispatch(
-              queueNotification({
-                type: msg.success ? "success" : "error",
-                message: msg.message,
-              }),
-            )
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
           },
         )
 
         socket.socket.on(DroneSpecificSocketEvents.onNavResult, (msg) => {
-          store.dispatch(
-            queueNotification({
-              type: msg.success ? "success" : "error",
-              message: msg.message,
-            }),
-          )
+          msg.success
+            ? showSuccessNotification(msg.message)
+            : showErrorNotification(msg.message)
         })
 
         socket.socket.on(
           DroneSpecificSocketEvents.onHomePositionResult,
           (msg) => {
-            store.dispatch(
-              msg.success
-                ? setHomePosition(msg.data) // use actual home position
-                : queueNotification({ type: "error", message: msg.message }),
-            )
+            if (msg.success) {
+              store.dispatch(setHomePosition(msg.data)) // use actual home position
+            } else {
+              showErrorNotification(msg.message)
+            }
           },
         )
 
@@ -331,7 +312,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setRebootData(msg))
           if (msg.success) {
             store.dispatch(setAutoPilotRebootModalOpen(false))
-            store.dispatch(queueSuccessNotification(msg.message))
+            showSuccessNotification(msg.message)
             store.dispatch(setRebootData({}))
           }
         })
@@ -356,7 +337,7 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(ParamSpecificSocketEvents.onParamSetSuccess, (msg) => {
-          store.dispatch(queueSuccessNotification(msg.message))
+          showSuccessNotification(msg.message)
           store.dispatch(setModifiedParams([]))
           // Update the param in the params list also
           for (let param of msg.data) {
@@ -365,7 +346,7 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
-          store.dispatch(queueErrorNotification(msg.message))
+          showErrorNotification(msg.message)
           store.dispatch(setFetchingVars(false))
         })
 
@@ -373,10 +354,10 @@ const socketMiddleware = (store) => {
           DroneSpecificSocketEvents.onNavRepositionResult,
           (msg) => {
             if (msg.success) {
-              store.dispatch(queueSuccessNotification(msg.message))
+              showSuccessNotification(msg.message)
               store.dispatch(setGuidedModePinData(msg.data))
             } else {
-              store.dispatch(queueErrorNotification(msg.message))
+              showErrorNotification(msg.message)
             }
           },
         )
@@ -384,22 +365,20 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           DroneSpecificSocketEvents.onGetLoiterRadiusResult,
           (msg) => {
-            store.dispatch(
-              msg.success
-                ? setLoiterRadius(msg.data)
-                : queueNotification({ type: "error", message: msg.message }),
-            )
+            if (msg.success) {
+              store.dispatch(setLoiterRadius(msg.data))
+            } else {
+              showErrorNotification(msg.message)
+            }
           },
         )
 
         socket.socket.on(
           DroneSpecificSocketEvents.onSetLoiterRadiusResult,
           (msg) => {
-            store.dispatch(
-              msg.success
-                ? queueNotification({ type: "success", message: msg.message })
-                : queueNotification({ type: "error", message: msg.message }),
-            )
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
           },
         )
 
@@ -409,7 +388,19 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMissionAll,
           (msg) => {
-            store.dispatch(setCurrentMissionItems(msg))
+            if (!msg.success) {
+              showErrorNotification(msg.message)
+            } else {
+              store.dispatch(
+                setCurrentMissionItems({
+                  missionItems: msg.mission_items,
+                  fenceItems: msg.fence_items,
+                  rallyItems: msg.rally_items,
+                }),
+              )
+              store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
+            }
+            store.dispatch(closeDashboardMissionFetchingNotificationThunk())
           },
         )
 
@@ -491,16 +482,9 @@ const socketMiddleware = (store) => {
                 )
               }
 
-              store.dispatch(
-                queueNotification({
-                  type: "success",
-                  message: `${msg.mission_type} read successfully`,
-                }),
-              )
+              showSuccessNotification(`${msg.mission_type} read successfully`)
             } else {
-              store.dispatch(
-                queueNotification({ type: "error", message: msg.message }),
-              )
+              showErrorNotification(msg.message)
             }
           },
         )
@@ -512,9 +496,7 @@ const socketMiddleware = (store) => {
 
             const storeState = store.getState()
             if (msg.success) {
-              store.dispatch(
-                queueNotification({ type: "success", message: msg.message }),
-              )
+              showSuccessNotification(msg.message)
               store.dispatch(
                 setUnwrittenChanges({
                   ...storeState.missionInfo.unwrittenChanges,
@@ -522,9 +504,7 @@ const socketMiddleware = (store) => {
                 }),
               )
             } else {
-              store.dispatch(
-                queueNotification({ type: "error", message: msg.message }),
-              )
+              showErrorNotification(msg.message)
             }
           },
         )
@@ -605,13 +585,9 @@ const socketMiddleware = (store) => {
                 )
               }
 
-              store.dispatch(
-                queueNotification({ type: "success", message: msg.message }),
-              )
+              showSuccessNotification(msg.message)
             } else {
-              store.dispatch(
-                queueNotification({ type: "error", message: msg.message }),
-              )
+              showErrorNotification(msg.message)
             }
           },
         )
@@ -619,12 +595,9 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           MissionSpecificSocketEvents.onMissionControlResult,
           (msg) => {
-            store.dispatch(
-              queueNotification({
-                type: msg.success ? "success" : "error",
-                message: msg.message,
-              }),
-            )
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
           },
         )
 
@@ -635,12 +608,9 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           MissionSpecificSocketEvents.onExportMissionResult,
           (msg) => {
-            store.dispatch(
-              queueNotification({
-                type: msg.success ? "success" : "error",
-                message: msg.message,
-              }),
-            )
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
           },
         )
 

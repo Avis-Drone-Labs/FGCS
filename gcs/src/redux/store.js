@@ -13,7 +13,6 @@ import droneConnectionSlice, {
   setWireless,
 } from "./slices/droneConnectionSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
-import notificationSlice from "./slices/notificationSlice"
 import paramsSlice from "./slices/paramsSlice"
 import statusTextSlice from "./slices/statusTextSlice"
 
@@ -24,7 +23,6 @@ const rootReducer = combineSlices(
   droneInfoSlice,
   missionInfoSlice,
   statusTextSlice,
-  notificationSlice,
   paramsSlice,
 )
 

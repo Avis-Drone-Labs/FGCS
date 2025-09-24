@@ -3,11 +3,10 @@
 */
 
 // Component imports
-import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
 
-import { useSessionStorage } from "@mantine/hooks"
 import { useSelector } from "react-redux"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import { selectActiveTab } from "../../redux/slices/missionSlice"
 
 // Tailwind styling
@@ -20,9 +19,8 @@ export default function HomeMarker({
   lat,
   lon,
   updateMissionHomePositionDragCb,
-  lineTo = null,
 }) {
-  const [currentPage] = useSessionStorage({ key: "currentPage" })
+  const currentPage = useSelector(selectCurrentPage)
   const activeTab = useSelector(selectActiveTab)
 
   return (
@@ -42,12 +40,6 @@ export default function HomeMarker({
             : null
         }
       />
-      {lineTo !== null && (
-        <DrawLineCoordinates
-          coordinates={[[lon, lat], lineTo]}
-          colour={tailwindColors.yellow[400]}
-        />
-      )}
     </>
   )
 }

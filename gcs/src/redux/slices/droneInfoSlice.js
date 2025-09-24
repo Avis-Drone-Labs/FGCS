@@ -62,6 +62,7 @@ const droneInfoSlice = createSlice({
       },
       lastGraphResultsMessage: false,
     },
+    gripperEnabled: false,
   },
   reducers: {
     setHeartbeatData: (state, action) => {
@@ -170,6 +171,14 @@ const droneInfoSlice = createSlice({
     setGuidedModePinData: (state, action) => {
       state.guidedModePinData = action.payload
     },
+    setGripperEnabled: (state, action) => {
+      if (action.payload !== state.gripperEnabled) {
+        state.gripperEnabled = action.payload
+      }
+    },
+
+    // Emits
+    emitGripperEnabled: () => {},
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -203,6 +212,7 @@ const droneInfoSlice = createSlice({
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
     selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
+    selectGripperEnabled: (state) => state.gripperEnabled
   },
 })
 
@@ -225,6 +235,10 @@ export const {
   setLastGraphMessage,
   setLoiterRadius,
   setGuidedModePinData,
+  setGripperEnabled,
+
+  // Emitters
+  emitGripperEnabled
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -298,6 +312,7 @@ export const {
   selectExtraDroneData,
   selectGraphValues,
   selectLastGraphMessage,
+  selectGripperEnabled
 } = droneInfoSlice.selectors
 
 export default droneInfoSlice

@@ -15,6 +15,7 @@ import {
   emitTakeoff,
   setCurrentPage,
 } from "../slices/droneConnectionSlice"
+import { emitGripperEnabled } from "../slices/droneInfoSlice"
 import {
   emitControlMission,
   emitExportMissionToFile,
@@ -200,6 +201,17 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetMultipleParams,
       callback: () => socket.socket.emit("set_multiple_params", action.payload),
+    },
+
+
+    /*
+      ==========
+      = CONFIG =
+      ==========
+    */
+    {
+      emitter: emitGripperEnabled,
+      callback: () => socket.socket.emit("gripper_enabled")
     },
   ]
 

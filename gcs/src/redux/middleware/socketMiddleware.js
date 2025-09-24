@@ -35,6 +35,7 @@ import {
   setExtraData,
   setGpsData,
   setGpsRawIntData,
+  setGripperEnabled,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -116,6 +117,12 @@ const MissionSpecificSocketEvents = Object.freeze({
   onCurrentMission: "current_mission",
   onTargetInfo: "target_info",
   onCurrentMissionProgress: "current_mission_progress",
+})
+
+const ConfigSpecificSocketEvents = Object.freeze({
+  onGripperEnabled: "gripper_enabled",
+  onSetGripperResult: "set_gripper_result",
+  onMotorTestResult: "motor_test_result"
 })
 
 const socketMiddleware = (store) => {
@@ -622,6 +629,40 @@ const socketMiddleware = (store) => {
         )
 
         /*
+          ==========
+          = CONFIG =
+          ==========
+        */
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onGripperEnabled,
+          (msg) => {
+            store.dispatch(setGripperEnabled(msg))
+          }
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          }
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onMotorTestResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          }
+        )
+
+        /*
           Generic Drone Data
         */
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
@@ -690,6 +731,9 @@ const socketMiddleware = (store) => {
           socket.socket.off(event),
         )
         Object.values(MissionSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
+        Object.values(ConfigSpecificSocketEvents).map((event) => 
           socket.socket.off(event),
         )
       }

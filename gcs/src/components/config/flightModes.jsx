@@ -7,12 +7,15 @@
 */
 // Base imports
 import { useEffect, useMemo, useState } from "react"
-import { useSelector } from "react-redux"
 import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
 
 // 3rd party imports
 import { Button, LoadingOverlay, Select } from "@mantine/core"
-import { useListState, useSessionStorage } from "@mantine/hooks"
+import { useListState } from "@mantine/hooks"
+
+// Redux
+import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 
 // Helper javascript files
 import {
@@ -37,10 +40,7 @@ const FLIGHT_MODE_PWM_VALUES = [
 ]
 
 export default function FlightModes() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+  const connected = useSelector(selectConnectedToDrone)
 
   const [flightModes, flightModesHandler] = useListState([
     "UNKNOWN",

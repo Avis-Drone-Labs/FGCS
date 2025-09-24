@@ -12,13 +12,16 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-// Custom helper function
-import { socket } from "../../helpers/socket"
+// Redux
+import { useDispatch } from "react-redux"
+import { emitSetGripper } from "../../redux/slices/configSlice"
 
 export default function Gripper() {
+  const dispatch = useDispatch()
+  
   // Set gripper config values
   function setGripper(action) {
-    socket.emit("set_gripper", action)
+    dispatch(emitSetGripper(action))
   }
 
   return (

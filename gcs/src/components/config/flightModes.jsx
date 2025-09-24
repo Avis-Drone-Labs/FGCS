@@ -15,12 +15,12 @@ import { Button, LoadingOverlay, Select } from "@mantine/core"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { emitSetState, selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+import { emitGetFlightModeConfig, emitRefreshFlightModeData, emitSetFlightMode, selectFlightModeChannel, selectFlightModesList, selectPwmValue, selectRefreshingFlightModeData, setRefreshingFlightModeData } from "../../redux/slices/configSlice"
 
 // Helper javascript files
 import {
   getFlightModeMap,
 } from "../../helpers/mavlinkConstants"
-import { emitGetFlightModeConfig, emitRefreshFlightModeData, emitSetFlightMode, selectFlightModeChannel, selectFlightModesList, selectPwmValue, selectRefreshingFlightModeData, setRefreshingFlightModeData } from "../../redux/slices/configSlice"
 
 const FLIGHT_MODE_PWM_VALUES = [
   [0, 1230],

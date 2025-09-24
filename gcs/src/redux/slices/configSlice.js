@@ -42,7 +42,8 @@ const configSlice = createSlice({
     emitGripperEnabled: () => {},
     emitGetFlightModeConfig: () => {},
     emitSetFlightMode: () => {},
-    emitRefreshFlightModeData: () => {}
+    emitRefreshFlightModeData: () => {},
+    emitSetGripper: () => {}
   },
   selectors: {
     selectGripperEnabled: (state) => state.gripperEnabled,
@@ -63,6 +64,7 @@ export const {
   emitGetFlightModeConfig,
   emitSetFlightMode,
   emitRefreshFlightModeData,
+  emitSetGripper,
 } = configSlice.actions
 
 export const {

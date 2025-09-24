@@ -1,4 +1,4 @@
-import { emitGetFlightModeConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode } from "../slices/configSlice"
+import { emitGetFlightModeConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode, emitSetGripper } from "../slices/configSlice"
 import {
   emitArmDisarm,
   emitConnectToDrone,
@@ -227,6 +227,10 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitRefreshFlightModeData,
       callback: () => socket.socket.emit("refresh_flight_mode_data")
+    },
+    {
+      emitter: emitSetGripper,
+      callback: () => socket.socket.emit("set_gripper", action.payload)
     }
   ]
 

@@ -17,16 +17,11 @@ import Motortestpanel from "./components/config/motorTest"
 import RadioCalibration from "./components/config/radioCalibration"
 import Layout from "./components/layout"
 import NoDroneConnected from "./components/noDroneConnected"
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification"
-import { socket } from "./helpers/socket"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
-import { emitGripperEnabled, selectGripperEnabled } from "./redux/slices/droneInfoSlice"
+import { emitGripperEnabled, selectGripperEnabled } from "./redux/slices/configSlice"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"

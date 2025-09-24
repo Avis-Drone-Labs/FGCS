@@ -35,7 +35,6 @@ import {
   setExtraData,
   setGpsData,
   setGpsRawIntData,
-  setGripperEnabled,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -75,6 +74,7 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
+import { setGripperEnabled } from "../slices/configSlice.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events

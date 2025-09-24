@@ -20,6 +20,25 @@ const configSlice = createSlice({
     frameTypeName: null,
     frameClass: null,
     numberOfMotors: 4,
+    radioChannels: {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+      6: 0,
+      7: 0,
+      8: 0,
+      9: 0,
+      10: 0,
+      11: 0,
+      12: 0,
+      13: 0,
+      14: 0,
+      15: 0,
+      16: 0,
+    },
+    radioChannelsConfig: {}
   },
   reducers: {
     setGripperEnabled: (state, action) => {
@@ -62,6 +81,14 @@ const configSlice = createSlice({
       if (action.payload === state.numberOfMotors) return
       state.numberOfMotors = action.payload 
     },
+    setRadioChannels: (state, action) => {
+      if (action.payload === state.radioChannels) return
+      state.radioChannels = action.payload
+    },
+    setChannelsConfig: (state, action) => {
+      if (action.payload === state.radioChannelsConfig) return
+      state.radioChannelsConfig = action.payload
+    },
 
     // Emits
     emitGripperEnabled: () => {},
@@ -73,6 +100,7 @@ const configSlice = createSlice({
     emitTestOneMotor: () => {},
     emitTestMotorSequence: () => {},
     emitTestAllMotors: () => {},
+    emitGetRcConfig: () => {},
   },
   selectors: {
     selectGripperEnabled: (state) => state.gripperEnabled,
@@ -85,6 +113,8 @@ const configSlice = createSlice({
     selectFrameTypeName: (state) => state.frameTypeName,
     selectFrameClass: (state) => state.frameClass,
     selectNumberOfMotors: (state) => state.numberOfMotors,
+    selectRadioChannels: (state) => state.radioChannels,
+    selectRadioChannelsConfig: (state) => state.radioChannelsConfig,
   },
 })
 
@@ -99,6 +129,8 @@ export const {
   setFrameTypeName,
   setFrameClass,
   setNumberOfMotors,
+  setRadioChannels,
+  setChannelsConfig,
 
   // Emitters
   emitGripperEnabled,
@@ -109,7 +141,8 @@ export const {
   emitGetFrameConfig,
   emitTestOneMotor,
   emitTestMotorSequence,
-  emitTestAllMotors
+  emitTestAllMotors,
+  emitGetRcConfig
 } = configSlice.actions
 
 export const {
@@ -123,6 +156,8 @@ export const {
   selectFrameTypeName,
   selectFrameClass,
   selectNumberOfMotors,
+  selectRadioChannels,
+  selectRadioChannelsConfig,
 } = configSlice.selectors
 
 export default configSlice

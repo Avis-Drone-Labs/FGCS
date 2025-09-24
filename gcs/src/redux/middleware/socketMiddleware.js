@@ -74,7 +74,7 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
-import { emitGetFlightModeConfig, setCurrentPwmValue, setFlightModeChannel, setFlightModesList, setFrameClass, setFrameTypeDirection, setFrameTypeName, setFrameTypeOrder, setGripperEnabled, setNumberOfMotors, setRefreshingFlightModeData } from "../slices/configSlice.js"
+import { emitGetFlightModeConfig, setChannelsConfig, setCurrentPwmValue, setFlightModeChannel, setFlightModesList, setFrameClass, setFrameTypeDirection, setFrameTypeName, setFrameTypeOrder, setGripperEnabled, setNumberOfMotors, setRadioChannels, setRefreshingFlightModeData } from "../slices/configSlice.js"
 import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 
 const SocketEvents = Object.freeze({
@@ -126,7 +126,8 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
   onSetFlightModeResult: "set_flight_mode_result",
-  onFrameTypeConfig: "frame_type_config"
+  onFrameTypeConfig: "frame_type_config",
+  onRcConfig: "rc_config"
 })
 
 const socketMiddleware = (store) => {
@@ -163,6 +164,12 @@ const socketMiddleware = (store) => {
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!
         store.dispatch(setRSSIData(msg.rssi))
+        const chans = {}
+        for (let i = 1; i < msg.chancount + 1; i++) {
+          chans[i] = msg[`chan${i}_raw`]
+
+          store.dispatch(setRadioChannels(chans))
+        }
         break
       case "MISSION_CURRENT":
         store.dispatch(setCurrentMission(msg))
@@ -714,6 +721,24 @@ const socketMiddleware = (store) => {
             }
             store.dispatch(setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name))
             store.dispatch(setNumberOfMotors(FRAME_CLASS_MAP[currentFrameClass].numberOfMotors))
+          }
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onRcConfig,
+          (msg) => {
+            const config = {}
+
+            for (let i = 1; i < 17; i++) {
+              config[i] = msg[`RC_${i}`]
+            }
+            config[`${msg.pitch}`].map = "Pitch"
+            config[`${msg.roll}`].map = "Roll"
+            config[`${msg.throttle}`].map = "Throttle"
+            config[`${msg.yaw}`].map = "Yaw"
+            config[`${msg.flight_modes}`].map = "Flight modes"
+
+            store.dispatch(setChannelsConfig(config))
           }
         )
 

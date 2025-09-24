@@ -1,4 +1,4 @@
-import { emitGetFlightModeConfig, emitGetFrameConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode, emitSetGripper, emitTestAllMotors, emitTestMotorSequence, emitTestOneMotor } from "../slices/configSlice"
+import { emitGetFlightModeConfig, emitGetFrameConfig, emitGetRcConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode, emitSetGripper, emitTestAllMotors, emitTestMotorSequence, emitTestOneMotor } from "../slices/configSlice"
 import {
   emitArmDisarm,
   emitConnectToDrone,
@@ -260,6 +260,10 @@ export function handleEmitters(socket, store, action) {
         number_of_motors: action.payload.numberOfMotors
       })
     },
+    {
+      emitter: emitGetRcConfig,
+      callback: () => socket.socket.emit("get_rc_config")
+    }
   ]
 
   for (const { emitter, callback } of emitHandlers) {

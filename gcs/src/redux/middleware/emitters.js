@@ -1,4 +1,15 @@
-import { emitGetFlightModeConfig, emitGetFrameConfig, emitGetRcConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode, emitSetGripper, emitTestAllMotors, emitTestMotorSequence, emitTestOneMotor } from "../slices/configSlice"
+import {
+  emitGetFlightModeConfig,
+  emitGetFrameConfig,
+  emitGetRcConfig,
+  emitGripperEnabled,
+  emitRefreshFlightModeData,
+  emitSetFlightMode,
+  emitSetGripper,
+  emitTestAllMotors,
+  emitTestMotorSequence,
+  emitTestOneMotor,
+} from "../slices/configSlice"
 import {
   emitArmDisarm,
   emitConnectToDrone,
@@ -203,7 +214,6 @@ export function handleEmitters(socket, store, action) {
       callback: () => socket.socket.emit("set_multiple_params", action.payload),
     },
 
-
     /*
       ==========
       = CONFIG =
@@ -211,59 +221,63 @@ export function handleEmitters(socket, store, action) {
     */
     {
       emitter: emitGripperEnabled,
-      callback: () => socket.socket.emit("gripper_enabled")
+      callback: () => socket.socket.emit("gripper_enabled"),
     },
     {
       emitter: emitGetFlightModeConfig,
-      callback: () => socket.socket.emit("get_flight_mode_config")
+      callback: () => socket.socket.emit("get_flight_mode_config"),
     },
     {
       emitter: emitSetFlightMode,
-      callback: () => socket.socket.emit("set_flight_mode", {
-        mode_number: action.payload.mode_number,
-        flight_mode: action.payload.flight_mode
-      })
+      callback: () =>
+        socket.socket.emit("set_flight_mode", {
+          mode_number: action.payload.mode_number,
+          flight_mode: action.payload.flight_mode,
+        }),
     },
     {
       emitter: emitRefreshFlightModeData,
-      callback: () => socket.socket.emit("refresh_flight_mode_data")
+      callback: () => socket.socket.emit("refresh_flight_mode_data"),
     },
     {
       emitter: emitSetGripper,
-      callback: () => socket.socket.emit("set_gripper", action.payload)
+      callback: () => socket.socket.emit("set_gripper", action.payload),
     },
     {
       emitter: emitGetFrameConfig,
-      callback: () => socket.socket.emit("get_frame_config")
+      callback: () => socket.socket.emit("get_frame_config"),
     },
     {
       emitter: emitTestOneMotor,
-      callback: () => socket.socket.emit("test_one_motor", {
-        motorInstance: action.payload.motorInstance,
-        throttle: action.payload.throttle,
-        duration: action.payload.duration,
-      })
+      callback: () =>
+        socket.socket.emit("test_one_motor", {
+          motorInstance: action.payload.motorInstance,
+          throttle: action.payload.throttle,
+          duration: action.payload.duration,
+        }),
     },
     {
       emitter: emitTestMotorSequence,
-      callback: () => socket.socket.emit("test_motor_sequence", {
-        throttle: action.payload.throttle,
-        duration: action.payload.duration,
-        number_of_motors: action.payload.numberOfMotors
-      })
+      callback: () =>
+        socket.socket.emit("test_motor_sequence", {
+          throttle: action.payload.throttle,
+          duration: action.payload.duration,
+          number_of_motors: action.payload.numberOfMotors,
+        }),
     },
     {
       emitter: emitTestAllMotors,
-      callback: () => socket.socket.emit("test_all_motors", {
-        throttle: action.payload.throttle,
-        duration: action.payload.duration,
-        number_of_motors: action.payload.numberOfMotors
-      })
+      callback: () =>
+        socket.socket.emit("test_all_motors", {
+          throttle: action.payload.throttle,
+          duration: action.payload.duration,
+          number_of_motors: action.payload.numberOfMotors,
+        }),
     },
     {
       emitter: emitGetRcConfig,
-      callback: () => socket.socket.emit("get_rc_config")
-    }
+      callback: () => socket.socket.emit("get_rc_config"),
+    },
   ]
 
   for (const { emitter, callback } of emitHandlers) {

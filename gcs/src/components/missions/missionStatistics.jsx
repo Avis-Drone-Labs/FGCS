@@ -200,9 +200,7 @@ function calculateMaxTelemDistance(missionItems, homePosition) {
 
   // Remove any waypoints without coordinates and the home location
   missionItems = missionItems.filter(
-    (item) =>
-      (item.x !== 0 && item.y !== 0) ||
-      isGlobalFrameHomeCommand(item),
+    (item) => (item.x !== 0 && item.y !== 0) || isGlobalFrameHomeCommand(item),
   )
 
   for (const item of missionItems) {

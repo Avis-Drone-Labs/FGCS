@@ -7,20 +7,33 @@
 */
 // Base imports
 import { useEffect, useMemo } from "react"
-import { selectAircraftTypeString, selectFlightModeString } from "../../redux/slices/droneInfoSlice"
+import {
+  selectAircraftTypeString,
+  selectFlightModeString,
+} from "../../redux/slices/droneInfoSlice"
 
 // 3rd party imports
 import { Button, LoadingOverlay, Select } from "@mantine/core"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitSetState, selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
-import { emitGetFlightModeConfig, emitRefreshFlightModeData, emitSetFlightMode, selectFlightModeChannel, selectFlightModesList, selectPwmValue, selectRefreshingFlightModeData, setRefreshingFlightModeData } from "../../redux/slices/configSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
+import {
+  emitGetFlightModeConfig,
+  emitRefreshFlightModeData,
+  emitSetFlightMode,
+  selectFlightModeChannel,
+  selectFlightModesList,
+  selectPwmValue,
+  selectRefreshingFlightModeData,
+  setRefreshingFlightModeData,
+} from "../../redux/slices/configSlice"
 
 // Helper javascript files
-import {
-  getFlightModeMap,
-} from "../../helpers/mavlinkConstants"
+import { getFlightModeMap } from "../../helpers/mavlinkConstants"
 
 const FLIGHT_MODE_PWM_VALUES = [
   [0, 1230],
@@ -76,10 +89,12 @@ export default function FlightModes() {
   }
 
   function changeFlightMode(modeNumber, newFlightMode) {
-    dispatch(emitSetFlightMode({
-      mode_number: modeNumber + 1, // Mode number is 1 + indexed value
-      flight_mode: parseInt(newFlightMode),
-    }))
+    dispatch(
+      emitSetFlightMode({
+        mode_number: modeNumber + 1, // Mode number is 1 + indexed value
+        flight_mode: parseInt(newFlightMode),
+      }),
+    )
   }
 
   function refreshFlightModeData() {

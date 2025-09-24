@@ -38,7 +38,7 @@ const configSlice = createSlice({
       15: 0,
       16: 0,
     },
-    radioChannelsConfig: {}
+    radioChannelsConfig: {},
   },
   reducers: {
     setGripperEnabled: (state, action) => {
@@ -67,11 +67,11 @@ const configSlice = createSlice({
     },
     setFrameTypeDirection: (state, action) => {
       if (action.payload === state.frameTypeDirection) return
-      state.frameTypeDirection = action.payload 
+      state.frameTypeDirection = action.payload
     },
     setFrameTypeName: (state, action) => {
       if (action.payload === state.frameTypeName) return
-      state.frameTypeName = action.payload 
+      state.frameTypeName = action.payload
     },
     setFrameClass: (state, action) => {
       if (action.payload === state.frameClass) return
@@ -79,7 +79,7 @@ const configSlice = createSlice({
     },
     setNumberOfMotors: (state, action) => {
       if (action.payload === state.numberOfMotors) return
-      state.numberOfMotors = action.payload 
+      state.numberOfMotors = action.payload
     },
     setRadioChannels: (state, action) => {
       if (action.payload === state.radioChannels) return
@@ -142,7 +142,7 @@ export const {
   emitTestOneMotor,
   emitTestMotorSequence,
   emitTestAllMotors,
-  emitGetRcConfig
+  emitGetRcConfig,
 } = configSlice.actions
 
 export const {

@@ -18,7 +18,7 @@ import { emitSetGripper } from "../../redux/slices/configSlice"
 
 export default function Gripper() {
   const dispatch = useDispatch()
-  
+
   // Set gripper config values
   function setGripper(action) {
     dispatch(emitSetGripper(action))

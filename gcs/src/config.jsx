@@ -21,7 +21,10 @@ import NoDroneConnected from "./components/noDroneConnected"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
-import { emitGripperEnabled, selectGripperEnabled } from "./redux/slices/configSlice"
+import {
+  emitGripperEnabled,
+  selectGripperEnabled,
+} from "./redux/slices/configSlice"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"

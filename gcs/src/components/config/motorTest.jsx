@@ -15,14 +15,25 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
-import {
-  MOTOR_LETTER_LABELS,
-} from "../../helpers/mavlinkConstants"
+import { MOTOR_LETTER_LABELS } from "../../helpers/mavlinkConstants"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { emitSetState, selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
-import { emitGetFrameConfig, emitTestAllMotors, emitTestMotorSequence, emitTestOneMotor, selectFrameClass, selectFrameTypeDirection, selectFrameTypeName, selectFrameTypeOrder, selectNumberOfMotors } from "../../redux/slices/configSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
+import {
+  emitGetFrameConfig,
+  emitTestAllMotors,
+  emitTestMotorSequence,
+  emitTestOneMotor,
+  selectFrameClass,
+  selectFrameTypeDirection,
+  selectFrameTypeName,
+  selectFrameTypeOrder,
+  selectNumberOfMotors,
+} from "../../redux/slices/configSlice"
 
 export default function MotorTestPanel() {
   const dispatch = useDispatch()
@@ -45,30 +56,36 @@ export default function MotorTestPanel() {
 
   // Test a single motor with the specified throttle and duration
   function testOneMotor(motorInstance) {
-    dispatch(emitTestOneMotor({
-      motorInstance: motorInstance,
-      throttle: selectedThrottle,
-      duration: selectedDuration,
-    }))
+    dispatch(
+      emitTestOneMotor({
+        motorInstance: motorInstance,
+        throttle: selectedThrottle,
+        duration: selectedDuration,
+      }),
+    )
   }
 
   // Test the motors individually in sequence with the specified throttle and time delay
   function testMotorSequence() {
-    dispatch(emitTestMotorSequence({
-      throttle: selectedThrottle,
-      // This is actually the delay between tests since it's a sequence test
-      duration: selectedDuration,
-      numberOfMotors: numberOfMotors,
-    }))
+    dispatch(
+      emitTestMotorSequence({
+        throttle: selectedThrottle,
+        // This is actually the delay between tests since it's a sequence test
+        duration: selectedDuration,
+        numberOfMotors: numberOfMotors,
+      }),
+    )
   }
 
   // Test all the motors simultaneously with the specified throttle and duration
   function testAllMotors() {
-    dispatch(emitTestAllMotors({
-      throttle: selectedThrottle,
-      duration: selectedDuration,
-      numberOfMotors: numberOfMotors,
-    }))
+    dispatch(
+      emitTestAllMotors({
+        throttle: selectedThrottle,
+        duration: selectedDuration,
+        numberOfMotors: numberOfMotors,
+      }),
+    )
   }
 
   return (

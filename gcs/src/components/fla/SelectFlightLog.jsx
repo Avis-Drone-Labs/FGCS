@@ -9,12 +9,12 @@ import {
 import moment from "moment"
 import { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
-import { readableBytes } from "./utils"
 import {
-  queueErrorNotification,
-  queueSuccessNotification,
-} from "../../redux/slices/notificationSlice.js"
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification.js"
 import { setFile } from "../../redux/slices/logAnalyserSlice.js"
+import { readableBytes } from "./utils"
 
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
@@ -24,11 +24,6 @@ export default function SelectFlightLog({ processLoadedFile }) {
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
-
-  const dispatchErrorNotification = (message) =>
-    dispatch(queueErrorNotification(message))
-  const dispatchSuccessNotification = (message) =>
-    dispatch(queueSuccessNotification(message))
 
   async function getFgcsLogs() {
     setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
@@ -46,13 +41,13 @@ export default function SelectFlightLog({ processLoadedFile }) {
       setLoadingFile(true)
       const result = await window.ipcRenderer.loadFile(file.path)
       if (!result.success) {
-        dispatchErrorNotification("Error loading file, file not found. Reload.")
+        showErrorNotification("Error loading file, file not found. Reload.")
         return
       }
       await processLoadedFile(result)
-      dispatchSuccessNotification(`${file.name} loaded successfully`)
+      showSuccessNotification(`${file.name} loaded successfully`)
     } catch (error) {
-      dispatchErrorNotification("Error loading file: " + error.message)
+      showErrorNotification("Error loading file: " + error.message)
     } finally {
       setLoadingFile(false)
     }

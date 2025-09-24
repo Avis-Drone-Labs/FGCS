@@ -28,6 +28,7 @@ import { logEventIds } from "./components/fla/logEventIds.js"
 import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
 import MainDisplay from "./components/fla/mainDisplay.jsx"
 import Layout from "./components/layout.jsx"
+import { showErrorNotification } from "./helpers/notification.js"
 import {
   selectCustomColors,
   selectFormatMessages,
@@ -50,7 +51,6 @@ import {
   setUnits,
   setUtcAvailable,
 } from "./redux/slices/logAnalyserSlice.js"
-import { queueErrorNotification } from "./redux/slices/notificationSlice.js"
 
 export default function FLA() {
   // Redux
@@ -71,7 +71,7 @@ export default function FLA() {
     const loadedLogMessages = result.messages
 
     if (!loadedLogMessages) {
-      dispatch(queueErrorNotification("Error loading file, no messages found."))
+      showErrorNotification("Error loading file, no messages found.")
       return
     }
 

@@ -21,6 +21,10 @@ import tailwindConfig from "../../../tailwind.config"
 import { useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification.js"
+import {
   selectAircraftType,
   // Selectors
   selectLogType,
@@ -30,10 +34,6 @@ import {
   setCustomColors,
   setMessageFilters,
 } from "../../redux/slices/logAnalyserSlice.js"
-import {
-  queueErrorNotification,
-  queueSuccessNotification,
-} from "../../redux/slices/notificationSlice.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -67,10 +67,8 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
       if (Object.keys(messageFilters).includes(categoryName)) {
         preset.filters[categoryName].forEach((field) => {
           if (!(field in messageFilters[categoryName])) {
-            dispatch(
-              queueErrorNotification(
-                `Your log file does not include ${categoryName}/${field} data`,
-              ),
+            showErrorNotification(
+              `Your log file does not include ${categoryName}/${field} data`,
             )
             return
           }
@@ -83,11 +81,7 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
           }
         })
       } else {
-        dispatch(
-          queueErrorNotification(
-            `Your log file does not include ${categoryName}`,
-          ),
-        )
+        showErrorNotification(`Your log file does not include ${categoryName}`)
       }
     })
 
@@ -140,10 +134,8 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
     }
 
     deleteCustomPreset(presetName, logType)
-    dispatch(
-      queueSuccessNotification(
-        `Custom preset "${presetName}" deleted successfully`,
-      ),
+    showSuccessNotification(
+      `Custom preset "${presetName}" deleted successfully`,
     )
   }
 

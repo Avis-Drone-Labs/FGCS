@@ -8,15 +8,15 @@ import { useState } from "react"
 // Redux imports
 import { useDispatch, useSelector } from "react-redux"
 import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification.js"
+import {
   selectAircraftType,
   selectLogType,
   selectMessageFilters,
   setCanSavePreset,
 } from "../../redux/slices/logAnalyserSlice.js"
-import {
-  queueErrorNotification,
-  queueSuccessNotification,
-} from "../../redux/slices/notificationSlice.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -63,25 +63,19 @@ export default function SavePresetModal({
 
       if (!existingPreset) {
         saveCustomPreset(newPreset, logType)
-        dispatch(
-          queueSuccessNotification(
-            `Custom preset "${presetName}" saved successfully`,
-          ),
+        showSuccessNotification(
+          `Custom preset "${presetName}" saved successfully`,
         )
         closeSavePresetModal()
         dispatch(setCanSavePreset(false))
       } else {
         if (existingPreset.name === presetName) {
-          dispatch(
-            queueErrorNotification(
-              `The name "${presetName}" is in use. Please choose a different name.`,
-            ),
+          showErrorNotification(
+            `The name "${presetName}" is in use. Please choose a different name.`,
           )
         } else {
-          dispatch(
-            queueErrorNotification(
-              `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
-            ),
+          showErrorNotification(
+            `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
           )
           closeSavePresetModal()
           dispatch(setCanSavePreset(false))

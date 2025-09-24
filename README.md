@@ -66,7 +66,15 @@ Create a new Python virtual environment using `python -m venv venv`. This can th
 
 <details><summary>Mac/Linux</summary>
 
-We currently don't have instructions or releases for mac or linux, we will in future releases. It does run on ubuntu and mac as members of the team use it, but we want to test the instructions before releasing them. However, you can still run both the frontend and backend individually by following the windows version with slight alterations to the commands.
+We currently don't have instructions or releases for linux, we will in future releases. It does run on ubuntu as members of the team use it, but we want to test the instructions before releasing them. However, you can still run both the frontend and backend individually by following the windows version with slight alterations to the commands.
+
+For mac, ensure that your python version is up to date (3.11.x+), and that yarn is at least version 1.20.x+ (older versions may work, but have not been tested). 
+Then, run:
+1. `python3 -m venv venv`
+2. `source venv/bin/activate`
+3. `./setup.sh`
+4. `./run.sh ./venv update`  when running for the first time
+5. `./ren.sh ./venv` for other runs.
 
 </details>
 

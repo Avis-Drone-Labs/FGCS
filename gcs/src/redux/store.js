@@ -15,6 +15,7 @@ import droneConnectionSlice, {
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
 import statusTextSlice from "./slices/statusTextSlice"
+import configSlice from "./slices/configSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -24,6 +25,7 @@ const rootReducer = combineSlices(
   missionInfoSlice,
   statusTextSlice,
   paramsSlice,
+  configSlice,
 )
 
 // Get the persisted state, we only want to take a couple of things from here.

@@ -74,7 +74,7 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
-import { setGripperEnabled } from "../slices/configSlice.js"
+import { emitGetFlightModeConfig, setCurrentPwmValue, setFlightModeChannel, setFlightModesList, setGripperEnabled, setRefreshingFlightModeData } from "../slices/configSlice.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -122,7 +122,9 @@ const MissionSpecificSocketEvents = Object.freeze({
 const ConfigSpecificSocketEvents = Object.freeze({
   onGripperEnabled: "gripper_enabled",
   onSetGripperResult: "set_gripper_result",
-  onMotorTestResult: "motor_test_result"
+  onMotorTestResult: "motor_test_result",
+  onFlightModeConfig: "flight_mode_config",
+  onSetFlightModeResult: "set_flight_mode_result"
 })
 
 const socketMiddleware = (store) => {
@@ -662,6 +664,28 @@ const socketMiddleware = (store) => {
           }
         )
 
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onFlightModeConfig,
+          (msg) => {
+            store.dispatch(setFlightModesList(msg.flight_modes))
+            store.dispatch(setFlightModeChannel(msg.flight_mode_channel))
+            store.dispatch(setRefreshingFlightModeData(false))
+          }
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetFlightModeResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+      
+            store.dispatch(emitGetFlightModeConfig())
+          }
+        )
+
         /*
           Generic Drone Data
         */
@@ -721,6 +745,14 @@ const socketMiddleware = (store) => {
               getGraphDataFromMessage(msg, msg.mavpackettype),
             ),
           )
+
+          // Handle Flight Mode incoming data
+          if (
+            msg.mavpackettype === "RC_CHANNELS" &&
+            storeState.config.flightModeChannel !== "UNKNOWN"
+          ) {
+            store.dispatch(setCurrentPwmValue(msg[`chan${storeState.config.flightModeChannel}_raw`]))
+          }
         })
       } else {
         // Turn off socket events

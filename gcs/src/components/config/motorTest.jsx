@@ -8,7 +8,6 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Button, NumberInput } from "@mantine/core"
-import { useSessionStorage } from "@mantine/hooks"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -17,86 +16,59 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom helper function
 import {
-  FRAME_CLASS_MAP,
   MOTOR_LETTER_LABELS,
 } from "../../helpers/mavlinkConstants"
-import { socket } from "../../helpers/socket"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { emitSetState, selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+import { emitGetFrameConfig, emitTestAllMotors, emitTestMotorSequence, emitTestOneMotor, selectFrameClass, selectFrameTypeDirection, selectFrameTypeName, selectFrameTypeOrder, selectNumberOfMotors } from "../../redux/slices/configSlice"
 
 export default function MotorTestPanel() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [frameTypeOrder, setFrameTypeOrder] = useState(null)
-  const [frameTypeDirection, setFrameTypeDirection] = useState(null)
-  const [frameTypename, setFrameTypename] = useState(null)
-  const [frameClass, setFrameClass] = useState(null)
-  const [numberOfMotors, setNumberOfMotors] = useState(4)
+  const dispatch = useDispatch()
+  const connected = useSelector(selectConnectedToDrone)
+  const frameTypeOrder = useSelector(selectFrameTypeOrder)
+  const frameTypeDirection = useSelector(selectFrameTypeDirection)
+  const frameTypename = useSelector(selectFrameTypeName)
+  const frameClass = useSelector(selectFrameClass)
+  const numberOfMotors = useSelector(selectNumberOfMotors)
+
   const [selectedThrottle, setSelectedThrottle] = useState(10)
   const [selectedDuration, setSelectedDuration] = useState(2)
 
   useEffect(() => {
     if (connected) {
-      socket.emit("set_state", { state: "config.motor_test" })
-      socket.emit("get_frame_config")
-    }
-    socket.on("frame_type_config", (data) => {
-      const currentFrameType = data.frame_type
-      const currentFrameClass = data.frame_class
-
-      // Checks if the frame class has any compatible frame types and if the current frame type param is comaptible
-      if (FRAME_CLASS_MAP[currentFrameClass].frametype) {
-        if (
-          Object.keys(FRAME_CLASS_MAP[currentFrameClass].frametype).includes(
-            currentFrameType.toString(),
-          )
-        ) {
-          const frameInfo =
-            FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
-          setFrameTypeDirection(frameInfo.direction)
-          setFrameTypeOrder(frameInfo.motorOrder)
-          setFrameTypename(frameInfo.frametypename)
-        }
-      } else {
-        setFrameTypeDirection(null)
-        setFrameTypeOrder(null)
-        setFrameTypename(currentFrameType)
-      }
-      setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name)
-      setNumberOfMotors(FRAME_CLASS_MAP[currentFrameClass].numberOfMotors)
-    })
-
-    return () => {
-      socket.emit("set_state", { state: "config" })
-      socket.off("frame_type_config")
+      dispatch(emitSetState("config.motor_test"))
+      dispatch(emitGetFrameConfig())
     }
   }, [connected])
+
   // Test a single motor with the specified throttle and duration
   function testOneMotor(motorInstance) {
-    socket.emit("test_one_motor", {
+    dispatch(emitTestOneMotor({
       motorInstance: motorInstance,
       throttle: selectedThrottle,
       duration: selectedDuration,
-    })
+    }))
   }
 
   // Test the motors individually in sequence with the specified throttle and time delay
   function testMotorSequence() {
-    socket.emit("test_motor_sequence", {
+    dispatch(emitTestMotorSequence({
       throttle: selectedThrottle,
       // This is actually the delay between tests since it's a sequence test
       duration: selectedDuration,
       numberOfMotors: numberOfMotors,
-    })
+    }))
   }
 
   // Test all the motors simultaneously with the specified throttle and duration
   function testAllMotors() {
-    socket.emit("test_all_motors", {
+    dispatch(emitTestAllMotors({
       throttle: selectedThrottle,
       duration: selectedDuration,
-      numOfMotors: numberOfMotors,
-    })
+      numberOfMotors: numberOfMotors,
+    }))
   }
 
   return (

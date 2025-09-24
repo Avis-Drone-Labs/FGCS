@@ -6,6 +6,8 @@
         "Crosshair",
         "falcongrey",
         "falconred",
+        "frametype",
+        "frametypename",
         "maplibre",
         "maptilers",
         "mavutil",

@@ -14,7 +14,12 @@ const configSlice = createSlice({
     ],
     flightModeChannel: "UNKNOWN",
     refreshingFlightModeData: false,
-    pwmValue: 0
+    pwmValue: 0,
+    frameTypeOrder: null,
+    frameTypeDirection: null,
+    frameTypeName: null,
+    frameClass: null,
+    numberOfMotors: 4,
   },
   reducers: {
     setGripperEnabled: (state, action) => {
@@ -37,20 +42,49 @@ const configSlice = createSlice({
       if (action.payload === state.pwmValue) return
       state.pwmValue = action.payload
     },
+    setFrameTypeOrder: (state, action) => {
+      if (action.payload === state.frameTypeOrder) return
+      state.frameTypeOrder = action.payload
+    },
+    setFrameTypeDirection: (state, action) => {
+      if (action.payload === state.frameTypeDirection) return
+      state.frameTypeDirection = action.payload 
+    },
+    setFrameTypeName: (state, action) => {
+      if (action.payload === state.frameTypeName) return
+      state.frameTypeName = action.payload 
+    },
+    setFrameClass: (state, action) => {
+      if (action.payload === state.frameClass) return
+      state.frameClass = action.payload
+    },
+    setNumberOfMotors: (state, action) => {
+      if (action.payload === state.numberOfMotors) return
+      state.numberOfMotors = action.payload 
+    },
 
     // Emits
     emitGripperEnabled: () => {},
     emitGetFlightModeConfig: () => {},
     emitSetFlightMode: () => {},
     emitRefreshFlightModeData: () => {},
-    emitSetGripper: () => {}
+    emitSetGripper: () => {},
+    emitGetFrameConfig: () => {},
+    emitTestOneMotor: () => {},
+    emitTestMotorSequence: () => {},
+    emitTestAllMotors: () => {},
   },
   selectors: {
     selectGripperEnabled: (state) => state.gripperEnabled,
     selectFlightModesList: (state) => state.flightModes,
     selectFlightModeChannel: (state) => state.flightModeChannel,
     selectRefreshingFlightModeData: (state) => state.refreshingFlightModeData,
-    selectPwmValue: (state) => state.pwmValue
+    selectPwmValue: (state) => state.pwmValue,
+    selectFrameTypeOrder: (state) => state.frameTypeOrder,
+    selectFrameTypeDirection: (state) => state.frameTypeDirection,
+    selectFrameTypeName: (state) => state.frameTypeName,
+    selectFrameClass: (state) => state.frameClass,
+    selectNumberOfMotors: (state) => state.numberOfMotors,
   },
 })
 
@@ -60,11 +94,22 @@ export const {
   setFlightModeChannel,
   setRefreshingFlightModeData,
   setCurrentPwmValue,
+  setFrameTypeOrder,
+  setFrameTypeDirection,
+  setFrameTypeName,
+  setFrameClass,
+  setNumberOfMotors,
+
+  // Emitters
   emitGripperEnabled,
   emitGetFlightModeConfig,
   emitSetFlightMode,
   emitRefreshFlightModeData,
   emitSetGripper,
+  emitGetFrameConfig,
+  emitTestOneMotor,
+  emitTestMotorSequence,
+  emitTestAllMotors
 } = configSlice.actions
 
 export const {
@@ -73,6 +118,11 @@ export const {
   selectFlightModeChannel,
   selectRefreshingFlightModeData,
   selectPwmValue,
+  selectFrameTypeOrder,
+  selectFrameTypeDirection,
+  selectFrameTypeName,
+  selectFrameClass,
+  selectNumberOfMotors,
 } = configSlice.selectors
 
 export default configSlice

@@ -74,7 +74,8 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
-import { emitGetFlightModeConfig, setCurrentPwmValue, setFlightModeChannel, setFlightModesList, setGripperEnabled, setRefreshingFlightModeData } from "../slices/configSlice.js"
+import { emitGetFlightModeConfig, setCurrentPwmValue, setFlightModeChannel, setFlightModesList, setFrameClass, setFrameTypeDirection, setFrameTypeName, setFrameTypeOrder, setGripperEnabled, setNumberOfMotors, setRefreshingFlightModeData } from "../slices/configSlice.js"
+import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -124,7 +125,8 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onSetGripperResult: "set_gripper_result",
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
-  onSetFlightModeResult: "set_flight_mode_result"
+  onSetFlightModeResult: "set_flight_mode_result",
+  onFrameTypeConfig: "frame_type_config"
 })
 
 const socketMiddleware = (store) => {
@@ -685,6 +687,36 @@ const socketMiddleware = (store) => {
             store.dispatch(emitGetFlightModeConfig())
           }
         )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onFrameTypeConfig,
+          (msg) => {
+            const currentFrameType = msg.frame_type
+            const currentFrameClass = msg.frame_class
+      
+            // Checks if the frame class has any compatible frame types and if the current frame type param is compatible
+            if (FRAME_CLASS_MAP[currentFrameClass].frametype) {
+              if (
+                Object.keys(FRAME_CLASS_MAP[currentFrameClass].frametype).includes(
+                  currentFrameType.toString(),
+                )
+              ) {
+                const frameInfo =
+                  FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
+                store.dispatch(setFrameTypeDirection(frameInfo.direction))
+                store.dispatch(setFrameTypeOrder(frameInfo.motorOrder))
+                store.dispatch(setFrameTypeName(frameInfo.frametypename))
+              }
+            } else {
+              store.dispatch(setFrameTypeDirection(null))
+              store.dispatch(setFrameTypeOrder(null))
+              store.dispatch(setFrameTypeName(currentFrameType))
+            }
+            store.dispatch(setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name))
+            store.dispatch(setNumberOfMotors(FRAME_CLASS_MAP[currentFrameClass].numberOfMotors))
+          }
+        )
+
 
         /*
           Generic Drone Data

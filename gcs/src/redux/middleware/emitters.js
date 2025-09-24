@@ -1,4 +1,4 @@
-import { emitGetFlightModeConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode, emitSetGripper } from "../slices/configSlice"
+import { emitGetFlightModeConfig, emitGetFrameConfig, emitGripperEnabled, emitRefreshFlightModeData, emitSetFlightMode, emitSetGripper, emitTestAllMotors, emitTestMotorSequence, emitTestOneMotor } from "../slices/configSlice"
 import {
   emitArmDisarm,
   emitConnectToDrone,
@@ -231,7 +231,35 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetGripper,
       callback: () => socket.socket.emit("set_gripper", action.payload)
-    }
+    },
+    {
+      emitter: emitGetFrameConfig,
+      callback: () => socket.socket.emit("get_frame_config")
+    },
+    {
+      emitter: emitTestOneMotor,
+      callback: () => socket.socket.emit("test_one_motor", {
+        motorInstance: action.payload.motorInstance,
+        throttle: action.payload.throttle,
+        duration: action.payload.duration,
+      })
+    },
+    {
+      emitter: emitTestMotorSequence,
+      callback: () => socket.socket.emit("test_motor_sequence", {
+        throttle: action.payload.throttle,
+        duration: action.payload.duration,
+        number_of_motors: action.payload.numberOfMotors
+      })
+    },
+    {
+      emitter: emitTestAllMotors,
+      callback: () => socket.socket.emit("test_all_motors", {
+        throttle: action.payload.throttle,
+        duration: action.payload.duration,
+        number_of_motors: action.payload.numberOfMotors
+      })
+    },
   ]
 
   for (const { emitter, callback } of emitHandlers) {

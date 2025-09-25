@@ -8,7 +8,7 @@ as graph annotations to show events or different flight modes.
 import { useEffect, useRef, useState } from "react"
 
 // 3rd party imports
-import { ActionIcon, Tooltip as MantineTooltip, Button } from "@mantine/core"
+import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
 import { useToggle } from "@mantine/hooks"
 import {
   IconCapture,
@@ -35,6 +35,20 @@ import zoomPlugin from "chartjs-plugin-zoom"
 import createColormap from "colormap"
 import { Line } from "react-chartjs-2"
 
+// Redux imports
+import { useDispatch, useSelector } from "react-redux"
+import {
+  selectCanSavePreset,
+  selectFlightModeMessages,
+  selectLogEvents,
+  selectMessageFilters,
+  selectUtcAvailable,
+  setCanSavePreset,
+  setColorIndex,
+  setCustomColors,
+  setMessageFilters,
+} from "../../redux/slices/logAnalyserSlice.js"
+
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config.js"
@@ -45,6 +59,7 @@ import {
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../helpers/mavlinkConstants.js"
 import { showSuccessNotification } from "../../helpers/notification.js"
+import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
 // Note: changes to the plugin code is not reflected to the chart, because the plugin is loaded at chart construction time and editor changes only trigger an chart.update().
@@ -76,18 +91,35 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({
-  data,
-  events,
-  flightModes,
-  graphConfig,
-  clearFilters,
-  canSavePreset,
-  openPresetModal,
-}) {
-  const [config, setConfig] = useState({ ...graphConfig })
+export default function Graph({ data, openPresetModal }) {
+  // Redux state
+  const dispatch = useDispatch()
+  const messageFilters = useSelector(selectMessageFilters)
+  const utcAvailable = useSelector(selectUtcAvailable)
+  const events = useSelector(selectLogEvents)
+  const flightModes = useSelector(selectFlightModeMessages)
+  const canSavePreset = useSelector(selectCanSavePreset)
+
+  const [config, setConfig] = useState({
+    ...(utcAvailable ? fgcsOptions : dataflashOptions),
+  })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
+
+  // Turn on/off all filters
+  function clearFilters() {
+    let newFilters = structuredClone(messageFilters)
+    Object.keys(newFilters).forEach((categoryName) => {
+      const category = newFilters[categoryName]
+      Object.keys(category).forEach((fieldName) => {
+        newFilters[categoryName][fieldName] = false
+      })
+    })
+    dispatch(setMessageFilters(newFilters))
+    dispatch(setCustomColors({}))
+    dispatch(setColorIndex(0))
+    dispatch(setCanSavePreset(false))
+  }
 
   function downloadUpscaledImage(originalDataURI, wantedWidth, wantedHeight) {
     // https://stackoverflow.com/questions/20958078/resize-a-base-64-image-in-javascript-without-using-canvas
@@ -173,8 +205,8 @@ export default function Graph({
   }
 
   useEffect(() => {
-    setConfig({ ...graphConfig })
-  }, [graphConfig])
+    setConfig({ ...(utcAvailable ? fgcsOptions : dataflashOptions) })
+  }, [utcAvailable])
 
   useEffect(() => {
     const annotations = []
@@ -318,8 +350,6 @@ export default function Graph({
       scales.y = {
         grid: { color: tailwindColors.gray[500] },
       }
-    } else {
-      delete graphConfig.scales.y
     }
 
     yAxisIDs.forEach((yAxisID, index) => {

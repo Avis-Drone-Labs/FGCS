@@ -1,5 +1,5 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
-import logAnalyserSlice from "./logAnalyserSlice"
+import logAnalyserSlice from "./slices/logAnalyserSlice"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 import socketSlice from "./slices/socketSlice"
 
@@ -92,6 +92,12 @@ if (persistedState.missionInfo?.plannedHomePosition !== undefined) {
 // Update states when a new message comes in, probably inefficient
 // TODO: In the future we should check to see if the variables have changed before updating
 store.subscribe(() => {
+
+  // Temporary: Skip store subscription for FLA route to avoid delaying UI updates
+  if (window.location.hash === "#/fla") {
+    return
+  }
+
   let store_mut = store.getState()
   let local_storage = window.localStorage
   let session_storage = window.sessionStorage

@@ -16,7 +16,7 @@ import _ from "lodash"
 const dataflashPresetCategories = [
   {
     name: "Speed",
-    filters: [
+    presets: [
       {
         name: "Ground Speed vs Air Speed",
         filters: { GPS: ["Spd"], ARSP: ["Airspeed"] },
@@ -26,7 +26,7 @@ const dataflashPresetCategories = [
   },
   {
     name: "Attitude",
-    filters: [
+    presets: [
       {
         name: "Desired Roll vs Achieved Roll",
         filters: { ATT: ["DesRoll", "Roll"] },
@@ -46,7 +46,7 @@ const dataflashPresetCategories = [
   },
   {
     name: "Vibration",
-    filters: [
+    presets: [
       {
         name: "Vibration XYZ",
         filters: { VIBE: ["VibeX", "VibeY", "VibeZ"] },
@@ -56,7 +56,7 @@ const dataflashPresetCategories = [
   },
   {
     name: "Batteries",
-    filters: [
+    presets: [
       {
         name: "Battery 1 Voltage vs Current",
         filters: { BAT1: ["Volt", "Curr"] },
@@ -81,7 +81,7 @@ const dataflashPresetCategories = [
   },
   {
     name: "Control Tuning",
-    filters: [
+    presets: [
       {
         name: "Desired Alt vs Achieved Alt vs Barometer Alt",
         filters: { CTUN: ["DAlt", "Alt", "BAlt"] },
@@ -126,7 +126,7 @@ const dataflashPresetCategories = [
   },
   {
     name: "RC Inputs",
-    filters: [
+    presets: [
       {
         name: "RC Inputs 1-4",
         filters: { RCIN: ["C1", "C2", "C3", "C4"] },
@@ -139,7 +139,7 @@ const dataflashPresetCategories = [
 const fgcsTelemetryPresetCategories = [
   {
     name: "Speed",
-    filters: [
+    presets: [
       {
         name: "Ground Speed vs Air Speed",
         filters: { VFR_HUD: ["groundspeed", "airspeed"] },
@@ -148,7 +148,7 @@ const fgcsTelemetryPresetCategories = [
   },
   {
     name: "Attitude",
-    filters: [
+    presets: [
       {
         name: "Roll vs Pitch",
         filters: { ATTITUDE: ["roll", "pitch"] },
@@ -157,7 +157,7 @@ const fgcsTelemetryPresetCategories = [
   },
   {
     name: "Vibration",
-    filters: [
+    presets: [
       {
         name: "Vibration XYZ",
         filters: { VIBRATION: ["vibration_x", "vibration_y", "vibration_z"] },
@@ -170,7 +170,7 @@ const fgcsTelemetryPresetCategories = [
   },
   {
     name: "RC Inputs",
-    filters: [
+    presets: [
       {
         name: "RC Inputs 1-4",
         filters: {
@@ -187,13 +187,13 @@ const initialPresetCategories = {
   custom_dataflash: [
     {
       name: "Custom Presets",
-      filters: [],
+      presets: [],
     },
   ], // New category for custom dataflash presets
   custom_fgcs_telemetry: [
     {
       name: "Custom Presets",
-      filters: [],
+      presets: [],
     },
   ], // New category for custom FGCS telemetry presets
 }
@@ -218,7 +218,7 @@ export function usePresetCategories() {
         custom_dataflash: [
           {
             name: "Custom Presets",
-            filters: JSON.parse(savedCustomDataflashPresets),
+            presets: JSON.parse(savedCustomDataflashPresets),
           },
         ],
       }))
@@ -230,7 +230,7 @@ export function usePresetCategories() {
         custom_fgcs_telemetry: [
           {
             name: "Custom Presets",
-            filters: JSON.parse(savedCustomFgcsTelemetryPresets),
+            presets: JSON.parse(savedCustomFgcsTelemetryPresets),
           },
         ],
       }))
@@ -247,7 +247,7 @@ export function usePresetCategories() {
 
     setPresetCategories((prevCategories) => {
       const updatedCustomPresets = [
-        ...prevCategories[categoryKey][0].filters,
+        ...prevCategories[categoryKey][0].presets,
         preset,
       ]
       localStorage.setItem(storageKey, JSON.stringify(updatedCustomPresets))
@@ -256,7 +256,7 @@ export function usePresetCategories() {
         [categoryKey]: [
           {
             name: "Custom Presets",
-            filters: updatedCustomPresets,
+            presets: updatedCustomPresets,
           },
         ],
       }
@@ -274,14 +274,14 @@ export function usePresetCategories() {
     setPresetCategories((prevCategories) => {
       const updatedCustomPresets = prevCategories[
         categoryKey
-      ][0].filters.filter((preset) => preset.name !== presetName)
+      ][0].presets.filter((preset) => preset.name !== presetName)
       localStorage.setItem(storageKey, JSON.stringify(updatedCustomPresets))
       return {
         ...prevCategories,
         [categoryKey]: [
           {
             name: "Custom Presets",
-            filters: updatedCustomPresets,
+            presets: updatedCustomPresets,
           },
         ],
       }
@@ -293,7 +293,7 @@ export function usePresetCategories() {
       logType === "dataflash" ? "custom_dataflash" : "custom_fgcs_telemetry"
 
     // Check in custom presets
-    const customPreset = presetCategories[customCategoryKey][0].filters.find(
+    const customPreset = presetCategories[customCategoryKey][0].presets.find(
       (existingPreset) =>
         existingPreset.name === preset.name ||
         _.isEqual(existingPreset.filters, preset.filters),
@@ -305,20 +305,17 @@ export function usePresetCategories() {
 
     // Check in standard presets
     const standardCategories = presetCategories[logType] || []
-    const reducedFilters = Object.fromEntries(
-      Object.entries(preset.filters).filter(([, value]) => value.length > 0),
-    )
     for (const category of standardCategories) {
-      // Make sure category.filters exists and is an array
-      if (!Array.isArray(category.filters)) {
+      // Make sure category.presets exists and is an array
+      if (!Array.isArray(category.presets)) {
         continue
       }
 
-      // Check each filter in the category
-      for (const existingPreset of category.filters) {
+      // Check each preset in the category
+      for (const existingPreset of category.presets) {
         if (
           existingPreset.name === preset.name ||
-          _.isEqual(existingPreset.filters, reducedFilters)
+          _.isEqual(existingPreset.filters, preset.filters)
         ) {
           return existingPreset
         }

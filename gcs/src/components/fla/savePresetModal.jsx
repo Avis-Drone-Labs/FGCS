@@ -2,18 +2,94 @@
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config.js"
 // Third party imports
-import React, { useState } from "react"
-import { Modal, TextInput, Button, Group } from "@mantine/core"
-export default function SavePresetModal({ opened, close, onSave }) {
+import { Button, Group, Modal, TextInput } from "@mantine/core"
+import { useState } from "react"
+
+// Redux imports
+import { useDispatch, useSelector } from "react-redux"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification.js"
+import {
+  selectAircraftType,
+  selectLogType,
+  selectMessageFilters,
+  setCanSavePreset,
+} from "../../redux/slices/logAnalyserSlice.js"
+
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+export default function SavePresetModal({
+  isSavePresetModalOpen,
+  closeSavePresetModal,
+  saveCustomPreset,
+  findExistingPreset,
+}) {
+  // Redux
+  const dispatch = useDispatch()
+  const logType = useSelector(selectLogType)
+  const messageFilters = useSelector(selectMessageFilters)
+  const aircraftType = useSelector(selectAircraftType)
+
   const [presetName, setPresetName] = useState("")
-  const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+  // Function to handle saving a custom preset
+  function handleSaveCustomPreset(presetName) {
+    if (!presetName) return
+
+    if (presetName) {
+      const currentFilters = Object.keys(messageFilters).reduce(
+        (acc, category) => {
+          const selectedFields = Object.keys(messageFilters[category]).filter(
+            (field) => messageFilters[category][field] === true,
+          )
+          // Only add the category to the result if it has selected fields
+          if (selectedFields.length > 0) {
+            acc[category] = selectedFields
+          }
+          return acc
+        },
+        {},
+      )
+
+      const newPreset = {
+        name: presetName,
+        filters: currentFilters,
+        aircraftType: aircraftType ? [aircraftType] : undefined, // Only save the aircraft type if it exists
+      }
+
+      const existingPreset = findExistingPreset(newPreset, logType)
+
+      if (!existingPreset) {
+        saveCustomPreset(newPreset, logType)
+        showSuccessNotification(
+          `Custom preset "${presetName}" saved successfully`,
+        )
+        closeSavePresetModal()
+        dispatch(setCanSavePreset(false))
+      } else {
+        if (existingPreset.name === presetName) {
+          showErrorNotification(
+            `The name "${presetName}" is in use. Please choose a different name.`,
+          )
+        } else {
+          showErrorNotification(
+            `Custom preset "${presetName}" already exists as "${existingPreset.name}".`,
+          )
+          closeSavePresetModal()
+          dispatch(setCanSavePreset(false))
+        }
+      }
+    }
+  }
 
   return (
     <Modal
-      opened={opened}
+      opened={isSavePresetModalOpen}
       onClose={() => {
         setPresetName("")
-        close()
+        closeSavePresetModal()
       }}
       title="Save Preset"
       centered
@@ -25,7 +101,7 @@ export default function SavePresetModal({ opened, close, onSave }) {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          onSave(presetName.trim())
+          handleSaveCustomPreset(presetName.trim())
         }}
       >
         {/* Add character limit */}
@@ -43,7 +119,7 @@ export default function SavePresetModal({ opened, close, onSave }) {
             color={tailwindColors.red[500]}
             onClick={() => {
               setPresetName("")
-              close()
+              closeSavePresetModal()
             }}
           >
             Close

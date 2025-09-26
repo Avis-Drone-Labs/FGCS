@@ -12,6 +12,7 @@
         "maplibre",
         "maptilers",
         "mavutil",
+        "Motortestpanel",
         "pymavlink",
         "PYQT",
         "RSSI",

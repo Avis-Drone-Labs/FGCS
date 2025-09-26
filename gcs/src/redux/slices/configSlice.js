@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit"
 const configSlice = createSlice({
   name: "config",
   initialState: {
-    gripperEnabled: false,
+    getGripperEnabled: false,
     flightModes: [
       "UNKNOWN",
       "UNKNOWN",
@@ -41,9 +41,9 @@ const configSlice = createSlice({
     radioChannelsConfig: {},
   },
   reducers: {
-    setGripperEnabled: (state, action) => {
-      if (action.payload === state.gripperEnabled) return
-      state.gripperEnabled = action.payload
+    setGetGripperEnabled: (state, action) => {
+      if (action.payload === state.getGripperEnabled) return
+      state.getGripperEnabled = action.payload
     },
     setFlightModesList: (state, action) => {
       if (action.payload === state.flightModes) return
@@ -91,7 +91,7 @@ const configSlice = createSlice({
     },
 
     // Emits
-    emitGripperEnabled: () => {},
+    emitGetGripperEnabled: () => {},
     emitGetFlightModeConfig: () => {},
     emitSetFlightMode: () => {},
     emitRefreshFlightModeData: () => {},
@@ -103,7 +103,7 @@ const configSlice = createSlice({
     emitGetRcConfig: () => {},
   },
   selectors: {
-    selectGripperEnabled: (state) => state.gripperEnabled,
+    selectGetGripperEnabled: (state) => state.getGripperEnabled,
     selectFlightModesList: (state) => state.flightModes,
     selectFlightModeChannel: (state) => state.flightModeChannel,
     selectRefreshingFlightModeData: (state) => state.refreshingFlightModeData,
@@ -119,7 +119,7 @@ const configSlice = createSlice({
 })
 
 export const {
-  setGripperEnabled,
+  setGetGripperEnabled,
   setFlightModesList,
   setFlightModeChannel,
   setRefreshingFlightModeData,
@@ -133,7 +133,7 @@ export const {
   setChannelsConfig,
 
   // Emitters
-  emitGripperEnabled,
+  emitGetGripperEnabled,
   emitGetFlightModeConfig,
   emitSetFlightMode,
   emitRefreshFlightModeData,
@@ -146,7 +146,7 @@ export const {
 } = configSlice.actions
 
 export const {
-  selectGripperEnabled,
+  selectGetGripperEnabled,
   selectFlightModesList,
   selectFlightModeChannel,
   selectRefreshingFlightModeData,

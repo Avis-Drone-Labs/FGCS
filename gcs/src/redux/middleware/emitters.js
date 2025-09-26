@@ -1,8 +1,8 @@
 import {
   emitGetFlightModeConfig,
   emitGetFrameConfig,
+  emitGetGripperEnabled,
   emitGetRcConfig,
-  emitGripperEnabled,
   emitRefreshFlightModeData,
   emitSetFlightMode,
   emitSetGripper,
@@ -220,8 +220,8 @@ export function handleEmitters(socket, store, action) {
       ==========
     */
     {
-      emitter: emitGripperEnabled,
-      callback: () => socket.socket.emit("gripper_enabled"),
+      emitter: emitGetGripperEnabled,
+      callback: () => socket.socket.emit("get_gripper_enabled"),
     },
     {
       emitter: emitGetFlightModeConfig,

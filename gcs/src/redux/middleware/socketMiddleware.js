@@ -84,7 +84,7 @@ import {
   setFrameTypeDirection,
   setFrameTypeName,
   setFrameTypeOrder,
-  setGripperEnabled,
+  setGetGripperEnabled,
   setNumberOfMotors,
   setRadioChannels,
   setRefreshingFlightModeData,
@@ -663,7 +663,7 @@ const socketMiddleware = (store) => {
           ==========
         */
         socket.socket.on(ConfigSpecificSocketEvents.onGripperEnabled, (msg) => {
-          store.dispatch(setGripperEnabled(msg))
+          store.dispatch(setGetGripperEnabled(msg))
         })
 
         socket.socket.on(

@@ -62,7 +62,6 @@ const droneInfoSlice = createSlice({
       },
       lastGraphResultsMessage: false,
     },
-    gripperEnabled: false,
   },
   reducers: {
     setHeartbeatData: (state, action) => {

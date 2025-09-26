@@ -22,8 +22,8 @@ import NoDroneConnected from "./components/noDroneConnected"
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 import {
-  emitGripperEnabled,
-  selectGripperEnabled,
+  emitGetGripperEnabled,
+  selectGetGripperEnabled,
 } from "./redux/slices/configSlice"
 
 // Styling imports
@@ -35,7 +35,7 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export default function Config() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const gripperEnabled = useSelector(selectGripperEnabled)
+  const getGripperEnabled = useSelector(selectGetGripperEnabled)
 
   // States in the frontend
   const [activeTab, setActiveTab] = useState(null)
@@ -46,7 +46,7 @@ export default function Config() {
     if (!connected) {
       setActiveTab(null)
     } else {
-      dispatch(emitGripperEnabled())
+      dispatch(emitGetGripperEnabled())
     }
   }, [connected])
 
@@ -63,7 +63,7 @@ export default function Config() {
             onChange={setActiveTab}
           >
             <Tabs.List>
-              <Tabs.Tab value="gripper" disabled={!gripperEnabled}>
+              <Tabs.Tab value="gripper" disabled={!getGripperEnabled}>
                 Gripper
               </Tabs.Tab>
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>

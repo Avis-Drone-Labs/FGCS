@@ -24,7 +24,7 @@ def getGripperEnabled() -> None:
     (
         droneErrorCb("Could not get gripper state from drone.")
         if enabled is None
-        else socketio.emit("gripper_enabled", enabled)
+        else socketio.emit("is_gripper_enabled", enabled)
     )
 
 

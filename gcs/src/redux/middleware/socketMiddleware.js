@@ -135,7 +135,7 @@ const MissionSpecificSocketEvents = Object.freeze({
 })
 
 const ConfigSpecificSocketEvents = Object.freeze({
-  onGripperEnabled: "gripper_enabled",
+  onGripperEnabled: "is_gripper_enabled",
   onSetGripperResult: "set_gripper_result",
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",

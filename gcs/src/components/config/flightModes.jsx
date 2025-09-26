@@ -6,26 +6,34 @@
   each mode.
 */
 // Base imports
-import { useEffect, useMemo, useState } from "react"
-import { useSelector } from "react-redux"
-import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
+import { useEffect, useMemo } from "react"
+import {
+  selectAircraftTypeString,
+  selectFlightModeString,
+} from "../../redux/slices/droneInfoSlice"
 
 // 3rd party imports
-import { Button, LoadingOverlay, Select } from "@mantine/core"
-import { useListState, useSessionStorage } from "@mantine/hooks"
+import { LoadingOverlay, Select } from "@mantine/core"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
+import {
+  emitGetFlightModeConfig,
+  emitRefreshFlightModeData,
+  emitSetFlightMode,
+  selectFlightModeChannel,
+  selectFlightModesList,
+  selectPwmValue,
+  selectRefreshingFlightModeData,
+  setRefreshingFlightModeData,
+} from "../../redux/slices/configSlice"
 
 // Helper javascript files
-import {
-  COPTER_MODES_FLIGHT_MODE_MAP,
-  getFlightModeMap,
-  MAV_AUTOPILOT_INVALID,
-  PLANE_MODES_FLIGHT_MODE_MAP,
-} from "../../helpers/mavlinkConstants"
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "../../helpers/notification"
-import { socket } from "../../helpers/socket"
+import { getFlightModeMap } from "../../helpers/mavlinkConstants"
 
 const FLIGHT_MODE_PWM_VALUES = [
   [0, 1230],
@@ -37,26 +45,14 @@ const FLIGHT_MODE_PWM_VALUES = [
 ]
 
 export default function FlightModes() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-
-  const [flightModes, flightModesHandler] = useListState([
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-  ])
-  const [flightModeChannel, setFlightModeChannel] = useState("UNKNOWN")
-  const [currentFlightMode, setCurrentFlightMode] = useState("UNKNOWN")
-  const [currentPwmValue, setCurrentPwmValue] = useState(0)
-  const [refreshingFlightModeData, setRefreshingFlightModeData] =
-    useState(false)
-
+  const dispatch = useDispatch()
+  const connected = useSelector(selectConnectedToDrone)
+  const flightModes = useSelector(selectFlightModesList)
+  const flightModeChannel = useSelector(selectFlightModeChannel)
+  const refreshingFlightModeData = useSelector(selectRefreshingFlightModeData)
   const aircraftType = useSelector(selectAircraftTypeString)
+  const currentFlightMode = useSelector(selectFlightModeString)
+  const currentPwmValue = useSelector(selectPwmValue)
 
   const flightModeSelectDataMap = useMemo(() => {
     const flightModeMap = getFlightModeMap(aircraftType)
@@ -73,60 +69,10 @@ export default function FlightModes() {
       return
     }
 
-    socket.emit("set_state", { state: "config.flight_modes" })
-    socket.emit("get_flight_mode_config")
-
-    socket.on("flight_mode_config", (data) => {
-      flightModesHandler.setState(data.flight_modes)
-      setFlightModeChannel(data.flight_mode_channel)
-      setRefreshingFlightModeData(false)
-    })
-
-    socket.on("set_flight_mode_result", (data) => {
-      if (data.success) {
-        showSuccessNotification(data.message)
-      } else {
-        showErrorNotification(data.message)
-      }
-
-      socket.emit("get_flight_mode_config")
-    })
-
-    return () => {
-      socket.emit("set_state", { state: "config" })
-      socket.off("flight_mode_config")
-      socket.off("set_flight_mode_result")
-    }
+    dispatch(emitSetState("config.flight_modes"))
+    dispatch(emitGetFlightModeConfig())
+    refreshFlightModeData()
   }, [connected])
-
-  useEffect(() => {
-    socket.on("incoming_msg", (msg) => {
-      if (
-        msg.mavpackettype === "RC_CHANNELS" &&
-        flightModeChannel !== "UNKNOWN"
-      ) {
-        setCurrentPwmValue(msg[`chan${flightModeChannel}_raw`])
-      } else if (
-        msg.mavpackettype === "HEARTBEAT" &&
-        msg.autopilot !== MAV_AUTOPILOT_INVALID &&
-        msg.type
-      ) {
-        // Get the current flight mode
-        let mode = "UNKNOWN"
-        if (msg.type === 1) {
-          mode = PLANE_MODES_FLIGHT_MODE_MAP[msg.custom_mode]
-        } else if (msg.type === 2) {
-          mode = COPTER_MODES_FLIGHT_MODE_MAP[msg.custom_mode]
-        }
-
-        setCurrentFlightMode(mode)
-      }
-    })
-
-    return () => {
-      socket.off("incoming_msg")
-    }
-  }, [flightModeChannel])
 
   function isFlightModeActive(mode_idx) {
     // Check if the current PWM value is within the range of the flight mode
@@ -144,15 +90,17 @@ export default function FlightModes() {
   }
 
   function changeFlightMode(modeNumber, newFlightMode) {
-    socket.emit("set_flight_mode", {
-      mode_number: modeNumber + 1, // Mode number is 1 + indexed value
-      flight_mode: parseInt(newFlightMode),
-    })
+    dispatch(
+      emitSetFlightMode({
+        mode_number: modeNumber + 1, // Mode number is 1 + indexed value
+        flight_mode: parseInt(newFlightMode),
+      }),
+    )
   }
 
   function refreshFlightModeData() {
-    socket.emit("refresh_flight_mode_data")
-    setRefreshingFlightModeData(true)
+    dispatch(emitRefreshFlightModeData())
+    dispatch(setRefreshingFlightModeData(true))
   }
 
   return (
@@ -184,13 +132,6 @@ export default function FlightModes() {
             <p>Current mode: {currentFlightMode}</p>
             <p>Flight mode channel: {flightModeChannel}</p>
             <p>Current PWM: {currentPwmValue}</p>
-            <Button
-              onClick={refreshFlightModeData}
-              loading={refreshingFlightModeData}
-              className="mt-2"
-            >
-              Refresh data
-            </Button>
           </div>
         </div>
       </div>

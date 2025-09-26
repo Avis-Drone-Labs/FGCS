@@ -22,6 +22,11 @@ def getFrameDetails() -> None:
     if not droneStatus.drone:
         return notConnectedError(action="get frame config")
 
+    # Update frame type from params
+    droneStatus.drone.frameController.getFrameType()
+    droneStatus.drone.frameController.getFrameClass()
+
+    # Send frame type
     frame_type = droneStatus.drone.frameController.frame_type
     frame_class = droneStatus.drone.frameController.frame_class
     socketio.emit(

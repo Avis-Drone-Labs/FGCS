@@ -71,6 +71,7 @@ export default function FlightModes() {
 
     dispatch(emitSetState("config.flight_modes"))
     dispatch(emitGetFlightModeConfig())
+    refreshFlightModeData()
   }, [connected])
 
   function isFlightModeActive(mode_idx) {
@@ -131,13 +132,6 @@ export default function FlightModes() {
             <p>Current mode: {currentFlightMode}</p>
             <p>Flight mode channel: {flightModeChannel}</p>
             <p>Current PWM: {currentPwmValue}</p>
-            <Button
-              onClick={refreshFlightModeData}
-              loading={refreshingFlightModeData}
-              className="mt-2"
-            >
-              Refresh data
-            </Button>
           </div>
         </div>
       </div>

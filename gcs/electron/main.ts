@@ -24,6 +24,7 @@ import registerAboutIPC, {
 } from "./modules/aboutWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
+  openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
 import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
 // The built directory structure
@@ -262,6 +263,13 @@ function setMainMenu() {
     {
       label: "View",
       submenu: [
+        {
+          label: "Connection Stats",
+          click: () => {
+            openLinkStatsWindow()
+          },
+        },
+        { type: "separator" },
         { role: "reload" },
         { role: "forceReload" },
         { role: "toggleDevTools" },

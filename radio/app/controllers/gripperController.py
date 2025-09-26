@@ -22,9 +22,9 @@ class GripperController:
         self.drone = drone
         self.params = {}
 
-        if (gripperEnabled := self.getEnabled()) is None:
+        if (getGripperEnabled := self.getEnabled()) is None:
             self.drone.logger.warning("Could not get gripper state from drone.")
-        elif gripperEnabled is False:
+        elif getGripperEnabled is False:
             self.drone.logger.warning("Gripper is not enabled.")
         else:
             self.params = {
@@ -83,13 +83,13 @@ class GripperController:
         Returns:
             Response
         """
-        if (gripperEnabled := self.getEnabled()) is None:
+        if (getGripperEnabled := self.getEnabled()) is None:
             self.drone.logger.warning("Could not get gripper state from drone.")
             return {
                 "success": False,
                 "message": "Could not get gripper state from drone.",
             }
-        elif gripperEnabled is False:
+        elif getGripperEnabled is False:
             self.drone.logger.error("Gripper is not enabled")
             return {
                 "success": False,

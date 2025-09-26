@@ -13,7 +13,7 @@ import {
 } from "../../redux/slices/droneInfoSlice"
 
 // 3rd party imports
-import { Button, LoadingOverlay, Select } from "@mantine/core"
+import { LoadingOverlay, Select } from "@mantine/core"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"

@@ -148,12 +148,12 @@ const socketMiddleware = (store) => {
   let socket
 
   function handleRcChannels(msg) {
-    const chans = {}
+    let chans = {}
     for (let i = 1; i < msg.chancount + 1; i++) {
       chans[i] = msg[`chan${i}_raw`]
-
-      store.dispatch(setRadioChannels(chans))
     }
+
+    store.dispatch(setRadioChannels(chans))
   }
 
   const incomingMessageHandler = (msg) => {

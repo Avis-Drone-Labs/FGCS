@@ -4,6 +4,9 @@
   It sends the gripper commands to release and grab for testing it functions as specified
 */
 
+// Native imports
+import { useEffect } from "react"
+
 // 3rd Party Imports
 import { Button } from "@mantine/core"
 
@@ -13,16 +16,24 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { emitSetGripper } from "../../redux/slices/configSlice"
+import { emitSetState, selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
 
 export default function Gripper() {
   const dispatch = useDispatch()
-
+  const connected = useSelector(selectConnectedToDrone)
+  
   // Set gripper config values
   function setGripper(action) {
     dispatch(emitSetGripper(action))
   }
+
+  useEffect(() => {
+    if (connected) {
+      dispatch(emitSetState("config"))
+    }
+  }, [connected])
 
   return (
     <div className="m-4 w-1/2">

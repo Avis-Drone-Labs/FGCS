@@ -74,7 +74,7 @@ export default function RadioCalibration() {
 
   return (
     <div className="m-4 flex flex-row gap-4 relative">
-      <table class="table-auto">
+      <table className="table-auto">
         <tbody>
           {Object.keys(channels).map((channel) => (
             <tr key={channel}>

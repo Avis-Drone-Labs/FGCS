@@ -77,7 +77,19 @@ if (outsideVisibility !== null) {
 
 const selectedRealtimeGraphs = localStorage.getItem("selectedRealtimeGraphs")
 if (selectedRealtimeGraphs !== null) {
-  store.dispatch(setGraphValues(selectedRealtimeGraphs))
+  try {
+    const parsedGraphs = JSON.parse(selectedRealtimeGraphs)
+    store.dispatch(setGraphValues(parsedGraphs))
+  } catch (error) {
+    store.dispatch(
+      setGraphValues({
+        graph_a: null,
+        graph_b: null,
+        graph_c: null,
+        graph_d: null,
+      }),
+    )
+  }
 }
 
 const plannedHomePosition = localStorage.getItem("plannedHomePosition")
@@ -181,8 +193,8 @@ store.subscribe(() => {
     )
   }
 
-  if (typeof store_mut.droneInfo.graphs.selectedGraphs === "string") {
-    updateLocalStorageIfChanged(
+  if (typeof store_mut.droneInfo.graphs.selectedGraphs === "object") {
+    updateJSONLocalStorageIfChanged(
       "selectedRealtimeGraphs",
       store_mut.droneInfo.graphs.selectedGraphs,
     )

@@ -23,11 +23,27 @@ import {
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
+import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
+import {
+  emitGetFlightModeConfig,
+  setChannelsConfig,
+  setCurrentPwmValue,
+  setFlightModeChannel,
+  setFlightModesList,
+  setFrameClass,
+  setFrameTypeDirection,
+  setFrameTypeName,
+  setFrameTypeOrder,
+  setGetGripperEnabled,
+  setNumberOfMotors,
+  setRadioChannels,
+  setRefreshingFlightModeData,
+} from "../slices/configSlice.js"
 import {
   setAttitudeData,
   setBatteryData,
@@ -74,22 +90,6 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
-import {
-  emitGetFlightModeConfig,
-  setChannelsConfig,
-  setCurrentPwmValue,
-  setFlightModeChannel,
-  setFlightModesList,
-  setFrameClass,
-  setFrameTypeDirection,
-  setFrameTypeName,
-  setFrameTypeOrder,
-  setGetGripperEnabled,
-  setNumberOfMotors,
-  setRadioChannels,
-  setRefreshingFlightModeData,
-} from "../slices/configSlice.js"
-import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -281,7 +281,12 @@ const socketMiddleware = (store) => {
 
         // Setting connection status
         socket.socket.on("drone_connect_status", (msg) => {
-          store.dispatch(setConnectionStatus(msg.message))
+          store.dispatch(
+            setConnectionStatus({
+              message: msg.message,
+              progress: msg.progress,
+            }),
+          )
         })
 
         // Flags that the drone is connected

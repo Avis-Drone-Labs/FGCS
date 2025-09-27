@@ -10,7 +10,10 @@ const initialState = {
   connecting: false,
   connected: false,
   connection_modal: false,
-  connection_status: null,
+  connection_status: {
+    message: "",
+    progress: 0,
+  },
 
   // aircraft type
   aircraft_type: 0,

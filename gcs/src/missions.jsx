@@ -337,7 +337,6 @@ export default function Missions() {
           {missionProgressModalData.progress !== null &&
             missionProgressModalData.progress !== undefined && (
               <Progress
-                color="lime"
                 animated
                 size="lg"
                 transitionDuration={300}

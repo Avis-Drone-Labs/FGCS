@@ -15,13 +15,11 @@ import {
 } from "../../helpers/notification.js"
 import { setFile } from "../../redux/slices/logAnalyserSlice.js"
 import { readableBytes } from "./utils"
-import { useRenderCount } from "./debug/renderCount.js"
 
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
  */
 export default function SelectFlightLog({ processLoadedFile }) {
-  // useRenderCount("SelectFlightLog")
   const dispatch = useDispatch()
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)

@@ -51,9 +51,9 @@ async function parseDataflashLogFile(fileData, webContents) {
       const unitId = splitLineData[2]?.trim()
       const unitName = splitLineData[3]?.trim()
       if (unitId && unitName) {
-        const unitCharCode = parseInt(unitId);
+        const unitCharCode = parseInt(unitId)
         if (!isNaN(unitCharCode)) {
-          units[String.fromCharCode(unitCharCode)] = unitName;
+          units[String.fromCharCode(unitCharCode)] = unitName
         }
       }
     } else if (messageName === "FMTU") {

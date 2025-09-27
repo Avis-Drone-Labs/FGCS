@@ -74,6 +74,22 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
+import {
+  emitGetFlightModeConfig,
+  setChannelsConfig,
+  setCurrentPwmValue,
+  setFlightModeChannel,
+  setFlightModesList,
+  setFrameClass,
+  setFrameTypeDirection,
+  setFrameTypeName,
+  setFrameTypeOrder,
+  setGetGripperEnabled,
+  setNumberOfMotors,
+  setRadioChannels,
+  setRefreshingFlightModeData,
+} from "../slices/configSlice.js"
+import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -118,8 +134,27 @@ const MissionSpecificSocketEvents = Object.freeze({
   onCurrentMissionProgress: "current_mission_progress",
 })
 
+const ConfigSpecificSocketEvents = Object.freeze({
+  onGripperEnabled: "is_gripper_enabled",
+  onSetGripperResult: "set_gripper_result",
+  onMotorTestResult: "motor_test_result",
+  onFlightModeConfig: "flight_mode_config",
+  onSetFlightModeResult: "set_flight_mode_result",
+  onFrameTypeConfig: "frame_type_config",
+  onRcConfig: "rc_config",
+})
+
 const socketMiddleware = (store) => {
   let socket
+
+  function handleRcChannels(msg) {
+    let chans = {}
+    for (let i = 1; i < msg.chancount + 1; i++) {
+      chans[i] = msg[`chan${i}_raw`]
+    }
+
+    store.dispatch(setRadioChannels(chans))
+  }
 
   const incomingMessageHandler = (msg) => {
     switch (msg.mavpackettype) {
@@ -152,6 +187,7 @@ const socketMiddleware = (store) => {
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!
         store.dispatch(setRSSIData(msg.rssi))
+        handleRcChannels(msg)
         break
       case "MISSION_CURRENT":
         store.dispatch(setCurrentMission(msg))
@@ -622,6 +658,109 @@ const socketMiddleware = (store) => {
         )
 
         /*
+          ==========
+          = CONFIG =
+          ==========
+        */
+        socket.socket.on(ConfigSpecificSocketEvents.onGripperEnabled, (msg) => {
+          store.dispatch(setGetGripperEnabled(msg))
+        })
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onMotorTestResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onFlightModeConfig,
+          (msg) => {
+            store.dispatch(setFlightModesList(msg.flight_modes))
+            store.dispatch(setFlightModeChannel(msg.flight_mode_channel))
+            store.dispatch(setRefreshingFlightModeData(false))
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetFlightModeResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            store.dispatch(emitGetFlightModeConfig())
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onFrameTypeConfig,
+          (msg) => {
+            const currentFrameType = msg.frame_type
+            const currentFrameClass = msg.frame_class
+
+            // Checks if the frame class has any compatible frame types and if the current frame type param is compatible
+            if (FRAME_CLASS_MAP[currentFrameClass].frametype) {
+              if (
+                Object.keys(
+                  FRAME_CLASS_MAP[currentFrameClass].frametype,
+                ).includes(currentFrameType.toString())
+              ) {
+                const frameInfo =
+                  FRAME_CLASS_MAP[currentFrameClass].frametype[currentFrameType]
+                store.dispatch(setFrameTypeDirection(frameInfo.direction))
+                store.dispatch(setFrameTypeOrder(frameInfo.motorOrder))
+                store.dispatch(setFrameTypeName(frameInfo.frametypename))
+              }
+            } else {
+              store.dispatch(setFrameTypeDirection(null))
+              store.dispatch(setFrameTypeOrder(null))
+              store.dispatch(setFrameTypeName(currentFrameType))
+            }
+            store.dispatch(
+              setFrameClass(FRAME_CLASS_MAP[currentFrameClass].name),
+            )
+            store.dispatch(
+              setNumberOfMotors(
+                FRAME_CLASS_MAP[currentFrameClass].numberOfMotors,
+              ),
+            )
+          },
+        )
+
+        socket.socket.on(ConfigSpecificSocketEvents.onRcConfig, (msg) => {
+          const config = {}
+
+          for (let i = 1; i < 17; i++) {
+            config[i] = msg[`RC_${i}`]
+          }
+          config[`${msg.pitch}`].map = "Pitch"
+          config[`${msg.roll}`].map = "Roll"
+          config[`${msg.throttle}`].map = "Throttle"
+          config[`${msg.yaw}`].map = "Yaw"
+          config[`${msg.flight_modes}`].map = "Flight modes"
+
+          store.dispatch(setChannelsConfig(config))
+        })
+
+        /*
           Generic Drone Data
         */
         socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
@@ -680,6 +819,18 @@ const socketMiddleware = (store) => {
               getGraphDataFromMessage(msg, msg.mavpackettype),
             ),
           )
+
+          // Handle Flight Mode incoming data
+          if (
+            msg.mavpackettype === "RC_CHANNELS" &&
+            storeState.config.flightModeChannel !== "UNKNOWN"
+          ) {
+            store.dispatch(
+              setCurrentPwmValue(
+                msg[`chan${storeState.config.flightModeChannel}_raw`],
+              ),
+            )
+          }
         })
       } else {
         // Turn off socket events
@@ -690,6 +841,9 @@ const socketMiddleware = (store) => {
           socket.socket.off(event),
         )
         Object.values(MissionSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
+        Object.values(ConfigSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
       }

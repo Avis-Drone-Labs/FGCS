@@ -3,8 +3,8 @@ from app import logger, socketio
 from app.utils import droneErrorCb
 
 
-@socketio.on("gripper_enabled")
-def gripperEnabled() -> None:
+@socketio.on("get_gripper_enabled")
+def getGripperEnabled() -> None:
     """
     Tells the frontend whether or not the gripper is enabled, this only works on the config page.
     """
@@ -21,9 +21,11 @@ def gripperEnabled() -> None:
         logger.warning("Attempted to get gripper state when drone is None.")
         return
     enabled = droneStatus.drone.gripperController.getEnabled()
-    droneErrorCb(
-        "Could not get gripper state from drone."
-    ) if enabled is None else socketio.emit("gripper_enabled", enabled)
+    (
+        droneErrorCb("Could not get gripper state from drone.")
+        if enabled is None
+        else socketio.emit("is_gripper_enabled", enabled)
+    )
 
 
 @socketio.on("set_gripper")

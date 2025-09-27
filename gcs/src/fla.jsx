@@ -157,7 +157,7 @@ export default function FLA() {
    */
   function expandESCMessages(logMessages, filterState) {
     const escData = logMessages["ESC"]
-    if (!escData || !Array.isArray(escData) || escData.length === 0) {
+    if (!escData?.length) {
       return { updatedMessages: logMessages, updatedFilters: filterState }
     }
 

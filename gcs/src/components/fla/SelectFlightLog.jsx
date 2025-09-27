@@ -21,7 +21,7 @@ import { useRenderCount } from "./debug/renderCount.js"
  * Initial FLA screen for selecting or uploading a flight log file.
  */
 export default function SelectFlightLog({ processLoadedFile }) {
-  useRenderCount("SelectFlightLog")
+  // useRenderCount("SelectFlightLog")
   const dispatch = useDispatch()
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)

@@ -5,7 +5,7 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 // 3rd Party Imports
 import { useDispatch, useSelector } from "react-redux"
@@ -15,6 +15,7 @@ import {
   buildDefaultMessageFilters,
   calcGPSOffset,
   calculateMeanValues,
+  clearUnitCache,
   convertTimeUStoUTC,
   getUnit,
   hexToRgba,
@@ -68,6 +69,7 @@ export default function FLA() {
    * Process the entire log file
    */
   async function processLoadedFile(result) {
+    clearUnitCache() // Clear cache when loading new file
     const loadedLogMessages = result.messages
 
     if (!loadedLogMessages) {
@@ -154,25 +156,26 @@ export default function FLA() {
    * Expands ESC messages into separate arrays based on Instance
    */
   function expandESCMessages(logMessages, filterState) {
-    if (!logMessages["ESC"]) {
+    const escData = logMessages["ESC"]
+    if (!escData || !Array.isArray(escData) || escData.length === 0) {
       return { updatedMessages: logMessages, updatedFilters: filterState }
     }
 
     const updatedMessages = { ...logMessages }
     const updatedFilters = { ...filterState }
 
-    logMessages["ESC"].forEach((escData) => {
+    escData.forEach((escMessage) => {
       const newEscData = {
-        ...escData,
-        name: `ESC${escData["Instance"] + 1}`,
+        ...escMessage,
+        name: `ESC${escMessage["Instance"] + 1}`,
       }
-      updatedMessages[newEscData.name] = (
-        updatedMessages[newEscData.name] || []
-      ).concat([newEscData])
 
-      if (!updatedFilters[newEscData.name]) {
+      if (!updatedMessages[newEscData.name]) {
+        updatedMessages[newEscData.name] = []
         updatedFilters[newEscData.name] = { ...filterState["ESC"] }
       }
+
+      updatedMessages[newEscData.name].push(newEscData)
     })
 
     delete updatedMessages["ESC"]
@@ -255,12 +258,45 @@ export default function FLA() {
     dispatch(setLogEvents(null))
     dispatch(setLogType("dataflash"))
     dispatch(setCanSavePreset(false))
+    clearUnitCache() // Clear memoization cache
   }
 
-  // Update datasets based on the message filters constantly
-  useEffect(() => {
-    if (!messageFilters || !logMessages) return
-    // Sort the category and field names to maintain consistent order
+  // Cache transformed data for each message type to avoid expensive re-processing
+  const transformedData = useMemo(() => {
+    if (!logMessages) return {}
+
+    const cache = {}
+
+    Object.keys(logMessages)
+      .filter(
+        (key) =>
+          key !== "format" &&
+          key !== "units" &&
+          Array.isArray(logMessages[key]),
+      )
+      .forEach((categoryName) => {
+        const messageData = logMessages[categoryName]
+        cache[categoryName] = {}
+
+        // Get available fields for this message type
+        const fields = logMessages["format"]?.[categoryName]?.fields || []
+
+        fields.forEach((fieldName) => {
+          // Pre-transform data for each field
+          cache[categoryName][fieldName] = messageData.map((d) => ({
+            x: d.TimeUS,
+            y: d[fieldName],
+          }))
+        })
+      })
+
+    return cache
+  }, [logMessages])
+
+  // Create base datasets when filters change
+  const baseDatasets = useMemo(() => {
+    if (!messageFilters || !transformedData) return []
+
     const datasets = Object.keys(messageFilters)
       .sort()
       .reduce((acc, categoryName) => {
@@ -268,9 +304,11 @@ export default function FLA() {
         Object.keys(category)
           .sort()
           .forEach((fieldName) => {
-            if (category[fieldName]) {
+            if (
+              category[fieldName] &&
+              transformedData[categoryName]?.[fieldName]
+            ) {
               const label = `${categoryName}/${fieldName}`
-              const color = customColors[label]
               const unit = getUnit(
                 categoryName,
                 fieldName,
@@ -280,20 +318,28 @@ export default function FLA() {
               acc.push({
                 label: label,
                 yAxisID: unit,
-                data: logMessages[categoryName].map((d) => ({
-                  x: d.TimeUS,
-                  y: d[fieldName],
-                })),
-                borderColor: color,
-                backgroundColor: hexToRgba(color, 0.5), // Use a more transparent shade for the background
+                unit: unit,
+                data: transformedData[categoryName][fieldName], // Use pre-cached data
               })
             }
           })
         return acc
       }, [])
+    return datasets
+  }, [messageFilters, transformedData, formatMessages, units])
 
-    setLocalChartData({ datasets: datasets })
-  }, [messageFilters, customColors])
+  // Apply colors to datasets
+  useEffect(() => {
+    const datasetsWithColors = baseDatasets.map((dataset) => {
+      const color = customColors[dataset.label] || "#000000"
+      return {
+        ...dataset,
+        borderColor: color,
+        backgroundColor: hexToRgba(color, 0.5),
+      }
+    })
+    setLocalChartData({ datasets: datasetsWithColors })
+  }, [baseDatasets, customColors])
 
   return (
     <Layout currentPage="fla">

@@ -306,7 +306,7 @@ export default function Navbar() {
 
         {connecting &&
           droneConnectionStatus.message !== null &&
-          droneConnectionStatus.progress !== null && (
+          typeof droneConnectionStatus.progress === "number" && (
             <>
               <p className="text-center mt-4">
                 {droneConnectionStatus.message}

@@ -4,7 +4,6 @@
 
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
 import {
   IconAnchor,
   IconAnchorOff,
@@ -14,11 +13,15 @@ import {
 } from "@tabler/icons-react"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectGPS } from "../../redux/slices/droneInfoSlice"
 
 // Helper Functions
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
+import {
+  selectOutsideVisibility,
+  setOutsideVisibility,
+} from "../../redux/slices/droneConnectionSlice"
 
 export default function FloatingToolbar({
   centerMapOnDrone,
@@ -26,11 +29,9 @@ export default function FloatingToolbar({
   setFollowDrone,
   mapRef,
 }) {
+  const dispatch = useDispatch()
   const gpsData = useSelector(selectGPS)
-  const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
-    key: "outsideVisibility",
-    defaultValue: false,
-  })
+  const outsideVisibility = useSelector(selectOutsideVisibility)
 
   function updateFollowDroneAction() {
     setFollowDrone(
@@ -94,7 +95,7 @@ export default function FloatingToolbar({
       >
         <ActionIcon
           onClick={() => {
-            setOutsideVisibility(!outsideVisibility)
+            dispatch(setOutsideVisibility(!outsideVisibility))
           }}
         >
           {outsideVisibility ? <IconSun /> : <IconSunOff />}

@@ -51,7 +51,10 @@ async function parseDataflashLogFile(fileData, webContents) {
       const unitId = splitLineData[2]?.trim()
       const unitName = splitLineData[3]?.trim()
       if (unitId && unitName) {
-        units[String.fromCharCode(parseInt(unitId))] = unitName
+        const unitCharCode = parseInt(unitId);
+        if (!isNaN(unitCharCode)) {
+          units[String.fromCharCode(unitCharCode)] = unitName;
+        }
       }
     } else if (messageName === "FMTU") {
       // Message defining units and multipliers used for fields of other messages

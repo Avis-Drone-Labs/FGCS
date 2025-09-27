@@ -99,6 +99,22 @@ class Drone:
 
         self.connectionError: Optional[str] = None
 
+        self.connection_phases = [
+            "Connecting to drone",
+            "Received heartbeat",
+            "Cleaned temp logs",
+            "Setup parameters controller",
+            "Setup arm controller",
+            "Setup flight modes controller",
+            "Setup motor controller",
+            "Setup gripper controller",
+            "Setup mission controller",
+            "Setup frame controller",
+            "Setup RC controller",
+            "Setup nav controller",
+            "Connection complete",
+        ]
+
         self.logger.debug(f"Trying to setup master with port {port} and baud {baud}")
 
         if not Drone.checkBaudrateValid(baud):
@@ -108,7 +124,7 @@ class Drone:
             return
 
         try:
-            self.sendConnectionStatusUpdate("Connecting to drone")
+            self.sendConnectionStatusUpdate(0)
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.logger.exception(traceback.format_exc())
@@ -131,7 +147,7 @@ class Drone:
             self.connectionError = "Could not connect to the drone."
             return
 
-        self.sendConnectionStatusUpdate("Received heartbeat")
+        self.sendConnectionStatusUpdate(1)
 
         self.aircraft_type = getVehicleType(initial_heartbeat.type)
         if self.aircraft_type not in (
@@ -163,7 +179,7 @@ class Drone:
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
-        self.sendConnectionStatusUpdate("Cleaned temp logs")
+        self.sendConnectionStatusUpdate(2)
 
         self.is_active = Event()
         self.is_active.set()
@@ -178,31 +194,31 @@ class Drone:
         self.armed = False
 
         self.paramsController = ParamsController(self)
-        self.sendConnectionStatusUpdate("Setup parameters controller")
+        self.sendConnectionStatusUpdate(3)
 
         self.armController = ArmController(self)
-        self.sendConnectionStatusUpdate("Setup arm controller")
+        self.sendConnectionStatusUpdate(4)
 
         self.flightModesController = FlightModesController(self)
-        self.sendConnectionStatusUpdate("Setup flight modes controller")
+        self.sendConnectionStatusUpdate(5)
 
         self.motorTestController = MotorTestController(self)
-        self.sendConnectionStatusUpdate("Setup motor controller")
+        self.sendConnectionStatusUpdate(6)
 
         self.gripperController = GripperController(self)
-        self.sendConnectionStatusUpdate("Setup gripper controller")
+        self.sendConnectionStatusUpdate(7)
 
         self.missionController = MissionController(self)
-        self.sendConnectionStatusUpdate("Setup mission controller")
+        self.sendConnectionStatusUpdate(8)
 
         self.frameController = FrameController(self)
-        self.sendConnectionStatusUpdate("Setup frame controller")
+        self.sendConnectionStatusUpdate(9)
 
         self.rcController = RcController(self)
-        self.sendConnectionStatusUpdate("Setup RC controller")
+        self.sendConnectionStatusUpdate(10)
 
         self.navController = NavController(self)
-        self.sendConnectionStatusUpdate("Setup nav controller")
+        self.sendConnectionStatusUpdate(11)
 
         self.stopAllDataStreams()
 
@@ -210,15 +226,26 @@ class Drone:
 
         self.startThread()
 
+        self.sendConnectionStatusUpdate(12)
+
     def __getNextLogFilePath(self, line: str) -> str:
         return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
 
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
-    def sendConnectionStatusUpdate(self, msg):
+    def sendConnectionStatusUpdate(self, msg_index):
+        total_msgs = len(self.connection_phases)
+        if msg_index < 0 or msg_index >= total_msgs:
+            self.logger.error(f"Invalid connection status index {msg_index}")
+            return
+
+        msg = self.connection_phases[msg_index]
+
         if self.droneConnectStatusCb:
-            self.droneConnectStatusCb(msg)
+            self.droneConnectStatusCb(
+                {"message": msg, "progress": int((msg_index / (total_msgs - 1)) * 100)}
+            )
 
     @staticmethod
     def checkBaudrateValid(baud: int) -> bool:

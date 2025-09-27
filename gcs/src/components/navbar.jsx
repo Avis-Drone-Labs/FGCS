@@ -16,6 +16,7 @@ import {
   Group,
   LoadingOverlay,
   Modal,
+  Progress,
   SegmentedControl,
   Select,
   Tabs,
@@ -90,7 +91,7 @@ export default function Navbar() {
   const networkType = useSelector(selectNetworkType)
   const ip = useSelector(selectIp)
   const port = useSelector(selectPort)
-  const droneConnectionStatusMessage = useSelector(selectConnectionStatus)
+  const droneConnectionStatus = useSelector(selectConnectionStatus)
 
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
@@ -166,6 +167,8 @@ export default function Navbar() {
           },
         }}
         withCloseButton={false}
+        closeOnClickOutside={!connecting}
+        closeOnEscape={!connecting}
       >
         <form
           onSubmit={(e) => {
@@ -281,6 +284,7 @@ export default function Navbar() {
                 dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
               }}
+              disabled={connecting}
             >
               Close
             </Button>
@@ -300,9 +304,23 @@ export default function Navbar() {
           </Group>
         </form>
 
-        {connecting && droneConnectionStatusMessage !== null && (
-          <p className="text-center mt-4">{droneConnectionStatusMessage}</p>
-        )}
+        {connecting &&
+          droneConnectionStatus.message !== null &&
+          droneConnectionStatus.progress !== null && (
+            <>
+              <p className="text-center mt-4">
+                {droneConnectionStatus.message}
+              </p>
+              <Progress
+                color="lime"
+                animated
+                size="lg"
+                transitionDuration={300}
+                value={droneConnectionStatus.progress}
+                className="w-full mx-auto my-auto"
+              />
+            </>
+          )}
       </Modal>
 
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">

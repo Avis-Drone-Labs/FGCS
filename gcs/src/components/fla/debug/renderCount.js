@@ -20,7 +20,7 @@ export function useRenderCount(label) {
 // How to use:
 // import { useRenderCount } from "./debug/renderCount.js"
 // function MyComponent() {
-//   const renderCount = useRenderCount("MyComponent")
-//   return <div>Render count: {renderCount}</div>
+//   useRenderCount("MyComponent")
+//   return <div>Stuff</div>
 // }
 // Check your console!

@@ -163,15 +163,13 @@ export function buildDefaultMessageFilters(loadedLogMessages) {
 }
 
 export function processFlightModes(result, loadedLogMessages) {
-  let flightModes
   if (result.logType === "dataflash") {
-    flightModes = loadedLogMessages.MODE
+    return loadedLogMessages.MODE
   } else if (result.logType === "fgcs_telemetry") {
-    flightModes = getHeartbeatMessages(loadedLogMessages.HEARTBEAT)
+    return getHeartbeatMessages(loadedLogMessages.HEARTBEAT)
   } else {
-    flightModes = []
+    return []
   }
-  return flightModes
 }
 
 /**

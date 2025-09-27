@@ -2,16 +2,16 @@
 This file contains the logic for parsing different types of log files on the main electron process.
 */
 
-import fs from 'fs'
-import createRecentLogsManager from '../settings/recentLogManager'
+import fs from "fs"
+import createRecentLogsManager from "../settings/recentLogManager"
 
 const recentLogsManager = createRecentLogsManager()
 
-function parseDataflashLogFile(fileData, webContents) {
+async function parseDataflashLogFile(fileData, webContents) {
   // https://ardupilot.org/copter/docs/logmessages.html
   // https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Logger
 
-  const stringTypes = ['n', 'N', 'Z', 'M']
+  const stringTypes = new Set(["n", "N", "Z", "M"])
 
   const formatMessages = {}
   const messages = {}
@@ -19,208 +19,227 @@ function parseDataflashLogFile(fileData, webContents) {
   const numberOfLines = fileData.length
 
   let aircraftType = null
+  const PROGRESS_INTERVAL = 25000 // Reduce progress update frequency
+  const CHUNK_SIZE = 10000 // Process in chunks to prevent blocking
 
-  for (const [idx, line] of fileData.entries()) {
-    const splitLineData = line.split(',').map(function (item) {
-      return item.trim()
-    })
-    const messageName = splitLineData[0]
-    if (messageName === 'FMT') {
+  for (let idx = 0; idx < numberOfLines; idx++) {
+    const line = fileData[idx]
+
+    // Skip empty lines early
+    if (!line || line.length < 3) continue
+
+    // Optimized splitting - avoid trim on every element
+    const splitLineData = line.split(",")
+    const messageName = splitLineData[0].trim()
+    if (messageName === "FMT") {
       // Message defining the format of messages in this file
-      const definedMessageType = parseInt(splitLineData[1]) // unique-to-this-log identifier for message being defined
-      const definedMessageLength = parseInt(splitLineData[2]) // the number of bytes taken up by this message (including all headers)
-      const definedMessageName = splitLineData[3] // name of the message being defined
-      const definedMessageFormat = splitLineData[4] // character string defining the C-storage-type of the fields in this message
-      const fields = splitLineData.slice(5)
+      const definedMessageType = parseInt(splitLineData[1])
+      const definedMessageLength = parseInt(splitLineData[2])
+      const definedMessageName = splitLineData[3].trim()
+      const definedMessageFormat = splitLineData[4].trim()
+      const fields = splitLineData.slice(5).map((f) => f.trim())
 
       formatMessages[definedMessageName] = {
-        length: definedMessageLength, // is this even needed?
+        length: definedMessageLength,
         name: definedMessageName,
         type: definedMessageType,
         format: definedMessageFormat,
         fields,
       }
-
-      // if (definedMessageName === 'ATT') {
-      //   console.log(formatMessages[definedMessageName])
-      // }
-    } else if (messageName === 'UNIT') {
+    } else if (messageName === "UNIT") {
       // Message mapping from single character to SI unit
-      const unitId = splitLineData[2]
-      const unitName = splitLineData[3]
-      units[String.fromCharCode(unitId)] = unitName
-    } else if (messageName === 'FMTU') {
+      const unitId = splitLineData[2]?.trim()
+      const unitName = splitLineData[3]?.trim()
+      if (unitId && unitName) {
+        units[String.fromCharCode(parseInt(unitId))] = unitName
+      }
+    } else if (messageName === "FMTU") {
       // Message defining units and multipliers used for fields of other messages
       const messageType = parseInt(splitLineData[2])
-      const messageUnits = splitLineData[3]
-      const messageMultiplier = splitLineData[4]
+      const messageUnits = splitLineData[3]?.trim()
+      const messageMultiplier = splitLineData[4]?.trim()
 
-      Object.keys(formatMessages).forEach((formatMessageName) => {
+      // Cache format message names to avoid repeated Object.keys() calls
+      for (const formatMessageName in formatMessages) {
         const formatMessage = formatMessages[formatMessageName]
         if (formatMessage.type === messageType) {
           formatMessage.units = messageUnits
           formatMessage.multiplier = messageMultiplier
         }
-      })
-    } else if (messageName === 'MULT') {
+      }
+    } else if (messageName === "MULT") {
       // Message mapping from single character to numeric multiplier
-    } else if (messageName === 'PARM') {
+    } else if (messageName === "PARM") {
       // Parameter value
-      if (splitLineData[2] === 'Q_ENABLE' && splitLineData[3] === '1') {
-        aircraftType = 'quadplane'
+      if (
+        splitLineData[2]?.trim() === "Q_ENABLE" &&
+        splitLineData[3]?.trim() === "1"
+      ) {
+        aircraftType = "quadplane"
       }
-    } else if (messageName === 'FILE') {
+    } else if (messageName === "FILE") {
       // File data
-    } else if (messageName === 'MSG') {
+    } else if (messageName === "MSG") {
       // MSG data
-      const text = splitLineData[2]
+      const text = splitLineData[2]?.trim()
 
-      if (aircraftType !== null) {
-        continue
-      }
-
-      if (text.toLowerCase().indexOf('arduplane') > -1) {
-        aircraftType = 'plane'
-      } else if (text.toLowerCase().indexOf('arducopter') > -1) {
-        aircraftType = 'copter'
+      if (aircraftType === null && text) {
+        const lowerText = text.toLowerCase()
+        if (lowerText.includes("arduplane")) {
+          aircraftType = "plane"
+        } else if (lowerText.includes("arducopter")) {
+          aircraftType = "copter"
+        }
       }
     } else {
       // Message data
-      if (Object.keys(formatMessages).includes(messageName)) {
-        if (!Object.keys(messages).includes(messageName)) {
+      const formatMessage = formatMessages[messageName]
+      if (formatMessage) {
+        if (!messages[messageName]) {
           messages[messageName] = []
         }
-
-        const formatMessage = formatMessages[messageName]
 
         const messageObj = {
           name: messageName,
           type: formatMessage.type,
-          // length: formatMessage.length, // is this even needed?
         }
 
-        const messageData = splitLineData.slice(1)
         const fields = formatMessage.fields
         const format = formatMessage.format
+        const fieldsLength = fields.length
 
-        for (let i = 0; i < fields.length; i++) {
-          let field = fields[i]
-          let formatType = format[i]
-          let value = messageData[i]
+        for (let i = 0; i < fieldsLength && i < splitLineData.length - 1; i++) {
+          const field = fields[i]
+          const formatType = format[i]
+          const value = splitLineData[i + 1]?.trim()
 
-          if (stringTypes.includes(formatType)) {
-            messageObj[field] = value
-          } else {
-            messageObj[field] = parseFloat(value)
+          if (value !== undefined && value !== "") {
+            if (stringTypes.has(formatType)) {
+              messageObj[field] = value
+            } else {
+              const numValue = parseFloat(value)
+              messageObj[field] = isNaN(numValue) ? 0 : numValue
+            }
           }
         }
-
-        // if (messageName === 'ATT' && messages[messageName].length === 0) {
-        //   console.log(messageObj)
-        // }
 
         messages[messageName].push(messageObj)
       }
     }
-    if (idx % 5000 === 0) {
-      webContents.send('fla:log-parse-progress', {
-        percent: Math.round((idx / numberOfLines) * 100),
-      })
+
+    if (idx % PROGRESS_INTERVAL === 0) {
+      const percent = Math.round((idx / numberOfLines) * 100)
+      webContents.send("fla:log-parse-progress", { percent })
+    }
+
+    // Yield control to prevent blocking for very large files
+    if (idx % CHUNK_SIZE === 0 && idx > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }
 
-  webContents.send('fla:log-parse-progress', {
+  webContents.send("fla:log-parse-progress", {
     percent: 100,
   })
 
   // Add format messages to messages for later digesting and return
-  messages['format'] = formatMessages
-  messages['units'] = units
-  messages['aircraftType'] = aircraftType
+  messages["format"] = formatMessages
+  messages["units"] = units
+  messages["aircraftType"] = aircraftType
   return messages
 }
 
-function parseFgcsTelemetryLogFile(fileData, webContents) {
+async function parseFgcsTelemetryLogFile(fileData, webContents) {
   const formatMessages = {}
   const messages = {}
   const numberOfLines = fileData.length
+  const CHUNK_SIZE = 10000
+  const PROGRESS_INTERVAL = 25000
+
   if (numberOfLines < 2) {
     return null
   }
 
-  for (const [idx, line] of fileData.entries()) {
-    if (line.includes('==')) {
-      // ignore lines which aren't meant for parsing
+  for (let idx = 0; idx < numberOfLines; idx++) {
+    const line = fileData[idx]
+    if (!line || line.length < 5 || line.includes("==")) {
       continue
     }
 
-    const splitLineData = line.split(',').map(function (item) {
-      return item.trim()
-    })
+    const splitLineData = line.split(",")
     const timestamp = parseFloat(splitLineData[0])
-    const messageName = splitLineData[1]
-    const messageData = splitLineData.splice(2)
+    const messageName = splitLineData[1]?.trim()
 
-    if (messageName === 'STATUSTEXT') {
+    // TODO: Don't skip these messages
+    if (
+      !messageName ||
+      messageName === "STATUSTEXT" ||
+      messageName === "BATTERY_STATUS" ||
+      messageName === "ESC_TELEMETRY_1_TO_4"
+    ) {
       continue
     }
 
-    // get the field names from the message data and add it to the format object
-    // if it doesn't exist for that message name already
-    if (!(messageName in formatMessages)) {
-      const fields = messageData.map((keyVal) => keyVal.split(':')[0])
+    const messageData = splitLineData.slice(2)
 
-      formatMessages[messageName] = {
-        fields,
+    // Get field names and cache format
+    if (!formatMessages[messageName]) {
+      const fields = []
+      for (let i = 0; i < messageData.length; i++) {
+        const keyVal = messageData[i]?.trim()
+        if (keyVal) {
+          const colonIndex = keyVal.indexOf(":")
+          if (colonIndex > 0) {
+            fields.push(keyVal.substring(0, colonIndex))
+          }
+        }
       }
+      formatMessages[messageName] = { fields }
     }
 
-    // This object contains the message data in a more structured format so FLA can read and interpret it
     const messageObj = {
-      // moment (the datatime adapter for chartjs) uses milliseconds from epoch
-      // as default, so this is a small hack to convert the seconds into milliseconds
-      // as the timestamp recorded in a .ftlog is higher precision.
-      TimeUS: parseInt(timestamp * 1000),
+      TimeUS: Math.round(timestamp * 1000), // Use round instead of parseInt for better precision
       name: messageName,
     }
 
-    // ignore certain messages as the data contains an array which is hard to parse
-    // TOOD: fix
-    if (messageName === 'BATTERY_STATUS') {
-      continue
-    } else if (messageName === 'ESC_TELEMETRY_1_TO_4') {
-      continue
+    for (let i = 0; i < messageData.length; i++) {
+      const keyVal = messageData[i]?.trim()
+      if (keyVal) {
+        const colonIndex = keyVal.indexOf(":")
+        if (colonIndex > 0) {
+          const key = keyVal.substring(0, colonIndex)
+          const value = keyVal.substring(colonIndex + 1)
+          const numValue = parseFloat(value)
+          if (!isNaN(numValue)) {
+            messageObj[key] = numValue
+          }
+        }
+      }
     }
 
-    messageData.forEach((keyVal) => {
-      const [key, value] = keyVal.split(':')
-
-      try {
-        messageObj[key] = parseFloat(value)
-      } catch (e) {
-        // messageObj[key] = null
-      }
-    })
-
-    if (!(messageName in messages)) {
+    if (!messages[messageName]) {
       messages[messageName] = []
     }
 
     messages[messageName].push(messageObj)
 
-    if (idx % 5000 === 0) {
-      webContents.send('fla:log-parse-progress', {
-        percent: Math.round((idx / numberOfLines) * 100),
-      })
+    if (idx % PROGRESS_INTERVAL === 0) {
+      const percent = Math.round((idx / numberOfLines) * 100)
+      webContents.send("fla:log-parse-progress", { percent })
+    }
+
+    // Yield control for large files
+    if (idx % CHUNK_SIZE === 0 && idx > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }
 
-  webContents.send('fla:log-parse-progress', {
+  webContents.send("fla:log-parse-progress", {
     percent: 100,
   })
 
   // Add format messages to messages for later digesting and return
-  messages['format'] = formatMessages
+  messages["format"] = formatMessages
   return messages
 }
 
@@ -229,24 +248,24 @@ function determineLogFileType(filePath, firstLine) {
   const ext = reFileExtension.exec(filePath)[1]
 
   const extensionToTypeMap = {
-    log: 'dataflash',
-    ftlog: 'fgcs_telemetry',
+    log: "dataflash",
+    ftlog: "fgcs_telemetry",
     // exclude txt from map as txt's are ambiguous
   }
 
-  if (ext !== undefined && ext !== 'txt' && ext in extensionToTypeMap) {
+  if (ext !== undefined && ext !== "txt" && ext in extensionToTypeMap) {
     return extensionToTypeMap[ext]
   } else {
     // Try to figure out the type of log file from the first line of the file
     if (
-      firstLine === 'FMT, 128, 89, FMT, BBnNZ, Type,Length,Name,Format,Columns'
+      firstLine === "FMT, 128, 89, FMT, BBnNZ, Type,Length,Name,Format,Columns"
     ) {
-      return 'dataflash'
-    } else if (firstLine.includes('==START_TIME==')) {
-      return 'fgcs_telemetry'
+      return "dataflash"
+    } else if (firstLine.includes("==START_TIME==")) {
+      return "fgcs_telemetry"
     } else if (firstLine.match(/\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}:\d{2}/)) {
       // check if first line contains a string similar to "30/04/2024 13:08:13"
-      return 'mp_telemetry'
+      return "mp_telemetry"
     } else {
       return null
     }
@@ -263,32 +282,36 @@ export function clearRecentFiles() {
   recentLogsManager.clearRecentLogs()
 }
 
-export default function openFile(event, filePath) {
+export default async function openFile(event, filePath) {
   if (filePath == null) {
-    return null
+    return { success: false, error: "No file path provided" }
   }
 
   try {
-    const fileData = fs.readFileSync(filePath, 'utf8')
-    const fileLines = fileData.trim().split('\n')
+    const fileData = fs.readFileSync(filePath, "utf8")
+    const fileLines = fileData.trim().split("\n")
 
     const logType = determineLogFileType(filePath, fileLines[0])
 
     if (logType === null) {
-      return { success: false, error: 'Unknown log file type' }
+      return { success: false, error: "Unknown log file type" }
     }
 
-    var messages = null
+    let messages = null
 
-    if (logType === 'dataflash') {
-      messages = parseDataflashLogFile(fileLines, event.sender)
-    } else if (logType === 'fgcs_telemetry') {
-      messages = parseFgcsTelemetryLogFile(fileLines, event.sender)
-    } else if (logType === 'mp_telemetry') {
+    if (logType === "dataflash") {
+      messages = await parseDataflashLogFile(fileLines, event.sender)
+    } else if (logType === "fgcs_telemetry") {
+      messages = await parseFgcsTelemetryLogFile(fileLines, event.sender)
+    } else if (logType === "mp_telemetry") {
       // TODO: implement
-      // messages = parseMpTelemetryLogFile(fileLines, event.sender)
+      // messages = await parseMpTelemetryLogFile(fileLines, event.sender)
+      return {
+        success: false,
+        error: "MP telemetry parsing not yet implemented",
+      }
     } else {
-      return { success: false, error: 'Unknown log file type' }
+      return { success: false, error: "Unknown log file type" }
     }
 
     if (messages !== null) {
@@ -299,8 +322,11 @@ export default function openFile(event, filePath) {
         messages,
         logType,
       }
+    } else {
+      return { success: false, error: "Failed to parse log file" }
     }
   } catch (err) {
-    return { success: false, error: err }
+    console.error("Error parsing log file:", err)
+    return { success: false, error: err.message || "Unknown parsing error" }
   }
 }

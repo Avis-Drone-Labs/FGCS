@@ -36,20 +36,36 @@ export default function SelectFlightLog({ processLoadedFile }) {
 
   async function handleFile(file) {
     if (!file) return
+
+    console.time(`Loading file: ${file.name}`)
+
     try {
       dispatch(setFile(file))
       setLoadingFile(true)
+      setLoadingFileProgress(0)
+
+      console.log(
+        `Starting to load file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
+      )
+
       const result = await window.ipcRenderer.loadFile(file.path)
+
       if (!result.success) {
-        showErrorNotification("Error loading file, file not found. Reload.")
+        showErrorNotification(
+          `Error loading file: ${result.error || "File not found. Please reload."}`,
+        )
         return
       }
+
       await processLoadedFile(result)
       showSuccessNotification(`${file.name} loaded successfully`)
+      console.timeEnd(`Loading file: ${file.name}`)
     } catch (error) {
+      console.error("Error loading file:", error)
       showErrorNotification("Error loading file: " + error.message)
     } finally {
       setLoadingFile(false)
+      setLoadingFileProgress(0)
     }
   }
 

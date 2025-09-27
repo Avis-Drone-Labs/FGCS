@@ -308,11 +308,10 @@ export default function Navbar() {
           droneConnectionStatus.message !== null &&
           typeof droneConnectionStatus.progress === "number" && (
             <>
-              <p className="text-center mt-4">
+              <p className="text-center my-4">
                 {droneConnectionStatus.message}
               </p>
               <Progress
-                color="lime"
                 animated
                 size="lg"
                 transitionDuration={300}

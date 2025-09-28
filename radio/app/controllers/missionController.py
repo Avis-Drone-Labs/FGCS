@@ -201,11 +201,11 @@ class MissionController:
             # TypeError is raised if mavlink V1 is used where the mission_request_list_send
             # function does not have a mission_type parameter
             self.drone.logger.error(
-                "Failed to request mission list from autopilot, got type error"
+                "Failed to request mission list from autopilot, got type error. Trying again without mission type."
             )
             return {
                 "success": False,
-                "message": "Failed to request mission list from autopilot, got type error",
+                "message": "Failed to request mission list from autopilot, got type error. Try reconnecting to the drone.",
             }
 
         try:

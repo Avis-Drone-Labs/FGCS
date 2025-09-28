@@ -5,6 +5,8 @@ import app.droneStatus as droneStatus
 from app import create_app, socketio
 from dotenv import load_dotenv
 
+os.environ["MAVLINK20"] = "1"
+
 app = create_app(debug=True)
 
 if __name__ == "__main__":

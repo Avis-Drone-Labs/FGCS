@@ -52,6 +52,8 @@ def set_state(data: SetStateType) -> None:
         "config.flight_modes": ["RC_CHANNELS", "HEARTBEAT"],
     }
 
+    droneStatus.drone.logger.info(f"Changing state to {droneStatus.state}")
+
     if droneStatus.state == "dashboard":
         droneStatus.drone.setupDataStreams()
         for message in message_listeners["dashboard"]:

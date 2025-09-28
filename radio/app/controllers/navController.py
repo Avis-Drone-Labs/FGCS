@@ -23,6 +23,10 @@ class NavController:
 
         self.loiter_radius_param_type = mavutil.mavlink.MAV_PARAM_TYPE_INT16
         self.loiter_radius = 80.0  # Default loiter radius
+        if (
+            self.drone.aircraft_type == 1
+        ):  # Copter doesn't have loiter radius, only Plane
+            self.getLoiterRadiusFromDrone()
 
     @sendingCommandLock
     def getHomePosition(self) -> Response:
@@ -252,10 +256,11 @@ class NavController:
                 "message": "Could not reposition, serial exception",
             }
 
-    def getLoiterRadius(self) -> Response:
+    def getLoiterRadiusFromDrone(self) -> Response:
         """
         Get the loiter radius of the drone.
         """
+        self.drone.logger.debug("Fetching loiter radius")
         loiter_radius_data = self.drone.paramsController.getSingleParam(
             "WP_LOITER_RAD", timeout=1.5
         )
@@ -270,7 +275,7 @@ class NavController:
                 }
             else:
                 self.drone.logger.error(
-                    "Loiter radius parameter found, but parametvalue not found"
+                    "Loiter radius parameter found, but parameter value not found"
                 )
                 return {
                     "success": False,
@@ -282,6 +287,29 @@ class NavController:
                 "success": False,
                 "message": loiter_radius_data.get("message", ""),
             }
+
+    def getLoiterRadius(self) -> Response:
+        """
+        Get the loiter radius of the drone from the cached parameters.
+
+        Returns:
+            Response: The response from the get loiter radius command
+        """
+
+        loiter_radius_data = self.drone.paramsController.getCachedParam("WP_LOITER_RAD")
+
+        if loiter_radius_data.get("param_value") is None:
+            self.drone.logger.warning(
+                "Loiter radius parameter not found in cache, fetching from drone"
+            )
+            return self.getLoiterRadiusFromDrone()
+
+        self.loiter_radius = loiter_radius_data.get("param_value", self.loiter_radius)
+
+        return {
+            "success": True,
+            "data": self.loiter_radius,
+        }
 
     def setLoiterRadius(self, radius: float) -> Response:
         """

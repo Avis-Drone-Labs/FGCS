@@ -81,6 +81,7 @@ import {
   setAutoPilotRebootModalOpen,
   setFetchingVars,
   setFetchingVarsProgress,
+  setHasFetchedOnce,
   setModifiedParams,
   setParams,
   setParamSearchValue,
@@ -299,6 +300,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
+          store.dispatch(setHasFetchedOnce(false))
           store.dispatch(setGuidedModePinData({ lat: 0, lon: 0, alt: 0 }))
           store.dispatch(setRebootData({}))
           store.dispatch(setAutoPilotRebootModalOpen(false))
@@ -667,9 +669,12 @@ const socketMiddleware = (store) => {
           = CONFIG =
           ==========
         */
-        socket.socket.on(ConfigSpecificSocketEvents.onGripperEnabled, (msg) => {
-          store.dispatch(setGetGripperEnabled(msg))
-        })
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onGripperEnabled,
+          (enabled) => {
+            store.dispatch(setGetGripperEnabled(enabled))
+          },
+        )
 
         socket.socket.on(
           ConfigSpecificSocketEvents.onSetGripperResult,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import serial
 from app.customTypes import Response
@@ -22,9 +22,7 @@ class GripperController:
         self.drone = drone
         self.params = {}
 
-        if (getGripperEnabled := self.getEnabled()) is None:
-            self.drone.logger.warning("Could not get gripper state from drone.")
-        elif getGripperEnabled is False:
+        if not self.getEnabledFromDrone():
             self.drone.logger.warning("Gripper is not enabled.")
         else:
             self.params = {
@@ -51,13 +49,14 @@ class GripperController:
                 ),
             }
 
-    def getEnabled(self) -> Optional[bool]:
+    def getEnabledFromDrone(self) -> bool:
         """
         Gets the enabled status of the gripper by checking the value of the GRIP_ENABLE param
 
         Returns:
             Optional[bool]
         """
+        self.drone.logger.debug("Fetching gripper enabled state")
         gripper_enabled_response = self.drone.paramsController.getSingleParam(
             param_name="GRIP_ENABLE"
         )
@@ -65,13 +64,31 @@ class GripperController:
             self.drone.logger.warning(
                 f"Gripper state could not be fetched from drone: {gripper_enabled_response.get('message')}"
             )
-            return None
+            return False
 
         gripper_enabled_response_data = gripper_enabled_response.get("data")
         if gripper_enabled_response_data:
             return bool(gripper_enabled_response_data.param_value)
 
         return False
+
+    def getEnabled(self) -> bool:
+        """
+        Gets the cached enabled status of the gripper by checking the value of the GRIP_ENABLE param
+
+        Returns:
+            Optional[bool]
+        """
+        gripper_enabled_param = self.drone.paramsController.getCachedParam(
+            "GRIP_ENABLE"
+        )
+        if not gripper_enabled_param:
+            self.drone.logger.warning(
+                "Gripper state could not be fetched from cache, fetching from drone"
+            )
+            return self.getEnabledFromDrone()
+
+        return bool(gripper_enabled_param.get("param_value"))
 
     def setGripper(self, action: str) -> Response:
         """
@@ -83,13 +100,7 @@ class GripperController:
         Returns:
             Response
         """
-        if (getGripperEnabled := self.getEnabled()) is None:
-            self.drone.logger.warning("Could not get gripper state from drone.")
-            return {
-                "success": False,
-                "message": "Could not get gripper state from drone.",
-            }
-        elif getGripperEnabled is False:
+        if not self.getEnabled():
             self.drone.logger.error("Gripper is not enabled")
             return {
                 "success": False,

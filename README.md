@@ -2,7 +2,7 @@
 
 > Learn more on our [website](https://fgcs.projectfalcon.uk)!
 
-![UI Screenshot](ui.webp)
+![UI Screenshot](ui.png)
 
 ---
 

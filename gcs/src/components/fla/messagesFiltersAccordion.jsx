@@ -34,11 +34,17 @@ export default function MessagesFiltersAccordion() {
   if (!messageFilters) return null
 
   function selectMessageFilter(event, messageName, fieldName) {
-    let newFilters = structuredClone(messageFilters)
-    let newColors = structuredClone(customColors)
+    // Use shallow cloning for better performance
+    const newFilters = {
+      ...messageFilters,
+      [messageName]: {
+        ...messageFilters[messageName],
+        [fieldName]: event.currentTarget.checked,
+      },
+    }
 
     const checked = event.currentTarget.checked
-    newFilters[messageName][fieldName] = checked
+    let newColors = { ...customColors }
 
     if (!checked) {
       delete newColors[`${messageName}/${fieldName}`]

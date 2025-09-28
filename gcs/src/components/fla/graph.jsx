@@ -58,7 +58,10 @@ import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
 } from "../../helpers/mavlinkConstants.js"
-import { showSuccessNotification } from "../../helpers/notification.js"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification.js"
 import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
@@ -200,7 +203,7 @@ export default function Graph({ data, openPresetModal }) {
 
       img.src = chartRef?.current?.toBase64Image()
     } catch (error) {
-      console.error(error)
+      showErrorNotification(error)
     }
   }
 

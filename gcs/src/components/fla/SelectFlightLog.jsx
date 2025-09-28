@@ -7,7 +7,7 @@ import {
   ScrollArea,
 } from "@mantine/core"
 import moment from "moment"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { useDispatch } from "react-redux"
 import {
   showErrorNotification,
@@ -34,24 +34,42 @@ export default function SelectFlightLog({ processLoadedFile }) {
     getFgcsLogs()
   }
 
-  async function handleFile(file) {
-    if (!file) return
-    try {
-      dispatch(setFile(file))
-      setLoadingFile(true)
-      const result = await window.ipcRenderer.loadFile(file.path)
-      if (!result.success) {
-        showErrorNotification("Error loading file, file not found. Reload.")
-        return
+  const handleFile = useCallback(
+    async function (file) {
+      if (!file) return
+
+      console.time(`Loading file: ${file.name}`)
+
+      try {
+        dispatch(setFile(file))
+        setLoadingFile(true)
+        setLoadingFileProgress(0)
+
+        console.log(
+          `Starting to load file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
+        )
+
+        const result = await window.ipcRenderer.loadFile(file.path)
+
+        if (!result.success) {
+          showErrorNotification(
+            `Error loading file: ${result.error || "File not found. Please reload."}`,
+          )
+          return
+        }
+
+        await processLoadedFile(result)
+        showSuccessNotification(`${file.name} loaded successfully`)
+        console.timeEnd(`Loading file: ${file.name}`)
+      } catch (error) {
+        console.error("Error loading file:", error)
+        showErrorNotification("Error loading file: " + error.message)
+      } finally {
+        setLoadingFile(false)
+        setLoadingFileProgress(0)
       }
-      await processLoadedFile(result)
-      showSuccessNotification(`${file.name} loaded successfully`)
-    } catch (error) {
-      showErrorNotification("Error loading file: " + error.message)
-    } finally {
-      setLoadingFile(false)
-    }
-  }
+    }, [dispatch, processLoadedFile],
+  )
 
   useEffect(() => {
     const onProgress = (evt, message) => setLoadingFileProgress(message.percent)
@@ -61,6 +79,28 @@ export default function SelectFlightLog({ processLoadedFile }) {
       window.ipcRenderer.removeAllListeners(["fla:log-parse-progress"])
     }
   }, [])
+
+  const recentLogItems = useMemo(() => {
+    if (!recentFgcsLogs) return null
+    return recentFgcsLogs.map((log, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
+        onClick={() => handleFile(log)}
+      >
+        <p>{log.name} </p>
+        <div className="flex flex-row gap-2">
+          <p className="text-sm text-gray-400">
+            {moment(
+              log.timestamp.toISOString(),
+              "YYYY-MM-DD_HH-mm-ss",
+            ).fromNow()}
+          </p>
+          <p className="text-sm text-gray-400">{readableBytes(log.size)}</p>
+        </div>
+      </div>
+    ))
+  }, [recentFgcsLogs, handleFile])
 
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
@@ -84,27 +124,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
           <div className="flex flex-col items-center gap-2">
             <p className="font-bold">Recent FGCS telemetry logs</p>
             <ScrollArea h={250} offsetScrollbars>
-              {recentFgcsLogs !== null &&
-                recentFgcsLogs.map((log, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
-                    onClick={() => handleFile(log)}
-                  >
-                    <p>{log.name} </p>
-                    <div className="flex flex-row gap-2">
-                      <p className="text-sm text-gray-400">
-                        {moment(
-                          log.timestamp.toISOString(),
-                          "YYYY-MM-DD_HH-mm-ss",
-                        ).fromNow()}
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        {readableBytes(log.size)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              {recentLogItems}
             </ScrollArea>
           </div>
         </div>

@@ -701,6 +701,13 @@ class Drone:
 
         this_thread = current_thread()
 
+        self.paramsController.is_requesting_params = False
+        if (
+            hasattr(self.paramsController, "getAllParamsThread")
+            and self.paramsController.getAllParamsThread is not None
+        ):
+            self.paramsController.getAllParamsThread.join(timeout=3)
+
         for thread in [
             getattr(self, "listener_thread", None),
             getattr(self, "sender_thread", None),

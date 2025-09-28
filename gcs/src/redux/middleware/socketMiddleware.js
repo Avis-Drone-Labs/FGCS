@@ -64,6 +64,7 @@ import {
 } from "../slices/droneInfoSlice"
 import {
   addIdToItem,
+  closeDashboardMissionFetchingNotificationNoSuccessThunk,
   closeDashboardMissionFetchingNotificationThunk,
   setCurrentMission,
   setCurrentMissionItems,
@@ -151,7 +152,8 @@ const socketMiddleware = (store) => {
 
   function handleRcChannels(msg) {
     let chans = {}
-    for (let i = 1; i < msg.chancount + 1; i++) {
+    const chanCount = msg.chancount || 16 // default to 16 channels if chancount is 0
+    for (let i = 1; i < chanCount + 1; i++) {
       chans[i] = msg[`chan${i}_raw`]
     }
 
@@ -249,6 +251,9 @@ const socketMiddleware = (store) => {
             store.dispatch(setConnected(false))
             store.dispatch(setConnecting(false))
             store.dispatch(emitGetComPorts())
+            store.dispatch(
+              closeDashboardMissionFetchingNotificationNoSuccessThunk(),
+            )
           }
         })
 
@@ -261,10 +266,13 @@ const socketMiddleware = (store) => {
               port.toLowerCase().includes("mavlink") ||
               port.toLowerCase().includes("ardupilot"),
           )
-          if (possibleComPort !== undefined) {
-            store.dispatch(setSelectedComPorts(possibleComPort))
-          } else if (msg.length > 0) {
-            store.dispatch(setSelectedComPorts(msg[0]))
+          if (!store.getState().droneConnection.selected_com_ports) {
+            // If no com port is selected, select a possible mavlink/ardupilot port if it exists, otherwise select the first port
+            if (possibleComPort !== undefined) {
+              store.dispatch(setSelectedComPorts(possibleComPort))
+            } else if (msg.length > 0) {
+              store.dispatch(setSelectedComPorts(msg[0]))
+            }
           }
         })
 
@@ -275,7 +283,7 @@ const socketMiddleware = (store) => {
 
         // Flags an error with the com port
         socket.socket.on("connection_error", (msg) => {
-          console.log("Connection error: " + msg.message)
+          console.error("Connection error: " + msg.message)
           showErrorNotification(msg.message)
           store.dispatch(setConnecting(false))
           store.dispatch(setConnected(false))
@@ -366,7 +374,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setParams(msg))
           store.dispatch(setShownParams(msg))
           store.dispatch(setFetchingVars(false))
-          store.dispatch(setFetchingVarsProgress(0))
+          store.dispatch(setFetchingVarsProgress({ progress: 0, param_id: "" }))
           store.dispatch(setParamSearchValue(""))
         })
 
@@ -374,9 +382,11 @@ const socketMiddleware = (store) => {
           ParamSpecificSocketEvents.onParamRequestUpdate,
           (msg) => {
             store.dispatch(
-              setFetchingVarsProgress(
-                (msg.current_param_index / msg.total_number_of_params) * 100,
-              ),
+              setFetchingVarsProgress({
+                progress:
+                  (msg.current_param_index / msg.total_number_of_params) * 100,
+                param_id: msg.current_param_id,
+              }),
             )
           },
         )

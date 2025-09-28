@@ -4,10 +4,10 @@
 */
 
 // 3rd Party Imports
+import { useHotkeys } from "@mantine/hooks"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
-import { useState, useEffect } from "react"
-import { useHotkeys } from "@mantine/hooks"
 
 let commands = []
 
@@ -73,7 +73,7 @@ export function AddCommand(id, command, shortcut = null, macShortcut = null) {
       macShortcut: macShortcut,
     })
   } else {
-    console.log(`Attempting to add command that already exists: ${id}`)
+    console.error(`Attempting to add command that already exists: ${id}`)
   }
 }
 
@@ -84,12 +84,6 @@ export function RunCommand(id) {
   if (cmd !== undefined) {
     cmd.command()
   } else {
-    console.log(`Couldn't find command ${id} to run`)
-  }
-
-  try {
-    commands.find((entry) => entry.id == id).command()
-  } catch {
-    console.log(`Couldn't find command, ${id}, to run`)
+    console.error(`Couldn't find command ${id} to run`)
   }
 }

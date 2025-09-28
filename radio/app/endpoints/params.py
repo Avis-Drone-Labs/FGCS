@@ -50,7 +50,7 @@ def refresh_params() -> None:
 
     droneStatus.drone.paramsController.getAllParams()
 
-    timeout_secs = 60
+    timeout_secs = 120
 
     timeout = time.time() + timeout_secs
     last_index_sent = -1
@@ -73,6 +73,7 @@ def refresh_params() -> None:
                 "param_request_update",
                 {
                     "current_param_index": droneStatus.drone.paramsController.current_param_index,
+                    "current_param_id": droneStatus.drone.paramsController.current_param_id,
                     "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
                 },
             )

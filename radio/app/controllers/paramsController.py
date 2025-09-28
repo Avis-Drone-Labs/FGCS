@@ -314,7 +314,11 @@ class ParamsController:
             params (Optional[str]): The name of the parameter to get
         """
         if isinstance(params, str):
-            return next((x for x in self.params if x["param_id"] == params), {})
+            try:
+                return next((x for x in self.params if x["param_id"] == params))
+            except StopIteration:
+                self.drone.logger.error(f"Param {params} not found in cached params")
+                return {}
         else:
             self.drone.logger.error(f"Invalid params type, got {type(params)}")
             return {}

@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -306,7 +306,7 @@ class ParamsController:
                 }
             )
 
-    def getCachedParam(self, params: str) -> CachedParam:
+    def getCachedParam(self, params: str) -> Union[CachedParam, dict]:
         """
         Get a single parameter from the cached params.
 

@@ -45,16 +45,18 @@ class RcController:
             param_key (str): The key for the parameter within the dictionary
             param_name (str): The name of the parameter
         """
-        param = self.drone.paramsController.getCachedParam(param_name)
-        if param:
-            params_dict[param_key] = param.get("param_value")
+        cached_param = self.drone.paramsController.getCachedParam(param_name)
+        if cached_param:
+            params_dict[param_key] = cached_param.get("param_value")
         else:
             self.drone.logger.warning(
                 f"Param {param_name} not found in cache, fetching from drone"
             )
-            param = self.drone.paramsController.getSingleParam(param_name).get("data")
-            if param:
-                params_dict[param_key] = param.param_value
+            fetched_param = self.drone.paramsController.getSingleParam(param_name).get(
+                "data"
+            )
+            if fetched_param:
+                params_dict[param_key] = fetched_param.param_value
 
     def fetchParams(self) -> None:
         """

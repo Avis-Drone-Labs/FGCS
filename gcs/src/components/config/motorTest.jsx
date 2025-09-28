@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Button, NumberInput } from "@mantine/core"
+import { Button, Modal, NumberInput } from "@mantine/core"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -18,11 +18,8 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 import { MOTOR_LETTER_LABELS } from "../../helpers/mavlinkConstants"
 
 // Redux
+
 import { useDispatch, useSelector } from "react-redux"
-import {
-  emitSetState,
-  selectConnectedToDrone,
-} from "../../redux/slices/droneConnectionSlice"
 import {
   emitGetFrameConfig,
   emitTestAllMotors,
@@ -33,7 +30,13 @@ import {
   selectFrameTypeName,
   selectFrameTypeOrder,
   selectNumberOfMotors,
+  selectShowMotorTestWarningModal,
+  setShowMotorTestWarningModal,
 } from "../../redux/slices/configSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
 
 export default function MotorTestPanel() {
   const dispatch = useDispatch()
@@ -43,6 +46,7 @@ export default function MotorTestPanel() {
   const frameTypename = useSelector(selectFrameTypeName)
   const frameClass = useSelector(selectFrameClass)
   const numberOfMotors = useSelector(selectNumberOfMotors)
+  const showMotorTestWarningModal = useSelector(selectShowMotorTestWarningModal)
 
   const [selectedThrottle, setSelectedThrottle] = useState(10)
   const [selectedDuration, setSelectedDuration] = useState(2)
@@ -90,6 +94,37 @@ export default function MotorTestPanel() {
 
   return (
     <div className="flex flex-row gap-16 px-4">
+      <Modal
+        opened={showMotorTestWarningModal}
+        onClose={() => dispatch(setShowMotorTestWarningModal(false))}
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        withCloseButton={false}
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <div className="flex flex-col items-start justify-center gap-4">
+          <p>
+            Ensure all propellers are removed and the drone is secured before
+            testing the motors.
+          </p>
+          <p className="font-bold text-falconred-600">
+            Improper testing can lead to injury or damage.
+          </p>
+
+          <div className="mx-auto">
+            <Button
+              color={tailwindColors.green[600]}
+              onClick={() => dispatch(setShowMotorTestWarningModal(false))}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      </Modal>
       <div className="flex flex-col gap-2">
         {/* Input throttle and duration/delay of the test*/}
         <div className="flex gap-2">

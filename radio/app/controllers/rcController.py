@@ -45,7 +45,7 @@ class RcController:
             param_key (str): The key for the parameter within the dictionary
             param_name (str): The name of the parameter
         """
-        param = self.drone.paramsController.getCachedParams(param_name)
+        param = self.drone.paramsController.getCachedParam(param_name)
         if param:
             params_dict[param_key] = param.get("param_value")
         else:

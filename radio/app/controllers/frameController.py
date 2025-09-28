@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
+
+from app.customTypes import Number
 
 if TYPE_CHECKING:
     from app.drone import Drone
@@ -15,8 +17,8 @@ class FrameController:
         """
         self.drone = drone
 
-        self.frame_type = "UNKNOWN"
-        self.frame_class = 0
+        self.frame_type: Union[Number, str] = "UNKNOWN"
+        self.frame_class: Number = 0
 
         # Plane type doesn't have a frame type or class
         if self.drone.aircraft_type != 1:
@@ -56,10 +58,10 @@ class FrameController:
         Returns:
             dict: The frame config of the drone
         """
-        self.frame_type = self.drone.paramsController.getCachedParams("FRAME_TYPE").get(
+        self.frame_type = self.drone.paramsController.getCachedParam("FRAME_TYPE").get(
             "param_value", "UNKNOWN"
         )
-        self.frame_class = self.drone.paramsController.getCachedParams(
+        self.frame_class = self.drone.paramsController.getCachedParam(
             "FRAME_CLASS"
         ).get("param_value", 0)
 

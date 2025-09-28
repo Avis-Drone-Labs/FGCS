@@ -296,9 +296,7 @@ class NavController:
             Response: The response from the get loiter radius command
         """
 
-        loiter_radius_data = self.drone.paramsController.getCachedParams(
-            "WP_LOITER_RAD"
-        )
+        loiter_radius_data = self.drone.paramsController.getCachedParam("WP_LOITER_RAD")
 
         if loiter_radius_data.get("param_value") is None:
             self.drone.logger.warning(

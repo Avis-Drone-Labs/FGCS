@@ -3,15 +3,22 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
 from app.utils import sendingCommandLock
 from pymavlink import mavutil
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from app.drone import Drone
+
+
+class CachedParam(TypedDict):
+    param_name: str
+    param_value: Number
+    param_type: int
 
 
 class ParamsController:
@@ -299,30 +306,15 @@ class ParamsController:
                 }
             )
 
-    def getCachedParams(
-        self, params: Union[List[str], str]
-    ) -> Union[List[IncomingParam], IncomingParam, None]:
+    def getCachedParam(self, params: str) -> CachedParam:
         """
-        Get a single parameter or a list of parameters from the cached params.
+        Get a single parameter from the cached params.
 
         Args:
-            params (Union[List[str], str]): The name of the parameter or list of parameter names to get
+            params (Optional[str]): The name of the parameter to get
         """
         if isinstance(params, str):
-            existing_param = next(
-                (x for x in self.params if x["param_id"] == params), None
-            )
-            return existing_param
-        elif isinstance(params, list):
-            cached_params = []
-            for param_name in params:
-                existing_param = next(
-                    (x for x in self.params if x["param_id"] == param_name), None
-                )
-                if existing_param is not None:
-                    cached_params.append(existing_param)
-
-            return cached_params
+            return next((x for x in self.params if x["param_id"] == params))
         else:
             self.drone.logger.error(f"Invalid params type, got {type(params)}")
-            return None
+            return {}

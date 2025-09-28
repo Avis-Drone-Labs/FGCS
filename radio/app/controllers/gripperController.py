@@ -79,7 +79,7 @@ class GripperController:
         Returns:
             Optional[bool]
         """
-        gripper_enabled_param = self.drone.paramsController.getCachedParams(
+        gripper_enabled_param = self.drone.paramsController.getCachedParam(
             "GRIP_ENABLE"
         )
         if not gripper_enabled_param:

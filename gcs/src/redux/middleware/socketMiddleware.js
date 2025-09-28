@@ -43,6 +43,7 @@ import {
   setNumberOfMotors,
   setRadioChannels,
   setRefreshingFlightModeData,
+  setShowMotorTestWarningModal,
 } from "../slices/configSlice.js"
 import {
   setAttitudeData,
@@ -303,6 +304,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setRebootData({}))
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
+          store.dispatch(setShowMotorTestWarningModal(true))
         })
 
         // Link stats

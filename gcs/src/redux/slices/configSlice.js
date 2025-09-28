@@ -20,6 +20,7 @@ const configSlice = createSlice({
     frameTypeName: null,
     frameClass: null,
     numberOfMotors: 4,
+    showMotorTestWarningModal: true,
     radioChannels: {
       1: 0,
       2: 0,
@@ -81,6 +82,10 @@ const configSlice = createSlice({
       if (action.payload === state.numberOfMotors) return
       state.numberOfMotors = action.payload
     },
+    setShowMotorTestWarningModal: (state, action) => {
+      if (action.payload === state.showMotorTestWarningModal) return
+      state.showMotorTestWarningModal = action.payload
+    },
     setRadioChannels: (state, action) => {
       if (action.payload === state.radioChannels) return
       state.radioChannels = action.payload
@@ -113,6 +118,7 @@ const configSlice = createSlice({
     selectFrameTypeName: (state) => state.frameTypeName,
     selectFrameClass: (state) => state.frameClass,
     selectNumberOfMotors: (state) => state.numberOfMotors,
+    selectShowMotorTestWarningModal: (state) => state.showMotorTestWarningModal,
     selectRadioChannels: (state) => state.radioChannels,
     selectRadioChannelsConfig: (state) => state.radioChannelsConfig,
   },
@@ -129,6 +135,7 @@ export const {
   setFrameTypeName,
   setFrameClass,
   setNumberOfMotors,
+  setShowMotorTestWarningModal,
   setRadioChannels,
   setChannelsConfig,
 
@@ -156,6 +163,7 @@ export const {
   selectFrameTypeName,
   selectFrameClass,
   selectNumberOfMotors,
+  selectShowMotorTestWarningModal,
   selectRadioChannels,
   selectRadioChannelsConfig,
 } = configSlice.selectors

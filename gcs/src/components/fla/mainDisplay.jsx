@@ -5,9 +5,7 @@ import { useSelector } from "react-redux"
 import {
   selectAircraftType,
   selectFile,
-  selectFormatMessages,
   selectMessageMeans,
-  selectUnits,
 } from "../../redux/slices/logAnalyserSlice.js"
 import ChartDataCard from "./chartDataCard.jsx"
 import Graph from "./graph.jsx"
@@ -15,7 +13,6 @@ import MessagesFiltersAccordion from "./messagesFiltersAccordion.jsx"
 import { usePresetCategories } from "./presetCategories.js"
 import PresetsAccordion from "./presetsAccordion.jsx"
 import SavePresetModal from "./savePresetModal.jsx"
-import { getUnit } from "./utils.js"
 
 /**
  * Main display component for the Falcon Log Analyser (FLA).
@@ -25,8 +22,6 @@ export default function MainDisplay({ closeLogFile, chartData }) {
   const file = useSelector(selectFile)
   const aircraftType = useSelector(selectAircraftType)
   const messageMeans = useSelector(selectMessageMeans)
-  const formatMessages = useSelector(selectFormatMessages)
-  const units = useSelector(selectUnits)
 
   // Shared presets state for all children (presets + modal)
   const {
@@ -116,12 +111,7 @@ export default function MainDisplay({ closeLogFile, chartData }) {
             <Fragment key={item.label}>
               <ChartDataCard
                 item={item}
-                unit={getUnit(
-                  item.label.split("/")[0],
-                  item.label.split("/")[1],
-                  formatMessages,
-                  units,
-                )}
+                unit={item.unit} // Use cached unit from dataset
                 messageMeans={messageMeans}
               />
             </Fragment>

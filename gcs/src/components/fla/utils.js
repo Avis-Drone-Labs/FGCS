@@ -19,31 +19,46 @@ export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
   return new Date(totalMs)
 }
 
-/**
- * Retrieves the unit for a given message field.
- */
+// Memoization cache for getUnit function
+const unitCache = new Map()
+
+export function clearUnitCache() {
+  unitCache.clear()
+}
+
 export function getUnit(
   messageName,
   fieldName,
   formatMessages = {},
   units = {},
 ) {
-  // TODO: Find out why this is here
-  if (messageName.includes("ESC")) {
-    messageName = "ESC"
+  // Create cache key
+  const cacheKey = `${messageName}/${fieldName}`
+  if (unitCache.has(cacheKey)) {
+    return unitCache.get(cacheKey)
   }
 
-  if (messageName in formatMessages) {
-    const formatMessage = formatMessages[messageName]
+  // TODO: Find out why this is here
+  let normalizedMessageName = messageName
+  if (messageName.includes("ESC")) {
+    normalizedMessageName = "ESC"
+  }
+
+  let result = "UNKNOWN"
+  if (normalizedMessageName in formatMessages) {
+    const formatMessage = formatMessages[normalizedMessageName]
     const fieldIndex = formatMessage.fields.indexOf(fieldName)
     if (fieldIndex !== -1 && formatMessage.units) {
       const unitId = formatMessage.units[fieldIndex]
       if (unitId in units) {
-        return units[unitId]
+        result = units[unitId]
       }
     }
   }
-  return "UNKNOWN"
+
+  // Cache the result
+  unitCache.set(cacheKey, result)
+  return result
 }
 
 /**
@@ -53,54 +68,61 @@ export function getUnit(
  */
 export function calculateMeanValues(loadedLogMessages) {
   if (!loadedLogMessages) return null
-  // Loop over all fields and precalculate min, max, mean
-  const rawValues = {}
-  // Putting all raw data into a list
+
+  // Cache Set for O(1) lookups
+  const ignoredMessagesSet = new Set(ignoredMessages)
+  const means = {}
+
+  // Process data directly without building intermediate arrays
   Object.keys(loadedLogMessages)
-    .filter((key) => !ignoredMessages.includes(key))
+    .filter((key) => !ignoredMessagesSet.has(key))
     .forEach((key) => {
       const messageData = loadedLogMessages[key]
-      const messageDataMeans = {}
+      if (!Array.isArray(messageData) || messageData.length === 0) return
 
-      messageData.forEach((message) => {
-        Object.keys(message)
-          .filter((dataPointKey) => dataPointKey !== "name")
-          .forEach((dataPointKey) => {
-            const dataPoint = message[dataPointKey]
-            if (messageDataMeans[dataPointKey] === undefined) {
-              messageDataMeans[dataPointKey] = [dataPoint]
+      const fieldStats = {}
+
+      for (let i = 0; i < messageData.length; i++) {
+        const message = messageData[i]
+
+        // Process each field in the message
+        for (const dataPointKey in message) {
+          if (dataPointKey === "name") continue
+
+          const dataPoint = message[dataPointKey]
+          if (typeof dataPoint === "number") {
+            const fieldKey = `${key}/${dataPointKey}`
+
+            if (!fieldStats[fieldKey]) {
+              // Initialize stats for this field
+              fieldStats[fieldKey] = {
+                min: dataPoint,
+                max: dataPoint,
+                sum: dataPoint,
+                count: 1,
+              }
             } else {
-              messageDataMeans[dataPointKey].push(dataPoint)
+              const stats = fieldStats[fieldKey]
+              if (dataPoint < stats.min) stats.min = dataPoint
+              if (dataPoint > stats.max) stats.max = dataPoint
+              stats.sum += dataPoint
+              stats.count++
             }
-          })
-      })
-
-      rawValues[key] = messageDataMeans
-    })
-
-  // Looping over each list and finding min, max, mean
-  const means = {}
-  Object.keys(rawValues).forEach((key) => {
-    means[key] = {}
-    const messageData = rawValues[key]
-    Object.keys(messageData).forEach((messageKey) => {
-      const messageValues = messageData[messageKey]
-      // Safeguard for empty arrays
-      if (messageValues.length === 0) return
-
-      const min = Math.min(...messageValues)
-      const max = Math.max(...messageValues)
-      const mean =
-        messageValues.reduce((acc, curr) => acc + curr, 0) /
-        messageValues.length
-
-      means[`${key}/${messageKey}`] = {
-        mean: mean.toFixed(2),
-        max: max.toFixed(2),
-        min: min.toFixed(2),
+          }
+        }
       }
+
+      // Calculate final means from accumulated stats
+      Object.keys(fieldStats).forEach((fieldKey) => {
+        const stats = fieldStats[fieldKey]
+        means[fieldKey] = {
+          mean: (stats.sum / stats.count).toFixed(2),
+          max: stats.max.toFixed(2),
+          min: stats.min.toFixed(2),
+        }
+      })
     })
-  })
+
   return means
 }
 
@@ -115,24 +137,28 @@ export function calculateMeanValues(loadedLogMessages) {
  */
 export function buildDefaultMessageFilters(loadedLogMessages) {
   const logMessageFilterDefaultState = {}
-  Object.keys(loadedLogMessages["format"])
+
+  // Cache keys and create Sets for O(1) lookups
+  const messageKeys = Object.keys(loadedLogMessages)
+  const formatKeys = Object.keys(loadedLogMessages["format"])
+  const ignoredMessagesSet = new Set(ignoredMessages)
+  const ignoredKeysSet = new Set(ignoredKeys)
+
+  formatKeys
     // Only include messages that are within the log and are not ignored
-    .filter(
-      (key) =>
-        Object.keys(loadedLogMessages).includes(key) &&
-        !ignoredMessages.includes(key),
-    )
+    .filter((key) => messageKeys.includes(key) && !ignoredMessagesSet.has(key))
     .sort()
     .forEach((key) => {
       const fieldsState = {}
       // Set all field states to false if they're not ignored
       loadedLogMessages["format"][key].fields.forEach((field) => {
-        if (!ignoredKeys.includes(field)) {
+        if (!ignoredKeysSet.has(field)) {
           fieldsState[field] = false
         }
       })
       logMessageFilterDefaultState[key] = fieldsState
     })
+
   return logMessageFilterDefaultState
 }
 
@@ -141,8 +167,9 @@ export function processFlightModes(result, loadedLogMessages) {
     return loadedLogMessages.MODE
   } else if (result.logType === "fgcs_telemetry") {
     return getHeartbeatMessages(loadedLogMessages.HEARTBEAT)
+  } else {
+    return []
   }
-  return []
 }
 
 /**
@@ -164,6 +191,7 @@ export function getHeartbeatMessages(heartbeatMessages) {
       }
     }
   }
+
   return modeMessages
 }
 
@@ -180,8 +208,10 @@ export function calcGPSOffset(loadedLogMessages) {
   const messageObj = loadedLogMessages["GPS"][0]
   if (messageObj.GWk !== undefined && messageObj.GMS !== undefined) {
     const utcTime = gpsToUTC(messageObj.GWk, messageObj.GMS)
-    return utcTime.getTime() - messageObj.TimeUS / 1000
+    const offset = utcTime.getTime() - messageObj.TimeUS / 1000
+    return offset
   }
+
   return null
 }
 
@@ -192,6 +222,7 @@ export function calcGPSOffset(loadedLogMessages) {
  * @returns {Object} Messages with TimeUS converted to UTC
  */
 export function convertTimeUStoUTC(logMessages, gpsOffset) {
+  // This still takes some time for some reason
   const convertedMessages = { ...logMessages }
 
   Object.keys(convertedMessages)
@@ -210,12 +241,14 @@ export function convertTimeUStoUTC(logMessages, gpsOffset) {
  * Sorts object keys alphabetically
  */
 export function sortObjectByKeys(obj) {
-  return Object.keys(obj)
+  const result = Object.keys(obj)
     .sort()
     .reduce((acc, key) => {
       acc[key] = obj[key]
       return acc
     }, {})
+
+  return result
 }
 
 export function readableBytes(bytes) {

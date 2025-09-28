@@ -1,21 +1,22 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
-import logAnalyserSlice from "./slices/logAnalyserSlice"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
+import logAnalyserSlice from "./slices/logAnalyserSlice"
 import socketSlice from "./slices/socketSlice"
 
 import socketMiddleware from "./middleware/socketMiddleware"
+import configSlice from "./slices/configSlice"
 import droneConnectionSlice, {
   setBaudrate,
   setConnectionType,
   setIp,
   setNetworkType,
+  setOutsideVisibility,
   setPort,
   setWireless,
 } from "./slices/droneConnectionSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
 import statusTextSlice from "./slices/statusTextSlice"
-import configSlice from "./slices/configSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -28,11 +29,6 @@ const rootReducer = combineSlices(
   configSlice,
 )
 
-// Get the persisted state, we only want to take a couple of things from here.
-const persistedState = localStorage.getItem("reduxState")
-  ? JSON.parse(localStorage.getItem("reduxState"))
-  : {}
-
 export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) => {
@@ -43,93 +39,182 @@ export const store = configureStore({
   },
 })
 
-let droneConnection = persistedState.droneConnection
-let droneInfo = persistedState.droneInfo
-if (droneConnection !== undefined) {
-  if (droneConnection.wireless !== undefined) {
-    store.dispatch(setWireless(droneConnection.wireless))
-  }
-  if (droneConnection.baudrate !== undefined) {
-    store.dispatch(setBaudrate(droneConnection.baudrate))
-  }
-  if (droneConnection.connection_type !== undefined) {
-    store.dispatch(setConnectionType(droneConnection.connection_type))
-  }
-  if (droneConnection.network_type !== undefined) {
-    store.dispatch(setNetworkType(droneConnection.network_type))
-  }
-  if (droneConnection.ip !== undefined) {
-    store.dispatch(setIp(droneConnection.ip))
-  }
-  if (droneConnection.port !== undefined) {
-    store.dispatch(setPort(droneConnection.port))
-  }
-  if (
-    droneInfo !== undefined &&
-    droneInfo.graphs &&
-    droneInfo.graphs.selectedGraphs !== undefined
-  ) {
-    store.dispatch(setGraphValues(droneInfo.graphs.selectedGraphs))
+// Load individual persisted values from localStorage
+const wireless = localStorage.getItem("wirelessConnection")
+if (wireless !== null) {
+  store.dispatch(setWireless(wireless === "true"))
+}
+
+const baudrate = localStorage.getItem("baudrate")
+if (baudrate !== null) {
+  store.dispatch(setBaudrate(baudrate))
+}
+
+const connectionType = localStorage.getItem("connectionType")
+if (connectionType !== null) {
+  store.dispatch(setConnectionType(connectionType))
+}
+
+const networkType = localStorage.getItem("networkType")
+if (networkType !== null) {
+  store.dispatch(setNetworkType(networkType))
+}
+
+const ip = localStorage.getItem("ip")
+if (ip !== null) {
+  store.dispatch(setIp(ip))
+}
+
+const port = localStorage.getItem("port")
+if (port !== null) {
+  store.dispatch(setPort(port))
+}
+
+const outsideVisibility = localStorage.getItem("outsideVisibility")
+if (outsideVisibility !== null) {
+  store.dispatch(setOutsideVisibility(outsideVisibility === "true"))
+}
+
+const selectedRealtimeGraphs = localStorage.getItem("selectedRealtimeGraphs")
+if (selectedRealtimeGraphs !== null) {
+  try {
+    const parsedGraphs = JSON.parse(selectedRealtimeGraphs)
+    store.dispatch(setGraphValues(parsedGraphs))
+  } catch (error) {
+    store.dispatch(
+      setGraphValues({
+        graph_a: null,
+        graph_b: null,
+        graph_c: null,
+        graph_d: null,
+      }),
+    )
   }
 }
 
-if (persistedState.missionInfo?.plannedHomePosition !== undefined) {
-  // Validate the loaded planned home position, if invalid reset to 0,0,0
-  if (
-    !("lat" in persistedState.missionInfo.plannedHomePosition) ||
-    typeof persistedState.missionInfo.plannedHomePosition.lat !== "number" ||
-    !("lon" in persistedState.missionInfo.plannedHomePosition) ||
-    typeof persistedState.missionInfo.plannedHomePosition.lon !== "number" ||
-    !("alt" in persistedState.missionInfo.plannedHomePosition) ||
-    typeof persistedState.missionInfo.plannedHomePosition.alt !== "number"
-  ) {
-    persistedState.missionInfo.plannedHomePosition = { lat: 0, lon: 0, alt: 0 }
+const plannedHomePosition = localStorage.getItem("plannedHomePosition")
+if (plannedHomePosition !== null) {
+  try {
+    const homePos = JSON.parse(plannedHomePosition)
+    // Validate the loaded planned home position, if invalid reset to 0,0,0
+    if (
+      !("lat" in homePos) ||
+      typeof homePos.lat !== "number" ||
+      !("lon" in homePos) ||
+      typeof homePos.lon !== "number" ||
+      !("alt" in homePos) ||
+      typeof homePos.alt !== "number"
+    ) {
+      store.dispatch(setPlannedHomePosition({ lat: 0, lon: 0, alt: 0 }))
+    } else {
+      store.dispatch(setPlannedHomePosition(homePos))
+    }
+  } catch (error) {
+    store.dispatch(setPlannedHomePosition({ lat: 0, lon: 0, alt: 0 }))
   }
-
-  store.dispatch(
-    setPlannedHomePosition(persistedState.missionInfo.plannedHomePosition),
-  )
 }
 
-// Update states when a new message comes in, probably inefficient
-// TODO: In the future we should check to see if the variables have changed before updating
+const updateLocalStorageIfChanged = (key, newValue) => {
+  if (newValue !== null && newValue !== undefined) {
+    const currentValue = localStorage.getItem(key)
+    const stringValue = String(newValue)
+    if (currentValue !== stringValue) {
+      localStorage.setItem(key, stringValue)
+    }
+  }
+}
+
+const updateSessionStorageIfChanged = (key, newValue) => {
+  if (newValue !== null && newValue !== undefined) {
+    const currentValue = sessionStorage.getItem(key)
+    const stringValue = String(newValue)
+    if (currentValue !== stringValue) {
+      sessionStorage.setItem(key, stringValue)
+    }
+  }
+}
+
+const updateJSONLocalStorageIfChanged = (key, newValue) => {
+  if (newValue !== null && newValue !== undefined) {
+    const currentValue = localStorage.getItem(key)
+    const stringValue = JSON.stringify(newValue)
+    if (currentValue !== stringValue) {
+      localStorage.setItem(key, stringValue)
+    }
+  }
+}
+
+// Update states when a new message comes in
 store.subscribe(() => {
-
   // Temporary: Skip store subscription for FLA route to avoid delaying UI updates
   if (window.location.hash === "#/fla") {
     return
   }
 
-  let store_mut = store.getState()
-  let local_storage = window.localStorage
-  let session_storage = window.sessionStorage
-  local_storage.setItem("reduxState", JSON.stringify(store.getState()))
+  const store_mut = store.getState()
 
-  // Drone connection
-  local_storage.setItem(
-    "wirelessConnection",
-    store_mut.droneConnection.wireless,
-  )
-  local_storage.setItem("baudrate", store_mut.droneConnection.baudrate)
-  local_storage.setItem(
-    "connectionType",
-    store_mut.droneConnection.connection_type,
-  )
-  local_storage.setItem("networkType", store_mut.droneConnection.network_type)
-  local_storage.setItem("ip", store_mut.droneConnection.ip)
-  local_storage.setItem("port", store_mut.droneConnection.port)
-  local_storage.setItem(
-    "selectedRealtimeGraphs",
-    store_mut.droneInfo.graphs.selectedGraphs,
-  )
-  session_storage.setItem(
-    "connectedToDrone",
-    store_mut.droneConnection.connected,
-  )
+  if (typeof store_mut.droneConnection.wireless === "boolean") {
+    updateLocalStorageIfChanged(
+      "wirelessConnection",
+      store_mut.droneConnection.wireless,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.baudrate === "string") {
+    updateLocalStorageIfChanged("baudrate", store_mut.droneConnection.baudrate)
+  }
+
+  if (typeof store_mut.droneConnection.connection_type === "string") {
+    updateLocalStorageIfChanged(
+      "connectionType",
+      store_mut.droneConnection.connection_type,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.network_type === "string") {
+    updateLocalStorageIfChanged(
+      "networkType",
+      store_mut.droneConnection.network_type,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.ip === "string") {
+    updateLocalStorageIfChanged("ip", store_mut.droneConnection.ip)
+  }
+
+  if (typeof store_mut.droneConnection.port === "string") {
+    updateLocalStorageIfChanged("port", store_mut.droneConnection.port)
+  }
+
+  if (typeof store_mut.droneConnection.outsideVisibility === "boolean") {
+    updateLocalStorageIfChanged(
+      "outsideVisibility",
+      store_mut.droneConnection.outsideVisibility,
+    )
+  }
+
+  if (typeof store_mut.droneInfo.graphs.selectedGraphs === "object") {
+    updateJSONLocalStorageIfChanged(
+      "selectedRealtimeGraphs",
+      store_mut.droneInfo.graphs.selectedGraphs,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.connected === "boolean") {
+    updateSessionStorageIfChanged(
+      "connectedToDrone",
+      store_mut.droneConnection.connected,
+    )
+  }
 
   // Store the planned home position for use in the map when no drone is connected
-  local_storage.setItem(
-    "plannedHomePosition",
-    JSON.stringify(store_mut.missionInfo.plannedHomePosition),
-  )
+  if (
+    store_mut.missionInfo.plannedHomePosition &&
+    typeof store_mut.missionInfo.plannedHomePosition === "object"
+  ) {
+    updateJSONLocalStorageIfChanged(
+      "plannedHomePosition",
+      store_mut.missionInfo.plannedHomePosition,
+    )
+  }
 })

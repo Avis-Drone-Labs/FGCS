@@ -530,6 +530,18 @@ export const closeDashboardMissionFetchingNotificationThunk =
     }
     dispatch(setDashboardMissionFetchingNotificationId(null))
   }
+export const closeDashboardMissionFetchingNotificationNoSuccessThunk =
+  () => (dispatch, getState) => {
+    const { dashboardMissionFetchingNotificationId } = getState().missionInfo
+    if (dashboardMissionFetchingNotificationId) {
+      closeLoadingNotification(
+        dashboardMissionFetchingNotificationId,
+        "",
+        "",
+      )
+    }
+    dispatch(setDashboardMissionFetchingNotificationId(null))
+  }
 
 export const getFrameKey = (frame) =>
   parseInt(

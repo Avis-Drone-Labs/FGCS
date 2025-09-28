@@ -8,7 +8,7 @@
 import { useEffect } from "react"
 
 // 3rd Party Imports
-import { Progress } from "@mantine/core"
+import { Button, Progress } from "@mantine/core"
 import { useDebouncedValue } from "@mantine/hooks"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
@@ -58,6 +58,12 @@ export default function Params() {
   const fetchingVars = useSelector(selectFetchingVars)
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
 
+  function fetchParams() {
+    dispatch(setFetchingVars(true))
+    dispatch(emitRefreshParams())
+    dispatch(setHasFetchedOnce(true))
+  }
+
   // Reset state if we loose connection
   useEffect(() => {
     if (!connected) {
@@ -65,9 +71,7 @@ export default function Params() {
     }
 
     if (connected && !hasFetchedOnce && !fetchingVars) {
-      dispatch(setFetchingVars(true))
-      dispatch(emitRefreshParams())
-      dispatch(setHasFetchedOnce(true))
+      fetchParams()
     }
   }, [connected])
 
@@ -92,11 +96,18 @@ export default function Params() {
       {connected ? (
         <>
           {fetchingVars && (
-            <Progress
-              radius="xs"
-              value={fetchingVarsProgress}
-              className="w-1/3 mx-auto my-auto"
-            />
+            <div className="my-auto">
+              {fetchingVarsProgress.param_id && (
+                <p className="text-center my-4">
+                  Fetched {fetchingVarsProgress.param_id}
+                </p>
+              )}
+              <Progress
+                radius="xs"
+                value={fetchingVarsProgress.progress}
+                className="w-1/3 mx-auto my-auto"
+              />
+            </div>
           )}
 
           {Object.keys(params).length > 0 && !fetchingVars && (
@@ -117,6 +128,14 @@ export default function Params() {
                   )}
                 </AutoSizer>
               </div>
+            </div>
+          )}
+          {Object.keys(params).length === 0 && !fetchingVars && (
+            <div className="flex flex-col my-auto mx-auto">
+              <p className="text-center my-4">
+                No parameters found, try fetching them again.
+              </p>
+              <Button onClick={() => fetchParams()}>Fetch Params</Button>
             </div>
           )}
         </>

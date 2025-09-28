@@ -12,6 +12,7 @@ import droneConnectionSlice, {
   setNetworkType,
   setOutsideVisibility,
   setPort,
+  setSelectedComPorts,
   setWireless,
 } from "./slices/droneConnectionSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
@@ -43,6 +44,11 @@ export const store = configureStore({
 const wireless = localStorage.getItem("wirelessConnection")
 if (wireless !== null) {
   store.dispatch(setWireless(wireless === "true"))
+}
+
+const selected_com_port = localStorage.getItem("selected_com_port")
+if (selected_com_port !== null) {
+  store.dispatch(setSelectedComPorts(selected_com_port))
 }
 
 const baudrate = localStorage.getItem("baudrate")
@@ -157,6 +163,13 @@ store.subscribe(() => {
     updateLocalStorageIfChanged(
       "wirelessConnection",
       store_mut.droneConnection.wireless,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.selected_com_ports === "string") {
+    updateLocalStorageIfChanged(
+      "selected_com_port",
+      store_mut.droneConnection.selected_com_ports,
     )
   }
 

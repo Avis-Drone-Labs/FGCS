@@ -23,7 +23,7 @@ class GripperController:
         self.params = {}
 
         if not self.getEnabledFromDrone():
-            self.drone.logger.warning("Gripper is not enabled.")
+            self.drone.logger.info("Gripper is not enabled.")
         else:
             self.params = {
                 "gripAutoclose": self.drone.paramsController.getSingleParam(

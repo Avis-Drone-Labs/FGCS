@@ -12,9 +12,9 @@ import { ActionIcon, Button, Checkbox, Modal, Tooltip } from "@mantine/core"
 import EditCheckList from "./checkListEdit.jsx"
 
 // Styling imports
+import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
-import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function CheckListArea({
@@ -51,7 +51,6 @@ export default function CheckListArea({
 
   function generateCheckboxList(defaultCheck = false) {
     // Go from string to list, does not return
-    console.log(checkBoxListString)
     var final = []
     checkBoxListString
       .split("<li><p>")

@@ -19,15 +19,15 @@ import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
-  emitSetState,
-  selectConnectedToDrone,
-} from "../../redux/slices/droneConnectionSlice"
-import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
-import {
   emitGetRcConfig,
   selectRadioChannels,
   selectRadioChannelsConfig,
 } from "../../redux/slices/configSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
+import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
 
 // Tailwind
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors

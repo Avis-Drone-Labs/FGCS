@@ -313,6 +313,7 @@ def test_refreshParams_successfullyRefreshed(
         or socketio_result["name"] == "params"
     )
 
+    # TODO: Fix flaky test
     pytest.skip(reason="Flaky test, needs fixing in alpha 0.1.8")
     if socketio_result["name"] == "param_request_update":
         assert len(socketio_result["args"][0]) == 2

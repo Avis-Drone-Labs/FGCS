@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -70,6 +70,9 @@ class ParamsController:
 
             self.drone.is_listening = True
             if response:
+                self.saveParam(
+                    response.param_id, response.param_value, response.param_type
+                )
                 return {
                     "success": True,
                     "data": response,
@@ -295,3 +298,31 @@ class ParamsController:
                     "param_type": param_type,
                 }
             )
+
+    def getCachedParams(
+        self, params: Union[List[str], str]
+    ) -> Union[List[IncomingParam], IncomingParam, None]:
+        """
+        Get a single parameter or a list of parameters from the cached params.
+
+        Args:
+            params (Union[List[str], str]): The name of the parameter or list of parameter names to get
+        """
+        if isinstance(params, str):
+            existing_param = next(
+                (x for x in self.params if x["param_id"] == params), None
+            )
+            return existing_param
+        elif isinstance(params, list):
+            cached_params = []
+            for param_name in params:
+                existing_param = next(
+                    (x for x in self.params if x["param_id"] == param_name), None
+                )
+                if existing_param is not None:
+                    cached_params.append(existing_param)
+
+            return cached_params
+        else:
+            self.drone.logger.error(f"Invalid params type, got {type(params)}")
+            return None

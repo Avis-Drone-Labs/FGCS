@@ -4,24 +4,22 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
 import moment from "moment"
+import { useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { ScrollArea } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
 
 // Helpers Scripts
+import { useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
+import { selectOutsideVisibility } from "../../redux/slices/droneConnectionSlice"
 
 export default function StatusMessages(props) {
   const viewport = useRef(null)
   const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
 
-  const [outsideVisibility] = useLocalStorage({
-    key: "outsideVisibility",
-    defaultValue: false,
-  })
+  const outsideVisibility = useSelector(selectOutsideVisibility)
 
   // Pushes new messages to bottom
   useEffect(() => {

@@ -34,6 +34,7 @@ const initialState = {
   port: "5760", // local
 
   currentPage: "dashboard",
+  outsideVisibility: false, // local
 }
 
 const droneConnectionSlice = createSlice({
@@ -111,6 +112,11 @@ const droneConnectionSlice = createSlice({
         state.currentPage = action.payload
       }
     },
+    setOutsideVisibility: (state, action) => {
+      if (action.payload !== state.outsideVisibility) {
+        state.outsideVisibility = action.payload
+      }
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -145,6 +151,7 @@ const droneConnectionSlice = createSlice({
     selectConnectionStatus: (state) => state.connection_status,
     selectWireless: (state) => state.wireless,
     selectCurrentPage: (state) => state.currentPage,
+    selectOutsideVisibility: (state) => state.outsideVisibility,
   },
 })
 
@@ -164,6 +171,7 @@ export const {
   setConnectionStatus,
   setWireless,
   setCurrentPage,
+  setOutsideVisibility,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -196,6 +204,7 @@ export const {
   selectConnectionStatus,
   selectWireless,
   selectCurrentPage,
+  selectOutsideVisibility,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

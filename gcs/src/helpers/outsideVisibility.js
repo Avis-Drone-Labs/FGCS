@@ -2,25 +2,29 @@
   outsideVisibility. Used to get the colour from one central place
 */
 
-// 3rd Party Imports
-import { useLocalStorage } from "@mantine/hooks"
+import { useMemo } from "react"
+
+// Redux
+import { useSelector } from "react-redux"
+import { selectOutsideVisibility } from "../redux/slices/droneConnectionSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config"
+
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+const outsideVisibilityEnabledColor = tailwindColors.falcongrey["900"]
+const outsideVisibilityDisabledColor = tailwindColors.falcongrey["TRANSLUCENT"]
+
 export default function GetOutsideVisibilityColor() {
-  const [outsideVisibility] = useLocalStorage({
-    key: "outsideVisibility",
-    defaultValue: false,
-  })
+  const outsideVisibility = useSelector(selectOutsideVisibility)
 
-  return getOutsideVisibilityColorManually(outsideVisibility)
-}
+  const color = useMemo(() => {
+    return outsideVisibility
+      ? outsideVisibilityEnabledColor
+      : outsideVisibilityDisabledColor
+  }, [outsideVisibility])
 
-export function getOutsideVisibilityColorManually(isOutside) {
-  return isOutside
-    ? tailwindColors.falcongrey["900"]
-    : tailwindColors.falcongrey["TRANSLUCENT"]
+  return color
 }

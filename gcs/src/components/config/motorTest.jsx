@@ -106,7 +106,7 @@ export default function MotorTestPanel() {
           blur: 3,
         }}
       >
-        <div className="flex flex-col items-left justify-center gap-4">
+        <div className="flex flex-col items-start justify-center gap-4">
           <p>
             Ensure all propellers are removed and the drone is secured before
             testing the motors.

@@ -669,9 +669,12 @@ const socketMiddleware = (store) => {
           = CONFIG =
           ==========
         */
-        socket.socket.on(ConfigSpecificSocketEvents.onGripperEnabled, (msg) => {
-          store.dispatch(setGetGripperEnabled(msg))
-        })
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onGripperEnabled,
+          (enabled) => {
+            store.dispatch(setGetGripperEnabled(enabled))
+          },
+        )
 
         socket.socket.on(
           ConfigSpecificSocketEvents.onSetGripperResult,

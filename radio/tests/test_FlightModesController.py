@@ -51,8 +51,15 @@ def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
 @falcon_test(pass_drone_status=True)
 def test_getFlightModeChannel_failure(client: SocketIOTestClient, droneStatus):
     with RecvMsgReturnsNone():
+        original_flight_mode_channel = (
+            droneStatus.drone.flightModesController.flight_mode_channel
+        )
+        droneStatus.drone.flightModesController.flight_mode_channel = "UNKNOWN"
         droneStatus.drone.flightModesController.getFlightModeChannel()
         assert droneStatus.drone.flightModesController.flight_mode_channel == "UNKNOWN"
+        droneStatus.drone.flightModesController.flight_mode_channel = (
+            original_flight_mode_channel
+        )
 
 
 @falcon_test(pass_drone_status=True)

@@ -314,7 +314,7 @@ class ParamsController:
             params (Optional[str]): The name of the parameter to get
         """
         if isinstance(params, str):
-            return next((x for x in self.params if x["param_id"] == params))
+            return next((x for x in self.params if x["param_id"] == params), {})
         else:
             self.drone.logger.error(f"Invalid params type, got {type(params)}")
             return {}

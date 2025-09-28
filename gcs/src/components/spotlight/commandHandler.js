@@ -86,10 +86,4 @@ export function RunCommand(id) {
   } else {
     console.error(`Couldn't find command ${id} to run`)
   }
-
-  try {
-    commands.find((entry) => entry.id == id).command()
-  } catch {
-    console.error(`Couldn't find command, ${id}, to run`)
-  }
 }

@@ -152,7 +152,7 @@ const socketMiddleware = (store) => {
 
   function handleRcChannels(msg) {
     let chans = {}
-    const chanCount = msg.chancount ?? 16 // default to 16 channels if chancount is 0
+    const chanCount = msg.chancount || 16 // default to 16 channels if chancount is 0
     for (let i = 1; i < chanCount + 1; i++) {
       chans[i] = msg[`chan${i}_raw`]
     }

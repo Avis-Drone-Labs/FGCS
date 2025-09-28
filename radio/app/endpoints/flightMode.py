@@ -26,12 +26,11 @@ def getFlightModeConfig() -> None:
     if not droneStatus.drone:
         return notConnectedError(action="get the flight mode config")
 
-    flight_modes = droneStatus.drone.flightModesController.flight_modes
-    flight_mode_channel = droneStatus.drone.flightModesController.flight_mode_channel
+    flight_modes_config = droneStatus.drone.flightModesController.getConfig()
 
     socketio.emit(
         "flight_mode_config",
-        {"flight_modes": flight_modes, "flight_mode_channel": flight_mode_channel},
+        flight_modes_config,
     )
 
 

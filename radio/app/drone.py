@@ -103,15 +103,15 @@ class Drone:
             "Connecting to drone",
             "Received heartbeat",
             "Cleaned temp logs",
-            "Setup parameters controller",
-            "Setup arm controller",
-            "Setup flight modes controller",
-            "Setup motor controller",
-            "Setup gripper controller",
-            "Setup mission controller",
-            "Setup frame controller",
-            "Setup RC controller",
-            "Setup nav controller",
+            "Setting up the parameters controller",
+            "Setting up the arm controller",
+            "Setting up the flight modes controller",
+            "Setting up the motor controller",
+            "Setting up the gripper controller",
+            "Setting up the mission controller",
+            "Setting up the frame controller",
+            "Setting up the RC controller",
+            "Setting up the nav controller",
             "Connection complete",
         ]
 
@@ -193,32 +193,32 @@ class Drone:
 
         self.armed = False
 
-        self.paramsController = ParamsController(self)
         self.sendConnectionStatusUpdate(3)
+        self.paramsController = ParamsController(self)
 
-        self.armController = ArmController(self)
         self.sendConnectionStatusUpdate(4)
+        self.armController = ArmController(self)
 
-        self.flightModesController = FlightModesController(self)
         self.sendConnectionStatusUpdate(5)
+        self.flightModesController = FlightModesController(self)
 
-        self.motorTestController = MotorTestController(self)
         self.sendConnectionStatusUpdate(6)
+        self.motorTestController = MotorTestController(self)
 
-        self.gripperController = GripperController(self)
         self.sendConnectionStatusUpdate(7)
+        self.gripperController = GripperController(self)
 
-        self.missionController = MissionController(self)
         self.sendConnectionStatusUpdate(8)
+        self.missionController = MissionController(self)
 
-        self.frameController = FrameController(self)
         self.sendConnectionStatusUpdate(9)
+        self.frameController = FrameController(self)
 
-        self.rcController = RcController(self)
         self.sendConnectionStatusUpdate(10)
+        self.rcController = RcController(self)
 
-        self.navController = NavController(self)
         self.sendConnectionStatusUpdate(11)
+        self.navController = NavController(self)
 
         self.stopAllDataStreams()
 

@@ -41,6 +41,7 @@ class FlightModesController:
     def getFlightModes(self) -> None:
         """
         Get the current flight modes of the drone."""
+        self.drone.logger.debug("Fetching flight modes")
         self.flight_modes = []
         for mode in FLIGHT_MODES:
             flight_mode = self.drone.paramsController.getSingleParam(mode)
@@ -55,6 +56,7 @@ class FlightModesController:
     def getFlightModeChannel(self) -> None:
         """
         Get the flight mode channel of the drone."""
+        self.drone.logger.debug("Fetching flight mode channel")
         self.flight_mode_channel = "UNKNOWN"
         flight_mode_channel = self.drone.paramsController.getSingleParam("FLTMODE_CH")
 
@@ -184,3 +186,26 @@ class FlightModesController:
             mode = mavutil.mavlink.PLANE_MODE_GUIDED
 
         return self.setCurrentFlightMode(mode)
+
+    def getConfig(self) -> dict:
+        """
+        Get the current flight modes and flight mode channel from cached parameters.
+
+        Returns:
+            dict: The flight modes and flight mode channel of the drone
+        """
+        self.flight_mode_channel = self.drone.paramsController.getCachedParams(
+            "FLTMODE_CH"
+        ).get("param_value", "UNKNOWN")
+        self.flight_modes = []
+        for mode in FLIGHT_MODES:
+            self.flight_modes.append(
+                self.drone.paramsController.getCachedParams(mode).get(
+                    "param_value", "UNKNOWN"
+                )
+            )
+
+        return {
+            "flight_modes": self.flight_modes,
+            "flight_mode_channel": self.flight_mode_channel,
+        }

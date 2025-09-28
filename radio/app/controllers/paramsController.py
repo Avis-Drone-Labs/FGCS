@@ -3,15 +3,22 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
 from app.utils import sendingCommandLock
 from pymavlink import mavutil
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from app.drone import Drone
+
+
+class CachedParam(TypedDict):
+    param_name: str
+    param_value: Number
+    param_type: int
 
 
 class ParamsController:
@@ -70,6 +77,9 @@ class ParamsController:
 
             self.drone.is_listening = True
             if response:
+                self.saveParam(
+                    response.param_id, response.param_value, response.param_type
+                )
                 return {
                     "success": True,
                     "data": response,
@@ -295,3 +305,20 @@ class ParamsController:
                     "param_type": param_type,
                 }
             )
+
+    def getCachedParam(self, params: str) -> Union[CachedParam, dict]:
+        """
+        Get a single parameter from the cached params.
+
+        Args:
+            params (Optional[str]): The name of the parameter to get
+        """
+        if isinstance(params, str):
+            try:
+                return next((x for x in self.params if x["param_id"] == params))
+            except StopIteration:
+                self.drone.logger.error(f"Param {params} not found in cached params")
+                return {}
+        else:
+            self.drone.logger.error(f"Invalid params type, got {type(params)}")
+            return {}

@@ -24,15 +24,18 @@ import { Row } from "./components/params/row.jsx"
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
+  emitRefreshParams,
   resetParamState,
   selectFetchingVars,
   selectFetchingVarsProgress,
+  selectHasFetchedOnce,
   selectModifiedParams,
   selectParams,
   selectParamSearchValue,
   selectShowModifiedParams,
   selectShownParams,
   setFetchingVars,
+  setHasFetchedOnce,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
 
@@ -41,6 +44,7 @@ export default function Params() {
   const connected = useSelector(selectConnectedToDrone)
 
   // Parameter states
+  const hasFetchedOnce = useSelector(selectHasFetchedOnce)
   const params = useSelector(selectParams)
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
@@ -60,8 +64,10 @@ export default function Params() {
       dispatch(resetParamState())
     }
 
-    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
+    if (connected && !hasFetchedOnce && !fetchingVars) {
       dispatch(setFetchingVars(true))
+      dispatch(emitRefreshParams())
+      dispatch(setHasFetchedOnce(true))
     }
   }, [connected])
 
@@ -93,7 +99,7 @@ export default function Params() {
             />
           )}
 
-          {Object.keys(params).length !== 0 && (
+          {Object.keys(params).length > 0 && !fetchingVars && (
             <div className="w-full h-full contents">
               <ParamsToolbar />
 

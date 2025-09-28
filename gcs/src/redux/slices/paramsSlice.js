@@ -12,6 +12,7 @@ const paramsSlice = createSlice({
     fetchingVars: false,
     fetchingVarsProgress: 0,
     searchValue: "",
+    hasFetchedOnce: false,
   },
   reducers: {
     setRebootData: (state, action) => {
@@ -92,6 +93,9 @@ const paramsSlice = createSlice({
       state.rebootData = {}
       state.searchValue = ""
     },
+    setHasFetchedOnce: (state, action) => {
+      state.hasFetchedOnce = action.payload
+    },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
@@ -111,6 +115,7 @@ const paramsSlice = createSlice({
     selectFetchingVars: (state) => state.fetchingVars,
     selectFetchingVarsProgress: (state) => state.fetchingVarsProgress,
     selectParamSearchValue: (state) => state.searchValue,
+    selectHasFetchedOnce: (state) => state.hasFetchedOnce,
   },
 })
 
@@ -132,6 +137,7 @@ export const {
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
+  setHasFetchedOnce,
 } = paramsSlice.actions
 export const {
   selectRebootData,
@@ -144,6 +150,7 @@ export const {
   selectFetchingVarsProgress,
   selectShowModifiedParams,
   selectParamSearchValue,
+  selectHasFetchedOnce,
 } = paramsSlice.selectors
 
 export default paramsSlice

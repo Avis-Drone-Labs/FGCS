@@ -19,7 +19,7 @@ def getRcConfig() -> None:
     if not droneStatus.drone:
         return notConnectedError(action="get the RC config")
 
-    rc_params = droneStatus.drone.rcController.params
+    rc_params = droneStatus.drone.rcController.getConfig()
     rc_params[
         "flight_modes"
     ] = droneStatus.drone.flightModesController.flight_mode_channel

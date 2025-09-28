@@ -1,5 +1,3 @@
-import time
-
 from pymavlink import mavutil
 from typing_extensions import TypedDict
 
@@ -81,46 +79,6 @@ def set_state(data: SetStateType) -> None:
             droneStatus.drone.addMessageListener(message, sendMessage)
     elif droneStatus.state == "params":
         droneStatus.drone.stopAllDataStreams()
-
-        if len(droneStatus.drone.paramsController.params):
-            socketio.emit("params", droneStatus.drone.paramsController.params)
-            return
-
-        droneStatus.drone.paramsController.getAllParams()
-
-        timeout = time.time() + 20
-        last_index_sent = -1
-
-        while (
-            droneStatus.drone
-            and droneStatus.drone.paramsController.is_requesting_params
-        ):
-            if time.time() > timeout:
-                socketio.emit(
-                    "params_error",
-                    {"message": "Parameter request timed out after 3 minutes."},
-                )
-                return
-
-            if (
-                last_index_sent
-                != droneStatus.drone.paramsController.current_param_index
-                and droneStatus.drone.paramsController.current_param_index
-                > last_index_sent
-            ):
-                socketio.emit(
-                    "param_request_update",
-                    {
-                        "current_param_index": droneStatus.drone.paramsController.current_param_index,
-                        "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
-                    },
-                )
-                last_index_sent = droneStatus.drone.paramsController.current_param_index
-
-            time.sleep(0.2)
-
-        if droneStatus.drone:
-            socketio.emit("params", droneStatus.drone.paramsController.params)
     elif droneStatus.state == "config":
         droneStatus.drone.stopAllDataStreams()
     elif droneStatus.state == "config.flight_modes":

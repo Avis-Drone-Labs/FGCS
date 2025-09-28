@@ -48,7 +48,7 @@ export default function StatusBar(props) {
   // Start clock
   useEffect(() => {
     updateClock.start()
-    return updateClock.stop
+    return () => updateClock.stop()
   }, [])
 
   // Alerts

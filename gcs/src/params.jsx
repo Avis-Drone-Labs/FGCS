@@ -99,7 +99,7 @@ export default function Params() {
             />
           )}
 
-          {Object.keys(params).length !== 0 && !fetchingVars && (
+          {Object.keys(params).length > 0 && !fetchingVars && (
             <div className="w-full h-full contents">
               <ParamsToolbar />
 

@@ -40,10 +40,13 @@ import {
   setFrameTypeName,
   setFrameTypeOrder,
   setGetGripperEnabled,
+  setGripperConfig,
   setNumberOfMotors,
   setRadioChannels,
   setRefreshingFlightModeData,
+  setRefreshingGripperConfigData,
   setShowMotorTestWarningModal,
+  updateGripperConfigParam,
 } from "../slices/configSlice.js"
 import {
   setAttitudeData,
@@ -140,6 +143,8 @@ const MissionSpecificSocketEvents = Object.freeze({
 const ConfigSpecificSocketEvents = Object.freeze({
   onGripperEnabled: "is_gripper_enabled",
   onSetGripperResult: "set_gripper_result",
+  onGripperConfig: "gripper_config",
+  setGripperParamResult: "set_gripper_param_result",
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
   onSetFlightModeResult: "set_flight_mode_result",
@@ -693,6 +698,28 @@ const socketMiddleware = (store) => {
           (msg) => {
             if (msg.success) {
               showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(ConfigSpecificSocketEvents.onGripperConfig, (msg) => {
+          store.dispatch(setGripperConfig(msg.params))
+          store.dispatch(setRefreshingGripperConfigData(false))
+        })
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.setGripperParamResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+              store.dispatch(
+                updateGripperConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
             } else {
               showErrorNotification(msg.message)
             }

@@ -39,7 +39,6 @@ const ALLOWED_ON_CHANNELS = [
   "main-process-message",
   "app:webcam-closed",
   "app:send-link-stats",
-  "app:send-link-stats",
   "fla:log-parse-progress",
 ]
 

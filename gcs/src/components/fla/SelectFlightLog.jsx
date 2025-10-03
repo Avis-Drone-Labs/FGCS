@@ -30,7 +30,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
   }
 
   async function clearFgcsLogs() {
-    await window.ipcRenderer.invoke("fla-clear-recent-logs")
+    await window.ipcRenderer.invoke("fla:clear-recent-logs")
     getFgcsLogs()
   }
 

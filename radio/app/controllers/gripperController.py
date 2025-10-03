@@ -30,7 +30,7 @@ class GripperController:
             drone (Drone): The main drone object
         """
         self.drone = drone
-        self.params = {}
+        self.params: dict = {}
 
         if not self.getEnabledFromDrone():
             self.drone.logger.info("Gripper is not enabled.")
@@ -78,7 +78,7 @@ class GripperController:
 
         return bool(gripper_enabled_param.get("param_value"))
 
-    def getGripperParams(self) -> dict:
+    def getGripperParams(self) -> None:
         """
         Gets the gripper related parameters from the drone.
         """

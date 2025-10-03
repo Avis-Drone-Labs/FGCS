@@ -71,7 +71,8 @@ def getGripperConfig() -> None:
 
     if not droneStatus.drone:
         logger.warning("Attempted to get the gripper config when drone is None.")
-        return droneErrorCb(action="get the gripper config")
+        droneErrorCb(action="get the gripper config")
+        return
 
     gripper_config = droneStatus.drone.gripperController.getConfig()
 
@@ -98,7 +99,8 @@ def setGripperParam(data: dict) -> None:
 
     if not droneStatus.drone:
         logger.warning("Attempted to set a gripper param when drone is None.")
-        return droneErrorCb(action="set a gripper param")
+        droneErrorCb(action="set a gripper param")
+        return
 
     param_id = data.get("param_id", None)
     value = data.get("value", None)

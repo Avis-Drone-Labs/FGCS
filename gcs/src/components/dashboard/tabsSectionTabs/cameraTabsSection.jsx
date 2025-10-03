@@ -4,15 +4,15 @@
  */
 
 // Native
-import { useCallback, useState, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // Mantine
+import { Select, Tabs } from "@mantine/core"
 import { useSessionStorage } from "@mantine/hooks"
-import { Tabs, Select } from "@mantine/core"
 
 // Helper
-import Webcam from "react-webcam"
 import { IconExternalLink, IconVideoOff } from "@tabler/icons-react"
+import Webcam from "react-webcam"
 
 export default function CameraTabsSection({ tabPadding }) {
   // Camera devices
@@ -21,7 +21,7 @@ export default function CameraTabsSection({ tabPadding }) {
     defaultValue: null,
   })
 
-  window.ipcRenderer.onCameraWindowClose(() => setPictureInPicture(false))
+  window.ipcRenderer.on("app:webcam-closed", () => setPictureInPicture(false))
 
   // Ref used to get video capture stream to send to new electron window
   const videoRef = useRef(null)
@@ -47,8 +47,9 @@ export default function CameraTabsSection({ tabPadding }) {
       streamTrack.getSettings().width / streamTrack.getSettings().height
 
     pictureInPicture
-      ? window.ipcRenderer.closeWebcamWindow()
-      : window.ipcRenderer.openWebcamWindow(
+      ? window.ipcRenderer.invoke("app:close-webcam-window")
+      : window.ipcRenderer.invoke(
+          "app:open-webcam-window",
           deviceId,
           streamTrack.label,
           streamAspect,

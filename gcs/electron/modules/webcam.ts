@@ -71,11 +71,6 @@ export function openWebcamPopout(
     })
   })
 
-  // Windows doesn't consider maximising to be fullscreening so we must prevent default
-  webcamPopoutWin.on("maximize", (e: Event) => {
-    e.preventDefault()
-  })
-
   // Ensure initial size fits the aspect ratio ()
   webcamPopoutWin.setSize(
     webcamPopoutWin.getBounds().width,
@@ -92,7 +87,7 @@ export function openWebcamPopout(
 export function closeWebcamPopout(mainWindow: BrowserWindow | null) {
   console.log("Destroying webcam window")
   destroyWebcamWindow()
-  mainWindow?.webContents.send("webcam-closed")
+  mainWindow?.webContents.send("app:webcam-closed")
 }
 
 export function destroyWebcamWindow() {
@@ -101,11 +96,11 @@ export function destroyWebcamWindow() {
 }
 
 export default function registerWebcamIPC(mainWindow: BrowserWindow) {
-  ipcMain.removeHandler("openWebcamWindow")
-  ipcMain.removeHandler("closeWebcamWindow")
+  ipcMain.removeHandler("app:open-webcam-window")
+  ipcMain.removeHandler("app:close-webcam-window")
 
-  ipcMain.handle("openWebcamWindow", (_, videoStreamId, name, aspect) => {
+  ipcMain.handle("app:open-webcam-window", (_, videoStreamId, name, aspect) => {
     openWebcamPopout(videoStreamId, name, aspect)
   })
-  ipcMain.handle("closeWebcamWindow", () => closeWebcamPopout(mainWindow))
+  ipcMain.handle("app:close-webcam-window", () => closeWebcamPopout(mainWindow))
 }

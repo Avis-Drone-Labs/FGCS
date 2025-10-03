@@ -30,7 +30,7 @@ export default function LinkStatsWindow() {
   })
 
   useEffect(() => {
-    window.ipcRenderer.onGetLinkStats((stats) => {
+    window.ipcRenderer.on("app:send-link-stats", (_event, stats) => {
       setLinkStats(stats)
     })
   }, [])

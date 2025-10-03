@@ -1,9 +1,9 @@
 import { createContext, useEffect, useState } from "react"
 
-import { setSettingInSettings, getSettingFromSettings } from "./settings"
+import { getSettingFromSettings, setSettingInSettings } from "./settings"
 
-import DefaultSettings from "../../data/default_settings.json"
 import { useDisclosure } from "@mantine/hooks"
+import DefaultSettings from "../../data/default_settings.json"
 
 const SettingsContext = createContext({})
 
@@ -30,7 +30,7 @@ export const SettingsProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const data = await window.ipcRenderer.getSettings()
+      const data = await window.ipcRenderer.invoke("settings:fetch-settings")
       setSettings(data)
     }
     fetchSettings()
@@ -45,7 +45,7 @@ export const SettingsProvider = ({ children }) => {
     }
 
     setSettings(newSettings)
-    window.ipcRenderer.saveSettings(newSettings)
+    window.ipcRenderer.invoke("settings:save-settings", newSettings)
   }
 
   const getSetting = (setting) => {

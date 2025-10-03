@@ -21,7 +21,7 @@ export default function FileMenu(props) {
       <MenuItem
         name="About FGCS"
         onClick={() => {
-          window.ipcRenderer.openAboutWindow()
+          window.ipcRenderer.invoke("app:open-about-window")
         }}
       />
       <MenuItem name="Current Version" shortcut={packageJson.version} />
@@ -35,17 +35,17 @@ export default function FileMenu(props) {
       <MenuItem
         name="Minimise"
         shortcut="Alt + Esc"
-        callback={() => window.ipcRenderer.send("minimise")}
+        callback={() => window.ipcRenderer.send("window:minimise")}
       />
       <MenuItem
         name="Toggle Maximise"
         shortcut="Win + Down, Win + Up"
-        callback={() => window.ipcRenderer.send("maximise")}
+        callback={() => window.ipcRenderer.send("window:maximise")}
       />
       <MenuItem
         name="Exit"
         shortcut="Alt + F4"
-        callback={() => window.ipcRenderer.send("close")}
+        callback={() => window.ipcRenderer.send("window:close")}
       />
       <Divider />
       <MenuItem name="Settings" callback={() => open()} />

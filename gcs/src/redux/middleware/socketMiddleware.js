@@ -319,7 +319,7 @@ const socketMiddleware = (store) => {
 
         // Link stats
         socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
-          window.ipcRenderer.updateLinkStats(msg)
+          window.ipcRenderer.invoke("app:update-link-stats", msg)
         })
       }
     }

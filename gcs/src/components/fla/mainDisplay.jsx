@@ -48,7 +48,10 @@ export default function MainDisplay({ closeLogFile, chartData }) {
                 <span
                   className="ml-2 text-white underline cursor-pointer"
                   onClick={() => {
-                    window.ipcRenderer.send("openFileInExplorer", file.path)
+                    window.ipcRenderer.send(
+                      "window:open-file-in-explorer",
+                      file.path,
+                    )
                   }}
                 >
                   {file.name}

@@ -268,7 +268,10 @@ export default function Missions() {
       ],
     }
 
-    const result = await window.ipcRenderer.getSaveMissionFilePath(options)
+    const result = await window.ipcRenderer.invoke(
+      "missions:get-save-mission-file-path",
+      options,
+    )
 
     if (!result.canceled) {
       let items = []

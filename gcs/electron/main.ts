@@ -129,54 +129,55 @@ function getUserConfiguration() {
   return userSettings
 }
 
-ipcMain.handle("getSettings", () => {
+ipcMain.handle("settings:fetch-settings", () => {
   return getUserConfiguration()
 })
-ipcMain.handle("setSettings", (_, settings) => {
+ipcMain.handle("settings:save-settings", (_, settings) => {
   saveUserConfiguration(settings)
 })
 
-ipcMain.handle("isMac", () => {
+ipcMain.handle("app:is-mac", () => {
   return process.platform == "darwin"
 })
-ipcMain.on("close", () => {
+ipcMain.on("window:close", () => {
   closeWithBackend()
 })
-ipcMain.on("minimise", () => {
+ipcMain.on("window:minimise", () => {
   getWindow()?.minimize()
 })
-ipcMain.on("maximise", () => {
+ipcMain.on("window:maximise", () => {
   getWindow()?.isMaximized()
     ? getWindow()?.unmaximize()
     : getWindow()?.maximize()
 })
 
-ipcMain.on("reload", () => {
+ipcMain.on("window:reload", () => {
   getWindow()?.reload()
 })
-ipcMain.on("force_reload", () => {
+ipcMain.on("window:force-reload", () => {
   getWindow()?.webContents.reloadIgnoringCache()
 })
-ipcMain.on("toggle_developer_tools", () => {
+ipcMain.on("window:toggle-developer-tools", () => {
   getWindow()?.webContents.toggleDevTools()
 })
-ipcMain.on("actual_size", () => {
+ipcMain.on("window:actual-size", () => {
   getWindow()?.webContents.setZoomFactor(1)
 })
-ipcMain.on("toggle_fullscreen", () => {
+ipcMain.on("window:toggle-fullscreen", () => {
   getWindow()?.isFullScreen()
     ? getWindow()?.setFullScreen(false)
     : getWindow()?.setFullScreen(true)
 })
-ipcMain.on("zoom_in", () => {
+ipcMain.on("window:zoom-in", () => {
   const window = getWindow()?.webContents
   window?.setZoomFactor(window?.getZoomFactor() + 0.1)
 })
-ipcMain.on("zoom_out", () => {
+ipcMain.on("window:zoom-out", () => {
   const window = getWindow()?.webContents
   window?.setZoomFactor(window?.getZoomFactor() - 0.1)
 })
-ipcMain.on("openFileInExplorer", (_event, filePath) => {
+
+ipcMain.on("window:open-file-in-explorer", (_event, filePath) => {
   shell.showItemInFolder(filePath)
 })
 

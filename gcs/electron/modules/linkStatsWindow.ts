@@ -29,10 +29,6 @@ export function openLinkStatsWindow() {
     linkStatsWin?.loadFile(path.join(process.env.DIST, "linkStats.html"))
   }
 
-  // Windows doesn't consider maximising to be fullscreening so we must prevent default
-  linkStatsWin.on("maximize", (e: Event) => {
-    e.preventDefault()
-  })
   linkStatsWin.on("close", () => {
     linkStatsWin = null
   })
@@ -50,16 +46,16 @@ export function destroyLinkStatsWindow() {
 }
 
 export default function registerLinkStatsIPC() {
-  ipcMain.removeHandler("openLinkStatsWindow")
-  ipcMain.removeHandler("closeLinkStatsWindow")
-  ipcMain.removeHandler("update-link-stats")
+  ipcMain.removeHandler("app:open-link-stats-window")
+  ipcMain.removeHandler("app:close-link-stats-window")
+  ipcMain.removeHandler("app:update-link-stats")
 
-  ipcMain.handle("openLinkStatsWindow", () => {
+  ipcMain.handle("app:open-link-stats-window", () => {
     openLinkStatsWindow()
   })
-  ipcMain.handle("closeLinkStatsWindow", () => closeLinkStatsWindow())
-  ipcMain.handle("update-link-stats", (_, linkStats) => {
-    linkStatsWin?.webContents.send("send-link-stats", linkStats)
+  ipcMain.handle("app:close-link-stats-window", () => closeLinkStatsWindow())
+  ipcMain.handle("app:update-link-stats", (_, linkStats) => {
+    linkStatsWin?.webContents.send("app:send-link-stats", linkStats)
     const uptimeFormatted = new Date(Math.round(linkStats.uptime) * 1000)
       .toISOString()
       .substring(11, 19)

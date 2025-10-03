@@ -16,7 +16,7 @@ export function Commands() {
   const [isMac, setIsMac] = useState(false)
 
   useEffect(() => {
-    window.ipcRenderer.invoke("isMac").then((result) => {
+    window.ipcRenderer.invoke("app:is-mac").then((result) => {
       setIsMac(result)
     })
   }, [])
@@ -44,7 +44,7 @@ export function Commands() {
     navigate("/fla")
   })
   AddCommand("force_refresh", () => {
-    window.ipcRenderer.send("force_reload")
+    window.ipcRenderer.send("window:force-reload")
   })
   AddCommand("open_settings", () => {
     open()

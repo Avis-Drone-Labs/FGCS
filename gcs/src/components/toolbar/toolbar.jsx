@@ -9,17 +9,17 @@
 import { useEffect, useState } from "react"
 
 // Custom Imports
-import { MaximizeIcon, MinimizeIcon, CloseIcon } from "./icons.jsx"
+import SpotlightComponent from "../spotlight/spotlight.jsx"
+import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
-import SpotlightComponent from "../spotlight/spotlight.jsx"
 
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false)
   const [isMac, setIsMac] = useState(false)
 
   useEffect(() => {
-    window.ipcRenderer.invoke("isMac").then((result) => {
+    window.ipcRenderer.invoke("app:is-mac").then((result) => {
       setIsMac(result)
     })
   }, [])
@@ -70,7 +70,7 @@ export default function Toolbar() {
               title="Minimise"
               className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-700"
               onClick={() => {
-                window.ipcRenderer.send("minimise", [])
+                window.ipcRenderer.send("window:minimise", [])
               }}
               label="Minimise"
             >
@@ -82,7 +82,7 @@ export default function Toolbar() {
               title="Maximise"
               className="px-3 flex items-center h-full no-drag cursor-pointer hover:bg-falcongrey-700"
               onClick={() => {
-                window.ipcRenderer.send("maximise", [])
+                window.ipcRenderer.send("window:maximise", [])
               }}
               label="Maximise"
             >
@@ -94,7 +94,7 @@ export default function Toolbar() {
               title="Close"
               className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500"
               onClick={() => {
-                window.ipcRenderer.send("close", [])
+                window.ipcRenderer.send("window:close", [])
               }}
               label="Close"
             >

@@ -7,7 +7,7 @@ import {
   ScrollArea,
 } from "@mantine/core"
 import moment from "moment"
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useDispatch } from "react-redux"
 import {
   showErrorNotification,
@@ -26,11 +26,11 @@ export default function SelectFlightLog({ processLoadedFile }) {
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
 
   async function getFgcsLogs() {
-    setRecentFgcsLogs(await window.ipcRenderer.getRecentLogs())
+    setRecentFgcsLogs(await window.ipcRenderer.invoke("fla:get-recent-logs"))
   }
 
   async function clearFgcsLogs() {
-    await window.ipcRenderer.clearRecentLogs()
+    await window.ipcRenderer.invoke("fla-clear-recent-logs")
     getFgcsLogs()
   }
 
@@ -49,7 +49,10 @@ export default function SelectFlightLog({ processLoadedFile }) {
           `Starting to load file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
         )
 
-        const result = await window.ipcRenderer.loadFile(file.path)
+        const result = await window.ipcRenderer.invoke(
+          "fla:open-file",
+          file.path,
+        )
 
         if (!result.success) {
           showErrorNotification(
@@ -68,15 +71,17 @@ export default function SelectFlightLog({ processLoadedFile }) {
         setLoadingFile(false)
         setLoadingFileProgress(0)
       }
-    }, [dispatch, processLoadedFile],
+    },
+    [dispatch, processLoadedFile],
   )
 
   useEffect(() => {
-    const onProgress = (evt, message) => setLoadingFileProgress(message.percent)
+    const onProgress = (_event, message) =>
+      setLoadingFileProgress(message.percent)
     window.ipcRenderer.on("fla:log-parse-progress", onProgress)
     getFgcsLogs()
     return () => {
-      window.ipcRenderer.removeAllListeners(["fla:log-parse-progress"])
+      window.ipcRenderer.removeAllListeners("fla:log-parse-progress")
     }
   }, [])
 

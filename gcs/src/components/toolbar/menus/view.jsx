@@ -17,7 +17,7 @@ export default function ViewMenu(props) {
       <MenuItem
         name="Connection Stats"
         onClick={() => {
-          window.ipcRenderer.openLinkStatsWindow()
+          window.ipcRenderer.invoke("app:open-link-stats-window")
         }}
       />
 
@@ -26,17 +26,19 @@ export default function ViewMenu(props) {
       <MenuItem
         name="Reload"
         shortcut="Ctrl + R"
-        callback={() => window.ipcRenderer.send("reload")}
+        callback={() => window.ipcRenderer.send("window:reload")}
       />
       <MenuItem
         name="Force Reload"
         shortcut="Ctrl + Shift + R"
-        callback={() => window.ipcRenderer.send("force_reload")}
+        callback={() => window.ipcRenderer.send("window:force-reload")}
       />
       <MenuItem
         name="Toggle Developer Tools"
         shortcut="Ctrl + Shift + I"
-        callback={() => window.ipcRenderer.send("toggle_developer_tools")}
+        callback={() =>
+          window.ipcRenderer.send("window:toggle-developer-tools")
+        }
       />
 
       <Divider />
@@ -44,17 +46,17 @@ export default function ViewMenu(props) {
       <MenuItem
         name="Actual Size"
         shortcut="Ctrl + 0"
-        callback={() => window.ipcRenderer.send("actual_size")}
+        callback={() => window.ipcRenderer.send("window:actual-size")}
       />
       <MenuItem
         name="Zoom In"
         shortcut="Ctrl + Shift + +"
-        callback={() => window.ipcRenderer.send("zoom_in")}
+        callback={() => window.ipcRenderer.send("window:zoom-in")}
       />
       <MenuItem
         name="Zoom Out"
         shortcut="Ctrl + -"
-        callback={() => window.ipcRenderer.send("zoom_out")}
+        callback={() => window.ipcRenderer.send("window:zoom-out")}
       />
 
       <Divider />
@@ -62,7 +64,7 @@ export default function ViewMenu(props) {
       <MenuItem
         name="Toggle Full Screen"
         shortcut="F11"
-        callback={() => window.ipcRenderer.send("toggle_fullscreen")}
+        callback={() => window.ipcRenderer.send("window:toggle-fullscreen")}
       />
     </MenuTemplate>
   )

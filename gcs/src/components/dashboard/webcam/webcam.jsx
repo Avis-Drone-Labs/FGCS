@@ -1,8 +1,8 @@
 "use client"
 
-import Webcam from "react-webcam"
 import { IconX } from "@tabler/icons-react"
 import { useRef } from "react"
+import Webcam from "react-webcam"
 
 export default function CameraWindow() {
   const searchParams = new URLSearchParams(window.location.search)
@@ -22,7 +22,7 @@ export default function CameraWindow() {
         </div>
         <button
           className="group px-2 no-drag hover:bg-red-500 h-[100%]"
-          onClick={() => window.ipcRenderer.closeWebcamWindow()}
+          onClick={() => window.ipcRenderer.invoke("app:close-webcam-window")}
         >
           <IconX
             stroke={2}

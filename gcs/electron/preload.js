@@ -1,50 +1,83 @@
 import { contextBridge, ipcRenderer } from "electron"
 
 // --------- Expose some API to the Renderer process ---------
+// Whitelist of allowed IPC channels for security
+const ALLOWED_INVOKE_CHANNELS = [
+  "fla:open-file",
+  "fla:get-recent-logs",
+  "fla:clear-recent-logs",
+  "missions:get-save-mission-file-path",
+  "app:get-node-env",
+  "app:get-version",
+  "app:is-mac",
+  "settings:fetch-settings",
+  "settings:save-settings",
+  "app:open-webcam-window",
+  "app:close-webcam-window",
+  "app:open-about-window",
+  "app:close-about-window",
+  "app:open-link-stats-window",
+  "app:close-link-stats-window",
+  "app:update-link-stats",
+]
+
+const ALLOWED_SEND_CHANNELS = [
+  "window:close",
+  "window:minimise",
+  "window:maximise",
+  "window:reload",
+  "window:force-reload",
+  "window:toggle-developer-tools",
+  "window:actual-size",
+  "window:toggle-fullscreen",
+  "window:zoom-in",
+  "window:zoom-out",
+  "window:open-file-in-explorer",
+]
+
+const ALLOWED_ON_CHANNELS = [
+  "main-process-message",
+  "app:webcam-closed",
+  "app:send-link-stats",
+  "app:send-link-stats",
+  "fla:log-parse-progress",
+]
+
 contextBridge.exposeInMainWorld("ipcRenderer", {
-  ...withPrototype(ipcRenderer),
-  loadFile: (data) => ipcRenderer.invoke("fla:open-file", data),
-  getRecentLogs: () => ipcRenderer.invoke("fla:get-recent-logs"),
-  clearRecentLogs: () => ipcRenderer.invoke("fla:clear-recent-logs"),
-  getSaveMissionFilePath: (options) =>
-    ipcRenderer.invoke("missions:get-save-mission-file-path", options),
-  getNodeEnv: () => ipcRenderer.invoke("app:get-node-env"),
-  getVersion: () => ipcRenderer.invoke("app:get-version"),
-  getSettings: () => ipcRenderer.invoke("getSettings"),
-  saveSettings: (settings) => ipcRenderer.invoke("setSettings", settings),
-  openWebcamWindow: (id, name, aspect) =>
-    ipcRenderer.invoke("openWebcamWindow", id, name, aspect),
-  closeWebcamWindow: () => ipcRenderer.invoke("closeWebcamWindow"),
-  onCameraWindowClose: (callback) =>
-    ipcRenderer.on("webcam-closed", () => callback()),
-  openAboutWindow: () => ipcRenderer.invoke("openAboutWindow"),
-  closeAboutWindow: () => ipcRenderer.invoke("closeAboutWindow"),
-  openLinkStatsWindow: () => ipcRenderer.invoke("openLinkStatsWindow"),
-  closeLinkStatsWindow: () => ipcRenderer.invoke("closeLinkStatsWindow"),
-  updateLinkStats: (linkStats) =>
-    ipcRenderer.invoke("update-link-stats", linkStats),
-  onGetLinkStats: (callback) =>
-    ipcRenderer.on("send-link-stats", (_, stats) => callback(stats)),
-})
-
-// `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.
-function withPrototype(obj) {
-  const protos = Object.getPrototypeOf(obj)
-
-  for (const [key, value] of Object.entries(protos)) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) continue
-
-    if (typeof value === "function") {
-      // Some native APIs, like `NodeJS.EventEmitter['on']`, don't work in the Renderer process. Wrapping them into a function.
-      obj[key] = function (...args) {
-        return value.call(obj, ...args)
-      }
-    } else {
-      obj[key] = value
+  // Secure invoke method - only allows whitelisted channels
+  invoke: (channel, ...args) => {
+    if (ALLOWED_INVOKE_CHANNELS.includes(channel)) {
+      return ipcRenderer.invoke(channel, ...args)
     }
-  }
-  return obj
-}
+    throw new Error(`IPC invoke channel '${channel}' is not allowed`)
+  },
+
+  // Secure send method - only allows whitelisted channels
+  send: (channel, ...args) => {
+    if (ALLOWED_SEND_CHANNELS.includes(channel)) {
+      return ipcRenderer.send(channel, ...args)
+    }
+    throw new Error(`IPC send channel '${channel}' is not allowed`)
+  },
+
+  // Secure on method - only allows whitelisted channels
+  on: (channel, callback) => {
+    if (ALLOWED_ON_CHANNELS.includes(channel)) {
+      return ipcRenderer.on(channel, callback)
+    }
+    throw new Error(`IPC on channel '${channel}' is not allowed`)
+  },
+
+  // Secure removeAllListeners - only for whitelisted channels
+  removeAllListeners: (channel) => {
+    if (ALLOWED_ON_CHANNELS.includes(channel)) {
+      return ipcRenderer.removeAllListeners(channel)
+    }
+    throw new Error(
+      `IPC removeAllListeners channel '${channel}' is not allowed`,
+    )
+  },
+})
 
 // --------- Preload scripts loading ---------
 function domReady(condition = ["complete", "interactive"]) {

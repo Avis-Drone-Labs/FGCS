@@ -28,7 +28,7 @@ export default function SpotlightComponent() {
   const [isMac, setIsMac] = useState(false)
 
   useEffect(() => {
-    window.ipcRenderer.invoke("isMac").then((result) => {
+    window.ipcRenderer.invoke("app:is-mac").then((result) => {
       setIsMac(result)
     })
   }, [])

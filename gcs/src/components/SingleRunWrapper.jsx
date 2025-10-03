@@ -48,10 +48,10 @@ export default function SingleRunWrapper({ children }) {
       // this is done by getting the latest release from the GitHub API and comparing
       // it to the current version.
 
-      const nodeEnv = await window.ipcRenderer.getNodeEnv()
+      const nodeEnv = await window.ipcRenderer.invoke("app:get-node-env")
       if (nodeEnv !== "production") return
 
-      const currentVersion = await window.ipcRenderer.getVersion()
+      const currentVersion = await window.ipcRenderer.invoke("app:get-version")
 
       // https://docs.github.com/en/rest/releases/releases#get-the-latest-release
       const latestGithubRelease = await octokit.request(

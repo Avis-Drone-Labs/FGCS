@@ -55,7 +55,7 @@ export default function ErrorBoundaryFallback({ error }) {
         size="lg"
         variant="light"
         color="blue"
-        onClick={() => window.ipcRenderer.send("force_reload")}
+        onClick={() => window.ipcRenderer.send("window:force-reload")}
         className="mt-2"
       >
         Go Back!

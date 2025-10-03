@@ -37,10 +37,6 @@ export function openAboutPopout() {
     return { action: "deny" }
   })
 
-  // Windows doesn't consider maximising to be fullscreening so we must prevent default
-  aboutPopoutWin.on("maximize", (e: Event) => {
-    e.preventDefault()
-  })
   aboutPopoutWin.on("close", () => {
     aboutPopoutWin = null
   })
@@ -58,11 +54,11 @@ export function destroyAboutWindow() {
 }
 
 export default function registerAboutIPC() {
-  ipcMain.removeHandler("openAboutWindow")
-  ipcMain.removeHandler("closeAboutWindow")
+  ipcMain.removeHandler("app:open-about-window")
+  ipcMain.removeHandler("app:close-about-window")
 
-  ipcMain.handle("openAboutWindow", () => {
+  ipcMain.handle("app:open-about-window", () => {
     openAboutPopout()
   })
-  ipcMain.handle("closeAboutWindow", () => closeAboutPopout())
+  ipcMain.handle("app:close-about-window", () => closeAboutPopout())
 }

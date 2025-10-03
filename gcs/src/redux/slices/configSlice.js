@@ -147,7 +147,7 @@ const configSlice = createSlice({
 export const {
   setGetGripperEnabled,
   setGripperConfig,
-
+  updateGripperConfigParam,
   setRefreshingGripperConfigData,
   setFlightModesList,
   setFlightModeChannel,

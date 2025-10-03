@@ -163,10 +163,10 @@ class GripperController:
         Sets a gripper related parameter on the drone.
         """
         if param_id not in GRIPPER_PARAMS:
-            return {
-                "success": False,
-                "message": f"Parameter {param_id} is not a valid gripper parameter",
-            }
+            self.drone.logger.error(
+                f"Parameter {param_id} is not a valid gripper parameter"
+            )
+            return False
 
         param_type = self.params.get(param_id, {}).get("param_type", None)
 

@@ -4,7 +4,7 @@ const configSlice = createSlice({
   name: "config",
   initialState: {
     getGripperEnabled: false,
-    griperConfig: {},
+    gripperConfig: {},
     refreshingGripperConfigData: false,
     flightModes: [
       "UNKNOWN",
@@ -49,13 +49,13 @@ const configSlice = createSlice({
       state.getGripperEnabled = action.payload
     },
     setGripperConfig: (state, action) => {
-      if (action.payload === state.griperConfig) return
-      state.griperConfig = action.payload
+      if (action.payload === state.gripperConfig) return
+      state.gripperConfig = action.payload
     },
     updateGripperConfigParam: (state, action) => {
       const { param_id, value } = action.payload
-      if (state.griperConfig[param_id] === value) return
-      state.griperConfig[param_id] = value
+      if (state.gripperConfig[param_id] === value) return
+      state.gripperConfig[param_id] = value
     },
     setRefreshingGripperConfigData: (state, action) => {
       if (action.payload === state.refreshingGripperConfigData) return
@@ -126,7 +126,7 @@ const configSlice = createSlice({
   },
   selectors: {
     selectGetGripperEnabled: (state) => state.getGripperEnabled,
-    selectGripperConfig: (state) => state.griperConfig,
+    selectGripperConfig: (state) => state.gripperConfig,
     selectRefreshingGripperConfigData: (state) =>
       state.refreshingGripperConfigData,
     selectFlightModesList: (state) => state.flightModes,
@@ -147,7 +147,7 @@ const configSlice = createSlice({
 export const {
   setGetGripperEnabled,
   setGripperConfig,
-  updateGripperConfigParam,
+
   setRefreshingGripperConfigData,
   setFlightModesList,
   setFlightModeChannel,

@@ -55,7 +55,7 @@ def setGripper(action: str) -> None:
 
 
 @socketio.on("get_gripper_config")
-def getGriperConfig() -> None:
+def getGripperConfig() -> None:
     """
     Sends the gripper config to the frontend, only works when the config page is loaded.
     """

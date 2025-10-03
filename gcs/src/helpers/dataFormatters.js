@@ -1,3 +1,5 @@
+import { MAV_FRAME_LIST } from "./mavlinkConstants"
+
 function radToDeg(val) {
   return (val * 180) / Math.PI
 }
@@ -8,11 +10,25 @@ export function intToCoord(val) {
 }
 
 export function coordToInt(val) {
-  return val * 1e7
+  return parseInt(val * 1e7)
 }
 
 export const dataFormatters = {
   "ATTITUDE.pitch": radToDeg,
   "ATTITUDE.roll": radToDeg,
   "ATTITUDE.yaw": radToDeg,
+}
+
+export function getPositionFrameName(frameId) {
+  if (frameId === undefined || frameId === null) {
+    return "UNKNOWN"
+  }
+
+  var frameName = MAV_FRAME_LIST[frameId]
+
+  if (frameName.startsWith("MAV_FRAME_")) {
+    frameName = frameName.replace("MAV_FRAME_", "")
+  }
+
+  return frameName || "UNKNOWN"
 }

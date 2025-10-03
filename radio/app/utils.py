@@ -3,8 +3,9 @@ from typing import Any, List
 
 from pymavlink import mavutil
 from serial.tools import list_ports
+from typing_extensions import TypedDict
 
-from app.customTypes import VehicleType
+from app.customTypes import Number, VehicleType
 
 from . import socketio
 
@@ -130,14 +131,19 @@ def droneErrorCb(msg: Any) -> None:
     socketio.emit("drone_error", {"message": msg})
 
 
-def droneConnectStatusCb(msg: Any) -> None:
+class ConnectionDataType(TypedDict):
+    message: str
+    progress: Number
+
+
+def droneConnectStatusCb(msg: ConnectionDataType) -> None:
     """
     Send drone connect status updates to the socket
 
     Args:
         msg: The connect message to send to the client
     """
-    socketio.emit("drone_connect_status", {"message": msg})
+    socketio.emit("drone_connect_status", msg)
 
 
 def notConnectedError(action: str | None = None) -> None:
@@ -185,32 +191,6 @@ def sendMessage(msg: Any) -> None:
     socketio.emit("incoming_msg", data)
 
 
-def wpToMissionItemInt(
-    wp: mavutil.mavlink.MAVLink_message,
-) -> mavutil.mavlink.MAVLink_message:
-    if wp.get_type() == "MISSION_ITEM_INT":
-        return wp
-
-    wp_int = mavutil.mavlink.MAVLink_mission_item_int_message(
-        wp.target_system,
-        wp.target_component,
-        wp.seq,
-        wp.frame,
-        wp.command,
-        wp.current,
-        wp.autocontinue,
-        wp.param1,
-        wp.param2,
-        wp.param3,
-        wp.param4,
-        int(wp.x * 1e7),
-        int(wp.y * 1e7),
-        wp.z,
-        wp.mission_type,
-    )
-    return wp_int
-
-
 FIXED_WING_TYPES = [
     mavutil.mavlink.MAV_TYPE_FIXED_WING,
     mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR,
@@ -241,3 +221,17 @@ def getVehicleType(typeId: int) -> int:
         return VehicleType.MULTIROTOR.value
     else:
         return VehicleType.UNKNOWN.value
+
+
+def sendingCommandLock(func):
+    """A decorator to ensure that only one command is sent at a time."""
+
+    def wrapper(self, *args, **kwargs):
+        lock = getattr(self, "drone", self).sending_command_lock
+        lock.acquire()
+        try:
+            return func(self, *args, **kwargs)
+        finally:
+            lock.release()
+
+    return wrapper

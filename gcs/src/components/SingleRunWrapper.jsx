@@ -16,13 +16,13 @@ import {
 import { Octokit } from "octokit"
 import semverGt from "semver/functions/gt"
 
-// Custom helpers
-import { showErrorNotification } from "../helpers/notification.js"
+// Other
+import { useSettings } from "../helpers/settings.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
-import { useSettings } from "../helpers/settings.js"
+import { showErrorNotification } from "../helpers/notification.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -31,8 +31,7 @@ const octokit = new Octokit({})
 export default function SingleRunWrapper({ children }) {
   const [opened, { open, close }] = useDisclosure(false)
   const [fgcsOutOfDateInfo, setFgcsOutOfDateInfo] = useState(null)
-  // eslint-disable-next-line no-unused-vars
-  const [outOfDate, setOutOfDate] = useSessionStorage({
+  const [, setOutOfDate] = useSessionStorage({
     key: "outOfDate",
     defaultValue: false,
   })
@@ -77,7 +76,7 @@ export default function SingleRunWrapper({ children }) {
         }
       } else {
         showErrorNotification(
-          "Failed to check for updates. Please check your internet connection.",
+          "Failed to check for updates. Please check your internet connection and try again later.",
         )
       }
     }

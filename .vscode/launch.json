@@ -1,0 +1,11 @@
+{
+  "configurations": [
+    {
+      "name": "Python Debugger: Backend",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/radio/app.py",
+      "console": "integratedTerminal"
+    }
+  ]
+}

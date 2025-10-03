@@ -4,34 +4,34 @@
 
 // 3rd Party Imports
 import { ActionIcon, Tooltip } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
-import { centerOfMass, polygon } from "@turf/turf"
 import {
   IconAnchor,
   IconAnchorOff,
   IconCrosshair,
-  IconMapPins,
   IconSun,
   IconSunOff,
 } from "@tabler/icons-react"
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectGPS } from "../../redux/slices/droneInfoSlice"
+
 // Helper Functions
-import { filterMissionItems } from "../../helpers/filterMissions"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
+import {
+  selectOutsideVisibility,
+  setOutsideVisibility,
+} from "../../redux/slices/droneConnectionSlice"
 
 export default function FloatingToolbar({
-  missionItems,
   centerMapOnDrone,
-  gpsData,
   followDrone,
   setFollowDrone,
   mapRef,
 }) {
-  const filteredMissionItems = filterMissionItems(missionItems.mission_items)
-  const [outsideVisibility, setOutsideVisibility] = useLocalStorage({
-    key: "outsideVisibility",
-    defaultValue: false,
-  })
+  const dispatch = useDispatch()
+  const gpsData = useSelector(selectGPS)
+  const outsideVisibility = useSelector(selectOutsideVisibility)
 
   function updateFollowDroneAction() {
     setFollowDrone(
@@ -46,24 +46,6 @@ export default function FloatingToolbar({
             return true
           })(),
     )
-  }
-
-  function centerMapOnMission() {
-    if (filteredMissionItems.length > 0) {
-      let points = filteredMissionItems.map((item) => [
-        item.x * 1e-7,
-        item.y * 1e-7,
-      ])
-      points.push(points[0]) // Close the polygon
-      let geo = polygon([points])
-      let center = centerOfMass(geo).geometry.coordinates
-      let lat = parseFloat(center[0])
-      let lon = parseFloat(center[1])
-      mapRef.current.getMap().flyTo({
-        center: [lon, lat],
-      })
-    }
-    setFollowDrone(false)
   }
 
   return (
@@ -103,20 +85,6 @@ export default function FloatingToolbar({
         </ActionIcon>
       </Tooltip>
 
-      {/* Center Map on full mission */}
-      <Tooltip
-        label={
-          !filteredMissionItems.length > 0 ? "No mission" : "Center on mission"
-        }
-      >
-        <ActionIcon
-          disabled={filteredMissionItems.length <= 0}
-          onClick={centerMapOnMission}
-        >
-          <IconMapPins />
-        </ActionIcon>
-      </Tooltip>
-
       {/* Set outside visibility */}
       <Tooltip
         label={
@@ -127,7 +95,7 @@ export default function FloatingToolbar({
       >
         <ActionIcon
           onClick={() => {
-            setOutsideVisibility(!outsideVisibility)
+            dispatch(setOutsideVisibility(!outsideVisibility))
           }}
         >
           {outsideVisibility ? <IconSun /> : <IconSunOff />}

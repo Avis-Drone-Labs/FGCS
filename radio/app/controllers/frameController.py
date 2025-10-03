@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
+
+from app.customTypes import Number
 
 if TYPE_CHECKING:
     from app.drone import Drone
@@ -15,8 +17,8 @@ class FrameController:
         """
         self.drone = drone
 
-        self.frame_type = "UNKNOWN"
-        self.frame_class = 0
+        self.frame_type: Union[Number, str] = "UNKNOWN"
+        self.frame_class: Number = 0
 
         # Plane type doesn't have a frame type or class
         if self.drone.aircraft_type != 1:
@@ -26,6 +28,7 @@ class FrameController:
     def getFrameType(self) -> None:
         """
         Gets the current frame type of the drone."""
+        self.drone.logger.debug("Fetching frame type")
         frame_type_result = self.drone.paramsController.getSingleParam("FRAME_TYPE")
 
         if frame_type_result.get("success"):
@@ -38,6 +41,7 @@ class FrameController:
     def getFrameClass(self) -> None:
         """
         Gets the current frame class of the drone."""
+        self.drone.logger.debug("Fetching frame class")
         frame_class_result = self.drone.paramsController.getSingleParam("FRAME_CLASS")
 
         if frame_class_result.get("success"):
@@ -46,3 +50,22 @@ class FrameController:
                 self.frame_class = frame_class_data.param_value
         else:
             self.drone.logger.error(frame_class_result.get("message"))
+
+    def getConfig(self) -> dict:
+        """
+        Get the current frame config from cached parameters.
+
+        Returns:
+            dict: The frame config of the drone
+        """
+        self.frame_type = self.drone.paramsController.getCachedParam("FRAME_TYPE").get(
+            "param_value", "UNKNOWN"
+        )
+        self.frame_class = self.drone.paramsController.getCachedParam(
+            "FRAME_CLASS"
+        ).get("param_value", 0)
+
+        return {
+            "frame_type": self.frame_type,
+            "frame_class": self.frame_class,
+        }

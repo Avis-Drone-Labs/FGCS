@@ -3,14 +3,22 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
+from app.utils import sendingCommandLock
 from pymavlink import mavutil
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from app.drone import Drone
+
+
+class CachedParam(TypedDict):
+    param_name: str
+    param_value: Number
+    param_type: int
 
 
 class ParamsController:
@@ -24,11 +32,13 @@ class ParamsController:
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0
+        self.current_param_id = ""
         self.total_number_of_params = 0
         self.is_requesting_params = False
         self.getAllParamsThread: Optional[Thread] = None
 
-    def getSingleParam(self, param_name: str, timeout: Optional[float] = 5) -> Response:
+    @sendingCommandLock
+    def getSingleParam(self, param_name: str, timeout: float = 3) -> Response:
         """
         Gets a specific parameter value.
 
@@ -40,6 +50,7 @@ class ParamsController:
             Response: The response from the retrieval of the specific parameter
         """
         self.drone.is_listening = False
+        time.sleep(0.05)  # Give some time to stop listening
         failure_message = f"Failed to get parameter {param_name}"
 
         self.drone.master.mav.param_request_read_send(
@@ -50,18 +61,32 @@ class ParamsController:
         )
 
         try:
-            response = self.drone.master.recv_match(
-                type="PARAM_VALUE", blocking=True, timeout=timeout
-            )
+            start_time = time.time()
+            response = None
+            while time.time() - start_time < timeout:
+                # timeout of 0.2 to recv_match to allow checking the overall timeout and not block forever
+                msg = self.drone.master.recv_match(
+                    type="PARAM_VALUE", blocking=True, timeout=0.2
+                )
 
-            if response and response.param_id == param_name:
-                self.drone.is_listening = True
+                if msg is None:
+                    continue
+
+                if msg.param_id == param_name:
+                    response = msg
+                    break
+
+            self.drone.is_listening = True
+            if response:
+                self.saveParam(
+                    response.param_id, response.param_value, response.param_type
+                )
                 return {
                     "success": True,
                     "data": response,
                 }
             else:
-                self.drone.is_listening = True
+                self.drone.logger.error(f"Did not receive {param_name} within timeout")
                 return {
                     "success": False,
                     "message": f"{failure_message}, timed out",
@@ -79,6 +104,7 @@ class ParamsController:
         """
         self.drone.stopAllDataStreams()
         self.drone.is_listening = False
+        self.is_requesting_params = True
 
         self.getAllParamsThread = Thread(
             target=self.getAllParamsThreadFunc, daemon=True
@@ -86,20 +112,20 @@ class ParamsController:
         self.getAllParamsThread.start()
 
         self.drone.master.param_fetch_all()
-        self.is_requesting_params = True
 
     def getAllParamsThreadFunc(self) -> None:
         """
         The thread function to get all parameters from the drone.
         """
-        timeout = time.time() + 20  # 20 seconds from now
+        timeout = time.time() + 120  # 120 seconds from now
 
-        while True:
+        while self.is_requesting_params:
             try:
                 if time.time() > timeout:
-                    self.drone.logger.warning("Get all params thread timed out")
+                    self.drone.logger.error("Get all params thread timed out")
                     self.is_requesting_params = False
                     self.current_param_index = 0
+                    self.current_param_id = ""
                     self.total_number_of_params = 0
                     self.params = []
                     self.drone.is_listening = True
@@ -110,6 +136,7 @@ class ParamsController:
                     self.saveParam(msg.param_id, msg.param_value, msg.param_type)
 
                     self.current_param_index = msg.param_index
+                    self.current_param_id = msg.param_id
 
                     if self.total_number_of_params != msg.param_count:
                         self.total_number_of_params = msg.param_count
@@ -117,6 +144,7 @@ class ParamsController:
                     if msg.param_index == msg.param_count - 1:
                         self.is_requesting_params = False
                         self.current_param_index = 0
+                        self.current_param_id = ""
                         self.total_number_of_params = 0
                         self.params = sorted(self.params, key=lambda k: k["param_id"])
                         self.drone.is_listening = True
@@ -125,13 +153,14 @@ class ParamsController:
             except serial.serialutil.SerialException:
                 self.is_requesting_params = False
                 self.current_param_index = 0
+                self.current_param_id = ""
                 self.total_number_of_params = 0
                 self.params = []
                 self.drone.is_listening = True
                 self.drone.logger.error("Serial exception while getting all params")
                 return
 
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> bool:
+    def setMultipleParams(self, params_list: list[IncomingParam]) -> Response:
         """
         Sets multiple parameters on the drone.
 
@@ -142,21 +171,36 @@ class ParamsController:
             bool: True if all parameters were set, False if any failed
         """
         if not params_list:
-            return False
+            return {"success": False, "message": "No parameters to set"}
+
+        params_set_successfully = []
 
         for param in params_list:
-            param_id = param.get("param_id")
-            param_value = param.get("param_value")
-            param_type = param.get("param_type")
-            if not param_id or not param_value or not param_type:
+            param_id = param.get("param_id", None)
+            param_value = param.get("param_value", None)
+            param_type = param.get("param_type", None)
+            param.pop("initial_value", None)  # Remove initial value if it exists
+
+            if param_id is None or param_value is None or param_type is None:
+                self.drone.logger.error(f"Invalid parameter data: {param}, skipping")
                 continue
 
             done = self.setParam(param_id, param_value, param_type)
             if not done:
-                return False
+                return {
+                    "success": False,
+                    "message": f"Failed to set parameter {param_id}",
+                }
+            else:
+                params_set_successfully.append(param)
 
-        return True
+        return {
+            "success": True,
+            "message": "All parameters set successfully",
+            "data": params_set_successfully,
+        }
 
+    @sendingCommandLock
     def setParam(
         self,
         param_name: str,
@@ -266,3 +310,20 @@ class ParamsController:
                     "param_type": param_type,
                 }
             )
+
+    def getCachedParam(self, params: str) -> Union[CachedParam, dict]:
+        """
+        Get a single parameter from the cached params.
+
+        Args:
+            params (Optional[str]): The name of the parameter to get
+        """
+        if isinstance(params, str):
+            try:
+                return next((x for x in self.params if x["param_id"] == params))
+            except StopIteration:
+                self.drone.logger.error(f"Param {params} not found in cached params")
+                return {}
+        else:
+            self.drone.logger.error(f"Invalid params type, got {type(params)}")
+            return {}

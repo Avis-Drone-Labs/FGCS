@@ -1,38 +1,55 @@
 /*
-  Telemetry. This file holds all the telemetry indicators and is part of the resizable info box 
+  Telemetry. This file holds all the telemetry indicators and is part of the resizable info box
   section, found in the top half.
 */
 
 // Custom Components
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
+import { MAV_STATE } from "../../helpers/mavlinkConstants"
+
+// Redux
+import { useSelector } from "react-redux"
+import {
+  selectArmed,
+  selectAttitude,
+  selectBatteryData,
+  selectFlightModeString,
+  selectGPS,
+  selectHeartbeat,
+  selectNavController,
+  selectPrearmEnabled,
+  selectTelemetry,
+} from "../../redux/slices/droneInfoSlice"
 
 export default function TelemetrySection({
-  getIsArmed,
-  prearmEnabled,
   calcIndicatorSize,
   calcIndicatorPadding,
-  getFlightMode,
-  telemetryData,
   telemetryFontSize,
-  attitudeData,
-  gpsData,
   sideBarRef,
-  navControllerOutputData,
-  batteryData,
-  systemStatus,
 }) {
+  const prearmEnabled = useSelector(selectPrearmEnabled)
+  const flightMode = useSelector(selectFlightModeString)
+  const gpsData = useSelector(selectGPS)
+  const isArmed = useSelector(selectArmed)
+  const telemetryData = useSelector(selectTelemetry)
+  const attitudeData = useSelector(selectAttitude)
+  const navControllerOutputData = useSelector(selectNavController)
+  const batteryData = useSelector(selectBatteryData)
+  const heartbeatData = useSelector(selectHeartbeat)
+  const systemStatus = MAV_STATE[heartbeatData.systemStatus]
+
   return (
     <div>
       {/* Information above indicators */}
       <div className="flex flex-col items-center space-y-2">
         <div className="flex items-center space-x-3">
-          {getIsArmed() ? (
+          {isArmed ? (
             <p className="font-bold text-falconred">ARMED</p>
           ) : (
             <>
               <p className="font-bold">DISARMED</p>
-              {prearmEnabled() ? (
+              {prearmEnabled ? (
                 <p className="text-green-500">Prearm: Enabled</p>
               ) : (
                 <p className="font-bold text-falconred">Prearm: Disabled</p>
@@ -42,7 +59,7 @@ export default function TelemetrySection({
         </div>
         <div className="flex flex-row space-x-6">
           <p>{systemStatus}</p>
-          <p>{getFlightMode()}</p>
+          <p>{flightMode}</p>
         </div>
       </div>
 

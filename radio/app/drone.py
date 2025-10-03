@@ -4,9 +4,9 @@ import time
 import traceback
 from logging import Logger, getLogger
 from pathlib import Path
-from queue import Queue
+from queue import Empty, Queue
 from secrets import token_hex
-from threading import Thread
+from threading import Event, Lock, Thread, current_thread
 from typing import Callable, Dict, List, Optional
 
 import serial
@@ -23,7 +23,7 @@ from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
 from app.customTypes import Number, Response, VehicleType
-from app.utils import commandAccepted, getVehicleType
+from app.utils import commandAccepted, getVehicleType, sendingCommandLock
 
 # Constants
 
@@ -75,6 +75,7 @@ class Drone:
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
+        linkDebugStatsCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -91,14 +92,30 @@ class Drone:
         self.baud = baud
         self.wireless = wireless
         self.logger = logger
-        self.connectionType = "TCP" if self.port.startswith("tcp") else "SERIAL"
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
         self.droneConnectStatusCb = droneConnectStatusCb
+        self.linkDebugStatsCb = linkDebugStatsCb
 
         self.connectionError: Optional[str] = None
 
-        self.logger.debug("Trying to setup master")
+        self.connection_phases = [
+            "Connecting to drone",
+            "Received heartbeat",
+            "Cleaned temp logs",
+            "Setting up the parameters controller",
+            "Setting up the arm controller",
+            "Setting up the flight modes controller",
+            "Setting up the motor controller",
+            "Setting up the gripper controller",
+            "Setting up the mission controller",
+            "Setting up the frame controller",
+            "Setting up the RC controller",
+            "Setting up the nav controller",
+            "Connection complete",
+        ]
+
+        self.logger.debug(f"Trying to setup master with port {port} and baud {baud}")
 
         if not Drone.checkBaudrateValid(baud):
             self.connectionError = (
@@ -107,7 +124,7 @@ class Drone:
             return
 
         try:
-            self.sendConnectionStatusUpdate("Connecting to drone")
+            self.sendConnectionStatusUpdate(0)
             self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
         except Exception as e:
             self.logger.exception(traceback.format_exc())
@@ -130,7 +147,7 @@ class Drone:
             self.connectionError = "Could not connect to the drone."
             return
 
-        self.sendConnectionStatusUpdate("Received heartbeat")
+        self.sendConnectionStatusUpdate(1)
 
         self.aircraft_type = getVehicleType(initial_heartbeat.type)
         if self.aircraft_type not in (
@@ -162,40 +179,46 @@ class Drone:
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
 
-        self.sendConnectionStatusUpdate("Cleaned temp logs")
+        self.sendConnectionStatusUpdate(2)
 
-        self.is_active = True
+        self.is_active = Event()
+        self.is_active.set()
+        self.is_listening = False
+
+        # To ensure that only one command is sent at a time and we wait for a
+        # response before sending another command, a thread-safe lock is used
+        self.sending_command_lock = Lock()
 
         self.number_of_motors = 4  # Is there a way to get this from the drone?
 
         self.armed = False
 
+        self.sendConnectionStatusUpdate(3)
         self.paramsController = ParamsController(self)
-        self.sendConnectionStatusUpdate("Setup parameters controller")
 
+        self.sendConnectionStatusUpdate(4)
         self.armController = ArmController(self)
-        self.sendConnectionStatusUpdate("Setup arm controller")
 
+        self.sendConnectionStatusUpdate(5)
         self.flightModesController = FlightModesController(self)
-        self.sendConnectionStatusUpdate("Setup flight modes controller")
 
+        self.sendConnectionStatusUpdate(6)
         self.motorTestController = MotorTestController(self)
-        self.sendConnectionStatusUpdate("Setup motor controller")
 
+        self.sendConnectionStatusUpdate(7)
         self.gripperController = GripperController(self)
-        self.sendConnectionStatusUpdate("Setup gripper controller")
 
+        self.sendConnectionStatusUpdate(8)
         self.missionController = MissionController(self)
-        self.sendConnectionStatusUpdate("Setup mission controller")
 
+        self.sendConnectionStatusUpdate(9)
         self.frameController = FrameController(self)
-        self.sendConnectionStatusUpdate("Setup frame controller")
 
+        self.sendConnectionStatusUpdate(10)
         self.rcController = RcController(self)
-        self.sendConnectionStatusUpdate("Setup RC controller")
 
+        self.sendConnectionStatusUpdate(11)
         self.navController = NavController(self)
-        self.sendConnectionStatusUpdate("Setup nav controller")
 
         self.stopAllDataStreams()
 
@@ -203,15 +226,26 @@ class Drone:
 
         self.startThread()
 
+        self.sendConnectionStatusUpdate(12)
+
     def __getNextLogFilePath(self, line: str) -> str:
         return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
 
     def __getCurrentDateTimeStr(self) -> str:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
-    def sendConnectionStatusUpdate(self, msg):
+    def sendConnectionStatusUpdate(self, msg_index):
+        total_msgs = len(self.connection_phases)
+        if msg_index < 0 or msg_index >= total_msgs:
+            self.logger.error(f"Invalid connection status index {msg_index}")
+            return
+
+        msg = self.connection_phases[msg_index]
+
         if self.droneConnectStatusCb:
-            self.droneConnectStatusCb(msg)
+            self.droneConnectStatusCb(
+                {"message": msg, "progress": int((msg_index / (total_msgs - 1)) * 100)}
+            )
 
     @staticmethod
     def checkBaudrateValid(baud: int) -> bool:
@@ -370,6 +404,7 @@ class Drone:
         else:
             self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRED[stream])
 
+    @sendingCommandLock
     def sendDataStreamRequestMessage(self, stream: int, rate: int) -> None:
         """Send a request for a specific data stream.
 
@@ -385,6 +420,7 @@ class Drone:
             1,
         )
 
+    @sendingCommandLock
     def stopAllDataStreams(self) -> None:
         """Stop all data streams"""
         self.master.mav.request_data_stream_send(
@@ -426,7 +462,7 @@ class Drone:
 
     def checkForMessages(self) -> None:
         """Check for messages from the drone and add them to the message queue."""
-        while self.is_active:
+        while self.is_active.is_set():
             if not self.is_listening:
                 time.sleep(0.05)  # Sleep a bit to not clog up processing usage
                 continue
@@ -447,8 +483,7 @@ class Drone:
                 self.logger.error(e, exc_info=True)
                 if self.droneDisconnectCb:
                     self.droneDisconnectCb()
-                self.is_listening = False
-                self.is_active = False
+                self.close()
                 break
             except Exception as e:
                 # Log any other unexpected exception
@@ -490,10 +525,12 @@ class Drone:
 
     def executeMessages(self) -> None:
         """Executes message listeners based on messages from the message queue."""
-        while self.is_active:
+        while self.is_active.is_set():
             try:
-                q = self.message_queue.get()
+                q = self.message_queue.get(timeout=1)
                 self.message_listeners[q[0]](q[1])
+            except Empty:
+                continue
             except KeyError as e:
                 self.logger.error(
                     f"Could not execute message (likely due to backend abruptly stopping): {e}"
@@ -503,61 +540,192 @@ class Drone:
         """A thread to log messages into a temp FTLog file from the log queue."""
         current_line_number = 0
 
-        while self.is_active:
-            log_msg = self.log_message_queue.get()
-            if log_msg:
-                # Check if a temp log file has been created yet, if not create one
-                if self.current_log_file is None:
-                    self.current_log_file = self.log_directory.joinpath(
-                        f"tmp_first_{token_hex(8)}.ftlog"
+        while self.is_active.is_set():
+            try:
+                log_msg = self.log_message_queue.get(timeout=1)
+                if log_msg:
+                    # Check if a temp log file has been created yet, if not create one
+                    if self.current_log_file is None:
+                        self.current_log_file = self.log_directory.joinpath(
+                            f"tmp_first_{token_hex(8)}.ftlog"
+                        )
+                        self.log_file_names.append(self.current_log_file)
+                        with open(self.current_log_file, "w") as f:
+                            f.write(
+                                f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
+                            )
+
+                    # Write the incoming telemetry message to the temp log file
+                    if current_line_number < LOG_LINE_LIMIT:
+                        with open(
+                            self.current_log_file, "a"
+                        ) as current_log_file_handler:
+                            current_log_file_handler.write(log_msg + "\n")
+                            current_line_number += 1
+                    else:
+                        # If the current log file has reached the line limit, create a new temp log file
+                        next_log_file_name = self.log_directory.joinpath(
+                            f"tmp_{token_hex(8)}.ftlog"
+                        )
+                        with open(
+                            self.current_log_file, "a"
+                        ) as current_log_file_handler:
+                            # Write the next file name to the current log file
+                            current_log_file_handler.write(
+                                f"==NEXT_FILE=={str(next_log_file_name)}==END==\n"
+                            )
+
+                        self.current_log_file = next_log_file_name
+                        self.log_file_names.append(self.current_log_file)
+
+                        with open(self.current_log_file, "w") as f:
+                            f.write(
+                                f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
+                            )
+                            f.write(log_msg + "\n")
+                            current_line_number = 1
+            except Empty:
+                continue
+
+    def getLinkDebugData(self) -> None:
+        """While active, get link debug data"""
+        refresh_rate_hz = 2
+
+        if not hasattr(self, "_sliding_window"):
+            self._sliding_window: dict[str, list] = {
+                "packets_sent": [],
+                "bytes_sent": [],
+                "packets_received": [],
+                "bytes_received": [],
+            }
+
+        if not hasattr(self, "_last_link_stats"):
+            self._last_link_stats: dict[str, Number] = {
+                "total_packets_sent": 0,
+                "total_bytes_sent": 0,
+                "total_packets_received": 0,
+                "total_bytes_received": 0,
+                "total_receive_errors": 0,
+                "uptime": 0,
+            }
+
+        while self.is_active.is_set():
+            if self.linkDebugStatsCb:
+                try:
+                    link_stats = {
+                        "total_packets_sent": self.master.mav.total_packets_sent,
+                        "total_bytes_sent": self.master.mav.total_bytes_sent,
+                        "total_packets_received": self.master.mav.total_packets_received,
+                        "total_bytes_received": self.master.mav.total_bytes_received,
+                        "total_receive_errors": self.master.mav.total_receive_errors,
+                        "uptime": self.master.uptime,
+                    }
+
+                    # Update sliding window
+                    self._sliding_window["packets_sent"].append(
+                        link_stats["total_packets_sent"]
+                        - self._last_link_stats["total_packets_sent"]
                     )
-                    self.log_file_names.append(self.current_log_file)
-                    with open(self.current_log_file, "w") as f:
-                        f.write(
-                            f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
-                        )
-
-                # Write the incoming telemetry message to the temp log file
-                if current_line_number < LOG_LINE_LIMIT:
-                    with open(self.current_log_file, "a") as current_log_file_handler:
-                        current_log_file_handler.write(log_msg + "\n")
-                        current_line_number += 1
-                else:
-                    # If the current log file has reached the line limit, create a new temp log file
-                    next_log_file_name = self.log_directory.joinpath(
-                        f"tmp_{token_hex(8)}.ftlog"
+                    self._sliding_window["bytes_sent"].append(
+                        link_stats["total_bytes_sent"]
+                        - self._last_link_stats["total_bytes_sent"]
                     )
-                    with open(self.current_log_file, "a") as current_log_file_handler:
-                        # Write the next file name to the current log file
-                        current_log_file_handler.write(
-                            f"==NEXT_FILE=={str(next_log_file_name)}==END==\n"
-                        )
+                    self._sliding_window["packets_received"].append(
+                        link_stats["total_packets_received"]
+                        - self._last_link_stats["total_packets_received"]
+                    )
+                    self._sliding_window["bytes_received"].append(
+                        link_stats["total_bytes_received"]
+                        - self._last_link_stats["total_bytes_received"]
+                    )
 
-                    self.current_log_file = next_log_file_name
-                    self.log_file_names.append(self.current_log_file)
+                    # Keep only the last x readings
+                    for key in self._sliding_window:
+                        if len(self._sliding_window[key]) > refresh_rate_hz:
+                            self._sliding_window[key].pop(0)
 
-                    with open(self.current_log_file, "w") as f:
-                        f.write(
-                            f"==START_TIME=={self.__getCurrentDateTimeStr()}==END==\n"
-                        )
-                        f.write(log_msg + "\n")
-                        current_line_number = 1
+                    # Calculate averages over the last x readings
+                    link_stats["avg_packets_sent_per_sec"] = sum(
+                        self._sliding_window["packets_sent"]
+                    ) / len(self._sliding_window["packets_sent"])
+                    link_stats["avg_bytes_sent_per_sec"] = sum(
+                        self._sliding_window["bytes_sent"]
+                    ) / len(self._sliding_window["bytes_sent"])
+                    link_stats["avg_packets_received_per_sec"] = sum(
+                        self._sliding_window["packets_received"]
+                    ) / len(self._sliding_window["packets_received"])
+                    link_stats["avg_bytes_received_per_sec"] = sum(
+                        self._sliding_window["bytes_received"]
+                    ) / len(self._sliding_window["bytes_received"])
+
+                    self._last_link_stats = copy.deepcopy(link_stats)
+
+                    self.linkDebugStatsCb(link_stats)
+                except Exception as e:
+                    self.logger.error(e, exc_info=True)
+
+            time.sleep(1 / refresh_rate_hz)
+
+    def sendHeartbeatMessage(self) -> None:
+        """Sends a heartbeat message to the drone every second."""
+        while self.is_active.is_set():
+            try:
+                self.master.mav.heartbeat_send(
+                    mavutil.mavlink.MAV_TYPE_GCS,
+                    mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                    0,
+                    0,
+                    0,
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to send heartbeat: {e}", exc_info=True)
+            time.sleep(1)
 
     def startThread(self) -> None:
         """Starts the listener and sender threads."""
         self.listener_thread = Thread(target=self.checkForMessages, daemon=True)
         self.sender_thread = Thread(target=self.executeMessages, daemon=True)
         self.log_thread = Thread(target=self.logMessages, daemon=True)
+        self.link_debug_data_thread = Thread(target=self.getLinkDebugData, daemon=True)
+        self.heartbeat_thread = Thread(target=self.sendHeartbeatMessage, daemon=True)
         self.listener_thread.start()
         self.sender_thread.start()
         self.log_thread.start()
+        self.link_debug_data_thread.start()
+        self.heartbeat_thread.start()
+
+    def stopAllThreads(self) -> None:
+        """Stops all threads."""
+        self.is_active.clear()
+        self.is_listening = False
+
+        this_thread = current_thread()
+
+        self.paramsController.is_requesting_params = False
+        if (
+            hasattr(self.paramsController, "getAllParamsThread")
+            and self.paramsController.getAllParamsThread is not None
+        ):
+            self.paramsController.getAllParamsThread.join(timeout=3)
+
+        for thread in [
+            getattr(self, "listener_thread", None),
+            getattr(self, "sender_thread", None),
+            getattr(self, "log_thread", None),
+            getattr(self, "link_debug_data_thread", None),
+            getattr(self, "heartbeat_thread", None),
+        ]:
+            if thread is not None and thread.is_alive() and thread is not this_thread:
+                thread.join(timeout=3)
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
         self.is_listening = False
+        self.sending_command_lock.acquire()
+
         self.sendCommand(
             mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-            param1=1,  #  Autpilot
+            param1=1,  #  Autopilot
             param2=0,  #  Companion
             param3=0,  # Component action
             param4=0,  # Component ID
@@ -565,6 +733,7 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.sending_command_lock.release()
 
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
@@ -578,6 +747,7 @@ class Drone:
             self.logger.debug("Rebooting")
             self.close()
 
+    @sendingCommandLock
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.
 
@@ -598,14 +768,21 @@ class Drone:
 
         try:
             response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.is_listening = True
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
                 return {"success": True, "message": f"Setting servo to {pwm_value}"}
-
             else:
-                return {"success": False, "message": "Setting servo failed"}
+                self.logger.error(
+                    f"Failed to set servo {servo_instance} to {pwm_value}"
+                )
+                return {
+                    "success": False,
+                    "message": f"Failed to set servo {servo_instance} to {pwm_value}",
+                }
 
         except serial.serialutil.SerialException:
+            self.is_listening = True
             return {
                 "success": False,
                 "message": "Setting servo failed, serial exception",
@@ -715,7 +892,7 @@ class Drone:
             self.removeMessageListener(message_id)
 
         self.stopAllDataStreams()
-        self.is_active = False
+        self.stopAllThreads()
         self.master.close()
 
         if len(self.log_file_names) == 0:

@@ -1,5 +1,5 @@
-from app import logger, socketio
 import app.droneStatus as droneStatus
+from app import logger, socketio
 from app.utils import notConnectedError
 
 
@@ -22,9 +22,9 @@ def getFrameDetails() -> None:
     if not droneStatus.drone:
         return notConnectedError(action="get frame config")
 
-    frame_type = droneStatus.drone.frameController.frame_type
-    frame_class = droneStatus.drone.frameController.frame_class
+    framesConfig = droneStatus.drone.frameController.getConfig()
+
     socketio.emit(
         "frame_type_config",
-        {"frame_type": frame_type, "frame_class": frame_class},
+        framesConfig,
     )

@@ -6,9 +6,10 @@
     "name": "Avis-Drone-Labs"
   },
   "private": true,
-  "version": "0.1.9-alpha",
+  "version": "0.2.0-alpha",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
+  "githubLink": "https://github.com/Avis-Drone-Labs/FGCS",
   "bugs": {
     "url": "https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
   },

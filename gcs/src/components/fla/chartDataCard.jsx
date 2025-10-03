@@ -1,11 +1,24 @@
 /*
-  A custom component for each message card (seen at the bottom of the screen on FLA).
-  This holds information about the colour of the line, and its mean, max, min.
+A custom component for each message card (seen at the bottom of the screen on FLA).
+This holds information about the colour of the line, and its mean, max, min.
 */
+
+import { colorInputSwatch } from "./constants.js"
 
 // 3rd Party Imports
 import { ActionIcon, Box, ColorInput } from "@mantine/core"
 import { IconPaint, IconTrash } from "@tabler/icons-react"
+import { memo, useCallback } from "react"
+import { useDispatch, useSelector } from "react-redux"
+
+// Redux imports
+import {
+  selectCustomColors,
+  selectMessageFilters,
+  setCanSavePreset,
+  setCustomColors,
+  setMessageFilters,
+} from "../../redux/slices/logAnalyserSlice.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -13,14 +26,57 @@ import tailwindConfig from "../../../tailwind.config.js"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function ChartDataCard({
-  item,
-  unit,
-  messageMeans,
-  colorInputSwatch,
-  changeColorFunc,
-  removeDatasetFunc,
-}) {
+function ChartDataCard({ item, unit, messageMeans }) {
+  const dispatch = useDispatch()
+  const messageFilters = useSelector(selectMessageFilters)
+  const customColors = useSelector(selectCustomColors)
+
+  // Change the color of the line
+  const changeColor = useCallback(
+    (label, color) => {
+      // Early return if color hasn't actually changed
+      if (customColors[label] === color) {
+        return
+      }
+
+      const newColors = { ...customColors, [label]: color }
+      dispatch(setCustomColors(newColors))
+    },
+    [customColors, dispatch],
+  )
+
+  // Turn off only one filter at a time
+  const removeDataset = useCallback(
+    (label) => {
+      const [categoryName, fieldName] = label.split("/")
+
+      // Early return if invalid
+      if (
+        !messageFilters[categoryName] ||
+        messageFilters[categoryName][fieldName] === undefined
+      ) {
+        return
+      }
+
+      // Use shallow cloning for better performance
+      const newFilters = {
+        ...messageFilters,
+        [categoryName]: {
+          ...messageFilters[categoryName],
+          [fieldName]: false,
+        },
+      }
+
+      const newColors = { ...customColors }
+      delete newColors[label]
+
+      dispatch(setCustomColors(newColors))
+      dispatch(setMessageFilters(newFilters))
+      dispatch(setCanSavePreset(Object.keys(newColors).length > 0))
+    },
+    [messageFilters, customColors, dispatch],
+  )
+
   return (
     <div className="inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200">
       {/* Title and Delete Button */}
@@ -31,7 +87,7 @@ export default function ChartDataCard({
         <ActionIcon
           variant="subtle"
           color={tailwindColors.red[500]}
-          onClick={() => removeDatasetFunc(item.label)}
+          onClick={() => removeDataset(item.label)}
         >
           <IconTrash size={18} />
         </ActionIcon>
@@ -47,7 +103,7 @@ export default function ChartDataCard({
         withEyeDropper={false}
         value={item.borderColor}
         rightSection={<IconPaint size={16} />}
-        onChangeEnd={(color) => changeColorFunc(item.label, color)}
+        onChangeEnd={(color) => changeColor(item.label, color)}
       />
 
       {/* Min, max, min */}
@@ -58,3 +114,5 @@ export default function ChartDataCard({
     </div>
   )
 }
+
+export default memo(ChartDataCard)

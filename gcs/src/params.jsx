@@ -5,17 +5,11 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 // 3rd Party Imports
-import { Progress } from "@mantine/core"
-import {
-  useDebouncedValue,
-  useDisclosure,
-  useListState,
-  useSessionStorage,
-  useToggle,
-} from "@mantine/hooks"
+import { Button, Progress } from "@mantine/core"
+import { useDebouncedValue } from "@mantine/hooks"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
 
@@ -25,173 +19,61 @@ import NoDroneConnected from "./components/noDroneConnected.jsx"
 import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "./helpers/notification.js"
-import { socket } from "./helpers/socket.js"
+  emitRefreshParams,
+  resetParamState,
+  selectFetchingVars,
+  selectFetchingVarsProgress,
+  selectHasFetchedOnce,
+  selectModifiedParams,
+  selectParams,
+  selectParamSearchValue,
+  selectShowModifiedParams,
+  selectShownParams,
+  setFetchingVars,
+  setHasFetchedOnce,
+  setShownParams,
+} from "./redux/slices/paramsSlice.js"
 
 export default function Params() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: true,
-  })
+  const dispatch = useDispatch()
+  const connected = useSelector(selectConnectedToDrone)
 
   // Parameter states
-  const [params, paramsHandler] = useListState([])
-  const [shownParams, shownParamsHandler] = useListState([])
-  const [modifiedParams, modifiedParamsHandler] = useListState([])
-  const [showModifiedParams, showModifiedParamsToggle] = useToggle()
-
-  // Autopilot reboot states
-  const [rebootData, setRebootData] = useState({})
-  const [opened, { open, close }] = useDisclosure(false)
+  const hasFetchedOnce = useSelector(selectHasFetchedOnce)
+  const params = useSelector(selectParams)
+  const shownParams = useSelector(selectShownParams)
+  const modifiedParams = useSelector(selectModifiedParams)
+  const showModifiedParams = useSelector(selectShowModifiedParams)
 
   // Searchbar states
-  const [searchValue, setSearchValue] = useState("")
+  const searchValue = useSelector(selectParamSearchValue)
   const [debouncedSearchValue] = useDebouncedValue(searchValue, 150)
 
   // Fetch progress states
-  const [fetchingVars, setFetchingVars] = useState(false)
-  const [fetchingVarsProgress, setFetchingVarsProgress] = useState(0)
+  const fetchingVars = useSelector(selectFetchingVars)
+  const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
 
-  /**
-   * Resets the state of the parameters page to the initial states
-   */
-  function resetState() {
-    setFetchingVars(false)
-    setFetchingVarsProgress(0)
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
-    modifiedParamsHandler.setState([])
-    setSearchValue("")
-    setRebootData({})
+  function fetchParams() {
+    dispatch(setFetchingVars(true))
+    dispatch(emitRefreshParams())
+    dispatch(setHasFetchedOnce(true))
   }
 
-  /**
-   * Sends a request to the drone to reboot the autopilot
-   */
-  function rebootAutopilot() {
-    socket.emit("reboot_autopilot")
-    open()
-    resetState()
-  }
-
-  /**
-   * Refreshes the params on the drone then fetches them
-   */
-  function refreshParams() {
-    paramsHandler.setState([])
-    shownParamsHandler.setState([])
-    socket.emit("refresh_params")
-    setFetchingVars(true)
-  }
-
-  /**
-   * Checks if a paramter has been modified since the last save
-   * @param {*} param the parameter to check
-   * @returns true if the given parameter is in modifiedParams, otherwise false
-   */
-  function isModified(param) {
-    return modifiedParams.find((obj) => {
-      return obj.param_id === param.param_id
-    })
-  }
-
-  /**
-   * Updates the parameter value in the given useListState handler
-   *
-   * @param {*} handler
-   * @param {*} param
-   * @param {*} value
-   */
-  function updateParamValue(handler, param, value) {
-    handler.applyWhere(
-      (item) => item.param_id === param.param_id,
-      (item) => ({ ...item, param_value: value }),
-    )
-  }
-
-  /**
-   * Adds a parameter to the list of parameters that have been modified since the
-   * last save
-   *
-   * @param {*} value
-   * @param {*} param
-   * @returns
-   */
-  function addToModifiedParams(value, param) {
-    if (value === "") return
-
-    // If param has already been modified since last save then update it
-    if (isModified(param)) updateParamValue(modifiedParamsHandler, param, value)
-    else {
-      // Otherwise add it to modified params
-      param.param_value = value
-      modifiedParamsHandler.append(param)
-    }
-
-    updateParamValue(paramsHandler, param, value)
-  }
-
+  // Reset state if we loose connection
   useEffect(() => {
-    // Updates the autopilot modal depending on the success of the reboot
-    socket.on("reboot_autopilot", (msg) => {
-      setRebootData(msg)
-      if (msg.success) {
-        close()
-      }
-    })
-
-    // Drone has lost connection
     if (!connected) {
-      resetState()
-      return
+      dispatch(resetParamState())
     }
 
-    // Fetch params on connection to drone
-    if (connected && Object.keys(params).length === 0 && !fetchingVars) {
-      socket.emit("set_state", { state: "params" })
-      setFetchingVars(true)
+    if (connected && !hasFetchedOnce && !fetchingVars) {
+      fetchParams()
     }
-
-    // Update parameter states when params are receieved from drone
-    socket.on("params", (params) => {
-      paramsHandler.setState(params)
-      shownParamsHandler.setState(params)
-      setFetchingVars(false)
-      setFetchingVarsProgress(0)
-      setSearchValue("")
-    })
-
-    // Set fetch progress on update from drone
-    socket.on("param_request_update", (msg) => {
-      setFetchingVarsProgress(
-        (msg.current_param_index / msg.total_number_of_params) * 100,
-      )
-    })
-
-    // Show success on saving modified params
-    socket.on("param_set_success", (msg) => {
-      showSuccessNotification(msg.message)
-      modifiedParamsHandler.setState([])
-    })
-
-    // Show error message on drone error
-    socket.on("params_error", (err) => {
-      showErrorNotification(err.message)
-      setFetchingVars(false)
-    })
-
-    //
-    return () => {
-      socket.off("params")
-      socket.off("param_request_update")
-      socket.off("param_set_success")
-      socket.off("params_error")
-      socket.off("reboot_autopilot")
-    }
-  }, [connected]) // useEffect
+  }, [connected])
 
   useEffect(() => {
     if (!params) return
@@ -204,38 +86,33 @@ export default function Params() {
     )
 
     // Show the filtered parameters
-    shownParamsHandler.setState(filteredParams)
-  }, [debouncedSearchValue, showModifiedParams])
+    dispatch(setShownParams(filteredParams))
+  }, [debouncedSearchValue, showModifiedParams, params, modifiedParams])
 
   return (
     <Layout currentPage="params">
+      <AutopilotRebootModal />
+
       {connected ? (
         <>
-          <AutopilotRebootModal
-            rebootData={rebootData}
-            opened={opened}
-            onClose={close}
-          />
-
           {fetchingVars && (
-            <Progress
-              radius="xs"
-              value={fetchingVarsProgress}
-              className="w-1/3 mx-auto my-auto"
-            />
+            <div className="my-auto">
+              {fetchingVarsProgress.param_id && (
+                <p className="text-center my-4">
+                  Fetched {fetchingVarsProgress.param_id}
+                </p>
+              )}
+              <Progress
+                radius="xs"
+                value={fetchingVarsProgress.progress}
+                className="w-1/3 mx-auto my-auto"
+              />
+            </div>
           )}
 
-          {Object.keys(params).length !== 0 && (
+          {Object.keys(params).length > 0 && !fetchingVars && (
             <div className="w-full h-full contents">
-              <ParamsToolbar
-                searchValue={searchValue}
-                modifiedParams={modifiedParams}
-                showModifiedParams={showModifiedParams}
-                refreshCallback={refreshParams}
-                rebootCallback={rebootAutopilot}
-                modifiedCallback={showModifiedParamsToggle}
-                searchCallback={setSearchValue}
-              />
+              <ParamsToolbar />
 
               <div className="h-full w-2/3 mx-auto">
                 <AutoSizer>
@@ -245,16 +122,20 @@ export default function Params() {
                       width={width}
                       itemSize={120}
                       itemCount={shownParams.length}
-                      itemData={{
-                        params: shownParams,
-                        onChange: addToModifiedParams,
-                      }}
                     >
                       {Row}
                     </FixedSizeList>
                   )}
                 </AutoSizer>
               </div>
+            </div>
+          )}
+          {Object.keys(params).length === 0 && !fetchingVars && (
+            <div className="flex flex-col my-auto mx-auto">
+              <p className="text-center my-4">
+                No parameters found, try fetching them again.
+              </p>
+              <Button onClick={() => fetchParams()}>Fetch Params</Button>
             </div>
           )}
         </>

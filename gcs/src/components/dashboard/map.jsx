@@ -11,57 +11,52 @@ import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
 import { Button, Divider, Modal, NumberInput } from "@mantine/core"
-import {
-  useClipboard,
-  useDisclosure,
-  useLocalStorage,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useClipboard, useDisclosure, useLocalStorage } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  selectFlightModeString,
+  selectGPS,
+  selectGuidedModePinData,
+  selectHomePosition,
+} from "../../redux/slices/droneInfoSlice"
+import { selectCurrentMissionItems } from "../../redux/slices/missionSlice"
 
 // Helper scripts
 import { intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
-import {
-  showErrorNotification,
-  showNotification,
-  showSuccessNotification,
-} from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
-import { socket } from "../../helpers/socket"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
-import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import DroneMarker from "../mapComponents/droneMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
 
 // Tailwind styling
+import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import { showInfoNotification } from "../../helpers/notification"
+import { emitReposition } from "../../redux/slices/droneConnectionSlice"
+import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
-function MapSectionNonMemo({
-  passedRef,
-  data,
-  heading,
-  desiredBearing,
-  missionItems,
-  homePosition,
-  onDragstart,
-  getFlightMode,
-  mapId = "dashboard",
-}) {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
+function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
+  // Redux
+  const dispatch = useDispatch()
+  const gpsData = useSelector(selectGPS)
+  const missionItems = useSelector(selectCurrentMissionItems)
+  const homePosition = useSelector(selectHomePosition) // use actual home position
+  const flightModeString = useSelector(selectFlightModeString)
+  const guidedModePinData = useSelector(selectGuidedModePinData)
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -99,47 +94,32 @@ function MapSectionNonMemo({
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  const [guidedModePinData, setGuidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
-
   useEffect(() => {
-    socket.on("nav_reposition_result", (msg) => {
-      if (!msg.success) {
-        showErrorNotification(msg.message)
-      } else {
-        showSuccessNotification(msg.message)
-        setGuidedModePinData(msg.data)
-      }
-    })
-
-    return () => {
-      socket.off("nav_reposition_result")
-    }
-  }, [connected])
-
-  useEffect(() => {
-    // Check latest data point is valid
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
+    // Check latest gpsData point is valid
+    if (
+      isNaN(gpsData.lat) ||
+      isNaN(gpsData.lon) ||
+      gpsData.lon === 0 ||
+      gpsData.lat === 0
+    )
       return
 
     // Move drone icon on map
-    let lat = intToCoord(data.lat)
-    let lon = intToCoord(data.lon)
+    let lat = intToCoord(gpsData.lat)
+    let lon = intToCoord(gpsData.lon)
     setPosition({ latitude: lat, longitude: lon })
 
-    if (!firstCenteredToDrone) {
+    if (!firstCenteredToDrone && passedRef.current !== null) {
       passedRef.current.getMap().flyTo({
         center: [lon, lat],
         zoom: initialViewState.zoom,
       })
       setFirstCenteredToDrone(true)
     }
-  }, [data])
+  }, [gpsData])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItems.mission_items))
+    setFilteredMissionItems(filterMissionItems(missionItems.missionItems))
   }, [missionItems])
 
   useEffect(() => {
@@ -171,12 +151,47 @@ function MapSectionNonMemo({
     }
   }, [contextMenuPositionCalculationInfo])
 
-  function reposition() {
-    socket.emit("reposition", {
-      lat: clickedGpsCoords.lat,
-      lon: clickedGpsCoords.lng,
-      alt: repositionAltitude,
-    })
+  function zoomToDrone() {
+    if (passedRef.current && position) {
+      passedRef.current.getMap().flyTo({
+        center: [position.longitude, position.latitude],
+        zoom: 17,
+      })
+    }
+  }
+
+  function zoomToMission() {
+    if (passedRef.current && filteredMissionItems.length > 0) {
+      const filteredCoords = filteredMissionItems.map((item) =>
+        point([intToCoord(item.y), intToCoord(item.x)]),
+      )
+      const features = featureCollection(filteredCoords)
+      const boundingBox = envelope(features).bbox
+
+      passedRef.current.getMap().fitBounds(
+        [
+          [boundingBox[0], boundingBox[1]],
+          [boundingBox[2], boundingBox[3]],
+        ],
+        {
+          padding: 150,
+        },
+      )
+    }
+  }
+
+  function zoomToHome() {
+    if (
+      passedRef.current &&
+      homePosition &&
+      homePosition.lat !== 0 &&
+      homePosition.lon !== 0
+    ) {
+      passedRef.current.getMap().flyTo({
+        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        zoom: 17,
+      })
+    }
   }
 
   return (
@@ -217,47 +232,17 @@ function MapSectionNonMemo({
             <DroneMarker
               lat={position.latitude}
               lon={position.longitude}
-              heading={heading ?? 0}
               zoom={initialViewState.zoom}
               showHeadingLine={true}
-              desiredBearing={desiredBearing ?? 0}
             />
           )}
 
-        <MissionItems missionItems={missionItems.mission_items} />
+        <MissionItems missionItems={missionItems.missionItems} />
 
-        {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
-          return (
-            <MarkerPin
-              key={index}
-              lat={intToCoord(item.x)}
-              lon={intToCoord(item.y)}
-              colour={tailwindColors.blue[400]}
-            />
-          )
-        })}
-
-        {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
-          <DrawLineCoordinates
-            coordinates={[
-              ...missionItems.fence_items.map((item) => [
-                intToCoord(item.y),
-                intToCoord(item.x),
-              ]),
-              [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
-              ],
-            ]}
-            colour={tailwindColors.blue[200]}
-            lineProps={{ "line-dasharray": [2, 2] }}
-          />
-        )}
+        <FenceItems fenceItems={missionItems.fenceItems} />
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {missionItems.rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}
@@ -269,7 +254,7 @@ function MapSectionNonMemo({
           )
         })}
 
-        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+        {flightModeString === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}
@@ -281,25 +266,27 @@ function MapSectionNonMemo({
         )}
 
         {/* Show home position */}
-        {homePosition !== null && (
-          <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
-          />
-        )}
+        {homePosition !== null &&
+          homePosition.lat !== 0 &&
+          homePosition.lon !== 0 && (
+            <HomeMarker
+              lat={intToCoord(homePosition.lat)}
+              lon={intToCoord(homePosition.lon)}
+            />
+          )}
 
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
           <form
             className="flex flex-col space-y-2"
             onSubmit={(e) => {
               e.preventDefault()
-              reposition()
+              dispatch(
+                emitReposition({
+                  lat: clickedGpsCoords.lat,
+                  lon: clickedGpsCoords.lng,
+                  alt: repositionAltitude,
+                }),
+              )
               close()
             }}
           >
@@ -321,9 +308,19 @@ function MapSectionNonMemo({
         {clicked && (
           <div
             ref={contextMenuRef}
-            className="absolute bg-falcongrey-700 rounded-md p-1"
+            className="absolute bg-falcongrey-700 rounded-md p-1 z-20"
             style={{ top: points.y, left: points.x }}
           >
+            <ContextMenuItem onClick={zoomToDrone}>
+              <p>Zoom to drone</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToMission}>
+              <p>Zoom to mission</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToHome}>
+              <p>Zoom to home</p>
+            </ContextMenuItem>
+            <Divider className="my-1" />
             <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem
@@ -331,7 +328,7 @@ function MapSectionNonMemo({
                 clipboard.copy(
                   `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
                 )
-                showNotification("Copied to clipboard")
+                showInfoNotification("Copied to clipboard")
               }}
             >
               <div className="w-full flex justify-between gap-2">

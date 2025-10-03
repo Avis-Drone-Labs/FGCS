@@ -1,10 +1,10 @@
+from typing import Any, List, Optional, Union
+
 import pytest
-from typing import Optional, Union
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import ParamSetTimeout, ParamRefreshTimeout
-from typing import List, Any
+from .helpers import ParamRefreshTimeout, ParamSetTimeout
 
 
 def send_and_receive_params(
@@ -27,19 +27,6 @@ def send_and_receive_params(
     return client.get_received()[0]
 
 
-def assert_test_params(data: dict, message: dict, name: str) -> None:
-    """
-    Take the data from socketio test client and assert that it matches the asserted values
-
-    Args:
-        data (dict): The data received from the .get_received()
-        message (dict): The expected message
-        name (str): The name of the socket.emit
-    """
-    assert data["name"] == name
-    assert data["args"][0] == message
-
-
 @falcon_test(pass_drone_status=True)
 def test_setMultipleParams_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
@@ -49,11 +36,10 @@ def test_setMultipleParams_wrongState(
         socketio_client, "set_multiple_params", []
     )
 
-    assert_test_params(
-        socketio_result,
-        {"message": "You must be on the params screen to save parameters."},
-        "params_error",
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the params screen to save parameters.",
+    }
 
 
 @falcon_test(pass_drone_status=True)
@@ -65,9 +51,11 @@ def test_setMultipleParams_missingData(
         socketio_client, "set_multiple_params", []
     )
 
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "No parameters to set",
+    }
 
 
 @falcon_test(pass_drone_status=True)
@@ -83,7 +71,10 @@ def test_setMultipleParams_invalidData(
     )
 
     assert socketio_result["name"] == "params_error"
-    assert socketio_result["args"][0] == {"message": "Failed to save parameters."}
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter RC_11MAX",
+    }
 
     # Param Value too big to fit into param_type data type structure
     socketio_result = send_and_receive_params(
@@ -91,54 +82,66 @@ def test_setMultipleParams_invalidData(
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 256, "param_type": 1}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 128, "param_type": 2}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 65536, "param_type": 3}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 32770, "param_type": 4}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 4294967296, "param_type": 5}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 2147483648, "param_type": 6}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     # Param Value too small to fit into param_type data type structure
     socketio_result = send_and_receive_params(
@@ -146,54 +149,66 @@ def test_setMultipleParams_invalidData(
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": -1, "param_type": 1}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": -129, "param_type": 2}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": -1, "param_type": 3}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": -32770, "param_type": 4}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": -1, "param_type": 5}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
         [{"param_id": "ACRO_BAL_ROLL", "param_value": -2147483686, "param_type": 6}],
     )
-    assert_test_params(
-        socketio_result, {"message": "Failed to save parameters."}, "params_error"
-    )
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "Failed to set parameter ACRO_BAL_ROLL",
+    }
 
 
 @falcon_test(pass_drone_status=True)
@@ -207,9 +222,11 @@ def test_setMultipleParams_paramSetTimeout(
             "set_multiple_params",
             [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
         )
-        assert_test_params(
-            socketio_result, {"message": "Failed to save parameters."}, "params_error"
-        )
+        assert socketio_result["name"] == "params_error"
+        assert socketio_result["args"][0] == {
+            "success": False,
+            "message": "Failed to set parameter ACRO_BAL_ROLL",
+        }
 
 
 @falcon_test(pass_drone_status=True)
@@ -223,11 +240,12 @@ def test_setMultipleParams_successfullySet_paramsState(
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
     )
 
-    assert_test_params(
-        socketio_result,
-        {"message": "Parameters saved successfully."},
-        "param_set_success",
-    )
+    assert socketio_result["name"] == "param_set_success"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "All parameters set successfully",
+        "data": [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
+    }
 
 
 @falcon_test(pass_drone_status=True)
@@ -241,11 +259,12 @@ def test_setMultipleParams_successfullySet_configState(
         [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
     )
 
-    assert_test_params(
-        socketio_result,
-        {"message": "Parameters saved successfully."},
-        "param_set_success",
-    )
+    assert socketio_result["name"] == "param_set_success"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "All parameters set successfully",
+        "data": [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
+    }
 
 
 @falcon_test(pass_drone_status=True)
@@ -254,11 +273,11 @@ def test_refreshParams_wrongState(
 ) -> None:
     droneStatus.state = "dashboard"
     socketio_result = send_and_receive_params(socketio_client, "refresh_params")
-    assert_test_params(
-        socketio_result,
-        {"message": "You must be on the params screen to refresh the parameters."},
-        "params_error",
-    )
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the params screen to refresh the parameters.",
+    }
 
 
 @falcon_test(pass_drone_status=True)
@@ -294,6 +313,7 @@ def test_refreshParams_successfullyRefreshed(
         or socketio_result["name"] == "params"
     )
 
+    # TODO: Fix flaky test
     pytest.skip(reason="Flaky test, needs fixing in alpha 0.1.8")
     if socketio_result["name"] == "param_request_update":
         assert len(socketio_result["args"][0]) == 2

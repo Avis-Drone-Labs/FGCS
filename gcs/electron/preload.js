@@ -1,18 +1,30 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer } from "electron"
 
 // --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld('ipcRenderer', {
+contextBridge.exposeInMainWorld("ipcRenderer", {
   ...withPrototype(ipcRenderer),
-  loadFile: (data) => ipcRenderer.invoke('fla:open-file', data),
-  getRecentLogs: () => ipcRenderer.invoke('fla:get-recent-logs'),
-  clearRecentLogs: () => ipcRenderer.invoke('fla:clear-recent-logs'),
-  getNodeEnv: () => ipcRenderer.invoke('app:get-node-env'),
-  getVersion: () => ipcRenderer.invoke('app:get-version'),
-  getSettings: () => ipcRenderer.invoke('getSettings'),
-  saveSettings: (settings) => ipcRenderer.invoke('setSettings', settings),
-  openWebcamWindow: (id, name, aspect) => ipcRenderer.invoke("openWebcamWindow", id, name, aspect),
-  closeWebcamWindow: () => ipcRenderer.invoke('closeWebcamWindow'),
-  onCameraWindowClose: (callback) => ipcRenderer.on("webcam-closed", () => callback())
+  loadFile: (data) => ipcRenderer.invoke("fla:open-file", data),
+  getRecentLogs: () => ipcRenderer.invoke("fla:get-recent-logs"),
+  clearRecentLogs: () => ipcRenderer.invoke("fla:clear-recent-logs"),
+  getSaveMissionFilePath: (options) =>
+    ipcRenderer.invoke("missions:get-save-mission-file-path", options),
+  getNodeEnv: () => ipcRenderer.invoke("app:get-node-env"),
+  getVersion: () => ipcRenderer.invoke("app:get-version"),
+  getSettings: () => ipcRenderer.invoke("getSettings"),
+  saveSettings: (settings) => ipcRenderer.invoke("setSettings", settings),
+  openWebcamWindow: (id, name, aspect) =>
+    ipcRenderer.invoke("openWebcamWindow", id, name, aspect),
+  closeWebcamWindow: () => ipcRenderer.invoke("closeWebcamWindow"),
+  onCameraWindowClose: (callback) =>
+    ipcRenderer.on("webcam-closed", () => callback()),
+  openAboutWindow: () => ipcRenderer.invoke("openAboutWindow"),
+  closeAboutWindow: () => ipcRenderer.invoke("closeAboutWindow"),
+  openLinkStatsWindow: () => ipcRenderer.invoke("openLinkStatsWindow"),
+  closeLinkStatsWindow: () => ipcRenderer.invoke("closeLinkStatsWindow"),
+  updateLinkStats: (linkStats) =>
+    ipcRenderer.invoke("update-link-stats", linkStats),
+  onGetLinkStats: (callback) =>
+    ipcRenderer.on("send-link-stats", (_, stats) => callback(stats)),
 })
 
 // `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.
@@ -22,7 +34,7 @@ function withPrototype(obj) {
   for (const [key, value] of Object.entries(protos)) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) continue
 
-    if (typeof value === 'function') {
+    if (typeof value === "function") {
       // Some native APIs, like `NodeJS.EventEmitter['on']`, don't work in the Renderer process. Wrapping them into a function.
       obj[key] = function (...args) {
         return value.call(obj, ...args)
@@ -35,12 +47,12 @@ function withPrototype(obj) {
 }
 
 // --------- Preload scripts loading ---------
-function domReady(condition = ['complete', 'interactive']) {
+function domReady(condition = ["complete", "interactive"]) {
   return new Promise((resolve) => {
     if (condition.includes(document.readyState)) {
       resolve(true)
     } else {
-      document.addEventListener('readystatechange', () => {
+      document.addEventListener("readystatechange", () => {
         if (condition.includes(document.readyState)) {
           resolve(true)
         }
@@ -97,12 +109,12 @@ function useLoading() {
   z-index: 9;
 }
     `
-  const oStyle = document.createElement('style')
-  const oDiv = document.createElement('div')
+  const oStyle = document.createElement("style")
+  const oDiv = document.createElement("div")
 
-  oStyle.id = 'app-loading-style'
+  oStyle.id = "app-loading-style"
   oStyle.innerHTML = styleContent
-  oDiv.className = 'app-loading-wrap'
+  oDiv.className = "app-loading-wrap"
   oDiv.innerHTML = `<div class="${className}"><div></div></div>`
 
   return {
@@ -124,7 +136,7 @@ const { appendLoading, removeLoading } = useLoading()
 domReady().then(appendLoading)
 
 window.onmessage = (ev) => {
-  ev.data.payload === 'removeLoading' && removeLoading()
+  ev.data.payload === "removeLoading" && removeLoading()
 }
 
 setTimeout(removeLoading, 4999)

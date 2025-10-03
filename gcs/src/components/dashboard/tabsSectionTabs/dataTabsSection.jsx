@@ -18,14 +18,18 @@ import { IconInfoCircle } from "@tabler/icons-react"
 
 // Helper
 import { DataMessage } from "../../../helpers/dataDisplay"
+import { useDispatch, useSelector } from "react-redux"
+import {
+  changeExtraData,
+  selectExtraDroneData,
+} from "../../../redux/slices/droneInfoSlice"
 
-export default function DataTabsSection({
-  tabPadding,
-  displayedData,
-  setDisplayedData,
-}) {
+export default function DataTabsSection({ tabPadding }) {
   const [selectedBox, setSelectedBox] = useState(null)
   const [opened, { open, close }] = useDisclosure(false)
+
+  const dispatch = useDispatch()
+  const selectedData = useSelector(selectExtraDroneData)
 
   const handleDoubleClick = (box) => {
     setSelectedBox(box)
@@ -35,17 +39,16 @@ export default function DataTabsSection({
   const handleCheckboxChange = (key, subkey, subvalue, boxId, isChecked) => {
     // Update wantedData on checkbox change
     if (isChecked) {
-      const newDisplay = displayedData.map((item, index) => {
-        if (index === boxId) {
-          return {
-            ...item,
+      dispatch(
+        changeExtraData({
+          index: boxId,
+          data: {
             currently_selected: `${key}.${subkey}`,
             display_name: subvalue,
-          }
-        }
-        return item
-      })
-      setDisplayedData(newDisplay)
+            value: 0,
+          },
+        }),
+      )
       close()
     }
   }
@@ -54,8 +57,8 @@ export default function DataTabsSection({
     <Tabs.Panel value="data">
       <div className={tabPadding}>
         <Grid className="cursor-pointer select-none">
-          {displayedData.length > 0 ? (
-            displayedData.map((data) => (
+          {selectedData.length > 0 ? (
+            selectedData.map((data) => (
               <Grid.Col
                 span={6}
                 key={data.boxId}

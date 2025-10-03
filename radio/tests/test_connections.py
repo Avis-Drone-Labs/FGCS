@@ -1,6 +1,4 @@
 import pytest
-from serial.tools.list_ports_common import ListPortInfo
-
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
@@ -12,14 +10,11 @@ def run_once_after_all_tests():
     Saves the valid connection string then ensures that the drone connection is established again after the tests have run
     """
     from app import droneStatus
+
     from .conftest import setupDrone
 
     assert droneStatus.drone is not None
     VALID_DRONE_PORT = droneStatus.drone.port
-
-    # Get the connection string
-    if isinstance(VALID_DRONE_PORT, ListPortInfo):
-        VALID_DRONE_PORT = VALID_DRONE_PORT.device
 
     droneStatus.drone.logger.info(f"Found drone running on port {VALID_DRONE_PORT}")
     yield
@@ -49,6 +44,20 @@ def test_isConnectedToDrone_with_drone(
     assert socketio_result[0]["name"] == "is_connected_to_drone"  # Correct name emitted
 
 
+@falcon_test(pass_drone_status=True)
+def test_getTargetInfo(socketio_client: SocketIOTestClient, droneStatus):
+    socketio_client.emit("get_target_info")
+    socketio_result = socketio_client.get_received()
+
+    assert len(socketio_result) == 1
+    assert socketio_result[0]["name"] == "target_info"
+    assert socketio_result[0]["args"][0] == {
+        "target_component": 0,
+        "target_system": 1,
+    }
+
+
+# Has to be the final test otherwise the socket disconnects
 @falcon_test(pass_drone_status=True)
 def test_disconnect(socketio_client: SocketIOTestClient, droneStatus):
     """Test disconnecting from socket"""

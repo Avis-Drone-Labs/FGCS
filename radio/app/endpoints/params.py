@@ -25,13 +25,11 @@ def set_multiple_params(params_list: List[Any]) -> None:
     if not droneStatus.drone:
         return
 
-    success = droneStatus.drone.paramsController.setMultipleParams(params_list)
-    if success:
-        socketio.emit(
-            "param_set_success", {"message": "Parameters saved successfully."}
-        )
+    response = droneStatus.drone.paramsController.setMultipleParams(params_list)
+    if response.get("success"):
+        socketio.emit("param_set_success", response)
     else:
-        socketio.emit("params_error", {"message": "Failed to save parameters."})
+        socketio.emit("params_error", response)
 
 
 @socketio.on("refresh_params")
@@ -52,14 +50,18 @@ def refresh_params() -> None:
 
     droneStatus.drone.paramsController.getAllParams()
 
-    timeout = time.time() + 20  # 20 seconds from now yipee
+    timeout_secs = 120
+
+    timeout = time.time() + timeout_secs
     last_index_sent = -1
 
     while droneStatus.drone and droneStatus.drone.paramsController.is_requesting_params:
         if time.time() > timeout:
             socketio.emit(
                 "params_error",
-                {"message": "Parameter request timed out after 3 minutes."},
+                {
+                    "message": f"Parameter request timed out after {timeout_secs} seconds."
+                },
             )
             return
 
@@ -71,6 +73,7 @@ def refresh_params() -> None:
                 "param_request_update",
                 {
                     "current_param_index": droneStatus.drone.paramsController.current_param_index,
+                    "current_param_id": droneStatus.drone.paramsController.current_param_id,
                     "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
                 },
             )
@@ -78,5 +81,4 @@ def refresh_params() -> None:
 
         time.sleep(0.2)
 
-    if droneStatus.drone:
-        socketio.emit("params", droneStatus.drone.paramsController.params)
+    socketio.emit("params", droneStatus.drone.paramsController.params)

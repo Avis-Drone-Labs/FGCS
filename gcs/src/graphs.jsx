@@ -8,21 +8,27 @@
 import { useEffect, useRef } from "react"
 
 // 3rd Party Imports
-import { useLocalStorage, usePrevious, useSessionStorage } from "@mantine/hooks"
-
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config.js"
+import { usePrevious } from "@mantine/hooks"
 
 // Custom components and helpers
 import GraphPanel from "./components/graphs/graphPanel.jsx"
 import MessageSelector from "./components/graphs/messageSelector.jsx"
 import Layout from "./components/layout"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
-import { dataFormatters } from "./helpers/dataFormatters.js"
 import { graphOptions } from "./helpers/realTimeGraphOptions.js"
-import { socket } from "./helpers/socket"
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
+import {
+  selectGraphValues,
+  selectLastGraphMessage,
+  setGraphValues,
+} from "./redux/slices/droneInfoSlice.js"
+
+// Styling imports
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const graphLabelColors = {
@@ -40,30 +46,10 @@ const graphColors = {
 }
 
 export default function Graphs() {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-
-  const [selectValues, setSelectValues] = useLocalStorage({
-    key: "graphSelectedValues",
-    defaultValue: {
-      graph_a: null,
-      graph_b: null,
-      graph_c: null,
-      graph_d: null,
-    },
-    // modify the deserialization process to set values containing '/' to null
-    deserialize: (strValue) => {
-      const parsedValue = JSON.parse(strValue)
-      for (const key in parsedValue) {
-        if (parsedValue[key] && parsedValue[key].includes("/")) {
-          parsedValue[key] = null
-        }
-      }
-      return parsedValue
-    },
-  })
+  const dispatch = useDispatch()
+  const connected = useSelector(selectConnectedToDrone)
+  const selectValues = useSelector(selectGraphValues)
+  const lastGraphMessage = useSelector(selectLastGraphMessage)
 
   const previousSelectValues = usePrevious(selectValues)
 
@@ -75,30 +61,15 @@ export default function Graphs() {
   }
 
   useEffect(() => {
-    if (!connected) {
-      return
-    } else {
-      socket.emit("set_state", { state: "graphs" })
+    if (lastGraphMessage !== false) {
+      lastGraphMessage.forEach((graphResult) => {
+        graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
+          graphResult.data,
+        )
+        graphRefs[graphResult.graphKey]?.current.update("quiet")
+      })
     }
-  }, [connected])
-
-  useEffect(() => {
-    socket.on("incoming_msg", (msg) => {
-      const graphResults = getGraphDataFromMessage(msg, msg.mavpackettype)
-      if (graphResults !== false) {
-        graphResults.forEach((graphResult) => {
-          graphRefs[graphResult.graphKey]?.current.data.datasets[0].data.push(
-            graphResult.data,
-          )
-          graphRefs[graphResult.graphKey]?.current.update("quiet")
-        })
-      }
-    })
-
-    return () => {
-      socket.off("incoming_msg")
-    }
-  }, [selectValues])
+  }, [lastGraphMessage])
 
   useEffect(() => {
     if (!previousSelectValues) return
@@ -115,36 +86,9 @@ export default function Graphs() {
     }
   }, [previousSelectValues])
 
-  function getGraphDataFromMessage(msg, targetMessageKey) {
-    const returnDataArray = []
-    for (let graphKey in selectValues) {
-      const messageKey = selectValues[graphKey]
-      if (messageKey && messageKey.includes(targetMessageKey)) {
-        const [, valueName] = messageKey.split(".")
-
-        // Applying Data Formatters
-        let formatted_value = msg[valueName]
-        if (messageKey in dataFormatters) {
-          formatted_value = dataFormatters[messageKey](
-            msg[valueName].toFixed(3),
-          )
-        }
-
-        returnDataArray.push({
-          data: { x: Date.now(), y: formatted_value },
-          graphKey: graphKey,
-        })
-      }
-    }
-    if (returnDataArray.length) {
-      return returnDataArray
-    }
-    return false
-  }
-
   function updateSelectValues(values) {
     const updatedSelectValues = { ...selectValues, ...values }
-    setSelectValues(updatedSelectValues)
+    dispatch(setGraphValues(updatedSelectValues))
   }
 
   return (

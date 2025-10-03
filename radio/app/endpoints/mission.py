@@ -1,3 +1,5 @@
+from typing import Any
+
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
@@ -9,8 +11,33 @@ class CurrentMissionType(TypedDict):
     type: str
 
 
+class WriteCurrentMissionType(TypedDict):
+    type: str
+    items: list[dict]
+
+
+class ImportMissionFileType(TypedDict):
+    type: str
+    file_path: str
+
+
+class ExportMissionFileType(TypedDict):
+    type: str
+    file_path: str
+    items: list[dict]
+
+
 class ControlMissionType(TypedDict):
     action: str
+
+
+def progressUpdateCallback(message: str, progress: float) -> None:
+    """
+    Callback that is used to update the frontend with the current mission function progress.
+    """
+    socketio.emit(
+        "current_mission_progress", {"message": message, "progress": progress}
+    )
 
 
 @socketio.on("get_current_mission")
@@ -46,7 +73,7 @@ def getCurrentMission(data: CurrentMissionType) -> None:
         return
 
     result = droneStatus.drone.missionController.getCurrentMission(
-        mission_type_array.index(mission_type)
+        mission_type_array.index(mission_type), progressUpdateCallback
     )
 
     if not result.get("success"):
@@ -80,14 +107,164 @@ def getCurrentMissionAll() -> None:
 
     result = droneStatus.drone.missionController.getCurrentMissionAll()
 
+    if not result.get("success"):
+        socketio.emit("current_mission_all", result)
+        return
+
+    data: dict[str, Any] = result.get("data", {})
+    if not isinstance(data, dict):
+        data = {}
+
     socketio.emit(
         "current_mission_all",
         {
-            "mission_items": result.get("data", {}).get("mission_items", []),
-            "fence_items": result.get("data", {}).get("fence_items", []),
-            "rally_items": result.get("data", {}).get("rally_items", []),
+            "success": True,
+            "mission_items": data.get("mission_items", []),
+            "fence_items": data.get("fence_items", []),
+            "rally_items": data.get("rally_items", []),
         },
     )
+
+
+@socketio.on("write_current_mission")
+def writeCurrentMission(data: WriteCurrentMissionType) -> None:
+    """
+    Writes the current mission to the drone, only works if missions screen is loaded.
+    """
+    if droneStatus.state != "missions":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the missions screen to write the current mission."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="write current mission")
+
+    mission_type = data.get("type")
+    mission_type_array = ["mission", "fence", "rally"]
+
+    if mission_type not in mission_type_array:
+        socketio.emit(
+            "write_mission_result",
+            {
+                "success": False,
+                "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
+            },
+        )
+        logger.error(
+            f"Invalid mission type: {mission_type}. Must be 'mission', 'fence', or 'rally'."
+        )
+        return
+
+    items = data.get("items", [])
+
+    result = droneStatus.drone.missionController.uploadMission(
+        mission_type_array.index(mission_type), items, progressUpdateCallback
+    )
+    if not result.get("success"):
+        logger.error(result.get("message"))
+
+    socketio.emit("write_mission_result", result)
+
+
+@socketio.on("import_mission_from_file")
+def importMissionFromFile(data: ImportMissionFileType) -> None:
+    if droneStatus.state != "missions":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the missions screen to import a mission from a file."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="import mission from file")
+
+    mission_type = data.get("type")
+    mission_type_array = ["mission", "fence", "rally"]
+
+    if mission_type not in mission_type_array:
+        socketio.emit(
+            "import_mission_result",
+            {
+                "success": False,
+                "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
+            },
+        )
+        logger.error(
+            f"Invalid mission type: {mission_type}. Must be 'mission', 'fence', or 'rally'."
+        )
+        return
+
+    file_path = data.get("file_path", "")
+
+    result = droneStatus.drone.missionController.importMissionFromFile(
+        mission_type_array.index(mission_type), file_path
+    )
+
+    if not result.get("success"):
+        logger.error(result.get("message"))
+        socketio.emit("import_mission_result", result)
+    else:
+        socketio.emit(
+            "import_mission_result",
+            {
+                "success": True,
+                "message": result.get("message", ""),
+                "items": result.get("data", []),
+                "mission_type": mission_type,
+            },
+        )
+
+
+@socketio.on("export_mission_to_file")
+def exportMissionToFile(data: ExportMissionFileType) -> None:
+    if droneStatus.state != "missions":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the missions screen to export a mission to a file."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="export mission to file")
+
+    mission_type = data.get("type")
+    mission_type_array = ["mission", "fence", "rally"]
+
+    if mission_type not in mission_type_array:
+        socketio.emit(
+            "export_mission_result",
+            {
+                "success": False,
+                "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
+            },
+        )
+        logger.error(
+            f"Invalid mission type: {mission_type}. Must be 'mission', 'fence', or 'rally'."
+        )
+        return
+
+    file_path = data.get("file_path", "")
+    items = data.get("items", [])
+
+    result = droneStatus.drone.missionController.exportMissionToFile(
+        mission_type_array.index(mission_type), file_path, items
+    )
+
+    if not result.get("success"):
+        logger.error(result.get("message"))
+
+    socketio.emit("export_mission_result", result)
 
 
 @socketio.on("control_mission")

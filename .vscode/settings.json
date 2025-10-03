@@ -1,13 +1,18 @@
 {
     "cSpell.words": [
+        "ardupilot",
         "ARSP",
         "centered",
+        "chancount",
         "Crosshair",
         "falcongrey",
         "falconred",
+        "frametype",
+        "frametypename",
         "maplibre",
         "maptilers",
         "mavutil",
+        "Motortestpanel",
         "pymavlink",
         "PYQT",
         "RSSI",

@@ -28,3 +28,20 @@ def isConnectedToDrone() -> None:
     Handle client asking if we're connected to the drone or not
     """
     socketio.emit("is_connected_to_drone", bool(droneStatus.drone))
+
+
+@socketio.on("get_target_info")
+def getTargetInfo() -> None:
+    """
+    Return the target component and target system
+    """
+    if droneStatus.drone:
+        socketio.emit(
+            "target_info",
+            {
+                "target_component": droneStatus.drone.target_component,
+                "target_system": droneStatus.drone.target_system,
+            },
+        )
+    else:
+        socketio.emit("target_info", None)

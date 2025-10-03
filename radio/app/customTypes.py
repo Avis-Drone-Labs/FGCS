@@ -10,6 +10,7 @@ class IncomingParam(TypedDict):
     param_id: str
     param_value: Number
     param_type: NotRequired[int]
+    initial_value: NotRequired[Number]
 
 
 class Response(TypedDict):

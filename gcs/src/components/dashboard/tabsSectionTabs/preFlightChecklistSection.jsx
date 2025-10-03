@@ -4,20 +4,22 @@
  */
 
 // Native imports
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Tabs, Accordion, Button, Modal, TextInput } from "@mantine/core"
+import { Accordion, Button, Modal, Tabs, TextInput } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
-import { showErrorNotification } from "../../../helpers/notification.js"
+
+// Other
+import { AddCommand } from "../../spotlight/commandHandler.js"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
-import { AddCommand } from "../../spotlight/commandHandler.js"
+import { showErrorNotification } from "../../../helpers/notification.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function PreFlightChecklistTab({ tabPadding }) {
@@ -64,9 +66,10 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     // Show error message
     showErrorNotification("Name cannot be empty")
   }
-
+  useEffect(() => {
+    AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
+  }, [])
   // Add create new checklist as a spotlight command
-  AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
 
   const items = preFlightChecklistItems.map((item) => (
     <Accordion.Item

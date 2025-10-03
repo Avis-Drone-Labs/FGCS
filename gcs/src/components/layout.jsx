@@ -9,25 +9,48 @@ import { useEffect } from "react"
 import { Notifications } from "@mantine/notifications"
 
 // Helpers and custom component imports
-import { showErrorNotification } from "../helpers/notification"
-import { socket } from "../helpers/socket"
-import Navbar from "./navbar"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  emitGetCurrentMissionAll,
+  emitGetHomePosition,
+  emitGetLoiterRadius,
+  emitSetState,
+  selectConnectedToDrone,
+} from "../redux/slices/droneConnectionSlice"
+import { selectAircraftTypeString } from "../redux/slices/droneInfoSlice"
+import { selectShouldFetchAllMissionsOnDashboard } from "../redux/slices/missionSlice"
 
 export default function Layout({ children, currentPage }) {
-  // Handle drone errors
-  useEffect(() => {
-    socket.on("drone_error", (err) => {
-      showErrorNotification(err.message)
-    })
+  const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
+  const aircraftTypeString = useSelector(selectAircraftTypeString)
+  const shouldFetchAllMissionsOnDashboard = useSelector(
+    selectShouldFetchAllMissionsOnDashboard,
+  )
 
-    return () => {
-      socket.off("drone_error")
+  // Handle switching to states
+  useEffect(() => {
+    dispatch(emitSetState(currentPage))
+
+    if (!connectedToDrone) return
+
+    if (currentPage.toLowerCase() == "dashboard") {
+      dispatch(emitGetHomePosition()) // use actual home position
+
+      if (shouldFetchAllMissionsOnDashboard) {
+        dispatch(emitGetCurrentMissionAll())
+      }
+
+      if (aircraftTypeString === "Plane") {
+        dispatch(emitGetLoiterRadius())
+      }
     }
-  }, [])
+  }, [currentPage, connectedToDrone])
 
   return (
     <>
-      <Navbar currentPage={currentPage} className="no-drag" />
       <Notifications limit={5} position="bottom-center" />
       {children}
     </>

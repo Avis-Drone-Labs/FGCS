@@ -10,59 +10,74 @@
 import React, { useEffect, useRef, useState } from "react"
 
 // Maplibre and mantine imports
-import {
-  useClipboard,
-  useLocalStorage,
-  usePrevious,
-  useSessionStorage,
-} from "@mantine/hooks"
+import { useClipboard, useLocalStorage, usePrevious } from "@mantine/hooks"
 import "maplibre-gl/dist/maplibre-gl.css"
 import Map from "react-map-gl/maplibre"
 
 // Helper scripts
-import { intToCoord } from "../../helpers/dataFormatters"
+import { v4 as uuidv4 } from "uuid"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 import { showNotification } from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
-import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
+import ContextMenuSubMenuItem from "../mapComponents/contextMenuSubMenuItem"
 import DroneMarker from "../mapComponents/droneMarker"
+import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
-import useContextMenu from "../mapComponents/useContextMenu"
+import Polygon from "../mapComponents/polygon"
+import Divider from "../toolbar/menus/divider"
 
 // Tailwind styling
+import { envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  selectFlightModeString,
+  selectGPS,
+  selectGuidedModePinData,
+} from "../../redux/slices/droneInfoSlice"
+import {
+  clearDrawingItems,
+  createFencePolygon,
+  createNewDefaultDrawingItem,
+  getFrameKey,
+  removeDrawingItem,
+  selectActiveTab,
+  selectContextMenu,
+  selectPlannedHomePosition,
+  setPlannedHomePosition,
+  setPlannedHomePositionToDronesHomePositionThunk,
+  updateContextMenuState,
+} from "../../redux/slices/missionSlice"
+import ContextMenuSpecificCommandItems from "../mapComponents/contextMenuSpecificCommandItems"
+
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
 
 function MapSectionNonMemo({
   passedRef,
-  data,
-  heading,
-  desiredBearing,
   missionItems,
-  homePosition,
+  fenceItems,
+  rallyItems,
   onDragstart,
-  getFlightMode,
-  currentTab,
-  markerDragEndCallback,
-  rallyDragEndCallback,
-  mapId = "dashboard",
 }) {
-  const [connected] = useSessionStorage({
-    key: "connectedToDrone",
-    defaultValue: false,
-  })
-  const [guidedModePinData] = useSessionStorage({
-    key: "guidedModePinData",
-    defaultValue: null,
-  })
+  // Redux
+  const dispatch = useDispatch()
+  const gpsData = useSelector(selectGPS)
+  const plannedHomePosition = useSelector(selectPlannedHomePosition)
+  const flightModeString = useSelector(selectFlightModeString)
+  const currentTab = useSelector(selectActiveTab)
+  const contextMenuState = useSelector(selectContextMenu)
+  const guidedModePinData = useSelector(selectGuidedModePinData)
 
   const [position, setPosition] = useState(null)
   const { getSetting } = useSettings()
@@ -73,101 +88,180 @@ function MapSectionNonMemo({
   // Use either a shared key or a unique key based on the setting
   const viewStateKey = syncMaps
     ? "initialViewState"
-    : `initialViewState_${mapId}`
+    : `initialViewState_missions`
 
   const [initialViewState, setInitialViewState] = useLocalStorage({
     key: viewStateKey,
     defaultValue: { latitude: 53.381655, longitude: -1.481434, zoom: 17 },
     getInitialValueInEffect: false,
   })
-  const previousHomePositionValue = usePrevious(homePosition)
+  const previousPlannedHomePositionValue = usePrevious(plannedHomePosition)
 
-  const [missionItemsList, setMissionItemsList] = useState(
-    missionItems.mission_items,
-  )
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
-  const { clicked, setClicked, points, setPoints } = useContextMenu()
-  const [
-    contextMenuPositionCalculationInfo,
-    setContextMenuPositionCalculationInfo,
-  ] = useState()
-  const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
 
   const clipboard = useClipboard({ timeout: 500 })
 
-  useEffect(() => {
-    return () => {}
-  }, [connected])
+  const [polygonDrawMode, setPolygonDrawMode] = useState(false)
+  const [polygonPoints, setPolygonPoints] = useState([])
 
   useEffect(() => {
-    // Check latest data point is valid
-    if (isNaN(data.lat) || isNaN(data.lon) || data.lon === 0 || data.lat === 0)
+    const closeContextMenu = () =>
+      dispatch(updateContextMenuState({ isOpen: false }))
+
+    document.addEventListener("click", closeContextMenu)
+    return () => {
+      document.removeEventListener("click", closeContextMenu)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Check latest gpsData point is valid
+    if (
+      isNaN(gpsData.lat) ||
+      isNaN(gpsData.lon) ||
+      gpsData.lon === 0 ||
+      gpsData.lat === 0
+    )
       return
 
     // Move drone icon on map
-    let lat = intToCoord(data.lat)
-    let lon = intToCoord(data.lon)
+    let lat = intToCoord(gpsData.lat)
+    let lon = intToCoord(gpsData.lon)
     setPosition({ latitude: lat, longitude: lon })
-  }, [data])
+  }, [gpsData])
 
   useEffect(() => {
-    setFilteredMissionItems(filterMissionItems(missionItemsList))
-  }, [missionItemsList])
-
-  useEffect(() => {
-    setMissionItemsList(missionItems.mission_items)
+    setFilteredMissionItems(filterMissionItems(missionItems))
   }, [missionItems])
 
   useEffect(() => {
     if (contextMenuRef.current) {
-      const contextMenuWidth = Math.round(
-        contextMenuRef.current.getBoundingClientRect().width,
+      const boundingRect = contextMenuRef.current.getBoundingClientRect()
+      dispatch(
+        updateContextMenuState({
+          menuSize: {
+            width: Math.round(boundingRect.width),
+            height: Math.round(boundingRect.height),
+          },
+        }),
       )
-      const contextMenuHeight = Math.round(
-        contextMenuRef.current.getBoundingClientRect().height,
-      )
-      let x = contextMenuPositionCalculationInfo.clickedPoint.x
-      let y = contextMenuPositionCalculationInfo.clickedPoint.y
-
-      if (
-        contextMenuWidth + contextMenuPositionCalculationInfo.clickedPoint.x >
-        contextMenuPositionCalculationInfo.canvasSize.width
-      ) {
-        x = contextMenuPositionCalculationInfo.clickedPoint.x - contextMenuWidth
-      }
-      if (
-        contextMenuHeight + contextMenuPositionCalculationInfo.clickedPoint.y >
-        contextMenuPositionCalculationInfo.canvasSize.height
-      ) {
-        y =
-          contextMenuPositionCalculationInfo.clickedPoint.y - contextMenuHeight
-      }
-
-      setPoints({ x, y })
     }
-  }, [contextMenuPositionCalculationInfo])
+  }, [contextMenuRef.current])
 
   useEffect(() => {
     // center map on home point only on first instance of home point being
     // received from the drone
     if (
       passedRef.current &&
-      homePosition !== null &&
-      previousHomePositionValue === null
+      plannedHomePosition !== null &&
+      previousPlannedHomePositionValue === null
     ) {
       setInitialViewState({
-        latitude: intToCoord(homePosition.lat),
-        longitude: intToCoord(homePosition.lon),
+        latitude: intToCoord(plannedHomePosition.lat),
+        longitude: intToCoord(plannedHomePosition.lon),
         zoom: initialViewState.zoom,
       })
       passedRef.current.getMap().flyTo({
-        center: [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        center: [
+          intToCoord(plannedHomePosition.lon),
+          intToCoord(plannedHomePosition.lat),
+        ],
         zoom: initialViewState.zoom,
       })
     }
-  }, [homePosition])
+  }, [plannedHomePosition])
+
+  function addNewPolygonVertex(lat, lon) {
+    if (!polygonDrawMode) return
+
+    // Add new point to polygon points
+    setPolygonPoints((prevPoints) => [
+      ...prevPoints,
+      { id: uuidv4(), lat: lat, lon: lon },
+    ])
+  }
+
+  function updatePolygonVertex(updatedPolygonVertex) {
+    setPolygonPoints((prevPoints) =>
+      prevPoints.map((item) =>
+        item.id === updatedPolygonVertex.id
+          ? {
+              ...item,
+              lat: intToCoord(updatedPolygonVertex.x),
+              lon: intToCoord(updatedPolygonVertex.y),
+            }
+          : item,
+      ),
+    )
+  }
+
+  function convertPolygonToFenceItems(fenceType) {
+    if (polygonPoints.length < 3) {
+      showNotification("Polygon must have at least 3 points to be valid")
+      return
+    }
+
+    const fenceItems = polygonPoints.map((point, index) => ({
+      id: point.id,
+      command: fenceType === "inclusion" ? 5001 : 5002, // 5001 for inclusion, 5002 for exclusion
+      param1: polygonPoints.length, // Number of points in the polygon
+      param2: 0,
+      param3: 0,
+      param4: 0,
+      x: coordToInt(point.lat),
+      y: coordToInt(point.lon),
+      z: index,
+      frame: getFrameKey("MAV_FRAME_GLOBAL_RELATIVE_ALT"),
+      mission_type: 1,
+    }))
+
+    dispatch(createFencePolygon(fenceItems))
+    setPolygonPoints([])
+    setPolygonDrawMode(false)
+  }
+
+  function zoomToDrone() {
+    if (passedRef.current && position) {
+      passedRef.current.getMap().flyTo({
+        center: [position.longitude, position.latitude],
+        zoom: 17,
+      })
+    }
+  }
+
+  function zoomToMission() {
+    if (passedRef.current && filteredMissionItems.length > 0) {
+      const filteredCoords = filteredMissionItems.map((item) =>
+        point([intToCoord(item.y), intToCoord(item.x)]),
+      )
+      const features = featureCollection(filteredCoords)
+      const boundingBox = envelope(features).bbox
+
+      passedRef.current.getMap().fitBounds(
+        [
+          [boundingBox[0], boundingBox[1]],
+          [boundingBox[2], boundingBox[3]],
+        ],
+        {
+          padding: 50,
+        },
+      )
+    }
+  }
+
+  function zoomToPlannedHome() {
+    if (passedRef.current && plannedHomePosition) {
+      passedRef.current.getMap().flyTo({
+        center: [
+          intToCoord(plannedHomePosition.lon),
+          intToCoord(plannedHomePosition.lat),
+        ],
+        zoom: 17,
+      })
+    }
+  }
 
   return (
     <div className="w-initial h-full" id="map">
@@ -178,6 +272,17 @@ function MapSectionNonMemo({
         attributionControl={false}
         dragRotate={false}
         touchRotate={false}
+        onLoad={(e) => {
+          const canvas = e.target.getCanvas()
+          dispatch(
+            updateContextMenuState({
+              canvasSize: {
+                width: canvas.clientWidth,
+                height: canvas.clientHeight,
+              },
+            }),
+          )
+        }}
         onMoveEnd={(newViewState) =>
           setInitialViewState({
             latitude: newViewState.viewState.latitude,
@@ -188,15 +293,33 @@ function MapSectionNonMemo({
         onDragStart={onDragstart}
         onContextMenu={(e) => {
           e.preventDefault()
-          setClicked(true)
-          setClickedGpsCoords(e.lngLat)
-          setContextMenuPositionCalculationInfo({
-            clickedPoint: e.point,
-            canvasSize: {
-              height: e.originalEvent.target.clientHeight,
-              width: e.originalEvent.target.clientWidth,
-            },
-          })
+          dispatch(
+            updateContextMenuState({
+              isOpen: true,
+              position: e.point,
+              gpsCoords: e.lngLat,
+              markerId: null,
+            }),
+          )
+        }}
+        onMouseDown={() => {
+          dispatch(updateContextMenuState({ isOpen: false }))
+        }}
+        onClick={(e) => {
+          dispatch(updateContextMenuState({ isOpen: false }))
+          let lat = e.lngLat.lat
+          let lon = e.lngLat.lng
+
+          if (polygonDrawMode) {
+            addNewPolygonVertex(lat, lon)
+          } else {
+            dispatch(
+              createNewDefaultDrawingItem({
+                x: coordToInt(lat),
+                y: coordToInt(lon),
+              }),
+            )
+          }
         }}
         cursor="default"
       >
@@ -207,51 +330,23 @@ function MapSectionNonMemo({
             <DroneMarker
               lat={position.latitude}
               lon={position.longitude}
-              heading={heading ?? 0}
               zoom={initialViewState.zoom}
               showHeadingLine={true}
-              desiredBearing={desiredBearing ?? 0}
             />
           )}
 
-        <MissionItems
-          missionItems={missionItemsList}
-          editable={currentTab === "mission"}
-          dragEndCallback={markerDragEndCallback}
+        <Polygon
+          polygonPoints={polygonPoints}
+          editable={polygonDrawMode}
+          dragEndCallback={updatePolygonVertex}
         />
 
-        {/* Show mission geo-fence MARKERS */}
-        {missionItems.fence_items.map((item, index) => {
-          return (
-            <MarkerPin
-              key={index}
-              lat={intToCoord(item.x)}
-              lon={intToCoord(item.y)}
-              colour={tailwindColors.blue[400]}
-            />
-          )
-        })}
+        <MissionItems missionItems={missionItems} />
 
-        {/* Show geo-fence outlines */}
-        {missionItems.fence_items.length > 0 && (
-          <DrawLineCoordinates
-            coordinates={[
-              ...missionItems.fence_items.map((item) => [
-                intToCoord(item.y),
-                intToCoord(item.x),
-              ]),
-              [
-                intToCoord(missionItems.fence_items[0].y),
-                intToCoord(missionItems.fence_items[0].x),
-              ],
-            ]}
-            colour={tailwindColors.blue[200]}
-            lineProps={{ "line-dasharray": [2, 2] }}
-          />
-        )}
+        <FenceItems fenceItems={fenceItems} />
 
         {/* Show mission rally point */}
-        {missionItems.rally_items.map((item, index) => {
+        {rallyItems.map((item, index) => {
           return (
             <MarkerPin
               key={index}
@@ -259,14 +354,14 @@ function MapSectionNonMemo({
               lat={intToCoord(item.x)}
               lon={intToCoord(item.y)}
               colour={tailwindColors.purple[400]}
+              text={`${item.seq}`}
               tooltipText={item.z ? `Alt: ${item.z}` : null}
               draggable={currentTab === "rally"}
-              dragEndCallback={rallyDragEndCallback}
             />
           )
         })}
 
-        {getFlightMode() === "Guided" && guidedModePinData !== null && (
+        {flightModeString === "Guided" && guidedModePinData !== null && (
           <MarkerPin
             lat={guidedModePinData.lat}
             lon={guidedModePinData.lon}
@@ -278,52 +373,142 @@ function MapSectionNonMemo({
         )}
 
         {/* Show home position */}
-        {homePosition !== null && (
+        {plannedHomePosition !== null && (
           <HomeMarker
-            lat={intToCoord(homePosition.lat)}
-            lon={intToCoord(homePosition.lon)}
-            lineTo={
-              filteredMissionItems.length > 0 && [
-                intToCoord(filteredMissionItems[0].y),
-                intToCoord(filteredMissionItems[0].x),
-              ]
-            }
+            lat={intToCoord(plannedHomePosition.lat)}
+            lon={intToCoord(plannedHomePosition.lon)}
+            updateMissionHomePositionDragCb={({ x, y }) => {
+              dispatch(
+                setPlannedHomePosition({
+                  lat: coordToInt(x),
+                  lon: coordToInt(y),
+                }),
+              )
+            }}
           />
         )}
 
-        {clicked && (
+        {contextMenuState.isOpen && (
           <div
             ref={contextMenuRef}
-            className="absolute bg-falcongrey-700 rounded-md p-1"
-            style={{ top: points.y, left: points.x }}
+            className="absolute bg-falcongrey-700 rounded-md p-1 z-20"
+            style={{
+              top: contextMenuState.position.y,
+              left: contextMenuState.position.x,
+            }}
           >
             <ContextMenuItem
               onClick={() => {
                 clipboard.copy(
-                  `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
+                  `${contextMenuState.gpsCoords.lat}, ${contextMenuState.gpsCoords.lng}`,
                 )
                 showNotification("Copied to clipboard")
               }}
             >
-              <div className="w-full flex justify-between gap-2">
-                <p>
-                  {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
-                  {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
-                </p>
-                <svg
-                  className="relative -right-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z"
-                  />
-                </svg>
-              </div>
+              <p>
+                {contextMenuState.gpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
+                {contextMenuState.gpsCoords.lng.toFixed(coordsFractionDigits)}
+              </p>
+              <svg
+                className="relative -right-1"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="currentColor"
+                  d="M9 18q-.825 0-1.412-.587T7 16V4q0-.825.588-1.412T9 2h9q.825 0 1.413.588T20 4v12q0 .825-.587 1.413T18 18zm0-2h9V4H9zm-4 6q-.825 0-1.412-.587T3 20V7q0-.425.288-.712T4 6t.713.288T5 7v13h10q.425 0 .713.288T16 21t-.288.713T15 22zm4-6V4z"
+                />
+              </svg>
             </ContextMenuItem>
+            {contextMenuState.markerId !== null &&
+              contextMenuState.markerId !== undefined &&
+              contextMenuState.markerId !== "home" && (
+                <>
+                  <Divider />
+                  <ContextMenuItem
+                    onClick={() =>
+                      dispatch(removeDrawingItem(contextMenuState.markerId))
+                    }
+                  >
+                    <p>Delete waypoint</p>
+                  </ContextMenuItem>
+                </>
+              )}
+            <ContextMenuSpecificCommandItems />
+            <Divider />
+            <ContextMenuItem onClick={zoomToDrone}>
+              <p>Zoom to drone</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToMission}>
+              <p>Zoom to mission</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={zoomToPlannedHome}>
+              <p>Zoom to planned home</p>
+            </ContextMenuItem>
+            <Divider />
+            {contextMenuState?.markerId === "home" ? (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(setPlannedHomePositionToDronesHomePositionThunk())
+                }}
+              >
+                <p>Set planned home to drone's home position</p>
+              </ContextMenuItem>
+            ) : (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(
+                    setPlannedHomePosition({
+                      lat: coordToInt(contextMenuState.gpsCoords.lat),
+                      lon: coordToInt(contextMenuState.gpsCoords.lng),
+                    }),
+                  )
+                }}
+              >
+                <p>Set planned home position</p>
+              </ContextMenuItem>
+            )}
+            <ContextMenuItem onClick={() => dispatch(clearDrawingItems())}>
+              <p>Clear mission</p>
+            </ContextMenuItem>
+            <Divider />
+            <ContextMenuSubMenuItem title={"Polygon"}>
+              <ContextMenuItem
+                onClick={() => {
+                  setPolygonDrawMode(true)
+                }}
+              >
+                <p>Draw polygon</p>
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => {
+                  setPolygonPoints([])
+                  setPolygonDrawMode(false)
+                }}
+              >
+                <p>Clear polygon</p>
+              </ContextMenuItem>
+              {currentTab === "fence" && (
+                <>
+                  <ContextMenuItem
+                    onClick={() => {
+                      convertPolygonToFenceItems("inclusion")
+                    }}
+                  >
+                    <p>Fence inclusion</p>
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => {
+                      convertPolygonToFenceItems("exclusion")
+                    }}
+                  >
+                    <p>Fence exclusion</p>
+                  </ContextMenuItem>
+                </>
+              )}
+            </ContextMenuSubMenuItem>
           </div>
         )}
       </Map>

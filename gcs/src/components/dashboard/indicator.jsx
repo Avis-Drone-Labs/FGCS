@@ -55,7 +55,7 @@ export const AttitudeIndicator = (params) => {
         style={{
           ...box,
           top: "0%",
-          transform: `rotate(${-params.roll ?? 0}deg)`,
+          transform: `rotate(${-(params.roll ?? 0)}deg)`,
         }}
       >
         <img src={horizon_back} className="box" alt="" style={{ ...box }} />
@@ -77,7 +77,7 @@ export const HeadingIndicator = (params) => {
     <Instrument {...params}>
       <div
         className="heading box"
-        style={{ ...box, transform: `rotate(${-params.heading ?? 0}deg)` }}
+        style={{ ...box, transform: `rotate(${-(params.heading ?? 0)}deg)` }}
       >
         <img src={heading_yaw} className="box" style={box} alt="" />
       </div>

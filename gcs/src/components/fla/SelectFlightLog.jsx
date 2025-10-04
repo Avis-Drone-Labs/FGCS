@@ -1,7 +1,6 @@
 import {
   Button,
   Divider,
-  FileButton,
   LoadingOverlay,
   Progress,
   ScrollArea,
@@ -32,6 +31,16 @@ export default function SelectFlightLog({ processLoadedFile }) {
   async function clearFgcsLogs() {
     await window.ipcRenderer.invoke("fla:clear-recent-logs")
     getFgcsLogs()
+  }
+
+  const selectFile = async () => {
+    const result = await window.ipcRenderer.invoke(
+      "window:select-file-in-explorer",
+      [{ name: "Flight Logs", extensions: ["log", "ftlog"] }],
+    )
+    if (result) {
+      handleFile(result)
+    }
   }
 
   const handleFile = useCallback(
@@ -111,14 +120,9 @@ export default function SelectFlightLog({ processLoadedFile }) {
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
         <div className="flex flex-col gap-4">
-          {/* File selection */}
-          <FileButton onChange={handleFile} accept=".log,.ftlog">
-            {(props) => (
-              <Button {...props} loading={loadingFile}>
-                Analyse a log
-              </Button>
-            )}
-          </FileButton>
+          <Button onClick={selectFile} loading={loadingFile}>
+            Analyse a log
+          </Button>
           <Button color="red" variant="filled" onClick={clearFgcsLogs}>
             Clear Logs
           </Button>

@@ -180,6 +180,27 @@ ipcMain.on("window:zoom-out", () => {
 ipcMain.on("window:open-file-in-explorer", (_event, filePath) => {
   shell.showItemInFolder(filePath)
 })
+ipcMain.handle("window:select-file-in-explorer", async (_event, filters) => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ["openFile"],
+    filters: [...filters, { name: "All Files", extensions: ["*"] }],
+  })
+  if (!canceled && filePaths.length > 0) {
+    const filePath = filePaths[0]
+    try {
+      const stats = fs.statSync(filePath)
+      return {
+        path: filePath,
+        name: path.basename(filePath),
+        size: stats.size,
+      }
+    } catch (err) {
+      // File is inaccessible or deleted
+      return null
+    }
+  }
+  return null
+})
 
 function createWindow() {
   win = new BrowserWindow({

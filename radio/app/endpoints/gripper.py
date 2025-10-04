@@ -1,5 +1,6 @@
 import app.droneStatus as droneStatus
 from app import logger, socketio
+from app.customTypes import SetConfigParam
 from app.utils import droneErrorCb
 
 
@@ -83,7 +84,7 @@ def getGripperConfig() -> None:
 
 
 @socketio.on("set_gripper_config_param")
-def setGripperParam(data: dict) -> None:
+def setGripperParam(data: SetConfigParam) -> None:
     """
     Sets a gripper parameter based off data passed in, only works when the config page is loaded.
     """

@@ -23,7 +23,7 @@ const configSlice = createSlice({
     frameClass: null,
     numberOfMotors: 4,
     showMotorTestWarningModal: true,
-    radioChannels: {
+    radioPwmChannels: {
       1: 0,
       2: 0,
       3: 0,
@@ -101,13 +101,35 @@ const configSlice = createSlice({
       if (action.payload === state.showMotorTestWarningModal) return
       state.showMotorTestWarningModal = action.payload
     },
-    setRadioChannels: (state, action) => {
-      if (action.payload === state.radioChannels) return
-      state.radioChannels = action.payload
+    setRadioPwmChannels: (state, action) => {
+      if (action.payload === state.radioPwmChannels) return
+      state.radioPwmChannels = action.payload
     },
     setChannelsConfig: (state, action) => {
       if (action.payload === state.radioChannelsConfig) return
       state.radioChannelsConfig = action.payload
+    },
+    updateChannelsConfigParam: (state, action) => {
+      const { param_id, value } = action.payload
+      // param_id is like "RC1_OPTION", "RC2_REVERSED", etc. so we need to separate out the channel number
+      const channelNum = param_id.match(/^RC(\d+)_/)[1]
+      if (!channelNum) return
+      // Only update if the channel exists in the current config
+      if (!state.radioChannelsConfig[channelNum]) return
+
+      // Get if its an option or reversed parameter
+      const isOption = param_id.endsWith("_OPTION")
+      const isReversed = param_id.endsWith("_REVERSED")
+      if (!isOption && !isReversed) return
+
+      if (isOption) {
+        // For option, value should be an integer
+        if (state.radioChannelsConfig[channelNum].option === value) return
+        state.radioChannelsConfig[channelNum].option = value
+      } else if (isReversed) {
+        if (state.radioChannelsConfig[channelNum].reversed === value) return
+        state.radioChannelsConfig[channelNum].reversed = value
+      }
     },
 
     // Emits
@@ -123,6 +145,7 @@ const configSlice = createSlice({
     emitTestMotorSequence: () => {},
     emitTestAllMotors: () => {},
     emitGetRcConfig: () => {},
+    emitSetRcConfigParam: () => {},
   },
   selectors: {
     selectGetGripperEnabled: (state) => state.getGripperEnabled,
@@ -139,7 +162,7 @@ const configSlice = createSlice({
     selectFrameClass: (state) => state.frameClass,
     selectNumberOfMotors: (state) => state.numberOfMotors,
     selectShowMotorTestWarningModal: (state) => state.showMotorTestWarningModal,
-    selectRadioChannels: (state) => state.radioChannels,
+    selectRadioPwmChannels: (state) => state.radioPwmChannels,
     selectRadioChannelsConfig: (state) => state.radioChannelsConfig,
   },
 })
@@ -159,8 +182,9 @@ export const {
   setFrameClass,
   setNumberOfMotors,
   setShowMotorTestWarningModal,
-  setRadioChannels,
+  setRadioPwmChannels,
   setChannelsConfig,
+  updateChannelsConfigParam,
 
   // Emitters
   emitGetGripperEnabled,
@@ -175,6 +199,7 @@ export const {
   emitTestMotorSequence,
   emitTestAllMotors,
   emitGetRcConfig,
+  emitSetRcConfigParam,
 } = configSlice.actions
 
 export const {
@@ -191,7 +216,7 @@ export const {
   selectFrameClass,
   selectNumberOfMotors,
   selectShowMotorTestWarningModal,
-  selectRadioChannels,
+  selectRadioPwmChannels,
   selectRadioChannelsConfig,
 } = configSlice.selectors
 

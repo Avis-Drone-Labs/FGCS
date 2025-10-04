@@ -43,7 +43,7 @@ class SetFlightModeValueAndNumber(TypedDict):
 
 class SetConfigParam(TypedDict):
     param_id: str
-    param_value: Number
+    value: Number
 
 
 class VehicleType(Enum):

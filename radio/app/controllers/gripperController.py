@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import serial
-from app.customTypes import Response
+from app.customTypes import Number, Response
 from app.utils import commandAccepted
 from pymavlink import mavutil
 
@@ -158,7 +158,7 @@ class GripperController:
 
         return config
 
-    def setGripperParam(self, param_id: str, value: float) -> bool:
+    def setGripperParam(self, param_id: str, value: Number) -> bool:
         """
         Sets a gripper related parameter on the drone.
         """

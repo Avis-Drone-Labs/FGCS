@@ -49,8 +49,8 @@ def setRcConfigParam(data: SetConfigParam) -> None:
     if not droneStatus.drone:
         return notConnectedError(action="set a RC config parameter")
 
-    param_id = data.get("param_id")
-    value = data.get("value")
+    param_id = data.get("param_id", None)
+    value = data.get("value", None)
 
     if param_id is None or value is None:
         socketio.emit(

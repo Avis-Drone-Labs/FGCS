@@ -814,7 +814,6 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           ConfigSpecificSocketEvents.onSetRcConfigResult,
           (msg) => {
-            console.log(msg)
             if (msg.success) {
               showSuccessNotification(msg.message)
               store.dispatch(

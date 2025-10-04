@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.customTypes import Number
+
 if TYPE_CHECKING:
     from app.drone import Drone
 
@@ -111,7 +113,7 @@ class RcController:
 
         return self.params
 
-    def setConfigParam(self, param_id: str, value: float) -> bool:
+    def setConfigParam(self, param_id: str, value: Number) -> bool:
         """
         Sets a RC configuration related parameter on the drone.
         """

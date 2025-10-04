@@ -112,9 +112,11 @@ const configSlice = createSlice({
     updateChannelsConfigParam: (state, action) => {
       const { param_id, value } = action.payload
       // param_id is like "RC1_OPTION", "RC2_REVERSED", etc. so we need to separate out the channel number
-      const channelNum = param_id.match(/^RC(\d+)_/)[1]
-      if (!channelNum) return
-      // Only update if the channel exists in the current config
+      const match = param_id.match(/^RC(\d+)_/)[1]
+      if (!match) return
+
+      const channelNum = match[1]
+
       if (!state.radioChannelsConfig[channelNum]) return
 
       // Get if its an option or reversed parameter

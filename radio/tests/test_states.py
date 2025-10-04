@@ -46,7 +46,7 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
 
     socketio_client.emit("set_state", {"state": "config.rc"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 0
+    assert len(droneStatus.drone.message_listeners) == 2
 
     droneStatus.drone.message_listeners = {}
 

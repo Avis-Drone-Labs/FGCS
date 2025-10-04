@@ -50,6 +50,7 @@ def set_state(data: SetStateType) -> None:
         "missions": ["GLOBAL_POSITION_INT", "NAV_CONTROLLER_OUTPUT", "HEARTBEAT"],
         "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],
         "config.flight_modes": ["RC_CHANNELS", "HEARTBEAT"],
+        "config.rc": ["RC_CHANNELS", "HEARTBEAT"],
     }
 
     droneStatus.drone.logger.info(f"Changing state to {droneStatus.state}")
@@ -98,3 +99,6 @@ def set_state(data: SetStateType) -> None:
         droneStatus.drone.sendDataStreamRequestMessage(
             mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
         )
+
+        for message in message_listeners["config.rc"]:
+            droneStatus.drone.addMessageListener(message, sendMessage)

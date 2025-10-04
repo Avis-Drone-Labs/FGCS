@@ -8,6 +8,7 @@ import {
   emitSetFlightMode,
   emitSetGripper,
   emitSetGripperConfigParam,
+  emitSetRcConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
@@ -296,6 +297,15 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitGetRcConfig,
       callback: () => socket.socket.emit("get_rc_config"),
+    },
+    {
+      emitter: emitSetRcConfigParam,
+      callback: () => {
+        socket.socket.emit("set_rc_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
     },
   ]
 

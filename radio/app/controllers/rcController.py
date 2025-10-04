@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.customTypes import Number
+
 if TYPE_CHECKING:
     from app.drone import Drone
 
@@ -16,6 +18,7 @@ class RcController:
         """
         self.drone = drone
         self.params: dict = {}
+        self.param_types: dict = {}
 
         self.fetchParams()
 
@@ -33,6 +36,7 @@ class RcController:
         param = self.drone.paramsController.getSingleParam(param_name).get("data")
         if param:
             params_dict[param_key] = param.param_value
+            self.param_types[param_name] = param.param_type
 
     def _getAndSetCachedParam(
         self, params_dict: dict, param_key: str, param_name: str
@@ -57,6 +61,7 @@ class RcController:
             )
             if fetched_param:
                 params_dict[param_key] = fetched_param.param_value
+                self.param_types[param_name] = fetched_param.param_type
 
     def fetchParams(self) -> None:
         """
@@ -107,3 +112,11 @@ class RcController:
             self.params[f"RC_{channel_number}"] = channel_params
 
         return self.params
+
+    def setConfigParam(self, param_id: str, value: Number) -> bool:
+        """
+        Sets a RC configuration related parameter on the drone.
+        """
+        param_type = self.param_types.get(param_id)
+
+        return self.drone.paramsController.setParam(param_id, value, param_type)

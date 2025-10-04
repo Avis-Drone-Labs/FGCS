@@ -42,10 +42,11 @@ import {
   setGetGripperEnabled,
   setGripperConfig,
   setNumberOfMotors,
-  setRadioChannels,
+  setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
   setShowMotorTestWarningModal,
+  updateChannelsConfigParam,
   updateGripperConfigParam,
 } from "../slices/configSlice.js"
 import {
@@ -150,6 +151,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onSetFlightModeResult: "set_flight_mode_result",
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
+  onSetRcConfigResult: "set_rc_config_result",
 })
 
 const socketMiddleware = (store) => {
@@ -162,7 +164,7 @@ const socketMiddleware = (store) => {
       chans[i] = msg[`chan${i}_raw`]
     }
 
-    store.dispatch(setRadioChannels(chans))
+    store.dispatch(setRadioPwmChannels(chans))
   }
 
   const incomingMessageHandler = (msg) => {
@@ -808,6 +810,23 @@ const socketMiddleware = (store) => {
 
           store.dispatch(setChannelsConfig(config))
         })
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetRcConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+              store.dispatch(
+                updateChannelsConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
 
         /*
           Generic Drone Data

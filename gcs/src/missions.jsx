@@ -15,7 +15,6 @@ import {
   ActionIcon,
   Button,
   Divider,
-  FileButton,
   Modal,
   NumberInput,
   Progress,
@@ -117,10 +116,6 @@ export default function Missions() {
   const tabsListRef = useRef(null)
   const [tableSectionHeight, setTableSectionHeight] = useState(300)
 
-  // File import handling
-  const [importFile, setImportFile] = useState(null)
-  const importFileResetRef = useRef(null)
-
   // Modal for mission progress
   const [missionProgressModalTitle, setMissionProgressModalTitle] = useState(
     "Mission progress update",
@@ -151,12 +146,6 @@ export default function Missions() {
   useEffect(() => {
     dispatch(emitGetTargetInfo())
   }, [currentPage])
-
-  useEffect(() => {
-    if (importFile) {
-      importMissionFromFile(importFile.path)
-    }
-  }, [importFile])
 
   useEffect(() => {
     activeTabRef.current = activeTab
@@ -245,17 +234,19 @@ export default function Missions() {
     dispatch(setMissionProgressModal(true))
   }
 
-  function importMissionFromFile(filePath) {
-    dispatch(
-      emitImportMissionFromFile({
-        type: activeTabRef.current,
-        file_path: filePath,
-      }),
+  async function importMissionFromFile() {
+    const result = await window.ipcRenderer.invoke(
+      "window:select-file-in-explorer",
+      [{ name: "Waypoint files", extensions: ["waypoints", "txt"] }],
     )
-
-    // Reset the import file after sending
-    setImportFile(null)
-    importFileResetRef.current?.()
+    if (result) {
+      dispatch(
+        emitImportMissionFromFile({
+          type: activeTabRef.current,
+          file_path: result.path,
+        }),
+      )
+    }
   }
 
   async function saveMissionToFile() {
@@ -414,14 +405,9 @@ export default function Missions() {
                 <Divider className="my-1" />
 
                 <div className="flex flex-col gap-4">
-                  <FileButton
-                    resetRef={importFileResetRef}
-                    onChange={setImportFile}
-                    accept=".waypoints,.txt"
-                    className="grow"
-                  >
-                    {(props) => <Button {...props}>Import from file</Button>}
-                  </FileButton>
+                  <Button className="grow" onClick={importMissionFromFile}>
+                    Import from file
+                  </Button>
                   <Button
                     onClick={() => {
                       saveMissionToFile()

@@ -19,6 +19,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:open-link-stats-window",
   "app:close-link-stats-window",
   "app:update-link-stats",
+  "window:select-file-in-explorer",
 ]
 
 const ALLOWED_SEND_CHANNELS = [

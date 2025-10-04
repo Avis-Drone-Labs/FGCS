@@ -27,6 +27,9 @@ export default function EkfDisplay({ telemetryFontSize }) {
         lineHeight: `${telemetryFontSize * 1.75}rem`,
         color: textColour,
       }}
+      onClick={() => {
+        window.ipcRenderer.invoke("app:open-ekf-status-window")
+      }}
     >
       EKF
     </div>

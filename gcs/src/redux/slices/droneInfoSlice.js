@@ -194,10 +194,7 @@ const droneInfoSlice = createSlice({
       const posHor = state.ekfStatusReportData.pos_horiz_variance
       const posVer = state.ekfStatusReportData.pos_vert_variance
       const terAlt = state.ekfStatusReportData.terrain_alt_variance
-      state.ekfCalculatedStatus = Math.max(
-        vel,
-        Math.max(comp, Math.max(posHor, Math.max(posVer, terAlt))),
-      )
+      state.ekfCalculatedStatus = Math.max(vel, comp, posHor, posVer, terAlt)
 
       // Check EKF flags to handle critical errors
       // https://github.com/ArduPilot/MissionPlanner/blob/4d441bd4b1dbc08adce4d8b26e078e93760da3a7/ExtLibs/ArduPilot/CurrentState.cs#L2674-L2736

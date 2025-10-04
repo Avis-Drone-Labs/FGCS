@@ -20,6 +20,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:close-link-stats-window",
   "app:update-link-stats",
   "window:select-file-in-explorer",
+  "app:update-ekf-status",
+  "app:open-ekf-status-window",
 ]
 
 const ALLOWED_SEND_CHANNELS = [
@@ -41,6 +43,7 @@ const ALLOWED_ON_CHANNELS = [
   "app:webcam-closed",
   "app:send-link-stats",
   "fla:log-parse-progress",
+  "app:send-ekf-status",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

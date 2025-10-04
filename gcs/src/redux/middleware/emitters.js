@@ -1,14 +1,17 @@
 import {
   emitGetFlightModeConfig,
   emitGetFrameConfig,
+  emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
   emitSetGripper,
+  emitSetGripperConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
+  setRefreshingGripperConfigData,
 } from "../slices/configSlice"
 import {
   emitArmDisarm,
@@ -222,6 +225,22 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitGetGripperEnabled,
       callback: () => socket.socket.emit("get_gripper_enabled"),
+    },
+    {
+      emitter: emitGetGripperConfig,
+      callback: () => {
+        socket.socket.emit("get_gripper_config")
+        store.dispatch(setRefreshingGripperConfigData(true))
+      },
+    },
+    {
+      emitter: emitSetGripperConfigParam,
+      callback: () => {
+        socket.socket.emit("set_gripper_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
     },
     {
       emitter: emitGetFlightModeConfig,

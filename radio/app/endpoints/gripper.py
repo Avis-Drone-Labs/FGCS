@@ -52,3 +52,74 @@ def setGripper(action: str) -> None:
 
     result = droneStatus.drone.gripperController.setGripper(action)
     socketio.emit("set_gripper_result", result)
+
+
+@socketio.on("get_gripper_config")
+def getGripperConfig() -> None:
+    """
+    Sends the gripper config to the frontend, only works when the config page is loaded.
+    """
+    if droneStatus.state != "config":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the config screen to access the gripper configuration."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        logger.warning("Attempted to get the gripper config when drone is None.")
+        droneErrorCb("get the gripper config")
+        return
+
+    gripper_config = droneStatus.drone.gripperController.getConfig()
+
+    socketio.emit(
+        "gripper_config",
+        {"params": gripper_config},
+    )
+
+
+@socketio.on("set_gripper_config_param")
+def setGripperParam(data: dict) -> None:
+    """
+    Sets a gripper parameter based off data passed in, only works when the config page is loaded.
+    """
+    if droneStatus.state != "config":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the config screen to access the gripper configuration."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        logger.warning("Attempted to set a gripper param when drone is None.")
+        droneErrorCb("set a gripper param")
+        return
+
+    param_id = data.get("param_id", None)
+    value = data.get("value", None)
+
+    if param_id is None or value is None:
+        droneErrorCb("Param ID and value must be specified.")
+        return
+
+    success = droneStatus.drone.gripperController.setGripperParam(param_id, value)
+    if success:
+        result = {
+            "success": True,
+            "message": f"Parameter {param_id} successfully set to {value}.",
+            "param_id": param_id,
+            "value": value,
+        }
+    else:
+        result = {
+            "success": False,
+            "message": f"Failed to set parameter {param_id} to {value}.",
+        }
+    socketio.emit("set_gripper_param_result", result)

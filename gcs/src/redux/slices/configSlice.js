@@ -4,6 +4,8 @@ const configSlice = createSlice({
   name: "config",
   initialState: {
     getGripperEnabled: false,
+    gripperConfig: {},
+    refreshingGripperConfigData: false,
     flightModes: [
       "UNKNOWN",
       "UNKNOWN",
@@ -45,6 +47,19 @@ const configSlice = createSlice({
     setGetGripperEnabled: (state, action) => {
       if (action.payload === state.getGripperEnabled) return
       state.getGripperEnabled = action.payload
+    },
+    setGripperConfig: (state, action) => {
+      if (action.payload === state.gripperConfig) return
+      state.gripperConfig = action.payload
+    },
+    updateGripperConfigParam: (state, action) => {
+      const { param_id, value } = action.payload
+      if (state.gripperConfig[param_id] === value) return
+      state.gripperConfig[param_id] = value
+    },
+    setRefreshingGripperConfigData: (state, action) => {
+      if (action.payload === state.refreshingGripperConfigData) return
+      state.refreshingGripperConfigData = action.payload
     },
     setFlightModesList: (state, action) => {
       if (action.payload === state.flightModes) return
@@ -97,6 +112,8 @@ const configSlice = createSlice({
 
     // Emits
     emitGetGripperEnabled: () => {},
+    emitGetGripperConfig: () => {},
+    emitSetGripperConfigParam: () => {},
     emitGetFlightModeConfig: () => {},
     emitSetFlightMode: () => {},
     emitRefreshFlightModeData: () => {},
@@ -109,6 +126,9 @@ const configSlice = createSlice({
   },
   selectors: {
     selectGetGripperEnabled: (state) => state.getGripperEnabled,
+    selectGripperConfig: (state) => state.gripperConfig,
+    selectRefreshingGripperConfigData: (state) =>
+      state.refreshingGripperConfigData,
     selectFlightModesList: (state) => state.flightModes,
     selectFlightModeChannel: (state) => state.flightModeChannel,
     selectRefreshingFlightModeData: (state) => state.refreshingFlightModeData,
@@ -126,6 +146,9 @@ const configSlice = createSlice({
 
 export const {
   setGetGripperEnabled,
+  setGripperConfig,
+  updateGripperConfigParam,
+  setRefreshingGripperConfigData,
   setFlightModesList,
   setFlightModeChannel,
   setRefreshingFlightModeData,
@@ -141,6 +164,8 @@ export const {
 
   // Emitters
   emitGetGripperEnabled,
+  emitGetGripperConfig,
+  emitSetGripperConfigParam,
   emitGetFlightModeConfig,
   emitSetFlightMode,
   emitRefreshFlightModeData,
@@ -154,6 +179,8 @@ export const {
 
 export const {
   selectGetGripperEnabled,
+  selectGripperConfig,
+  selectRefreshingGripperConfigData,
   selectFlightModesList,
   selectFlightModeChannel,
   selectRefreshingFlightModeData,

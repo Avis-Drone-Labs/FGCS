@@ -10,6 +10,16 @@ from pymavlink import mavutil
 if TYPE_CHECKING:
     from app.drone import Drone
 
+GRIPPER_PARAMS = [
+    "GRIP_CAN_ID",
+    "GRIP_AUTOCLOSE",
+    "GRIP_GRAB",
+    "GRIP_NEUTRAL",
+    "GRIP_REGRAB",
+    "GRIP_RELEASE",
+    "GRIP_TYPE",
+]
+
 
 class GripperController:
     def __init__(self, drone: Drone) -> None:
@@ -20,34 +30,12 @@ class GripperController:
             drone (Drone): The main drone object
         """
         self.drone = drone
-        self.params = {}
+        self.params: dict = {}
 
         if not self.getEnabledFromDrone():
             self.drone.logger.info("Gripper is not enabled.")
         else:
-            self.params = {
-                "gripAutoclose": self.drone.paramsController.getSingleParam(
-                    "GRIP_AUTOCLOSE"
-                ).get("data"),
-                "gripCanId": self.drone.paramsController.getSingleParam(
-                    "GRIP_CAN_ID"
-                ).get("data"),
-                "gripGrab": self.drone.paramsController.getSingleParam("GRIP_GRAB").get(
-                    "data"
-                ),
-                "gripNeutral": self.drone.paramsController.getSingleParam(
-                    "GRIP_NEUTRAL"
-                ).get("data"),
-                "gripRegrab": self.drone.paramsController.getSingleParam(
-                    "GRIP_REGRAB"
-                ).get("data"),
-                "gripRelease": self.drone.paramsController.getSingleParam(
-                    "GRIP_RELEASE"
-                ).get("data"),
-                "gripType": self.drone.paramsController.getSingleParam("GRIP_TYPE").get(
-                    "data"
-                ),
-            }
+            self.getGripperParams()
 
     def getEnabledFromDrone(self) -> bool:
         """
@@ -89,6 +77,14 @@ class GripperController:
             return self.getEnabledFromDrone()
 
         return bool(gripper_enabled_param.get("param_value"))
+
+    def getGripperParams(self) -> None:
+        """
+        Gets the gripper related parameters from the drone.
+        """
+        self.drone.logger.debug("Fetching gripper parameters")
+        for param in GRIPPER_PARAMS:
+            self.params[param] = self.drone.paramsController.getSingleParam(param)
 
     def setGripper(self, action: str) -> Response:
         """
@@ -150,3 +146,28 @@ class GripperController:
                 "success": False,
                 "message": "Setting gripper failed, serial exception",
             }
+
+    def getConfig(self) -> dict:
+        """
+        Get the current gripper config from cached parameters.
+        """
+        config = {}
+        for param in GRIPPER_PARAMS:
+            self.params[param] = self.drone.paramsController.getCachedParam(param)
+            config[param] = self.params[param].get("param_value", "UNKNOWN")
+
+        return config
+
+    def setGripperParam(self, param_id: str, value: float) -> bool:
+        """
+        Sets a gripper related parameter on the drone.
+        """
+        if param_id not in GRIPPER_PARAMS:
+            self.drone.logger.error(
+                f"Parameter {param_id} is not a valid gripper parameter"
+            )
+            return False
+
+        param_type = self.params.get(param_id, {}).get("param_type", None)
+
+        return self.drone.paramsController.setParam(param_id, value, param_type)

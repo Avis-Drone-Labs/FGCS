@@ -478,3 +478,31 @@ export const MAV_FRAME_LIST = {
   22: "MAV_FRAME_LOCAL_FLU",
   23: "MAV_FRAME_ENUM_END",
 }
+
+export const EKF_STATUS_FLAGS = {
+  1: "EKF_ATTITUDE",
+  2: "EKF_VELOCITY_HORIZ",
+  4: "EKF_VELOCITY_VERT",
+  8: "EKF_POS_HORIZ_REL",
+  16: "EKF_POS_HORIZ_ABS",
+  32: "EKF_POS_VERT_ABS",
+  64: "EKF_POS_VERT_AGL",
+  128: "EKF_CONST_POS_MODE",
+  256: "EKF_PRED_POS_HORIZ_REL",
+  512: "EKF_PRED_POS_HORIZ_ABS",
+  1024: "EKF_UNINITIALIZED",
+  32768: "EKF_GPS_GLITCHING",
+}
+
+export function getActiveEKFFlags(statusValue) {
+  const activeFlags = []
+
+  for (const [flag, name] of Object.entries(EKF_STATUS_FLAGS)) {
+    const flagValue = parseInt(flag)
+    if (statusValue & flagValue) {
+      activeFlags.push(name)
+    }
+  }
+
+  return activeFlags
+}

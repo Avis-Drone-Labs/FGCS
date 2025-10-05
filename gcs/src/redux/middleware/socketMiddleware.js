@@ -53,6 +53,7 @@ import {
   setAttitudeData,
   setBatteryData,
   setDroneAircraftType,
+  setEkfStatusReportData,
   setExtraData,
   setGpsData,
   setGpsRawIntData,
@@ -206,6 +207,19 @@ const socketMiddleware = (store) => {
       case "BATTERY_STATUS":
         store.dispatch(setBatteryData(msg))
         break
+      case "EKF_STATUS_REPORT": {
+        const data = {
+          compass_variance: msg.compass_variance,
+          pos_horiz_variance: msg.pos_horiz_variance,
+          pos_vert_variance: msg.pos_vert_variance,
+          terrain_alt_variance: msg.terrain_alt_variance,
+          velocity_variance: msg.velocity_variance,
+          flags: msg.flags,
+        }
+        store.dispatch(setEkfStatusReportData(data))
+        window.ipcRenderer.invoke("app:update-ekf-status", data)
+        break
+      }
     }
   }
 

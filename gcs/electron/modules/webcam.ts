@@ -49,6 +49,7 @@ export function openWebcamPopout(
       },
       fullscreen: false,
       fullscreenable: false,
+      alwaysOnTop: true,
     })
   } else {
     console.warn("2nd webcam window requested, ignoring")
@@ -85,7 +86,6 @@ export function openWebcamPopout(
 }
 
 export function closeWebcamPopout(mainWindow: BrowserWindow | null) {
-  console.log("Destroying webcam window")
   destroyWebcamWindow()
   mainWindow?.webContents.send("app:webcam-closed")
 }

@@ -22,6 +22,9 @@ import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
 } from "./modules/aboutWindow"
+import registerEkfStatusIPC, {
+  destroyEkfStatusWindow,
+} from "./modules/ekfStatus"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -220,6 +223,7 @@ function createWindow() {
   registerWebcamIPC(win)
   registerAboutIPC()
   registerLinkStatsIPC()
+  registerEkfStatusIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -371,14 +375,19 @@ function startBackend() {
   })
 }
 
+function closeWindows() {
+  destroyWebcamWindow()
+  destroyAboutWindow()
+  destroyLinkStatsWindow()
+  destroyEkfStatusWindow()
+}
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 function closeWithBackend() {
   // Always close all popout windows first
-  destroyWebcamWindow()
-  destroyAboutWindow()
-  destroyLinkStatsWindow()
+  closeWindows()
   console.log("Killing backend")
   // kill any processes with the name "fgcs_backend.exe"
   // Windows
@@ -400,9 +409,7 @@ app.on("before-quit", () => {
     console.log("Stopping backend")
     spawnSync("pkill", ["-f", "fgcs_backend"])
     pythonBackend = null
-    destroyWebcamWindow()
-    destroyAboutWindow()
-    destroyLinkStatsWindow()
+    closeWindows()
   }
 })
 

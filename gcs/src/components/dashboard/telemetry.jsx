@@ -4,9 +4,9 @@
 */
 
 // Custom Components
+import { MAV_STATE } from "../../helpers/mavlinkConstants"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
-import { MAV_STATE } from "../../helpers/mavlinkConstants"
 
 // Redux
 import { useSelector } from "react-redux"
@@ -21,6 +21,7 @@ import {
   selectPrearmEnabled,
   selectTelemetry,
 } from "../../redux/slices/droneInfoSlice"
+import EkfDisplay from "./ekfDisplay"
 
 export default function TelemetrySection({
   calcIndicatorSize,
@@ -175,36 +176,51 @@ export default function TelemetrySection({
         </div>
       </div>
 
-      {/* Battery information */}
-      <div className="flex flex-col items-center">
-        <p>BATTERY</p>
-
-        <table>
-          <tbody>
-            {batteryData.map((battery) => (
-              <tr className="w-full" key={battery.id}>
-                <td className="px-4">BATTERY{battery.id}</td>
-                <td className="font-bold px-2 text-xl text-right">
-                  {(battery.voltages ? battery.voltages[0] / 1000 : 0).toFixed(
-                    2,
-                  )}
-                  V
-                </td>
-                <td className="font-bold px-2 text-xl text-right">
-                  {(battery.current_battery
-                    ? battery.current_battery / 100
-                    : 0
-                  ).toFixed(2)}
-                  A
-                </td>
-                <td className="font-bold px-2 text-xl text-right">
-                  {battery.battery_remaining ? battery.battery_remaining : 0}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* EKF and VIBE labels */}
+      <div className="flex flex-row items-center justify-center gap-10 my-4">
+        <EkfDisplay telemetryFontSize={telemetryFontSize} />
+        <div
+          className="font-bold hover:cursor-pointer"
+          style={{
+            fontSize: `${telemetryFontSize * 1.25}rem`,
+            lineHeight: `${telemetryFontSize * 1.75}rem`,
+          }}
+        >
+          VIBE
+        </div>
       </div>
+
+      {/* Battery information */}
+      {batteryData.length > 0 && (
+        <div className="flex flex-col items-center my-4">
+          <table>
+            <tbody>
+              {batteryData.map((battery) => (
+                <tr className="w-full" key={battery.id}>
+                  <td className="px-4">BATTERY{battery.id}</td>
+                  <td className="font-bold px-2 text-xl text-right">
+                    {(battery.voltages
+                      ? battery.voltages[0] / 1000
+                      : 0
+                    ).toFixed(2)}
+                    V
+                  </td>
+                  <td className="font-bold px-2 text-xl text-right">
+                    {(battery.current_battery
+                      ? battery.current_battery / 100
+                      : 0
+                    ).toFixed(2)}
+                    A
+                  </td>
+                  <td className="font-bold px-2 text-xl text-right">
+                    {battery.battery_remaining ? battery.battery_remaining : 0}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

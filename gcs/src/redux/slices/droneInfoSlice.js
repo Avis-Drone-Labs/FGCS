@@ -1,6 +1,10 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages"
-import { getFlightModeMap, MAV_STATE } from "../../helpers/mavlinkConstants"
+import {
+  getActiveEKFFlags,
+  getFlightModeMap,
+  MAV_STATE,
+} from "../../helpers/mavlinkConstants"
 
 const droneInfoSlice = createSlice({
   name: "droneInfo",
@@ -53,6 +57,15 @@ const droneInfoSlice = createSlice({
       lon: 0, // Stored in coords not int
       alt: 0,
     },
+    ekfStatusReportData: {
+      compass_variance: 0,
+      pos_horiz_variance: 0,
+      pos_vert_variance: 0,
+      terrain_alt_variance: 0,
+      velocity_variance: 0,
+      flags: 0,
+    },
+    ekfCalculatedStatus: 0,
     graphs: {
       selectedGraphs: {
         graph_a: null,
@@ -170,6 +183,35 @@ const droneInfoSlice = createSlice({
     setGuidedModePinData: (state, action) => {
       state.guidedModePinData = action.payload
     },
+    setEkfStatusReportData: (state, action) => {
+      state.ekfStatusReportData = action.payload
+
+      // Calculate EKF status value ranging from 0-1
+      // https://github.com/ArduPilot/MissionPlanner/blob/4d441bd4b1dbc08adce4d8b26e078e93760da3a7/ExtLibs/ArduPilot/CurrentState.cs#L2645-L2647
+      const vel = state.ekfStatusReportData.velocity_variance
+      const comp = state.ekfStatusReportData.compass_variance
+      const posHor = state.ekfStatusReportData.pos_horiz_variance
+      const posVer = state.ekfStatusReportData.pos_vert_variance
+      const terAlt = state.ekfStatusReportData.terrain_alt_variance
+      state.ekfCalculatedStatus = Math.max(vel, comp, posHor, posVer, terAlt)
+
+      // Check EKF flags to handle critical errors
+      // https://github.com/ArduPilot/MissionPlanner/blob/4d441bd4b1dbc08adce4d8b26e078e93760da3a7/ExtLibs/ArduPilot/CurrentState.cs#L2674-L2736
+      const activeFlags = getActiveEKFFlags(state.ekfStatusReportData.flags)
+      if (!activeFlags.includes("EKF_ATTITUDE")) {
+        // If we have no attitude solution
+        state.ekfCalculatedStatus = 1
+      } else if (!activeFlags.includes("EKF_VELOCITY_HORIZ")) {
+        // If we have GPS but no horizontal velocity solution
+        const gpsStatus = state.gpsRawIntData.fixType
+        if (gpsStatus > 0) {
+          state.ekfCalculatedStatus = 1
+        }
+      } else if (activeFlags.includes("EKF_UNINITIALIZED")) {
+        // EKF not initialized at all
+        state.ekfCalculatedStatus = 1
+      }
+    },
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -203,6 +245,8 @@ const droneInfoSlice = createSlice({
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
     selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
+    selectEkfStatusReportData: (state) => state.ekfStatusReportData,
+    selectEkfCalculatedStatus: (state) => state.ekfCalculatedStatus,
   },
 })
 
@@ -225,6 +269,7 @@ export const {
   setLastGraphMessage,
   setLoiterRadius,
   setGuidedModePinData,
+  setEkfStatusReportData,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -298,6 +343,8 @@ export const {
   selectExtraDroneData,
   selectGraphValues,
   selectLastGraphMessage,
+  selectEkfStatusReportData,
+  selectEkfCalculatedStatus,
 } = droneInfoSlice.selectors
 
 export default droneInfoSlice

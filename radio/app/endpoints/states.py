@@ -46,6 +46,7 @@ def set_state(data: SetStateType) -> None:
             "RC_CHANNELS",
             "ESC_TELEMETRY_5_TO_8",
             "MISSION_CURRENT",
+            "EKF_STATUS_REPORT",
         ],
         "missions": ["GLOBAL_POSITION_INT", "NAV_CONTROLLER_OUTPUT", "HEARTBEAT"],
         "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],

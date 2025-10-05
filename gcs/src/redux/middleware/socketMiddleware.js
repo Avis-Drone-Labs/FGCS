@@ -217,7 +217,7 @@ const socketMiddleware = (store) => {
           flags: msg.flags,
         }
         store.dispatch(setEkfStatusReportData(data))
-        window.ipcRenderer.invoke("app:update-ekf-data", data)
+        window.ipcRenderer.invoke("app:update-ekf-status", data)
         break
       }
     }

@@ -8,8 +8,8 @@ let ekfStatusWin: BrowserWindow | null = null
 export function openEkfStatusWindow() {
   if (ekfStatusWin === null) {
     ekfStatusWin = new BrowserWindow({
-      width: 500,
-      height: 300,
+      width: 700,
+      height: 400,
       frame: true,
       icon: path.join(process.env.VITE_PUBLIC, "app_icon.ico"),
       show: false,
@@ -20,6 +20,7 @@ export function openEkfStatusWindow() {
       },
       fullscreen: false,
       fullscreenable: false,
+      alwaysOnTop: true,
     })
   }
 

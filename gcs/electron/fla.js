@@ -326,6 +326,7 @@ export default async function openFile(event, filePath) {
 
     if (logType === null) {
       rl.close(); // Close the stream if we're not using it.
+      fileStream.destroy(); // Properly close the underlying file stream to prevent resource leaks.
       return { success: false, error: "Unknown log file type" }
     }
 

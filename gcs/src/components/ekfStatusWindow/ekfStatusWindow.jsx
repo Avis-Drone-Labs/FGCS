@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 
 export default function EkfStatusWindow() {
   const [ekfStatus, setEkfStatus] = useState({
-    airspeed_variance: 0,
     compass_variance: 0,
     pos_horiz_variance: 0,
     pos_vert_variance: 0,
@@ -28,12 +27,6 @@ export default function EkfStatusWindow() {
       >
         <h1 className="text-2xl font-bold text-white mb-4">EKF Status</h1>
         <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-          <div className="bg-falcongrey-700 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-white mb-2">
-              Airspeed Variance
-            </h2>
-            <p className="text-white">{ekfStatus.airspeed_variance}</p>
-          </div>
           <div className="bg-falcongrey-700 p-4 rounded-lg">
             <h2 className="text-lg font-semibold text-white mb-2">
               Compass Variance

@@ -209,7 +209,6 @@ const socketMiddleware = (store) => {
         break
       case "EKF_STATUS_REPORT": {
         const data = {
-          airspeed_variance: msg.airspeed_variance ?? 0,
           compass_variance: msg.compass_variance,
           pos_horiz_variance: msg.pos_horiz_variance,
           pos_vert_variance: msg.pos_vert_variance,

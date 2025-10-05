@@ -58,7 +58,6 @@ const droneInfoSlice = createSlice({
       alt: 0,
     },
     ekfStatusReportData: {
-      airspeed_variance: 0,
       compass_variance: 0,
       pos_horiz_variance: 0,
       pos_vert_variance: 0,

@@ -66,6 +66,7 @@ import {
   setOnboardControlSensorsEnabled,
   setRSSIData,
   setTelemetryData,
+  setVibrationData,
 } from "../slices/droneInfoSlice"
 import {
   addIdToItem,
@@ -218,6 +219,19 @@ const socketMiddleware = (store) => {
         }
         store.dispatch(setEkfStatusReportData(data))
         window.ipcRenderer.invoke("app:update-ekf-status", data)
+        break
+      }
+      case "VIBRATION": {
+        const data = {
+          vibration_x: msg.vibration_x,
+          vibration_y: msg.vibration_y,
+          vibration_z: msg.vibration_z,
+          clipping_0: msg.clipping_0,
+          clipping_1: msg.clipping_1,
+          clipping_2: msg.clipping_2,
+        }
+        store.dispatch(setVibrationData(data))
+        window.ipcRenderer.invoke("app:update-vibe-status", data)
         break
       }
     }

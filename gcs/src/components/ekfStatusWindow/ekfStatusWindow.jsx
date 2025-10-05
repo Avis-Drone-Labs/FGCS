@@ -13,7 +13,7 @@ import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // EKF Flags that are good when enabled
-const FLAGS_ENABLED_BAD = ["EKF_UNITIALIZED", "EKF_GPS_GLITCHING"]
+const FLAGS_ENABLED_BAD = ["EKF_UNINITIALIZED", "EKF_GPS_GLITCHING"]
 
 const EKF_VARIANCE_STRINGS = {
   compass_variance: "Compass Variance",
@@ -53,7 +53,6 @@ export default function EkfStatusWindow() {
 
   useEffect(() => {
     window.ipcRenderer.on("app:send-ekf-status", (_event, status) => {
-      console.log(status)
       setEkfVariances({
         compass_variance: status.compass_variance,
         pos_horiz_variance: status.pos_horiz_variance,

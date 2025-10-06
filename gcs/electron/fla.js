@@ -6,6 +6,9 @@ import fs from "fs"
 import readline from "readline";
 import createRecentLogsManager from "../settings/recentLogManager"
 
+let aircraftType = null
+let lineCount = 0
+const UPDATE_THROTTLE_MS = 100; // Update every 100ms
 const recentLogsManager = createRecentLogsManager()
 
 async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
@@ -19,9 +22,6 @@ async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
     const messages = {}
     const units = {}
 
-    let aircraftType = null
-    let lineCount = 0
-    const UPDATE_THROTTLE_MS = 100; // Update every 100ms
     let lastUpdateTime = 0;
 
     rl.on('line', (line) => {
@@ -151,15 +151,17 @@ async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
       resolve(messages)
     })
 
-    rl.on('error', reject)
+    rl.on('error', (err) => {
+      console.error("Error reading log file:", err)
+      reject(err)
+    })
   })
 }
 
 async function parseFgcsTelemetryLogFile(rl, fileStream, fileSize, webContents) {
   const formatMessages = {}
   const messages = {}
-  let lineCount = 0
-  const UPDATE_THROTTLE_MS = 100; // Update every 100ms
+
   let lastUpdateTime = 0;
 
   return new Promise((resolve, reject) => {
@@ -244,7 +246,10 @@ async function parseFgcsTelemetryLogFile(rl, fileStream, fileSize, webContents) 
       resolve(messages)
     })
 
-    rl.on('error', reject)
+    rl.on('error', (err) => {
+      console.error("Error reading log file:", err)
+      reject(err)
+    })
   })
 
 }

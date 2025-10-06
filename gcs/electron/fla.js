@@ -6,9 +6,6 @@ import fs from "fs"
 import readline from "readline";
 import createRecentLogsManager from "../settings/recentLogManager"
 
-let aircraftType = null
-let lineCount = 0
-let lastUpdateTime = 0;
 const UPDATE_THROTTLE_MS = 100; // Update every 100ms
 const recentLogsManager = createRecentLogsManager()
 
@@ -18,6 +15,9 @@ async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
 
   return new Promise((resolve, reject) => {
     const stringTypes = new Set(["n", "N", "Z", "M"])
+    let aircraftType = null
+    let lineCount = 0
+    let lastUpdateTime = 0;
 
     const formatMessages = {}
     const messages = {}
@@ -160,6 +160,9 @@ async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
 async function parseFgcsTelemetryLogFile(rl, fileStream, fileSize, webContents) {
   const formatMessages = {}
   const messages = {}
+  let aircraftType = null // TODO: determine aircraft type from log
+  let lineCount = 0
+  let lastUpdateTime = 0;
 
   return new Promise((resolve, reject) => {
     rl.on('line', (line) => {

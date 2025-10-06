@@ -454,6 +454,106 @@ class MissionController:
             "message": f"Waypoint file loaded {loader.count()} points successfully",
         }
 
+    def loadMissionData(self, mission_data: List[dict], mission_type: int) -> Response:
+        """
+        Loads mission data from frontend into the appropriate mission loader.
+
+        Args:
+            mission_data (List[dict]): List of mission items from frontend
+            mission_type (int): The type of mission to load. 0=Mission,1=Fence,2=Rally.
+        """
+        mission_type_check = self._checkMissionType(mission_type)
+        if not mission_type_check.get("success"):
+            return mission_type_check
+
+        if mission_type == TYPE_MISSION:
+            loader = self.missionLoader
+        elif mission_type == TYPE_FENCE:
+            loader = self.fenceLoader
+        else:
+            loader = self.rallyLoader
+
+        # Clear existing mission data
+        loader.clear()
+
+        if not mission_data:
+            return {
+                "success": True,
+                "message": "Mission data loaded successfully (empty mission)",
+            }
+
+        try:
+            for item in mission_data:
+                # Convert coordinates from integer format (1e7 * degrees) to float degrees
+                x_coord = item.get("x", 0) / 1e7 if item.get("x", 0) != 0 else 0.0
+                y_coord = item.get("y", 0) / 1e7 if item.get("y", 0) != 0 else 0.0
+                
+                # Create mission item from frontend data
+                mission_item = mavutil.mavlink.MAVLink_mission_item_message(
+                    self.drone.target_system,
+                    self.drone.target_component,
+                    item.get("seq", 0),
+                    item.get("frame", 3),  # MAV_FRAME_GLOBAL_RELATIVE_ALT
+                    item.get("command", 16),  # MAV_CMD_NAV_WAYPOINT
+                    item.get("current", 0),
+                    item.get("autocontinue", 1),
+                    item.get("param1", 0.0),
+                    item.get("param2", 0.0),
+                    item.get("param3", 0.0),
+                    item.get("param4", 0.0),
+                    x_coord,  # latitude in degrees
+                    y_coord,  # longitude in degrees
+                    item.get("z", 0.0),  # altitude
+                    mission_type,
+                )
+                loader.add(mission_item)
+
+            self.drone.logger.info(
+                f"Loaded {len(mission_data)} mission items into {['mission', 'fence', 'rally'][mission_type]} loader"
+            )
+            return {
+                "success": True,
+                "message": f"Mission data loaded successfully with {len(mission_data)} items",
+            }
+
+        except Exception as e:
+            self.drone.logger.error(f"Error loading mission data: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Failed to load mission data: {str(e)}",
+            }
+
+    def uploadMissionData(self, mission_data: List[dict], mission_type: int) -> Response:
+        """
+        Loads mission data from frontend and uploads it to the drone.
+
+        Args:
+            mission_data (List[dict]): List of mission items from frontend
+            mission_type (int): The type of mission to upload. 0=Mission,1=Fence,2=Rally.
+        """
+        self.drone.logger.info(f"Starting mission upload process for type {mission_type}")
+        self.drone.logger.debug(f"Mission data received: {len(mission_data)} items")
+        
+        # First load the mission data into the loader
+        self.drone.logger.info("Loading mission data into loader...")
+        load_result = self.loadMissionData(mission_data, mission_type)
+        if not load_result.get("success"):
+            self.drone.logger.error(f"Failed to load mission data: {load_result}")
+            return load_result
+
+        self.drone.logger.info("Mission data loaded successfully")
+        
+        # Then upload the mission to the drone
+        self.drone.logger.info("Uploading mission to drone...")
+        upload_result = self.uploadMission(mission_type)
+        
+        if upload_result.get("success"):
+            self.drone.logger.info("Mission upload completed successfully")
+        else:
+            self.drone.logger.error(f"Mission upload failed: {upload_result}")
+            
+        return upload_result
+
     def uploadMission(self, mission_type: int) -> Response:
         """
         Uploads the current mission to the drone.

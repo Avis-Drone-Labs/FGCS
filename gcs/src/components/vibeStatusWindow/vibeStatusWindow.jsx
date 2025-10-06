@@ -1,3 +1,7 @@
+/*
+  A custom component for displaying vibration status and clipping information in a dedicated window.
+*/
+
 "use client"
 
 import { Progress } from "@mantine/core"
@@ -6,6 +10,10 @@ import { useEffect, useState } from "react"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import {
+  VIBE_STATUS_DANGER_LEVEL,
+  VIBE_STATUS_WARNING_LEVEL,
+} from "../../helpers/mavlinkConstants"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const VIBE_STRINGS = {
@@ -29,8 +37,8 @@ function getPercentageFromValue(value) {
 }
 
 function getColourFromValue(value) {
-  if (value > 60) return RED
-  if (value > 30) return YELLOW
+  if (value > VIBE_STATUS_DANGER_LEVEL) return RED
+  if (value > VIBE_STATUS_WARNING_LEVEL) return YELLOW
   return ""
 }
 

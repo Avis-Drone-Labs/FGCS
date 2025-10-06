@@ -1,3 +1,7 @@
+/*
+A component that displays "VIBE" text, which changes color based on vibration data, on the dashboard.
+*/
+
 import { useMemo } from "react"
 import { useSelector } from "react-redux"
 import { selectVibrationData } from "../../redux/slices/droneInfoSlice"
@@ -5,6 +9,10 @@ import { selectVibrationData } from "../../redux/slices/droneInfoSlice"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import {
+  VIBE_STATUS_DANGER_LEVEL,
+  VIBE_STATUS_WARNING_LEVEL,
+} from "../../helpers/mavlinkConstants"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const RED = tailwindColors.red[500]
@@ -20,8 +28,8 @@ export default function VibeDisplay({ telemetryFontSize }) {
       vibrationData.vibration_z,
     ]
 
-    if (vibes.some((v) => v > 60)) return RED
-    if (vibes.some((v) => v > 30)) return YELLOW
+    if (vibes.some((v) => v > VIBE_STATUS_DANGER_LEVEL)) return RED
+    if (vibes.some((v) => v > VIBE_STATUS_WARNING_LEVEL)) return YELLOW
     return ""
   }, [vibrationData])
 

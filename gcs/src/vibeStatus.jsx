@@ -1,3 +1,7 @@
+/*
+  Entry point for the Vibe Status Window application.
+*/
+
 import "./css/index.css" // Needs to be at the top of the file
 import "./css/resizable.css"
 

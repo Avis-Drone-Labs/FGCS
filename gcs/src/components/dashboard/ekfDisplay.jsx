@@ -5,6 +5,10 @@ import { selectEkfCalculatedStatus } from "../../redux/slices/droneInfoSlice"
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import {
+  EKF_STATUS_DANGER_LEVEL,
+  EKF_STATUS_WARNING_LEVEL,
+} from "../../helpers/mavlinkConstants"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const RED = tailwindColors.red[500]
@@ -14,8 +18,8 @@ export default function EkfDisplay({ telemetryFontSize }) {
   const ekfCalculatedStatus = useSelector(selectEkfCalculatedStatus)
 
   const textColour = useMemo(() => {
-    if (ekfCalculatedStatus > 0.8) return RED
-    if (ekfCalculatedStatus > 0.5) return YELLOW
+    if (ekfCalculatedStatus > EKF_STATUS_DANGER_LEVEL) return RED
+    if (ekfCalculatedStatus > EKF_STATUS_WARNING_LEVEL) return YELLOW
     return ""
   }, [ekfCalculatedStatus])
 

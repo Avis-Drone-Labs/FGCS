@@ -24,12 +24,15 @@ import registerAboutIPC, {
 } from "./modules/aboutWindow"
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
-} from "./modules/ekfStatus"
+} from "./modules/ekfStatusWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
+import registerVibeStatusIPC, {
+  destroyVibeStatusWindow,
+} from "./modules/vibeStatusWindow"
+import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -224,6 +227,7 @@ function createWindow() {
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
+  registerVibeStatusIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -380,6 +384,7 @@ function closeWindows() {
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
+  destroyVibeStatusWindow()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

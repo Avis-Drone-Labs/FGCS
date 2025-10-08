@@ -22,6 +22,7 @@ import {
   selectTelemetry,
 } from "../../redux/slices/droneInfoSlice"
 import EkfDisplay from "./ekfDisplay"
+import VibeDisplay from "./vibeDisplay"
 
 export default function TelemetrySection({
   calcIndicatorSize,
@@ -179,15 +180,7 @@ export default function TelemetrySection({
       {/* EKF and VIBE labels */}
       <div className="flex flex-row items-center justify-center gap-10 my-4">
         <EkfDisplay telemetryFontSize={telemetryFontSize} />
-        <div
-          className="font-bold hover:cursor-pointer"
-          style={{
-            fontSize: `${telemetryFontSize * 1.25}rem`,
-            lineHeight: `${telemetryFontSize * 1.75}rem`,
-          }}
-        >
-          VIBE
-        </div>
+        <VibeDisplay telemetryFontSize={telemetryFontSize} />
       </div>
 
       {/* Battery information */}

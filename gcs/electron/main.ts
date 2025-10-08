@@ -24,15 +24,15 @@ import registerAboutIPC, {
 } from "./modules/aboutWindow"
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
-} from "./modules/ekfStatus"
+} from "./modules/ekfStatusWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
-} from "./modules/vibeStatus"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
+} from "./modules/vibeStatusWindow"
+import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
 // The built directory structure
 //
 // ├─┬─┬ dist

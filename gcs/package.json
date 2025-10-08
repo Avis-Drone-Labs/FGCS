@@ -26,6 +26,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@headlessui/react": "2.1.4",
     "@mantine/code-highlight": "^7.17.1",
     "@mantine/core": "^7.17.3",
@@ -43,6 +44,8 @@
     "@tiptap/starter-kit": "^2.11.6",
     "@tremor/react": "^3.12.1",
     "@turf/turf": "^7.2.0",
+    "@types/ws": "^7.4.7",
+    "bufferutil": "^4.0.9",
     "chart.js": "^4.4.2",
     "chartjs-adapter-moment": "^1.0.1",
     "chartjs-plugin-annotation": "^3.0.1",
@@ -75,8 +78,10 @@
     "tailwind-merge": "^2.1.0",
     "tailwindcss": "^3.3.6",
     "use-sound": "^4.0.1",
+    "utf-8-validate": "^6.0.5",
     "uuid": "^11.1.0",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "ws": "^7.5.10"
   },
   "devDependencies": {
     "@playwright/test": "^1.46.0",

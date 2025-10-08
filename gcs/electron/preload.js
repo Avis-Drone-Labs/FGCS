@@ -16,6 +16,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:close-webcam-window",
   "app:start-rtsp-stream",
   "app:stop-rtsp-stream",
+  "app:test-rtsp-connection",
   "ffmpeg:get-binary-info",
   "ffmpeg:download-binary",
   "ffmpeg:delete-binary",

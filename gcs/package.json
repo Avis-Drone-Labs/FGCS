@@ -49,6 +49,7 @@
     "chartjs-plugin-zoom": "^2.0.1",
     "colormap": "^2.3.2",
     "eslint-config-prettier": "^9.1.0",
+    "ffbinaries": "^1.1.6",
     "glob": "^10.3.12",
     "mapbox-gl": "^3.0.1",
     "maplibre-gl": "^3.6.2",

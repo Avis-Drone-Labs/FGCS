@@ -25,10 +25,14 @@ import registerAboutIPC, {
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatus"
+import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
+import registerRTSPStreamIPC, {
+  cleanupAllRTSPStreams,
+} from "./modules/rtspStream"
 import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
 // The built directory structure
 //
@@ -221,6 +225,8 @@ function createWindow() {
   })
 
   registerWebcamIPC(win)
+  registerFFmpegBinaryIPC()
+  registerRTSPStreamIPC()
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
@@ -380,6 +386,7 @@ function closeWindows() {
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
+  cleanupAllRTSPStreams()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

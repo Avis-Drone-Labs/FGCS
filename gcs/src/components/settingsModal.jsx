@@ -9,9 +9,14 @@ import {
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
-import { IconTrash } from "@tabler/icons-react"
+import { IconAlertCircle, IconCheck, IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import DefaultSettings from "../../data/default_settings.json"
+import {
+  closeLoadingNotification,
+  redColor,
+  showLoadingNotification,
+} from "../helpers/notification"
 
 const isValidNumber = (num, range) => {
   return (
@@ -125,7 +130,168 @@ function ExtendableNumberSetting({ settingName, range, suffix }) {
   )
 }
 
+function FFmpegBinarySetting({ settingName }) {
+  const { getSetting, setSetting } = useSettings()
+  const [binaryInfo, setBinaryInfo] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Load binary info on component mount
+  useEffect(() => {
+    loadBinaryInfo()
+  }, [])
+
+  const loadBinaryInfo = async () => {
+    try {
+      const info = await window.ipcRenderer.invoke("ffmpeg:get-binary-info")
+      setBinaryInfo(info)
+
+      // Update the setting with the current path
+      if (info.exists && info.path !== getSetting(settingName)) {
+        setSetting(settingName, info.path)
+      }
+    } catch (error) {
+      console.error("Failed to load FFmpeg binary info:", error)
+    }
+  }
+
+  const handleDownload = async () => {
+    const loadingNotificationId = showLoadingNotification(
+      "Info",
+      "Downloading FFmpeg binary...",
+    )
+    setIsLoading(true)
+
+    try {
+      const result = await window.ipcRenderer.invoke("ffmpeg:download-binary")
+
+      if (result.success) {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Success",
+          "FFmpeg binary downloaded successfully!",
+        )
+        setSetting(settingName, result.path)
+        await loadBinaryInfo()
+      } else {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Error",
+          `Download failed: ${result.error}`,
+          { color: redColor },
+        )
+      }
+    } catch (error) {
+      closeLoadingNotification(
+        loadingNotificationId,
+        "Error",
+        `Download failed: ${error.message}`,
+        { color: redColor },
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    const loadingNotificationId = showLoadingNotification(
+      "Info",
+      "Removing FFmpeg binary...",
+    )
+    setIsLoading(true)
+
+    try {
+      const result = await window.ipcRenderer.invoke("ffmpeg:delete-binary")
+
+      if (result.success) {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Success",
+          "Binary removed successfully!",
+        )
+        setSetting(settingName, "")
+        await loadBinaryInfo()
+      } else {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Error",
+          "Failed to remove binary",
+          { color: redColor },
+        )
+      }
+    } catch (error) {
+      closeLoadingNotification(
+        loadingNotificationId,
+        "Error",
+        `Failed to remove binary: ${error.message}`,
+        { color: redColor },
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "Unknown size"
+    const mb = bytes / (1024 * 1024)
+    return `${mb.toFixed(1)} MB`
+  }
+
+  return (
+    <div className="px-10">
+      {binaryInfo?.exists ? (
+        <div className="bg-green-900/20 border border-green-700 rounded p-3">
+          <div className="flex flex-row items-center gap-2 mb-2">
+            <IconCheck size={16} className="text-green-400" />
+            <p>FFmpeg binary is installed</p>
+            <br />
+          </div>
+          <p className="text-xs text-slate-400 mb-2">Path: {binaryInfo.path}</p>
+          <p className="text-xs text-slate-400 mb-2">
+            Size: {formatFileSize(binaryInfo.size)}
+          </p>
+          <Button
+            size="compact-xs"
+            color="red"
+            onClick={handleDelete}
+            loading={isLoading}
+          >
+            Remove Binary
+          </Button>
+        </div>
+      ) : (
+        <div className="bg-orange-900/20 border border-orange-700 rounded p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <IconAlertCircle size={16} className="text-orange-400" />
+            <p>FFmpeg binary not found</p>
+          </div>
+          <p className="text-xs text-slate-400 mb-2">
+            Download FFmpeg to enable RTSP stream conversion
+          </p>
+          <Button
+            size="xs"
+            color="blue"
+            onClick={handleDownload}
+            loading={isLoading}
+          >
+            Download FFmpeg
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Setting({ settingName, df }) {
+  // Special handling for FFmpeg binary settings
+  if (settingName === "Video.ffmpegBinaryPath") {
+    return <FFmpegBinarySetting settingName={settingName} />
+  }
+
+  // Skip the download status setting as it's managed internally
+  if (settingName === "Video.ffmpegDownloadStatus") {
+    return null
+  }
+
   return (
     <div
       className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}
@@ -193,15 +359,18 @@ function SettingsModal() {
         {settingTabs.map((t) => {
           return (
             <Tabs.Panel className="space-y-4" value={t} key={t}>
-              {Object.keys(DefaultSettings[t]).map((s) => {
-                return (
-                  <Setting
-                    settingName={`${t}.${s}`}
-                    df={DefaultSettings[t][s]}
-                    key={`${t}.${s}`}
-                  />
-                )
-              })}
+              {Object.keys(DefaultSettings[t])
+                .map((s) => {
+                  const setting = (
+                    <Setting
+                      settingName={`${t}.${s}`}
+                      df={DefaultSettings[t][s]}
+                      key={`${t}.${s}`}
+                    />
+                  )
+                  return setting
+                })
+                .filter(Boolean)}
               {Object.keys(DefaultSettings[t]).length == 0 && (
                 <p className="pl-4 pt-2">No settings available right now.</p>
               )}

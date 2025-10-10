@@ -51,7 +51,7 @@ import ResizableInfoBox from "./components/dashboard/resizableInfoBox"
 import StatusBar, { StatusSection } from "./components/dashboard/statusBar"
 import StatusMessages from "./components/dashboard/statusMessages"
 import TabsSection from "./components/dashboard/tabsSection"
-import TelemetrySection from "./components/dashboard/telemetry"
+import TelemetrySection from "./components/dashboard/telemetrySection/telemetry"
 import Layout from "./components/layout"
 
 // Tailwind styling

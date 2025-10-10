@@ -24,9 +24,8 @@ import registerAboutIPC, {
 } from "./modules/aboutWindow"
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
-} from "./modules/ekfStatus"
-import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 } from "./modules/ekfStatusWindow"
+import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -34,11 +33,11 @@ import registerLinkStatsIPC, {
 import registerRTSPStreamIPC, {
   cleanupAllRTSPStreams,
 } from "./modules/rtspStream"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcam"
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
 import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
+
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -230,12 +229,12 @@ function createWindow() {
   })
 
   registerWebcamIPC(win)
-  registerFFmpegBinaryIPC()
-  registerRTSPStreamIPC()
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
   registerVibeStatusIPC()
+  registerFFmpegBinaryIPC()
+  registerRTSPStreamIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -392,8 +391,8 @@ function closeWindows() {
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
-  cleanupAllRTSPStreams()
   destroyVibeStatusWindow()
+  cleanupAllRTSPStreams()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

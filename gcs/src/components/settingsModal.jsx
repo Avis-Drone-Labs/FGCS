@@ -130,6 +130,120 @@ function ExtendableNumberSetting({ settingName, range, suffix }) {
   )
 }
 
+function ExtendableTextSetting({ settingName, df }) {
+  const { getSetting, setSetting } = useSettings()
+
+  const [items, setItems] = useState(
+    getSetting(settingName).length > 0
+      ? getSetting(settingName).map((item) => {
+          const newItem = { id: generateId() }
+          df.fields.forEach((field) => {
+            newItem[field.key] = item[field.key] || ""
+          })
+          return newItem
+        })
+      : [],
+  )
+
+  useEffect(() => {
+    const cleanItems = items.map((item) => {
+      const cleanItem = {}
+      df.fields.forEach((field) => {
+        cleanItem[field.key] = item[field.key]
+      })
+      return cleanItem
+    })
+    setSetting(settingName, cleanItems)
+  }, [items, settingName, setSetting, df.fields])
+
+  const updateItemField = (id, fieldKey, value) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, [fieldKey]: value } : item,
+      ),
+    )
+  }
+
+  const removeItem = (id) => {
+    setItems((prev) => prev.filter((item) => item.id !== id))
+  }
+
+  const validateField = (field, value) => {
+    if (!field.validation || !value) return { isValid: true, error: null }
+
+    switch (field.validation) {
+      case "rtsp":
+        try {
+          const parsedUrl = new URL(value)
+          const isValid = parsedUrl.protocol === "rtsp:"
+          return {
+            isValid,
+            error: isValid ? null : "Invalid RTSP URL",
+          }
+        } catch {
+          return { isValid: false, error: "Invalid RTSP URL" }
+        }
+      default:
+        return { isValid: true, error: null }
+    }
+  }
+
+  const addNewItem = () => {
+    const newItem = { id: generateId() }
+    df.fields.forEach((field) => {
+      newItem[field.key] = ""
+    })
+    setItems([...items, newItem])
+  }
+
+  return (
+    <div className="flex flex-col shrink-0 items-end gap-3">
+      {items.map((item) => (
+        <div key={item.id} className="flex gap-2 items-start">
+          <button
+            className="text-falconred-600 hover:text-falconred-700 p-1 rounded-full mt-1"
+            onClick={() => removeItem(item.id)}
+            title={`Remove ${df.display.toLowerCase().slice(0, -1)}`}
+          >
+            <IconTrash size={20} />
+          </button>
+          <div className="flex flex-col gap-1 min-w-80">
+            {df.fields.map((field) => {
+              const validation = validateField(field, item[field.key])
+              return (
+                <Input
+                  key={field.key}
+                  placeholder={field.placeholder}
+                  value={item[field.key]}
+                  onChange={(e) =>
+                    updateItemField(item.id, field.key, e.currentTarget.value)
+                  }
+                  size="sm"
+                  error={validation.error}
+                  rightSection={
+                    item[field.key] && field.validation ? (
+                      validation.isValid ? (
+                        <IconCheck size={16} className="text-green-500" />
+                      ) : (
+                        <IconAlertCircle size={16} className="text-red-500" />
+                      )
+                    ) : null
+                  }
+                />
+              )
+            })}
+          </div>
+        </div>
+      ))}
+      <div className="w-full pl-9">
+        <Button fullWidth onClick={addNewItem} size="sm">
+          Add {df.display.slice(0, -1)}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function FFmpegBinarySetting({ settingName }) {
   const { getSetting, setSetting } = useSettings()
   const [binaryInfo, setBinaryInfo] = useState(null)
@@ -294,7 +408,7 @@ function Setting({ settingName, df }) {
 
   return (
     <div
-      className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}
+      className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && df.type != "extendableText" && "items-center"} px-10 `}
     >
       <div className="space-y-px">
         <div>{df.display}:</div>
@@ -306,6 +420,8 @@ function Setting({ settingName, df }) {
           range={df.range || null}
           suffix={df.suffix}
         />
+      ) : df.type == "extendableText" ? (
+        <ExtendableTextSetting settingName={settingName} df={df} />
       ) : df.type == "number" ? (
         <NumberSetting settingName={settingName} range={df.range || null} />
       ) : df.type == "boolean" ? (

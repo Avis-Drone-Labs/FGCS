@@ -35,6 +35,8 @@ const initialState = {
 
   currentPage: "dashboard",
   outsideVisibility: false, // local
+
+  videoSource: null,
 }
 
 const droneConnectionSlice = createSlice({
@@ -117,6 +119,9 @@ const droneConnectionSlice = createSlice({
         state.outsideVisibility = action.payload
       }
     },
+    setVideoSource: (state, action) => {
+      state.videoSource = action.payload
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -152,6 +157,8 @@ const droneConnectionSlice = createSlice({
     selectWireless: (state) => state.wireless,
     selectCurrentPage: (state) => state.currentPage,
     selectOutsideVisibility: (state) => state.outsideVisibility,
+    selectVideoSourceType: (state) => state.videoSourceType,
+    selectVideoSource: (state) => state.videoSource,
   },
 })
 
@@ -172,6 +179,7 @@ export const {
   setWireless,
   setCurrentPage,
   setOutsideVisibility,
+  setVideoSource,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -205,6 +213,7 @@ export const {
   selectWireless,
   selectCurrentPage,
   selectOutsideVisibility,
+  selectVideoSource,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

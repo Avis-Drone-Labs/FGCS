@@ -12,7 +12,6 @@ import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
-import RTSPStreamTabsSection from "./tabsSectionTabs/rtspStreamTabsSection"
 
 // Redux
 import { useSelector } from "react-redux"
@@ -35,7 +34,6 @@ export default function TabsSection({ currentFlightModeNumber }) {
         <Tabs.Tab value="actions">Actions</Tabs.Tab>
         <Tabs.Tab value="mission">Mission</Tabs.Tab>
         <Tabs.Tab value="camera">Camera</Tabs.Tab>
-        <Tabs.Tab value="rtsp-streams">RTSP Streams</Tabs.Tab>
         <Tabs.Tab value="preFlightChecklist">Pre-Flight Checklist</Tabs.Tab>
       </Tabs.List>
 
@@ -62,9 +60,6 @@ export default function TabsSection({ currentFlightModeNumber }) {
 
       {/* Camera */}
       <CameraTabsSection tabPadding={tabPadding} />
-
-      {/* RTSP Streams */}
-      <RTSPStreamTabsSection tabPadding={tabPadding} />
 
       {/* Pre Flight Checklist */}
       <PreFlightChecklistTab tabPadding={tabPadding} />

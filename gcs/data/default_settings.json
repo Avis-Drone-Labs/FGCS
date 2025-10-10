@@ -73,6 +73,25 @@
       "type": "string",
       "display": "FFmpeg Download Status",
       "description": "Status of FFmpeg binary download"
+    },
+    "rtspStreams": {
+      "default": [],
+      "type": "extendableText",
+      "display": "RTSP Streams",
+      "description": "List of configured RTSP video streams",
+      "fields": [
+        {
+          "key": "name",
+          "label": "Stream Name",
+          "placeholder": "Stream name (e.g., Front Camera)"
+        },
+        {
+          "key": "url",
+          "label": "RTSP URL",
+          "placeholder": "rtsp://192.168.1.100:554/stream",
+          "validation": "rtsp"
+        }
+      ]
     }
   }
 }

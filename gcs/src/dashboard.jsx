@@ -52,6 +52,7 @@ import StatusBar, { StatusSection } from "./components/dashboard/statusBar"
 import StatusMessages from "./components/dashboard/statusMessages"
 import TabsSection from "./components/dashboard/tabsSection"
 import TelemetrySection from "./components/dashboard/telemetrySection/telemetry"
+import VideoWidget from "./components/dashboard/videoWidget"
 import Layout from "./components/layout"
 
 // Tailwind styling
@@ -228,6 +229,9 @@ export default function Dashboard() {
           setFollowDrone={setFollowDrone}
           mapRef={mapRef}
         />
+
+        {/* Video Widget for RTSP streams */}
+        <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
 
         {connectedToDrone && (
           <div className="absolute bottom-0 right-0 z-20">

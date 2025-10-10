@@ -506,3 +506,8 @@ export function getActiveEKFFlags(statusValue) {
 
   return activeFlags
 }
+
+export const EKF_STATUS_WARNING_LEVEL = 0.5
+export const EKF_STATUS_DANGER_LEVEL = 0.8
+export const VIBE_STATUS_WARNING_LEVEL = 30
+export const VIBE_STATUS_DANGER_LEVEL = 60

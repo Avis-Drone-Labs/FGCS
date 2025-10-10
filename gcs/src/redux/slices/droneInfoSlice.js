@@ -66,6 +66,14 @@ const droneInfoSlice = createSlice({
       flags: 0,
     },
     ekfCalculatedStatus: 0,
+    vibrationData: {
+      vibration_x: 0,
+      vibration_y: 0,
+      vibration_z: 0,
+      clipping_0: 0,
+      clipping_1: 0,
+      clipping_2: 0,
+    },
     graphs: {
       selectedGraphs: {
         graph_a: null,
@@ -212,6 +220,9 @@ const droneInfoSlice = createSlice({
         state.ekfCalculatedStatus = 1
       }
     },
+    setVibrationData: (state, action) => {
+      state.vibrationData = action.payload
+    },
   },
   selectors: {
     selectAttitude: (state) => state.attitudeData,
@@ -247,6 +258,7 @@ const droneInfoSlice = createSlice({
     selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
     selectEkfStatusReportData: (state) => state.ekfStatusReportData,
     selectEkfCalculatedStatus: (state) => state.ekfCalculatedStatus,
+    selectVibrationData: (state) => state.vibrationData,
   },
 })
 
@@ -270,6 +282,7 @@ export const {
   setLoiterRadius,
   setGuidedModePinData,
   setEkfStatusReportData,
+  setVibrationData,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -345,6 +358,7 @@ export const {
   selectLastGraphMessage,
   selectEkfStatusReportData,
   selectEkfCalculatedStatus,
+  selectVibrationData,
 } = droneInfoSlice.selectors
 
 export default droneInfoSlice

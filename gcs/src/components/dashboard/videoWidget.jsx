@@ -21,6 +21,7 @@ import {
 import { useSelector } from "react-redux"
 import Webcam from "react-webcam"
 import { showSuccessNotification } from "../../helpers/notification"
+import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectVideoSource } from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 
@@ -44,7 +45,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   const jsmpegPlayerRef = useRef(null)
 
   function updateScale(newScale) {
-    const clampedScale = Math.max(0.5, Math.min(3, newScale)) // Clamp between 0.5x and 3x
+    const clampedScale = Math.max(1, Math.min(3, newScale)) // Clamp between 1x and 3x
     setScale(clampedScale)
 
     // Recalculate dimensions based on new scale
@@ -239,8 +240,11 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       />
 
       <div
-        className="absolute bottom-4 min-w-[350px] bg-falcongrey-900/95 border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
-        style={{ left: `${telemetryPanelWidth + 16}px` }}
+        className="absolute bottom-4 min-w-[350px]  border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
+        style={{
+          left: `${telemetryPanelWidth + 16}px`,
+          background: GetOutsideVisibilityColor(),
+        }}
       >
         <div className="p-2">
           <div className="flex items-center justify-between mb-2">
@@ -293,7 +297,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
               </>
             ) : (
               <div
-                className="bg-falcongrey-800 rounded flex flex-col items-center justify-center text-center"
+                className=" rounded flex flex-col items-center justify-center text-center mx-auto"
                 style={{
                   width: `${videoDimensions.width}px`,
                   height: `${videoDimensions.height}px`,

@@ -27,8 +27,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 
   // Stop any existing stream before starting a new one
   if (activeStream) {
-    console.log("Stopping existing stream before starting new one")
-    stopCurrentStream()
+    stopCurrentStream("manual")
   }
 
   // If requesting the same stream that's already running, return its URL
@@ -113,10 +112,9 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
         console.log("FFmpeg stderr:", output)
       }
 
-      // Debug: Log all stderr output during startup to help diagnose issues
-      if (!streamStarted) {
-        console.log("DEBUG stderr during startup:", JSON.stringify(output))
-      }
+      // if (!streamStarted) {
+      //   console.log("DEBUG stderr during startup:", JSON.stringify(output))
+      // }
 
       // Look for error patterns and handle immediately (but not if we're manually stopping)
       if (
@@ -126,7 +124,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "Network connectivity issue: Cannot connect to RTSP stream. Check the URL and network connectivity."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -135,7 +132,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "Invalid RTSP stream format: The stream format is not supported or the URL is incorrect."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -144,7 +140,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "Permission denied: Access to the RTSP stream is restricted. Check authentication credentials."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -153,7 +148,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "RTSP stream not found: The specified stream URL does not exist or is not accessible."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -161,7 +155,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
         output.includes("Immediate exit requested")
       ) {
         const errorMsg = "FFmpeg was terminated unexpectedly."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -173,7 +166,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "Failed to resolve hostname: The RTSP URL's hostname could not be resolved. Check the URL for typos or DNS issues."
-        console.error("DETECTED HOSTNAME ERROR:", errorMsg)
+        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -182,7 +175,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "RTSP server error: The server returned a 4xx error code. Check the URL and authentication."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (
@@ -191,14 +183,12 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       ) {
         const errorMsg =
           "Connection timeout: The RTSP server is not responding. Check the URL and network connectivity."
-        console.error("DETECTED ERROR:", errorMsg)
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (output.includes("Stream mapping:")) {
-        console.log("FFmpeg successfully connected to RTSP stream")
         streamStarted = true
       } else if (output.includes("Video:") || output.includes("Audio:")) {
-        console.log("Stream info:", output.trim())
+        // Stream info message
       }
     })
 
@@ -244,7 +234,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
     })
 
     // Wait for FFmpeg to either start successfully or fail (with timeout)
-    console.log("Waiting for FFmpeg to initialize...")
     await new Promise<void>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         if (!streamStarted && !startupError) {
@@ -256,7 +245,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
         }
       }, 10000) // 10 second timeout
 
-      // Check every 100ms if stream started or error occurred
+      // Check every 50ms if stream started or error occurred
       const checkInterval = setInterval(() => {
         if (startupError) {
           clearTimeout(timeoutId)
@@ -265,10 +254,9 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
         } else if (streamStarted) {
           clearTimeout(timeoutId)
           clearInterval(checkInterval)
-          console.log("FFmpeg initialization completed successfully")
           resolve()
         }
-      }, 100)
+      }, 50)
     })
 
     // Create HTTP server and WebSocket server for JSMpeg streaming
@@ -331,7 +319,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 let mainWindowRef: BrowserWindow | null = null
 
 function stopCurrentStream(
-  reason?: string,
+  reason: string,
   error?: string,
   ffmpegProcess?: ChildProcess,
 ): void {
@@ -342,7 +330,6 @@ function stopCurrentStream(
   // Set flag to prevent delayed error reporting when manually stopping
   if (reason === "manual" || reason === "cleanup") {
     isManuallyStoppingStream = true
-    console.log("Set flag to ignore delayed errors during manual stop")
   }
 
   if (activeStream) {
@@ -364,7 +351,6 @@ function stopCurrentStream(
     activeStream = null
   } else if (ffmpegProcess) {
     // During initialization, we might not have activeStream set yet
-    console.log("Killing FFmpeg process during initialization")
     ffmpegProcess.kill()
   }
 
@@ -372,13 +358,8 @@ function stopCurrentStream(
   if (reason === "manual" || reason === "cleanup") {
     setTimeout(() => {
       isManuallyStoppingStream = false
-      console.log("Reset flag - no longer ignoring errors")
-    }, 2000) // 2 second delay to allow FFmpeg to fully shut down
-  }
-
-  // Notify frontend when stream stops for reasons other than manual stop
-  if (reason && reason !== "manual" && mainWindowRef) {
-    console.log(`Stream stopped - Reason: ${reason}, Error: ${error}`)
+    }, 1000) // 1 second delay to allow FFmpeg to fully shut down
+  } else if (reason !== "manual" && mainWindowRef) {
     mainWindowRef.webContents.send("app:stream-stopped", {
       reason,
       error,

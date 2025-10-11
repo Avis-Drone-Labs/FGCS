@@ -240,7 +240,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       />
 
       <div
-        className="absolute bottom-4 min-w-[350px]  border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
+        className="absolute bottom-4 min-w-[350px] border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
         style={{
           left: `${telemetryPanelWidth + 16}px`,
           background: GetOutsideVisibilityColor(),

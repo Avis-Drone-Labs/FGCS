@@ -89,6 +89,7 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
               label: stream.name,
             }))}
             allowDeselect
+            clearable
           />
         ) : (
           <Select
@@ -113,6 +114,7 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
               label: device.label || `Camera ${device.deviceId}`,
             }))}
             allowDeselect
+            clearable
           />
         )}
       </div>

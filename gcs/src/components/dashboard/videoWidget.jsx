@@ -20,7 +20,6 @@ import {
 } from "@tabler/icons-react"
 import { useSelector } from "react-redux"
 import Webcam from "react-webcam"
-import { showSuccessNotification } from "../../helpers/notification"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectVideoSource } from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
@@ -35,6 +34,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   }) // Default 16:9 aspect ratio
   const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
   const [scale, setScale] = useState(1) // Scale factor for resizing
+  const [isPoppedOut, setIsPoppedOut] = useState(false) // Track if video is popped out
 
   const [
     sourceSelectModalOpened,
@@ -77,6 +77,42 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("mouseup", handleMouseUp)
+  }
+
+  async function handlePopoutVideo() {
+    if (!videoSource) return
+
+    try {
+      if (videoSource.type === "stream") {
+        // For RTSP streams, we need to get the current stream URL
+        const streamUrl = await window.ipcRenderer.invoke(
+          "app:get-current-stream-url",
+        )
+        await window.ipcRenderer.invoke(
+          "app:open-video-window",
+          "stream",
+          videoSource.id || "",
+          videoSource.name,
+          baseAspectRatio,
+          streamUrl,
+        )
+      } else {
+        // For webcam
+        await window.ipcRenderer.invoke(
+          "app:open-video-window",
+          "webcam",
+          videoSource.deviceId,
+          videoSource.name,
+          baseAspectRatio,
+          "",
+        )
+      }
+
+      setIsPoppedOut(true)
+    } catch (error) {
+      console.error("Error opening video popout:", error)
+      setError(`Failed to pop out video: ${error.message}`)
+    }
   }
 
   function destroyJSMpegPlayer() {
@@ -166,8 +202,6 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       )
 
       if (streamUrl) {
-        showSuccessNotification(`Stream "${stream.name}" started successfully!`)
-
         // Set up JSMpeg video player
         const videoWrapper = videoRef.current
         if (videoWrapper) {
@@ -210,9 +244,17 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   }
 
   useEffect(() => {
+    // Listen for video window close events
+    const handleVideoWindowClose = () => {
+      setIsPoppedOut(false)
+    }
+
+    window.ipcRenderer.on("app:video-closed", handleVideoWindowClose)
+
     // Cleanup on unmount
     return () => {
       destroyJSMpegPlayer()
+      window.ipcRenderer.removeAllListeners("app:video-closed")
     }
   }, [])
 
@@ -240,7 +282,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       />
 
       <div
-        className="absolute bottom-4 min-w-[350px] border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
+        className={`absolute bottom-4 min-w-[350px] border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10 ${isPoppedOut ? "hidden" : ""}`}
         style={{
           left: `${telemetryPanelWidth + 16}px`,
           background: GetOutsideVisibilityColor(),
@@ -250,8 +292,14 @@ export default function VideoWidget({ telemetryPanelWidth }) {
           <div className="flex items-center justify-between mb-2">
             <Text>{videoSource?.name}</Text>
             <div className="flex items-center gap-1">
-              {videoSource && (
-                <ActionIcon size="sm" variant="subtle">
+              {videoSource && error === null && (
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  onClick={handlePopoutVideo}
+                  className="text-slate-400 hover:text-slate-200"
+                  title="Pop out video"
+                >
                   <IconExternalLink size={16} />
                 </ActionIcon>
               )}

@@ -8,23 +8,38 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 const MIN_VIDEO_HEIGHT: number = 100
 const VIDEO_TITLEBAR_HEIGHT: number = 28
 
-function loadVideo(id: string = "", name: string = "") {
-  const params: string =
-    id && name
-      ? "video.html?deviceId=" + id + "&deviceName=" + name
-      : "video.html"
+function loadVideo(
+  type: string,
+  id: string = "",
+  name: string = "",
+  streamUrl: string = "",
+) {
+  let params = "videoWindow.html"
+  const urlParams = new URLSearchParams()
+
+  if (type) urlParams.set("type", type)
+  if (id) urlParams.set("deviceId", id)
+  if (name) urlParams.set("deviceName", name)
+  if (streamUrl) urlParams.set("streamUrl", streamUrl)
+
+  if (urlParams.toString()) {
+    params += "?" + urlParams.toString()
+  }
 
   if (VITE_DEV_SERVER_URL) videoPopoutWin?.loadURL(VITE_DEV_SERVER_URL + params)
   else
-    videoPopoutWin?.loadFile(path.join(process.env.DIST, "video.html"), {
-      search: id && name ? `?deviceId=${id}&deviceName=${name}` : "",
+    videoPopoutWin?.loadFile(path.join(process.env.DIST, "videoWindow.html"), {
+      search: urlParams.toString(),
     })
 }
 
 export function openVideoPopout(
+  type: string,
   videoStreamId: string,
   name: string,
   aspect: number,
+  streamUrl: string = "",
+  mainWindow: BrowserWindow | null = null,
 ) {
   if (videoPopoutWin === null) {
     videoPopoutWin = new BrowserWindow({
@@ -45,8 +60,14 @@ export function openVideoPopout(
     })
   }
 
-  loadVideo(videoStreamId, name)
+  loadVideo(type, videoStreamId, name, streamUrl)
   videoPopoutWin.setTitle(name)
+
+  // Handle window close events (Alt+F4, clicking X, etc.)
+  videoPopoutWin.on("close", () => {
+    videoPopoutWin = null // Just set to null, don't call destroyVideoWindow to avoid recursion
+    mainWindow?.webContents.send("app:video-closed") // Notify main window
+  })
 
   videoPopoutWin.on("will-resize", (event, newBounds) => {
     event.preventDefault()
@@ -72,6 +93,7 @@ export function openVideoPopout(
     Math.round(aspect * (MIN_VIDEO_HEIGHT - 28)),
     MIN_VIDEO_HEIGHT,
   )
+
   videoPopoutWin.show()
 }
 
@@ -81,16 +103,22 @@ export function closeVideoPopout(mainWindow: BrowserWindow | null) {
 }
 
 export function destroyVideoWindow() {
-  videoPopoutWin?.close()
-  videoPopoutWin = null
+  if (videoPopoutWin) {
+    videoPopoutWin.removeAllListeners() // Remove all event listeners to prevent recursion
+    videoPopoutWin.destroy() // Use destroy instead of close to avoid triggering close event
+    videoPopoutWin = null
+  }
 }
 
 export default function registerVideoIPC(mainWindow: BrowserWindow) {
   ipcMain.removeHandler("app:open-video-window")
   ipcMain.removeHandler("app:close-video-window")
 
-  ipcMain.handle("app:open-video-window", (_, videoStreamId, name, aspect) => {
-    openVideoPopout(videoStreamId, name, aspect)
-  })
+  ipcMain.handle(
+    "app:open-video-window",
+    (_, type, videoStreamId, name, aspect, streamUrl = "") => {
+      openVideoPopout(type, videoStreamId, name, aspect, streamUrl, mainWindow)
+    },
+  )
   ipcMain.handle("app:close-video-window", () => closeVideoPopout(mainWindow))
 }

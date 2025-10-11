@@ -257,6 +257,13 @@ async function findAvailablePort(basePort: number): Promise<number> {
   })
 }
 
+function getCurrentStreamUrl(): string | null {
+  if (activeStream) {
+    return `ws://localhost:${activeStream.port}/`
+  }
+  return null
+}
+
 export function cleanupAllRTSPStreams(): void {
   stopCurrentStream()
 }
@@ -264,6 +271,7 @@ export function cleanupAllRTSPStreams(): void {
 export default function registerRTSPStreamIPC() {
   ipcMain.removeHandler("app:start-rtsp-stream")
   ipcMain.removeHandler("app:stop-rtsp-stream")
+  ipcMain.removeHandler("app:get-current-stream-url")
 
   ipcMain.handle("app:start-rtsp-stream", async (_, rtspUrl: string) => {
     try {
@@ -276,5 +284,9 @@ export default function registerRTSPStreamIPC() {
 
   ipcMain.handle("app:stop-rtsp-stream", () => {
     stopCurrentStream()
+  })
+
+  ipcMain.handle("app:get-current-stream-url", () => {
+    return getCurrentStreamUrl()
   })
 }

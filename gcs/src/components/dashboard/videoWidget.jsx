@@ -11,7 +11,12 @@ import { ActionIcon, Text } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 
 // Helper
-import { IconExternalLink, IconSettings, IconVideo } from "@tabler/icons-react"
+import {
+  IconAlertCircle,
+  IconExternalLink,
+  IconSettings,
+  IconVideo,
+} from "@tabler/icons-react"
 import { useSelector } from "react-redux"
 import { showSuccessNotification } from "../../helpers/notification"
 import { selectVideoSource } from "../../redux/slices/droneConnectionSlice"
@@ -20,7 +25,7 @@ import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 export default function VideoWidget({ telemetryPanelWidth }) {
   const videoSource = useSelector(selectVideoSource)
 
-  const [error, setError] = useState("")
+  const [error, setError] = useState(null)
 
   const [
     sourceSelectModalOpened,
@@ -30,17 +35,25 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   const videoRef = useRef(null)
   const jsmpegPlayerRef = useRef(null)
 
-  const setupJSMpegPlayer = (videoWrapper, streamUrl, streamName) => {
-    // Clean up any existing JSMpeg player
+  function destroyJSMpegPlayer() {
     if (jsmpegPlayerRef.current) {
       try {
-        if (typeof jsmpegPlayerRef.current.destroy === "function") {
-          jsmpegPlayerRef.current.destroy()
+        if (typeof jsmpegPlayerRef.current.destory === "function") {
+          jsmpegPlayerRef.current.destory()
         }
+        jsmpegPlayerRef.current = null
+        setError(null)
       } catch (error) {
-        console.warn("Error destroying previous JSMpeg player:", error)
+        console.warn("Error cleaning up previous JSMpeg player:", error)
+        jsmpegPlayerRef.current = null
       }
+    } else {
+      setError(null)
     }
+  }
+
+  function setupJSMpegPlayer(videoWrapper, streamUrl, streamName) {
+    destroyJSMpegPlayer()
 
     try {
       const player = new JSMpeg.VideoElement(videoWrapper, streamUrl, {
@@ -81,10 +94,12 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     }
   }
 
-  const startStream = async (stream) => {
-    setError("")
+  async function startStream(stream) {
+    setError(null)
 
     try {
+      destroyJSMpegPlayer()
+
       const streamUrl = await window.ipcRenderer.invoke(
         "app:start-rtsp-stream",
         stream.url,
@@ -93,12 +108,11 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       if (streamUrl) {
         showSuccessNotification(`Stream "${stream.name}" started successfully!`)
 
-        setTimeout(() => {
-          const videoWrapper = videoRef.current
-          if (videoWrapper) {
-            setupJSMpegPlayer(videoWrapper, streamUrl, stream.name)
-          }
-        }, 1000)
+        // Set up JSMpeg video player
+        const videoWrapper = videoRef.current
+        if (videoWrapper) {
+          setupJSMpegPlayer(videoWrapper, streamUrl, stream.name)
+        }
       } else {
         setError(
           "Failed to start RTSP stream conversion. Check the console for details and ensure FFmpeg is installed in settings.",
@@ -125,13 +139,10 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     }
   }
 
-  const stopStream = async (stream) => {
+  async function stopStream() {
     try {
-      await window.ipcRenderer.invoke("app:stop-rtsp-stream", stream.url)
-      if (typeof jsmpegPlayerRef.current.destroy === "function") {
-        jsmpegPlayerRef.current.destroy()
-        jsmpegPlayerRef.current = null
-      }
+      await window.ipcRenderer.invoke("app:stop-rtsp-stream")
+      destroyJSMpegPlayer()
     } catch (error) {
       console.error("Error stopping RTSP stream:", error)
       setError(`Failed to stop stream: ${error.message}`)
@@ -141,13 +152,25 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   useEffect(() => {
     // Cleanup on unmount
     return () => {
-      if (jsmpegPlayerRef.current) {
-        if (typeof jsmpegPlayerRef.current.destroy === "function") {
-          jsmpegPlayerRef.current.destroy()
-        }
-      }
+      destroyJSMpegPlayer()
     }
   }, [])
+
+  useEffect(() => {
+    async function handleVideoSourceChange() {
+      if (videoSource === null) {
+        // If no video source is selected, clean up any existing JSMpeg player
+        await stopStream()
+      } else if (videoSource.type === "stream") {
+        await startStream(videoSource)
+      } else if (videoSource.type === "webcam") {
+        await stopStream()
+        // TODO: Add webcam handling
+      }
+    }
+
+    handleVideoSourceChange()
+  }, [videoSource])
 
   return (
     <>
@@ -173,33 +196,40 @@ export default function VideoWidget({ telemetryPanelWidth }) {
             </ActionIcon>
           </div>
 
-          {videoSource ? (
-            <div className="relative">
-              <div
-                ref={videoRef}
-                className="w-full h-32 bg-black rounded overflow-hidden"
-                style={{ width: "100%", height: "128px" }}
-              />
-              <div className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 rounded text-xs text-slate-300">
-                LIVE
+          <div>
+            {videoSource && error === null ? (
+              <div className="relative">
+                <div
+                  ref={videoRef}
+                  className="w-full h-32 bg-black rounded overflow-hidden"
+                  style={{ width: "100%", height: "128px" }}
+                />
+                <button
+                  className="absolute top-1 right-1 bg-black/60 p-1 rounded z-10"
+                  // onClick={() => openStreamPopout(selectedStream)}
+                >
+                  <IconExternalLink size={14} className="text-slate-200" />
+                </button>
               </div>
-              <button
-                className="absolute top-1 right-1 bg-black/60 p-1 rounded"
-                // onClick={() => openStreamPopout(selectedStream)}
-              >
-                <IconExternalLink size={14} className="text-slate-200" />
-              </button>
-            </div>
-          ) : (
-            <div className="w-full h-32 bg-falcongrey-800 rounded flex items-center justify-center">
-              <div className="flex flex-col items-center text-center">
-                <IconVideo size={24} className="text-slate-500 mb-1" />
-                <Text size="sm" className="text-slate-400">
-                  No stream selected
-                </Text>
+            ) : (
+              <div className="w-full h-32 bg-falcongrey-800 rounded flex flex-col items-center justify-center text-center">
+                {error === null ? (
+                  <>
+                    <IconVideo size={24} className="text-slate-500 mb-1" />
+                    <Text size="sm">No stream selected</Text>
+                  </>
+                ) : (
+                  <>
+                    <IconAlertCircle
+                      size={24}
+                      className="text-falconred mb-1"
+                    />
+                    <Text size="sm">{error}</Text>
+                  </>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </>

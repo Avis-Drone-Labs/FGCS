@@ -14,36 +14,32 @@ interface RTSPStream {
   port: number
 }
 
-const activeStreams = new Map<string, RTSPStream>()
+let activeStream: RTSPStream | null = null
 const WEBSOCKET_BASE_PORT = 8080
 
-/**
- * Start converting an RTSP stream to MPEG1 for JSMpeg browser consumption
- * @param rtspUrl The RTSP stream URL to convert
- * @returns Promise<string> The WebSocket URL that can be used by JSMpeg player
- */
 async function startRTSPStream(rtspUrl: string): Promise<string> {
-  // Check if FFmpeg binary exists
   if (!checkFFmpegBinaryExists()) {
     throw new Error(
       "FFmpeg binary not found. Please download FFmpeg from the settings.",
     )
   }
 
-  const streamId = Buffer.from(rtspUrl).toString("base64")
-
-  if (activeStreams.has(streamId)) {
-    const stream = activeStreams.get(streamId)!
-    return `ws://localhost:${stream.port}/stream`
+  // Stop any existing stream before starting a new one
+  if (activeStream) {
+    console.log("Stopping existing stream before starting new one")
+    stopCurrentStream()
   }
 
-  // Find available port
+  // If requesting the same stream that's already running, return its URL
+  if (activeStream && activeStream.rtspUrl === rtspUrl) {
+    return `ws://localhost:${activeStream.port}`
+  }
+
   const port = await findAvailablePort(WEBSOCKET_BASE_PORT)
 
   const ffmpegPath = getFFmpegBinaryPath()
 
   try {
-    // Verify FFmpeg binary exists and is executable
     if (!fs.existsSync(ffmpegPath)) {
       throw new Error(`FFmpeg binary not found at: ${ffmpegPath}`)
     }
@@ -93,7 +89,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
     ffmpegProcess.stderr?.on("data", (data) => {
       const output = data.toString()
 
-      // Filter out progress messages, HLS segment creation messages, and version banner
+      // Filter out progress messages
       const isProgressMessage =
         output.includes("time=") &&
         output.includes("bitrate=") &&
@@ -132,11 +128,15 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 
     ffmpegProcess.on("error", (error) => {
       console.error("FFmpeg process spawn error:", error)
-      stopRTSPStream(rtspUrl)
+      stopCurrentStream()
     })
 
     ffmpegProcess.on("exit", (code, signal) => {
       console.log(`FFmpeg process exited with code ${code}, signal ${signal}`)
+
+      if (code === null && signal === "SIGTERM") {
+        return
+      }
 
       if (code !== 0) {
         console.error(`FFmpeg failed with exit code: ${code}`)
@@ -156,7 +156,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
           `FFmpeg unknown error (code: ${code})`
         console.error(`Error details: ${errorMsg}`)
 
-        stopRTSPStream(rtspUrl)
+        stopCurrentStream()
       }
     })
 
@@ -168,11 +168,9 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
     const clients: Set<WebSocket> = new Set()
 
     wsServer.on("connection", (client: WebSocket) => {
-      console.log("JSMpeg client connected")
       clients.add(client)
 
       client.on("close", () => {
-        console.log("JSMpeg client disconnected")
         clients.delete(client)
       })
 
@@ -209,9 +207,8 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       port,
     }
 
-    activeStreams.set(streamId, streamInfo)
+    activeStream = streamInfo
 
-    // Return the WebSocket URL for JSMpeg
     return `ws://localhost:${port}`
   } catch (error) {
     console.error("Error starting RTSP stream:", error)
@@ -219,38 +216,31 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
   }
 }
 
-/**
- * Stop and cleanup an RTSP stream conversion
- * @param rtspUrl The RTSP stream URL to stop
- */
-function stopRTSPStream(rtspUrl: string): void {
-  const streamId = Buffer.from(rtspUrl).toString("base64")
-  const stream = activeStreams.get(streamId)
+function stopCurrentStream(): void {
+  if (activeStream) {
+    console.log(`Stopping RTSP stream: ${activeStream.rtspUrl}`)
 
-  if (stream) {
     // Kill FFmpeg process
-    if (stream.ffmpegProcess) {
-      stream.ffmpegProcess.kill()
+    if (activeStream.ffmpegProcess) {
+      activeStream.ffmpegProcess.kill()
     }
 
     // Close WebSocket server
-    if (stream.wsServer) {
-      stream.wsServer.close()
+    if (activeStream.wsServer) {
+      activeStream.wsServer.close()
     }
 
     // Close HTTP server
-    if (stream.httpServer) {
-      stream.httpServer.close()
+    if (activeStream.httpServer) {
+      activeStream.httpServer.close()
     }
 
-    activeStreams.delete(streamId)
+    activeStream = null
   }
 }
 
-/**
- * Find an available port starting from the base port
- */
 async function findAvailablePort(basePort: number): Promise<number> {
+  // Find an available port starting from the base port
   return new Promise((resolve) => {
     const server = createServer()
     server.listen(basePort, () => {
@@ -267,118 +257,13 @@ async function findAvailablePort(basePort: number): Promise<number> {
   })
 }
 
-/**
- * Cleanup all active streams
- */
 export function cleanupAllRTSPStreams(): void {
-  for (const [, stream] of activeStreams) {
-    stopRTSPStream(stream.rtspUrl)
-  }
-  activeStreams.clear()
+  stopCurrentStream()
 }
 
-/**
- * Test RTSP connection without starting full conversion
- */
-async function testRTSPConnection(
-  rtspUrl: string,
-): Promise<{ success: boolean; error?: string }> {
-  if (!checkFFmpegBinaryExists()) {
-    return {
-      success: false,
-      error:
-        "FFmpeg binary not found. Please download FFmpeg from the settings.",
-    }
-  }
-
-  const ffmpegPath = getFFmpegBinaryPath()
-
-  return new Promise((resolve) => {
-    console.log(`Testing RTSP connection: ${rtspUrl}`)
-
-    // Use FFmpeg to test the stream for 5 seconds
-    const testProcess = spawn(
-      ffmpegPath,
-      [
-        "-rtsp_transport",
-        "tcp",
-        "-i",
-        rtspUrl,
-        "-t",
-        "5", // Test for 5 seconds
-        "-f",
-        "null", // Discard output
-        "-",
-      ],
-      {
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    )
-
-    let errorOutput = ""
-    let hasConnected = false
-
-    testProcess.stderr?.on("data", (data) => {
-      const output = data.toString()
-      errorOutput += output
-
-      // Look for signs of successful connection
-      if (
-        output.includes("Stream mapping:") ||
-        output.includes("Video:") ||
-        output.includes("Audio:")
-      ) {
-        hasConnected = true
-      }
-    })
-
-    testProcess.on("exit", (code) => {
-      if (hasConnected || code === 0) {
-        resolve({ success: true })
-      } else {
-        let errorMessage = "Connection test failed"
-
-        if (errorOutput.includes("Connection refused")) {
-          errorMessage =
-            "Connection refused - check if the RTSP server is running"
-        } else if (errorOutput.includes("No route to host")) {
-          errorMessage = "No route to host - check network connectivity"
-        } else if (errorOutput.includes("Invalid data")) {
-          errorMessage = "Invalid stream format - check RTSP URL"
-        } else if (errorOutput.includes("Unauthorized")) {
-          errorMessage = "Authentication failed - check username/password"
-        } else if (errorOutput.includes("Not found")) {
-          errorMessage = "Stream not found - check RTSP path"
-        }
-
-        resolve({ success: false, error: errorMessage })
-      }
-    })
-
-    testProcess.on("error", (error) => {
-      resolve({ success: false, error: `Process error: ${error.message}` })
-    })
-
-    // Timeout after 10 seconds
-    setTimeout(() => {
-      testProcess.kill()
-      if (!hasConnected) {
-        resolve({
-          success: false,
-          error: "Connection timeout - stream may be unreachable",
-        })
-      }
-    }, 10000)
-  })
-}
-
-/**
- * Register RTSP stream IPC handlers
- */
 export default function registerRTSPStreamIPC() {
   ipcMain.removeHandler("app:start-rtsp-stream")
   ipcMain.removeHandler("app:stop-rtsp-stream")
-  ipcMain.removeHandler("app:test-rtsp-connection")
 
   ipcMain.handle("app:start-rtsp-stream", async (_, rtspUrl: string) => {
     try {
@@ -389,16 +274,7 @@ export default function registerRTSPStreamIPC() {
     }
   })
 
-  ipcMain.handle("app:stop-rtsp-stream", (_, rtspUrl: string) => {
-    stopRTSPStream(rtspUrl)
-  })
-
-  ipcMain.handle("app:test-rtsp-connection", async (_, rtspUrl: string) => {
-    try {
-      return await testRTSPConnection(rtspUrl)
-    } catch (error) {
-      console.error("Failed to test RTSP connection:", error)
-      return { success: false, error: "Test failed with unknown error" }
-    }
+  ipcMain.handle("app:stop-rtsp-stream", () => {
+    stopCurrentStream()
   })
 }

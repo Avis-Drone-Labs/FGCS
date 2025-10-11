@@ -145,14 +145,16 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         autoplay: true,
         audio: false, // No audio needed
         loop: false,
-        videoBufferSize: 512 * 1024, // 512KB buffer (very small for low latency)
+        videoBufferSize: 1024 * 1024, // 1MB buffer (larger for stability)
         pauseWhenHidden: false, // Keep playing when tab is not visible
         disableGl: false, // Use WebGL for better performance
         preserveDrawingBuffer: false,
         progressive: true, // Enable progressive decoding
         throttled: false, // Don't throttle to reduce latency
-        chunkSize: 1024 * 4, // Small chunk size for lower latency
-        videoDecodeChunkSize: 512 * 1024, // Video decode chunk size
+        chunkSize: 1024 * 8, // Larger chunk size for stability
+        videoDecodeChunkSize: 1024 * 1024, // 1MB decode chunk size
+        maxAudioLag: 0.5, // Allow some audio lag tolerance
+        seekable: false, // Not seekable for live streams
         hooks: {
           load: () => {
             console.log(`Loading started for ${streamName}`)
@@ -236,8 +238,30 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
   useEffect(() => {
     // Listen for video window close events
-    const handleVideoWindowClose = () => {
+    const handleVideoWindowClose = async () => {
       setIsPoppedOut(false)
+
+      // If there's an active video stream, recreate the JSMpeg player for the main widget
+      if (videoSource && videoSource.type === "stream") {
+        try {
+          const currentStreamUrl = await window.ipcRenderer.invoke(
+            "app:get-current-stream-url",
+          )
+          if (currentStreamUrl && videoRef.current) {
+            setupJSMpegPlayer(
+              videoRef.current,
+              currentStreamUrl,
+              videoSource.name,
+            )
+          }
+        } catch (error) {
+          console.error(
+            "Error recreating JSMpeg player after popout close:",
+            error,
+          )
+          setError(`Failed to restore video in main widget: ${error.message}`)
+        }
+      }
     }
 
     const handleStreamStopped = (_, data) => {

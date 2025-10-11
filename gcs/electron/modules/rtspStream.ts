@@ -46,33 +46,57 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 
     console.log(`Starting FFmpeg conversion for RTSP stream: ${rtspUrl}`)
 
-    // Start FFmpeg process to convert RTSP to MPEG1 stream for JSMpeg (ultra low latency)
+    // Start FFmpeg process to convert RTSP to MPEG1 stream for JSMpeg
     const ffmpegArgs = [
       "-loglevel",
       "warning", // Only show warnings and errors, not info messages
       "-rtsp_transport",
       "tcp", // Use TCP for RTSP (more reliable)
+      "-allowed_media_types",
+      "video", // Only process video, ignore audio
       "-i",
       rtspUrl,
       "-an", // Disable audio completely
       "-c:v",
       "mpeg1video", // MPEG1 video codec (required for JSMpeg)
       "-b:v",
-      "1M", // Video bitrate
+      "1.2M", // Higher bitrate to prevent underflow
+      "-maxrate",
+      "2M", // Higher maximum bitrate ceiling
+      "-bufsize",
+      "4M", // Larger buffer size for better rate control
       "-s",
       "1280x720", // Resolution (adjust as needed)
       "-r",
-      "30", // Frame rate
+      "25", // Slightly lower frame rate for stability
+      "-g",
+      "50", // GOP size (keyframe interval)
+      "-keyint_min",
+      "25", // Minimum keyframe interval
+      "-qmin",
+      "2", // Lower minimum quantizer for better quality
+      "-qmax",
+      "35", // Higher maximum quantizer for more flexibility
+      "-rc_lookahead",
+      "40", // Rate control lookahead frames
+      "-mbtree",
+      "1", // Enable macroblock tree rate control
       "-f",
       "mpegts", // MPEG Transport Stream format
       "-muxdelay",
       "0.1", // Minimize muxing delay
+      "-fflags",
+      "+flush_packets", // Flush packets immediately
+      "-flush_packets",
+      "1", // Enable packet flushing
       "-reconnect",
       "1", // Reconnect on connection failure
       "-reconnect_at_eof",
       "1", // Reconnect at end of file
       "-reconnect_streamed",
       "1", // Reconnect for streamed content
+      "-reconnect_delay_max",
+      "5", // Maximum reconnect delay
       "-y", // Overwrite output files
       "pipe:1", // Output to stdout for WebSocket streaming
     ]
@@ -83,11 +107,31 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 
     let streamStarted = false
     let startupError: string | null = null
+    let validDataChunks = 0 // Counter for valid video data chunks
 
-    // Capture FFmpeg output for debugging
-    // ffmpegProcess.stdout?.on("data", (_data) => {
-    //   console.log(_data)
-    // })
+    ffmpegProcess.stdout?.on("data", (data) => {
+      // Check if this looks like valid MPEG video data
+      if (data && data.length > 100) {
+        // Minimum size threshold for video data
+        // Check for MPEG transport stream sync bytes (0x47) or MPEG1 video markers
+        const hasValidMpegData =
+          data.includes(0x47) || // MPEG-TS sync byte
+          data.toString("hex").includes("000001") || // MPEG start codes
+          data.length > 300
+
+        if (hasValidMpegData) {
+          validDataChunks++
+
+          // Mark as started after receiving a few valid chunks to be sure
+          if (!streamStarted && validDataChunks >= 2) {
+            console.log(
+              "FFmpeg successfully connected - confirmed video stream",
+            )
+            streamStarted = true
+          }
+        }
+      }
+    })
 
     ffmpegProcess.stderr?.on("data", (data) => {
       const output = data.toString()
@@ -185,6 +229,16 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
           "Connection timeout: The RTSP server is not responding. Check the URL and network connectivity."
         startupError = errorMsg
         stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        output.includes("corrupted") ||
+        output.includes("corrupt") ||
+        output.includes("invalid data") ||
+        output.includes("decode error") ||
+        output.includes("error while decoding")
+      ) {
+        console.warn("FFmpeg stream quality issue detected:", output.trim())
+        // Don't stop the stream for minor corruption, just log it
+        // These issues often resolve themselves
       } else if (output.includes("Stream mapping:")) {
         streamStarted = true
       } else if (output.includes("Video:") || output.includes("Audio:")) {

@@ -90,7 +90,7 @@ export function openVideoPopout(
       VIDEO_TITLEBAR_HEIGHT,
   )
   videoPopoutWin.setMinimumSize(
-    Math.round(aspect * (MIN_VIDEO_HEIGHT - 28)),
+    Math.round(aspect * (MIN_VIDEO_HEIGHT - VIDEO_TITLEBAR_HEIGHT)),
     MIN_VIDEO_HEIGHT,
   )
 

@@ -157,7 +157,6 @@ const droneConnectionSlice = createSlice({
     selectWireless: (state) => state.wireless,
     selectCurrentPage: (state) => state.currentPage,
     selectOutsideVisibility: (state) => state.outsideVisibility,
-    selectVideoSourceType: (state) => state.videoSourceType,
     selectVideoSource: (state) => state.videoSource,
   },
 })

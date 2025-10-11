@@ -28,7 +28,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         linkStats: resolve(__dirname, "linkStats.html"),
         aboutWindow: resolve(__dirname, "aboutWindow.html"),
-        video: resolve(__dirname, "video.html"),
+        videoWindow: resolve(__dirname, "videoWindow.html"),
         ekfStatus: resolve(__dirname, "ekfStatus.html"),
         vibeStatus: resolve(__dirname, "vibeStatus.html"),
       },

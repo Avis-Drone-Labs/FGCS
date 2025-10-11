@@ -86,7 +86,7 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 
     // Capture FFmpeg output for debugging
     // ffmpegProcess.stdout?.on("data", (_data) => {
-    // Stream data is being piped to HTTP response, no need to log
+    //   console.log(_data)
     // })
 
     ffmpegProcess.stderr?.on("data", (data) => {
@@ -292,9 +292,11 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
     }
 
     await new Promise<void>((resolve, reject) => {
-      httpServer.listen(port, (err?: Error) => {
-        if (err) reject(err)
-        else resolve()
+      httpServer.once("error", (err: Error) => {
+        reject(err)
+      })
+      httpServer.listen(port, "localhost", () => {
+        resolve()
       })
     })
 

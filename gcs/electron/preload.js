@@ -17,7 +17,6 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:start-rtsp-stream",
   "app:stop-rtsp-stream",
   "app:get-current-stream-url",
-  "app:test-rtsp-connection",
   "ffmpeg:get-binary-info",
   "ffmpeg:download-binary",
   "ffmpeg:delete-binary",

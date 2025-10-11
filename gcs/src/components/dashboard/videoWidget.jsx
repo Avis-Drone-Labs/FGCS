@@ -14,6 +14,7 @@ import { useDisclosure } from "@mantine/hooks"
 import {
   IconAlertCircle,
   IconExternalLink,
+  IconResize,
   IconSettings,
   IconVideo,
 } from "@tabler/icons-react"
@@ -31,6 +32,8 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     width: 350,
     height: 197,
   }) // Default 16:9 aspect ratio
+  const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
+  const [scale, setScale] = useState(1) // Scale factor for resizing
 
   const [
     sourceSelectModalOpened,
@@ -39,6 +42,41 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
   const videoRef = useRef(null)
   const jsmpegPlayerRef = useRef(null)
+
+  function updateScale(newScale) {
+    const clampedScale = Math.max(0.5, Math.min(3, newScale)) // Clamp between 0.5x and 3x
+    setScale(clampedScale)
+
+    // Recalculate dimensions based on new scale
+    const baseWidth = 350
+    const newWidth = baseWidth * clampedScale
+    const newHeight = Math.round(newWidth / baseAspectRatio)
+
+    setVideoDimensions({
+      width: newWidth,
+      height: newHeight,
+    })
+  }
+
+  function handleResizeStart(e) {
+    const startX = e.clientX
+    const startScale = scale
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - startX
+      const scaleChange = deltaX / 200 // Adjust sensitivity
+      const newScale = startScale + scaleChange
+      updateScale(newScale)
+    }
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+
+    document.addEventListener("mousemove", handleMouseMove)
+    document.addEventListener("mouseup", handleMouseUp)
+  }
 
   function destroyJSMpegPlayer() {
     if (jsmpegPlayerRef.current) {
@@ -89,9 +127,10 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
                 // Calculate dimensions with 350px base width
                 const aspectRatio = videoWidth / videoHeight
-                const displayWidth = 350
+                const displayWidth = 350 * scale
                 const displayHeight = Math.round(displayWidth / aspectRatio)
 
+                setBaseAspectRatio(aspectRatio)
                 setVideoDimensions({
                   width: displayWidth,
                   height: displayHeight,
@@ -206,14 +245,31 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         <div className="p-2">
           <div className="flex items-center justify-between mb-2">
             <Text>{videoSource?.name}</Text>
-            <ActionIcon
-              size="sm"
-              variant="subtle"
-              onClick={openStreamSelectModal}
-              className="text-slate-400 hover:text-slate-200"
-            >
-              <IconSettings size={16} />
-            </ActionIcon>
+            <div className="flex items-center gap-1">
+              {videoSource && (
+                <ActionIcon size="sm" variant="subtle">
+                  <IconExternalLink size={16} />
+                </ActionIcon>
+              )}
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                onMouseDown={handleResizeStart}
+                className={`text-slate-400 hover:text-slate-200 hover:cursor-ne-resize`}
+                title="Drag to resize"
+              >
+                <IconResize size={16} />
+              </ActionIcon>
+
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                onClick={openStreamSelectModal}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <IconSettings size={16} />
+              </ActionIcon>
+            </div>
           </div>
 
           <div>
@@ -230,6 +286,8 @@ export default function VideoWidget({ telemetryPanelWidth }) {
                     deviceId={videoSource.deviceId}
                     dimensions={videoDimensions}
                     onDimensionsChange={setVideoDimensions}
+                    onAspectRatioChange={setBaseAspectRatio}
+                    scale={scale}
                   />
                 )}
               </>
@@ -272,34 +330,36 @@ function StreamDisplay({ videoRef, dimensions }) {
     <div className="relative">
       <div
         ref={videoRef}
-        className="bg-black rounded overflow-hidden"
+        className="bg-black rounded overflow-hidden mx-auto"
         style={{
           width: `${dimensions.width}px`,
           height: `${dimensions.height}px`,
         }}
       />
-      <button
-        className="absolute top-1 right-1 bg-black/60 p-1 rounded z-10"
-        // onClick={() => openStreamPopout(selectedStream)}
-      >
-        <IconExternalLink size={14} className="text-slate-200" />
-      </button>
     </div>
   )
 }
 
-function WebcamDisplay({ videoRef, deviceId, dimensions, onDimensionsChange }) {
+function WebcamDisplay({
+  videoRef,
+  deviceId,
+  dimensions,
+  onDimensionsChange,
+  onAspectRatioChange,
+  scale,
+}) {
   const handleUserMedia = (stream) => {
     // Get actual video track dimensions
-    if (stream && onDimensionsChange) {
+    if (stream && onDimensionsChange && onAspectRatioChange) {
       const videoTrack = stream.getVideoTracks()[0]
       if (videoTrack) {
         const settings = videoTrack.getSettings()
         if (settings.width && settings.height) {
           const aspectRatio = settings.width / settings.height
-          const displayWidth = 350
+          const displayWidth = 350 * (scale || 1)
           const displayHeight = Math.round(displayWidth / aspectRatio)
 
+          onAspectRatioChange(aspectRatio)
           onDimensionsChange({ width: displayWidth, height: displayHeight })
         }
       }
@@ -321,7 +381,7 @@ function WebcamDisplay({ videoRef, deviceId, dimensions, onDimensionsChange }) {
           width: `${dimensions.width}px`,
           height: `${dimensions.height}px`,
         }}
-        className="rounded overflow-hidden"
+        className="rounded overflow-hidden mx-auto"
         onUserMediaError={() => {}}
       />
     </div>

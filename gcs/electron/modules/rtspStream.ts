@@ -1,5 +1,5 @@
 import { ChildProcess, spawn } from "child_process"
-import { ipcMain } from "electron"
+import { BrowserWindow, ipcMain } from "electron"
 import fs from "fs"
 import { createServer, Server } from "http"
 import { checkFFmpegBinaryExists, getFFmpegBinaryPath } from "./ffmpegBinary"
@@ -15,6 +15,7 @@ interface RTSPStream {
 }
 
 let activeStream: RTSPStream | null = null
+let isManuallyStoppingStream = false // Flag to prevent error reporting during manual stop
 const WEBSOCKET_BASE_PORT = 8080
 
 async function startRTSPStream(rtspUrl: string): Promise<string> {
@@ -81,6 +82,9 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       stdio: ["ignore", "pipe", "pipe"], // Capture stdout and stderr
     })
 
+    let streamStarted = false
+    let startupError: string | null = null
+
     // Capture FFmpeg output for debugging
     // ffmpegProcess.stdout?.on("data", (_data) => {
     // Stream data is being piped to HTTP response, no need to log
@@ -109,36 +113,90 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
         console.log("FFmpeg stderr:", output)
       }
 
-      // Look for common error patterns and throw detailed errors
+      // Debug: Log all stderr output during startup to help diagnose issues
+      if (!streamStarted) {
+        console.log("DEBUG stderr during startup:", JSON.stringify(output))
+      }
+
+      // Look for error patterns and handle immediately (but not if we're manually stopping)
       if (
-        output.includes("Connection refused") ||
-        output.includes("No route to host")
+        !isManuallyStoppingStream &&
+        (output.includes("Connection refused") ||
+          output.includes("No route to host"))
       ) {
         const errorMsg =
           "Network connectivity issue: Cannot connect to RTSP stream. Check the URL and network connectivity."
-        console.error(errorMsg)
-        throw new Error(errorMsg)
-      } else if (output.includes("Invalid data found when processing input")) {
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        output.includes("Invalid data found when processing input")
+      ) {
         const errorMsg =
           "Invalid RTSP stream format: The stream format is not supported or the URL is incorrect."
-        console.error(errorMsg)
-        throw new Error(errorMsg)
-      } else if (output.includes("Permission denied")) {
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        output.includes("Permission denied")
+      ) {
         const errorMsg =
           "Permission denied: Access to the RTSP stream is restricted. Check authentication credentials."
-        console.error(errorMsg)
-        throw new Error(errorMsg)
-      } else if (output.includes("No such file or directory")) {
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        output.includes("No such file or directory")
+      ) {
         const errorMsg =
           "RTSP stream not found: The specified stream URL does not exist or is not accessible."
-        console.error(errorMsg)
-        throw new Error(errorMsg)
-      } else if (output.includes("Immediate exit requested")) {
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        output.includes("Immediate exit requested")
+      ) {
         const errorMsg = "FFmpeg was terminated unexpectedly."
-        console.error(errorMsg)
-        throw new Error(errorMsg)
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        (output.includes("Failed to resolve hostname") ||
+          output.includes("Name or service not known") ||
+          output.includes("nodename nor servname provided") ||
+          output.includes("getaddrinfo failed"))
+      ) {
+        const errorMsg =
+          "Failed to resolve hostname: The RTSP URL's hostname could not be resolved. Check the URL for typos or DNS issues."
+        console.error("DETECTED HOSTNAME ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        output.includes("Server returned 4")
+      ) {
+        const errorMsg =
+          "RTSP server error: The server returned a 4xx error code. Check the URL and authentication."
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
+      } else if (
+        !isManuallyStoppingStream &&
+        output.includes("Connection timed out")
+      ) {
+        const errorMsg =
+          "Connection timeout: The RTSP server is not responding. Check the URL and network connectivity."
+        console.error("DETECTED ERROR:", errorMsg)
+        startupError = errorMsg
+        stopCurrentStream("error", errorMsg, ffmpegProcess)
       } else if (output.includes("Stream mapping:")) {
         console.log("FFmpeg successfully connected to RTSP stream")
+        streamStarted = true
       } else if (output.includes("Video:") || output.includes("Audio:")) {
         console.log("Stream info:", output.trim())
       }
@@ -146,8 +204,8 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
 
     ffmpegProcess.on("error", (error) => {
       console.error("FFmpeg process spawn error:", error)
-      stopCurrentStream()
-      throw new Error(`FFmpeg process failed to start: ${error.message}`)
+      startupError = `FFmpeg process failed to start: ${error.message}`
+      stopCurrentStream("process-error", startupError, ffmpegProcess)
     })
 
     ffmpegProcess.on("exit", (code, signal) => {
@@ -160,26 +218,57 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       if (code !== 0) {
         console.error(`FFmpeg failed with exit code: ${code}`)
 
-        // Common exit code meanings with detailed descriptions
-        const errorMessages: Record<number, string> = {
-          1: "FFmpeg general error: Stream processing failed. Check the RTSP URL and stream format.",
-          2: "FFmpeg invalid argument: Invalid parameters provided to FFmpeg. This may indicate a configuration issue.",
-          126: "FFmpeg binary not executable: The FFmpeg binary does not have execute permissions.",
-          127: "FFmpeg binary not found: FFmpeg binary is missing or not in the expected location.",
-          134: "FFmpeg aborted (SIGABRT): FFmpeg was aborted, possibly due to memory issues or invalid input.",
-          139: "FFmpeg segmentation fault (SIGSEGV): FFmpeg crashed due to a memory access violation.",
-          4294967274:
-            "FFmpeg error opening stream: The RTSP stream could not be opened. Check the URL and network connectivity.",
-        }
+        setTimeout(() => {
+          // Only set generic error if we don't already have a specific error from stderr
+          if (!isManuallyStoppingStream && !startupError) {
+            // Common exit code meanings with detailed descriptions
+            const errorMessages: Record<number, string> = {
+              1: "FFmpeg general error: Stream processing failed. Check the RTSP URL and stream format.",
+              2: "FFmpeg invalid argument: Invalid parameters provided to FFmpeg. This may indicate a configuration issue.",
+              126: "FFmpeg binary not executable: The FFmpeg binary does not have execute permissions.",
+              127: "FFmpeg binary not found: FFmpeg binary is missing or not in the expected location.",
+              134: "FFmpeg aborted (SIGABRT): FFmpeg was aborted, possibly due to memory issues or invalid input.",
+              139: "FFmpeg segmentation fault (SIGSEGV): FFmpeg crashed due to a memory access violation.",
+            }
 
-        const errorMsg =
-          (code !== null && errorMessages[code]) ||
-          `FFmpeg process failed with unknown exit code: ${code}. This typically indicates a stream processing error.`
-        console.error(`Error details: ${errorMsg}`)
+            const errorMsg =
+              (code !== null && errorMessages[code]) ||
+              `FFmpeg process failed with unknown exit code: ${code}. This typically indicates a stream processing error.`
+            console.error(`Error details: ${errorMsg}`)
 
-        stopCurrentStream()
-        throw new Error(errorMsg)
+            startupError = errorMsg
+            stopCurrentStream("process-exit", errorMsg, ffmpegProcess)
+          }
+        }, 100) // 100ms delay to let stderr finish processing
       }
+    })
+
+    // Wait for FFmpeg to either start successfully or fail (with timeout)
+    console.log("Waiting for FFmpeg to initialize...")
+    await new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        if (!streamStarted && !startupError) {
+          const timeoutError =
+            "Timeout: Stream failed to start within 10 seconds"
+          startupError = timeoutError
+          stopCurrentStream("error", timeoutError, ffmpegProcess)
+          reject(new Error(timeoutError))
+        }
+      }, 10000) // 10 second timeout
+
+      // Check every 100ms if stream started or error occurred
+      const checkInterval = setInterval(() => {
+        if (startupError) {
+          clearTimeout(timeoutId)
+          clearInterval(checkInterval)
+          reject(new Error(startupError))
+        } else if (streamStarted) {
+          clearTimeout(timeoutId)
+          clearInterval(checkInterval)
+          console.log("FFmpeg initialization completed successfully")
+          resolve()
+        }
+      }, 100)
     })
 
     // Create HTTP server and WebSocket server for JSMpeg streaming
@@ -234,14 +323,29 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
     return `ws://localhost:${port}`
   } catch (error) {
     console.error("Error starting RTSP stream:", error)
-    throw new Error("Failed to start RTSP stream conversion")
+    // Re-throw the original error to preserve the specific error message
+    throw error
   }
 }
 
-function stopCurrentStream(): void {
-  if (activeStream) {
-    console.log(`Stopping RTSP stream: ${activeStream.rtspUrl}`)
+let mainWindowRef: BrowserWindow | null = null
 
+function stopCurrentStream(
+  reason?: string,
+  error?: string,
+  ffmpegProcess?: ChildProcess,
+): void {
+  console.log(
+    `Stopping RTSP stream${activeStream ? `: ${activeStream.rtspUrl}` : " (during initialization)"}`,
+  )
+
+  // Set flag to prevent delayed error reporting when manually stopping
+  if (reason === "manual" || reason === "cleanup") {
+    isManuallyStoppingStream = true
+    console.log("Set flag to ignore delayed errors during manual stop")
+  }
+
+  if (activeStream) {
     // Kill FFmpeg process
     if (activeStream.ffmpegProcess) {
       activeStream.ffmpegProcess.kill()
@@ -258,6 +362,27 @@ function stopCurrentStream(): void {
     }
 
     activeStream = null
+  } else if (ffmpegProcess) {
+    // During initialization, we might not have activeStream set yet
+    console.log("Killing FFmpeg process during initialization")
+    ffmpegProcess.kill()
+  }
+
+  // Reset the flag after a delay to allow FFmpeg to fully shut down
+  if (reason === "manual" || reason === "cleanup") {
+    setTimeout(() => {
+      isManuallyStoppingStream = false
+      console.log("Reset flag - no longer ignoring errors")
+    }, 2000) // 2 second delay to allow FFmpeg to fully shut down
+  }
+
+  // Notify frontend when stream stops for reasons other than manual stop
+  if (reason && reason !== "manual" && mainWindowRef) {
+    console.log(`Stream stopped - Reason: ${reason}, Error: ${error}`)
+    mainWindowRef.webContents.send("app:stream-stopped", {
+      reason,
+      error,
+    })
   }
 }
 
@@ -287,10 +412,13 @@ function getCurrentStreamUrl(): string | null {
 }
 
 export function cleanupAllRTSPStreams(): void {
-  stopCurrentStream()
+  stopCurrentStream("cleanup")
 }
 
-export default function registerRTSPStreamIPC() {
+export default function registerRTSPStreamIPC(mainWindow?: BrowserWindow) {
+  // Store the main window reference for notifications
+  mainWindowRef = mainWindow || null
+
   ipcMain.removeHandler("app:start-rtsp-stream")
   ipcMain.removeHandler("app:stop-rtsp-stream")
   ipcMain.removeHandler("app:get-current-stream-url")
@@ -300,6 +428,14 @@ export default function registerRTSPStreamIPC() {
       return { success: true, streamUrl: await startRTSPStream(rtspUrl) }
     } catch (error) {
       console.error("Failed to start RTSP stream:", error)
+      // Notify frontend that stream stopped due to error
+      if (mainWindowRef) {
+        mainWindowRef.webContents.send("app:stream-stopped", {
+          reason: "error",
+          error:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        })
+      }
       return {
         success: false,
         error:
@@ -309,7 +445,13 @@ export default function registerRTSPStreamIPC() {
   })
 
   ipcMain.handle("app:stop-rtsp-stream", () => {
-    stopCurrentStream()
+    stopCurrentStream("manual")
+    // Notify frontend that stream was manually stopped
+    if (mainWindowRef) {
+      mainWindowRef.webContents.send("app:stream-stopped", {
+        reason: "manual",
+      })
+    }
   })
 
   ipcMain.handle("app:get-current-stream-url", () => {

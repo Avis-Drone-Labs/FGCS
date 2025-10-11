@@ -18,14 +18,18 @@ import {
   IconSettings,
   IconVideo,
 } from "@tabler/icons-react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import Webcam from "react-webcam"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import { selectVideoSource } from "../../redux/slices/droneConnectionSlice"
+import {
+  selectVideoSource,
+  setVideoSource,
+} from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 
 export default function VideoWidget({ telemetryPanelWidth }) {
   const videoSource = useSelector(selectVideoSource)
+  const dispatch = useDispatch()
 
   const [error, setError] = useState(null)
   const [videoDimensions, setVideoDimensions] = useState({
@@ -236,14 +240,52 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       setIsPoppedOut(false)
     }
 
+    const handleStreamStopped = (_, data) => {
+      // If videoSource is already null and this is an error from a previous stream, ignore it
+      if (
+        !videoSource &&
+        (data.reason === "error" ||
+          data.reason === "process-error" ||
+          data.reason === "process-exit")
+      ) {
+        return
+      }
+
+      // Only handle error cases, ignore manual stops
+      if (
+        data.reason === "error" ||
+        data.reason === "process-error" ||
+        data.reason === "process-exit"
+      ) {
+        setError(data.error || "Stream stopped due to an error")
+
+        // If there's a popout window, close it and show error in main widget
+        if (isPoppedOut) {
+          setIsPoppedOut(false)
+          window.ipcRenderer.invoke("app:close-video-window")
+        }
+
+        // Clear the video source when there's an error
+        dispatch(setVideoSource(null))
+      } else if (data.reason === "manual" || data.reason === "cleanup") {
+        setError(null)
+        // Don't clear videoSource here - let the normal flow handle it
+      }
+
+      // Always clean up JSMpeg player regardless of reason
+      destroyJSMpegPlayer()
+    }
+
     window.ipcRenderer.on("app:video-closed", handleVideoWindowClose)
+    window.ipcRenderer.on("app:stream-stopped", handleStreamStopped)
 
     // Cleanup on unmount
     return () => {
       destroyJSMpegPlayer()
       window.ipcRenderer.removeAllListeners("app:video-closed")
+      window.ipcRenderer.removeAllListeners("app:stream-stopped")
     }
-  }, [])
+  }, [dispatch, isPoppedOut, videoSource])
 
   useEffect(() => {
     async function handleVideoSourceChange() {
@@ -253,7 +295,21 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       } else if (videoSource.type === "stream") {
         await startStream(videoSource)
       } else if (videoSource.type === "webcam") {
-        await stopStream()
+        // For webcam, only stop RTSP stream if there's an active stream
+        // Don't call stopStream() which would trigger stream-stopped events
+        try {
+          const currentStreamUrl = await window.ipcRenderer.invoke(
+            "app:get-current-stream-url",
+          )
+          if (currentStreamUrl) {
+            // There's an active RTSP stream, stop it
+            await window.ipcRenderer.invoke("app:stop-rtsp-stream")
+          }
+          // Clean up any JSMpeg player
+          destroyJSMpegPlayer()
+        } catch (error) {
+          console.error("Error switching to webcam:", error)
+        }
         // TODO: Add webcam handling
       }
     }

@@ -51,6 +51,7 @@ const ALLOWED_SEND_CHANNELS = [
 const ALLOWED_ON_CHANNELS = [
   "main-process-message",
   "app:video-closed",
+  "app:stream-stopped",
   "app:send-link-stats",
   "fla:log-parse-progress",
   "app:send-ekf-status",

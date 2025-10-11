@@ -234,7 +234,7 @@ function createWindow() {
   registerEkfStatusIPC()
   registerVibeStatusIPC()
   registerFFmpegBinaryIPC()
-  registerRTSPStreamIPC()
+  registerRTSPStreamIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"

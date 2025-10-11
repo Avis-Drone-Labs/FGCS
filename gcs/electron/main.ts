@@ -36,7 +36,7 @@ import registerRTSPStreamIPC, {
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
+import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 
 // The built directory structure
 //
@@ -228,7 +228,7 @@ function createWindow() {
     frame: false,
   })
 
-  registerWebcamIPC(win)
+  registerVideoIPC(win)
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
@@ -387,7 +387,7 @@ function startBackend() {
 }
 
 function closeWindows() {
-  destroyWebcamWindow()
+  destroyVideoWindow()
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()

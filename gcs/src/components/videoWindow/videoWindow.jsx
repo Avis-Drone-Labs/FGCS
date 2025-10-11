@@ -4,7 +4,7 @@ import { IconX } from "@tabler/icons-react"
 import { useRef } from "react"
 import Webcam from "react-webcam"
 
-export default function CameraWindow() {
+export default function VideoWindow() {
   const searchParams = new URLSearchParams(window.location.search)
 
   const videoRef = useRef(null)

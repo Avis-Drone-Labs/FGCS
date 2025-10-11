@@ -12,8 +12,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:is-mac",
   "settings:fetch-settings",
   "settings:save-settings",
-  "app:open-webcam-window",
-  "app:close-webcam-window",
+  "app:open-video-window",
+  "app:close-video-window",
   "app:start-rtsp-stream",
   "app:stop-rtsp-stream",
   "app:test-rtsp-connection",
@@ -49,7 +49,7 @@ const ALLOWED_SEND_CHANNELS = [
 
 const ALLOWED_ON_CHANNELS = [
   "main-process-message",
-  "app:webcam-closed",
+  "app:video-closed",
   "app:send-link-stats",
   "fla:log-parse-progress",
   "app:send-ekf-status",

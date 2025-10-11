@@ -25,14 +25,14 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
     )
   }
 
-  // Stop any existing stream before starting a new one
-  if (activeStream) {
-    stopCurrentStream("manual")
-  }
-
   // If requesting the same stream that's already running, return its URL
   if (activeStream && activeStream.rtspUrl === rtspUrl) {
     return `ws://localhost:${activeStream.port}`
+  }
+
+  // Stop any existing stream before starting a new one
+  if (activeStream) {
+    stopCurrentStream("manual")
   }
 
   const port = await findAvailablePort(WEBSOCKET_BASE_PORT)
@@ -77,10 +77,6 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       "2", // Lower minimum quantizer for better quality
       "-qmax",
       "35", // Higher maximum quantizer for more flexibility
-      "-rc_lookahead",
-      "40", // Rate control lookahead frames
-      "-mbtree",
-      "1", // Enable macroblock tree rate control
       "-f",
       "mpegts", // MPEG Transport Stream format
       "-muxdelay",

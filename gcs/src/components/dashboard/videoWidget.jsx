@@ -100,6 +100,9 @@ export default function VideoWidget({ telemetryPanelWidth }) {
           baseAspectRatio,
           streamUrl,
         )
+
+        // Destroy the in-widget JSMpeg player to avoid duplicate processing
+        destroyJSMpegPlayer()
       } else {
         // For webcam
         await window.ipcRenderer.invoke(

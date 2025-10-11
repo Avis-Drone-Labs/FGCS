@@ -20,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "electron", "settings/recentLogManager.js"],
+  "include": ["src", "electron", "settings/recentLogManager.js", "../graphs"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -4,7 +4,7 @@
 */
 
 // Custom Components
-import { MAV_STATE } from "../../helpers/mavlinkConstants"
+import { MAV_STATE } from "../../../helpers/mavlinkConstants"
 import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
 
@@ -20,7 +20,7 @@ import {
   selectNavController,
   selectPrearmEnabled,
   selectTelemetry,
-} from "../../redux/slices/droneInfoSlice"
+} from "../../../redux/slices/droneInfoSlice"
 import EkfDisplay from "./ekfDisplay"
 import VibeDisplay from "./vibeDisplay"
 

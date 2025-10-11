@@ -3,12 +3,12 @@
 */
 
 // Image imports
-import heading_mechanics from "../img/heading_mechanics.svg"
-import heading_yaw from "../img/heading_yaw.svg"
-import horizon_back from "../img/horizon_back.svg"
-import horizon_ball from "../img/horizon_ball.svg"
-import horizon_circle from "../img/horizon_circle.svg"
-import horizon_mechanics from "../img/horizon_mechanics.svg"
+import heading_mechanics from "../../img/heading_mechanics.svg"
+import heading_yaw from "../../img/heading_yaw.svg"
+import horizon_back from "../../img/horizon_back.svg"
+import horizon_ball from "../../img/horizon_ball.svg"
+import horizon_circle from "../../img/horizon_circle.svg"
+import horizon_mechanics from "../../img/horizon_mechanics.svg"
 
 // File constants
 const constants = {

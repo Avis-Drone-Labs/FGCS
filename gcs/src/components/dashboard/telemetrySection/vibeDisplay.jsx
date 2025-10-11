@@ -4,15 +4,15 @@ A component that displays "VIBE" text, which changes color based on vibration da
 
 import { useMemo } from "react"
 import { useSelector } from "react-redux"
-import { selectVibrationData } from "../../redux/slices/droneInfoSlice"
+import { selectVibrationData } from "../../../redux/slices/droneInfoSlice"
 
 // Tailwind styling
 import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
+import tailwindConfig from "../../../../tailwind.config"
 import {
   VIBE_STATUS_DANGER_LEVEL,
   VIBE_STATUS_WARNING_LEVEL,
-} from "../../helpers/mavlinkConstants"
+} from "../../../helpers/mavlinkConstants"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const RED = tailwindColors.red[500]

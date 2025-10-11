@@ -18,6 +18,7 @@ import {
   IconVideo,
 } from "@tabler/icons-react"
 import { useSelector } from "react-redux"
+import Webcam from "react-webcam"
 import { showSuccessNotification } from "../../helpers/notification"
 import { selectVideoSource } from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
@@ -26,6 +27,10 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   const videoSource = useSelector(selectVideoSource)
 
   const [error, setError] = useState(null)
+  const [videoDimensions, setVideoDimensions] = useState({
+    width: 350,
+    height: 197,
+  }) // Default 16:9 aspect ratio
 
   const [
     sourceSelectModalOpened,
@@ -38,8 +43,8 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   function destroyJSMpegPlayer() {
     if (jsmpegPlayerRef.current) {
       try {
-        if (typeof jsmpegPlayerRef.current.destory === "function") {
-          jsmpegPlayerRef.current.destory()
+        if (typeof jsmpegPlayerRef.current.destroy === "function") {
+          jsmpegPlayerRef.current.destroy()
         }
         jsmpegPlayerRef.current = null
         setError(null)
@@ -75,12 +80,27 @@ export default function VideoWidget({ telemetryPanelWidth }) {
           },
           play: () => {
             console.log(`Playback started for ${streamName}`)
+            // Get video dimensions when playback starts
+            setTimeout(() => {
+              if (player && player.canvas) {
+                const canvas = player.canvas
+                const videoWidth = canvas.width || 350
+                const videoHeight = canvas.height || 197
+
+                // Calculate dimensions with 350px base width
+                const aspectRatio = videoWidth / videoHeight
+                const displayWidth = 350
+                const displayHeight = Math.round(displayWidth / aspectRatio)
+
+                setVideoDimensions({
+                  width: displayWidth,
+                  height: displayHeight,
+                })
+              }
+            }, 500) // Small delay to ensure canvas is ready
           },
           stop: () => {
             console.log(`Playback stopped for ${streamName}`)
-          },
-          pause: () => {
-            console.log(`Playback paused for ${streamName}`)
           },
         },
       })
@@ -180,7 +200,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       />
 
       <div
-        className="absolute bottom-4 w-80 bg-falcongrey-900/95 border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
+        className="absolute bottom-4 min-w-[350px] bg-falcongrey-900/95 border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10"
         style={{ left: `${telemetryPanelWidth + 16}px` }}
       >
         <div className="p-2">
@@ -198,21 +218,30 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
           <div>
             {videoSource && error === null ? (
-              <div className="relative">
-                <div
-                  ref={videoRef}
-                  className="w-full h-32 bg-black rounded overflow-hidden"
-                  style={{ width: "100%", height: "128px" }}
-                />
-                <button
-                  className="absolute top-1 right-1 bg-black/60 p-1 rounded z-10"
-                  // onClick={() => openStreamPopout(selectedStream)}
-                >
-                  <IconExternalLink size={14} className="text-slate-200" />
-                </button>
-              </div>
+              <>
+                {videoSource.type === "stream" ? (
+                  <StreamDisplay
+                    videoRef={videoRef}
+                    dimensions={videoDimensions}
+                  />
+                ) : (
+                  <WebcamDisplay
+                    videoRef={videoRef}
+                    deviceId={videoSource.deviceId}
+                    dimensions={videoDimensions}
+                    onDimensionsChange={setVideoDimensions}
+                  />
+                )}
+              </>
             ) : (
-              <div className="w-full h-32 bg-falcongrey-800 rounded flex flex-col items-center justify-center text-center">
+              <div
+                className="bg-falcongrey-800 rounded flex flex-col items-center justify-center text-center"
+                style={{
+                  width: `${videoDimensions.width}px`,
+                  height: `${videoDimensions.height}px`,
+                  minHeight: "128px", // Ensure minimum height for readability
+                }}
+              >
                 {error === null ? (
                   <>
                     <IconVideo size={24} className="text-slate-500 mb-1" />
@@ -224,7 +253,9 @@ export default function VideoWidget({ telemetryPanelWidth }) {
                       size={24}
                       className="text-falconred mb-1"
                     />
-                    <Text size="sm">{error}</Text>
+                    <Text size="sm" className="px-2">
+                      {error}
+                    </Text>
                   </>
                 )}
               </div>
@@ -233,5 +264,66 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         </div>
       </div>
     </>
+  )
+}
+
+function StreamDisplay({ videoRef, dimensions }) {
+  return (
+    <div className="relative">
+      <div
+        ref={videoRef}
+        className="bg-black rounded overflow-hidden"
+        style={{
+          width: `${dimensions.width}px`,
+          height: `${dimensions.height}px`,
+        }}
+      />
+      <button
+        className="absolute top-1 right-1 bg-black/60 p-1 rounded z-10"
+        // onClick={() => openStreamPopout(selectedStream)}
+      >
+        <IconExternalLink size={14} className="text-slate-200" />
+      </button>
+    </div>
+  )
+}
+
+function WebcamDisplay({ videoRef, deviceId, dimensions, onDimensionsChange }) {
+  const handleUserMedia = (stream) => {
+    // Get actual video track dimensions
+    if (stream && onDimensionsChange) {
+      const videoTrack = stream.getVideoTracks()[0]
+      if (videoTrack) {
+        const settings = videoTrack.getSettings()
+        if (settings.width && settings.height) {
+          const aspectRatio = settings.width / settings.height
+          const displayWidth = 350
+          const displayHeight = Math.round(displayWidth / aspectRatio)
+
+          onDimensionsChange({ width: displayWidth, height: displayHeight })
+        }
+      }
+    }
+  }
+
+  return (
+    <div className="relative">
+      <Webcam
+        onUserMedia={handleUserMedia}
+        ref={videoRef}
+        audio={false}
+        videoConstraints={{
+          deviceId: deviceId,
+          width: { ideal: 1280 }, // Request high resolution to get actual aspect ratio
+          height: { ideal: 720 },
+        }}
+        style={{
+          width: `${dimensions.width}px`,
+          height: `${dimensions.height}px`,
+        }}
+        className="rounded overflow-hidden"
+        onUserMediaError={() => {}}
+      />
+    </div>
   )
 }

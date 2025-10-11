@@ -196,40 +196,27 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     try {
       destroyJSMpegPlayer()
 
-      const streamUrl = await window.ipcRenderer.invoke(
+      const response = await window.ipcRenderer.invoke(
         "app:start-rtsp-stream",
         stream.url,
       )
 
-      if (streamUrl) {
+      if (response && response.success) {
         // Set up JSMpeg video player
         const videoWrapper = videoRef.current
         if (videoWrapper) {
-          setupJSMpegPlayer(videoWrapper, streamUrl, stream.name)
+          setupJSMpegPlayer(videoWrapper, response.streamUrl, stream.name)
         }
       } else {
-        setError(
-          "Failed to start RTSP stream conversion. Check the console for details and ensure FFmpeg is installed in settings.",
-        )
+        // Display the detailed error message from FFmpeg
+        const errorMessage =
+          response?.error ||
+          "Failed to start RTSP stream conversion. Check the console for details and ensure FFmpeg is installed in settings."
+        setError(errorMessage)
       }
     } catch (error) {
       console.error("Error starting RTSP stream:", error)
-
-      let errorMessage = "Failed to start stream"
-      if (error.message?.includes("FFmpeg binary not found")) {
-        errorMessage =
-          "FFmpeg not found. Please download FFmpeg from Settings → FGCS tab."
-      } else if (error.message?.includes("Connection refused")) {
-        errorMessage =
-          "Cannot connect to RTSP stream. Check the URL and network connectivity."
-      } else if (error.message?.includes("Invalid")) {
-        errorMessage =
-          "Invalid RTSP stream format. Please check the stream URL."
-      } else if (error.message) {
-        errorMessage = `Failed to start stream: ${error.message}`
-      }
-
-      setError(errorMessage)
+      setError(`Unexpected error: ${error.message || "Unknown error occurred"}`)
     }
   }
 

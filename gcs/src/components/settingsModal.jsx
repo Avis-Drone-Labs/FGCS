@@ -6,6 +6,7 @@ import {
   NativeSelect,
   NumberInput,
   Tabs,
+  TextInput,
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
@@ -169,7 +170,8 @@ function ExtendableTextSetting({ settingName, df }) {
   }
 
   const validateField = (field, value) => {
-    if (!field.validation || !value) return { isValid: true, error: null }
+    if (!field.validation) return { isValid: true, error: null }
+    if (!value) return { isValid: false, error: "Invalid input" }
 
     switch (field.validation) {
       case "rtsp":
@@ -211,7 +213,7 @@ function ExtendableTextSetting({ settingName, df }) {
             {df.fields.map((field) => {
               const validation = validateField(field, item[field.key])
               return (
-                <Input
+                <TextInput
                   key={field.key}
                   placeholder={field.placeholder}
                   value={item[field.key]}
@@ -219,16 +221,8 @@ function ExtendableTextSetting({ settingName, df }) {
                     updateItemField(item.id, field.key, e.currentTarget.value)
                   }
                   size="sm"
+                  label={field.label}
                   error={validation.error}
-                  rightSection={
-                    item[field.key] && field.validation ? (
-                      validation.isValid ? (
-                        <IconCheck size={16} className="text-green-500" />
-                      ) : (
-                        <IconAlertCircle size={16} className="text-red-500" />
-                      )
-                    ) : null
-                  }
                 />
               )
             })}

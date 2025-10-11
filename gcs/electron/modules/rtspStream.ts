@@ -109,26 +109,45 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
         console.log("FFmpeg stderr:", output)
       }
 
-      // Look for common error patterns
+      // Look for common error patterns and throw detailed errors
       if (
         output.includes("Connection refused") ||
         output.includes("No route to host")
       ) {
-        console.error("Network connectivity issue with RTSP stream")
+        const errorMsg =
+          "Network connectivity issue: Cannot connect to RTSP stream. Check the URL and network connectivity."
+        console.error(errorMsg)
+        throw new Error(errorMsg)
       } else if (output.includes("Invalid data found when processing input")) {
-        console.error("Invalid RTSP stream format")
+        const errorMsg =
+          "Invalid RTSP stream format: The stream format is not supported or the URL is incorrect."
+        console.error(errorMsg)
+        throw new Error(errorMsg)
       } else if (output.includes("Permission denied")) {
-        console.error("Permission denied accessing RTSP stream")
+        const errorMsg =
+          "Permission denied: Access to the RTSP stream is restricted. Check authentication credentials."
+        console.error(errorMsg)
+        throw new Error(errorMsg)
+      } else if (output.includes("No such file or directory")) {
+        const errorMsg =
+          "RTSP stream not found: The specified stream URL does not exist or is not accessible."
+        console.error(errorMsg)
+        throw new Error(errorMsg)
+      } else if (output.includes("Immediate exit requested")) {
+        const errorMsg = "FFmpeg was terminated unexpectedly."
+        console.error(errorMsg)
+        throw new Error(errorMsg)
       } else if (output.includes("Stream mapping:")) {
-        console.log("✅ FFmpeg successfully connected to RTSP stream")
+        console.log("FFmpeg successfully connected to RTSP stream")
       } else if (output.includes("Video:") || output.includes("Audio:")) {
-        console.log("📺 Stream info:", output.trim())
+        console.log("Stream info:", output.trim())
       }
     })
 
     ffmpegProcess.on("error", (error) => {
       console.error("FFmpeg process spawn error:", error)
       stopCurrentStream()
+      throw new Error(`FFmpeg process failed to start: ${error.message}`)
     })
 
     ffmpegProcess.on("exit", (code, signal) => {
@@ -141,22 +160,25 @@ async function startRTSPStream(rtspUrl: string): Promise<string> {
       if (code !== 0) {
         console.error(`FFmpeg failed with exit code: ${code}`)
 
-        // Common exit code meanings
+        // Common exit code meanings with detailed descriptions
         const errorMessages: Record<number, string> = {
-          1: "FFmpeg general error",
-          2: "FFmpeg invalid argument",
-          126: "FFmpeg binary not executable",
-          127: "FFmpeg binary not found",
-          134: "FFmpeg aborted (SIGABRT)",
-          139: "FFmpeg segmentation fault (SIGSEGV)",
+          1: "FFmpeg general error: Stream processing failed. Check the RTSP URL and stream format.",
+          2: "FFmpeg invalid argument: Invalid parameters provided to FFmpeg. This may indicate a configuration issue.",
+          126: "FFmpeg binary not executable: The FFmpeg binary does not have execute permissions.",
+          127: "FFmpeg binary not found: FFmpeg binary is missing or not in the expected location.",
+          134: "FFmpeg aborted (SIGABRT): FFmpeg was aborted, possibly due to memory issues or invalid input.",
+          139: "FFmpeg segmentation fault (SIGSEGV): FFmpeg crashed due to a memory access violation.",
+          4294967274:
+            "FFmpeg error opening stream: The RTSP stream could not be opened. Check the URL and network connectivity.",
         }
 
         const errorMsg =
           (code !== null && errorMessages[code]) ||
-          `FFmpeg unknown error (code: ${code})`
+          `FFmpeg process failed with unknown exit code: ${code}. This typically indicates a stream processing error.`
         console.error(`Error details: ${errorMsg}`)
 
         stopCurrentStream()
+        throw new Error(errorMsg)
       }
     })
 
@@ -275,10 +297,14 @@ export default function registerRTSPStreamIPC() {
 
   ipcMain.handle("app:start-rtsp-stream", async (_, rtspUrl: string) => {
     try {
-      return await startRTSPStream(rtspUrl)
+      return { success: true, streamUrl: await startRTSPStream(rtspUrl) }
     } catch (error) {
       console.error("Failed to start RTSP stream:", error)
-      return null
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      }
     }
   })
 

@@ -83,12 +83,11 @@
         {
           "key": "name",
           "label": "Stream Name",
-          "placeholder": "Stream name (e.g., Front Camera)"
+          "validation": true
         },
         {
           "key": "url",
           "label": "RTSP URL",
-          "placeholder": "rtsp://192.168.1.100:554/stream",
           "validation": "rtsp"
         }
       ]

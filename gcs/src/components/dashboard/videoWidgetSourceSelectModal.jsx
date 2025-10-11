@@ -84,10 +84,12 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
                     }),
                   )
             }}
-            data={rtspStreams.map((stream) => ({
-              value: stream.url,
-              label: stream.name,
-            }))}
+            data={rtspStreams
+              .filter((stream) => stream.name && stream.url)
+              .map((stream) => ({
+                value: stream.url,
+                label: stream.name,
+              }))}
             allowDeselect
             clearable
           />

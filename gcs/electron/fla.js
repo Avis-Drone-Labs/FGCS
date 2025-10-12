@@ -16,7 +16,6 @@ async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
   return new Promise((resolve, reject) => {
     const stringTypes = new Set(["n", "N", "Z", "M"])
     let aircraftType = null
-    let lineCount = 0
     let lastUpdateTime = 0
 
     const formatMessages = {}
@@ -24,7 +23,6 @@ async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
     const units = {}
 
     rl.on("line", (line) => {
-      lineCount += 1
       // Skip empty lines early
       if (!line || line.length < 3) return
 
@@ -167,15 +165,13 @@ async function parseFgcsTelemetryLogFile(
   fileSize,
   webContents,
 ) {
-  const formatMessages = {};
+  const formatMessages = {}
   const messages = {}
-  let aircraftType = null // TODO: determine aircraft type from log
-  let lineCount = 0
   let lastUpdateTime = 0
+  // TODO: determine aircraft type from log
 
   return new Promise((resolve, reject) => {
     rl.on("line", (line) => {
-      lineCount += 1
       if (!line || line.length < 5 || line.includes("==")) {
         return
       }

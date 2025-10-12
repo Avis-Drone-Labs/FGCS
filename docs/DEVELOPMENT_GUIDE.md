@@ -238,3 +238,21 @@ pytest -k "test_param_set"
 # Generate coverage report
 pytest --cov=app --cov-report=html
 ```
+
+### Frontend Testing
+
+Frontend tests use **Playwright** to test the electron app:
+
+To run the tests locally you can use:
+
+```bash
+yarn test
+```
+
+This will build the application locally and then run the playwright tests, this is required because the typescript files need to be compiled. Everytime you make any changes to any of the frontend you must rebuild.
+
+If you want to re-run the tests without re-building:
+
+```bash
+yarn test:nobuild
+```

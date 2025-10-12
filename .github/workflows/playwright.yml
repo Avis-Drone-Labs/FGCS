@@ -37,10 +37,6 @@ jobs:
         working-directory: gcs/data
         run: python generate_param_definitions.py
 
-      - name: Install Playwright Browsers
-        working-directory: gcs
-        run: yarn playwright install --with-deps
-
       - name: Run playwright tests
         working-directory: gcs
         run: yarn test

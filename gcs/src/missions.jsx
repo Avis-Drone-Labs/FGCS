@@ -46,15 +46,153 @@ export default function Missions() {
   // Mission - Test data for development
   const [missionItems, setMissionItems] = useSessionStorage({
     key: "missionItems",
-    defaultValue: [],
+    defaultValue: [
+      {
+        id: uuidv4(),
+        seq: 0,
+        command: 16, // MAV_CMD_NAV_WAYPOINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7749, // San Francisco latitude
+        y: -122.4194, // San Francisco longitude
+        z: 100.0, // altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 1,
+        command: 16, // MAV_CMD_NAV_WAYPOINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 49.2827, // British Columbia latitude
+        y: -123.1207, // British Columbia longitude
+        z: 150.0, // altitude
+      }
+    ],
   })
   const [fenceItems, setFenceItems] = useSessionStorage({
     key: "fenceItems",
-    defaultValue: [],
+    defaultValue: [
+      {
+        id: uuidv4(),
+        seq: 0,
+        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7849, // Fence vertex 1 - slightly north of SF
+        y: -122.4094, // Fence vertex 1 - slightly east of SF
+        z: 200.0, // max altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 1,
+        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7649, // Fence vertex 2 - slightly south of SF
+        y: -122.4094, // Fence vertex 2 - slightly east of SF
+        z: 200.0, // max altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 2,
+        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7649, // Fence vertex 3 - slightly south of SF
+        y: -122.4294, // Fence vertex 3 - slightly west of SF
+        z: 200.0, // max altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 3,
+        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7849, // Fence vertex 4 - slightly north of SF
+        y: -122.4294, // Fence vertex 4 - slightly west of SF
+        z: 200.0, // max altitude
+      }
+    ],
   })
   const [rallyItems, setRallyItems] = useSessionStorage({
     key: "rallyItems",
-    defaultValue: [],
+    defaultValue: [
+      {
+        id: uuidv4(),
+        seq: 0,
+        command: 510, // MAV_CMD_NAV_RALLY_POINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7849, // Rally point 1 - north of SF
+        y: -122.4094, // Rally point 1 - east of SF
+        z: 120.0, // altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 1,
+        command: 510, // MAV_CMD_NAV_RALLY_POINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7649, // Rally point 2 - south of SF
+        y: -122.4294, // Rally point 2 - west of SF
+        z: 130.0, // altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 2,
+        command: 510, // MAV_CMD_NAV_RALLY_POINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 37.7749, // Rally point 3 - center SF
+        y: -122.4194, // Rally point 3 - center SF
+        z: 110.0, // altitude
+      }
+    ],
   })
   const [homePosition, setHomePosition] = useSessionStorage({
     key: "homePosition",
@@ -337,6 +475,48 @@ export default function Missions() {
                   </Button>
                 </div>
 
+
+                <Divider className="my-1" />
+
+                {/* Test buttons for validation */}
+                <div className="flex flex-col gap-2">
+                  <div className="text-sm text-gray-400 mb-2">Test All Mission Types:</div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setActiveTab("mission")
+                        console.log("🧪 Testing Mission items:", missionItems.length)
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Test Mission ({missionItems.length})
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setActiveTab("fence")
+                        console.log("🧪 Testing Fence items:", fenceItems.length)
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Test Fence ({fenceItems.length})
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setActiveTab("rally")
+                        console.log("🧪 Testing Rally items:", rallyItems.length)
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Test Rally ({rallyItems.length})
+                    </Button>
+                  </div>
+                </div>
 
                 <Divider className="my-1" />
 

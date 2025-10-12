@@ -29,8 +29,8 @@ jobs:
 
       - name: Check code formatting
         run: |
-          # Get list of files that need formatting
-          if ! yarn prettier:diff > /tmp/prettier-files 2>/dev/null; then
+          # Get list of files that need formatting (run prettier directly to avoid yarn output)
+          if ! npx prettier src electron tests --list-different > /tmp/prettier-files 2>/dev/null; then
             echo "❌ Prettier formatting issues found in the following files:"
             cat /tmp/prettier-files
             echo ""
@@ -39,12 +39,12 @@ jobs:
 
             # For each file, show what prettier would change
             while IFS= read -r file; do
-              if [ -n "$file" ]; then
+              if [ -n "$file" ] && [ -f "$file" ]; then
                 echo ""
                 echo "📄 File: $file"
                 echo "----------------------------------------"
                 # Create a temp file with prettier formatting
-                npx prettier "$file" > "/tmp/$(basename "$file").formatted"
+                npx prettier "$file" > "/tmp/$(basename "$file").formatted" 2>/dev/null
                 # Show the diff
                 diff -u "$file" "/tmp/$(basename "$file").formatted" || true
                 echo "----------------------------------------"

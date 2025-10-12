@@ -15,10 +15,17 @@ export async function getSharedElectronApp(): Promise<ElectronApplication> {
 
   const executePath = "dist-electron/main.js"
 
-  sharedElectronApp = await electron.launch({
+  const launchOptions = {
     args: [executePath],
     bypassCSP: true,
-  })
+  }
+
+  // Disable sandbox in CI environment to avoid permission issues
+  if (process.env.CI) {
+    launchOptions.args.push("--no-sandbox", "--disable-setuid-sandbox")
+  }
+
+  sharedElectronApp = await electron.launch(launchOptions)
 
   // Wait for the main window to appear
   sharedMainWindow = await sharedElectronApp.waitForEvent("window", {

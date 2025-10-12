@@ -14,9 +14,9 @@
     "url": "https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
   },
   "scripts": {
-    "test": "yarn playwright test",
+    "test": "tsc && vite build && xvfb-maybe yarn playwright test",
+    "test:nobuild": "xvfb-maybe yarn playwright test",
     "dev": "vite --port 5173",
-    "dev:test": "vite --port 5173 --config ./vite.test.config.ts",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint src electron tests --ext js,jsx,ts,tsx",
     "lint:fix": "eslint src electron tests --ext js,jsx,ts,tsx --fix",
@@ -57,7 +57,7 @@
     "maplibre-gl": "^3.6.2",
     "moment": "^2.29.4",
     "octokit": "^4.0.2",
-    "playwright": "^1.46.0",
+    "playwright": "^1.56.0",
     "prettier": "3.2.5",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
@@ -83,7 +83,7 @@
     "ws": "^7.5.10"
   },
   "devDependencies": {
-    "@playwright/test": "^1.46.0",
+    "@playwright/test": "^1.56.0",
     "@types/node": "^22.2.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
@@ -104,7 +104,8 @@
     "@types/ws": "^7.4.7",
     "vite": "^7.1.5",
     "vite-plugin-electron": "^0.14.0",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "xvfb-maybe": "^0.2.1"
   },
   "resolutions": {
     "strip-ansi": "6.0.1",

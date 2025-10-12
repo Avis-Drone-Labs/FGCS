@@ -584,7 +584,7 @@ export default function Missions() {
           </div>
         </div>
       ) : (
-        <NoDroneConnected />
+        <NoDroneConnected tab="missions" />
       )}
     </Layout>
   )

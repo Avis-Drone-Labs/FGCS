@@ -155,7 +155,10 @@ export default function Dashboard() {
 
   return (
     <Layout currentPage="dashboard">
-      <div className="relative flex flex-auto w-full h-full overflow-hidden">
+      <div
+        className="relative flex flex-auto w-full h-full overflow-hidden"
+        data-testid="dashboard"
+      >
         <div className="w-full">
           <MapSection
             passedRef={mapRef}

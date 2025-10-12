@@ -9,9 +9,15 @@ import { Accordion } from "@mantine/core"
 import { useSelector } from "react-redux"
 
 import PresetAccordionItem from "./presetAccordionItem.jsx"
-import { selectLogType, selectLogMessages } from "../../redux/slices/logAnalyserSlice.js"
+import {
+  selectLogType,
+  selectLogMessages,
+} from "../../redux/slices/logAnalyserSlice.js"
 
-export default function PresetsAccordion({ presetCategories, deleteCustomPreset }) {
+export default function PresetsAccordion({
+  presetCategories,
+  deleteCustomPreset,
+}) {
   const logType = useSelector(selectLogType)
   const logMessages = useSelector(selectLogMessages)
 
@@ -29,7 +35,9 @@ export default function PresetsAccordion({ presetCategories, deleteCustomPreset 
               if (!logMessages[key]) return false
               const requiredFields = preset.filters[key] || []
               const availableFields = logMessages["format"]?.[key]?.fields || []
-              return requiredFields.every((field) => availableFields.includes(field))
+              return requiredFields.every((field) =>
+                availableFields.includes(field),
+              )
             }),
           ),
         }))
@@ -46,7 +54,11 @@ export default function PresetsAccordion({ presetCategories, deleteCustomPreset 
       {/* Custom Presets */}
       {filteredPresetCategories.custom.map((category) => (
         <Fragment key={category.name}>
-          <PresetAccordionItem key={category.name} category={category} deleteCustomPreset={deleteCustomPreset} />
+          <PresetAccordionItem
+            key={category.name}
+            category={category}
+            deleteCustomPreset={deleteCustomPreset}
+          />
         </Fragment>
       ))}
       {/* Default Presets */}

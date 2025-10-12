@@ -21,6 +21,7 @@
     "lint": "eslint src electron tests --ext js,jsx,ts,tsx",
     "lint:fix": "eslint src electron tests --ext js,jsx,ts,tsx --fix",
     "prettier": "npx prettier src electron tests --check",
+    "prettier:diff": "npx prettier src electron tests --list-different",
     "prettier:fix": "npx prettier src electron tests --write",
     "format": "yarn prettier:fix && yarn lint:fix",
     "preview": "vite preview"

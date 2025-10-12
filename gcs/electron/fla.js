@@ -167,7 +167,7 @@ async function parseFgcsTelemetryLogFile(
   fileSize,
   webContents,
 ) {
-  const formatMessages = {}
+  const formatMessages = {};
   const messages = {}
   let aircraftType = null // TODO: determine aircraft type from log
   let lineCount = 0

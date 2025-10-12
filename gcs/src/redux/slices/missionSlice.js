@@ -534,11 +534,7 @@ export const closeDashboardMissionFetchingNotificationNoSuccessThunk =
   () => (dispatch, getState) => {
     const { dashboardMissionFetchingNotificationId } = getState().missionInfo
     if (dashboardMissionFetchingNotificationId) {
-      closeLoadingNotification(
-        dashboardMissionFetchingNotificationId,
-        "",
-        "",
-      )
+      closeLoadingNotification(dashboardMissionFetchingNotificationId, "", "")
     }
     dispatch(setDashboardMissionFetchingNotificationId(null))
   }

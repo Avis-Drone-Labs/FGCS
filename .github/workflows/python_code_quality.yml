@@ -1,6 +1,15 @@
 name: Python Code Quality
-on: 
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - radio/**
   pull_request:
+    branches:
+      - main
+      - release-*
     paths:
       - radio/**
 

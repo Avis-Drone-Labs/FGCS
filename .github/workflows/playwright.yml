@@ -28,6 +28,15 @@ jobs:
         working-directory: gcs
         run: yarn
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Generate parameter definitions
+        working-directory: gcs/data
+        run: python generate_param_definitions.py
+
       - name: Run playwright tests
         working-directory: gcs
         run: yarn test

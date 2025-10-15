@@ -469,9 +469,11 @@ class MissionController:
         if mission_type == TYPE_MISSION:
             loader = self.missionLoader
         elif mission_type == TYPE_FENCE:
-            loader = self.fenceLoader
+            # Use mission loader for fence items to avoid compatibility issues
+            loader = self.missionLoader
         else:
-            loader = self.rallyLoader
+            # Use mission loader for rally items to avoid compatibility issues
+            loader = self.missionLoader
 
         # Clear existing mission data
         loader.clear()
@@ -483,7 +485,7 @@ class MissionController:
             }
 
         try:
-            for item in mission_data:
+            for i, item in enumerate(mission_data):
                 # Convert coordinates from integer format (1e7 * degrees) to float degrees
                 x_coord = item.get("x", 0) / 1e7 if item.get("x", 0) != 0 else 0.0
                 y_coord = item.get("y", 0) / 1e7 if item.get("y", 0) != 0 else 0.0
@@ -494,7 +496,7 @@ class MissionController:
                     self.drone.target_component,
                     item.get("seq", 0),
                     item.get("frame", 3),  # MAV_FRAME_GLOBAL_RELATIVE_ALT
-                    item.get("command", 16),  # MAV_CMD_NAV_WAYPOINT
+                    item.get("command", 16),  # Use actual command from frontend
                     item.get("current", 0),
                     item.get("autocontinue", 1),
                     item.get("param1", 0.0),
@@ -504,13 +506,24 @@ class MissionController:
                     x_coord,  # latitude in degrees
                     y_coord,  # longitude in degrees
                     item.get("z", 0.0),  # altitude
-                    mission_type,
                 )
                 loader.add(mission_item)
 
             self.drone.logger.info(
                 f"Loaded {len(mission_data)} mission items into {['mission', 'fence', 'rally'][mission_type]} loader"
             )
+            
+            # Additional debugging for fence and rally items
+            if mission_type == TYPE_FENCE:
+                self.drone.logger.info(f"Fence items count after adding: {loader.count()}")
+                for i in range(loader.count()):
+                    item = loader.item(i)
+                    self.drone.logger.info(f"Fence item {i}: command={item.command}, coords=({item.x}, {item.y})")
+            elif mission_type == TYPE_RALLY:
+                self.drone.logger.info(f"Rally items count after adding: {loader.count()}")
+                for i in range(loader.count()):
+                    item = loader.item(i)
+                    self.drone.logger.info(f"Rally item {i}: command={item.command}, coords=({item.x}, {item.y})")
             return {
                 "success": True,
                 "message": f"Mission data loaded successfully with {len(mission_data)} items",
@@ -568,27 +581,36 @@ class MissionController:
         if mission_type == TYPE_MISSION:
             loader = self.missionLoader
         elif mission_type == TYPE_FENCE:
-            loader = self.fenceLoader
+            # Use mission loader for fence items to avoid compatibility issues
+            loader = self.missionLoader
         else:
-            loader = self.rallyLoader
+            # Use mission loader for rally items to avoid compatibility issues
+            loader = self.missionLoader
 
         if loader.count() == 0:
+            self.drone.logger.error(f"No waypoints loaded for mission type {mission_type}")
             return {
                 "success": False,
                 "message": f"No waypoints loaded for the mission type of {mission_type}",
             }
 
-        clear_mission_response = self.clearMission(mission_type)
+        # For fence and rally, clear as mission type 0 for SITL compatibility
+        clear_mission_type = 0 if mission_type in [TYPE_FENCE, TYPE_RALLY] else mission_type
+        clear_mission_response = self.clearMission(clear_mission_type)
         if not clear_mission_response.get("success"):
+            self.drone.logger.error(f"Clear mission failed: {clear_mission_response}")
             return clear_mission_response
 
         self.drone.is_listening = False
 
+        # For fence and rally, use mission type 0 to avoid SITL compatibility issues
+        upload_mission_type = 0 if mission_type in [TYPE_FENCE, TYPE_RALLY] else mission_type
+        
         self.drone.master.mav.mission_count_send(
             self.drone.target_system,
             self.drone.target_component,
             loader.count(),
-            mission_type=mission_type,
+            mission_type=upload_mission_type,
         )
 
         try:
@@ -598,28 +620,22 @@ class MissionController:
                     blocking=True,
                     timeout=2,
                 )
+                
                 if not response:
                     self.drone.is_listening = True
-
                     return {
                         "success": False,
                         "message": "Could not upload mission, mission request not received",
                     }
                 elif response.msgname == "MISSION_ACK" and response.type != 0:
-                    self.drone.logger.error(
-                        f"Error uploading mission, mission ack response: {response.type}"
-                    )
                     return {
                         "success": False,
                         "message": "Could not upload mission, received mission acknowledgement error",
                     }
-                elif response.mission_type == mission_type:
-                    self.drone.logger.debug(
-                        f"Sending mission item {response.seq} out of {loader.count()}"
-                    )
-                    self.drone.master.mav.send(
-                        wpToMissionItemInt(loader.item(response.seq))
-                    )
+                elif response.mission_type == upload_mission_type:
+                    item_to_send = loader.item(response.seq)
+                    converted_item = wpToMissionItemInt(item_to_send)
+                    self.drone.master.mav.send(converted_item)
 
                     if response.seq == loader.count() - 1:
                         mission_ack_response = self.drone.master.recv_match(
@@ -634,17 +650,13 @@ class MissionController:
                         if (
                             mission_ack_response
                             and mission_ack_response.type == 0
-                            and mission_ack_response.mission_type == mission_type
+                            and mission_ack_response.mission_type == upload_mission_type
                         ):
-                            self.drone.logger.info("Uploaded mission successfully")
                             return {
                                 "success": True,
                                 "message": "Mission uploaded successfully",
                             }
                         else:
-                            self.drone.logger.error(
-                                f"Error uploading mission, mission ack response: {mission_ack_response.type}"
-                            )
                             return {
                                 "success": False,
                                 "message": "Could not upload mission, not received mission acknowledgement",

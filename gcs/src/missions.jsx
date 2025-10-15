@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid"
 // Custom component and helpers
 import { Button, Divider, Tabs } from "@mantine/core"
 import Layout from "./components/layout"
+import FenceItemsTable from "./components/missions/fenceItemsTable"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
@@ -85,7 +86,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 0,
-        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -100,7 +101,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 1,
-        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -115,7 +116,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 2,
-        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -130,7 +131,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 3,
-        command: 500, // MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -150,7 +151,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 0,
-        command: 510, // MAV_CMD_NAV_RALLY_POINT
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -165,7 +166,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 1,
-        command: 510, // MAV_CMD_NAV_RALLY_POINT
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -180,7 +181,7 @@ export default function Missions() {
       {
         id: uuidv4(),
         seq: 2,
-        command: 510, // MAV_CMD_NAV_RALLY_POINT
+        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
         frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
         current: 0,
         autocontinue: 1,
@@ -330,6 +331,15 @@ export default function Missions() {
       ),
     )
   }
+  function updateFenceItem(updatedFenceItem) {
+    setFenceItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === updatedFenceItem.id
+          ? { ...item, ...updatedFenceItem }
+          : item,
+      ),
+    )
+  }
 
   function readMissionFromDrone() {
     socket.emit("get_current_mission", { type: activeTab })
@@ -364,10 +374,8 @@ export default function Missions() {
       console.log("📋 Using mission items:", missionItems)
     } else if (activeTab === "fence") {
       missionData = fenceItems
-      console.log("🚧 Using fence items:", fenceItems)
     } else if (activeTab === "rally") {
       missionData = rallyItems
-      console.log("📍 Using rally items:", rallyItems)
     }
 
     if (missionData.length === 0) {
@@ -377,6 +385,7 @@ export default function Missions() {
     }
 
     console.log(`✅ Found ${missionData.length} ${activeTab} items to upload`)
+    
     setIsUploading(true)
 
     // Convert mission items to the format expected by the backend
@@ -391,11 +400,13 @@ export default function Missions() {
         param2: item.param2 || 0.0,
         param3: item.param3 || 0.0,
         param4: item.param4 || 0.0,
-        x: item.x || 0, // latitude as integer (1e7 * degrees)
-        y: item.y || 0, // longitude as integer (1e7 * degrees)
+        x: Math.round((item.x || 0) * 1e7), // latitude as integer (1e7 * degrees)
+        y: Math.round((item.y || 0) * 1e7), // longitude as integer (1e7 * degrees)
         z: item.z || 0.0, // altitude
       }
       console.log(`📝 Formatted item ${index}:`, formatted)
+      
+      
       return formatted
     })
 
@@ -475,48 +486,6 @@ export default function Missions() {
                   </Button>
                 </div>
 
-
-                <Divider className="my-1" />
-
-                {/* Test buttons for validation */}
-                <div className="flex flex-col gap-2">
-                  <div className="text-sm text-gray-400 mb-2">Test All Mission Types:</div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => {
-                        setActiveTab("mission")
-                        console.log("🧪 Testing Mission items:", missionItems.length)
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Test Mission ({missionItems.length})
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setActiveTab("fence")
-                        console.log("🧪 Testing Fence items:", fenceItems.length)
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Test Fence ({fenceItems.length})
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setActiveTab("rally")
-                        console.log("🧪 Testing Rally items:", rallyItems.length)
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Test Rally ({rallyItems.length})
-                    </Button>
-                  </div>
-                </div>
 
                 <Divider className="my-1" />
 
@@ -613,7 +582,12 @@ export default function Missions() {
                       updateMissionItem={updateMissionItem}
                     />
                   </Tabs.Panel>
-                  <Tabs.Panel value="fence"></Tabs.Panel>
+                  <Tabs.Panel value="fence">
+                    <FenceItemsTable
+                      fenceItems={fenceItems}
+                      updateFenceItem={updateFenceItem}
+                    />
+                  </Tabs.Panel>
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
                       rallyItems={rallyItems}

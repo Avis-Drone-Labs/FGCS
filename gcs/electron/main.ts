@@ -17,7 +17,7 @@ import path from "node:path"
 import packageInfo from "../package.json"
 
 // @ts-expect-error - no types available
-import openFile, { clearRecentFiles, getRecentFiles } from "./fla"
+import openFile, { clearRecentFiles, getRecentFiles, retrieveMessages } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -449,6 +449,9 @@ app.whenReady().then(() => {
   })
   // Clear recent logs
   ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
+
+  // Load Messages on demand
+  ipcMain.handle("fla:retrieve-messages", retrieveMessages)
 
   // Save mission file
   ipcMain.handle(

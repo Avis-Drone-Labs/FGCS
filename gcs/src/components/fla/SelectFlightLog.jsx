@@ -18,7 +18,7 @@ import { readableBytes } from "./utils"
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
  */
-export default function SelectFlightLog({ processLoadedFile }) {
+export default function SelectFlightLog({ saveLogSummary }) {
   const dispatch = useDispatch()
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
@@ -58,6 +58,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
           `Starting to load file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
         )
 
+        // the result contains a lightweight summary of the log
         const result = await window.ipcRenderer.invoke(
           "fla:open-file",
           file.path,
@@ -70,7 +71,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
           return
         }
 
-        await processLoadedFile(result)
+        await saveLogSummary(result)
         showSuccessNotification(`${file.name} loaded successfully`)
         console.timeEnd(`Loading file: ${file.name}`)
       } catch (error) {
@@ -81,7 +82,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
         setLoadingFileProgress(0)
       }
     },
-    [dispatch, processLoadedFile],
+    [dispatch, saveLogSummary],
   )
 
   useEffect(() => {

@@ -21,7 +21,7 @@ import {
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
 const recentLogsManager = createRecentLogsManager()
-let cachedLogData = null
+let logData = null
 let defaultMessageFilters = {}
 
 async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
@@ -366,7 +366,7 @@ function processAndCacheLogFile(loadedLogMessages, logType) {
   // 6. Process flight modes
   const flightModeMessages = processFlightModes(logType, finalMessages)
 
-  cachedLogData = finalMessages // Cache the complete data
+  logData = finalMessages // Cache the complete data
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
   // 8. Return the summary object
@@ -456,12 +456,12 @@ export async function retrieveMessages(_event, requestedMessages) {
 
   // for large log files, we need to consider decimation.
 
-  if (!cachedLogData || !Array.isArray(requestedMessages) || requestedMessages.length === 0) {
+  if (!logData || !Array.isArray(requestedMessages) || requestedMessages.length === 0) {
     return []
   }
 
-  const formatMessages = cachedLogData.format || {}
-  const units = cachedLogData.units || {}
+  const formatMessages = logData.format || {}
+  const units = logData.units || {}
   const datasets = []
 
   // Loop through the list of requested messages and transform each of them
@@ -478,7 +478,7 @@ export async function retrieveMessages(_event, requestedMessages) {
       label: label,
       yAxisID: getUnit(categoryName, fieldName, formatMessages, units),
       // I guess this is the expensive part. We're looping through every data point
-      data: cachedLogData[categoryName].map((d) => ({
+      data: logData[categoryName].map((d) => ({
         x: d.TimeUS,
         y: d[fieldName],
       })),

@@ -13,7 +13,6 @@ import { useDispatch, useSelector } from "react-redux"
 // Styling imports
 import {
   clearUnitCache,
-  getUnit,
   hexToRgba,
 } from "./components/fla/utils"
 
@@ -26,12 +25,9 @@ import Layout from "./components/layout.jsx"
 import { showErrorNotification } from "./helpers/notification.js"
 import {
   selectCustomColors,
-  selectFormatMessages,
   selectBaseChartData,
-  selectLogMessages,
   selectMessageFilters,
   // Selectors
-  selectUnits,
   setAircraftType,
   setCanSavePreset,
   setColorIndex,
@@ -162,7 +158,7 @@ export default function FLA() {
           backgroundColor: hexToRgba(color, 0.5),
         }
       })
-  }, [baseChartData, requestedLabels, customColors])
+  }, [baseChartData, customColors])
 
 
   // Step 4: Update the chart's state.

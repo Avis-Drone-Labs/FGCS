@@ -26,12 +26,6 @@ export default function FileMenu(props) {
       <MenuItem name="Current Version" shortcut={packageJson.version} />
       <Divider />
       <MenuItem
-        name="Report a Bug"
-        link={true}
-        href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
-      />
-      <Divider />
-      <MenuItem
         name="Minimise"
         shortcut="Alt + Esc"
         callback={() => window.ipcRenderer.send("minimise")}

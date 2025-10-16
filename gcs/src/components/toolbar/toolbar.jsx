@@ -33,7 +33,7 @@ export default function Toolbar() {
         <div className="pl-4 flex flex-row items-center h-full no-drag text-sm">
           {/* Icon */}
           <img
-            src="titlebar_logo.svg"
+            src="titlebar_logo_one.svg"
             className="w-auto h-2 pr-2 object-contain allow-drag"
           />
 

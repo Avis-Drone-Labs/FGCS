@@ -197,7 +197,7 @@ ipcMain.on("openFileInExplorer", (_event, filePath) => {shell.showItemInFolder(f
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
+    icon: path.join(process.env.VITE_PUBLIC, 'warg_app_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
@@ -216,7 +216,7 @@ function createWindow() {
     height: 300,
     frame: false,
     alwaysOnTop: true,
-    icon: path.join(process.env.VITE_PUBLIC, 'app_icon.ico'),
+    icon: path.join(process.env.VITE_PUBLIC, 'warg_app_icon.ico'),
     show: false,
     title: "Webcam",
     webPreferences: {
@@ -276,7 +276,7 @@ function setMainMenu() {
         {
           label: 'About FGCS',
           click: async () => {
-            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/window_loading_icon-2.png'))
+            const icon = nativeImage.createFromPath(path.join(__dirname, '../public/warg_loading_icon-2.png'))
 
             const options: MessageBoxOptions = {
               type: 'info',
@@ -336,7 +336,7 @@ function createLoadingWindow() {
 
   // Resize and center window
   loadingWin.loadFile(
-    path.join(process.env.VITE_PUBLIC, 'window_loading_icon.svg'),
+    path.join(process.env.VITE_PUBLIC, 'warg_loading_icon.svg'),
   )
   loadingWin.setSize(300, 300, true)
   loadingWin.center()

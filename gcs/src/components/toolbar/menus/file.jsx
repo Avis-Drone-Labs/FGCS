@@ -19,17 +19,11 @@ export default function FileMenu(props) {
       setMenusActive={props.setMenusActive}
     >
       <MenuItem
-        name="About FGCS"
+        name="About IMACS"
         link={true}
-        href="https://github.com/avis-drone-labs/fgcs"
+        href="https://github.com/UWARG/IMACS-3.0"
       />
       <MenuItem name="Current Version" shortcut={packageJson.version} />
-      <Divider />
-      <MenuItem
-        name="Report a Bug"
-        link={true}
-        href="https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
-      />
       <Divider />
       <MenuItem
         name="Minimise"

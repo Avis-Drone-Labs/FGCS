@@ -68,8 +68,8 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
   }
 
   function getCommonlyUsedCommands() {
-    var commands = getAvailableCommands()
-    var filteredCommands = commands.filter((a) =>
+    const commands = getAvailableCommands()
+    const filteredCommands = commands.filter((a) =>
       commonlyUsedLabels.includes(a.label),
     )
     return filteredCommands.map((a) => ({

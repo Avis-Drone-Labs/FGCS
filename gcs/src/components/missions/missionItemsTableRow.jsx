@@ -79,7 +79,7 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
   }
 
   function getCommonlyUsedIds() {
-    var commands = getCommonlyUsedCommands()
+    const commands = getCommonlyUsedCommands()
     return commands.map((a) => a.value)
   }
 

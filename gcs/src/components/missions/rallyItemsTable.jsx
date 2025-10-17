@@ -1,7 +1,7 @@
 /*
   This table displays all the rally items.
 */
-import { Table } from "@mantine/core"
+import { Table, Tooltip } from "@mantine/core"
 import React from "react"
 import { useSelector } from "react-redux"
 import { selectDrawingRallyItems } from "../../redux/slices/missionSlice"
@@ -9,6 +9,7 @@ import RallyItemsTableRow from "./rallyItemsTableRow"
 
 function RallyItemsTableNonMemo({ tableSectionHeight }) {
   const rallyItems = useSelector(selectDrawingRallyItems)
+  const notInUse = "This param is not used in Rally."
 
   return (
     <Table.ScrollContainer maxHeight={tableSectionHeight}>
@@ -16,11 +17,21 @@ function RallyItemsTableNonMemo({ tableSectionHeight }) {
         <Table.Thead>
           <Table.Tr>
             <Table.Th></Table.Th>
-            <Table.Th>Command</Table.Th>
-            <Table.Th></Table.Th>
-            <Table.Th></Table.Th>
-            <Table.Th></Table.Th>
-            <Table.Th></Table.Th>
+            <Tooltip label="RALLY_POINT is the only command available.">
+              <Table.Th>Command</Table.Th>
+            </Tooltip>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
             <Table.Th>Lat</Table.Th>
             <Table.Th>Lng</Table.Th>
             <Table.Th>Alt</Table.Th>

@@ -133,27 +133,29 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
         />
       </TableTd>
       <TableTd>{getPositionFrameName(missionItem.frame)}</TableTd>
-      <TableTd className="flex flex-row gap-2">
-        <ActionIcon
-          onClick={() =>
-            dispatch(reorderDrawingItem({ id: missionItem.id, increment: -1 }))
-          }
-        >
-          <IconArrowUp size={20} />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() =>
-            dispatch(reorderDrawingItem({ id: missionItem.id, increment: 1 }))
-          }
-        >
-          <IconArrowDown size={20} />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() => dispatch(removeDrawingItem(missionItem.id))}
-          color="red"
-        >
-          <IconTrash size={20} />
-        </ActionIcon>
+      <TableTd className="h-full">
+        <div className="flex flex-row gap-2">
+          <ActionIcon
+            onClick={() =>
+              dispatch(reorderDrawingItem({ id: missionItem.id, increment: -1 }))
+            }
+          >
+            <IconArrowUp size={20} />
+          </ActionIcon>
+          <ActionIcon
+            onClick={() =>
+              dispatch(reorderDrawingItem({ id: missionItem.id, increment: 1 }))
+            }
+          >
+            <IconArrowDown size={20} />
+          </ActionIcon>
+          <ActionIcon
+            onClick={() => dispatch(removeDrawingItem(missionItem.id))}
+            color="red"
+          >
+            <IconTrash size={20} />
+          </ActionIcon>
+        </div>
       </TableTd>
     </TableTr>
   )

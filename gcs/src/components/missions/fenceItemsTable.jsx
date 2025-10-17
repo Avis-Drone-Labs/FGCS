@@ -2,7 +2,7 @@
   This table displays all the fence items.
 */
 
-import { Table } from "@mantine/core"
+import { Table, Tooltip } from "@mantine/core"
 import React from "react"
 import FenceItemsTableRow from "./fenceItemsTableRow"
 
@@ -12,6 +12,7 @@ import { selectDrawingFenceItems } from "../../redux/slices/missionSlice"
 
 function FenceItemsTableNonMemo({ tableSectionHeight }) {
   const fenceItems = useSelector(selectDrawingFenceItems)
+  const notInUse = "This param is not used in Fence."
 
   return (
     <Table.ScrollContainer maxHeight={tableSectionHeight}>
@@ -21,12 +22,20 @@ function FenceItemsTableNonMemo({ tableSectionHeight }) {
             <Table.Th></Table.Th>
             <Table.Th>Command</Table.Th>
             <Table.Th>Param 1</Table.Th>
-            <Table.Th></Table.Th>
-            <Table.Th></Table.Th>
-            <Table.Th></Table.Th>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
             <Table.Th>Lat</Table.Th>
             <Table.Th>Lng</Table.Th>
-            <Table.Th></Table.Th>
+            <Tooltip label={notInUse}>
+              <Table.Th></Table.Th>
+            </Tooltip>
             <Table.Th>Frame</Table.Th>
             <Table.Th></Table.Th>
           </Table.Tr>

@@ -38,6 +38,9 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
   const missionItem = useSelector(
     selectDrawingMissionItemByIdx(missionItemIndex),
   )
+
+  // Commonly used section
+  const commonlyUsedTag = "-com-used"
   const commonlyUsedLabels = ["TAKEOFF", "WAYPOINT", "MISSION_START", "LAND"]
 
   function getDisplayCommandName(commandName) {
@@ -68,7 +71,7 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
     var commands = getAvailableCommands();
     var filteredCommands = commands.filter((a) => commonlyUsedLabels.includes(a.label))
     return filteredCommands.map((a) => ({
-      value: a.value + "-freq-used",
+      value: a.value + commonlyUsedTag,
       label: a.label
     }))
   }
@@ -96,9 +99,9 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
             {group: "Commonly Used", items: getCommonlyUsedCommands()},
             {group: "All commands", items: getAvailableCommands()}
           ]}
-          value={getCommonlyUsedIds().includes(missionItem.command.toString() + "-freq-used") ? missionItem.command.toString() + "-freq-used" : missionItem.command.toString()}
+          value={getCommonlyUsedIds().includes(missionItem.command.toString() + commonlyUsedTag) ? missionItem.command.toString() + commonlyUsedTag : missionItem.command.toString()}
           onChange={(value) =>
-            updateMissionItemData("command", parseInt(value.replace("-freq-used", "")))
+            updateMissionItemData("command", parseInt(value.replace(commonlyUsedTag, "")))
           }
           allowDeselect={false}
           classNames={{dropdown: "!min-w-fit"}}

@@ -59,11 +59,11 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       commandsList = PLANE_MISSION_ITEM_COMMANDS_LIST
     }
 
-    var mappedList = Object.entries(commandsList).map(([key, value]) => ({
+    const mappedList = Object.entries(commandsList).map(([key, value]) => ({
       value: key,
       label: getDisplayCommandName(value),
     }))
-    var sorted = mappedList.sort((a, b) => (a.label < b.label ? -1 : 1))
+    const sorted = mappedList.sort((a, b) => (a.label < b.label ? -1 : 1))
     return sorted
   }
 

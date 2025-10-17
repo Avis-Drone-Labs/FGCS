@@ -38,6 +38,7 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
   const missionItem = useSelector(
     selectDrawingMissionItemByIdx(missionItemIndex),
   )
+  const commonlyUsedLabels = ["TAKEOFF", "WAYPOINT", "MISSION_START", "LAND"]
 
   function getDisplayCommandName(commandName) {
     if (commandName.startsWith("MAV_CMD_NAV_")) {
@@ -55,10 +56,26 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       commandsList = PLANE_MISSION_ITEM_COMMANDS_LIST
     }
 
-    return Object.entries(commandsList).map(([key, value]) => ({
+    var mappedList = Object.entries(commandsList).map(([key, value]) => ({
       value: key,
       label: getDisplayCommandName(value),
     }))
+    var sorted = mappedList.sort((a, b) => a.label < b.label ? -1 : 1)
+    return sorted
+  }
+
+  function getCommonlyUsedCommands() {
+    var commands = getAvailableCommands();
+    var filteredCommands = commands.filter((a) => commonlyUsedLabels.includes(a.label))
+    return filteredCommands.map((a) => ({
+      value: a.value + "-freq-used",
+      label: a.label
+    }))
+  }
+
+  function getCommonlyUsedIds() {
+    var commands = getCommonlyUsedCommands()
+    return commands.map((a) => a.value)
   }
 
   function updateMissionItemData(key, newVal) {
@@ -75,12 +92,17 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       <TableTd>{missionItem.seq}</TableTd>
       <TableTd>
         <Select
-          data={getAvailableCommands()}
-          value={missionItem.command.toString()}
+          data={[
+            {group: "Commonly Used", items: getCommonlyUsedCommands()},
+            {group: "All commands", items: getAvailableCommands()}
+          ]}
+          value={getCommonlyUsedIds().includes(missionItem.command.toString() + "-freq-used") ? missionItem.command.toString() + "-freq-used" : missionItem.command.toString()}
           onChange={(value) =>
-            updateMissionItemData("command", parseInt(value))
+            updateMissionItemData("command", parseInt(value.replace("-freq-used", "")))
           }
           allowDeselect={false}
+          classNames={{dropdown: "!min-w-fit"}}
+          comboboxProps={{position: "top-start"}}
         />
       </TableTd>
       <TableTd>

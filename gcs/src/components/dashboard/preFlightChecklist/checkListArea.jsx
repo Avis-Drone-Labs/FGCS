@@ -12,9 +12,10 @@ import { ActionIcon, Button, Checkbox, Modal, Tooltip } from "@mantine/core"
 import EditCheckList from "./checkListEdit.jsx"
 
 // Styling imports
-import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
+import { IconCheckbox, IconEdit, IconFileExport, IconTrashX } from "@tabler/icons-react"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
+import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function CheckListArea({
@@ -50,20 +51,7 @@ export default function CheckListArea({
   }
 
   function generateCheckboxList(defaultCheck = false) {
-    // Go from string to list, does not return
-    var final = []
-    checkBoxListString
-      .split("<li><p>")
-      .splice(1)
-      .map((element) => {
-        var text = element.split("</p>")[0].trim()
-        if (text !== "") {
-          final.push({
-            checked: defaultCheck,
-            name: element.split("</p>")[0].trim(),
-          })
-        }
-      })
+    var final = generateCheckListObjectFromHTMLString(checkBoxListString, defaultCheck)
     setCheckboxList(final)
   }
 
@@ -90,6 +78,16 @@ export default function CheckListArea({
     setCheckboxList(final)
   }
 
+  function exportList() {
+    const downloadElement = document.createElement("a")
+    const file = new Blob([checkBoxListString], {type: "text/plain"})
+    downloadElement.href = URL.createObjectURL(file)
+    downloadElement.download = `${checkListName}.checklist`
+    document.body.appendChild(downloadElement)
+    downloadElement.click()
+    document.body.removeChild(downloadElement)
+  }
+
   function generateMappedItems() {
     return checkBoxList.map((element) => {
       return (
@@ -114,7 +112,7 @@ export default function CheckListArea({
       <div className="flex flex-col gap-2">
         <div className="flex w-full justify-between pb-2">
           <div className="flex gap-1">
-            <Tooltip label="Toggle all checked/unchecked">
+            <Tooltip label="Toggle Checked">
               <ActionIcon
                 variant="light"
                 radius="md"
@@ -126,7 +124,7 @@ export default function CheckListArea({
                 />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Edit list">
+            <Tooltip label="Edit List">
               <ActionIcon
                 variant="light"
                 radius="md"
@@ -138,21 +136,35 @@ export default function CheckListArea({
                 />
               </ActionIcon>
             </Tooltip>
+            <Tooltip label="Export List">
+              <ActionIcon
+                variant="light"
+                radius="md"
+                onClick={() => exportList()}
+              >
+                <IconFileExport
+                  style={{ width: "70%", height: "70%" }}
+                  stroke={1.5}
+                />
+              </ActionIcon>
+            </Tooltip>
           </div>
 
-          <Tooltip label="Delete list">
-            <ActionIcon
-              variant="light"
-              color="red"
-              radius="md"
-              onClick={() => setDeleteModal(true)}
-            >
-              <IconTrashX
-                style={{ width: "70%", height: "70%" }}
-                stroke={1.5}
-              />
-            </ActionIcon>
-          </Tooltip>
+          <div className="flex gap-1">
+            <Tooltip label="Delete List">
+              <ActionIcon
+                variant="light"
+                color="red"
+                radius="md"
+                onClick={() => setDeleteModal(true)}
+              >
+                <IconTrashX
+                  style={{ width: "70%", height: "70%" }}
+                  stroke={1.5}
+                />
+              </ActionIcon>
+            </Tooltip>
+          </div>
         </div>
 
         {mappedItems}

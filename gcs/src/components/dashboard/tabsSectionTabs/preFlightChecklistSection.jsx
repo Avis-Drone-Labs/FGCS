@@ -4,10 +4,10 @@
  */
 
 // Native imports
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { Accordion, Button, Modal, Tabs, TextInput } from "@mantine/core"
+import { Accordion, Button, FileInput, Modal, Tabs, TextInput } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
 // Local imports
@@ -20,6 +20,7 @@ import { AddCommand } from "../../spotlight/commandHandler.js"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 import { showErrorNotification } from "../../../helpers/notification.js"
+import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function PreFlightChecklistTab({ tabPadding }) {
@@ -34,6 +35,8 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   // New checklist
   const [showNewChecklistModal, setNewChecklistModal] = useState(false)
   const [newChecklistName, setNewChecklistName] = useState("")
+  const [uploadedChecklist, setUploadedChecklist] = useState(null)
+  const fileUploadRef = useRef()
 
   function deleteChecklist(toDelete) {
     var final = []
@@ -45,19 +48,26 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     setPreFlightChecklistItems(final)
   }
 
-  function createNewChecklist() {
-    if (newChecklistName !== "") {
+  function createNewChecklist(name, value) {
+    if (!name) {
+      name = newChecklistName
+    }
+    if (!value) {
+      value = [
+        {
+          checked: false,
+          name: "Your first item, press edit to add more!",
+        },
+      ]
+    }
+
+    if (name !== "") {
       preFlightChecklistItems.push({
-        name: newChecklistName,
-        value: [
-          {
-            checked: false,
-            name: "Your first item, press edit to add more!",
-          },
-        ],
+        name: name,
+        value: value
       })
       setPreFlightChecklistItems(preFlightChecklistItems)
-      setOpenChecklist(newChecklistName)
+      setOpenChecklist(name)
       setNewChecklistModal(false)
       setNewChecklistName("")
       return
@@ -69,7 +79,26 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   useEffect(() => {
     AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
   }, [])
-  // Add create new checklist as a spotlight command
+  
+  // Import checklist
+  useEffect(() => {
+    if (uploadedChecklist === null) return
+
+    const reader = new FileReader()
+    reader.onerror = () => {
+      showErrorNotification("Failed to read checklist file")
+    }
+
+    // Read text
+    reader.onload = () => {
+      console.log("OPENED FILE")
+      var text = reader.result
+      var title = uploadedChecklist.name.split(".")[0]
+      var checkListObject = generateCheckListObjectFromHTMLString(text)
+      createNewChecklist(title, checkListObject)
+    }
+    reader.readAsText(uploadedChecklist)
+  }, [uploadedChecklist])
 
   const items = preFlightChecklistItems.map((item) => (
     <Accordion.Item
@@ -110,6 +139,17 @@ export default function PreFlightChecklistTab({ tabPadding }) {
         >
           Add a new Checklist
         </Button>
+        <Button
+          className="!w-full !mt-2"
+          onClick={() => fileUploadRef.current?.click()}
+        >
+          Import from Checklist file
+        </Button>
+
+        {/* File input for import (hidden and controlled via a click from a function) */}
+        <div hidden>
+          <FileInput ref={fileUploadRef} onChange={setUploadedChecklist} />
+        </div>
 
         {/* New checklist modal */}
         <Modal

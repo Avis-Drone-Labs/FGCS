@@ -67,6 +67,8 @@ export default function FenceItemsTableRow({ fenceItemIndex }) {
           value={fenceItem.command.toString()}
           onChange={(value) => updateFenceItemData("command", parseInt(value))}
           allowDeselect={false}
+          classNames={{dropdown: "!min-w-fit"}}
+          comboboxProps={{position: "top-start"}}
         />
       </TableTd>
       <TableTd>

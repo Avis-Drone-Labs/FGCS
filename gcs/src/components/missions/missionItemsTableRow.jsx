@@ -63,16 +63,18 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       value: key,
       label: getDisplayCommandName(value),
     }))
-    var sorted = mappedList.sort((a, b) => a.label < b.label ? -1 : 1)
+    var sorted = mappedList.sort((a, b) => (a.label < b.label ? -1 : 1))
     return sorted
   }
 
   function getCommonlyUsedCommands() {
-    var commands = getAvailableCommands();
-    var filteredCommands = commands.filter((a) => commonlyUsedLabels.includes(a.label))
+    var commands = getAvailableCommands()
+    var filteredCommands = commands.filter((a) =>
+      commonlyUsedLabels.includes(a.label),
+    )
     return filteredCommands.map((a) => ({
       value: a.value + commonlyUsedTag,
-      label: a.label
+      label: a.label,
     }))
   }
 
@@ -96,16 +98,25 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       <TableTd>
         <Select
           data={[
-            {group: "Commonly Used", items: getCommonlyUsedCommands()},
-            {group: "All commands", items: getAvailableCommands()}
+            { group: "Commonly Used", items: getCommonlyUsedCommands() },
+            { group: "All commands", items: getAvailableCommands() },
           ]}
-          value={getCommonlyUsedIds().includes(missionItem.command.toString() + commonlyUsedTag) ? missionItem.command.toString() + commonlyUsedTag : missionItem.command.toString()}
+          value={
+            getCommonlyUsedIds().includes(
+              missionItem.command.toString() + commonlyUsedTag,
+            )
+              ? missionItem.command.toString() + commonlyUsedTag
+              : missionItem.command.toString()
+          }
           onChange={(value) =>
-            updateMissionItemData("command", parseInt(value.replace(commonlyUsedTag, "")))
+            updateMissionItemData(
+              "command",
+              parseInt(value.replace(commonlyUsedTag, "")),
+            )
           }
           allowDeselect={false}
-          classNames={{dropdown: "!min-w-fit"}}
-          comboboxProps={{position: "top-start"}}
+          classNames={{ dropdown: "!min-w-fit" }}
+          comboboxProps={{ position: "top-start" }}
         />
       </TableTd>
       <TableTd>
@@ -162,7 +173,9 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
         <div className="flex flex-row gap-2">
           <ActionIcon
             onClick={() =>
-              dispatch(reorderDrawingItem({ id: missionItem.id, increment: -1 }))
+              dispatch(
+                reorderDrawingItem({ id: missionItem.id, increment: -1 }),
+              )
             }
           >
             <IconArrowUp size={20} />

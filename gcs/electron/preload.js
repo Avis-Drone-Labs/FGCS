@@ -23,6 +23,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   "window:select-file-in-explorer",
   "app:update-ekf-status",
   "app:open-ekf-status-window",
+  "app:update-vibe-status",
+  "app:open-vibe-status-window",
 ]
 
 const ALLOWED_SEND_CHANNELS = [
@@ -45,6 +47,7 @@ const ALLOWED_ON_CHANNELS = [
   "app:send-link-stats",
   "fla:log-parse-progress",
   "app:send-ekf-status",
+  "app:send-vibe-status",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

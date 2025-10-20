@@ -1,5 +1,3 @@
-/// <reference types="vite-plugin-electron/electron-env" />
-
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
@@ -23,5 +21,5 @@ declare namespace NodeJS {
 
 // Used in Renderer process, expose in `preload.js`
 interface Window {
-  ipcRenderer: import('electron').IpcRenderer
+  ipcRenderer: import("electron").IpcRenderer
 }

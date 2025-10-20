@@ -1,7 +1,28 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
+import {
+  cleanupSharedElectronApp,
+  getSharedElectronApp,
+  getSharedMainWindow,
+} from "./electron-fixtures"
 
-// Ignore tests for now, will add at a later date
-// test("example test", async ({ page }) => {
-//   await page.goto("http://localhost:5173")
-//   await expect(1).toEqual(1)
-// })
+test.describe("Dashboard Tests", () => {
+  test.beforeAll(async () => {
+    await getSharedElectronApp()
+  })
+
+  test.afterAll(async () => {
+    await cleanupSharedElectronApp()
+  })
+
+  test("should have the correct title", async () => {
+    const mainWindow = await getSharedMainWindow()
+    await expect(mainWindow).toHaveTitle("FGCS")
+  })
+
+  test("should load the dashboard", async () => {
+    const mainWindow = await getSharedMainWindow()
+
+    await expect(mainWindow.locator("body")).toBeVisible()
+    await expect(mainWindow.getByTestId("dashboard")).toBeVisible()
+  })
+})

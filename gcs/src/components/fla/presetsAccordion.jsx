@@ -11,7 +11,10 @@ import { useSelector } from "react-redux"
 import PresetAccordionItem from "./presetAccordionItem.jsx"
 import { selectLogType, selectLogMessages, selectMessageFilters, selectFormatMessages } from "../../redux/slices/logAnalyserSlice.js"
 
-export default function PresetsAccordion({ presetCategories, deleteCustomPreset }) {
+export default function PresetsAccordion({
+  presetCategories,
+  deleteCustomPreset,
+}) {
   const logType = useSelector(selectLogType)
   const messageFilters = useSelector(selectMessageFilters)
   const formatMessages = useSelector(selectFormatMessages)
@@ -47,7 +50,11 @@ export default function PresetsAccordion({ presetCategories, deleteCustomPreset 
       {/* Custom Presets */}
       {filteredPresetCategories.custom.map((category) => (
         <Fragment key={category.name}>
-          <PresetAccordionItem key={category.name} category={category} deleteCustomPreset={deleteCustomPreset} />
+          <PresetAccordionItem
+            key={category.name}
+            category={category}
+            deleteCustomPreset={deleteCustomPreset}
+          />
         </Fragment>
       ))}
       {/* Default Presets */}

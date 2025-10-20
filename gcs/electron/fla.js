@@ -182,6 +182,7 @@ async function parseFgcsTelemetryLogFile(
 ) {
   const formatMessages = {}
   const messages = {}
+  
   // let aircraftType = null // TODO: determine aircraft type from log
   let lastUpdateTime = 0
 

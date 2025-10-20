@@ -3,7 +3,9 @@
 import { Progress } from "@mantine/core"
 import { useEffect, useMemo, useState } from "react"
 import {
+  EKF_STATUS_DANGER_LEVEL,
   EKF_STATUS_FLAGS,
+  EKF_STATUS_WARNING_LEVEL,
   getActiveEKFFlags,
 } from "../../helpers/mavlinkConstants"
 
@@ -32,8 +34,8 @@ function getPercentageFromValue(value) {
 }
 
 function getColourFromValue(value) {
-  if (value > 0.8) return RED
-  if (value > 0.5) return YELLOW
+  if (value > EKF_STATUS_DANGER_LEVEL) return RED
+  if (value > EKF_STATUS_WARNING_LEVEL) return YELLOW
   return ""
 }
 

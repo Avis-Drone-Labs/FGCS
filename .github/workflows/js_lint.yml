@@ -5,10 +5,14 @@ on:
     branches:
       - main
       - release-*
+    paths:
+      - gcs/**
   pull_request:
     branches:
       - main
       - release-*
+    paths:
+      - gcs/**
 
 jobs:
   run-linters:
@@ -27,5 +31,10 @@ jobs:
       - run: yarn
         working-directory: gcs
 
-      - run: yarn format
+      - name: Check code formatting
+        run: yarn prettier
+        working-directory: gcs
+
+      - name: Check code linting
+        run: yarn lint
         working-directory: gcs

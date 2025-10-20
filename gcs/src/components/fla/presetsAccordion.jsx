@@ -9,7 +9,11 @@ import { Accordion } from "@mantine/core"
 import { useSelector } from "react-redux"
 
 import PresetAccordionItem from "./presetAccordionItem.jsx"
-import { selectLogType, selectMessageFilters, selectFormatMessages } from "../../redux/slices/logAnalyserSlice.js"
+import {
+  selectLogType,
+  selectMessageFilters,
+  selectFormatMessages,
+} from "../../redux/slices/logAnalyserSlice.js"
 
 export default function PresetsAccordion({
   presetCategories,
@@ -33,7 +37,9 @@ export default function PresetsAccordion({
               if (!messageFilters[key]) return false
               const requiredFields = preset.filters[key] || []
               const availableFields = formatMessages?.[key]?.fields || []
-              return requiredFields.every((field) => availableFields.includes(field))
+              return requiredFields.every((field) =>
+                availableFields.includes(field),
+              )
             }),
           ),
         }))

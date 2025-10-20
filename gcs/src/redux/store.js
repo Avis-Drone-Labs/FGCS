@@ -152,7 +152,6 @@ const updateJSONLocalStorageIfChanged = (key, newValue) => {
 
 // Update states when a new message comes in
 store.subscribe(() => {
-
   const store_mut = store.getState()
 
   if (typeof store_mut.droneConnection.wireless === "boolean") {

@@ -9,13 +9,7 @@ const ignoredMessages = [
   "format",
   "aircraftType",
 ]
-const ignoredKeys = [
-  "TimeUS",
-  "function",
-  "source",
-  "result",
-  "time_boot_ms",
-]
+const ignoredKeys = ["TimeUS", "function", "source", "result", "time_boot_ms"]
 
 export function gpsToUTC(gpsWeek: number, gms: number, leapSeconds = 18) {
   // GPS epoch starts at 1980-01-06 00:00:00 UTC
@@ -41,7 +35,8 @@ export function calculateMeanValues(loadedLogMessages: { [x: string]: any }) {
 
   // Cache Set for O(1) lookups
   const ignoredMessagesSet = new Set(ignoredMessages)
-  const means: { [key: string]: { mean: string; max: string; min: string } } = {}
+  const means: { [key: string]: { mean: string; max: string; min: string } } =
+    {}
 
   // Process data directly without building intermediate arrays
   Object.keys(loadedLogMessages)
@@ -50,7 +45,9 @@ export function calculateMeanValues(loadedLogMessages: { [x: string]: any }) {
       const messageData = loadedLogMessages[key]
       if (!Array.isArray(messageData) || messageData.length === 0) return
 
-      const fieldStats: { [key: string]: { min: number; max: number; sum: number; count: number } } = {}
+      const fieldStats: {
+        [key: string]: { min: number; max: number; sum: number; count: number }
+      } = {}
 
       for (let i = 0; i < messageData.length; i++) {
         const message = messageData[i]
@@ -105,8 +102,12 @@ export function calculateMeanValues(loadedLogMessages: { [x: string]: any }) {
  * //   "AHR2": { "Roll": false, "Pitch": false, "Yaw": false }
  * // }
  */
-export function buildDefaultMessageFilters(loadedLogMessages: { [x: string]: any }) {
-  const logMessageFilterDefaultState: { [key: string]: { [field: string]: boolean } } = {}
+export function buildDefaultMessageFilters(loadedLogMessages: {
+  [x: string]: any
+}) {
+  const logMessageFilterDefaultState: {
+    [key: string]: { [field: string]: boolean }
+  } = {}
 
   // Cache keys and create Sets for O(1) lookups
   const messageKeys = Object.keys(loadedLogMessages)
@@ -132,7 +133,10 @@ export function buildDefaultMessageFilters(loadedLogMessages: { [x: string]: any
   return logMessageFilterDefaultState
 }
 
-export function processFlightModes(logType: string , loadedLogMessages: { [x: string]: any }) {
+export function processFlightModes(
+  logType: string,
+  loadedLogMessages: { [x: string]: any },
+) {
   if (logType === "dataflash") {
     return loadedLogMessages.MODE
   } else if (logType === "fgcs_telemetry") {
@@ -146,7 +150,7 @@ export function processFlightModes(logType: string , loadedLogMessages: { [x: st
  * For fgcs_telemetry logs:
  * Extracts heartbeat messages where mode changes occur
  */
-export function getHeartbeatMessages(heartbeatMessages: any[]){
+export function getHeartbeatMessages(heartbeatMessages: any[]) {
   const modeMessages = []
   for (let i = 0; i < heartbeatMessages.length; i++) {
     const msg = heartbeatMessages[i]
@@ -191,10 +195,12 @@ export function convertTimeUStoUTC(logMessages: any, gpsOffset: number) {
   Object.keys(convertedMessages)
     .filter((key) => key !== "format" && key !== "units")
     .forEach((key) => {
-      convertedMessages[key] = convertedMessages[key].map((message: { [key: string]: any, TimeUS: number }) => ({
-        ...message,
-        TimeUS: message.TimeUS / 1000 + gpsOffset,
-      }))
+      convertedMessages[key] = convertedMessages[key].map(
+        (message: { [key: string]: any; TimeUS: number }) => ({
+          ...message,
+          TimeUS: message.TimeUS / 1000 + gpsOffset,
+        }),
+      )
     })
 
   return convertedMessages
@@ -206,10 +212,13 @@ export function convertTimeUStoUTC(logMessages: any, gpsOffset: number) {
 export function sortObjectByKeys(obj: { [x: string]: any }) {
   const result = Object.keys(obj)
     .sort()
-    .reduce((acc: { [key: string]: any }, key: string) => {
-      acc[key] = obj[key]
-      return acc
-    }, {} as { [key: string]: any })
+    .reduce(
+      (acc: { [key: string]: any }, key: string) => {
+        acc[key] = obj[key]
+        return acc
+      },
+      {} as { [key: string]: any },
+    )
 
   return result
 }
@@ -234,33 +243,33 @@ export function expandESCMessages(
   const updatedFilters = { ...filterState }
   const updatedFormats = { ...logMessages["format"] }
 
-    escData.forEach((escMessage: { [x: string]: number }) => {
-      const escName = `ESC${escMessage["Instance"] + 1}`
-      const newEscData = {
-        ...escMessage,
+  escData.forEach((escMessage: { [x: string]: number }) => {
+    const escName = `ESC${escMessage["Instance"] + 1}`
+    const newEscData = {
+      ...escMessage,
+      name: escName,
+    }
+
+    if (!updatedMessages[escName]) {
+      updatedMessages[escName] = []
+      updatedFilters[escName] = { ...filterState["ESC"] }
+      updatedFormats[escName] = {
+        ...updatedFormats["ESC"],
         name: escName,
       }
+    }
 
-      if (!updatedMessages[escName]) {
-        updatedMessages[escName] = []
-        updatedFilters[escName] = { ...filterState["ESC"] }
-        updatedFormats[escName] = {
-          ...updatedFormats["ESC"],
-          name: escName,
-        }
-      }
+    updatedMessages[escName].push(newEscData)
+  })
 
-      updatedMessages[escName].push(newEscData)
-    })
+  delete updatedMessages["ESC"]
+  delete updatedFilters["ESC"]
+  delete updatedFormats["ESC"]
 
-    delete updatedMessages["ESC"]
-    delete updatedFilters["ESC"]
-    delete updatedFormats["ESC"]
+  // Update updatedMessages["format"] too
+  updatedMessages["format"] = updatedFormats
 
-    // Update updatedMessages["format"] too
-    updatedMessages["format"] = updatedFormats
-
-    return { updatedMessages, updatedFilters, updatedFormats }
+  return { updatedMessages, updatedFilters, updatedFormats }
 }
 
 /**
@@ -269,14 +278,14 @@ export function expandESCMessages(
 export function expandBATMessages(
   logMessages: { [key: string]: any },
   filterState: { [key: string]: any },
-  formatsWithESC: { [key: string]: any }
+  formatsWithESC: { [key: string]: any },
 ) {
   if (!logMessages["BAT"]) {
-      return {
-        updatedMessages: logMessages,
-        updatedFilters: filterState,
-        updatedFormats: formatsWithESC,
-      }
+    return {
+      updatedMessages: logMessages,
+      updatedFilters: filterState,
+      updatedFormats: formatsWithESC,
+    }
   }
 
   const updatedMessages = { ...logMessages }
@@ -322,8 +331,8 @@ export function clearUnitCache() {
 export function getUnit(
   messageName: string,
   fieldName: any,
-  formatMessages : {[key: string]: any},
-  units: {[key: string]: any},
+  formatMessages: { [key: string]: any },
+  units: { [key: string]: any },
 ) {
   // Create cache key
   const cacheKey = `${messageName}/${fieldName}`

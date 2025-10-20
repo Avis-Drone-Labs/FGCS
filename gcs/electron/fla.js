@@ -182,7 +182,7 @@ async function parseFgcsTelemetryLogFile(
 ) {
   const formatMessages = {}
   const messages = {}
-  
+
   // let aircraftType = null // TODO: determine aircraft type from log
   let lastUpdateTime = 0
 
@@ -460,8 +460,13 @@ export async function retrieveMessages(_event, requestedMessages) {
   // for large log files, we need to consider decimation.
 
   if (!logData) {
-    console.error("retrieveMessages: logData is null or undefined. Unable to retrieve messages.");
-    return { success: false, error: "Log data not loaded. Cannot retrieve messages." };
+    console.error(
+      "retrieveMessages: logData is null or undefined. Unable to retrieve messages.",
+    )
+    return {
+      success: false,
+      error: "Log data not loaded. Cannot retrieve messages.",
+    }
   }
   if (!Array.isArray(requestedMessages) || requestedMessages.length === 0) {
     return []
@@ -472,7 +477,11 @@ export async function retrieveMessages(_event, requestedMessages) {
   const datasets = []
 
   // Loop through the list of requested messages and transform each of them
-  for (let messageIndex = 0; messageIndex < requestedMessages.length; messageIndex++) {
+  for (
+    let messageIndex = 0;
+    messageIndex < requestedMessages.length;
+    messageIndex++
+  ) {
     let label = requestedMessages[messageIndex]
 
     // format is supposed to be `${categoryName}/${fieldName}`

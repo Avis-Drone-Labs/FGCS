@@ -158,7 +158,7 @@ export default function FLA() {
           backgroundColor: hexToRgba(color, 0.5),
         }
       })
-  }, [baseChartData, customColors])
+  }, [baseChartData, customColors, requestedLabels])
 
 
   // Step 4: Update the chart's state.

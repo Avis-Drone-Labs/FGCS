@@ -16,8 +16,12 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-// @ts-expect-error - no types available
-import openFile, { clearRecentFiles, getRecentFiles, retrieveMessages } from "./fla"
+import openFile, {
+  clearRecentFiles,
+  getRecentFiles,
+  retrieveMessages,
+  // @ts-expect-error - no types available
+} from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,

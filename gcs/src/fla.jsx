@@ -11,10 +11,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 
 // Styling imports
-import {
-  clearUnitCache,
-  hexToRgba,
-} from "./components/fla/utils"
+import { clearUnitCache, hexToRgba } from "./components/fla/utils"
 
 // Custom components and helpers
 import { logEventIds } from "./components/fla/logEventIds.js"
@@ -73,12 +70,14 @@ export default function FLA() {
     dispatch(setUtcAvailable(summary.utcAvailable))
     dispatch(setMessageFilters(summary.messageFilters))
     dispatch(setMessageMeans(summary.messageMeans))
-    dispatch(setLogEvents(
-      summary.logEvents.map((event) => ({
-        time: event.TimeUS,
-        message: logEventIds[event.Id],
-      }))
-    ))
+    dispatch(
+      setLogEvents(
+        summary.logEvents.map((event) => ({
+          time: event.TimeUS,
+          message: logEventIds[event.Id],
+        })),
+      ),
+    )
     dispatch(setBaseChartData([]))
   }
 
@@ -103,26 +102,25 @@ export default function FLA() {
   const requestedLabels = useMemo(() => {
     if (!messageFilters) return new Set()
 
-    const labels = new Set();
-    Object.keys(messageFilters).forEach(categoryName => {
-      const category = messageFilters[categoryName];
-      Object.keys(category).forEach(fieldName => {
+    const labels = new Set()
+    Object.keys(messageFilters).forEach((categoryName) => {
+      const category = messageFilters[categoryName]
+      Object.keys(category).forEach((fieldName) => {
         if (category[fieldName]) {
-          labels.add(`${categoryName}/${fieldName}`);
+          labels.add(`${categoryName}/${fieldName}`)
         }
-      });
-    });
-    return labels;
+      })
+    })
+    return labels
   }, [messageFilters])
-
 
   // Step 2: A dedicated effect for fetching missing data.
   // This only runs if the set of requestedLabels changes.
   useEffect(() => {
-    const cachedLabels = new Set((baseChartData || []).map(d => d.label));
+    const cachedLabels = new Set((baseChartData || []).map((d) => d.label))
 
     const labelsToFetch = [...requestedLabels].filter(
-      label => !cachedLabels.has(label)
+      (label) => !cachedLabels.has(label),
     )
 
     if (labelsToFetch.length > 0) {
@@ -130,7 +128,7 @@ export default function FLA() {
       const fetchMissingData = async () => {
         const newDatasets = await window.ipcRenderer.invoke(
           "fla:retrieve-messages",
-          labelsToFetch
+          labelsToFetch,
         )
         if (newDatasets) {
           // Dispatch to add the new data to our master cache in Redux
@@ -141,7 +139,6 @@ export default function FLA() {
     }
   }, [requestedLabels, baseChartData, dispatch])
 
-
   // Step 3: Memoize the final chart data.
   // This filters the master cache and applies colors. It only re-runs if
   // the data we need (baseChartData) or how it looks (customColors) changes.
@@ -149,8 +146,8 @@ export default function FLA() {
     if (!baseChartData) return []
 
     return baseChartData
-      .filter(dataset => requestedLabels.has(dataset.label))
-      .map(dataset => {
+      .filter((dataset) => requestedLabels.has(dataset.label))
+      .map((dataset) => {
         const color = customColors[dataset.label] || "#000000"
         return {
           ...dataset,
@@ -160,13 +157,11 @@ export default function FLA() {
       })
   }, [baseChartData, customColors, requestedLabels])
 
-
   // Step 4: Update the chart's state.
   // This is now very simple and just syncs the memoized data to the local state.
   useEffect(() => {
     setLocalChartData({ datasets: visibleDataWithColors })
   }, [visibleDataWithColors])
-
 
   return (
     <Layout currentPage="fla">

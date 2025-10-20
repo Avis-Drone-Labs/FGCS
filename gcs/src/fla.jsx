@@ -139,7 +139,7 @@ export default function FLA() {
       }
       fetchMissingData()
     }
-  }, [requestedLabels, dispatch])
+  }, [requestedLabels, baseChartData, dispatch])
 
 
   // Step 3: Memoize the final chart data.

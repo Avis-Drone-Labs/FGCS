@@ -39,7 +39,8 @@
           100000
       ],
       "display": "Maximum Altitude Alert",
-      "suffix": "m"
+      "suffix": "m",
+      "group": "Altitude"
     },
     "minAltitudeAlerts": {
       "description": "You'll be notified when the relative altitude of a drone goes below these values.",
@@ -50,7 +51,8 @@
           100000
       ],
       "display": "Minimum Altitude Alerts",
-      "suffix": "m"
+      "suffix": "m",
+      "group": "Altitude"
     },
     "batteryAlert": {
       "description": "You'll be notified when the battery percentage falls below these values.",
@@ -60,7 +62,8 @@
         0, 100
       ],
       "display": "Battery Alert",
-      "suffix": "%"
+      "suffix": "%",
+      "group": "Battery"
     }
   },
   "Params": {},

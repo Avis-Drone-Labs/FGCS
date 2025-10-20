@@ -256,20 +256,40 @@ function SettingsModal() {
               )
             })}
           </Tabs.List>
-          {settingTabs.map((t) => {
+          {settingTabs.map((tab) => {
+            const tabSettings = DefaultSettings[tab]
+            const groupedSettings = {}
+
+            Object.entries(tabSettings).forEach(([key, def]) => {
+              const group = def.group || "Ungrouped"
+              if (!groupedSettings[group]) {
+                groupedSettings[group] = []
+              }
+              groupedSettings[group].push({ key, def })
+            })
+
             return (
-              <Tabs.Panel className="space-y-4" value={t} key={t}>
-                {Object.keys(DefaultSettings[t]).map((s) => {
-                  return (
-                    <Setting
-                      settingName={`${t}.${s}`}
-                      df={DefaultSettings[t][s]}
-                      key={`${t}.${s}`}
-                      initialValue={initialSettings[`${t}.${s}`]}
-                    />
-                  )
-                })}
-                {Object.keys(DefaultSettings[t]).length == 0 && (
+              <Tabs.Panel className="space-y-6" value={tab} key={tab}>
+                {Object.keys(groupedSettings).map((group) => (
+                  <div className="pb-2" key={group}>
+                    {group !== "Ungrouped" && (
+                      <h2 className="text-lg font-semibold text-white px-10 pb-2">
+                        {group}
+                      </h2>
+                    )}
+                    <div className="space-y-4">
+                      {groupedSettings[group].map(({ key, def }) => (
+                        <Setting
+                          key={`${tab}.${key}`}
+                          settingName={`${tab}.${key}`}
+                          df={def}
+                          initialValue={initialSettings[`${tab}.${key}`]}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {Object.keys(tabSettings).length === 0 && (
                   <p className="pl-4 pt-2">No settings available right now.</p>
                 )}
               </Tabs.Panel>
@@ -294,7 +314,7 @@ function SettingsModal() {
                 setting
                   .split(".")
                   .reduce((title, value) => title[value], DefaultSettings)[
-                  "display"
+                "display"
                 ]
               }
             </p>

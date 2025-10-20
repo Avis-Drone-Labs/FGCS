@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const ignoredMessages = [
   "ERR",
   "EV",
@@ -12,7 +11,7 @@ const ignoredMessages = [
 ]
 const ignoredKeys = ["TimeUS", "function", "source", "result", "time_boot_ms"]
 
-export function gpsToUTC(gpsWeek: number, gms: number, leapSeconds = 18) {
+export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
   // GPS epoch starts at 1980-01-06 00:00:00 UTC
   const gpsEpoch = new Date(Date.UTC(1980, 0, 6))
 
@@ -31,13 +30,12 @@ export function gpsToUTC(gpsWeek: number, gms: number, leapSeconds = 18) {
  * Structure:
  * { "MESSAGE_TYPE/FIELD_NAME": { mean: value, min: value, max: value }, ... }
  */
-export function calculateMeanValues(loadedLogMessages: { [x: string]: any }) {
+export function calculateMeanValues(loadedLogMessages) {
   if (!loadedLogMessages) return null
 
   // Cache Set for O(1) lookups
   const ignoredMessagesSet = new Set(ignoredMessages)
-  const means: { [key: string]: { mean: string; max: string; min: string } } =
-    {}
+  const means = {}
 
   // Process data directly without building intermediate arrays
   Object.keys(loadedLogMessages)
@@ -46,9 +44,7 @@ export function calculateMeanValues(loadedLogMessages: { [x: string]: any }) {
       const messageData = loadedLogMessages[key]
       if (!Array.isArray(messageData) || messageData.length === 0) return
 
-      const fieldStats: {
-        [key: string]: { min: number; max: number; sum: number; count: number }
-      } = {}
+      const fieldStats = {}
 
       for (let i = 0; i < messageData.length; i++) {
         const message = messageData[i]
@@ -103,12 +99,8 @@ export function calculateMeanValues(loadedLogMessages: { [x: string]: any }) {
  * //   "AHR2": { "Roll": false, "Pitch": false, "Yaw": false }
  * // }
  */
-export function buildDefaultMessageFilters(loadedLogMessages: {
-  [x: string]: any
-}) {
-  const logMessageFilterDefaultState: {
-    [key: string]: { [field: string]: boolean }
-  } = {}
+export function buildDefaultMessageFilters(loadedLogMessages) {
+  const logMessageFilterDefaultState = {}
 
   // Cache keys and create Sets for O(1) lookups
   const messageKeys = Object.keys(loadedLogMessages)
@@ -121,9 +113,9 @@ export function buildDefaultMessageFilters(loadedLogMessages: {
     .filter((key) => messageKeys.includes(key) && !ignoredMessagesSet.has(key))
     .sort()
     .forEach((key) => {
-      const fieldsState: { [field: string]: boolean } = {}
+      const fieldsState = {}
       // Set all field states to false if they're not ignored
-      loadedLogMessages["format"][key].fields.forEach((field: string) => {
+      loadedLogMessages["format"][key].fields.forEach((field) => {
         if (!ignoredKeysSet.has(field)) {
           fieldsState[field] = false
         }
@@ -134,10 +126,7 @@ export function buildDefaultMessageFilters(loadedLogMessages: {
   return logMessageFilterDefaultState
 }
 
-export function processFlightModes(
-  logType: string,
-  loadedLogMessages: { [x: string]: any },
-) {
+export function processFlightModes(logType, loadedLogMessages) {
   if (logType === "dataflash") {
     return loadedLogMessages.MODE
   } else if (logType === "fgcs_telemetry") {
@@ -151,7 +140,7 @@ export function processFlightModes(
  * For fgcs_telemetry logs:
  * Extracts heartbeat messages where mode changes occur
  */
-export function getHeartbeatMessages(heartbeatMessages: any[]) {
+export function getHeartbeatMessages(heartbeatMessages) {
   const modeMessages = []
   for (let i = 0; i < heartbeatMessages.length; i++) {
     const msg = heartbeatMessages[i]
@@ -171,7 +160,7 @@ export function getHeartbeatMessages(heartbeatMessages: any[]) {
 /**
  * Calculates GPS offset for UTC conversion
  */
-export function calcGPSOffset(loadedLogMessages: { [x: string]: any[] }) {
+export function calcGPSOffset(loadedLogMessages) {
   if (!loadedLogMessages["GPS"] || !loadedLogMessages["GPS"][0]) {
     return null
   }
@@ -189,19 +178,17 @@ export function calcGPSOffset(loadedLogMessages: { [x: string]: any[] }) {
 /**
  * Converts TimeUS to UTC for all messages
  */
-export function convertTimeUStoUTC(logMessages: any, gpsOffset: number) {
+export function convertTimeUStoUTC(logMessages, gpsOffset) {
   // This still takes some time for some reason
   const convertedMessages = { ...logMessages }
 
   Object.keys(convertedMessages)
     .filter((key) => key !== "format" && key !== "units")
     .forEach((key) => {
-      convertedMessages[key] = convertedMessages[key].map(
-        (message: { [key: string]: any; TimeUS: number }) => ({
-          ...message,
-          TimeUS: message.TimeUS / 1000 + gpsOffset,
-        }),
-      )
+      convertedMessages[key] = convertedMessages[key].map((message) => ({
+        ...message,
+        TimeUS: message.TimeUS / 1000 + gpsOffset,
+      }))
     })
 
   return convertedMessages
@@ -210,16 +197,13 @@ export function convertTimeUStoUTC(logMessages: any, gpsOffset: number) {
 /**
  * Sorts object keys alphabetically
  */
-export function sortObjectByKeys(obj: { [x: string]: any }) {
+export function sortObjectByKeys(obj) {
   const result = Object.keys(obj)
     .sort()
-    .reduce(
-      (acc: { [key: string]: any }, key: string) => {
-        acc[key] = obj[key]
-        return acc
-      },
-      {} as { [key: string]: any },
-    )
+    .reduce((acc, key) => {
+      acc[key] = obj[key]
+      return acc
+    }, {})
 
   return result
 }
@@ -227,10 +211,7 @@ export function sortObjectByKeys(obj: { [x: string]: any }) {
 /**
  * Expands ESC messages into separate arrays based on Instance
  */
-export function expandESCMessages(
-  logMessages: { [key: string]: any },
-  filterState: { [key: string]: any },
-) {
+export function expandESCMessages(logMessages, filterState) {
   const escData = logMessages["ESC"]
   if (!escData?.length) {
     return {
@@ -244,7 +225,7 @@ export function expandESCMessages(
   const updatedFilters = { ...filterState }
   const updatedFormats = { ...logMessages["format"] }
 
-  escData.forEach((escMessage: { [x: string]: number }) => {
+  escData.forEach((escMessage) => {
     const escName = `ESC${escMessage["Instance"] + 1}`
     const newEscData = {
       ...escMessage,
@@ -276,11 +257,7 @@ export function expandESCMessages(
 /**
  * Expands BAT messages into separate arrays based on Instance
  */
-export function expandBATMessages(
-  logMessages: { [key: string]: any },
-  filterState: { [key: string]: any },
-  formatsWithESC: { [key: string]: any },
-) {
+export function expandBATMessages(logMessages, filterState, formatsWithESC) {
   if (!logMessages["BAT"]) {
     return {
       updatedMessages: logMessages,
@@ -293,7 +270,7 @@ export function expandBATMessages(
   const updatedFilters = { ...filterState }
   const updatedFormats = { ...formatsWithESC }
 
-  logMessages["BAT"].forEach((battData: { [x: string]: any }) => {
+  logMessages["BAT"].forEach((battData) => {
     const instanceValue = battData["Instance"] ?? battData["Inst"]
     const battName = `BAT${(instanceValue ?? 0) + 1}`
 
@@ -329,12 +306,7 @@ export function clearUnitCache() {
   unitCache.clear()
 }
 
-export function getUnit(
-  messageName: string,
-  fieldName: any,
-  formatMessages: { [key: string]: any },
-  units: { [key: string]: any },
-) {
+export function getUnit(messageName, fieldName, formatMessages, units) {
   // Create cache key
   const cacheKey = `${messageName}/${fieldName}`
   if (unitCache.has(cacheKey)) {

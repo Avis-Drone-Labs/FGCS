@@ -146,7 +146,7 @@ export function processFlightModes(logType: string , loadedLogMessages: { [x: st
  * For fgcs_telemetry logs:
  * Extracts heartbeat messages where mode changes occur
  */
-export function getHeartbeatMessages(heartbeatMessages: string | any[]){
+export function getHeartbeatMessages(heartbeatMessages: any[]){
   const modeMessages = []
   for (let i = 0; i < heartbeatMessages.length; i++) {
     const msg = heartbeatMessages[i]

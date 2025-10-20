@@ -190,7 +190,9 @@ export default function TelemetrySection({
             <tbody>
               {batteryData.map((battery) => (
                 <tr className="w-full" key={battery.id}>
-                  <td className="px-4">BATTERY{batteryData.length > 1 && battery.id}</td>
+                  <td className="px-4">
+                    BATTERY{batteryData.length > 1 && battery.id}
+                  </td>
                   <td className="font-bold px-2 text-xl text-right">
                     {(battery.voltages
                       ? battery.voltages[0] / 1000

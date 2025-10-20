@@ -9,7 +9,7 @@ import { Accordion } from "@mantine/core"
 import { useSelector } from "react-redux"
 
 import PresetAccordionItem from "./presetAccordionItem.jsx"
-import { selectLogType, selectLogMessages, selectMessageFilters, selectFormatMessages } from "../../redux/slices/logAnalyserSlice.js"
+import { selectLogType, selectMessageFilters, selectFormatMessages } from "../../redux/slices/logAnalyserSlice.js"
 
 export default function PresetsAccordion({
   presetCategories,

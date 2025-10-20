@@ -459,7 +459,11 @@ export async function retrieveMessages(_event, requestedMessages) {
 
   // for large log files, we need to consider decimation.
 
-  if (!logData || !Array.isArray(requestedMessages) || requestedMessages.length === 0) {
+  if (!logData) {
+    console.error("retrieveMessages: logData is null or undefined. Unable to retrieve messages.");
+    return { success: false, error: "Log data not loaded. Cannot retrieve messages." };
+  }
+  if (!Array.isArray(requestedMessages) || requestedMessages.length === 0) {
     return []
   }
 

@@ -326,8 +326,8 @@ async function getFirstLine(pathToFile) {
   return line
 }
 
-// function to process and cache the log file data
-function processAndCacheLogFile(loadedLogMessages, logType) {
+// function to process and save the log file data
+function processAndSaveLogData(loadedLogMessages, logType) {
   const aircraftType = loadedLogMessages.aircraftType
   delete loadedLogMessages.aircraftType
 
@@ -366,7 +366,7 @@ function processAndCacheLogFile(loadedLogMessages, logType) {
   // 6. Process flight modes
   const flightModeMessages = processFlightModes(logType, finalMessages)
 
-  logData = finalMessages // Cache the complete data
+  logData = finalMessages // Save the complete data
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
   // 8. Return the summary object
@@ -437,7 +437,8 @@ export default async function openFile(event, filePath) {
     }
 
     if (messages !== null) {
-      const summary = processAndCacheLogFile(messages, logType)
+      // returns a lightweight summary after processing
+      const summary = processAndSaveLogData(messages, logType)
       // add recent file
       recentLogsManager.addRecentLog(filePath)
       return { success: true, summary }
@@ -450,6 +451,7 @@ export default async function openFile(event, filePath) {
   }
 }
 
+// on-demand retrieval of messages
 export async function retrieveMessages(_event, requestedMessages) {
   // each requestedMessage should be of the form `${requestedMessageName}/${requestedFieldName}`
   // like ['ARM/ArmState', 'ARSP/Airspeed']

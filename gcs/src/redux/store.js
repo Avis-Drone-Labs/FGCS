@@ -152,10 +152,6 @@ const updateJSONLocalStorageIfChanged = (key, newValue) => {
 
 // Update states when a new message comes in
 store.subscribe(() => {
-  // Temporary: Skip store subscription for FLA route to avoid delaying UI updates
-  if (window.location.hash === "#/fla") {
-    return
-  }
 
   const store_mut = store.getState()
 

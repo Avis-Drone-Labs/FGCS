@@ -12,12 +12,6 @@
       "options": ["satellite", "hybrid", "streets", "outdoor"],
       "display": "Map Style"
     },
-    "port": {
-      "default": "4237",
-      "type": "number",
-      "range": [0, 65535],
-      "display": "Backend Port"
-    },
     "interfaceLanguage": {
       "default": "English",
       "type": "option",

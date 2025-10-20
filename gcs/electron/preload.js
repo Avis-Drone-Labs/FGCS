@@ -27,6 +27,7 @@ const ALLOWED_INVOKE_CHANNELS = [
 ]
 
 const ALLOWED_SEND_CHANNELS = [
+  "app:restart",
   "window:close",
   "window:minimise",
   "window:maximise",

@@ -145,6 +145,9 @@ ipcMain.handle("settings:save-settings", (_, settings) => {
 ipcMain.handle("app:is-mac", () => {
   return process.platform == "darwin"
 })
+ipcMain.on("app:restart", () => {
+  win!.webContents.reloadIgnoringCache()
+})
 ipcMain.on("window:close", () => {
   closeWithBackend()
 })

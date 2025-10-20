@@ -11,6 +11,7 @@ import { useSettings } from "../helpers/settings"
 
 import { IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
+import { useDisclosure } from "@mantine/hooks"
 import DefaultSettings from "../../data/default_settings.json"
 
 const isValidNumber = (num, range) => {
@@ -125,14 +126,31 @@ function ExtendableNumberSetting({ settingName, range, suffix }) {
   )
 }
 
-function Setting({ settingName, df }) {
+function Setting({ settingName, df, initialValue }) {
+  const { getSetting } = useSettings()
+  const [changed, setChanged] = useState(false)
+
+  useEffect(() => {
+    if (initialValue !== undefined)
+      setChanged(
+        JSON.stringify(getSetting(settingName)) != JSON.stringify(initialValue),
+      )
+  }, [getSetting(settingName)])
+
   return (
     <div
       className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}
     >
-      <div className="space-y-px">
-        <div>{df.display}:</div>
+      <div className="space-y-px relative">
+        <div className="">{df.display}:</div>
         <p className="text-gray-400 text-sm">{df.description}</p>
+        {df.requireRestart && (
+          <p
+            className={`${changed ? "text-falconred" : "text-gray-600"} text-xs`}
+          >
+            (requires restart)
+          </p>
+        )}
       </div>
       {df.type == "extendableNumber" ? (
         <ExtendableNumberSetting
@@ -156,60 +174,153 @@ function Setting({ settingName, df }) {
 function SettingsModal() {
   const settingTabs = Object.keys(DefaultSettings)
 
-  const { opened, close } = useSettings()
+  const { getSetting, opened, close } = useSettings()
+  const [initialSettings, setInitialSettings] = useState({})
+
+  const [
+    confirmRestartOpened,
+    { open: confirmRestartOpen, close: confirmRestartClose },
+  ] = useDisclosure(false)
+
+  const [changedRestartSettings, setChangedRestartSettings] = useState([])
+
+  function closeCheckRestart() {
+    const changedRestartSettings = []
+    Object.entries(DefaultSettings).forEach(([section, sectionSettings]) => {
+      Object.entries(sectionSettings).forEach(([key, def]) => {
+        const fullKey = `${section}.${key}`
+        const changed =
+          JSON.stringify(getSetting(fullKey)) !==
+          JSON.stringify(initialSettings[fullKey])
+
+        if (changed && def.requireRestart) {
+          changedRestartSettings.push(fullKey)
+        }
+      })
+    })
+
+    setChangedRestartSettings(changedRestartSettings)
+
+    if (changedRestartSettings.length > 0) {
+      confirmRestartOpen()
+    } else {
+      close()
+    }
+  }
+
+  useEffect(() => {
+    if (opened) {
+      const snapshot = {}
+
+      Object.entries(DefaultSettings).forEach(([section, sectionSettings]) => {
+        Object.entries(sectionSettings).forEach(([key]) => {
+          const fullKey = `${section}.${key}`
+          snapshot[fullKey] = getSetting(fullKey)
+        })
+      })
+
+      setInitialSettings(snapshot)
+    }
+  }, [opened])
 
   return (
-    <Modal
-      centered
-      onClose={close}
-      title="User Settings"
-      opened={opened}
-      size={"50%"}
-      styles={{
-        content: { backgroundColor: "rgb(23 26 27)" },
-        header: { backgroundColor: "rgb(23 26 27)" },
-      }}
-      bg="bg-falcongrey-900"
-      radius="15px"
-      shadow="xs"
-    >
-      <Tabs
-        defaultValue="General"
-        orientation="vertical"
-        className="bg-falcongrey-900"
-        color="#BA1B0B"
-        h="50vh"
-        styles={{ list: { width: "15%" } }}
+    <>
+      <Modal
+        centered
+        onClose={closeCheckRestart}
+        title="User Settings"
+        opened={opened}
+        size={"50%"}
+        styles={{
+          content: { backgroundColor: "rgb(23 26 27)" },
+          header: { backgroundColor: "rgb(23 26 27)" },
+        }}
+        bg="bg-falcongrey-900"
+        radius="15px"
+        shadow="xs"
       >
-        <Tabs.List>
+        <Tabs
+          defaultValue="General"
+          orientation="vertical"
+          className="bg-falcongrey-900"
+          color="#BA1B0B"
+          h="50vh"
+          styles={{ list: { width: "15%" } }}
+        >
+          <Tabs.List className="shrink-0">
+            {settingTabs.map((t) => {
+              return (
+                <Tabs.Tab key={t} value={t}>
+                  {t}
+                </Tabs.Tab>
+              )
+            })}
+          </Tabs.List>
           {settingTabs.map((t) => {
             return (
-              <Tabs.Tab key={t} value={t}>
-                {t}
-              </Tabs.Tab>
+              <Tabs.Panel className="space-y-4" value={t} key={t}>
+                {Object.keys(DefaultSettings[t]).map((s) => {
+                  return (
+                    <Setting
+                      settingName={`${t}.${s}`}
+                      df={DefaultSettings[t][s]}
+                      key={`${t}.${s}`}
+                      initialValue={initialSettings[`${t}.${s}`]}
+                    />
+                  )
+                })}
+                {Object.keys(DefaultSettings[t]).length == 0 && (
+                  <p className="pl-4 pt-2">No settings available right now.</p>
+                )}
+              </Tabs.Panel>
             )
           })}
-        </Tabs.List>
-        {settingTabs.map((t) => {
-          return (
-            <Tabs.Panel className="space-y-4" value={t} key={t}>
-              {Object.keys(DefaultSettings[t]).map((s) => {
-                return (
-                  <Setting
-                    settingName={`${t}.${s}`}
-                    df={DefaultSettings[t][s]}
-                    key={`${t}.${s}`}
-                  />
-                )
-              })}
-              {Object.keys(DefaultSettings[t]).length == 0 && (
-                <p className="pl-4 pt-2">No settings available right now.</p>
-              )}
-            </Tabs.Panel>
-          )
-        })}
-      </Tabs>
-    </Modal>
+        </Tabs>
+      </Modal>
+      <Modal
+        opened={confirmRestartOpened}
+        onClose={confirmRestartClose}
+        title="Restart Required"
+        centered
+        withCloseButton={false}
+      >
+        <p className="mb-2">
+          The following changes require a restart to take effect. Restart now?
+        </p>
+        <div className="mb-4">
+          {changedRestartSettings.map((setting) => (
+            <p key={setting}>
+              {
+                setting
+                  .split(".")
+                  .reduce((title, value) => title[value], DefaultSettings)[
+                  "display"
+                ]
+              }
+            </p>
+          ))}
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="default"
+            onClick={() => {
+              close()
+              confirmRestartClose()
+            }}
+          >
+            Restart Later
+          </Button>
+          <Button
+            color="red"
+            onClick={() => {
+              window.ipcRenderer.send("app:restart")
+            }}
+          >
+            Restart Now
+          </Button>
+        </div>
+      </Modal>
+    </>
   )
 }
 

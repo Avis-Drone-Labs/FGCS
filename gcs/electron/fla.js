@@ -17,7 +17,7 @@ import {
   processFlightModes,
   sortObjectByKeys,
   getUnit,
-} from "./modules/fla-utils"
+} from "./utils/fla-utils"
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
 const recentLogsManager = createRecentLogsManager()

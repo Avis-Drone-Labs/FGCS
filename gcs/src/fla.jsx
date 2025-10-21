@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 
 // Styling imports
-import { clearUnitCache, hexToRgba } from "./components/fla/utils"
+import { hexToRgba } from "./components/fla/utils"
 
 // Custom components and helpers
 import { logEventIds } from "./components/fla/logEventIds.js"
@@ -38,7 +38,6 @@ import {
   setLogType,
   setMessageFilters,
   setMessageMeans,
-  setUnits,
   setUtcAvailable,
 } from "./redux/slices/logAnalyserSlice.js"
 
@@ -56,7 +55,6 @@ export default function FLA() {
    * Dispatch the lightweight summary info to Redux
    */
   async function saveLogSummary(result) {
-    clearUnitCache() // Clear cache when loading new file
     const { summary } = result
     if (!summary) {
       showErrorNotification("Error loading file, no summary found.")
@@ -64,7 +62,6 @@ export default function FLA() {
     }
     dispatch(setLogType(summary.logType))
     dispatch(setAircraftType(summary.aircraftType))
-    dispatch(setUnits(summary.units))
     dispatch(setFormatMessages(summary.formatMessages))
     dispatch(setFlightModeMessages(summary.flightModeMessages))
     dispatch(setUtcAvailable(summary.utcAvailable))
@@ -127,7 +124,7 @@ export default function FLA() {
       console.log("Cache miss. Fetching:", labelsToFetch)
       const fetchMissingData = async () => {
         const newDatasets = await window.ipcRenderer.invoke(
-          "fla:retrieve-messages",
+          "fla:get-messages",
           labelsToFetch,
         )
         if (newDatasets) {

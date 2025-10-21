@@ -8,6 +8,7 @@ import readline from "readline"
 import createRecentLogsManager from "../settings/recentLogManager"
 
 import {
+  clearUnitCache,
   buildDefaultMessageFilters,
   calculateMeanValues,
   calcGPSOffset,
@@ -183,7 +184,6 @@ async function parseFgcsTelemetryLogFile(
   const formatMessages = {}
   const messages = {}
 
-  // let aircraftType = null // TODO: determine aircraft type from log
   let lastUpdateTime = 0
 
   return new Promise((resolve, reject) => {
@@ -329,6 +329,7 @@ async function getFirstLine(pathToFile) {
 
 // function to process and save the log file data
 function processAndSaveLogData(loadedLogMessages, logType) {
+  clearUnitCache() // Clear cache when loading new file
   const aircraftType = loadedLogMessages.aircraftType
   delete loadedLogMessages.aircraftType
 
@@ -372,7 +373,6 @@ function processAndSaveLogData(loadedLogMessages, logType) {
 
   // 8. Return the summary object
   return {
-    units: loadedLogMessages.units,
     formatMessages: finalFormats,
     utcAvailable,
     logEvents: finalMessages["EV"] || [],

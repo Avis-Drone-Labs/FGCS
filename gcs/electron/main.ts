@@ -460,7 +460,7 @@ app.whenReady().then(() => {
   ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Load Messages on demand
-  ipcMain.handle("fla:retrieve-messages", retrieveMessages)
+  ipcMain.handle("fla:get-messages", retrieveMessages)
 
   // Save mission file
   ipcMain.handle(

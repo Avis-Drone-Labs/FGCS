@@ -6,7 +6,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "fla:open-file",
   "fla:get-recent-logs",
   "fla:clear-recent-logs",
-  "fla:retrieve-messages",
+  "fla:get-messages",
   "missions:get-save-mission-file-path",
   "app:get-node-env",
   "app:get-version",

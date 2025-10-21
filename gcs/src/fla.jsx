@@ -91,7 +91,6 @@ export default function FLA() {
     dispatch(setLogType("dataflash"))
     dispatch(setCanSavePreset(false))
     dispatch(setBaseChartData([]))
-    clearUnitCache() // Clear memoization cache
   }
 
   // Step 1: Memoize the calculation of which labels are currently requested.

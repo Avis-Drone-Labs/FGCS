@@ -14,6 +14,8 @@ import { useDisclosure } from "@mantine/hooks"
 import {
   IconAlertCircle,
   IconExternalLink,
+  IconMaximize,
+  IconMinus,
   IconResize,
   IconSettings,
   IconVideo,
@@ -39,6 +41,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
   const [scale, setScale] = useState(1) // Scale factor for resizing
   const [isPoppedOut, setIsPoppedOut] = useState(false) // Track if video is popped out
+  const [isMinimized, setIsMinimized] = useState(false) // Track if widget is minimized
 
   const [
     sourceSelectModalOpened,
@@ -47,6 +50,14 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
   const videoRef = useRef(null)
   const jsmpegPlayerRef = useRef(null)
+
+  function minimizeVideoWidget() {
+    setIsMinimized(true)
+  }
+
+  function maximizeVideoWidget() {
+    setIsMinimized(false)
+  }
 
   function updateScale(newScale) {
     const clampedScale = Math.max(1, Math.min(3, newScale)) // Clamp between 1x and 3x
@@ -351,98 +362,146 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         onClose={closeStreamSelectModal}
       />
 
-      <div
-        className={`absolute bottom-4 min-w-[350px] border border-falcongrey-700 rounded-lg shadow-lg backdrop-blur-sm z-10 ${isPoppedOut ? "hidden" : ""}`}
-        style={{
-          left: `${telemetryPanelWidth + 16}px`,
-          background: GetOutsideVisibilityColor(),
-        }}
-      >
-        <div className="p-2">
-          <div className="flex items-center justify-between mb-2">
-            <Text>{videoSource?.name}</Text>
-            <div className="flex items-center gap-1">
-              {videoSource && error === null && (
+      {/* Minimized view */}
+      {isMinimized && !isPoppedOut && (
+        <div
+          className="absolute bottom-4 border border-falcongrey-700 rounded-md z-10"
+          style={{
+            left: `${telemetryPanelWidth + 16}px`,
+            background: GetOutsideVisibilityColor(),
+          }}
+        >
+          <div className="p-2 flex items-center gap-2">
+            {videoSource && error === null ? (
+              <div
+                className="w-2 h-2 bg-green-500 rounded-full"
+                title="Video active"
+              />
+            ) : error ? (
+              <IconAlertCircle size={16} className="text-falconred" />
+            ) : (
+              <IconVideo size={16} className="text-slate-500" />
+            )}
+            <Text size="sm" className="truncate max-w-[150px]">
+              {videoSource?.name || "No video selected"}
+            </Text>
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              onClick={maximizeVideoWidget}
+              className="text-slate-400 hover:text-slate-200"
+              title="Maximize video widget"
+            >
+              <IconMaximize size={16} />
+            </ActionIcon>
+          </div>
+        </div>
+      )}
+
+      {/* Full view */}
+      {!isMinimized && (
+        <div
+          className={`absolute bottom-4 min-w-[350px] border border-falcongrey-700 rounded-md z-10 ${isPoppedOut ? "hidden" : ""}`}
+          style={{
+            left: `${telemetryPanelWidth + 16}px`,
+            background: GetOutsideVisibilityColor(),
+          }}
+        >
+          <div className="p-2">
+            <div className="flex items-center justify-between mb-2">
+              <Text>{videoSource?.name || "No video selected"}</Text>
+              <div className="flex items-center gap-1">
                 <ActionIcon
                   size="sm"
                   variant="subtle"
-                  onClick={handlePopoutVideo}
+                  onClick={minimizeVideoWidget}
                   className="text-slate-400 hover:text-slate-200"
-                  title="Pop out video"
+                  title="Minimize video widget"
                 >
-                  <IconExternalLink size={16} />
+                  <IconMinus size={16} />
                 </ActionIcon>
-              )}
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                onMouseDown={handleResizeStart}
-                className={`text-slate-400 hover:text-slate-200 hover:cursor-ne-resize`}
-                title="Drag to resize"
-              >
-                <IconResize size={16} />
-              </ActionIcon>
+                {videoSource && error === null && (
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
+                    onClick={handlePopoutVideo}
+                    className="text-slate-400 hover:text-slate-200"
+                    title="Pop out video"
+                  >
+                    <IconExternalLink size={16} />
+                  </ActionIcon>
+                )}
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  onMouseDown={handleResizeStart}
+                  className={`text-slate-400 hover:text-slate-200 hover:cursor-ne-resize`}
+                  title="Drag to resize"
+                >
+                  <IconResize size={16} />
+                </ActionIcon>
 
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                onClick={openStreamSelectModal}
-                className="text-slate-400 hover:text-slate-200"
-              >
-                <IconSettings size={16} />
-              </ActionIcon>
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  onClick={openStreamSelectModal}
+                  className="text-slate-400 hover:text-slate-200"
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+              </div>
+            </div>
+
+            <div>
+              {videoSource && error === null ? (
+                <>
+                  {videoSource.type === "stream" ? (
+                    <StreamDisplay
+                      videoRef={videoRef}
+                      dimensions={videoDimensions}
+                    />
+                  ) : (
+                    <WebcamDisplay
+                      videoRef={videoRef}
+                      deviceId={videoSource.deviceId}
+                      dimensions={videoDimensions}
+                      onDimensionsChange={setVideoDimensions}
+                      onAspectRatioChange={setBaseAspectRatio}
+                      scale={scale}
+                    />
+                  )}
+                </>
+              ) : (
+                <div
+                  className=" rounded flex flex-col items-center justify-center text-center mx-auto"
+                  style={{
+                    width: `${videoDimensions.width}px`,
+                    height: `${videoDimensions.height}px`,
+                    minHeight: "128px", // Ensure minimum height for readability
+                  }}
+                >
+                  {error === null ? (
+                    <>
+                      <IconVideo size={24} className="text-slate-500 mb-1" />
+                      <Text size="sm">No stream selected</Text>
+                    </>
+                  ) : (
+                    <>
+                      <IconAlertCircle
+                        size={24}
+                        className="text-falconred mb-1"
+                      />
+                      <Text size="sm" className="px-2">
+                        {error}
+                      </Text>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-
-          <div>
-            {videoSource && error === null ? (
-              <>
-                {videoSource.type === "stream" ? (
-                  <StreamDisplay
-                    videoRef={videoRef}
-                    dimensions={videoDimensions}
-                  />
-                ) : (
-                  <WebcamDisplay
-                    videoRef={videoRef}
-                    deviceId={videoSource.deviceId}
-                    dimensions={videoDimensions}
-                    onDimensionsChange={setVideoDimensions}
-                    onAspectRatioChange={setBaseAspectRatio}
-                    scale={scale}
-                  />
-                )}
-              </>
-            ) : (
-              <div
-                className=" rounded flex flex-col items-center justify-center text-center mx-auto"
-                style={{
-                  width: `${videoDimensions.width}px`,
-                  height: `${videoDimensions.height}px`,
-                  minHeight: "128px", // Ensure minimum height for readability
-                }}
-              >
-                {error === null ? (
-                  <>
-                    <IconVideo size={24} className="text-slate-500 mb-1" />
-                    <Text size="sm">No stream selected</Text>
-                  </>
-                ) : (
-                  <>
-                    <IconAlertCircle
-                      size={24}
-                      className="text-falconred mb-1"
-                    />
-                    <Text size="sm" className="px-2">
-                      {error}
-                    </Text>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
         </div>
-      </div>
+      )}
     </>
   )
 }

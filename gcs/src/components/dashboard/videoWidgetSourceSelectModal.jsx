@@ -70,7 +70,7 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
             placeholder={
               rtspStreams.length === 0
                 ? "No RTSP streams configured"
-                : "Pick one"
+                : "Select an RTSP stream"
             }
             value={videoSource?.type === "stream" ? videoSource.url : null}
             onChange={(_, option) => {
@@ -97,7 +97,9 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
           <Select
             label="Select Webcam"
             placeholder={
-              webcamDevices.length === 0 ? "No webcams found" : "Pick one"
+              webcamDevices.length === 0
+                ? "No webcams found"
+                : "Select a webcam"
             }
             value={videoSource?.type === "webcam" ? videoSource.deviceId : null}
             onChange={(_, option) => {

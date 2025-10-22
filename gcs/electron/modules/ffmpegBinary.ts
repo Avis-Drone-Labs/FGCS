@@ -46,9 +46,33 @@ function checkFFmpegBinaryExists(): boolean {
 }
 
 /**
- * Download FFmpeg binary using ffbinaries
+ * Clean up any corrupted or partial download files
  */
-async function downloadFFmpegBinary(): Promise<string> {
+function cleanupDownloadDirectory(binaryDir: string): void {
+  try {
+    if (fs.existsSync(binaryDir)) {
+      const files = fs.readdirSync(binaryDir)
+      files.forEach((file) => {
+        const filePath = path.join(binaryDir, file)
+        try {
+          fs.unlinkSync(filePath)
+          console.log(`Cleaned up file: ${filePath}`)
+        } catch (error) {
+          console.warn(`Could not delete file ${filePath}:`, error)
+        }
+      })
+    }
+  } catch (error) {
+    console.error("Error cleaning up download directory:", error)
+  }
+}
+
+/**
+ * Download FFmpeg binary using ffbinaries with retry logic
+ */
+async function downloadFFmpegBinary(retryCount = 0): Promise<string> {
+  const maxRetries = 3
+
   return new Promise((resolve, reject) => {
     const platform = FFMPEG_PLATFORMS[process.platform]
 
@@ -59,13 +83,22 @@ async function downloadFFmpegBinary(): Promise<string> {
 
     const binaryDir = getFFmpegBinaryDir()
 
+    // Clean up any existing files on first attempt or retry
+    if (retryCount === 0 || retryCount > 0) {
+      console.log(
+        `Cleaning up download directory (attempt ${retryCount + 1}/${maxRetries})`,
+      )
+      cleanupDownloadDirectory(binaryDir)
+    }
+
     // Ensure directory exists
     if (!fs.existsSync(binaryDir)) {
       fs.mkdirSync(binaryDir, { recursive: true })
     }
 
-    console.log(`Downloading FFmpeg binary for platform: ${platform}`)
-    console.log(`Download directory: ${binaryDir}`)
+    console.log(
+      `Downloading FFmpeg binary for platform: ${platform} to: ${binaryDir}`,
+    )
 
     ffbinaries.downloadBinaries(
       ["ffmpeg"],
@@ -74,10 +107,35 @@ async function downloadFFmpegBinary(): Promise<string> {
         destination: binaryDir,
         quiet: false,
       },
-      (err: Error | null, data: unknown) => {
+      async (err: Error | null, data: unknown) => {
         if (err) {
           console.error("FFmpeg download error:", err)
-          reject(new Error(`Failed to download FFmpeg: ${err.message}`))
+
+          // Check if this is a compression/corruption error
+          const isCorruptionError =
+            err.message.includes("Z_DATA_ERROR") ||
+            err.message.includes("too many length or distance symbols") ||
+            err.message.includes("invalid distance") ||
+            err.message.includes("invalid code lengths")
+
+          if (isCorruptionError && retryCount < maxRetries) {
+            console.log(
+              `Download corruption detected, retrying... (${retryCount + 1}/${maxRetries})`,
+            )
+            try {
+              const result = await downloadFFmpegBinary(retryCount + 1)
+              resolve(result)
+            } catch (retryError) {
+              reject(retryError)
+            }
+            return
+          }
+
+          reject(
+            new Error(
+              `Failed to download FFmpeg after ${retryCount + 1} attempts: ${err.message}`,
+            ),
+          )
           return
         }
 
@@ -98,7 +156,24 @@ async function downloadFFmpegBinary(): Promise<string> {
 
           resolve(binaryPath)
         } else {
-          reject(new Error("FFmpeg binary was not found after download"))
+          // If verification fails and we have retries left, try again
+          if (retryCount < maxRetries) {
+            console.log(
+              `FFmpeg binary verification failed, retrying... (${retryCount + 1}/${maxRetries})`,
+            )
+            try {
+              const result = await downloadFFmpegBinary(retryCount + 1)
+              resolve(result)
+            } catch (retryError) {
+              reject(retryError)
+            }
+          } else {
+            reject(
+              new Error(
+                `FFmpeg binary was not found after download (${retryCount + 1} attempts)`,
+              ),
+            )
+          }
         }
       },
     )
@@ -134,18 +209,23 @@ function getFFmpegBinaryInfo(): {
 }
 
 /**
- * Delete FFmpeg binary
+ * Delete FFmpeg binary and clean up directory
  */
 function deleteFFmpegBinary(): boolean {
   const binaryPath = getFFmpegBinaryPath()
+  const binaryDir = getFFmpegBinaryDir()
 
   try {
+    // Delete the specific binary file
     if (fs.existsSync(binaryPath)) {
       fs.unlinkSync(binaryPath)
       console.log("FFmpeg binary deleted:", binaryPath)
-      return true
     }
-    return true // Already doesn't exist
+
+    // Clean up any other files in the directory (partial downloads, temp files, etc.)
+    cleanupDownloadDirectory(binaryDir)
+
+    return true
   } catch (error) {
     console.error("Error deleting FFmpeg binary:", error)
     return false

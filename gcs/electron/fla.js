@@ -4,10 +4,26 @@ This file contains the logic for parsing different types of log files on the mai
 
 import fs from "fs"
 import readline from "readline"
+
 import createRecentLogsManager from "../settings/recentLogManager"
+
+import {
+  clearUnitCache,
+  buildDefaultMessageFilters,
+  calculateMeanValues,
+  calcGPSOffset,
+  convertTimeUStoUTC,
+  expandBATMessages,
+  expandESCMessages,
+  processFlightModes,
+  sortObjectByKeys,
+  getUnit,
+} from "./utils/fla-utils"
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
 const recentLogsManager = createRecentLogsManager()
+let logData = null
+let defaultMessageFilters = {}
 
 async function parseDataflashLogFile(rl, fileStream, fileSize, webContents) {
   // https://ardupilot.org/copter/docs/logmessages.html
@@ -167,8 +183,8 @@ async function parseFgcsTelemetryLogFile(
 ) {
   const formatMessages = {}
   const messages = {}
+
   let lastUpdateTime = 0
-  // TODO: determine aircraft type from log
 
   return new Promise((resolve, reject) => {
     rl.on("line", (line) => {
@@ -311,6 +327,63 @@ async function getFirstLine(pathToFile) {
   return line
 }
 
+// function to process and save the log file data
+function processAndSaveLogData(loadedLogMessages, logType) {
+  clearUnitCache() // Clear cache when loading new file
+  const aircraftType = loadedLogMessages.aircraftType
+  delete loadedLogMessages.aircraftType
+
+  const initialFilters = buildDefaultMessageFilters(loadedLogMessages)
+
+  // Expand ESC messages
+  const {
+    updatedMessages: messagesWithESC,
+    updatedFilters: filtersWithESC,
+    updatedFormats: formatsWithESC,
+  } = expandESCMessages(loadedLogMessages, initialFilters)
+
+  // Expand BAT messages
+  const {
+    updatedMessages: expandedMessages,
+    updatedFilters: finalFilters,
+    updatedFormats: finalFormats,
+  } = expandBATMessages(messagesWithESC, filtersWithESC, formatsWithESC)
+
+  // Convert TimeUS to TimeUTC if GPS data is available
+  let finalMessages = { ...expandedMessages }
+  let gpsOffset = null
+  let utcAvailable = false
+  if (finalMessages.GPS && logType === "dataflash") {
+    gpsOffset = calcGPSOffset(finalMessages)
+    if (gpsOffset !== null) {
+      finalMessages = convertTimeUStoUTC(finalMessages, gpsOffset)
+      utcAvailable = true
+    }
+  }
+  if (logType === "fgcs_telemetry") utcAvailable = true
+
+  // 5. Calculate means on the final, fully-expanded data
+  const means = calculateMeanValues(finalMessages)
+
+  // 6. Process flight modes
+  const flightModeMessages = processFlightModes(logType, finalMessages)
+
+  logData = finalMessages // Save the complete data
+  defaultMessageFilters = sortObjectByKeys(finalFilters)
+
+  // 8. Return the summary object
+  return {
+    formatMessages: finalFormats,
+    utcAvailable,
+    logEvents: finalMessages["EV"] || [],
+    flightModeMessages,
+    logType,
+    messageFilters: defaultMessageFilters,
+    messageMeans: means,
+    aircraftType,
+  }
+}
+
 export default async function openFile(event, filePath) {
   if (filePath == null) {
     return { success: false, error: "No file path provided" }
@@ -327,17 +400,15 @@ export default async function openFile(event, filePath) {
     const firstLine = await getFirstLine(filePath)
     const logType = determineLogFileType(filePath, firstLine)
 
+    if (logType === null) {
+      return { success: false, error: "Unknown log file type" }
+    }
+
     const fileStream = fs.createReadStream(filePath)
     const rl = readline.createInterface({
       input: fileStream,
       crlfDelay: Infinity,
     })
-
-    if (logType === null) {
-      rl.close() // Close the stream if we're not using it.
-      fileStream.destroy() // Properly close the underlying file stream to prevent resource leaks.
-      return { success: false, error: "Unknown log file type" }
-    }
 
     let messages = null
 
@@ -367,13 +438,11 @@ export default async function openFile(event, filePath) {
     }
 
     if (messages !== null) {
+      // returns a lightweight summary after processing
+      const summary = processAndSaveLogData(messages, logType)
       // add recent file
       recentLogsManager.addRecentLog(filePath)
-      return {
-        success: true,
-        messages,
-        logType,
-      }
+      return { success: true, summary }
     } else {
       return { success: false, error: "Failed to parse log file" }
     }
@@ -381,4 +450,56 @@ export default async function openFile(event, filePath) {
     console.error("Error parsing log file:", err)
     return { success: false, error: err.message || "Unknown parsing error" }
   }
+}
+
+// on-demand retrieval of messages
+export async function retrieveMessages(_event, requestedMessages) {
+  // each requestedMessage should be of the form `${requestedMessageName}/${requestedFieldName}`
+  // like ['ARM/ArmState', 'ARSP/Airspeed']
+
+  // for large log files, we need to consider decimation.
+
+  if (!logData) {
+    console.error(
+      "retrieveMessages: logData is null or undefined. Unable to retrieve messages.",
+    )
+    return {
+      success: false,
+      error: "Log data not loaded. Cannot retrieve messages.",
+    }
+  }
+  if (!Array.isArray(requestedMessages) || requestedMessages.length === 0) {
+    return []
+  }
+
+  const formatMessages = logData.format || {}
+  const units = logData.units || {}
+  const datasets = []
+
+  // Loop through the list of requested messages and transform each of them
+  for (
+    let messageIndex = 0;
+    messageIndex < requestedMessages.length;
+    messageIndex++
+  ) {
+    let label = requestedMessages[messageIndex]
+
+    // format is supposed to be `${categoryName}/${fieldName}`
+    label = label.trim()
+    const slash = label.indexOf("/")
+    const categoryName = label.slice(0, slash)
+    const fieldName = label.slice(slash + 1)
+
+    datasets.push({
+      label: label,
+      yAxisID: getUnit(categoryName, fieldName, formatMessages, units),
+      // I guess this is the expensive part. We're looping through every data point
+      data: logData[categoryName].map((d) => ({
+        x: d.TimeUS,
+        y: d[fieldName],
+      })),
+    })
+  }
+
+  return datasets
 }

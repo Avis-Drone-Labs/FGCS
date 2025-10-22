@@ -18,7 +18,7 @@ import { readableBytes } from "./utils"
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
  */
-export default function SelectFlightLog({ saveLogSummary }) {
+export default function SelectFlightLog({ getLogSummary }) {
   const dispatch = useDispatch()
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
@@ -71,7 +71,7 @@ export default function SelectFlightLog({ saveLogSummary }) {
           return
         }
 
-        await saveLogSummary(result)
+        await getLogSummary(result)
         showSuccessNotification(`${file.name} loaded successfully`)
         console.timeEnd(`Loading file: ${file.name}`)
       } catch (error) {
@@ -82,7 +82,7 @@ export default function SelectFlightLog({ saveLogSummary }) {
         setLoadingFileProgress(0)
       }
     },
-    [dispatch, saveLogSummary],
+    [dispatch, getLogSummary],
   )
 
   useEffect(() => {

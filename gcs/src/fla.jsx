@@ -54,7 +54,7 @@ export default function FLA() {
   /**
    * Dispatch the lightweight summary info to Redux
    */
-  async function saveLogSummary(result) {
+  async function getLogSummary(result) {
     const { summary } = result
     if (!summary) {
       showErrorNotification("Error loading file, no summary found.")
@@ -162,7 +162,7 @@ export default function FLA() {
   return (
     <Layout currentPage="fla">
       {messageFilters === null ? (
-        <SelectFlightLog saveLogSummary={saveLogSummary} />
+        <SelectFlightLog getLogSummary={getLogSummary} />
       ) : (
         <MainDisplay closeLogFile={closeLogFile} chartData={chartData} />
       )}

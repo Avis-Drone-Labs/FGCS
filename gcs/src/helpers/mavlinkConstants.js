@@ -507,7 +507,13 @@ export function getActiveEKFFlags(statusValue) {
   return activeFlags
 }
 
-export const COMMONLY_USED_MISSION_TABLE_LABELS = ["WAYPOINT", "RETURN_TO_LAUNCH", "TAKEOFF", "LOITER_UNLIM", "LAND"]
+export const COMMONLY_USED_MISSION_TABLE_LABELS = [
+  "WAYPOINT",
+  "RETURN_TO_LAUNCH",
+  "TAKEOFF",
+  "LOITER_UNLIM",
+  "LAND",
+]
 
 export const EKF_STATUS_WARNING_LEVEL = 0.5
 export const EKF_STATUS_DANGER_LEVEL = 0.8

@@ -6,14 +6,13 @@ const logAnalyserSlice = createSlice({
     file: null,
     units: {},
     formatMessages: {},
-    logMessages: null,
     utcAvailable: false,
     logEvents: null,
     flightModeMessages: [],
     logType: "dataflash",
     messageFilters: null,
     messageMeans: {},
-    chartData: { datasets: [] },
+    baseChartData: [],
     customColors: {},
     colorIndex: 0,
     aircraftType: null,
@@ -47,6 +46,9 @@ const logAnalyserSlice = createSlice({
     setMessageFilters: (state, action) => {
       state.messageFilters = action.payload
     },
+    setBaseChartData: (state, action) => {
+      state.baseChartData = action.payload
+    },
     setMessageMeans: (state, action) => {
       state.messageMeans = action.payload
     },
@@ -74,6 +76,7 @@ const logAnalyserSlice = createSlice({
     selectUtcAvailable: (state) => state.utcAvailable,
     selectMessageFilters: (state) => state.messageFilters,
     selectMessageMeans: (state) => state.messageMeans,
+    selectBaseChartData: (state) => state.baseChartData,
     selectCustomColors: (state) => state.customColors,
     selectColorIndex: (state) => state.colorIndex,
     selectAircraftType: (state) => state.aircraftType,
@@ -92,6 +95,7 @@ export const {
   setLogType,
   setMessageFilters,
   setMessageMeans,
+  setBaseChartData,
   setCustomColors,
   setColorIndex,
   setAircraftType,
@@ -109,6 +113,7 @@ export const {
   selectUtcAvailable,
   selectMessageFilters,
   selectMessageMeans,
+  selectBaseChartData,
   selectCustomColors,
   selectColorIndex,
   selectAircraftType,

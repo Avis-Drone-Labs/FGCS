@@ -72,6 +72,7 @@ class Drone:
         baud: int = 57600,
         wireless: bool = False,
         logger: Logger = getLogger("fgcs"),
+        forwarding_address: Optional[str] = None,
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
@@ -185,11 +186,17 @@ class Drone:
         self.is_active.set()
         self.is_listening = False
 
+        self.forwarding_address: Optional[str] = None
+        self.forwarding_connection: Optional[mavutil.mavlink_connection] = None
+        if forwarding_address is not None:
+            try:
+                self.startForwardingToAddress(forwarding_address)
+            except Exception as e:
+                self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
+
         # To ensure that only one command is sent at a time and we wait for a
         # response before sending another command, a thread-safe lock is used
         self.sending_command_lock = Lock()
-
-        self.number_of_motors = 4  # Is there a way to get this from the drone?
 
         self.armed = False
 
@@ -492,6 +499,14 @@ class Drone:
                     self.droneErrorCb(str(e))
                 continue
 
+            if self.forwarding_connection is not None:
+                try:
+                    msg_buf = msg.get_msgbuf()
+                    self.forwarding_connection.write(msg_buf)
+                except Exception as e:
+                    self.logger.error(f"Failed to forward message: {e}", exc_info=True)
+                    self.stopForwarding()
+
             if msg:
                 if msg.msgname == "HEARTBEAT":
                     if (
@@ -747,6 +762,7 @@ class Drone:
             self.logger.debug("Rebooting")
             self.close()
 
+    # TODO: Move this out into a controller
     @sendingCommandLock
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.
@@ -885,12 +901,55 @@ class Drone:
             z,
         )
 
+    def startForwardingToAddress(self, address: str) -> Response:
+        """Start forwarding MAVLink messages to a specific address.
+
+        Args:
+            address (str): The address to forward messages to.
+        """
+        if self.forwarding_address == address:
+            self.logger.debug(f"Already forwarding to address {address}")
+            return
+
+        # Ensure address has the correct format
+        if not address.startswith(("udout:", "tcpout:")):
+            return {
+                "success": False,
+                "message": "Address must start with udout: or tcpout:",
+            }
+        if address.count(":") < 2:
+            return {
+                "success": False,
+                "message": "Address must include IP and port number",
+            }
+        if ":" not in address.split(":", 1)[1]:
+            return {"success": False, "message": "Address must include port number"}
+
+        self.stopForwarding()
+
+        self.forwarding_address = address
+        self.forwarding_connection = mavutil.mavlink_connection(
+            self.forwarding_address, timeout=1
+        )
+        self.logger.info(f"Started forwarding to address {address}")
+
+        return {"success": True, "message": f"Started forwarding to address {address}"}
+
+    def stopForwarding(self) -> None:
+        """Stop forwarding MAVLink messages."""
+        if self.forwarding_connection is not None:
+            self.forwarding_connection.close()
+            self.forwarding_connection = None
+            self.logger.info(f"Stopped forwarding to address {self.forwarding_address}")
+            self.forwarding_address = None
+
     def close(self) -> None:
         """Close the connection to the drone."""
         self.logger.info(f"Cleaning up resources for drone at {self}")
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 
+        self.stopForwarding()
         self.stopAllDataStreams()
         self.stopAllThreads()
         self.master.close()

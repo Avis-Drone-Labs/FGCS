@@ -404,6 +404,7 @@ export default function Navbar() {
           <p>
             {connectedToDrone && (
               <>
+                <Button>MAVLink forwarding</Button>
                 Connected to
                 <span className="inline font-bold">
                   {

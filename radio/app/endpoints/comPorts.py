@@ -1,5 +1,6 @@
 import sys
 import time
+from typing import Optional
 
 from serial.tools import list_ports
 from typing_extensions import TypedDict
@@ -15,6 +16,7 @@ class ConnectionDataType(TypedDict):
     baud: int
     wireless: bool
     connectionType: str
+    forwarding_address: Optional[str]
 
 
 class LinkStatsType(TypedDict):
@@ -115,10 +117,13 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneStatus.drone = None
         return
 
+    forwarding_address = data.get("forwarding_address")
+
     drone = Drone(
         port,
         wireless=data.get("wireless", True),
         baud=baud,
+        forwarding_address=forwarding_address,
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
         droneConnectStatusCb=droneConnectStatusCb,

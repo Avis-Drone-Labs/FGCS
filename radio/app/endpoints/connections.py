@@ -45,3 +45,34 @@ def getTargetInfo() -> None:
         )
     else:
         socketio.emit("target_info", None)
+
+
+@socketio.on("start_forwarding")
+def startForwarding(data: dict) -> None:
+    """
+    Start forwarding MAVLink messages to another address
+    """
+    if droneStatus.drone is None:
+        socketio.emit(
+            "forwarding_status", {"success": False, "message": "Not connected to drone"}
+        )
+        return
+
+    address = data.get("address")
+    if not address:
+        socketio.emit(
+            "forwarding_status", {"success": False, "message": "No address provided"}
+        )
+        return
+
+    try:
+        droneStatus.drone.startForwardingToAddress(address)
+        socketio.emit(
+            "forwarding_status",
+            {"success": True, "message": f"Forwarding to {address}"},
+        )
+    except Exception as e:
+        droneStatus.drone.logger.error(
+            f"Failed to start forwarding: {e}", exc_info=True
+        )
+        socketio.emit("forwarding_status", {"success": False, "message": str(e)})

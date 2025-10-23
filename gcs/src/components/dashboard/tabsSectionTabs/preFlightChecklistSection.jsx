@@ -48,9 +48,18 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     setPreFlightChecklistItems(final)
   }
 
+  function doesChecklistExist(name) {
+    return preFlightChecklistItems.find((element) => element.name.toLowerCase() == name.toLowerCase()) !== undefined
+  }
+
   function createNewChecklist(name, value) {
     if (!name) {
       name = newChecklistName
+    }
+    if (doesChecklistExist(name)) {
+      // In the future we can make this show a popup and allow them to change the name
+      showErrorNotification(`A checklist called '${name}' already exists`)  
+      return  
     }
     if (!value) {
       value = [

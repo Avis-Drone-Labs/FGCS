@@ -6,7 +6,7 @@
     "name": "Avis-Drone-Labs"
   },
   "private": true,
-  "version": "0.2.0-alpha",
+  "version": "0.2.1-alpha-dev1",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
   "githubLink": "https://github.com/Avis-Drone-Labs/FGCS",
@@ -26,6 +26,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@headlessui/react": "2.1.4",
     "@mantine/code-highlight": "^7.17.1",
     "@mantine/core": "^7.17.3",
@@ -43,12 +44,14 @@
     "@tiptap/starter-kit": "^2.11.6",
     "@tremor/react": "^3.12.1",
     "@turf/turf": "^7.2.0",
+    "bufferutil": "^4.0.9",
     "chart.js": "^4.4.2",
     "chartjs-adapter-moment": "^1.0.1",
     "chartjs-plugin-annotation": "^3.0.1",
     "chartjs-plugin-zoom": "^2.0.1",
     "colormap": "^2.3.2",
     "eslint-config-prettier": "^9.1.0",
+    "ffbinaries": "^1.1.6",
     "glob": "^10.3.12",
     "mapbox-gl": "^3.0.1",
     "maplibre-gl": "^3.6.2",
@@ -74,14 +77,17 @@
     "tailwind-merge": "^2.1.0",
     "tailwindcss": "^3.3.6",
     "use-sound": "^4.0.1",
+    "utf-8-validate": "^6.0.5",
     "uuid": "^11.1.0",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "ws": "^7.5.10"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
     "@types/node": "^22.2.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
+    "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^6.6.0",
     "@typescript-eslint/parser": "^6.6.0",
     "@vitejs/plugin-react": "^4.0.4",

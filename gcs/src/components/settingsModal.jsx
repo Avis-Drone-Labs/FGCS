@@ -6,12 +6,18 @@ import {
   NativeSelect,
   NumberInput,
   Tabs,
+  TextInput,
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
-import { IconTrash } from "@tabler/icons-react"
+import { IconAlertCircle, IconCheck, IconTrash } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import DefaultSettings from "../../data/default_settings.json"
+import {
+  closeLoadingNotification,
+  redColor,
+  showLoadingNotification,
+} from "../helpers/notification"
 
 const isValidNumber = (num, range) => {
   return (
@@ -125,10 +131,278 @@ function ExtendableNumberSetting({ settingName, range, suffix }) {
   )
 }
 
+function ExtendableTextSetting({ settingName, df }) {
+  const { getSetting, setSetting } = useSettings()
+
+  const [items, setItems] = useState(
+    getSetting(settingName).length > 0
+      ? getSetting(settingName).map((item) => {
+          const newItem = { id: generateId() }
+          df.fields.forEach((field) => {
+            newItem[field.key] = item[field.key] || ""
+          })
+          return newItem
+        })
+      : [],
+  )
+
+  useEffect(() => {
+    const cleanItems = items.map((item) => {
+      const cleanItem = {}
+      df.fields.forEach((field) => {
+        cleanItem[field.key] = item[field.key]
+      })
+      return cleanItem
+    })
+    setSetting(settingName, cleanItems)
+  }, [items, settingName, setSetting, df.fields])
+
+  const updateItemField = (id, fieldKey, value) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, [fieldKey]: value } : item,
+      ),
+    )
+  }
+
+  const removeItem = (id) => {
+    setItems((prev) => prev.filter((item) => item.id !== id))
+  }
+
+  const validateField = (field, value) => {
+    if (!field.validation) return { isValid: true, error: null }
+    if (!value) return { isValid: false, error: "Invalid input" }
+
+    switch (field.validation) {
+      case "rtsp":
+        try {
+          const parsedUrl = new URL(value)
+          const isValid = parsedUrl.protocol === "rtsp:"
+          return {
+            isValid,
+            error: isValid ? null : "Invalid RTSP URL",
+          }
+        } catch {
+          return { isValid: false, error: "Invalid RTSP URL" }
+        }
+      default:
+        return { isValid: true, error: null }
+    }
+  }
+
+  const addNewItem = () => {
+    const newItem = { id: generateId() }
+    df.fields.forEach((field) => {
+      newItem[field.key] = ""
+    })
+    setItems([...items, newItem])
+  }
+
+  return (
+    <div className="flex flex-col shrink-0 items-end gap-3">
+      {items.map((item) => (
+        <div key={item.id} className="flex gap-2 items-start">
+          <button
+            className="text-falconred-600 hover:text-falconred-700 p-1 rounded-full mt-1"
+            onClick={() => removeItem(item.id)}
+            title={`Remove ${df.display.toLowerCase().slice(0, -1)}`}
+          >
+            <IconTrash size={20} />
+          </button>
+          <div className="flex flex-col gap-1 min-w-80">
+            {df.fields.map((field) => {
+              const validation = validateField(field, item[field.key])
+              return (
+                <TextInput
+                  key={field.key}
+                  placeholder={field.placeholder}
+                  value={item[field.key]}
+                  onChange={(e) =>
+                    updateItemField(item.id, field.key, e.currentTarget.value)
+                  }
+                  size="sm"
+                  label={field.label}
+                  error={validation.error}
+                />
+              )
+            })}
+          </div>
+        </div>
+      ))}
+      <div className="w-full pl-9">
+        <Button fullWidth onClick={addNewItem} size="sm">
+          Add {df.display.slice(0, -1)}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function FFmpegBinarySetting({ settingName }) {
+  const { getSetting, setSetting } = useSettings()
+  const [binaryInfo, setBinaryInfo] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Load binary info on component mount
+  useEffect(() => {
+    loadBinaryInfo()
+  }, [])
+
+  const loadBinaryInfo = async () => {
+    try {
+      const info = await window.ipcRenderer.invoke("ffmpeg:get-binary-info")
+      setBinaryInfo(info)
+
+      // Update the setting with the current path
+      if (info.exists && info.path !== getSetting(settingName)) {
+        setSetting(settingName, info.path)
+      }
+    } catch (error) {
+      console.error("Failed to load FFmpeg binary info:", error)
+    }
+  }
+
+  const handleDownload = async () => {
+    const loadingNotificationId = showLoadingNotification(
+      "Info",
+      "Downloading FFmpeg binary...",
+    )
+    setIsLoading(true)
+
+    try {
+      const result = await window.ipcRenderer.invoke("ffmpeg:download-binary")
+
+      if (result.success) {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Success",
+          "FFmpeg binary downloaded successfully!",
+        )
+        setSetting(settingName, result.path)
+        await loadBinaryInfo()
+      } else {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Error",
+          `Download failed: ${result.error}`,
+          { color: redColor },
+        )
+      }
+    } catch (error) {
+      closeLoadingNotification(
+        loadingNotificationId,
+        "Error",
+        `Download failed: ${error.message}`,
+        { color: redColor },
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    const loadingNotificationId = showLoadingNotification(
+      "Info",
+      "Removing FFmpeg binary...",
+    )
+    setIsLoading(true)
+
+    try {
+      const result = await window.ipcRenderer.invoke("ffmpeg:delete-binary")
+
+      if (result.success) {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Success",
+          "Binary removed successfully!",
+        )
+        setSetting(settingName, "")
+        await loadBinaryInfo()
+      } else {
+        closeLoadingNotification(
+          loadingNotificationId,
+          "Error",
+          "Failed to remove binary",
+          { color: redColor },
+        )
+      }
+    } catch (error) {
+      closeLoadingNotification(
+        loadingNotificationId,
+        "Error",
+        `Failed to remove binary: ${error.message}`,
+        { color: redColor },
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "Unknown size"
+    const mb = bytes / (1024 * 1024)
+    return `${mb.toFixed(1)} MB`
+  }
+
+  return (
+    <div className="px-10">
+      {binaryInfo?.exists ? (
+        <div className="bg-green-900/20 border border-green-700 rounded p-3">
+          <div className="flex flex-row items-center gap-2 mb-2">
+            <IconCheck size={16} className="text-green-400" />
+            <p>FFmpeg binary is installed</p>
+            <br />
+          </div>
+          <p className="text-xs text-slate-400 mb-2">Path: {binaryInfo.path}</p>
+          <p className="text-xs text-slate-400 mb-2">
+            Size: {formatFileSize(binaryInfo.size)}
+          </p>
+          <Button
+            size="compact-xs"
+            color="red"
+            onClick={handleDelete}
+            loading={isLoading}
+          >
+            Remove Binary
+          </Button>
+        </div>
+      ) : (
+        <div className="bg-orange-900/20 border border-orange-700 rounded p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <IconAlertCircle size={16} className="text-orange-400" />
+            <p>FFmpeg binary not found</p>
+          </div>
+          <p className="text-xs text-slate-400 mb-2">
+            Download FFmpeg to enable RTSP stream conversion
+          </p>
+          <Button
+            size="xs"
+            color="blue"
+            onClick={handleDownload}
+            loading={isLoading}
+          >
+            Download FFmpeg
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Setting({ settingName, df }) {
+  // Special handling for FFmpeg binary settings
+  if (settingName === "Video.ffmpegBinaryPath") {
+    return <FFmpegBinarySetting settingName={settingName} />
+  }
+
+  // Skip the download status setting as it's managed internally
+  if (settingName === "Video.ffmpegDownloadStatus") {
+    return null
+  }
+
   return (
     <div
-      className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}
+      className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && df.type != "extendableText" && "items-center"} px-10 `}
     >
       <div className="space-y-px">
         <div>{df.display}:</div>
@@ -140,6 +414,8 @@ function Setting({ settingName, df }) {
           range={df.range || null}
           suffix={df.suffix}
         />
+      ) : df.type == "extendableText" ? (
+        <ExtendableTextSetting settingName={settingName} df={df} />
       ) : df.type == "number" ? (
         <NumberSetting settingName={settingName} range={df.range || null} />
       ) : df.type == "boolean" ? (
@@ -193,15 +469,18 @@ function SettingsModal() {
         {settingTabs.map((t) => {
           return (
             <Tabs.Panel className="space-y-4" value={t} key={t}>
-              {Object.keys(DefaultSettings[t]).map((s) => {
-                return (
-                  <Setting
-                    settingName={`${t}.${s}`}
-                    df={DefaultSettings[t][s]}
-                    key={`${t}.${s}`}
-                  />
-                )
-              })}
+              {Object.keys(DefaultSettings[t])
+                .map((s) => {
+                  const setting = (
+                    <Setting
+                      settingName={`${t}.${s}`}
+                      df={DefaultSettings[t][s]}
+                      key={`${t}.${s}`}
+                    />
+                  )
+                  return setting
+                })
+                .filter(Boolean)}
               {Object.keys(DefaultSettings[t]).length == 0 && (
                 <p className="pl-4 pt-2">No settings available right now.</p>
               )}

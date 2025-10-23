@@ -114,7 +114,7 @@ export default function MainDisplay({ closeLogFile, chartData }) {
             <Fragment key={item.label}>
               <ChartDataCard
                 item={item}
-                unit={item.unit} // Use cached unit from dataset
+                unit={item.yAxisID} // item.yAxisID is the unit
                 messageMeans={messageMeans}
               />
             </Fragment>

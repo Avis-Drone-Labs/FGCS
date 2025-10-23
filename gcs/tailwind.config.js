@@ -1,10 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 import containerQueries from "@tailwindcss/container-queries"
+
 export default {
   content: [
-    "./index.html",
-    "./webcam.html",
-    "./aboutWindow.html",
+    "./*.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],

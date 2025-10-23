@@ -117,6 +117,7 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
           allowDeselect={false}
           classNames={{ dropdown: "!min-w-fit" }}
           comboboxProps={{ position: "top-start" }}
+          searchable
         />
       </TableTd>
       <TableTd>

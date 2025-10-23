@@ -27,10 +27,6 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   const [preFlightChecklistItems, setPreFlightChecklistItems] = useLocalStorage(
     { key: "preFlightCheckList", defaultValue: [] },
   )
-  const [openChecklist, setOpenChecklist] = useLocalStorage({
-    key: "lastOpenedPreFlightCheckList",
-    defaultValue: "",
-  })
 
   // New checklist
   const [uploadedFile, setUploadedFile] = useState(null) // Needed so we can reset the uploaded file each click to avoid missed clicks as we use onChange for FileInput
@@ -70,21 +66,19 @@ export default function PreFlightChecklistTab({ tabPadding }) {
       ]
     }
 
-    if (name !== "") {
-      preFlightChecklistItems.push({
-        name: name,
-        value: value
-      })
-      setPreFlightChecklistItems(preFlightChecklistItems)
-      setOpenChecklist(name)
-      setNewChecklistModal(false)
-      setNewChecklistName("")
-      return
+    if (name == "") {
+      showErrorNotification("Name cannot be empty")
     }
 
-    // Show error message
-    showErrorNotification("Name cannot be empty")
+    preFlightChecklistItems.push({
+      name: name,
+      value: value
+    })
+    setNewChecklistModal(false)
+    setNewChecklistName("")
+    setPreFlightChecklistItems(preFlightChecklistItems)
   }
+
   useEffect(() => {
     AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
   }, [])
@@ -92,7 +86,6 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   // Import checklist
   function uploadChecklist(file) {
     if (file === null) return
-    setUploadedFile(null)
 
     const reader = new FileReader()
     reader.onerror = () => {
@@ -101,7 +94,6 @@ export default function PreFlightChecklistTab({ tabPadding }) {
 
     // Read text
     reader.onload = () => {
-      console.log("OPENED FILE")
       var text = reader.result
       var title = file.name.split(".")[0]
       var checkListObject = generateCheckListObjectFromHTMLString(text)
@@ -110,37 +102,39 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     reader.readAsText(file)
   }
 
-  const items = preFlightChecklistItems.map((item) => (
-    <Accordion.Item
-      key={item.name}
-      value={item.name}
-      onClick={() => setOpenChecklist(item.name)}
-    >
-      <Accordion.Control>{item.name}</Accordion.Control>
-      <Accordion.Panel>
-        <CheckListArea
-          items={item.value}
-          saveItems={(e) => {
-            item.value = e
-            setPreFlightChecklistItems(preFlightChecklistItems)
-          }}
-          deleteChecklist={() => deleteChecklist(item)}
-          name={item.name}
-          setName={(e) => {
-            item.name = e
-            setOpenChecklist(e)
-          }}
-        />
-      </Accordion.Panel>
-    </Accordion.Item>
-  ))
+  // Reset checklist upload when changed (needed so we don't miss clicks)
+  useEffect(() => {
+    if (uploadedFile == null) return
+    setUploadedFile(null)
+  }, [uploadedFile])
 
   return (
     <Tabs.Panel value="preFlightChecklist">
       <div className={tabPadding}>
         {/* List, known issue of not opening the same list if name was changed but it's not worth it */}
-        <Accordion variant="separated" defaultValue={openChecklist}>
-          {items}
+        <Accordion variant="separated">
+          {preFlightChecklistItems.map((item) => (
+            <Accordion.Item
+              key={item.name}
+              value={item.name}
+            >
+              <Accordion.Control>{item.name}</Accordion.Control>
+              <Accordion.Panel>
+                <CheckListArea
+                  items={item.value}
+                  saveItems={(e) => {
+                    item.value = e
+                    setPreFlightChecklistItems(preFlightChecklistItems)
+                  }}
+                  deleteChecklist={() => deleteChecklist(item)}
+                  name={item.name}
+                  setName={(e) => {
+                    item.name = e
+                  }}
+                />
+              </Accordion.Panel>
+            </Accordion.Item>
+          ))}
         </Accordion>
         {/* Controls */}
         <Button

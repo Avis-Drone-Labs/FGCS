@@ -37,6 +37,7 @@ const initialState = {
   outsideVisibility: false, // local
 
   videoSource: null,
+  videoMaximized: false,
 }
 
 const droneConnectionSlice = createSlice({
@@ -122,6 +123,9 @@ const droneConnectionSlice = createSlice({
     setVideoSource: (state, action) => {
       state.videoSource = action.payload
     },
+    setVideoMaximized: (state, action) => {
+      state.videoMaximized = action.payload
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -158,6 +162,7 @@ const droneConnectionSlice = createSlice({
     selectCurrentPage: (state) => state.currentPage,
     selectOutsideVisibility: (state) => state.outsideVisibility,
     selectVideoSource: (state) => state.videoSource,
+    selectVideoMaximized: (state) => state.videoMaximized,
   },
 })
 
@@ -179,6 +184,7 @@ export const {
   setCurrentPage,
   setOutsideVisibility,
   setVideoSource,
+  setVideoMaximized,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -213,6 +219,7 @@ export const {
   selectCurrentPage,
   selectOutsideVisibility,
   selectVideoSource,
+  selectVideoMaximized,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

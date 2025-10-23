@@ -24,13 +24,16 @@ import { useDispatch, useSelector } from "react-redux"
 import Webcam from "react-webcam"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import {
+  selectVideoMaximized,
   selectVideoSource,
+  setVideoMaximized,
   setVideoSource,
 } from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 
 export default function VideoWidget({ telemetryPanelWidth }) {
   const videoSource = useSelector(selectVideoSource)
+  const isMaximized = useSelector(selectVideoMaximized)
   const dispatch = useDispatch()
 
   const [error, setError] = useState(null)
@@ -41,7 +44,6 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
   const [scale, setScale] = useState(1) // Scale factor for resizing
   const [isPoppedOut, setIsPoppedOut] = useState(false) // Track if video is popped out
-  const [isMinimized, setIsMinimized] = useState(false) // Track if widget is minimized
 
   const [
     sourceSelectModalOpened,
@@ -52,11 +54,11 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   const jsmpegPlayerRef = useRef(null)
 
   function minimizeVideoWidget() {
-    setIsMinimized(true)
+    dispatch(setVideoMaximized(false))
   }
 
   function maximizeVideoWidget() {
-    setIsMinimized(false)
+    dispatch(setVideoMaximized(true))
   }
 
   function updateScale(newScale) {
@@ -363,7 +365,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       />
 
       {/* Minimized view */}
-      {isMinimized && !isPoppedOut && (
+      {!isMaximized && !isPoppedOut && (
         <div
           className="absolute bottom-4 border border-falcongrey-700 rounded-md z-10"
           style={{
@@ -399,7 +401,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       )}
 
       {/* Full view */}
-      {!isMinimized && (
+      {isMaximized && (
         <div
           className={`absolute bottom-4 min-w-[350px] border border-falcongrey-700 rounded-md z-10 ${isPoppedOut ? "hidden" : ""}`}
           style={{

@@ -33,9 +33,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   })
 
   // New checklist
+  const [uploadedFile, setUploadedFile] = useState(null) // Needed so we can reset the uploaded file each click to avoid missed clicks as we use onChange for FileInput
   const [showNewChecklistModal, setNewChecklistModal] = useState(false)
   const [newChecklistName, setNewChecklistName] = useState("")
-  const [uploadedChecklist, setUploadedChecklist] = useState(null)
   const fileUploadRef = useRef()
 
   function deleteChecklist(toDelete) {
@@ -90,8 +90,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   }, [])
   
   // Import checklist
-  useEffect(() => {
-    if (uploadedChecklist === null) return
+  function uploadChecklist(file) {
+    if (file === null) return
+    setUploadedFile(null)
 
     const reader = new FileReader()
     reader.onerror = () => {
@@ -102,12 +103,12 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     reader.onload = () => {
       console.log("OPENED FILE")
       var text = reader.result
-      var title = uploadedChecklist.name.split(".")[0]
+      var title = file.name.split(".")[0]
       var checkListObject = generateCheckListObjectFromHTMLString(text)
       createNewChecklist(title, checkListObject)
     }
-    reader.readAsText(uploadedChecklist)
-  }, [uploadedChecklist])
+    reader.readAsText(file)
+  }
 
   const items = preFlightChecklistItems.map((item) => (
     <Accordion.Item
@@ -157,7 +158,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
 
         {/* File input for import (hidden and controlled via a click from a function) */}
         <div hidden>
-          <FileInput ref={fileUploadRef} onChange={setUploadedChecklist} />
+          <FileInput ref={fileUploadRef} value={uploadedFile} onChange={(file) => {setUploadedFile(file); uploadChecklist(file)}} />
         </div>
 
         {/* New checklist modal */}

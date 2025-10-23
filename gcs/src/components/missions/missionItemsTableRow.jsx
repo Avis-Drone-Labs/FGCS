@@ -19,6 +19,7 @@ import {
   COPTER_MISSION_ITEM_COMMANDS_LIST,
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
+import { COMMONLY_USED_MISSION_TABLE_LABELS } from "../../helpers/mavlinkConstants"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -41,7 +42,6 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
 
   // Commonly used section
   const commonlyUsedTag = "-com-used"
-  const commonlyUsedLabels = ["TAKEOFF", "WAYPOINT", "MISSION_START", "LAND"]
 
   function getDisplayCommandName(commandName) {
     if (commandName.startsWith("MAV_CMD_NAV_")) {
@@ -70,7 +70,7 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
   function getCommonlyUsedCommands() {
     const commands = getAvailableCommands()
     const filteredCommands = commands.filter((a) =>
-      commonlyUsedLabels.includes(a.label),
+      COMMONLY_USED_MISSION_TABLE_LABELS.includes(a.label),
     )
     return filteredCommands.map((a) => ({
       value: a.value + commonlyUsedTag,

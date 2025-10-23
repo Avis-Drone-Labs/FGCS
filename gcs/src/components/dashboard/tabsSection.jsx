@@ -8,7 +8,6 @@ import { Tabs } from "@mantine/core"
 
 // Tab Components
 import ActionTabsSection from "./tabsSectionTabs/actionTabsSection"
-import CameraTabsSection from "./tabsSectionTabs/cameraTabsSection"
 import DataTabsSection from "./tabsSectionTabs/dataTabsSection"
 import MissionTabsSection from "./tabsSectionTabs/missionTabsSection"
 import PreFlightChecklistTab from "./tabsSectionTabs/preFlightChecklistSection"
@@ -33,7 +32,6 @@ export default function TabsSection({ currentFlightModeNumber }) {
         <Tabs.Tab value="data">Data</Tabs.Tab>
         <Tabs.Tab value="actions">Actions</Tabs.Tab>
         <Tabs.Tab value="mission">Mission</Tabs.Tab>
-        <Tabs.Tab value="camera">Camera</Tabs.Tab>
         <Tabs.Tab value="preFlightChecklist">Pre-Flight Checklist</Tabs.Tab>
       </Tabs.List>
 
@@ -57,9 +55,6 @@ export default function TabsSection({ currentFlightModeNumber }) {
         currentFlightModeNumber={currentFlightModeNumber}
         aircraftType={aircraftType}
       />
-
-      {/* Camera */}
-      <CameraTabsSection tabPadding={tabPadding} />
 
       {/* Pre Flight Checklist */}
       <PreFlightChecklistTab tabPadding={tabPadding} />

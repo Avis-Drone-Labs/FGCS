@@ -1,14 +1,14 @@
 import { useMemo } from "react"
 import { useSelector } from "react-redux"
-import { selectEkfCalculatedStatus } from "../../redux/slices/droneInfoSlice"
-
-// Tailwind styling
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
 import {
   EKF_STATUS_DANGER_LEVEL,
   EKF_STATUS_WARNING_LEVEL,
-} from "../../helpers/mavlinkConstants"
+} from "../../../helpers/mavlinkConstants"
+import { selectEkfCalculatedStatus } from "../../../redux/slices/droneInfoSlice"
+
+// Tailwind styling
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const RED = tailwindColors.red[500]

@@ -29,14 +29,19 @@ import registerAboutIPC, {
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
+import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
+import registerRTSPStreamIPC, {
+  cleanupAllRTSPStreams,
+} from "./modules/rtspStream"
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
+import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
+
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -227,11 +232,13 @@ function createWindow() {
     frame: false,
   })
 
-  registerWebcamIPC(win)
+  registerVideoIPC(win)
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
   registerVibeStatusIPC()
+  registerFFmpegBinaryIPC()
+  registerRTSPStreamIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -384,11 +391,12 @@ function startBackend() {
 }
 
 function closeWindows() {
-  destroyWebcamWindow()
+  destroyVideoWindow()
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
   destroyVibeStatusWindow()
+  cleanupAllRTSPStreams()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

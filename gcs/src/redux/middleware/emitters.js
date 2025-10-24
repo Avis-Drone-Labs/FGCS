@@ -28,8 +28,11 @@ import {
   emitSetCurrentFlightMode,
   emitSetLoiterRadius,
   emitSetState,
+  emitStartForwarding,
+  emitStopForwarding,
   emitTakeoff,
   setCurrentPage,
+  setIsForwarding,
 } from "../slices/droneConnectionSlice"
 import {
   emitControlMission,
@@ -70,6 +73,29 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitConnectToDrone,
       callback: () => socket.socket.emit("connect_to_drone", action.payload),
+    },
+    {
+      emitter: emitStartForwarding,
+      callback: () => {
+        const storeState = store.getState()
+        const isDroneConnected = storeState.droneConnection.connected
+        if (isDroneConnected) {
+          const forwardingAddress = storeState.droneConnection.forwardingAddress
+          socket.socket.emit("start_forwarding", { address: forwardingAddress })
+        }
+        store.dispatch(setIsForwarding(true))
+      },
+    },
+    {
+      emitter: emitStopForwarding,
+      callback: () => {
+        const storeState = store.getState()
+        const isDroneConnected = storeState.droneConnection.connected
+        if (isDroneConnected) {
+          socket.socket.emit("stop_forwarding")
+        }
+        store.dispatch(setIsForwarding(false))
+      },
     },
     {
       emitter: emitSetState,

@@ -117,7 +117,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneStatus.drone = None
         return
 
-    forwarding_address = data.get("forwarding_address")
+    forwarding_address = data.get("forwardingAddress")
 
     drone = Drone(
         port,

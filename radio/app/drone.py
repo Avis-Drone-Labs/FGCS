@@ -190,7 +190,13 @@ class Drone:
         self.forwarding_connection: Optional[mavutil.mavlink_connection] = None
         if forwarding_address is not None:
             try:
-                self.startForwardingToAddress(forwarding_address)
+                start_forwarding_result = self.startForwardingToAddress(
+                    forwarding_address
+                )
+                if not start_forwarding_result.get("success", False):
+                    self.logger.error(
+                        f"Failed to start forwarding: {start_forwarding_result.get('message', 'Unknown error')}"
+                    )
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
@@ -499,15 +505,17 @@ class Drone:
                     self.droneErrorCb(str(e))
                 continue
 
-            if self.forwarding_connection is not None:
-                try:
-                    msg_buf = msg.get_msgbuf()
-                    self.forwarding_connection.write(msg_buf)
-                except Exception as e:
-                    self.logger.error(f"Failed to forward message: {e}", exc_info=True)
-                    self.stopForwarding()
-
             if msg:
+                if self.forwarding_connection is not None:
+                    try:
+                        msg_buf = msg.get_msgbuf()
+                        self.forwarding_connection.write(msg_buf)
+                    except Exception as e:
+                        self.logger.error(
+                            f"Failed to forward message: {e}", exc_info=True
+                        )
+                        self.stopForwarding()
+
                 if msg.msgname == "HEARTBEAT":
                     if (
                         msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
@@ -912,10 +920,10 @@ class Drone:
             return
 
         # Ensure address has the correct format
-        if not address.startswith(("udout:", "tcpout:")):
+        if not address.startswith(("udpout:", "tcpout:")):
             return {
                 "success": False,
-                "message": "Address must start with udout: or tcpout:",
+                "message": "Address must start with udpout: or tcpout:",
             }
         if address.count(":") < 2:
             return {
@@ -935,13 +943,16 @@ class Drone:
 
         return {"success": True, "message": f"Started forwarding to address {address}"}
 
-    def stopForwarding(self) -> None:
+    def stopForwarding(self) -> Response:
         """Stop forwarding MAVLink messages."""
         if self.forwarding_connection is not None:
             self.forwarding_connection.close()
             self.forwarding_connection = None
             self.logger.info(f"Stopped forwarding to address {self.forwarding_address}")
             self.forwarding_address = None
+            return {"success": True, "message": "Stopped forwarding"}
+        else:
+            return {"success": False, "message": "Not currently forwarding"}
 
     def close(self) -> None:
         """Close the connection to the drone."""

@@ -66,13 +66,35 @@ def startForwarding(data: dict) -> None:
         return
 
     try:
-        droneStatus.drone.startForwardingToAddress(address)
+        result = droneStatus.drone.startForwardingToAddress(address)
         socketio.emit(
             "forwarding_status",
-            {"success": True, "message": f"Forwarding to {address}"},
+            result,
         )
     except Exception as e:
         droneStatus.drone.logger.error(
             f"Failed to start forwarding: {e}", exc_info=True
         )
+        socketio.emit("forwarding_status", {"success": False, "message": str(e)})
+
+
+@socketio.on("stop_forwarding")
+def stopForwarding() -> None:
+    """
+    Stop forwarding MAVLink messages
+    """
+    if droneStatus.drone is None:
+        socketio.emit(
+            "forwarding_status", {"success": False, "message": "Not connected to drone"}
+        )
+        return
+
+    try:
+        result = droneStatus.drone.stopForwarding()
+        socketio.emit(
+            "forwarding_status",
+            result,
+        )
+    except Exception as e:
+        droneStatus.drone.logger.error(f"Failed to stop forwarding: {e}", exc_info=True)
         socketio.emit("forwarding_status", {"success": False, "message": str(e)})

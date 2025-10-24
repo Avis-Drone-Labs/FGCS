@@ -917,7 +917,10 @@ class Drone:
         """
         if self.forwarding_address == address:
             self.logger.debug(f"Already forwarding to address {address}")
-            return
+            return {
+                "success": True,
+                "message": f"Already forwarding to address {address}",
+            }
 
         # Ensure address has the correct format
         if not address.startswith(("udpout:", "tcpout:")):

@@ -118,6 +118,15 @@ def connectToDrone(data: ConnectionDataType) -> None:
         return
 
     forwarding_address = data.get("forwardingAddress", None)
+    if forwarding_address is not None and not isinstance(forwarding_address, str):
+        socketio.emit(
+            "connection_error",
+            {
+                "message": f"Expected string value for forwarding address, recieved {type(forwarding_address).__name__}."
+            },
+        )
+        droneStatus.drone = None
+        return
 
     drone = Drone(
         port,

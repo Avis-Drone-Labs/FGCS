@@ -150,11 +150,11 @@ def test_connectToDrone_badBaud() -> None:
     assert send_and_recieve(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600.0},
-    ) == {"message": "Expected integer value for baud, recieved float."}
+    ) == {"message": "Expected integer value for baud, received float."}
     assert send_and_recieve(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": "9600"},
-    ) == {"message": "Expected integer value for baud, recieved str."}
+    ) == {"message": "Expected integer value for baud, received str."}
 
 
 def test_disconnectFromDrone() -> None:

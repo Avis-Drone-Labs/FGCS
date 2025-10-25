@@ -2,6 +2,7 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
+from .helpers import NoDrone
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -54,6 +55,131 @@ def test_getTargetInfo(socketio_client: SocketIOTestClient, droneStatus):
     assert socketio_result[0]["args"][0] == {
         "target_component": 0,
         "target_system": 1,
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_startForwarding_noDroneConnected(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    with NoDrone():
+        socketio_client.emit("start_forwarding", {"address": "udpout:127.0.0.1:14550"})
+        socketio_result = socketio_client.get_received()
+
+        assert socketio_result[0]["name"] == "forwarding_status"
+        assert socketio_result[0]["args"][0] == {
+            "success": False,
+            "message": "Not connected to drone",
+        }
+
+
+@falcon_test(pass_drone_status=True)
+def test_startForwarding_missingAddress(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    socketio_client.emit("start_forwarding", {})
+    socketio_result = socketio_client.get_received()
+
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
+        "success": False,
+        "message": "No address provided",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_startForwarding_badAddressFormat(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    socketio_client.emit("start_forwarding", {"address": "invalid_address_format"})
+    socketio_result = socketio_client.get_received()
+
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
+        "success": False,
+        "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
+    }
+
+    socketio_client.emit("start_forwarding", {"address": "udpout::14550"})
+    socketio_result = socketio_client.get_received()
+    assert socketio_result[1]["name"] == "forwarding_status"
+    assert socketio_result[1]["args"][0] == {
+        "success": False,
+        "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
+    }
+
+    socketio_client.emit("start_forwarding", {"address": "tcpout:192.168.1.:1450"})
+    socketio_result = socketio_client.get_received()
+    assert socketio_result[2]["name"] == "forwarding_status"
+    assert socketio_result[2]["args"][0] == {
+        "success": False,
+        "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_startForwarding_success(socketio_client: SocketIOTestClient, droneStatus):
+    socketio_client.emit("start_forwarding", {"address": "udpout:127.0.0.1:14550"})
+    socketio_result = socketio_client.get_received()
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
+        "success": True,
+        "message": "Started forwarding to udpout:127.0.0.1:14550",
+    }
+    assert droneStatus.drone.forwarding_address == "udpout:127.0.0.1:14550"
+
+
+@falcon_test(pass_drone_status=True)
+def test_startForwarding_alreadyForwarding(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    assert droneStatus.drone.forwarding_address == "udpout:127.0.0.1:14550"
+    socketio_client.emit("start_forwarding", {"address": "udpout:127.0.0.1:14550"})
+    socketio_result = socketio_client.get_received()
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
+        "success": False,
+        "message": "Already forwarding to address udpout:127.0.0.1:14550",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_stopForwarding_noDroneConnected(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    with NoDrone():
+        socketio_client.emit("stop_forwarding")
+        socketio_result = socketio_client.get_received()
+
+        assert socketio_result[0]["name"] == "forwarding_status"
+        assert socketio_result[0]["args"][0] == {
+            "success": False,
+            "message": "Not connected to drone",
+        }
+
+
+@falcon_test(pass_drone_status=True)
+def test_stopForwarding_success(socketio_client: SocketIOTestClient, droneStatus):
+    assert droneStatus.drone.forwarding_address == "udpout:127.0.0.1:14550"
+    socketio_client.emit("stop_forwarding")
+    socketio_result = socketio_client.get_received()
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
+        "success": True,
+        "message": "Stopped forwarding",
+    }
+    assert droneStatus.drone.forwarding_address is None
+
+
+@falcon_test(pass_drone_status=True)
+def test_stopForwarding_notForwarding(socketio_client: SocketIOTestClient, droneStatus):
+    assert droneStatus.drone.forwarding_address is None
+    socketio_client.emit("stop_forwarding")
+    socketio_result = socketio_client.get_received()
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
+        "success": False,
+        "message": "Not currently forwarding",
     }
 
 

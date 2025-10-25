@@ -22,14 +22,36 @@ const isValidNumber = (num, range) => {
   )
 }
 
-function TextSetting({ settingName, hidden }) {
+function TextSetting({ settingName, hidden, matches }) {
   const { getSetting, setSetting } = useSettings()
+  const [error, setError] = useState(null)
+
+  const [newValue, setNewValue] = useState(getSetting(settingName));
+
+  const handleChange = (e) => {
+    const newValue = e.currentTarget.value
+    setNewValue(newValue)
+
+    if (matches) {
+      const regex = new RegExp(matches)
+      if (!regex.test(newValue)) {
+        setError("Invalid input format")
+      } else {
+        setError(null)
+        setSetting(settingName, newValue)
+      }
+    }
+  }
+
   return (
-    <Input
-      value={getSetting(settingName)}
-      onChange={(e) => setSetting(settingName, e.currentTarget.value)}
-      type={hidden ? "password" : "text"}
-    />
+    <div>
+      <Input
+        value={newValue}
+        onChange={handleChange}
+        type={hidden ? "password" : "text"}
+      />
+      {error && <p className="text-red-600 text-sm">{error}</p>}
+    </div>
   )
 }
 
@@ -165,7 +187,7 @@ function Setting({ settingName, df, initialValue }) {
       ) : df.type == "option" ? (
         <OptionSetting settingName={settingName} options={df.options} />
       ) : (
-        <TextSetting settingName={settingName} hidden={df.hidden || false} />
+        <TextSetting settingName={settingName} hidden={df.hidden || false} matches={df.matches} />
       )}
     </div>
   )

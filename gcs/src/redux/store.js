@@ -8,7 +8,9 @@ import configSlice from "./slices/configSlice"
 import droneConnectionSlice, {
   setBaudrate,
   setConnectionType,
+  setForwardingAddress,
   setIp,
+  setIsForwarding,
   setNetworkType,
   setOutsideVisibility,
   setPort,
@@ -74,6 +76,16 @@ if (ip !== null) {
 const port = localStorage.getItem("port")
 if (port !== null) {
   store.dispatch(setPort(port))
+}
+
+const forwardingAddress = localStorage.getItem("forwardingAddress")
+if (forwardingAddress !== null) {
+  store.dispatch(setForwardingAddress(forwardingAddress))
+}
+
+const isForwarding = localStorage.getItem("isForwarding")
+if (isForwarding !== null) {
+  store.dispatch(setIsForwarding(isForwarding === "true"))
 }
 
 const outsideVisibility = localStorage.getItem("outsideVisibility")
@@ -192,6 +204,20 @@ store.subscribe(() => {
 
   if (typeof store_mut.droneConnection.port === "string") {
     updateLocalStorageIfChanged("port", store_mut.droneConnection.port)
+  }
+
+  if (typeof store_mut.droneConnection.forwardingAddress === "string") {
+    updateLocalStorageIfChanged(
+      "forwardingAddress",
+      store_mut.droneConnection.forwardingAddress,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.isForwarding === "boolean") {
+    updateLocalStorageIfChanged(
+      "isForwarding",
+      store_mut.droneConnection.isForwarding,
+    )
   }
 
   if (typeof store_mut.droneConnection.outsideVisibility === "boolean") {

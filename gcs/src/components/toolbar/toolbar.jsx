@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"
 // Custom Imports
 import SpotlightComponent from "../spotlight/spotlight.jsx"
 import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
+import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
 
@@ -48,6 +49,12 @@ export default function Toolbar() {
               </div>
               <div>
                 <ViewMenu
+                  areMenusActive={areMenusActive}
+                  setMenusActive={setMenusActive}
+                />
+              </div>
+              <div>
+                <AdvancedMenu
                   areMenusActive={areMenusActive}
                   setMenusActive={setMenusActive}
                 />

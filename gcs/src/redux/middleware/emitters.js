@@ -1,3 +1,4 @@
+import { showErrorNotification } from "../../helpers/notification"
 import {
   emitGetFlightModeConfig,
   emitGetFrameConfig,
@@ -28,8 +29,11 @@ import {
   emitSetCurrentFlightMode,
   emitSetLoiterRadius,
   emitSetState,
+  emitStartForwarding,
+  emitStopForwarding,
   emitTakeoff,
   setCurrentPage,
+  setIsForwarding,
 } from "../slices/droneConnectionSlice"
 import {
   emitControlMission,
@@ -70,6 +74,51 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitConnectToDrone,
       callback: () => socket.socket.emit("connect_to_drone", action.payload),
+    },
+    {
+      emitter: emitStartForwarding,
+      callback: () => {
+        const storeState = store.getState()
+        const isDroneConnected = storeState.droneConnection.connected
+        if (isDroneConnected) {
+          const forwardingAddress = storeState.droneConnection.forwardingAddress
+
+          if (!forwardingAddress || forwardingAddress.trim() === "") {
+            showErrorNotification(
+              "Forwarding address is empty",
+              "Please enter a valid forwarding address before starting MAVLink forwarding.",
+            )
+            return
+          }
+
+          // Check if the forwarding address is in the format: "udpout:IP:PORT" or "tcpout:IP:PORT"
+          if (
+            !/^((udpout|tcpout):(([0-9]{1,3}\.){3}[0-9]{1,3}):([0-9]{1,5}))$/.test(
+              forwardingAddress,
+            )
+          ) {
+            showErrorNotification(
+              "Invalid forwarding address format",
+              'Please enter a valid forwarding address in the format "udpout:IP:PORT" or "tcpout:IP:PORT".',
+            )
+            return
+          }
+
+          socket.socket.emit("start_forwarding", { address: forwardingAddress })
+        }
+        store.dispatch(setIsForwarding(true))
+      },
+    },
+    {
+      emitter: emitStopForwarding,
+      callback: () => {
+        const storeState = store.getState()
+        const isDroneConnected = storeState.droneConnection.connected
+        if (isDroneConnected) {
+          socket.socket.emit("stop_forwarding")
+        }
+        store.dispatch(setIsForwarding(false))
+      },
     },
     {
       emitter: emitSetState,

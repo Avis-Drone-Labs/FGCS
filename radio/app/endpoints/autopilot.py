@@ -16,6 +16,8 @@ def rebootAutopilot() -> None:
     if not droneStatus.drone:
         return
 
+    # TODO: Add forwarding address handling here too
+
     port = droneStatus.drone.port
     baud = droneStatus.drone.baud
     wireless = droneStatus.drone.wireless

@@ -113,6 +113,7 @@ const SocketEvents = Object.freeze({
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
+  onForwardingStatus: "forwarding_status",
   onDroneError: "drone_error",
   onArmDisarm: "arm_disarm",
   onSetCurrentFlightMode: "set_current_flight_mode_result",
@@ -362,6 +363,17 @@ const socketMiddleware = (store) => {
     if (setConnected.match(action)) {
       // Setup socket listeners on drone connection
       if (action.payload) {
+        socket.socket.on(
+          DroneSpecificSocketEvents.onForwardingStatus,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
         socket.socket.on(DroneSpecificSocketEvents.onDroneError, (msg) => {
           showErrorNotification(msg.message)
         })

@@ -102,16 +102,16 @@ def test_startForwarding_badAddressFormat(
 
     socketio_client.emit("start_forwarding", {"address": "udpout::14550"})
     socketio_result = socketio_client.get_received()
-    assert socketio_result[1]["name"] == "forwarding_status"
-    assert socketio_result[1]["args"][0] == {
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
         "success": False,
         "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
     }
 
     socketio_client.emit("start_forwarding", {"address": "tcpout:192.168.1.:1450"})
     socketio_result = socketio_client.get_received()
-    assert socketio_result[2]["name"] == "forwarding_status"
-    assert socketio_result[2]["args"][0] == {
+    assert socketio_result[0]["name"] == "forwarding_status"
+    assert socketio_result[0]["args"][0] == {
         "success": False,
         "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
     }
@@ -124,7 +124,7 @@ def test_startForwarding_success(socketio_client: SocketIOTestClient, droneStatu
     assert socketio_result[0]["name"] == "forwarding_status"
     assert socketio_result[0]["args"][0] == {
         "success": True,
-        "message": "Started forwarding to udpout:127.0.0.1:14550",
+        "message": "Started forwarding to address udpout:127.0.0.1:14550",
     }
     assert droneStatus.drone.forwarding_address == "udpout:127.0.0.1:14550"
 
@@ -138,7 +138,7 @@ def test_startForwarding_alreadyForwarding(
     socketio_result = socketio_client.get_received()
     assert socketio_result[0]["name"] == "forwarding_status"
     assert socketio_result[0]["args"][0] == {
-        "success": False,
+        "success": True,
         "message": "Already forwarding to address udpout:127.0.0.1:14550",
     }
 

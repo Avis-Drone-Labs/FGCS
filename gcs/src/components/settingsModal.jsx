@@ -9,8 +9,9 @@ import {
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
-import { IconTrash } from "@tabler/icons-react"
+import { IconTrash, IconRestore } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
+import { Tooltip } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 import DefaultSettings from "../../data/default_settings.json"
 
@@ -24,30 +25,38 @@ const isValidNumber = (num, range) => {
 
 function TextSetting({ settingName, hidden, matches }) {
   const { getSetting, setSetting } = useSettings()
+  const settingValue = getSetting(settingName)
+
+  const [newValue, setNewValue] = useState(settingValue)
   const [error, setError] = useState(null)
 
-  const [newValue, setNewValue] = useState(getSetting(settingName));
+  useEffect(() => {
+    if (settingValue !== newValue) {
+      setNewValue(settingValue)
+    }
+  }, [settingValue])
 
-  const handleChange = (e) => {
-    const newValue = e.currentTarget.value
-    setNewValue(newValue)
+  useEffect(() => {
+    if (newValue === settingValue) return
 
     if (matches) {
       const regex = new RegExp(matches)
       if (!regex.test(newValue)) {
         setError("Invalid input format")
+        return
       } else {
         setError(null)
-        setSetting(settingName, newValue)
       }
     }
-  }
+
+    setSetting(settingName, newValue)
+  }, [newValue])
 
   return (
     <div>
       <Input
-        value={newValue}
-        onChange={handleChange}
+        value={newValue ?? ""}
+        onChange={(e) => setNewValue(e.currentTarget.value)}
         type={hidden ? "password" : "text"}
       />
       {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -94,16 +103,29 @@ const generateId = () => Math.random().toString(36).slice(8)
 
 function ExtendableNumberSetting({ settingName, range, suffix }) {
   const { getSetting, setSetting } = useSettings()
+  const settingValue = getSetting(settingName)
 
-  const [values, setValues] = useState(
-    getSetting(settingName).map((val) => ({ id: generateId(), value: val })),
+  const [values, setValues] = useState(() =>
+    settingValue.map((val) => ({ id: generateId(), value: val })),
   )
 
   useEffect(() => {
-    setSetting(
-      settingName,
-      values.map((a) => a.value),
-    )
+    const currentValues = values.map((v) => v.value)
+    if (JSON.stringify(settingValue) !== JSON.stringify(currentValues)) {
+      setValues((prev) =>
+        settingValue.map((val, i) => ({
+          id: prev[i]?.id ?? generateId(),
+          value: val,
+        })),
+      )
+    }
+  }, [settingValue])
+
+  useEffect(() => {
+    const newArray = values.map((a) => a.value)
+    if (JSON.stringify(settingValue) !== JSON.stringify(newArray)) {
+      setSetting(settingName, newArray)
+    }
   }, [values])
 
   const updateValue = (id, value) => {
@@ -125,7 +147,7 @@ function ExtendableNumberSetting({ settingName, range, suffix }) {
             <IconTrash size={20} />
           </button>
           <NumberInput
-            defaultValue={value}
+            value={value}
             min={range ? range[0] : null}
             max={range ? range[1] : null}
             onChange={(num) => {
@@ -149,22 +171,38 @@ function ExtendableNumberSetting({ settingName, range, suffix }) {
 }
 
 function Setting({ settingName, df, initialValue }) {
-  const { getSetting } = useSettings()
+  const { getSetting, setSetting } = useSettings()
   const [changed, setChanged] = useState(false)
+  const [changedFromDefault, setChangedFromDefault] = useState(false)
 
   useEffect(() => {
     if (initialValue !== undefined)
       setChanged(
         JSON.stringify(getSetting(settingName)) != JSON.stringify(initialValue),
       )
+
+    setChangedFromDefault(
+      JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
+    )
   }, [getSetting(settingName)])
+
+  const resetToDefault = () => setSetting(settingName, df.default)
 
   return (
     <div
       className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && "items-center"} px-10 `}
     >
       <div className="space-y-px relative">
-        <div className="">{df.display}:</div>
+        <Tooltip disabled={!changedFromDefault} label="reset to default">
+          <button
+            className={`absolute right-full top-1.5 pr-1.5 ${!changedFromDefault && "text-gray-600"}`}
+            disabled={!changedFromDefault}
+            onClick={resetToDefault}
+          >
+            <IconRestore size={16} />
+          </button>
+        </Tooltip>
+        <div>{df.display}:</div>
         <p className="text-gray-400 text-sm">{df.description}</p>
         {df.requireRestart && (
           <p
@@ -187,7 +225,11 @@ function Setting({ settingName, df, initialValue }) {
       ) : df.type == "option" ? (
         <OptionSetting settingName={settingName} options={df.options} />
       ) : (
-        <TextSetting settingName={settingName} hidden={df.hidden || false} matches={df.matches} />
+        <TextSetting
+          settingName={settingName}
+          hidden={df.hidden || false}
+          matches={df.matches}
+        />
       )}
     </div>
   )

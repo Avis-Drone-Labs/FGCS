@@ -1,3 +1,4 @@
+import { showErrorNotification } from "../../helpers/notification"
 import {
   emitGetFlightModeConfig,
   emitGetFrameConfig,
@@ -81,6 +82,28 @@ export function handleEmitters(socket, store, action) {
         const isDroneConnected = storeState.droneConnection.connected
         if (isDroneConnected) {
           const forwardingAddress = storeState.droneConnection.forwardingAddress
+
+          if (!forwardingAddress || forwardingAddress.trim() === "") {
+            showErrorNotification(
+              "Forwarding address is empty",
+              "Please enter a valid forwarding address before starting MAVLink forwarding.",
+            )
+            return
+          }
+
+          // Check if the forwarding address is in the format: "udpout:IP:PORT" or "tcpout:IP:PORT"
+          if (
+            !/^((udpout|tcpout):(([0-9]{1,3}\.){3}[0-9]{1,3}):([0-9]{1,5}))$/.test(
+              forwardingAddress,
+            )
+          ) {
+            showErrorNotification(
+              "Invalid forwarding address format",
+              'Please enter a valid forwarding address in the format "udpout:IP:PORT" or "tcpout:IP:PORT".',
+            )
+            return
+          }
+
           socket.socket.emit("start_forwarding", { address: forwardingAddress })
         }
         store.dispatch(setIsForwarding(true))

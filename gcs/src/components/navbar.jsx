@@ -398,7 +398,7 @@ export default function Navbar() {
           </Button>
         ) : (
           <Button
-            className="mt-4"
+            className="mt-8"
             variant="filled"
             color={tailwindColors.green[600]}
             onClick={() => {

@@ -111,7 +111,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         socketio.emit(
             "connection_error",
             {
-                "message": f"Expected integer value for baud, recieved {type(baud).__name__}."
+                "message": f"Expected integer value for baud, received {type(baud).__name__}."
             },
         )
         droneStatus.drone = None
@@ -122,7 +122,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         socketio.emit(
             "connection_error",
             {
-                "message": f"Expected string value for forwarding address, recieved {type(forwarding_address).__name__}."
+                "message": f"Expected string value for forwarding address, received {type(forwarding_address).__name__}."
             },
         )
         droneStatus.drone = None

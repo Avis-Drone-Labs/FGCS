@@ -1,5 +1,6 @@
 import copy
 import os
+import re
 import time
 import traceback
 from logging import Logger, getLogger
@@ -922,19 +923,15 @@ class Drone:
                 "message": f"Already forwarding to address {address}",
             }
 
-        # Ensure address has the correct format
-        if not address.startswith(("udpout:", "tcpout:")):
+        # Check if the forwarding address is in the format: "udpout:IP:PORT" or "tcpout:IP:PORT"
+        match = re.match(
+            r"^((udpout|tcpout):(([0-9]{1,3}\.){3}[0-9]{1,3}):([0-9]{1,5}))$", address
+        )
+        if not match:
             return {
                 "success": False,
-                "message": "Address must start with udpout: or tcpout:",
+                "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
             }
-        if address.count(":") < 2:
-            return {
-                "success": False,
-                "message": "Address must include IP and port number",
-            }
-        if ":" not in address.split(":", 1)[1]:
-            return {"success": False, "message": "Address must include port number"}
 
         self.stopForwarding()
 

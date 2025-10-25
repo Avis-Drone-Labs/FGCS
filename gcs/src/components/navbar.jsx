@@ -485,11 +485,6 @@ export default function Navbar() {
 
           {/* Connected to message */}
           <p>
-            <Button
-              onClick={() => dispatch(setForwardingAddressModalOpened(true))}
-            >
-              MAVLink forwarding
-            </Button>
             {connectedToDrone && (
               <>
                 Connected to

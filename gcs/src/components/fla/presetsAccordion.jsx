@@ -11,7 +11,8 @@ import { useSelector } from "react-redux"
 import PresetAccordionItem from "./presetAccordionItem.jsx"
 import {
   selectLogType,
-  selectLogMessages,
+  selectMessageFilters,
+  selectFormatMessages,
 } from "../../redux/slices/logAnalyserSlice.js"
 
 export default function PresetsAccordion({
@@ -19,10 +20,11 @@ export default function PresetsAccordion({
   deleteCustomPreset,
 }) {
   const logType = useSelector(selectLogType)
-  const logMessages = useSelector(selectLogMessages)
+  const messageFilters = useSelector(selectMessageFilters)
+  const formatMessages = useSelector(selectFormatMessages)
 
   const filteredPresetCategories = useMemo(() => {
-    if (!presetCategories || !logType || !logMessages) {
+    if (!presetCategories || !logType || !messageFilters) {
       return { defaults: [], custom: [] }
     }
 
@@ -32,9 +34,9 @@ export default function PresetsAccordion({
           ...category,
           presets: (category.presets || []).filter((preset) =>
             Object.keys(preset.filters || {}).every((key) => {
-              if (!logMessages[key]) return false
+              if (!messageFilters[key]) return false
               const requiredFields = preset.filters[key] || []
-              const availableFields = logMessages["format"]?.[key]?.fields || []
+              const availableFields = formatMessages?.[key]?.fields || []
               return requiredFields.every((field) =>
                 availableFields.includes(field),
               )
@@ -47,7 +49,7 @@ export default function PresetsAccordion({
     const custom = filterCategories(presetCategories["custom_" + logType])
 
     return { defaults, custom }
-  }, [presetCategories, logType, logMessages])
+  }, [presetCategories, logType, messageFilters])
 
   return (
     <Accordion multiple={true}>

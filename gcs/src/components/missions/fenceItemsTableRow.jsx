@@ -67,6 +67,8 @@ export default function FenceItemsTableRow({ fenceItemIndex }) {
           value={fenceItem.command.toString()}
           onChange={(value) => updateFenceItemData("command", parseInt(value))}
           allowDeselect={false}
+          classNames={{ dropdown: "!min-w-fit" }}
+          comboboxProps={{ position: "top-start" }}
         />
       </TableTd>
       <TableTd>
@@ -107,27 +109,29 @@ export default function FenceItemsTableRow({ fenceItemIndex }) {
         />
       </TableTd>
       <TableTd>{getPositionFrameName(fenceItem.frame)}</TableTd>
-      <TableTd className="flex flex-row gap-2">
-        <ActionIcon
-          onClick={() =>
-            dispatch(reorderDrawingItem({ id: fenceItem.id, increment: -1 }))
-          }
-        >
-          <IconArrowUp size={20} />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() =>
-            dispatch(reorderDrawingItem({ id: fenceItem.id, increment: 1 }))
-          }
-        >
-          <IconArrowDown size={20} />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() => dispatch(removeDrawingItem(fenceItem.id))}
-          color="red"
-        >
-          <IconTrash size={20} />
-        </ActionIcon>
+      <TableTd className="h-full">
+        <div className="flex flex-row gap-2">
+          <ActionIcon
+            onClick={() =>
+              dispatch(reorderDrawingItem({ id: fenceItem.id, increment: -1 }))
+            }
+          >
+            <IconArrowUp size={20} />
+          </ActionIcon>
+          <ActionIcon
+            onClick={() =>
+              dispatch(reorderDrawingItem({ id: fenceItem.id, increment: 1 }))
+            }
+          >
+            <IconArrowDown size={20} />
+          </ActionIcon>
+          <ActionIcon
+            onClick={() => dispatch(removeDrawingItem(fenceItem.id))}
+            color="red"
+          >
+            <IconTrash size={20} />
+          </ActionIcon>
+        </div>
       </TableTd>
     </TableTr>
   )

@@ -34,10 +34,7 @@
       "description": "You'll be notified when the relative altitude of a drone exceeds this value.",
       "default": 120,
       "type": "number",
-      "range": [
-          0,
-          100000
-      ],
+      "range": [0, 100000],
       "display": "Maximum Altitude Alert",
       "suffix": "m",
       "group": "Altitude"
@@ -46,10 +43,7 @@
       "description": "You'll be notified when the relative altitude of a drone goes below these values.",
       "default": [],
       "type": "extendableNumber",
-      "range": [
-          0,
-          100000
-      ],
+      "range": [0, 100000],
       "display": "Minimum Altitude Alerts",
       "suffix": "m",
       "group": "Altitude"
@@ -58,15 +52,42 @@
       "description": "You'll be notified when the battery percentage falls below these values.",
       "default": [50, 20, 10],
       "type": "extendableNumber",
-      "range": [
-        0, 100
-      ],
+      "range": [0, 100],
       "display": "Battery Alert",
       "suffix": "%",
       "group": "Battery"
     }
   },
-  "Params": {},
-  "Config": {},
-  "FGCS": {}
+  "Video": {
+    "ffmpegBinaryPath": {
+      "default": "",
+      "type": "string",
+      "display": "FFmpeg Binary Path",
+      "description": "Path to FFmpeg binary for RTSP stream conversion"
+    },
+    "ffmpegDownloadStatus": {
+      "default": "not_downloaded",
+      "type": "string",
+      "display": "FFmpeg Download Status",
+      "description": "Status of FFmpeg binary download"
+    },
+    "rtspStreams": {
+      "default": [],
+      "type": "extendableText",
+      "display": "RTSP Streams",
+      "description": "List of configured RTSP video streams",
+      "fields": [
+        {
+          "key": "name",
+          "label": "Stream Name",
+          "validation": true
+        },
+        {
+          "key": "url",
+          "label": "RTSP URL",
+          "validation": "rtsp"
+        }
+      ]
+    }
+  }
 }

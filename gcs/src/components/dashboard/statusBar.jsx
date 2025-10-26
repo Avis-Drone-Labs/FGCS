@@ -23,9 +23,9 @@ import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 // Helper imports
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { useSettings } from "../../helpers/settings"
-import AlertSection, { AlertCategory, AlertSeverity } from "./alert"
-
-import { useAlerts } from "./alertProvider"
+import AlertSection from "./alerts/alert"
+import { AlertCategory, AlertSeverity } from "./alerts/alertConstants"
+import { useAlerts } from "./alerts/alertContext"
 
 export function StatusSection({ icon, value, tooltip }) {
   return (

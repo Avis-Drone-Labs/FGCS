@@ -147,8 +147,6 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         console.warn("Error cleaning up previous JSMpeg player:", error)
         jsmpegPlayerRef.current = null
       }
-    } else {
-      setError(null)
     }
   }
 
@@ -297,6 +295,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         data.reason === "process-error" ||
         data.reason === "process-exit"
       ) {
+        console.error("Stream stopped due to error:", data.error)
         setError(data.error || "Stream stopped due to an error")
 
         // If there's a popout window, close it and show error in main widget
@@ -308,7 +307,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
         // Clear the video source when there's an error
         dispatch(setVideoSource(null))
       } else if (data.reason === "manual" || data.reason === "cleanup") {
-        setError(null)
+        console.warn("Stream stopped manually or during cleanup.")
         // Don't clear videoSource here - let the normal flow handle it
       }
 

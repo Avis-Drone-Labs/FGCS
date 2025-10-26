@@ -51,7 +51,6 @@ export default function TelemetrySection({
   useEffect(() => {
     // Calculate distance from current pos to home pos
     if (gpsData.lat && gpsData.lon && homePosition.lat && homePosition.lon) {
-      console.log(gpsData, homePosition)
       const distToHome = distance(
         [intToCoord(gpsData.lon), intToCoord(gpsData.lat)],
         [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],

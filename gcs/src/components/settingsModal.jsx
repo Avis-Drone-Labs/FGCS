@@ -440,16 +440,6 @@ function FFmpegBinarySetting({ settingName }) {
 }
 
 function Setting({ settingName, df, initialValue }) {
-  // Special handling for FFmpeg binary settings
-  if (settingName === "Video.ffmpegBinaryPath") {
-    return <FFmpegBinarySetting settingName={settingName} />
-  }
-
-  // Skip the download status setting as it's managed internally
-  if (settingName === "Video.ffmpegDownloadStatus") {
-    return null
-  }
-
   const { getSetting, setSetting } = useSettings()
   const [changed, setChanged] = useState(false)
   const [changedFromDefault, setChangedFromDefault] = useState(false)
@@ -466,6 +456,16 @@ function Setting({ settingName, df, initialValue }) {
   }, [getSetting(settingName)])
 
   const resetToDefault = () => setSetting(settingName, df.default)
+
+  // Special handling for FFmpeg binary settings
+  if (settingName === "Video.ffmpegBinaryPath") {
+    return <FFmpegBinarySetting settingName={settingName} />
+  }
+
+  // Skip the download status setting as it's managed internally
+  if (settingName === "Video.ffmpegDownloadStatus") {
+    return null
+  }
 
   return (
     <div

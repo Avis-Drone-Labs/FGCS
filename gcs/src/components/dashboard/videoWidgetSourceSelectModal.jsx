@@ -2,7 +2,7 @@
 This component provides a modal to select the video source for the VideoWidget.
 */
 
-import { Modal, SegmentedControl, Select } from "@mantine/core"
+import { Modal, SegmentedControl, Select, Text, Tooltip } from "@mantine/core"
 import { useCallback, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useSettings } from "../../helpers/settings"
@@ -10,6 +10,7 @@ import {
   selectVideoSource,
   setVideoSource,
 } from "../../redux/slices/droneConnectionSlice"
+import { IconInfoCircle } from "@tabler/icons-react"
 
 export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
   const dispatch = useDispatch()
@@ -17,6 +18,7 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
   const videoSource = useSelector(selectVideoSource)
 
   const { getSetting } = useSettings()
+  const [ffmpegInstalled, setFfmpegInstalled] = useState(false)
   const rtspStreams = getSetting("Video.rtspStreams") || []
   const [webcamDevices, setWebcamDevices] = useState([])
 
@@ -29,6 +31,12 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
       ),
     [setWebcamDevices],
   )
+
+  useEffect(() => {
+    window.ipcRenderer.invoke("ffmpeg:check-binary-exists").then((exists) => {
+      setFfmpegInstalled(exists)
+    })
+  }, [])
 
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then(handleDevices)
@@ -65,34 +73,49 @@ export default function VideoWidgetSourceSelectModal({ opened, onClose }) {
         />
 
         {selectVideoSourceType === "stream" ? (
-          <Select
-            label="Select RTSP Stream"
-            placeholder={
-              rtspStreams.length === 0
-                ? "No RTSP streams configured"
-                : "Select an RTSP stream"
-            }
-            value={videoSource?.type === "stream" ? videoSource.url : null}
-            onChange={(_, option) => {
-              option === null
-                ? dispatch(setVideoSource(null))
-                : dispatch(
-                    setVideoSource({
-                      type: "stream",
-                      url: option.value,
-                      name: option.label,
-                    }),
-                  )
-            }}
-            data={rtspStreams
-              .filter((stream) => stream.name && stream.url)
-              .map((stream) => ({
-                value: stream.url,
-                label: stream.name,
-              }))}
-            allowDeselect
-            clearable
-          />
+          <>
+            <Select
+              label={
+                <div className="flex gap-2 pb-2 items-center">
+                  Select RTSP Stream
+                  <Tooltip label="Note: You can add RTSP streams in the Settings &gt; Video section.">
+                    <IconInfoCircle size={20} />
+                  </Tooltip>
+                </div>
+              }
+              placeholder={
+                rtspStreams.length === 0
+                  ? "No RTSP streams configured"
+                  : "Select an RTSP stream"
+              }
+              value={videoSource?.type === "stream" ? videoSource.url : null}
+              onChange={(_, option) => {
+                option === null
+                  ? dispatch(setVideoSource(null))
+                  : dispatch(
+                      setVideoSource({
+                        type: "stream",
+                        url: option.value,
+                        name: option.label,
+                      }),
+                    )
+              }}
+              data={rtspStreams
+                .filter((stream) => stream.name && stream.url)
+                .map((stream) => ({
+                  value: stream.url,
+                  label: stream.name,
+                }))}
+              allowDeselect
+              clearable
+            />
+            {!ffmpegInstalled && (
+              <Text size="sm" c="red">
+                FFmpeg is not installed or not found. RTSP streams will not
+                work. You can install it from the Settings &gt; Video section.
+              </Text>
+            )}
+          </>
         ) : (
           <Select
             label="Select Webcam"

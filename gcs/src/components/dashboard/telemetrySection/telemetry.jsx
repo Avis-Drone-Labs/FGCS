@@ -9,7 +9,10 @@ import { AttitudeIndicator, HeadingIndicator } from "./indicator"
 import TelemetryValueDisplay from "./telemetryValueDisplay"
 
 // Redux
+import { distance } from "@turf/turf"
+import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
+import { intToCoord } from "../../../helpers/dataFormatters"
 import {
   selectArmed,
   selectAttitude,
@@ -17,6 +20,7 @@ import {
   selectFlightModeString,
   selectGPS,
   selectHeartbeat,
+  selectHomePosition,
   selectNavController,
   selectPrearmEnabled,
   selectTelemetry,
@@ -39,7 +43,24 @@ export default function TelemetrySection({
   const navControllerOutputData = useSelector(selectNavController)
   const batteryData = useSelector(selectBatteryData)
   const heartbeatData = useSelector(selectHeartbeat)
+  const homePosition = useSelector(selectHomePosition)
   const systemStatus = MAV_STATE[heartbeatData.systemStatus]
+
+  const [distToHome, setDistToHome] = useState(0)
+
+  useEffect(() => {
+    // Calculate distance from current pos to home pos
+    if (gpsData.lat && gpsData.lon && homePosition.lat && homePosition.lon) {
+      const distToHome = distance(
+        [intToCoord(gpsData.lon), intToCoord(gpsData.lat)],
+        [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
+        {
+          units: "meters",
+        },
+      )
+      setDistToHome(distToHome.toFixed(2))
+    }
+  }, [gpsData, homePosition])
 
   return (
     <div>
@@ -162,15 +183,15 @@ export default function TelemetrySection({
             <p className="text-sm">m</p>
             <TelemetryValueDisplay
               title="WP"
-              value={(navControllerOutputData.wp_dist
-                ? navControllerOutputData.wp_dist
+              value={(navControllerOutputData.wpDist
+                ? navControllerOutputData.wpDist
                 : 0
               ).toFixed(2)}
               fs={telemetryFontSize}
             />
             <TelemetryValueDisplay
               title="HOME"
-              value={(0).toFixed(2)}
+              value={distToHome}
               fs={telemetryFontSize}
             />
           </div>

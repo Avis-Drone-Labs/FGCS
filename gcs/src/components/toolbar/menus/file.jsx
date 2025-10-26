@@ -48,7 +48,7 @@ export default function FileMenu(props) {
         callback={() => window.ipcRenderer.send("window:close")}
       />
       <Divider />
-      <MenuItem name="Settings" callback={() => open()} />
+      <MenuItem name="Settings" shortcut="Ctrl + ," callback={() => open()} />
     </MenuTemplate>
   )
 }

@@ -367,7 +367,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       {/* Minimized view */}
       {!isMaximized && !isPoppedOut && (
         <div
-          className="absolute bottom-2 border border-falcongrey-700 rounded-md z-10"
+          className="absolute bottom-2 rounded-md z-10"
           style={{
             left: `${telemetryPanelWidth + 8}px`,
             background: GetOutsideVisibilityColor(),
@@ -403,7 +403,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       {/* Full view */}
       {isMaximized && (
         <div
-          className={`absolute bottom-2 min-w-[350px] border border-falcongrey-700 rounded-md z-10 ${isPoppedOut ? "hidden" : ""}`}
+          className={`absolute bottom-2 min-w-[350px] rounded-md z-10 ${isPoppedOut ? "hidden" : ""}`}
           style={{
             left: `${telemetryPanelWidth + 8}px`,
             background: GetOutsideVisibilityColor(),

@@ -434,7 +434,7 @@ function FFmpegBinarySetting({ settingName }) {
   )
 }
 
-function Setting({ settingName, df }) {
+function Setting({ settingName, df, initialValue }) {
   // Special handling for FFmpeg binary settings
   if (settingName === "Video.ffmpegBinaryPath") {
     return <FFmpegBinarySetting settingName={settingName} />

@@ -50,7 +50,7 @@
     },
     "batteryAlert": {
       "description": "You'll be notified when the battery percentage falls below these values.",
-      "default": [50, 20, 10],
+      "default": [10, 20, 50],
       "type": "extendableNumber",
       "range": [0, 100],
       "display": "Battery Alert",

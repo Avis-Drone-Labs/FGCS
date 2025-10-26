@@ -3,8 +3,8 @@ import {
   Checkbox,
   Input,
   Modal,
-  NativeSelect,
   NumberInput,
+  Select,
   Tabs,
   TextInput,
 } from "@mantine/core"
@@ -51,10 +51,10 @@ function BoolSetting({ settingName }) {
 function OptionSetting({ settingName, options }) {
   const { getSetting, setSetting } = useSettings()
   return (
-    <NativeSelect
+    <Select
       data={options}
       value={getSetting(settingName)}
-      onChange={(e) => setSetting(settingName, e.currentTarget.value)}
+      onChange={(value) => setSetting(settingName, value)}
     />
   )
 }

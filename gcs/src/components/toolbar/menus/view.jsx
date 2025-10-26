@@ -15,15 +15,6 @@ export default function ViewMenu(props) {
       setMenusActive={props.setMenusActive}
     >
       <MenuItem
-        name="Connection Stats"
-        onClick={() => {
-          window.ipcRenderer.invoke("app:open-link-stats-window")
-        }}
-      />
-
-      <Divider />
-
-      <MenuItem
         name="Reload"
         shortcut="Ctrl + R"
         callback={() => window.ipcRenderer.send("window:reload")}

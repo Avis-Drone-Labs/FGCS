@@ -1,25 +1,8 @@
 import { Alert } from "@mantine/core"
 import { IconAlertTriangle } from "@tabler/icons-react"
 import { useMemo } from "react"
-import { useAlerts } from "./alertProvider"
-
-export const AlertCategory = {
-  Altitude: "Altitude",
-  Battery: "Battery",
-  Speed: "Speed",
-}
-
-export const AlertSeverity = {
-  Yellow: 1,
-  Orange: 2,
-  Red: 3,
-}
-
-const SeverityColor = {
-  [AlertSeverity.Yellow]: "yellow",
-  [AlertSeverity.Orange]: "orange",
-  [AlertSeverity.Red]: "red",
-}
+import { SeverityColor } from "./alertConstants"
+import { useAlerts } from "./alertContext"
 
 export default function AlertSection() {
   const { alerts, dismissAlert } = useAlerts()

@@ -485,6 +485,13 @@ class Drone:
                     self.droneDisconnectCb()
                 self.close()
                 break
+            except ConnectionAbortedError as e:
+                self.logger.error("Connection to autopilot aborted")
+                self.logger.error(e, exc_info=True)
+                if self.droneDisconnectCb:
+                    self.droneDisconnectCb()
+                self.close()
+                break
             except Exception as e:
                 # Log any other unexpected exception
                 self.logger.error(e, exc_info=True)

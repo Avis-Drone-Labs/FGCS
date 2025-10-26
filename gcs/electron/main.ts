@@ -293,6 +293,13 @@ function setMainMenu() {
             openAboutPopout()
           },
         },
+        {
+          label: "Settings",
+          accelerator: "Cmd+,",
+          click: () => {
+            win?.webContents.send("settings:open")
+          },
+        },
         { type: "separator" },
         {
           label: "Report a bug",

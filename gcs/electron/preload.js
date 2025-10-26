@@ -57,6 +57,7 @@ const ALLOWED_ON_CHANNELS = [
   "fla:log-parse-progress",
   "app:send-ekf-status",
   "app:send-vibe-status",
+  "settings:open",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

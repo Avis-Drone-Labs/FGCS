@@ -33,6 +33,10 @@ const initialState = {
   ip: "127.0.0.1", // local
   port: "5760", // local
 
+  forwardingAddress: "", // local
+  isForwarding: false, // local
+  forwardingAddressModalOpened: false,
+
   currentPage: "dashboard",
   outsideVisibility: false, // local
 
@@ -110,6 +114,15 @@ const droneConnectionSlice = createSlice({
         state.wireless = action.payload
       }
     },
+    setForwardingAddress: (state, action) => {
+      state.forwardingAddress = action.payload
+    },
+    setIsForwarding: (state, action) => {
+      state.isForwarding = action.payload
+    },
+    setForwardingAddressModalOpened: (state, action) => {
+      state.forwardingAddressModalOpened = action.payload
+    },
     setCurrentPage: (state, action) => {
       if (action.payload !== state.currentPage) {
         state.currentPage = action.payload
@@ -134,6 +147,8 @@ const droneConnectionSlice = createSlice({
     },
     emitDisconnectFromDrone: () => {},
     emitConnectToDrone: () => {},
+    emitStartForwarding: () => {},
+    emitStopForwarding: () => {},
     emitSetState: () => {},
     emitGetHomePosition: () => {},
     emitGetCurrentMissionAll: () => {},
@@ -159,6 +174,10 @@ const droneConnectionSlice = createSlice({
     selectConnectionModal: (state) => state.connection_modal,
     selectConnectionStatus: (state) => state.connection_status,
     selectWireless: (state) => state.wireless,
+    selectForwardingAddress: (state) => state.forwardingAddress,
+    selectIsForwarding: (state) => state.isForwarding,
+    selectForwardingAddressModalOpened: (state) =>
+      state.forwardingAddressModalOpened,
     selectCurrentPage: (state) => state.currentPage,
     selectOutsideVisibility: (state) => state.outsideVisibility,
     selectVideoSource: (state) => state.videoSource,
@@ -181,6 +200,9 @@ export const {
   setConnectionModal,
   setConnectionStatus,
   setWireless,
+  setForwardingAddress,
+  setIsForwarding,
+  setForwardingAddressModalOpened,
   setCurrentPage,
   setOutsideVisibility,
   setVideoSource,
@@ -191,6 +213,8 @@ export const {
   emitGetComPorts,
   emitDisconnectFromDrone,
   emitConnectToDrone,
+  emitStartForwarding,
+  emitStopForwarding,
   emitSetState,
   emitGetHomePosition,
   emitGetCurrentMissionAll,
@@ -216,6 +240,9 @@ export const {
   selectConnectionModal,
   selectConnectionStatus,
   selectWireless,
+  selectForwardingAddress,
+  selectIsForwarding,
+  selectForwardingAddressModalOpened,
   selectCurrentPage,
   selectOutsideVisibility,
   selectVideoSource,

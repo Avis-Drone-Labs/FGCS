@@ -1,5 +1,6 @@
 import copy
 import os
+import re
 import time
 import traceback
 from logging import Logger, getLogger
@@ -72,6 +73,7 @@ class Drone:
         baud: int = 57600,
         wireless: bool = False,
         logger: Logger = getLogger("fgcs"),
+        forwarding_address: Optional[str] = None,
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
@@ -185,11 +187,23 @@ class Drone:
         self.is_active.set()
         self.is_listening = False
 
+        self.forwarding_address: Optional[str] = None
+        self.forwarding_connection: Optional[mavutil.mavlink_connection] = None
+        if forwarding_address is not None:
+            try:
+                start_forwarding_result = self.startForwardingToAddress(
+                    forwarding_address
+                )
+                if not start_forwarding_result.get("success", False):
+                    self.logger.error(
+                        f"Failed to start forwarding: {start_forwarding_result.get('message', 'Unknown error')}"
+                    )
+            except Exception as e:
+                self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
+
         # To ensure that only one command is sent at a time and we wait for a
         # response before sending another command, a thread-safe lock is used
         self.sending_command_lock = Lock()
-
-        self.number_of_motors = 4  # Is there a way to get this from the drone?
 
         self.armed = False
 
@@ -478,9 +492,8 @@ class Drone:
                 self.logger.error(e, exc_info=True)
             except KeyboardInterrupt:
                 break
-            except serial.serialutil.SerialException as e:
-                self.logger.error("Autopilot disconnected")
-                self.logger.error(e, exc_info=True)
+            except (serial.serialutil.SerialException, ConnectionAbortedError):
+                self.logger.error("Autopilot disconnected", exc_info=True)
                 if self.droneDisconnectCb:
                     self.droneDisconnectCb()
                 self.close()
@@ -493,6 +506,16 @@ class Drone:
                 continue
 
             if msg:
+                if self.forwarding_connection is not None:
+                    try:
+                        msg_buf = msg.get_msgbuf()
+                        self.forwarding_connection.write(msg_buf)
+                    except Exception as e:
+                        self.logger.error(
+                            f"Failed to forward message: {e}", exc_info=True
+                        )
+                        self.stopForwarding()
+
                 if msg.msgname == "HEARTBEAT":
                     if (
                         msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
@@ -747,6 +770,7 @@ class Drone:
             self.logger.debug("Rebooting")
             self.close()
 
+    # TODO: Move this out into a controller
     @sendingCommandLock
     def setServo(self, servo_instance: int, pwm_value: int) -> Response:
         """Set a servo to a specific PWM value.
@@ -885,12 +909,57 @@ class Drone:
             z,
         )
 
+    def startForwardingToAddress(self, address: str) -> Response:
+        """Start forwarding MAVLink messages to a specific address.
+
+        Args:
+            address (str): The address to forward messages to.
+        """
+        if self.forwarding_address == address:
+            self.logger.debug(f"Already forwarding to address {address}")
+            return {
+                "success": True,
+                "message": f"Already forwarding to address {address}",
+            }
+
+        # Check if the forwarding address is in the format: "udpout:IP:PORT" or "tcpout:IP:PORT"
+        match = re.match(
+            r"^((udpout|tcpout):(([0-9]{1,3}\.){3}[0-9]{1,3}):([0-9]{1,5}))$", address
+        )
+        if not match:
+            return {
+                "success": False,
+                "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",
+            }
+
+        self.stopForwarding()
+
+        self.forwarding_address = address
+        self.forwarding_connection = mavutil.mavlink_connection(
+            self.forwarding_address, timeout=1
+        )
+        self.logger.info(f"Started forwarding to address {address}")
+
+        return {"success": True, "message": f"Started forwarding to address {address}"}
+
+    def stopForwarding(self) -> Response:
+        """Stop forwarding MAVLink messages."""
+        if self.forwarding_connection is not None:
+            self.forwarding_connection.close()
+            self.forwarding_connection = None
+            self.logger.info(f"Stopped forwarding to address {self.forwarding_address}")
+            self.forwarding_address = None
+            return {"success": True, "message": "Stopped forwarding"}
+        else:
+            return {"success": False, "message": "Not currently forwarding"}
+
     def close(self) -> None:
         """Close the connection to the drone."""
         self.logger.info(f"Cleaning up resources for drone at {self}")
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 
+        self.stopForwarding()
         self.stopAllDataStreams()
         self.stopAllThreads()
         self.master.close()

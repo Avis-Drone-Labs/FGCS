@@ -9,7 +9,6 @@ import { cloneElement, useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { Tooltip } from "@mantine/core"
-import { useInterval } from "@mantine/hooks"
 import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
 // Redux
@@ -41,14 +40,13 @@ export function StatusSection({ icon, value, tooltip }) {
 export default function StatusBar(props) {
   const isConnectedToSocket = useSelector(selectIsConnectedToSocket)
   const [time, setTime] = useState(moment())
-  const updateClock = useInterval(() => setTime(moment()), 1000)
   const batteryData = useSelector(selectBatteryData)
   const telemetryData = useSelector(selectTelemetry)
 
-  // Start clock
+  // Update clock every second
   useEffect(() => {
-    updateClock.start()
-    return () => updateClock.stop()
+    const id = setInterval(() => setTime(moment()), 1000)
+    return () => clearInterval(id)
   }, [])
 
   // Alerts

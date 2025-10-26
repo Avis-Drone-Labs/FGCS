@@ -10,7 +10,12 @@ import {
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
-import { IconAlertCircle, IconCheck, IconRestore, IconTrash } from "@tabler/icons-react"
+import {
+  IconAlertCircle,
+  IconCheck,
+  IconRestore,
+  IconTrash,
+} from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import { Tooltip } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
@@ -654,7 +659,7 @@ function SettingsModal() {
                 setting
                   .split(".")
                   .reduce((title, value) => title[value], DefaultSettings)[
-                "display"
+                  "display"
                 ]
               }
             </p>

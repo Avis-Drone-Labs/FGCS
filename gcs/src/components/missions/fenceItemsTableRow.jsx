@@ -99,24 +99,16 @@ export default function FenceItemsTableRow({
       </TableTd>
       <TableTd>
         <NumberInput
-          value={fenceItemData.x}
-          onChange={(value) => updateFenceItemData("x", value)}
-          min={-90}
-          max={90}
-          step={0.0000001}
-          size="xs"
-          decimalScale={coordsFractionDigits}
+          value={intToCoord(fenceItemData.x).toFixed(coordsFractionDigits)}
+          onChange={(val) => updateFenceItemData("x", coordToInt(val))}
+          hideControls
         />
       </TableTd>
       <TableTd>
         <NumberInput
-          value={fenceItemData.y}
-          onChange={(value) => updateFenceItemData("y", value)}
-          min={-180}
-          max={180}
-          step={0.0000001}
-          size="xs"
-          decimalScale={coordsFractionDigits}
+          value={intToCoord(fenceItemData.y).toFixed(coordsFractionDigits)}
+          onChange={(val) => updateFenceItemData("y", coordToInt(val))}
+          hideControls
         />
       </TableTd>
       <TableTd>

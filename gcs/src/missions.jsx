@@ -59,9 +59,9 @@ export default function Missions() {
         param2: 0.0,
         param3: 0.0,
         param4: 0.0,
-        x: 37.7749, // San Francisco latitude
-        y: -122.4194, // San Francisco longitude
-        z: 100.0, // altitude
+        x: 52.78031970, // Original waypoint 1
+        y: -0.70979300, // Original waypoint 1
+        z: 30.0, // altitude
       },
       {
         id: uuidv4(),
@@ -74,126 +74,19 @@ export default function Missions() {
         param2: 0.0,
         param3: 0.0,
         param4: 0.0,
-        x: 49.2827, // British Columbia latitude
-        y: -123.1207, // British Columbia longitude
-        z: 150.0, // altitude
+        x: 52.78122830, // Original waypoint 2
+        y: -0.70989490, // Original waypoint 2
+        z: 30.0, // altitude
       }
     ],
   })
   const [fenceItems, setFenceItems] = useSessionStorage({
     key: "fenceItems",
-    defaultValue: [
-      {
-        id: uuidv4(),
-        seq: 0,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7849, // Fence vertex 1 - slightly north of SF
-        y: -122.4094, // Fence vertex 1 - slightly east of SF
-        z: 200.0, // max altitude
-      },
-      {
-        id: uuidv4(),
-        seq: 1,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7649, // Fence vertex 2 - slightly south of SF
-        y: -122.4094, // Fence vertex 2 - slightly east of SF
-        z: 200.0, // max altitude
-      },
-      {
-        id: uuidv4(),
-        seq: 2,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7649, // Fence vertex 3 - slightly south of SF
-        y: -122.4294, // Fence vertex 3 - slightly west of SF
-        z: 200.0, // max altitude
-      },
-      {
-        id: uuidv4(),
-        seq: 3,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7849, // Fence vertex 4 - slightly north of SF
-        y: -122.4294, // Fence vertex 4 - slightly west of SF
-        z: 200.0, // max altitude
-      }
-    ],
+    defaultValue: [],
   })
   const [rallyItems, setRallyItems] = useSessionStorage({
     key: "rallyItems",
-    defaultValue: [
-      {
-        id: uuidv4(),
-        seq: 0,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7849, // Rally point 1 - north of SF
-        y: -122.4094, // Rally point 1 - east of SF
-        z: 120.0, // altitude
-      },
-      {
-        id: uuidv4(),
-        seq: 1,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7649, // Rally point 2 - south of SF
-        y: -122.4294, // Rally point 2 - west of SF
-        z: 130.0, // altitude
-      },
-      {
-        id: uuidv4(),
-        seq: 2,
-        command: 16, // MAV_CMD_NAV_WAYPOINT (using waypoint command for SITL compatibility)
-        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        current: 0,
-        autocontinue: 1,
-        param1: 0.0,
-        param2: 0.0,
-        param3: 0.0,
-        param4: 0.0,
-        x: 37.7749, // Rally point 3 - center SF
-        y: -122.4194, // Rally point 3 - center SF
-        z: 110.0, // altitude
-      }
-    ],
+    defaultValue: [],
   })
   const [homePosition, setHomePosition] = useSessionStorage({
     key: "homePosition",
@@ -276,13 +169,10 @@ export default function Missions() {
     })
 
     socket.on("upload_mission_result", (data) => {
-      console.log("📨 Received upload_mission_result:", data)
       setIsUploading(false)
       if (data.success) {
-        console.log("✅ Mission upload successful!")
         showSuccessNotification(data.message)
       } else {
-        console.log("❌ Mission upload failed:", data.message)
         showErrorNotification(data.message)
       }
     })
@@ -346,24 +236,12 @@ export default function Missions() {
   }
 
   function writeMissionToDrone() {
-    console.log("🚀 Write Mission Button Pressed!")
-    console.log("📊 Current state:", {
-      connected,
-      isUploading,
-      activeTab,
-      missionItemsCount: missionItems.length,
-      fenceItemsCount: fenceItems.length,
-      rallyItemsCount: rallyItems.length
-    })
-
     if (!connected) {
-      console.log("❌ Not connected to drone")
       showErrorNotification("Not connected to drone")
       return
     }
 
     if (isUploading) {
-      console.log("⏳ Mission upload already in progress")
       showErrorNotification("Mission upload already in progress")
       return
     }
@@ -371,7 +249,6 @@ export default function Missions() {
     let missionData = []
     if (activeTab === "mission") {
       missionData = missionItems
-      console.log("📋 Using mission items:", missionItems)
     } else if (activeTab === "fence") {
       missionData = fenceItems
     } else if (activeTab === "rally") {
@@ -379,12 +256,9 @@ export default function Missions() {
     }
 
     if (missionData.length === 0) {
-      console.log(`❌ No ${activeTab} items to upload`)
       showErrorNotification(`No ${activeTab} items to upload`)
       return
     }
-
-    console.log(`✅ Found ${missionData.length} ${activeTab} items to upload`)
     
     setIsUploading(true)
 
@@ -404,15 +278,8 @@ export default function Missions() {
         y: Math.round((item.y || 0) * 1e7), // longitude as integer (1e7 * degrees)
         z: item.z || 0.0, // altitude
       }
-      console.log(`📝 Formatted item ${index}:`, formatted)
-      
       
       return formatted
-    })
-
-    console.log("📤 Sending mission data to backend:", {
-      type: activeTab,
-      mission_data: formattedMissionData
     })
 
     socket.emit("upload_mission", {
@@ -420,12 +287,9 @@ export default function Missions() {
       mission_data: formattedMissionData,
     })
 
-    console.log("⏰ Setting 30-second timeout for upload...")
-
     // Set a timeout to handle cases where the upload might hang
     setTimeout(() => {
       if (isUploading) {
-        console.log("⏰ Mission upload timed out!")
         setIsUploading(false)
         showErrorNotification("Mission upload timed out. Please try again.")
       }

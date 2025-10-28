@@ -9,6 +9,7 @@ import {
 const droneInfoSlice = createSlice({
   name: "droneInfo",
   initialState: {
+    flightSwVersion: "",
     attitudeData: {
       roll: 0.0,
       pitch: 0.0,
@@ -85,6 +86,9 @@ const droneInfoSlice = createSlice({
     },
   },
   reducers: {
+    setFlightSwVersion: (state, action) => {
+      state.flightSwVersion = action.payload
+    },
     setHeartbeatData: (state, action) => {
       if (
         action.payload.base_mode & 128 &&
@@ -225,6 +229,8 @@ const droneInfoSlice = createSlice({
     },
   },
   selectors: {
+    selectFlightSwVersion: (state) => state.flightSwVersion,
+
     selectAttitude: (state) => state.attitudeData,
     selectTelemetry: (state) => state.telemetryData,
 
@@ -263,6 +269,7 @@ const droneInfoSlice = createSlice({
 })
 
 export const {
+  setFlightSwVersion,
   setHeartbeatData,
   soundPlayed,
   changeExtraData,
@@ -335,6 +342,7 @@ export const selectFlightModeString = createSelector(
 )
 
 export const {
+  selectFlightSwVersion,
   selectAttitude,
   selectTelemetry,
   selectGPS,

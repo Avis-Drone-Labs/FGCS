@@ -55,6 +55,7 @@ import {
   setDroneAircraftType,
   setEkfStatusReportData,
   setExtraData,
+  setFlightSwVersion,
   setGpsData,
   setGpsRawIntData,
   setGuidedModePinData,
@@ -341,6 +342,8 @@ const socketMiddleware = (store) => {
           if (msg.aircraft_type !== 1 && msg.aircraft_type !== 2) {
             showErrorNotification("Aircraft not of type quadcopter or plane")
           }
+
+          store.dispatch(setFlightSwVersion(msg.flight_sw_version))
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))

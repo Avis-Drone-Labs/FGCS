@@ -40,7 +40,6 @@ def set_state(data: SetStateType) -> None:
             "ALTITUDE",
             "NAV_CONTROLLER_OUTPUT",
             "HEARTBEAT",
-            "STATUSTEXT",
             "SYS_STATUS",
             "GPS_RAW_INT",
             "RC_CHANNELS",

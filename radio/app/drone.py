@@ -30,6 +30,7 @@ from app.utils import (
     getFlightSwVersionString,
     getVehicleType,
     sendingCommandLock,
+    sendMessage,
 )
 
 # Constants
@@ -187,6 +188,7 @@ class Drone:
         self.message_listeners: Dict[str, Callable] = {}
         self.message_queue: Queue = Queue()
         self.log_message_queue: Queue = Queue()
+
         self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.log_directory.mkdir(parents=True, exist_ok=True)
         self.current_log_file: Optional[Path] = None
@@ -195,31 +197,27 @@ class Drone:
 
         self.sendConnectionStatusUpdate(2)
 
-        self.is_active = Event()
-        self.is_active.set()
-        self.is_listening = False
-
-        self.forwarding_address: Optional[str] = None
-        self.forwarding_connection: Optional[mavutil.mavlink_connection] = None
-        if forwarding_address is not None:
-            try:
-                start_forwarding_result = self.startForwardingToAddress(
-                    forwarding_address
-                )
-                if not start_forwarding_result.get("success", False):
-                    self.logger.error(
-                        f"Failed to start forwarding: {start_forwarding_result.get('message', 'Unknown error')}"
-                    )
-            except Exception as e:
-                self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
-
         # To ensure that only one command is sent at a time and we wait for a
         # response before sending another command, a thread-safe lock is used
         self.sending_command_lock = Lock()
 
+        self.forwarding_address: Optional[str] = None
+        self.forwarding_connection: Optional[mavutil.mavlink_connection] = None
+
+        self.is_active = Event()
+        self.is_active.set()
+
         self.armed = False
         self.capabilities: Optional[list[str]] = None
         self.flight_sw_version: Optional[tuple[int, int, int, int]] = None
+
+        self.stopAllDataStreams()
+
+        # Always send STATUSTEXT messages
+        self.addMessageListener("STATUSTEXT", sendMessage)
+        self.is_listening = True
+
+        self.startThread()
 
         self.getAutopilotVersion()
 
@@ -240,6 +238,18 @@ class Drone:
             self.master = None
             self.connectionError = f"Unsupported flight software version {getFlightSwVersionString(self.flight_sw_version)}. Only version 4.x.x is supported."
             return
+
+        if forwarding_address is not None:
+            try:
+                start_forwarding_result = self.startForwardingToAddress(
+                    forwarding_address
+                )
+                if not start_forwarding_result.get("success", False):
+                    self.logger.error(
+                        f"Failed to start forwarding: {start_forwarding_result.get('message', 'Unknown error')}"
+                    )
+            except Exception as e:
+                self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
         self.sendConnectionStatusUpdate(3)
         self.paramsController = ParamsController(self)
@@ -267,12 +277,6 @@ class Drone:
 
         self.sendConnectionStatusUpdate(11)
         self.navController = NavController(self)
-
-        self.stopAllDataStreams()
-
-        self.is_listening = True
-
-        self.startThread()
 
         self.sendConnectionStatusUpdate(12)
 

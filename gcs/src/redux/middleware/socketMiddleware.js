@@ -98,7 +98,7 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage } from "../slices/statusTextSlice.js"
+import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -354,6 +354,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
           store.dispatch(setShowMotorTestWarningModal(true))
+          store.dispatch(resetMessages())
         })
 
         // Link stats

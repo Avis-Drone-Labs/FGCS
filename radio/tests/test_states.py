@@ -17,6 +17,8 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
         "message": "Request to endpoint set_state missing value for parameter: state."
     }
 
+    # TODO: These values don't seem right to me, they don't include the STATUSTEXT listener?
+
     # Success on changing state to dashboard
     socketio_client.emit("set_state", {"state": "dashboard"})
     assert len(socketio_client.get_received()) == 0
@@ -26,19 +28,19 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
 
     socketio_client.emit("set_state", {"state": "graphs"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 3
+    assert len(droneStatus.drone.message_listeners) == 4
 
     droneStatus.drone.message_listeners = {}
 
     socketio_client.emit("set_state", {"state": "config.flight_modes"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 2
+    assert len(droneStatus.drone.message_listeners) == 3
 
     droneStatus.drone.message_listeners = {}
 
     socketio_client.emit("set_state", {"state": "config.rc"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 2
+    assert len(droneStatus.drone.message_listeners) == 3
 
     droneStatus.drone.message_listeners = {}
 

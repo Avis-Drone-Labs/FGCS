@@ -206,6 +206,7 @@ class Drone:
 
         self.is_active = Event()
         self.is_active.set()
+        self.is_listening: bool = False
 
         self.armed = False
         self.capabilities: Optional[list[str]] = None

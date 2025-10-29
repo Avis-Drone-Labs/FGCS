@@ -212,8 +212,6 @@ class Drone:
         self.capabilities: Optional[list[str]] = None
         self.flight_sw_version: Optional[tuple[int, int, int, int]] = None
 
-        self.stopAllDataStreams()
-
         self.getAutopilotVersion()
 
         if self.flight_sw_version is None:
@@ -234,6 +232,8 @@ class Drone:
             self.connectionError = f"Unsupported flight software version {getFlightSwVersionString(self.flight_sw_version)}. Only version 4.x.x is supported."
             return
 
+        self.stopAllDataStreams()
+
         if forwarding_address is not None:
             try:
                 start_forwarding_result = self.startForwardingToAddress(
@@ -246,12 +246,14 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
+        self.setupControllers()
+
         # Always send STATUSTEXT messages
         self.addMessageListener("STATUSTEXT", sendMessage)
+
         self.is_listening = True
 
         self.startThread()
-        self.setupControllers()
 
         self.sendConnectionStatusUpdate(12)
 

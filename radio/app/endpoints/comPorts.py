@@ -8,7 +8,12 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
-from app.utils import droneConnectStatusCb, droneErrorCb, getComPortNames
+from app.utils import (
+    droneConnectStatusCb,
+    droneErrorCb,
+    getComPortNames,
+    getFlightSwVersionString,
+)
 
 
 class ConnectionDataType(TypedDict):
@@ -150,7 +155,13 @@ def connectToDrone(data: ConnectionDataType) -> None:
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
     logger.debug("Created drone instance")
-    socketio.emit("connected_to_drone", {"aircraft_type": drone.aircraft_type})
+    socketio.emit(
+        "connected_to_drone",
+        {
+            "aircraft_type": drone.aircraft_type,
+            "flight_sw_version": getFlightSwVersionString(drone.flight_sw_version),
+        },
+    )
 
 
 @socketio.on("disconnect_from_drone")

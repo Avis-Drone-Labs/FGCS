@@ -1,5 +1,5 @@
 import sys
-from typing import Any, List
+from typing import Any, List, Optional
 
 from pymavlink import mavutil
 from serial.tools import list_ports
@@ -235,3 +235,36 @@ def sendingCommandLock(func):
             lock.release()
 
     return wrapper
+
+
+def decodeFlightSwVersion(v: Optional[int]) -> Optional[tuple[int, int, int, int]]:
+    """
+    Decode a packed uint32 flight_sw_version into major.minor.patch and extra byte.
+    Format (conventional MAVLink): [major:8][minor:8][patch:8][extra:8]
+    Returns:
+        A tuple of (major, minor, patch, extra) or None if input is None
+    """
+    if v is None:
+        return None
+    v &= 0xFFFFFFFF
+    major = (v >> 24) & 0xFF
+    minor = (v >> 16) & 0xFF
+    patch = (v >> 8) & 0xFF
+    extra = v & 0xFF
+
+    return (major, minor, patch, extra)
+
+
+def getFlightSwVersionString(v: Optional[tuple[int, int, int, int]]) -> str:
+    """
+    Convert flight_sw_version tuple into a human-readable string.
+    """
+    if v is None:
+        return ""
+
+    major, minor, patch, extra = v
+
+    if extra != 0:
+        return f"{major}.{minor}.{patch} ({extra:02x})"
+    else:
+        return f"{major}.{minor}.{patch}"

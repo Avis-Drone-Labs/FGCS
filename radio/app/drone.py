@@ -24,7 +24,13 @@ from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
 from app.customTypes import Number, Response, VehicleType
-from app.utils import commandAccepted, getVehicleType, sendingCommandLock
+from app.utils import (
+    commandAccepted,
+    decodeFlightSwVersion,
+    getFlightSwVersionString,
+    getVehicleType,
+    sendingCommandLock,
+)
 
 # Constants
 
@@ -127,7 +133,13 @@ class Drone:
 
         try:
             self.sendConnectionStatusUpdate(0)
-            self.master: mavutil.mavserial = mavutil.mavlink_connection(port, baud=baud)
+            # Source system and component set to GCS values
+            self.master: mavutil.mavserial = mavutil.mavlink_connection(
+                port,
+                baud=baud,
+                source_system=255,
+                source_component=mavutil.mavlink.MAV_COMP_ID_MISSIONPLANNER,
+            )
         except Exception as e:
             self.logger.exception(traceback.format_exc())
             self.master = None
@@ -175,6 +187,7 @@ class Drone:
         self.message_listeners: Dict[str, Callable] = {}
         self.message_queue: Queue = Queue()
         self.log_message_queue: Queue = Queue()
+
         self.log_directory = Path.home().joinpath("FGCS", "logs")
         self.log_directory.mkdir(parents=True, exist_ok=True)
         self.current_log_file: Optional[Path] = None
@@ -183,12 +196,43 @@ class Drone:
 
         self.sendConnectionStatusUpdate(2)
 
-        self.is_active = Event()
-        self.is_active.set()
-        self.is_listening = False
+        # To ensure that only one command is sent at a time and we wait for a
+        # response before sending another command, a thread-safe lock is used
+        self.sending_command_lock = Lock()
 
         self.forwarding_address: Optional[str] = None
         self.forwarding_connection: Optional[mavutil.mavlink_connection] = None
+
+        self.is_active = Event()
+        self.is_active.set()
+        self.is_listening: bool = False
+
+        self.armed = False
+        self.capabilities: Optional[list[str]] = None
+        self.flight_sw_version: Optional[tuple[int, int, int, int]] = None
+
+        self.getAutopilotVersion()
+
+        if self.flight_sw_version is None:
+            self.logger.error("Could not determine flight software version")
+            self.master.close()
+            self.master = None
+            self.connectionError = "Could not determine flight software version"
+            return
+
+        self.logger.info(
+            f"Flight software version: {getFlightSwVersionString(self.flight_sw_version)}"
+        )
+
+        if self.flight_sw_version[0] != 4:
+            self.logger.error("Unsupported flight software version")
+            self.master.close()
+            self.master = None
+            self.connectionError = f"Unsupported flight software version {getFlightSwVersionString(self.flight_sw_version)}. Only version 4.x.x is supported."
+            return
+
+        self.stopAllDataStreams()
+
         if forwarding_address is not None:
             try:
                 start_forwarding_result = self.startForwardingToAddress(
@@ -201,12 +245,25 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
-        # To ensure that only one command is sent at a time and we wait for a
-        # response before sending another command, a thread-safe lock is used
-        self.sending_command_lock = Lock()
+        self.setupControllers()
 
-        self.armed = False
+        self.is_listening = True
 
+        self.startThread()
+
+        self.sendConnectionStatusUpdate(12)
+
+        self.sendStatusTextMessage(
+            mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
+        )
+
+    def __getNextLogFilePath(self, line: str) -> str:
+        return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
+
+    def __getCurrentDateTimeStr(self) -> str:
+        return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+    def setupControllers(self) -> None:
         self.sendConnectionStatusUpdate(3)
         self.paramsController = ParamsController(self)
 
@@ -233,20 +290,6 @@ class Drone:
 
         self.sendConnectionStatusUpdate(11)
         self.navController = NavController(self)
-
-        self.stopAllDataStreams()
-
-        self.is_listening = True
-
-        self.startThread()
-
-        self.sendConnectionStatusUpdate(12)
-
-    def __getNextLogFilePath(self, line: str) -> str:
-        return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
-
-    def __getCurrentDateTimeStr(self) -> str:
-        return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)
@@ -698,7 +741,7 @@ class Drone:
                     mavutil.mavlink.MAV_AUTOPILOT_INVALID,
                     0,
                     0,
-                    0,
+                    mavutil.mavlink.MAV_STATE_ACTIVE,
                 )
             except Exception as e:
                 self.logger.error(f"Failed to send heartbeat: {e}", exc_info=True)
@@ -740,6 +783,47 @@ class Drone:
         ]:
             if thread is not None and thread.is_alive() and thread is not this_thread:
                 thread.join(timeout=3)
+
+    @sendingCommandLock
+    def getAutopilotVersion(self) -> None:
+        """Get the autopilot version."""
+        was_listening = self.is_listening
+        self.is_listening = False
+
+        self.sendCommand(
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+            param1=mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION,
+        )
+
+        try:
+            response = self.master.recv_match(
+                type="AUTOPILOT_VERSION", blocking=True, timeout=5
+            )
+            if was_listening:
+                self.is_listening = True
+
+            if response is None:
+                self.logger.error("Failed to get autopilot version: Timeout")
+                return
+
+            capabilities = getattr(response, "capabilities", None)
+            if capabilities is not None:
+                # Decode capabilities bitmask into list of capability names
+                capabilities_map = mavutil.mavlink.enums["MAV_PROTOCOL_CAPABILITY"]
+                self.capabilities = []
+                for capability_value, capability_enum in capabilities_map.items():
+                    if capabilities & capability_value:
+                        self.capabilities.append(capability_enum.name)
+
+            flight_sw_version = getattr(response, "flight_sw_version", None)
+            if flight_sw_version is not None:
+                self.flight_sw_version = decodeFlightSwVersion(flight_sw_version)
+
+        except serial.serialutil.SerialException:
+            if was_listening:
+                self.is_listening = True
+
+            self.logger.error("Failed to get autopilot version due to serial exception")
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
@@ -908,6 +992,18 @@ class Drone:
             y,
             z,
         )
+
+    def sendStatusTextMessage(self, severity: int, text: str) -> None:
+        """Send a status text message to the drone.
+
+        Args:
+            severity (int): The severity of the message
+            text (str): The text of the message
+        """
+        max_len = 50
+        for i in range(0, len(text), max_len):
+            chunk = text[i : i + max_len]
+            self.master.mav.statustext_send(severity, chunk.encode("utf-8"))
 
     def startForwardingToAddress(self, address: str) -> Response:
         """Start forwarding MAVLink messages to a specific address.

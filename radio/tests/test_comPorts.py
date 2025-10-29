@@ -109,7 +109,10 @@ def test_connectToDrone_validConnection() -> None:
     socketio_client.emit(
         "connect_to_drone", {"connectionType": connectionType, "port": VALID_DRONE_PORT}
     )
-    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
+    assert socketio_client.get_received()[-1]["args"][0] == {
+        "flight_sw_version": "4.7.0",
+        "aircraft_type": 2,
+    }
     assert droneStatus.drone is not None
     assert droneStatus.drone.port == VALID_DRONE_PORT
     assert droneStatus.drone.baud == 57600
@@ -119,7 +122,10 @@ def test_connectToDrone_validConnection() -> None:
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
     )
-    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
+    assert socketio_client.get_received()[-1]["args"][0] == {
+        "flight_sw_version": "4.7.0",
+        "aircraft_type": 2,
+    }
     assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
 
@@ -170,7 +176,10 @@ def test_disconnectFromDrone() -> None:
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
     )
-    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
+    assert socketio_client.get_received()[-1]["args"][0] == {
+        "flight_sw_version": "4.7.0",
+        "aircraft_type": 2,
+    }
 
     socketio_client.emit("disconnect_from_drone")
     assert socketio_client.get_received()[0]["name"] == "disconnected_from_drone"

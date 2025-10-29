@@ -55,6 +55,7 @@ import {
   setDroneAircraftType,
   setEkfStatusReportData,
   setExtraData,
+  setFlightSwVersion,
   setGpsData,
   setGpsRawIntData,
   setGuidedModePinData,
@@ -97,7 +98,7 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage } from "../slices/statusTextSlice.js"
+import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -341,6 +342,8 @@ const socketMiddleware = (store) => {
           if (msg.aircraft_type !== 1 && msg.aircraft_type !== 2) {
             showErrorNotification("Aircraft not of type quadcopter or plane")
           }
+
+          store.dispatch(setFlightSwVersion(msg.flight_sw_version))
           store.dispatch(setConnected(true))
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
@@ -351,6 +354,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
           store.dispatch(setShowMotorTestWarningModal(true))
+          store.dispatch(resetMessages())
         })
 
         // Link stats

@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install dependencies
         working-directory: radio
@@ -39,4 +39,5 @@ jobs:
 
       - name: Test with pytest
         working-directory: radio
+        timeout-minutes: 25
         run: pytest --log-cli-level=DEBUG

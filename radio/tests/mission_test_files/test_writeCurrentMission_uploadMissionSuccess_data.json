@@ -13,7 +13,7 @@
       "param3": 0.0,
       "param4": 0.0,
       "seq": 0,
-      "target_component": 0,
+      "target_component": 190,
       "target_system": 255,
       "x": 527805690,
       "y": -7079236,
@@ -22,7 +22,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 1,
       "frame": 3,
       "command": 22,
@@ -40,7 +40,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 2,
       "frame": 3,
       "command": 16,
@@ -58,7 +58,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 3,
       "frame": 3,
       "command": 16,
@@ -76,7 +76,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 4,
       "frame": 3,
       "command": 16,
@@ -94,7 +94,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 5,
       "frame": 3,
       "command": 16,
@@ -112,7 +112,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 6,
       "frame": 3,
       "command": 16,
@@ -130,7 +130,7 @@
     {
       "mavpackettype": "MISSION_ITEM_INT",
       "target_system": 255,
-      "target_component": 0,
+      "target_component": 190,
       "seq": 7,
       "frame": 3,
       "command": 21,

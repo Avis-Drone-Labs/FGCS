@@ -251,6 +251,21 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
+        self.setupControllers()
+
+        self.sendConnectionStatusUpdate(12)
+
+        self.sendStatusTextMessage(
+            mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
+        )
+
+    def __getNextLogFilePath(self, line: str) -> str:
+        return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
+
+    def __getCurrentDateTimeStr(self) -> str:
+        return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+    def setupControllers(self) -> None:
         self.sendConnectionStatusUpdate(3)
         self.paramsController = ParamsController(self)
 
@@ -277,14 +292,6 @@ class Drone:
 
         self.sendConnectionStatusUpdate(11)
         self.navController = NavController(self)
-
-        self.sendConnectionStatusUpdate(12)
-
-    def __getNextLogFilePath(self, line: str) -> str:
-        return line.split("==NEXT_FILE==")[-1].split("==END==")[0]
-
-    def __getCurrentDateTimeStr(self) -> str:
-        return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)
@@ -987,6 +994,18 @@ class Drone:
             y,
             z,
         )
+
+    def sendStatusTextMessage(self, severity: int, text: str) -> None:
+        """Send a status text message to the drone.
+
+        Args:
+            severity (int): The severity of the message
+            text (str): The text of the message
+        """
+        max_len = 50
+        for i in range(0, len(text), max_len):
+            chunk = text[i : i + max_len]
+            self.master.mav.statustext_send(severity, chunk.encode("utf-8"))
 
     def startForwardingToAddress(self, address: str) -> Response:
         """Start forwarding MAVLink messages to a specific address.

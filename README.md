@@ -28,7 +28,7 @@ IMACS 3.0 is forked from Falcon Ground Control Station (FGCS).
 
 #### Creating a virtual environment
 
-Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `C`.
+Create a new Python virtual environment using `python -m venv venv`. This can then be activated using `./venv/scripts/activate`.
 
 > NOTE: To enter the virtual environment you will need to run `venv/Scripts/activate` on windows, to learn more please read: [how to make venv for linux and windows](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) or [what is a virtual environment?](https://docs.python.org/3/library/venv.html)
 

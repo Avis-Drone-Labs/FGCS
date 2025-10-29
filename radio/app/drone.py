@@ -213,12 +213,6 @@ class Drone:
 
         self.stopAllDataStreams()
 
-        # Always send STATUSTEXT messages
-        self.addMessageListener("STATUSTEXT", sendMessage)
-        self.is_listening = True
-
-        self.startThread()
-
         self.getAutopilotVersion()
 
         if self.flight_sw_version is None:
@@ -251,6 +245,11 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
+        # Always send STATUSTEXT messages
+        self.addMessageListener("STATUSTEXT", sendMessage)
+        self.is_listening = True
+
+        self.startThread()
         self.setupControllers()
 
         self.sendConnectionStatusUpdate(12)
@@ -789,7 +788,7 @@ class Drone:
     @sendingCommandLock
     def getAutopilotVersion(self) -> None:
         """Get the autopilot version."""
-        was_listening = self.is_listening is True
+        was_listening = self.is_listening
         self.is_listening = False
 
         self.sendCommand(

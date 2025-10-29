@@ -241,7 +241,8 @@ def decodeFlightSwVersion(v: Optional[int]) -> Optional[tuple[int, int, int, int
     """
     Decode a packed uint32 flight_sw_version into major.minor.patch and extra byte.
     Format (conventional MAVLink): [major:8][minor:8][patch:8][extra:8]
-    Returns a human-readable string.
+    Returns:
+        A tuple of (major, minor, patch, extra) or None if input is None
     """
     if v is None:
         return None

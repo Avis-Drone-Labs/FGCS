@@ -30,7 +30,6 @@ from app.utils import (
     getFlightSwVersionString,
     getVehicleType,
     sendingCommandLock,
-    sendMessage,
 )
 
 # Constants
@@ -247,9 +246,6 @@ class Drone:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
         self.setupControllers()
-
-        # Always send STATUSTEXT messages
-        self.addMessageListener("STATUSTEXT", sendMessage)
 
         self.is_listening = True
 

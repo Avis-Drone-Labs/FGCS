@@ -56,6 +56,9 @@ def set_state(data: SetStateType) -> None:
 
     droneStatus.drone.logger.info(f"Changing state to {droneStatus.state}")
 
+    # Always send STATUSTEXT messages
+    droneStatus.drone.addMessageListener("STATUSTEXT", sendMessage)
+
     if droneStatus.state == "dashboard":
         droneStatus.drone.setupDataStreams()
         for message in message_listeners["dashboard"]:

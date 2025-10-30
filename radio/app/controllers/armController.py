@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from threading import current_thread
 from typing import TYPE_CHECKING
 
 from app.customTypes import Response
@@ -19,6 +20,7 @@ class ArmController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"arm_{current_thread().ident}"
         self.drone = drone
 
     @sendingCommandLock
@@ -35,17 +37,24 @@ class ArmController:
         if self.drone.armed:
             return {"success": False, "message": "Already armed"}
 
-        self.drone.is_listening = False
-
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-            param1=1,  # 0=disarm, 1=arm
-            param2=2989 if force else 0,  # force arm/disarm
-        )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.drone.is_listening = True
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                param1=1,  # 0=disarm, 1=arm
+                param2=2989 if force else 0,  # force arm/disarm
+            )
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                timeout=3,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
                 # Wait for the drone to be armed fully after the command has been accepted
@@ -56,13 +65,18 @@ class ArmController:
                 return {"success": True, "message": "Armed successfully"}
             else:
                 self.drone.logger.debug("Arming failed")
+                return {
+                    "success": False,
+                    "message": "Could not arm, command not accepted",
+                }
+
         except Exception as e:
-            self.drone.is_listening = True
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
             return {"success": False, "message": "Could not arm, serial exception"}
-        return {"success": False, "message": "Could not arm, command not accepted"}
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     @sendingCommandLock
     def disarm(self, force: bool = False) -> Response:
@@ -78,17 +92,24 @@ class ArmController:
         if not self.drone.armed:
             return {"success": False, "message": "Already disarmed"}
 
-        self.drone.is_listening = False
-
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-            param1=0,  # 0=disarm, 1=arm
-            param2=2989 if force else 0,  # force arm/disarm
-        )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.drone.is_listening = True
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                param1=0,  # 0=disarm, 1=arm
+                param2=2989 if force else 0,  # force arm/disarm
+            )
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                timeout=3,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
                 # Wait for the drone to be disarmed fully after the command has been accepted
@@ -99,11 +120,17 @@ class ArmController:
                 return {"success": True, "message": "Disarmed successfully"}
             else:
                 self.drone.logger.debug("Could not disarm, command not accepted")
+                return {
+                    "success": False,
+                    "message": "Could not disarm, command not accepted",
+                }
+
         except Exception as e:
-            self.drone.is_listening = True
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
             return {"success": False, "message": "Could not disarm, serial exception"}
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
         return {"success": False, "message": "Could not disarm, command not accepted"}

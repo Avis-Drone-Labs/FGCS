@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 import time
-from threading import Thread
+from threading import Thread, current_thread
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import serial
@@ -29,6 +29,7 @@ class ParamsController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"params_{current_thread().ident}"
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0
@@ -49,34 +50,32 @@ class ParamsController:
         Returns:
             Response: The response from the retrieval of the specific parameter
         """
-        self.drone.is_listening = False
-        time.sleep(0.05)  # Give some time to stop listening
         failure_message = f"Failed to get parameter {param_name}"
 
-        self.drone.master.mav.param_request_read_send(
-            self.drone.target_system,
-            self.drone.target_component,
-            param_name.encode(),
-            -1,
-        )
+        if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
+            return {
+                "success": False,
+                "message": f"{failure_message}, another controller is using PARAM_VALUE messages",
+            }
 
         try:
-            start_time = time.time()
-            response = None
-            while time.time() - start_time < timeout:
-                # timeout of 0.2 to recv_match to allow checking the overall timeout and not block forever
-                msg = self.drone.master.recv_match(
-                    type="PARAM_VALUE", blocking=True, timeout=0.2
-                )
+            time.sleep(0.05)  # Brief pause for stability
 
-                if msg is None:
-                    continue
+            self.drone.master.mav.param_request_read_send(
+                self.drone.target_system,
+                self.drone.target_component,
+                param_name.encode(),
+                -1,
+            )
 
-                if msg.param_id == param_name:
-                    response = msg
-                    break
+            # Wait for the specific parameter response
+            response = self.drone.wait_for_message(
+                "PARAM_VALUE",
+                self.controller_id,
+                timeout,
+                condition_func=lambda msg: msg.param_id == param_name,
+            )
 
-            self.drone.is_listening = True
             if response:
                 self.saveParam(
                     response.param_id, response.param_value, response.param_type
@@ -91,19 +90,27 @@ class ParamsController:
                     "success": False,
                     "message": f"{failure_message}, timed out",
                 }
+
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",
             }
+        finally:
+            # Always release the message type
+            self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
     def getAllParams(self) -> None:
         """
         Request all parameters from the drone.
         """
         self.drone.stopAllDataStreams()
-        self.drone.is_listening = False
+        if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
+            self.drone.logger.error(
+                "Could not reserve PARAM_VALUE messages for getAllParams"
+            )
+            return
+
         self.is_requesting_params = True
 
         self.getAllParamsThread = Thread(
@@ -119,46 +126,56 @@ class ParamsController:
         """
         timeout = time.time() + 120  # 120 seconds from now
 
-        while self.is_requesting_params:
-            try:
-                if time.time() > timeout:
-                    self.drone.logger.error("Get all params thread timed out")
+        try:
+            while self.is_requesting_params:
+                try:
+                    if time.time() > timeout:
+                        self.drone.logger.error("Get all params thread timed out")
+                        self.is_requesting_params = False
+                        self.current_param_index = 0
+                        self.current_param_id = ""
+                        self.total_number_of_params = 0
+                        self.params = []
+                        return
+
+                    # Use the new wait_for_message system instead of recv_msg
+                    msg = self.drone.wait_for_message(
+                        "PARAM_VALUE",
+                        self.controller_id,
+                        timeout=1.0,  # Short timeout to check for overall timeout
+                    )
+
+                    if msg:
+                        self.saveParam(msg.param_id, msg.param_value, msg.param_type)
+
+                        self.current_param_index = msg.param_index
+                        self.current_param_id = msg.param_id
+
+                        if self.total_number_of_params != msg.param_count:
+                            self.total_number_of_params = msg.param_count
+
+                        if msg.param_index == msg.param_count - 1:
+                            self.is_requesting_params = False
+                            self.current_param_index = 0
+                            self.current_param_id = ""
+                            self.total_number_of_params = 0
+                            self.params = sorted(
+                                self.params, key=lambda k: k["param_id"]
+                            )
+                            self.drone.logger.info("Got all params")
+                            return
+
+                except serial.serialutil.SerialException:
                     self.is_requesting_params = False
                     self.current_param_index = 0
                     self.current_param_id = ""
                     self.total_number_of_params = 0
                     self.params = []
-                    self.drone.is_listening = True
+                    self.drone.logger.error("Serial exception while getting all params")
                     return
-
-                msg = self.drone.master.recv_msg()
-                if msg and msg.msgname == "PARAM_VALUE":
-                    self.saveParam(msg.param_id, msg.param_value, msg.param_type)
-
-                    self.current_param_index = msg.param_index
-                    self.current_param_id = msg.param_id
-
-                    if self.total_number_of_params != msg.param_count:
-                        self.total_number_of_params = msg.param_count
-
-                    if msg.param_index == msg.param_count - 1:
-                        self.is_requesting_params = False
-                        self.current_param_index = 0
-                        self.current_param_id = ""
-                        self.total_number_of_params = 0
-                        self.params = sorted(self.params, key=lambda k: k["param_id"])
-                        self.drone.is_listening = True
-                        self.drone.logger.info("Got all params")
-                        return
-            except serial.serialutil.SerialException:
-                self.is_requesting_params = False
-                self.current_param_index = 0
-                self.current_param_id = ""
-                self.total_number_of_params = 0
-                self.params = []
-                self.drone.is_listening = True
-                self.drone.logger.error("Serial exception while getting all params")
-                return
+        finally:
+            # Always release the message type when done
+            self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
     def setMultipleParams(self, params_list: list[IncomingParam]) -> Response:
         """
@@ -220,9 +237,12 @@ class ParamsController:
         Returns:
             bool: True if the parameter was set, False if it failed
         """
-        self.drone.is_listening = False
         got_ack = False
         save_timeout = 5
+
+        if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
+            self.drone.logger.error("Could not reserve PARAM_VALUE messages")
+            return False
 
         try:
             # Check if value fits inside the param type
@@ -248,7 +268,6 @@ class ParamsController:
                     self.drone.logger.error(
                         "can't send %s of type %u" % (param_name, param_type)
                     )
-                    self.drone.is_listening = True
                     return False
                 # vfloat, = struct.unpack(">f", vstr)
             vfloat = float(param_value)
@@ -256,22 +275,25 @@ class ParamsController:
             self.drone.logger.error(
                 f"Could not set parameter {param_name} with value {param_value}: {e}"
             )
-            self.drone.is_listening = True
             return False
 
-        # Keep trying to set the parameter until we get an ack or run out of retries or timeout
-        while retries > 0 and not got_ack:
-            retries -= 1
-            self.drone.master.param_set_send(
-                param_name.upper(), vfloat, parm_type=param_type
-            )
-            tstart = time.time()
-            while time.time() - tstart < save_timeout:
-                ack = self.drone.master.recv_match(type="PARAM_VALUE")
-                if ack is None:
-                    time.sleep(0.1)
-                    continue
-                if str(param_name).upper() == str(ack.param_id).upper():
+            # Keep trying to set the parameter until we get an ack or run out of retries or timeout
+            while retries > 0 and not got_ack:
+                retries -= 1
+                self.drone.master.param_set_send(
+                    param_name.upper(), vfloat, parm_type=param_type
+                )
+
+                # Wait for parameter acknowledgment using the new system
+                ack = self.drone.wait_for_message(
+                    "PARAM_VALUE",
+                    self.controller_id,
+                    save_timeout,
+                    condition_func=lambda msg: str(param_name).upper()
+                    == str(msg.param_id).upper(),
+                )
+
+                if ack:
                     got_ack = True
                     self.drone.logger.debug(
                         f"Got parameter saving ack for {param_name} for value {param_value}"
@@ -279,13 +301,13 @@ class ParamsController:
                     self.saveParam(ack.param_id, ack.param_value, ack.param_type)
                     break
 
-        if not got_ack:
-            self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
-            self.drone.is_listening = True
-            return False
+            if not got_ack:
+                self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
 
-        self.drone.is_listening = True
-        return True
+            return got_ack
+
+        finally:
+            self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
     def saveParam(self, param_name: str, param_value: Number, param_type: int) -> None:
         """

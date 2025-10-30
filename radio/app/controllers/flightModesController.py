@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from threading import current_thread
 from typing import TYPE_CHECKING, List, Union
 
 import serial
@@ -30,6 +31,7 @@ class FlightModesController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"flightmodes_{current_thread().ident}"
 
         self.drone = drone
 
@@ -138,7 +140,11 @@ class FlightModesController:
         Returns:
             A message to show if the drone recieved the message and succesfully set the new mode
         """
-        self.drone.is_listening = False
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
         time.sleep(0.3)
         self.drone.sendCommand(
             message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
@@ -152,26 +158,27 @@ class FlightModesController:
         )
 
         try:
-            response = self.drone.master.recv_match(
-                type="COMMAND_ACK", blocking=True, timeout=3
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                timeout=3,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
-                self.drone.is_listening = True
                 self.drone.logger.info("Flight mode set successfully")
                 return {"success": True, "message": "Flight mode set successfully"}
             else:
-                self.drone.is_listening = True
                 return {
                     "success": False,
                     "message": "Could not set flight mode",
                 }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Could not set flight mode, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     def setGuidedMode(self) -> Response:
         """

@@ -8,7 +8,7 @@ from pathlib import Path
 from queue import Empty, Queue
 from secrets import token_hex
 from threading import Event, Lock, Thread, current_thread
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Set
 
 import serial
 from pymavlink import mavutil
@@ -30,6 +30,7 @@ from app.utils import (
     getFlightSwVersionString,
     getVehicleType,
     sendingCommandLock,
+    sendMessage,
 )
 
 # Constants
@@ -205,11 +206,19 @@ class Drone:
 
         self.is_active = Event()
         self.is_active.set()
-        self.is_listening: bool = False
+
+        self.reserved_messages: Set[str] = set()
+        self.controller_queues: Dict[str, Queue] = {}
+        self.reservation_lock = Lock()
+        self.controller_id = f"Drone_{current_thread().ident}"
 
         self.armed = False
         self.capabilities: Optional[list[str]] = None
         self.flight_sw_version: Optional[tuple[int, int, int, int]] = None
+
+        self.startThread()
+
+        self.addMessageListener("STATUSTEXT", sendMessage)
 
         self.getAutopilotVersion()
 
@@ -246,10 +255,6 @@ class Drone:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
         self.setupControllers()
-
-        self.is_listening = True
-
-        self.startThread()
 
         self.sendConnectionStatusUpdate(12)
 
@@ -517,13 +522,84 @@ class Drone:
             return True
         return False
 
+    def reserve_message_type(self, message_type: str, controller_id: str) -> bool:
+        """Reserve a message type for exclusive controller use.
+
+        Args:
+            message_type: The MAVLink message type to reserve (e.g., "COMMAND_ACK")
+            controller_id: Unique identifier for the controller
+
+        Returns:
+            bool: True if reservation successful, False if already reserved
+        """
+        with self.reservation_lock:
+            if message_type in self.reserved_messages:
+                return False
+
+            self.reserved_messages.add(message_type)
+            if controller_id not in self.controller_queues:
+                self.controller_queues[controller_id] = Queue()
+
+            return True
+
+    def release_message_type(self, message_type: str, controller_id: str) -> None:
+        """Release a reserved message type.
+
+        Args:
+            message_type: The message type to release
+            controller_id: The controller releasing the message
+        """
+        with self.reservation_lock:
+            self.reserved_messages.discard(message_type)
+            # Clear any remaining messages in the controller's queue for this type
+            if controller_id in self.controller_queues:
+                # We'll implement a cleanup mechanism if needed
+                pass
+
+    def wait_for_message(
+        self,
+        message_type: str,
+        controller_id: str,
+        timeout: float = 3.0,
+        condition_func=None,
+    ) -> Optional[object]:
+        """Wait for a specific message type for a controller.
+
+        Args:
+            message_type: The message type to wait for
+            controller_id: The controller waiting for the message
+            timeout: How long to wait before timing out
+            condition_func: Optional function to filter messages (e.g., lambda msg: msg.command == expected_cmd)
+
+        Returns:
+            The message object if received, None if timeout
+        """
+        if controller_id not in self.controller_queues:
+            self.controller_queues[controller_id] = Queue()
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                # Check controller's queue for the message
+                queue_item = self.controller_queues[controller_id].get(timeout=0.1)
+                msg_type, msg = queue_item
+
+                if msg_type == message_type:
+                    # Apply condition filter if provided
+                    if condition_func is None or condition_func(msg):
+                        return msg
+                    else:
+                        # Not the message we're looking for, continue waiting
+                        continue
+
+            except Empty:
+                continue
+
+        return None
+
     def checkForMessages(self) -> None:
         """Check for messages from the drone and add them to the message queue."""
         while self.is_active.is_set():
-            if not self.is_listening:
-                time.sleep(0.05)  # Sleep a bit to not clog up processing usage
-                continue
-
             try:
                 msg = self.master.recv_msg()
             except mavutil.mavlink.MAVError as e:
@@ -559,7 +635,9 @@ class Drone:
                         )
                         self.stopForwarding()
 
-                if msg.msgname == "HEARTBEAT":
+                msg_name = msg.get_type()
+
+                if msg_name == "HEARTBEAT":
                     if (
                         msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
                     ):  # No valid autopilot, e.g. a GCS or other MAVLink component
@@ -572,22 +650,35 @@ class Drone:
                 if self.armed:
                     try:
                         self.log_message_queue.put(
-                            f"{msg._timestamp},{msg.msgname},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
+                            f"{msg._timestamp},{msg_name},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
                         )
                     except Exception as e:
                         self.log_message_queue.put(f"Writing message failed! {e}")
                         continue
 
-                if msg.msgname == "TIMESYNC":
+                if msg_name == "TIMESYNC":
                     component_timestamp = msg.ts1
                     local_timestamp = time.time_ns()
                     self.master.mav.timesync_send(local_timestamp, component_timestamp)
                     continue
-                elif msg.msgname == "STATUSTEXT":
+                elif msg_name == "STATUSTEXT":
                     self.logger.info(msg.text)
 
-                if msg.msgname in self.message_listeners:
-                    self.message_queue.put([msg.msgname, msg])
+                with self.reservation_lock:
+                    if msg_name in self.reserved_messages:
+                        # Route to controller queues
+                        for controller_id, queue in self.controller_queues.items():
+                            try:
+                                queue.put((msg_name, msg), block=False)
+                            except Exception:
+                                # Queue full
+                                pass
+                    else:
+                        # Route to normal message listeners
+                        if msg_name in self.message_listeners:
+                            self.message_queue.put([msg_name, msg])
+            else:
+                time.sleep(0.05)
 
     def executeMessages(self) -> None:
         """Executes message listeners based on messages from the message queue."""
@@ -763,7 +854,6 @@ class Drone:
     def stopAllThreads(self) -> None:
         """Stops all threads."""
         self.is_active.clear()
-        self.is_listening = False
 
         this_thread = current_thread()
 
@@ -787,20 +877,19 @@ class Drone:
     @sendingCommandLock
     def getAutopilotVersion(self) -> None:
         """Get the autopilot version."""
-        was_listening = self.is_listening
-        self.is_listening = False
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-            param1=mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION,
-        )
+        if not self.reserve_message_type("AUTOPILOT_VERSION", self.controller_id):
+            self.logger.error("Could not reserve AUTOPILOT_VERSION messages")
+            return
 
         try:
-            response = self.master.recv_match(
-                type="AUTOPILOT_VERSION", blocking=True, timeout=5
+            self.sendCommand(
+                mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+                param1=mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION,
             )
-            if was_listening:
-                self.is_listening = True
+
+            response = self.wait_for_message(
+                "AUTOPILOT_VERSION", self.controller_id, timeout=5
+            )
 
             if response is None:
                 self.logger.error("Failed to get autopilot version: Timeout")
@@ -820,27 +909,31 @@ class Drone:
                 self.flight_sw_version = decodeFlightSwVersion(flight_sw_version)
 
         except serial.serialutil.SerialException:
-            if was_listening:
-                self.is_listening = True
-
             self.logger.error("Failed to get autopilot version due to serial exception")
+        finally:
+            self.release_message_type("AUTOPILOT_VERSION", self.controller_id)
 
     def rebootAutopilot(self) -> None:
         """Reboot the autopilot."""
-        self.is_listening = False
-        self.sending_command_lock.acquire()
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-            param1=1,  #  Autopilot
-            param2=0,  #  Companion
-            param3=0,  # Component action
-            param4=0,  # Component ID
-        )
+        if not self.reserve_message_type("COMMAND_ACK", self.controller_id):
+            self.logger.error("Could not reserve COMMAND_ACK messages for reboot")
+            return
 
         try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.sending_command_lock.release()
+            self.sending_command_lock.acquire()
+
+            self.sendCommand(
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                param1=1,  #  Autopilot
+                param2=0,  #  Companion
+                param3=0,  # Component action
+                param4=0,  # Component ID
+            )
+
+            response = self.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+            )
 
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
@@ -849,10 +942,12 @@ class Drone:
                 self.close()
             else:
                 self.logger.error("Reboot failed")
-                self.is_listening = True
         except serial.serialutil.SerialException:
             self.logger.debug("Rebooting")
             self.close()
+        finally:
+            self.sending_command_lock.release()
+            self.release_message_type("COMMAND_ACK", self.controller_id)
 
     # TODO: Move this out into a controller
     @sendingCommandLock
@@ -866,17 +961,24 @@ class Drone:
         Returns:
             Response: The response from the servo set command
         """
-        self.is_listening = False
-
-        self.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
-            param1=servo_instance,  # Servo instance number
-            param2=pwm_value,  # PWM value
-        )
+        if not self.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.is_listening = True
+            self.sendCommand(
+                mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
+                param1=servo_instance,  # Servo instance number
+                param2=pwm_value,  # PWM value
+            )
+
+            response = self.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                timeout=3,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
                 return {"success": True, "message": f"Setting servo to {pwm_value}"}
@@ -890,11 +992,12 @@ class Drone:
                 }
 
         except serial.serialutil.SerialException:
-            self.is_listening = True
             return {
                 "success": False,
                 "message": "Setting servo failed, serial exception",
             }
+        finally:
+            self.release_message_type("COMMAND_ACK", self.controller_id)
 
     def sendCommand(
         self,

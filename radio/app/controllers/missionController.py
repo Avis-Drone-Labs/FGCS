@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from threading import current_thread
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import serial
@@ -27,6 +28,7 @@ class MissionController:
         """
 
         self.drone = drone
+        self.controller_id = f"MissionController_{current_thread().ident}"
 
         # Loaders are only used to manage the mission items that are currently loaded in the drone.
         # Importing and exporting mission items to/from files do not use loaders as these waypoints
@@ -188,35 +190,36 @@ class MissionController:
         else:
             loader = self.rallyLoader
 
-        self.drone.is_listening = False
-
-        try:
-            self.drone.master.mav.mission_request_list_send(
-                self.drone.target_system,
-                mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
-                mission_type=mission_type,
-            )
-        except TypeError:
-            self.drone.is_listening = True
-            # TypeError is raised if mavlink V1 is used where the mission_request_list_send
-            # function does not have a mission_type parameter
-            self.drone.logger.error(
-                "Failed to request mission list from autopilot, got type error. Trying again without mission type."
-            )
+        if not self.drone.reserve_message_type("MISSION_COUNT", self.controller_id):
             return {
                 "success": False,
-                "message": "Failed to request mission list from autopilot, got type error. Try reconnecting to the drone.",
+                "message": "Could not reserve MISSION_COUNT messages",
             }
 
         try:
-            response = self.drone.master.recv_match(
-                type=[
-                    "MISSION_COUNT",
-                ],
-                blocking=True,
+            try:
+                self.drone.master.mav.mission_request_list_send(
+                    self.drone.target_system,
+                    mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
+                    mission_type=mission_type,
+                )
+            except TypeError:
+                # TypeError is raised if mavlink V1 is used where the mission_request_list_send
+                # function does not have a mission_type parameter
+                self.drone.logger.error(
+                    "Failed to request mission list from autopilot, got type error. Trying again without mission type."
+                )
+                return {
+                    "success": False,
+                    "message": "Failed to request mission list from autopilot, got type error. Try reconnecting to the drone.",
+                }
+
+            response = self.drone.wait_for_message(
+                "MISSION_COUNT",
+                self.controller_id,
                 timeout=2,
+                condition_func=lambda msg: msg.mission_type == mission_type,
             )
-            self.drone.is_listening = True
 
             if response:
                 if response.mission_type != mission_type:
@@ -284,11 +287,12 @@ class MissionController:
                     "message": failure_message,
                 }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": f"{failure_message}, serial exception",
             }
+        finally:
+            self.drone.release_message_type("MISSION_COUNT", self.controller_id)
 
     def getItemDetails(
         self, item_number: int, mission_type: int, mission_count: int
@@ -310,24 +314,28 @@ class MissionController:
 
         failure_message = f"Failed to get mission item {item_number + 1}/{mission_count} for mission type {mission_type}"
 
-        self.drone.is_listening = False
-        # The sending_command_lock is held by the caller function getMissionItems
-
-        self.drone.master.mav.mission_request_int_send(
-            self.drone.target_system,
-            mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
-            item_number,
-            mission_type=mission_type,
-        )
+        if not self.drone.reserve_message_type("MISSION_ITEM_INT", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve MISSION_ITEM_INT messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(
-                type="MISSION_ITEM_INT",
-                blocking=True,
-                timeout=1.5,
+            # The sending_command_lock is held by the caller function getMissionItems
+            self.drone.master.mav.mission_request_int_send(
+                self.drone.target_system,
+                mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1,
+                item_number,
+                mission_type=mission_type,
             )
 
-            self.drone.is_listening = True
+            response = self.drone.wait_for_message(
+                "MISSION_ITEM_INT",
+                self.controller_id,
+                timeout=1.5,
+                condition_func=lambda msg: msg.mission_type == mission_type
+                and msg.seq == item_number,
+            )
 
             if response:
                 self.drone.logger.debug(
@@ -348,7 +356,6 @@ class MissionController:
                 }
 
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             self.drone.logger.error(
                 f"Got no response for mission item {item_number + 1}/{mission_count}, serial exception"
             )
@@ -356,6 +363,8 @@ class MissionController:
                 "success": False,
                 "message": f"{failure_message}, serial exception",
             }
+        finally:
+            self.drone.release_message_type("MISSION_ITEM_INT", self.controller_id)
 
     @sendingCommandLock
     def startMission(self) -> Response:
@@ -365,16 +374,22 @@ class MissionController:
         Returns:
             Dict: The response of the mission start request
         """
-        self.drone.is_listening = False
-
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_MISSION_START,
-        )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_MISSION_START,
+            )
 
-            self.drone.is_listening = True
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                timeout=3,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_MISSION_START):
                 return {
@@ -387,11 +402,12 @@ class MissionController:
                     "message": "Failed to start mission",
                 }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Failed to start mission, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     @sendingCommandLock
     def restartMission(self) -> Response:
@@ -401,14 +417,22 @@ class MissionController:
         Returns:
             Dict: The response of the mission restart request
         """
-        self.drone.is_listening = False
-
-        self.drone.sendCommand(mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT, param2=1)
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT, param2=1
+            )
 
-            self.drone.is_listening = True
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                timeout=3,
+            )
 
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT
@@ -423,11 +447,12 @@ class MissionController:
                     "message": "Failed to restart mission",
                 }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Failed to restart mission, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     @sendingCommandLock
     def clearMission(self, mission_type: int) -> Response:
@@ -441,29 +466,33 @@ class MissionController:
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        self.drone.is_listening = False
+        if not self.drone.reserve_message_type("MISSION_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve MISSION_ACK messages",
+            }
 
-        self.drone.master.mav.mission_clear_all_send(
-            self.drone.target_system,
-            self.drone.target_component,
-            mission_type=mission_type,
-        )
         try:
-            while True:
-                response = self.drone.master.recv_match(
-                    type=[
-                        "MISSION_ACK",
-                    ],
-                    blocking=True,
-                    timeout=2,
-                )
-                if not response:
-                    break
-                elif response.mission_type != mission_type:
-                    continue
-                elif response.type == 0:
-                    self.drone.is_listening = True
+            self.drone.master.mav.mission_clear_all_send(
+                self.drone.target_system,
+                self.drone.target_component,
+                mission_type=mission_type,
+            )
 
+            while True:
+                response = self.drone.wait_for_message(
+                    "MISSION_ACK",
+                    self.controller_id,
+                    timeout=2,
+                    condition_func=lambda msg: msg.mission_type == mission_type,
+                )
+
+                if not response:
+                    return {
+                        "success": False,
+                        "message": "Could not clear mission",
+                    }
+                elif response.type == 0:
                     return {
                         "success": True,
                         "message": "Mission cleared successfully",
@@ -472,20 +501,18 @@ class MissionController:
                     self.drone.logger.error(
                         f"Error clearing mission, mission ack response: {response.type}"
                     )
-                    break
-
-            self.drone.is_listening = True
-            return {
-                "success": False,
-                "message": "Could not clear mission",
-            }
+                    return {
+                        "success": False,
+                        "message": "Could not clear mission",
+                    }
 
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Could not clear mission, serial exception",
             }
+        finally:
+            self.drone.release_message_type("MISSION_ACK", self.controller_id)
 
     def _parseWaypointsListIntoLoader(
         self, waypoints: List[dict], mission_type: int
@@ -579,44 +606,64 @@ class MissionController:
                 "message": f"Cleared mission type {mission_type}, no waypoints to upload",
             }
 
-        self.drone.is_listening = False
-        self.drone.sending_command_lock.acquire()
-
-        self.drone.master.mav.mission_count_send(
-            self.drone.target_system,
-            self.drone.target_component,
-            new_loader.count(),
-            mission_type=mission_type,
-        )
+        if not self.drone.reserve_message_type("MISSION_REQUEST", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve MISSION_REQUEST messages",
+            }
+        if not self.drone.reserve_message_type("MISSION_ACK", self.controller_id):
+            self.drone.release_message_type("MISSION_REQUEST", self.controller_id)
+            return {
+                "success": False,
+                "message": "Could not reserve MISSION_ACK messages",
+            }
 
         try:
-            while True:
-                response = self.drone.master.recv_match(
-                    type=["MISSION_REQUEST", "MISSION_ACK"],
-                    blocking=True,
-                    timeout=2,
-                )
-                if not response:
-                    self.drone.is_listening = True
-                    self.drone.sending_command_lock.release()
+            self.drone.sending_command_lock.acquire()
 
-                    return {
-                        "success": False,
-                        "message": "Could not upload mission, mission request not received",
-                    }
-                elif response.msgname == "MISSION_ACK" and response.type != 0:
-                    self.drone.logger.error(
-                        f"Error uploading mission, mission ack response: {response.type}"
+            self.drone.master.mav.mission_count_send(
+                self.drone.target_system,
+                self.drone.target_component,
+                new_loader.count(),
+                mission_type=mission_type,
+            )
+
+            while True:
+                # Wait for either MISSION_REQUEST or MISSION_ACK
+                response = None
+                mission_request = self.drone.wait_for_message(
+                    "MISSION_REQUEST",
+                    self.controller_id,
+                    timeout=2,
+                    condition_func=lambda msg: msg.mission_type == mission_type,
+                )
+                if not mission_request:
+                    mission_ack = self.drone.wait_for_message(
+                        "MISSION_ACK",
+                        self.controller_id,
+                        timeout=2,
+                        condition_func=lambda msg: msg.mission_type == mission_type,
                     )
-                    self.drone.is_listening = True
-                    self.drone.sending_command_lock.release()
-                    return {
-                        "success": False,
-                        "message": "Could not upload mission, received mission acknowledgement error",
-                    }
-                elif response.msgname == "MISSION_ACK" and response.type == 0:
-                    continue  # Continue to next iteration if we received a MISSION_ACK
-                elif response.mission_type == mission_type:
+                    if mission_ack:
+                        if mission_ack.type != 0:
+                            self.drone.logger.error(
+                                f"Error uploading mission, mission ack response: {mission_ack.type}"
+                            )
+                            return {
+                                "success": False,
+                                "message": "Could not upload mission, received mission acknowledgement error",
+                            }
+                        else:
+                            continue  # Continue if we received a successful MISSION_ACK
+                    else:
+                        return {
+                            "success": False,
+                            "message": "Could not upload mission, mission request not received",
+                        }
+                else:
+                    response = mission_request
+
+                if response:
                     self.drone.logger.debug(
                         f"Sending mission item {response.seq + 1} out of {new_loader.count()}"
                     )
@@ -629,21 +676,14 @@ class MissionController:
                         )
 
                     if response.seq == new_loader.count() - 1:
-                        mission_ack_response = self.drone.master.recv_match(
-                            type=[
-                                "MISSION_ACK",
-                            ],
-                            blocking=True,
+                        mission_ack_response = self.drone.wait_for_message(
+                            "MISSION_ACK",
+                            self.controller_id,
                             timeout=2,
+                            condition_func=lambda msg: msg.mission_type == mission_type,
                         )
-                        self.drone.is_listening = True
-                        self.drone.sending_command_lock.release()
 
-                        if (
-                            mission_ack_response
-                            and mission_ack_response.type == 0
-                            and mission_ack_response.mission_type == mission_type
-                        ):
+                        if mission_ack_response and mission_ack_response.type == 0:
                             self.drone.logger.info("Uploaded mission successfully")
                             if mission_type == TYPE_MISSION:
                                 self.missionLoader = new_loader
@@ -658,19 +698,21 @@ class MissionController:
                             }
                         else:
                             self.drone.logger.error(
-                                f"Error uploading mission, mission ack response: {mission_ack_response.type}"
+                                f"Error uploading mission, mission ack response: {mission_ack_response.type if mission_ack_response else 'None'}"
                             )
                             return {
                                 "success": False,
                                 "message": "Could not upload mission, not received mission acknowledgement",
                             }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
-            self.drone.sending_command_lock.release()
             return {
                 "success": False,
                 "message": "Could not upload mission, serial exception",
             }
+        finally:
+            self.drone.sending_command_lock.release()
+            self.drone.release_message_type("MISSION_REQUEST", self.controller_id)
+            self.drone.release_message_type("MISSION_ACK", self.controller_id)
 
     def importMissionFromFile(self, mission_type: int, file_path: str) -> Response:
         """

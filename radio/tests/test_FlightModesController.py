@@ -73,12 +73,16 @@ def test_setCurrentFlightMode(client: SocketIOTestClient, droneStatus):
     with FakeTCP():
         response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
         assert response.get("success") is False
-        assert response.get("message") == "Could not set flight mode, serial exception"
+        assert (
+            response.get("message") == "Could not set flight mode, command not accepted"
+        )
 
     with RecvMsgReturnsNone():
         response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
         assert response.get("success") is False
-        assert response.get("message") == "Could not set flight mode"
+        assert (
+            response.get("message") == "Could not set flight mode, command not accepted"
+        )
 
     response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
     assert response.get("success") is True

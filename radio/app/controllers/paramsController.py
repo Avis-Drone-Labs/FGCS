@@ -138,7 +138,6 @@ class ParamsController:
                         self.params = []
                         return
 
-                    # Use the new wait_for_message system instead of recv_msg
                     msg = self.drone.wait_for_message(
                         "PARAM_VALUE",
                         self.controller_id,
@@ -165,13 +164,13 @@ class ParamsController:
                             self.drone.logger.info("Got all params")
                             return
 
-                except serial.serialutil.SerialException:
+                except Exception as e:
+                    self.drone.logger.error(e, exc_info=True)
                     self.is_requesting_params = False
                     self.current_param_index = 0
                     self.current_param_id = ""
                     self.total_number_of_params = 0
                     self.params = []
-                    self.drone.logger.error("Serial exception while getting all params")
                     return
         finally:
             # Always release the message type when done

@@ -146,18 +146,19 @@ class FlightModesController:
                 "message": "Could not reserve COMMAND_ACK messages",
             }
         time.sleep(0.3)
-        self.drone.sendCommand(
-            message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
-            param1=1,
-            param2=flightMode,
-            param3=0,
-            param4=0,
-            param5=0,
-            param6=0,
-            param7=0,
-        )
 
         try:
+            self.drone.sendCommand(
+                message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+                param1=1,
+                param2=flightMode,
+                param3=0,
+                param4=0,
+                param5=0,
+                param6=0,
+                param7=0,
+            )
+
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
@@ -170,7 +171,7 @@ class FlightModesController:
             else:
                 return {
                     "success": False,
-                    "message": "Could not set flight mode",
+                    "message": "Could not set flight mode, command not accepted",
                 }
         except serial.serialutil.SerialException:
             return {

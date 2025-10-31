@@ -242,7 +242,7 @@ class Drone:
 
         self.stopAllDataStreams()
 
-        if forwarding_address is not None:
+        if forwarding_address is not None and len(forwarding_address) > 0:
             try:
                 start_forwarding_result = self.startForwardingToAddress(
                     forwarding_address
@@ -1126,6 +1126,9 @@ class Drone:
             r"^((udpout|tcpout):(([0-9]{1,3}\.){3}[0-9]{1,3}):([0-9]{1,5}))$", address
         )
         if not match:
+            self.logger.warning(
+                f"Invalid forwarding address format. Must be in the format udpout:IP:PORT or tcpout:IP:PORT, got {address}"
+            )
             return {
                 "success": False,
                 "message": "Address must be in the format udpout:IP:PORT or tcpout:IP:PORT",

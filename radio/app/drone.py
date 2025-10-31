@@ -935,6 +935,9 @@ class Drone:
                 self.controller_id,
             )
 
+            self.sending_command_lock.release()
+            self.release_message_type("COMMAND_ACK", self.controller_id)
+
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
             ):
@@ -944,10 +947,9 @@ class Drone:
                 self.logger.error("Reboot failed")
         except serial.serialutil.SerialException:
             self.logger.debug("Rebooting")
-            self.close()
-        finally:
             self.sending_command_lock.release()
             self.release_message_type("COMMAND_ACK", self.controller_id)
+            self.close()
 
     # TODO: Move this out into a controller
     @sendingCommandLock
@@ -1161,8 +1163,8 @@ class Drone:
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
 
-        self.stopForwarding()
         self.stopAllDataStreams()
+        self.stopForwarding()
         self.stopAllThreads()
         self.master.close()
 

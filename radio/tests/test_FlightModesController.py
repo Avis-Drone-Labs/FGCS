@@ -4,7 +4,11 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import FakeTCP, ParamSetTimeout, RecvMsgReturnsNone, SetAircraftType
+from .helpers import (
+    FakeTCP,
+    SetAircraftType,
+    WaitForMessageReturnsNone,
+)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -41,7 +45,7 @@ def test_getFlightModes_success(client: SocketIOTestClient, droneStatus):
 
 @falcon_test(pass_drone_status=True)
 def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
-    with RecvMsgReturnsNone():
+    with WaitForMessageReturnsNone():
         droneStatus.drone.flightModesController.getFlightModes()
         assert len(droneStatus.drone.flightModesController.flight_modes) == 6
         for items in droneStatus.drone.flightModesController.flight_modes:
@@ -50,7 +54,7 @@ def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
 
 @falcon_test(pass_drone_status=True)
 def test_getFlightModeChannel_failure(client: SocketIOTestClient, droneStatus):
-    with RecvMsgReturnsNone():
+    with WaitForMessageReturnsNone():
         original_flight_mode_channel = (
             droneStatus.drone.flightModesController.flight_mode_channel
         )
@@ -72,105 +76,102 @@ def test_refreshdata(client: SocketIOTestClient, droneStatus):
 def test_setCurrentFlightMode(client: SocketIOTestClient, droneStatus):
     with FakeTCP():
         response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
-        assert response.get("success") is False
-        assert (
-            response.get("message") == "Could not set flight mode, command not accepted"
-        )
+        assert response == {
+            "success": False,
+            "message": "Could not set flight mode, serial exception",
+        }
 
-    with RecvMsgReturnsNone():
+    with WaitForMessageReturnsNone():
         response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
-        assert response.get("success") is False
-        assert (
-            response.get("message") == "Could not set flight mode, command not accepted"
-        )
+        assert response == {
+            "success": False,
+            "message": "Could not set flight mode, command not accepted",
+        }
 
     response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
-    assert response.get("success") is True
-    assert response.get("message") == "Flight mode set successfully"
+    assert response == {
+        "success": True,
+        "message": "Flight mode set successfully",
+    }
 
 
 @falcon_test(pass_drone_status=True)
 def test_setFlightMode(client: SocketIOTestClient, droneStatus):
     response = droneStatus.drone.flightModesController.setFlightMode(0, 1)
-    assert response.get("success") is False
-    assert (
-        response.get("message")
-        == "Invalid flight mode number, must be between 1 and 6 inclusive, got 0."
-    )
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode number, must be between 1 and 6 inclusive, got 0.",
+    }
 
     response = droneStatus.drone.flightModesController.setFlightMode(-100, 1)
-    assert response.get("success") is False
-    assert (
-        response.get("message")
-        == "Invalid flight mode number, must be between 1 and 6 inclusive, got -100."
-    )
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode number, must be between 1 and 6 inclusive, got -100.",
+    }
 
     response = droneStatus.drone.flightModesController.setFlightMode(7, 1)
-    assert response.get("success") is False
-    assert (
-        response.get("message")
-        == "Invalid flight mode number, must be between 1 and 6 inclusive, got 7."
-    )
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode number, must be between 1 and 6 inclusive, got 7.",
+    }
 
     response = droneStatus.drone.flightModesController.setFlightMode(100, 1)
-    assert response.get("success") is False
-    assert (
-        response.get("message")
-        == "Invalid flight mode number, must be between 1 and 6 inclusive, got 100."
-    )
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode number, must be between 1 and 6 inclusive, got 100.",
+    }
 
+    # TODO: Fix imitation of PLANE type while being on COPTER sim, should use a different simulator ideally.
     with SetAircraftType(1):
         response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
-        assert response.get("success") is False
-        assert (
-            response.get("message")
-            == "Invalid plane flight mode, must be between 0 and 24 inclusive, got -2"
-        )
+        assert response == {
+            "success": False,
+            "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got -2",
+        }
 
         response = droneStatus.drone.flightModesController.setFlightMode(1, 25)
-        assert response.get("success") is False
-        assert (
-            response.get("message")
-            == "Invalid plane flight mode, must be between 0 and 24 inclusive, got 25"
-        )
+        assert response == {
+            "success": False,
+            "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got 25",
+        }
 
-        with ParamSetTimeout():
+        with WaitForMessageReturnsNone():
             response = droneStatus.drone.flightModesController.setFlightMode(1, 1)
-            assert response.get("success") is False
-            assert (
-                response.get("message")
-                == "Failed to set flight mode 1 to PLANE_MODE_CIRCLE"
-            )
+            assert response == {
+                "success": False,
+                "message": "Failed to set flight mode 1 to PLANE_MODE_CIRCLE",
+            }
 
         response = droneStatus.drone.flightModesController.setFlightMode(1, 24)
-        assert response.get("success") is True
-        assert response.get("message") == "Flight mode 1 set to PLANE_MODE_THERMAL"
+        assert response == {
+            "success": True,
+            "message": "Flight mode 1 set to PLANE_MODE_THERMAL",
+        }
         assert droneStatus.drone.flightModesController.flight_modes[0] == 24
 
     with SetAircraftType(2):
         response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
-        assert response.get("success") is False
-        assert (
-            response.get("message")
-            == "Invalid copter flight mode, must be between 0 and 27 inclusive, got -2"
-        )
+        assert response == {
+            "success": False,
+            "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got -2",
+        }
 
         response = droneStatus.drone.flightModesController.setFlightMode(1, 28)
-        assert response.get("success") is False
-        assert (
-            response.get("message")
-            == "Invalid copter flight mode, must be between 0 and 27 inclusive, got 28"
-        )
+        assert response == {
+            "success": False,
+            "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got 28",
+        }
 
-        with ParamSetTimeout():
+        with WaitForMessageReturnsNone():
             response = droneStatus.drone.flightModesController.setFlightMode(1, 1)
-            assert response.get("success") is False
-            assert (
-                response.get("message")
-                == "Failed to set flight mode 1 to COPTER_MODE_ACRO"
-            )
+            assert response == {
+                "success": False,
+                "message": "Failed to set flight mode 1 to COPTER_MODE_ACRO",
+            }
 
         response = droneStatus.drone.flightModesController.setFlightMode(1, 27)
-        assert response.get("success") is True
-        assert response.get("message") == "Flight mode 1 set to COPTER_MODE_AUTO_RTL"
+        assert response == {
+            "success": True,
+            "message": "Flight mode 1 set to COPTER_MODE_AUTO_RTL",
+        }
         assert droneStatus.drone.flightModesController.flight_modes[0] == 27

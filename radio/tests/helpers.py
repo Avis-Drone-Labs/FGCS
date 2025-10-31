@@ -9,12 +9,11 @@ from . import socketio_client
 
 class FakeTCP:
     """
-    Context manager that replaces the mavlink mavtcp recv_msg method in `droneStatus.drone.master` with one that raises a
-    `serial.serialutils.SerialException`. Use if you want to simulate a serial issue for a unit test.
+    Context manager that replaces master mavlink functions with ones that raise SerialException
     """
 
     @staticmethod
-    def recv_msg_override(
+    def return_serial_exception(
         condition=None, type=None, blocking=False, timeout=None
     ) -> None:
         raise SerialException(
@@ -22,15 +21,13 @@ class FakeTCP:
         )
 
     def __enter__(self) -> None:
-        # Replace drone mavtcp recv_msg function with one that raises SerialException
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = FakeTCP.recv_msg_override
+            self.old_send = droneStatus.drone.master.mav.send
+            droneStatus.drone.master.mav.send = FakeTCP.return_serial_exception
 
     def __exit__(self, type, value, traceback) -> None:
-        # Reset recv_msg method
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv
+            droneStatus.drone.master.mav.send = self.old_send
 
 
 class NoDrone:
@@ -48,27 +45,6 @@ class NoDrone:
 
     def __exit__(self, type, value, traceback) -> None:
         droneStatus.drone = self.oldDrone
-
-
-class ParamSetTimeout:
-    """Context manager that replaces the mavlink recv_msg function in drone.master with a function that return a None value
-    to cause the set multipleparams function to timeout
-    """
-
-    @staticmethod
-    def recv_msg_null_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> None:
-        return None
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = ParamSetTimeout.recv_msg_null_value
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv
 
 
 class ParamRefreshTimeout:
@@ -99,42 +75,19 @@ class ParamRefreshTimeout:
             )
 
 
-class NoAcknowledgementMessage:
-    """Context manager that replaces the mavlink recv_msg function in drone.master with a function that returns False
-    causing no acknowledgement messages to be received when used in the MotorTestController tests
-    """
-
+class WaitForMessageReturnsNone:
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = (
-                NoAcknowledgementMessage.recv_msg_false_value
-            )
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv
-
-
-class RecvMsgReturnsNone:
-    @staticmethod
-    def recv_msg_false(condition=None, type=None, blocking=False, timeout=None) -> None:
+    def returns_none(*args, **kwargs) -> None:
         return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = RecvMsgReturnsNone.recv_msg_false
+            self.wait_for_message = droneStatus.drone.wait_for_message
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv
+            droneStatus.drone.wait_for_message = self.wait_for_message
 
 
 class SetAircraftType:

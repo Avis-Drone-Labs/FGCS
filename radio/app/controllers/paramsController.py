@@ -276,6 +276,7 @@ class ParamsController:
             )
             return False
 
+        try:
             # Keep trying to set the parameter until we get an ack or run out of retries or timeout
             while retries > 0 and not got_ack:
                 retries -= 1
@@ -304,7 +305,9 @@ class ParamsController:
                 self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
 
             return got_ack
-
+        except serial.serialutil.SerialException:
+            self.drone.logger.error(f"Serial exception setting parameter {param_name}")
+            return False
         finally:
             self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 

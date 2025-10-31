@@ -88,18 +88,12 @@ class FlightModesController:
 
         if mode_number < 1 or mode_number > 6:
             self.drone.logger.error(
-                "Invalid flight mode number, must be between 1 and 6 inclusive."
+                f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}."
             )
             return {
                 "success": False,
                 "message": f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}.",
             }
-
-        param_type = 2
-
-        param_set_success = self.drone.paramsController.setParam(
-            f"FLTMODE{mode_number}", flight_mode, param_type
-        )
 
         if self.drone.aircraft_type == 1:
             if (flight_mode < 0) or (flight_mode > 24):
@@ -115,6 +109,11 @@ class FlightModesController:
                     "message": f"Invalid copter flight mode, must be between 0 and 27 inclusive, got {flight_mode}",
                 }
             mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
+
+        param_type = 2
+        param_set_success = self.drone.paramsController.setParam(
+            f"FLTMODE{mode_number}", flight_mode, param_type
+        )
 
         if param_set_success:
             self.drone.logger.info(f"Flight mode {mode_number} set to {mode_name}")

@@ -53,15 +53,13 @@ class ParamRefreshTimeout:
     """
 
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, Type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
+    def returns_none(*args, **kwargs) -> None:
+        return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv_msg = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = ParamRefreshTimeout.recv_msg_false_value
+            self.wait_for_message = droneStatus.drone.wait_for_message
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none
             self.old_param_index = (
                 droneStatus.drone.paramsController.current_param_index
             )
@@ -69,7 +67,7 @@ class ParamRefreshTimeout:
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv_msg
+            droneStatus.drone.wait_for_message = self.wait_for_message
             droneStatus.drone.paramsController.current_param_index = (
                 self.old_param_index
             )

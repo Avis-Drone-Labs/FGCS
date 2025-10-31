@@ -4,7 +4,7 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import ParamRefreshTimeout, ParamSetTimeout
+from .helpers import ParamRefreshTimeout, WaitForMessageReturnsNone
 
 
 def send_and_receive_params(
@@ -212,11 +212,11 @@ def test_setMultipleParams_invalidData(
 
 
 @falcon_test(pass_drone_status=True)
-def test_setMultipleParams_paramSetTimeout(
+def test_setMultipleParams_WaitForMessageReturnsNone(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
     droneStatus.state = "params"
-    with ParamSetTimeout():
+    with WaitForMessageReturnsNone():
         socketio_result = send_and_receive_params(
             socketio_client,
             "set_multiple_params",

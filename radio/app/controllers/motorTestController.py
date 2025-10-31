@@ -86,6 +86,8 @@ class MotorTestController:
                 "message": "Could not reserve COMMAND_ACK messages",
             }
 
+        motor_letter = chr(64 + motor_instance)
+
         try:
             self.drone.sendCommand(
                 mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
@@ -96,8 +98,6 @@ class MotorTestController:
                 param5=0,  # number of motors to test in a sequence
                 param6=0,  # test order
             )
-
-            motor_letter = chr(64 + motor_instance)
 
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",

@@ -97,7 +97,6 @@ class ParamsController:
                 "message": f"{failure_message}, serial exception",
             }
         finally:
-            # Always release the message type
             self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
     def getAllParams(self) -> None:
@@ -239,10 +238,6 @@ class ParamsController:
         got_ack = False
         save_timeout = 5
 
-        if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
-            self.drone.logger.error("Could not reserve PARAM_VALUE messages")
-            return False
-
         try:
             # Check if value fits inside the param type
             # https://github.com/ArduPilot/pymavlink/blob/4d8c4ff274d41b9bc8da1a411cb172d39786e46b/mavparm.py#L30C10-L30C10
@@ -268,12 +263,16 @@ class ParamsController:
                         "can't send %s of type %u" % (param_name, param_type)
                     )
                     return False
-                # vfloat, = struct.unpack(">f", vstr)
+
             vfloat = float(param_value)
         except struct.error as e:
             self.drone.logger.error(
                 f"Could not set parameter {param_name} with value {param_value}: {e}"
             )
+            return False
+
+        if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
+            self.drone.logger.error("Could not reserve PARAM_VALUE messages")
             return False
 
         try:
@@ -284,14 +283,18 @@ class ParamsController:
                     param_name.upper(), vfloat, parm_type=param_type
                 )
 
+                print(
+                    f"Setting param {param_name} to {vfloat}, retries left: {retries}"
+                )
+
                 # Wait for parameter acknowledgment using the new system
                 ack = self.drone.wait_for_message(
                     "PARAM_VALUE",
                     self.controller_id,
                     save_timeout,
-                    condition_func=lambda msg: str(param_name).upper()
-                    == str(msg.param_id).upper(),
                 )
+
+                print(f"Received ack: {ack}")
 
                 if ack:
                     got_ack = True

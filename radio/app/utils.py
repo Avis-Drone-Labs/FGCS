@@ -188,7 +188,7 @@ def sendMessage(msg: Any) -> None:
     """
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
-    socketio.emit("incoming_msg", data)
+    socketio.emit("incoming_msg", data, namespace="/telemetry")
 
 
 FIXED_WING_TYPES = [

@@ -132,6 +132,7 @@ const ParamSpecificSocketEvents = Object.freeze({
   onParamRequestUpdate: "param_request_update",
   onParamSetSuccess: "param_set_success",
   onParamError: "params_error",
+  onExportParamsResult: "export_params_result",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -455,6 +456,17 @@ const socketMiddleware = (store) => {
           showErrorNotification(msg.message)
           store.dispatch(setFetchingVars(false))
         })
+
+        socket.socket.on(
+          ParamSpecificSocketEvents.onExportParamsResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
 
         socket.socket.on(
           DroneSpecificSocketEvents.onNavRepositionResult,

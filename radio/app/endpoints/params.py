@@ -1,8 +1,15 @@
 import time
 from typing import Any, List
 
+from typing_extensions import TypedDict
+
 import app.droneStatus as droneStatus
 from app import logger, socketio
+from app.utils import notConnectedError
+
+
+class ExportParamsFileType(TypedDict):
+    file_path: str
 
 
 @socketio.on("set_multiple_params")
@@ -82,3 +89,36 @@ def refresh_params() -> None:
         time.sleep(0.2)
 
     socketio.emit("params", droneStatus.drone.paramsController.params)
+
+
+@socketio.on("export_params_to_file")
+def export_params_to_file(data: ExportParamsFileType) -> None:
+    """
+    Export parameters to a file.
+
+    Args:
+        data: The data from the client containing the file path.
+    """
+    if droneStatus.state != "params":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the params screen to export parameters."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="export params to file")
+
+    file_path = data.get("file_path", None)
+    if not file_path:
+        socketio.emit(
+            "export_params_result",
+            {"success": False, "message": "No file path provided."},
+        )
+        logger.error("No file path provided for exporting parameters.")
+        return
+
+    result = droneStatus.drone.paramsController.exportParamsToFile(file_path)
+
+    socketio.emit("export_params_result", result)

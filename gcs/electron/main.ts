@@ -20,7 +20,7 @@ import openFile, {
   clearRecentFiles,
   getRecentFiles,
   retrieveMessages,
-  // @ts-expect-error - no types available
+   // @ts-expect-error - no types available
 } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
@@ -477,18 +477,15 @@ app.whenReady().then(() => {
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", retrieveMessages)
 
-  // Save mission file
-  ipcMain.handle(
-    "missions:get-save-mission-file-path",
-    async (event, options) => {
-      const window = BrowserWindow.fromWebContents(event.sender)
-      if (!window) {
-        throw new Error("No active window found")
-      }
-      const result = await dialog.showSaveDialog(window, options)
-      return result
-    },
-  )
+  // Open native save dialog
+  ipcMain.handle("app:get-save-file-path", async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) {
+      throw new Error("No active window found")
+    }
+    const result = await dialog.showSaveDialog(window, options)
+    return result
+  })
 
   ipcMain.handle("app:get-node-env", () =>
     app.isPackaged ? "production" : "development",

@@ -260,7 +260,8 @@ class MissionController:
 
                             if progressUpdateCallback and response.count != 0:
                                 progressUpdateCallback(
-                                    f"Received waypoint {i+1}", (i + 1) / response.count
+                                    f"Received waypoint {i + 1}",
+                                    (i + 1) / response.count,
                                 )
 
                             break
@@ -388,7 +389,8 @@ class MissionController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_MISSION_START,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_MISSION_START):
@@ -431,7 +433,8 @@ class MissionController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_SET_MISSION_CURRENT,
             )
 
             if commandAccepted(

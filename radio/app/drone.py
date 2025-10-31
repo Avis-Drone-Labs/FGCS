@@ -595,6 +595,9 @@ class Drone:
             except Empty:
                 continue
 
+        self.logger.debug(
+            f"Timeout waiting for message {message_type} for controller {controller_id}"
+        )
         return None
 
     def checkForMessages(self) -> None:
@@ -913,11 +916,15 @@ class Drone:
         finally:
             self.release_message_type("AUTOPILOT_VERSION", self.controller_id)
 
-    def rebootAutopilot(self) -> None:
-        """Reboot the autopilot."""
+    def rebootAutopilot(self) -> bool:
+        """Reboot the autopilot.
+
+        Returns:
+            bool: True if the reboot command was successfully sent and accepted, False otherwise.
+        """
         if not self.reserve_message_type("COMMAND_ACK", self.controller_id):
             self.logger.error("Could not reserve COMMAND_ACK messages for reboot")
-            return
+            return False
 
         try:
             self.sending_command_lock.acquire()
@@ -933,6 +940,8 @@ class Drone:
             response = self.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
             )
 
             self.sending_command_lock.release()
@@ -941,15 +950,18 @@ class Drone:
             if commandAccepted(
                 response, mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
             ):
-                self.logger.debug("Rebooting")
+                self.logger.info("Rebooting autopilot")
                 self.close()
+                return True
             else:
-                self.logger.error("Reboot failed")
+                self.logger.error("Reboot failed, command not accepted")
+                return False
         except serial.serialutil.SerialException:
-            self.logger.debug("Rebooting")
+            self.logger.info("Rebooting autopilot")
             self.sending_command_lock.release()
             self.release_message_type("COMMAND_ACK", self.controller_id)
             self.close()
+            return True
 
     # TODO: Move this out into a controller
     @sendingCommandLock
@@ -979,7 +991,8 @@ class Drone:
             response = self.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):

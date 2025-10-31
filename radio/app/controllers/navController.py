@@ -105,7 +105,8 @@ class NavController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=2,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_SET_HOME,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_HOME):
@@ -161,7 +162,8 @@ class NavController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
             )
 
             self.drone.sending_command_lock.release()
@@ -204,7 +206,8 @@ class NavController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_NAV_LAND,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_NAV_LAND):

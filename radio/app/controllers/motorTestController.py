@@ -102,7 +102,8 @@ class MotorTestController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
@@ -173,7 +174,8 @@ class MotorTestController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
@@ -244,6 +246,8 @@ class MotorTestController:
                     "COMMAND_ACK",
                     self.controller_id,
                     timeout=RESPONSE_TIMEOUT,
+                    condition_func=lambda msg: msg.command
+                    == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
                 )
                 if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                     successful_responses += 1

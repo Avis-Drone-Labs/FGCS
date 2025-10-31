@@ -53,7 +53,8 @@ class ArmController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):
@@ -108,7 +109,8 @@ class ArmController:
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
-                timeout=3,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM):

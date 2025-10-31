@@ -108,7 +108,8 @@ def export_params_to_file(data: ExportParamsFileType) -> None:
         return
 
     if not droneStatus.drone:
-        return notConnectedError(action="export params to file")
+        notConnectedError(action="export params to file")
+        return
 
     file_path = data.get("file_path", None)
     if not file_path:

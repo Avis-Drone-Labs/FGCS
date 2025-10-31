@@ -352,5 +352,5 @@ class ParamsController:
             self.drone.logger.error(f"Failed to export params to file: {e}")
             return {
                 "success": False,
-                "message": "Failed to export params to file",
+                "message": f"Failed to export params to file: {e}",
             }

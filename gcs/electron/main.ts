@@ -20,7 +20,7 @@ import openFile, {
   clearRecentFiles,
   getRecentFiles,
   retrieveMessages,
-   // @ts-expect-error - no types available
+  // @ts-expect-error - no types available
 } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,

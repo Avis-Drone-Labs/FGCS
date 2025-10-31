@@ -46,6 +46,7 @@ import {
   showDashboardMissionFetchingNotificationThunk,
 } from "../slices/missionSlice"
 import {
+  emitExportParamsToFile,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -265,6 +266,14 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetMultipleParams,
       callback: () => socket.socket.emit("set_multiple_params", action.payload),
+    },
+    {
+      emitter: emitExportParamsToFile,
+      callback: () => {
+        socket.socket.emit("export_params_to_file", {
+          file_path: action.payload.filePath,
+        })
+      },
     },
 
     /*

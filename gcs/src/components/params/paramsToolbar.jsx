@@ -8,6 +8,7 @@ rebooting the autopilot
 // 3rd party imports
 import { Button, TextInput, Tooltip } from "@mantine/core"
 import {
+  IconDownload,
   IconEye,
   IconPencil,
   IconPower,
@@ -23,6 +24,7 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  emitExportParamsToFile,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -59,6 +61,29 @@ export default function ParamsToolbar() {
     dispatch(resetParamState())
   }
 
+  async function saveParamsToFile() {
+    const options = {
+      title: "Save parameters to a file",
+      filters: [
+        { name: "Param File", extensions: ["param"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    }
+
+    const result = await window.ipcRenderer.invoke(
+      "app:get-save-file-path",
+      options,
+    )
+
+    if (!result.canceled) {
+      dispatch(
+        emitExportParamsToFile({
+          filePath: result.filePath,
+        }),
+      )
+    }
+  }
+
   return (
     <div className="flex justify-center space-x-4">
       <Tooltip
@@ -70,12 +95,7 @@ export default function ParamsToolbar() {
           onClick={() => dispatch(toggleShowModifiedParams())}
           color={tailwindColors.orange[600]}
         >
-          {" "}
-          {showModifiedParams ? (
-            <IconEye size={14} />
-          ) : (
-            <IconTool size={14} />
-          )}{" "}
+          {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
         </Button>
       </Tooltip>
 
@@ -95,8 +115,7 @@ export default function ParamsToolbar() {
         onClick={() => dispatch(emitSetMultipleParams(modifiedParams))}
         color={tailwindColors.green[600]}
       >
-        {" "}
-        Save params{" "}
+        Write params
       </Button>
 
       <Button
@@ -105,8 +124,7 @@ export default function ParamsToolbar() {
         onClick={refreshCallback}
         color={tailwindColors.blue[600]}
       >
-        {" "}
-        Refresh params{" "}
+        Refresh params
       </Button>
 
       <Button
@@ -115,8 +133,16 @@ export default function ParamsToolbar() {
         onClick={rebootCallback}
         color={tailwindColors.red[600]}
       >
-        {" "}
-        Reboot FC{" "}
+        Reboot FC
+      </Button>
+
+      <Button
+        size="sm"
+        rightSection={<IconDownload size={14} />}
+        onClick={saveParamsToFile}
+        color={tailwindColors.blue[600]}
+      >
+        Save params to file
       </Button>
     </div>
   )

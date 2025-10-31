@@ -260,7 +260,7 @@ export default function Missions() {
     }
 
     const result = await window.ipcRenderer.invoke(
-      "missions:get-save-mission-file-path",
+      "app:get-save-file-path",
       options,
     )
 

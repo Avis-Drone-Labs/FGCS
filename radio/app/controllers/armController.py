@@ -132,5 +132,3 @@ class ArmController:
             return {"success": False, "message": "Could not disarm, serial exception"}
         finally:
             self.drone.release_message_type("COMMAND_ACK", self.controller_id)
-
-        return {"success": False, "message": "Could not disarm, command not accepted"}

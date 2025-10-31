@@ -283,18 +283,12 @@ class ParamsController:
                     param_name.upper(), vfloat, parm_type=param_type
                 )
 
-                print(
-                    f"Setting param {param_name} to {vfloat}, retries left: {retries}"
-                )
-
                 # Wait for parameter acknowledgment using the new system
                 ack = self.drone.wait_for_message(
                     "PARAM_VALUE",
                     self.controller_id,
                     save_timeout,
                 )
-
-                print(f"Received ack: {ack}")
 
                 if ack:
                     got_ack = True

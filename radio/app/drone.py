@@ -624,61 +624,61 @@ class Drone:
                     self.droneErrorCb(str(e))
                 continue
 
-            if msg:
-                if self.forwarding_connection is not None:
-                    try:
-                        msg_buf = msg.get_msgbuf()
-                        self.forwarding_connection.write(msg_buf)
-                    except Exception as e:
-                        self.logger.error(
-                            f"Failed to forward message: {e}", exc_info=True
-                        )
-                        self.stopForwarding()
-
-                msg_name = msg.get_type()
-
-                if msg_name == "HEARTBEAT":
-                    if (
-                        msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
-                    ):  # No valid autopilot, e.g. a GCS or other MAVLink component
-                        continue
-
-                    self.armed = bool(
-                        msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
-                    )
-
-                if self.armed:
-                    try:
-                        self.log_message_queue.put(
-                            f"{msg._timestamp},{msg_name},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
-                        )
-                    except Exception as e:
-                        self.log_message_queue.put(f"Writing message failed! {e}")
-                        continue
-
-                if msg_name == "TIMESYNC":
-                    component_timestamp = msg.ts1
-                    local_timestamp = time.time_ns()
-                    self.master.mav.timesync_send(local_timestamp, component_timestamp)
-                    continue
-                elif msg_name == "STATUSTEXT":
-                    self.logger.info(msg.text)
-
-                with self.reservation_lock:
-                    if msg_name in self.reserved_messages:
-                        # Route to controller queues
-                        for controller_id, queue in self.controller_queues.items():
-                            try:
-                                queue.put((msg_name, msg), block=False)
-                            except Exception:
-                                # Queue full
-                                pass
-                    else:
-                        # Route to normal message listeners
-                        if msg_name in self.message_listeners:
-                            self.message_queue.put([msg_name, msg])
-            else:
+            if msg is None:
+                # Avoid busy waiting
                 time.sleep(0.05)
+                continue
+
+            if self.forwarding_connection is not None:
+                try:
+                    msg_buf = msg.get_msgbuf()
+                    self.forwarding_connection.write(msg_buf)
+                except Exception as e:
+                    self.logger.error(f"Failed to forward message: {e}", exc_info=True)
+                    self.stopForwarding()
+
+            msg_name = msg.get_type()
+
+            if msg_name == "HEARTBEAT":
+                if (
+                    msg.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID
+                ):  # No valid autopilot, e.g. a GCS or other MAVLink component
+                    continue
+
+                self.armed = bool(
+                    msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+                )
+
+            if self.armed:
+                try:
+                    self.log_message_queue.put(
+                        f"{msg._timestamp},{msg_name},{','.join([f'{message}:{msg.to_dict()[message]}' for message in msg.to_dict() if message != 'mavpackettype'])}"
+                    )
+                except Exception as e:
+                    self.log_message_queue.put(f"Writing message failed! {e}")
+                    continue
+
+            if msg_name == "TIMESYNC":
+                component_timestamp = msg.ts1
+                local_timestamp = time.time_ns()
+                self.master.mav.timesync_send(local_timestamp, component_timestamp)
+                continue
+            elif msg_name == "STATUSTEXT":
+                self.logger.info(msg.text)
+
+            with self.reservation_lock:
+                if msg_name in self.reserved_messages:
+                    # Route to controller queues
+                    for controller_id, queue in self.controller_queues.items():
+                        try:
+                            queue.put((msg_name, msg), block=False)
+                        except Exception:
+                            # Queue full
+                            pass
+                else:
+                    # Route to normal message listeners
+                    if msg_name in self.message_listeners:
+                        self.message_queue.put([msg_name, msg])
 
     def executeMessages(self) -> None:
         """Executes message listeners based on messages from the message queue."""
@@ -1162,6 +1162,8 @@ class Drone:
         self.logger.info(f"Cleaning up resources for drone at {self}")
         for message_id in copy.deepcopy(self.message_listeners):
             self.removeMessageListener(message_id)
+
+        self.is_active.clear()
 
         self.stopAllDataStreams()
         self.stopForwarding()

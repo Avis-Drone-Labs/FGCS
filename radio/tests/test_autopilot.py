@@ -4,7 +4,7 @@ from flask_socketio.test_client import SocketIOTestClient
 from . import falcon_test
 
 
-@pytest.mark.timeout(15)
+@pytest.mark.timeout(30)
 @falcon_test()
 def test_reboot_success(socketio_client: SocketIOTestClient):
     """

@@ -614,6 +614,7 @@ class MissionController:
                 "success": False,
                 "message": "Could not reserve MISSION_REQUEST messages",
             }
+
         if not self.drone.reserve_message_type("MISSION_ACK", self.controller_id):
             self.drone.release_message_type("MISSION_REQUEST", self.controller_id)
             return {

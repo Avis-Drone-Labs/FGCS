@@ -242,7 +242,7 @@ class Drone:
 
         self.stopAllDataStreams()
 
-        if forwarding_address is not None and len(forwarding_address) > 0:
+        if forwarding_address:
             try:
                 start_forwarding_result = self.startForwardingToAddress(
                     forwarding_address
@@ -552,9 +552,9 @@ class Drone:
         with self.reservation_lock:
             self.reserved_messages.discard(message_type)
             # Clear any remaining messages in the controller's queue for this type
+            # by creating a new, empty queue
             if controller_id in self.controller_queues:
-                # We'll implement a cleanup mechanism if needed
-                pass
+                self.controller_queues[controller_id] = Queue()
 
     def wait_for_message(
         self,

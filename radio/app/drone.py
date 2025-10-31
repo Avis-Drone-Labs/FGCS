@@ -562,7 +562,7 @@ class Drone:
         controller_id: str,
         timeout: float = 3.0,
         condition_func=None,
-    ) -> Optional[object]:
+    ) -> Optional[mavutil.mavlink.MAVLink_message]:
         """Wait for a specific message type for a controller.
 
         Args:

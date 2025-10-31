@@ -59,7 +59,7 @@ class ParamRefreshTimeout:
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
             self.wait_for_message = droneStatus.drone.wait_for_message
-            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none  # type: ignore[method-assign]
             self.old_param_index = (
                 droneStatus.drone.paramsController.current_param_index
             )
@@ -67,7 +67,7 @@ class ParamRefreshTimeout:
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.wait_for_message = self.wait_for_message
+            droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
             droneStatus.drone.paramsController.current_param_index = (
                 self.old_param_index
             )
@@ -81,11 +81,11 @@ class WaitForMessageReturnsNone:
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
             self.wait_for_message = droneStatus.drone.wait_for_message
-            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none  # type: ignore[method-assign]
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.wait_for_message = self.wait_for_message
+            droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
 
 
 class SetAircraftType:

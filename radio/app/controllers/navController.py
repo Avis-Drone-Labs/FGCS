@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from threading import current_thread
 from typing import TYPE_CHECKING
 
 import serial
@@ -19,6 +20,7 @@ class NavController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"nav_{current_thread().ident}"
         self.drone = drone
 
         self.loiter_radius_param_type = mavutil.mavlink.MAV_PARAM_TYPE_INT16
@@ -33,17 +35,21 @@ class NavController:
         """
         Request the current home position from the drone.
         """
-        self.drone.is_listening = False
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-            param1=mavutil.mavlink.MAVLINK_MSG_ID_HOME_POSITION,
-        )
+        if not self.drone.reserve_message_type("HOME_POSITION", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve HOME_POSITION messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(
-                type="HOME_POSITION", blocking=True, timeout=1.5
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+                param1=mavutil.mavlink.MAVLINK_MSG_ID_HOME_POSITION,
             )
-            self.drone.is_listening = True
+
+            response = self.drone.wait_for_message(
+                "HOME_POSITION", self.controller_id, timeout=1.5
+            )
 
             if response:
                 self.drone.logger.info("Home position received")
@@ -65,13 +71,15 @@ class NavController:
                     "success": False,
                     "message": "Could not get home position",
                 }
+
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             self.drone.logger.warning("Could not get home position, serial exception")
             return {
                 "success": False,
                 "message": "Could not get home position, serial exception",
             }
+        finally:
+            self.drone.release_message_type("HOME_POSITION", self.controller_id)
 
     @sendingCommandLock
     def setHomePosition(self, lat: float, lon: float, alt: float) -> Response:
@@ -83,28 +91,29 @@ class NavController:
             lon (float): The longitude of the home point
             alt (float): The altitude of the home point
         """
-
-        self.drone.is_listening = False
-        self.drone.sendCommandInt(
-            mavutil.mavlink.MAV_CMD_DO_SET_HOME, x=lat, y=lon, z=alt
-        )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(
-                type=[
-                    "COMMAND_ACK",
-                ],
-                blocking=True,
-                timeout=2,
+            self.drone.sendCommandInt(
+                mavutil.mavlink.MAV_CMD_DO_SET_HOME, x=lat, y=lon, z=alt
             )
-            self.drone.is_listening = True
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_SET_HOME,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_HOME):
                 return {
                     "success": True,
                     "message": "Home point set successfully",
                 }
-
             else:
                 return {
                     "success": False,
@@ -112,11 +121,12 @@ class NavController:
                 }
 
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Could not set home point, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     def takeoff(self, alt: float) -> Response:
         """
@@ -138,32 +148,43 @@ class NavController:
         if not guidedModeSetResult["success"]:
             return guidedModeSetResult
 
-        self.drone.is_listening = False
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
+
         self.drone.sending_command_lock.acquire()
 
-        self.drone.sendCommand(mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, param7=alt)
-
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.drone.is_listening = True
+            self.drone.sendCommand(mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, param7=alt)
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+            )
+
             self.drone.sending_command_lock.release()
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF):
-                self.drone.is_listening = True
                 self.drone.logger.info("Takeoff command send successfully")
                 return {"success": True, "message": "Takeoff command sent successfully"}
             else:
-                self.drone.is_listening = True
                 return {
                     "success": False,
                     "message": "Could not takeoff",
                 }
+
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
+            self.drone.sending_command_lock.release()
             return {
                 "success": False,
                 "message": "Could not takeoff, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     @sendingCommandLock
     def land(self) -> Response:
@@ -173,13 +194,21 @@ class NavController:
         Returns:
             Response: The response from the land command
         """
-        self.drone.is_listening = False
-
-        self.drone.sendCommand(mavutil.mavlink.MAV_CMD_NAV_LAND)
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
-            self.drone.is_listening = True
+            self.drone.sendCommand(mavutil.mavlink.MAV_CMD_NAV_LAND)
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_NAV_LAND,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_NAV_LAND):
                 self.drone.logger.info("Land command send successfully")
@@ -189,12 +218,14 @@ class NavController:
                     "success": False,
                     "message": "Could not land",
                 }
+
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Could not land, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     def reposition(self, lat: float, lon: float, alt: float) -> Response:
         """
@@ -212,33 +243,29 @@ class NavController:
         if not guidedModeSetResult["success"]:
             return guidedModeSetResult
 
-        self.drone.is_listening = False
-
-        with self.drone.sending_command_lock:
-            self.drone.master.mav.set_position_target_global_int_send(
-                0,
-                self.drone.target_system,
-                self.drone.target_component,
-                mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-                65016,  # Bitmask to ignore all values except for x, y and z
-                int(lat * 1e7),
-                int(lon * 1e7),
-                alt,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
-
-        self.drone.logger.info(f"Reposition command sent to {lat}, {lon}, {alt}m")
-
-        self.drone.is_listening = True
-
         try:
+            with self.drone.sending_command_lock:
+                self.drone.master.mav.set_position_target_global_int_send(
+                    0,
+                    self.drone.target_system,
+                    self.drone.target_component,
+                    mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                    65016,  # Bitmask to ignore all values except for x, y and z
+                    int(lat * 1e7),
+                    int(lon * 1e7),
+                    alt,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+
+            self.drone.logger.info(f"Reposition command sent to {lat}, {lon}, {alt}m")
+
             return {
                 "success": True,
                 "message": "Reposition command sent successfully",
@@ -249,7 +276,6 @@ class NavController:
                 },
             }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             self.drone.logger.error("Reposition command not accepted, serial exception")
             return {
                 "success": False,

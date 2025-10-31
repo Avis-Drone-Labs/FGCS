@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from threading import current_thread
 from typing import TYPE_CHECKING
 
 import serial
@@ -29,6 +30,7 @@ class GripperController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"gripper_{current_thread().ident}"
         self.drone = drone
         self.params: dict = {}
 
@@ -109,24 +111,33 @@ class GripperController:
                 "message": 'Gripper action must be either "release" or "grab"',
             }
 
-        self.drone.is_listening = False
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
+
         self.drone.sending_command_lock.acquire()
 
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_GRIPPER,
-            0,
-            0 if action == "release" else 1,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
-
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_DO_GRIPPER,
+                0,
+                0 if action == "release" else 1,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
 
-            self.drone.is_listening = True
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_GRIPPER,
+            )
+
             self.drone.sending_command_lock.release()
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_GRIPPER):
@@ -139,13 +150,15 @@ class GripperController:
                     "success": False,
                     "message": "Setting gripper failed",
                 }
+
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             self.drone.sending_command_lock.release()
             return {
                 "success": False,
                 "message": "Setting gripper failed, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     def getConfig(self) -> dict:
         """

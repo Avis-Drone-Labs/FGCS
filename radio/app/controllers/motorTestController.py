@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from threading import current_thread
 from typing import TYPE_CHECKING, Optional
 
 import serial
@@ -24,6 +25,7 @@ class MotorTestController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"motortest_{current_thread().ident}"
         self.drone = drone
 
     def checkMotorTestValues(
@@ -66,8 +68,6 @@ class MotorTestController:
         Returns:
             Response: The response from the motor test
         """
-        self.drone.is_listening = False
-
         throttle, duration, err = self.checkMotorTestValues(data)
         if err:
             return {"success": False, "message": err}
@@ -80,22 +80,31 @@ class MotorTestController:
             )
             return {"success": False, "message": "Invalid value for motorInstance"}
 
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-            param1=motor_instance,  # ID of the motor to be tested
-            param2=0,  # throttle type (PWM,% etc)
-            param3=throttle,  # value of the throttle - 0 to 100%
-            param4=duration,  # duration of the test in seconds
-            param5=0,  # number of motors to test in a sequence
-            param6=0,  # test order
-        )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         motor_letter = chr(64 + motor_instance)
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                param1=motor_instance,  # ID of the motor to be tested
+                param2=0,  # throttle type (PWM,% etc)
+                param3=throttle,  # value of the throttle - 0 to 100%
+                param4=duration,  # duration of the test in seconds
+                param5=0,  # number of motors to test in a sequence
+                param6=0,  # test order
+            )
 
-            self.drone.is_listening = True
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 self.drone.logger.info(f"Motor test started for motor {motor_instance}")
@@ -111,9 +120,8 @@ class MotorTestController:
                     "success": False,
                     "message": f"Motor test for motor {motor_letter} not started",
                 }
-        except serial.serialutil.SerialException:
-            self.drone.is_listening = True
 
+        except serial.serialutil.SerialException:
             self.drone.logger.error(
                 f"Motor test for motor {motor_instance} not started, serial exception"
             )
@@ -121,6 +129,8 @@ class MotorTestController:
                 "success": False,
                 "message": f"Motor test for motor {motor_letter} not started, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     @sendingCommandLock
     def testMotorSequence(self, data: MotorTestThrottleDurationAndNumber) -> Response:
@@ -133,8 +143,6 @@ class MotorTestController:
         Returns:
             Response: The response from the motor test
         """
-        self.drone.is_listening = False
-
         throttle, duration, err = self.checkMotorTestValues(data)
         if err:
             return {"success": False, "message": err}
@@ -146,20 +154,29 @@ class MotorTestController:
             )
             return {"success": False, "message": "Invalid value for number_of_motors"}
 
-        self.drone.sendCommand(
-            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-            param1=0,  # ID of the motor to be tested
-            param2=0,  # throttle type (PWM,% etc)
-            param3=throttle,  # value of the throttle - 0 to 100%
-            param4=duration,  # delay between tests in seconds
-            param5=num_motors,  # number of motors to test in a sequence
-            param6=0,  # test order
-        )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
         try:
-            response = self.drone.master.recv_match(type="COMMAND_ACK", blocking=True)
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                param1=0,  # ID of the motor to be tested
+                param2=0,  # throttle type (PWM,% etc)
+                param3=throttle,  # value of the throttle - 0 to 100%
+                param4=duration,  # delay between tests in seconds
+                param5=num_motors,  # number of motors to test in a sequence
+                param6=0,  # test order
+            )
 
-            self.drone.is_listening = True
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                 self.drone.logger.info("Motor sequence test started")
@@ -167,14 +184,15 @@ class MotorTestController:
             else:
                 self.drone.logger.error("Motor sequence test not started")
                 return {"success": False, "message": "Motor sequence test not started"}
-        except serial.serialutil.SerialException:
-            self.drone.is_listening = True
 
+        except serial.serialutil.SerialException:
             self.drone.logger.error("Motor sequence test not started, serial exception")
             return {
                 "success": False,
                 "message": "Motor sequence test not started, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     @sendingCommandLock
     def testAllMotors(self, data: MotorTestThrottleDurationAndNumber) -> Response:
@@ -190,8 +208,6 @@ class MotorTestController:
         # Timeout after 3 seconds waiting for the motor test confirmation
         RESPONSE_TIMEOUT = 3
 
-        self.drone.is_listening = False
-
         throttle, duration, err = self.checkMotorTestValues(data)
         if err:
             return {"success": False, "message": err}
@@ -204,56 +220,68 @@ class MotorTestController:
             )
             return {"success": False, "message": "Invalid value for number_of_motors"}
 
-        # Send all commands
-        for idx in range(1, num_motors + 1):
-            self.drone.sendCommand(
-                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-                param1=idx,  # ID of the motor to be tested
-                param2=0,  # throttle type (PWM,% etc)
-                param3=throttle,  # value of the throttle - 0 to 100%
-                param4=duration,  # duration of the test in seconds
-                param5=0,  # number of motors to test in a sequence
-                param6=0,  # test order
-            )
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
 
-        successful_responses = 0
         try:
-            # Attempt to gather all the command acknowledegements
+            # Send all commands
+            for idx in range(1, num_motors + 1):
+                self.drone.sendCommand(
+                    mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                    param1=idx,  # ID of the motor to be tested
+                    param2=0,  # throttle type (PWM,% etc)
+                    param3=throttle,  # value of the throttle - 0 to 100%
+                    param4=duration,  # duration of the test in seconds
+                    param5=0,  # number of motors to test in a sequence
+                    param6=0,  # test order
+                )
+
+            successful_responses = 0
+            # Attempt to gather all the command acknowledgements using the new system
             for _ in range(num_motors):
-                response = self.drone.master.recv_match(
-                    type="COMMAND_ACK", blocking=True, timeout=RESPONSE_TIMEOUT
+                response = self.drone.wait_for_message(
+                    "COMMAND_ACK",
+                    self.controller_id,
+                    timeout=RESPONSE_TIMEOUT,
+                    condition_func=lambda msg: msg.command
+                    == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
                 )
                 if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST):
                     successful_responses += 1
-        except serial.serialutil.SerialException:
-            self.drone.is_listening = True
 
+            # Return data based on the number of successful command acknowledgements
+            if successful_responses == num_motors:
+                self.drone.logger.info("All motor test started successfully")
+                return {
+                    "success": True,
+                    "message": "All motor test started successfully",
+                }
+            elif successful_responses < num_motors:
+                self.drone.logger.warning(
+                    f"Number of successful responses ({successful_responses}) was less than number of motors ({num_motors})"
+                )
+                return {
+                    "success": False,
+                    "message": f"All motor test successfully started {successful_responses} / {num_motors} motors",
+                }
+            else:  # pragma: no cover
+                # We should never reach this (since we should only ever have successful_responses <= num_motors)
+                self.drone.logger.info(
+                    f"All motor test potentially started, but received {successful_responses} responses with {num_motors} motors"
+                )
+                return {
+                    "success": True,
+                    "message": "All motor test potentially started",
+                }
+
+        except serial.serialutil.SerialException:
             self.drone.logger.error("All motor test not started, serial exception")
             return {
                 "success": False,
                 "message": "All motor test not started, serial exception",
             }
-
-        self.drone.is_listening = True
-
-        # Return data based on the number of successful command acknowledgements
-        if successful_responses == num_motors:
-            self.drone.logger.info("All motor test started successfully")
-            return {"success": True, "message": "All motor test started successfully"}
-        elif successful_responses < num_motors:
-            self.drone.logger.warning(
-                f"Number of successful responses ({successful_responses}) was less than number of motors ({num_motors})"
-            )
-            return {
-                "success": False,
-                "message": f"All motor test successfully started {successful_responses} / {num_motors} motors",
-            }
-        else:  # pragma: no cover
-            # We should never reach this (since we should only ever have successful_responses <= num_motors)
-            self.drone.logger.info(
-                f"All motor test potentially started, but received {successful_responses} responses with {num_motors} motors"
-            )
-            return {
-                "success": True,
-                "message": "All motor test potentially started",
-            }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)

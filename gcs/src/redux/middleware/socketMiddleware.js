@@ -98,7 +98,7 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
+import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -354,12 +354,108 @@ const socketMiddleware = (store) => {
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
           store.dispatch(setShowMotorTestWarningModal(true))
-          store.dispatch(resetMessages())
         })
 
         // Link stats
         socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
           window.ipcRenderer.invoke("app:update-link-stats", msg)
+        })
+
+        /*
+          Telemetry Socket Connection Events
+        */
+        socket.telemetrySocket.on("connect", () => {
+          console.log(
+            `Connected to telemetry socket: ${socket.telemetrySocket.id}`,
+          )
+        })
+
+        socket.telemetrySocket.on("disconnect", () => {
+          console.log(
+            `Disconnected from telemetry socket: ${socket.telemetrySocket.id}`,
+          )
+        })
+
+        socket.telemetrySocket.on("connect_error", (error) => {
+          console.error("Telemetry socket connection error:", error)
+        })
+
+        // I don't understand whatsoever why this doesn't work with the standard
+        // on method.
+        socket.telemetrySocket.onAny((eventName, ...args) => {
+          if (eventName !== DroneSpecificSocketEvents.onIncomingMsg) {
+            return
+          }
+
+          const msg = args[0]
+
+          incomingMessageHandler(msg)
+
+          // Data points on dashboard, the below code updates the value in the store when a new message
+          // comes in in the type of specificData.
+          const packetType = msg.mavpackettype
+          const storeState = store.getState()
+          if (storeState !== undefined) {
+            const extraDroneData = storeState.droneInfo.extraDroneData
+            const updatedExtraDroneData = extraDroneData.map((dataItem) => {
+              if (dataItem.currently_selected.startsWith(packetType)) {
+                const specificData = dataItem.currently_selected.split(".")[1]
+                if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+                  return { ...dataItem, value: msg[specificData] }
+                }
+              }
+              return dataItem
+            })
+
+            store.dispatch(setExtraData(updatedExtraDroneData))
+          }
+
+          // Handle graph messages
+          // Function to get the graph data from a message
+          function getGraphDataFromMessage(msg, targetMessageKey) {
+            const returnDataArray = []
+            for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
+              const messageKey =
+                storeState.droneInfo.graphs.selectedGraphs[graphKey]
+              if (messageKey && messageKey.includes(targetMessageKey)) {
+                const [, valueName] = messageKey.split(".")
+
+                // Applying Data Formatters
+                let formatted_value = msg[valueName]
+                if (messageKey in dataFormatters) {
+                  formatted_value = dataFormatters[messageKey](
+                    msg[valueName].toFixed(3),
+                  )
+                }
+
+                returnDataArray.push({
+                  data: { x: Date.now(), y: formatted_value },
+                  graphKey: graphKey,
+                })
+              }
+            }
+            if (returnDataArray.length) {
+              return returnDataArray
+            }
+            return false
+          }
+          store.dispatch(
+            setLastGraphMessage(
+              getGraphDataFromMessage(msg, msg.mavpackettype),
+            ),
+          )
+
+          // Handle Flight Mode incoming data
+          if (
+            msg.mavpackettype === "RC_CHANNELS" &&
+            storeState.config.flightModeChannel !== "UNKNOWN"
+          ) {
+            store.dispatch(
+              setCurrentPwmValue(
+                msg[`chan${storeState.config.flightModeChannel}_raw`],
+              ),
+            )
+          }
         })
       }
     }
@@ -871,79 +967,6 @@ const socketMiddleware = (store) => {
             }
           },
         )
-
-        /*
-          Generic Drone Data
-        */
-        socket.socket.on(DroneSpecificSocketEvents.onIncomingMsg, (msg) => {
-          incomingMessageHandler(msg)
-
-          // Data points on dashboard, the below code updates the value in the store when a new message
-          // comes in in the type of specificData.
-          const packetType = msg.mavpackettype
-          const storeState = store.getState()
-          if (storeState !== undefined) {
-            const extraDroneData = storeState.droneInfo.extraDroneData
-            const updatedExtraDroneData = extraDroneData.map((dataItem) => {
-              if (dataItem.currently_selected.startsWith(packetType)) {
-                const specificData = dataItem.currently_selected.split(".")[1]
-                if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-                  return { ...dataItem, value: msg[specificData] }
-                }
-              }
-              return dataItem
-            })
-
-            store.dispatch(setExtraData(updatedExtraDroneData))
-          }
-
-          // Handle graph messages
-          // Function to get the graph data from a message
-          function getGraphDataFromMessage(msg, targetMessageKey) {
-            const returnDataArray = []
-            for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
-              const messageKey =
-                storeState.droneInfo.graphs.selectedGraphs[graphKey]
-              if (messageKey && messageKey.includes(targetMessageKey)) {
-                const [, valueName] = messageKey.split(".")
-
-                // Applying Data Formatters
-                let formatted_value = msg[valueName]
-                if (messageKey in dataFormatters) {
-                  formatted_value = dataFormatters[messageKey](
-                    msg[valueName].toFixed(3),
-                  )
-                }
-
-                returnDataArray.push({
-                  data: { x: Date.now(), y: formatted_value },
-                  graphKey: graphKey,
-                })
-              }
-            }
-            if (returnDataArray.length) {
-              return returnDataArray
-            }
-            return false
-          }
-          store.dispatch(
-            setLastGraphMessage(
-              getGraphDataFromMessage(msg, msg.mavpackettype),
-            ),
-          )
-
-          // Handle Flight Mode incoming data
-          if (
-            msg.mavpackettype === "RC_CHANNELS" &&
-            storeState.config.flightModeChannel !== "UNKNOWN"
-          ) {
-            store.dispatch(
-              setCurrentPwmValue(
-                msg[`chan${storeState.config.flightModeChannel}_raw`],
-              ),
-            )
-          }
-        })
       } else {
         // Turn off socket events
         Object.values(DroneSpecificSocketEvents).map((event) =>
@@ -958,6 +981,9 @@ const socketMiddleware = (store) => {
         Object.values(ConfigSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
+
+        // Turn off telemetry socket events
+        socket.telemetrySocket.off(DroneSpecificSocketEvents.onIncomingMsg)
       }
     }
 

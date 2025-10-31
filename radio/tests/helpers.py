@@ -9,12 +9,11 @@ from . import socketio_client
 
 class FakeTCP:
     """
-    Context manager that replaces the mavlink mavtcp recv_match method in `droneStatus.drone.master` with one that raises a
-    `serial.serialutils.SerialException`. Use if you want to simulate a serial issue for a unit test.
+    Context manager that replaces master mavlink functions with ones that raise SerialException
     """
 
     @staticmethod
-    def recv_match_override(
+    def return_serial_exception(
         condition=None, type=None, blocking=False, timeout=None
     ) -> None:
         raise SerialException(
@@ -22,15 +21,13 @@ class FakeTCP:
         )
 
     def __enter__(self) -> None:
-        # Replace drone mavtcp recv_match function with one that raises SerialException
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = FakeTCP.recv_match_override
+            self.old_send = droneStatus.drone.master.mav.send
+            droneStatus.drone.master.mav.send = FakeTCP.return_serial_exception
 
     def __exit__(self, type, value, traceback) -> None:
-        # Reset recv_match method
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
+            droneStatus.drone.master.mav.send = self.old_send
 
 
 class NoDrone:
@@ -50,42 +47,19 @@ class NoDrone:
         droneStatus.drone = self.oldDrone
 
 
-class ParamSetTimeout:
-    """Context manager that replaces the mavlink recv_match function in drone.master with a function that return a None value
-    to cause the set multipleparams function to timeout
-    """
-
-    @staticmethod
-    def recv_match_null_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> None:
-        return None
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = ParamSetTimeout.recv_match_null_value
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
-
-
 class ParamRefreshTimeout:
     """Context manager that replaces the mavlink recv_msg function in drone.master with a function that returns a False value
     and sets current_param_index to -1 to cause the refresh_params function to timeout with no params received from the drone
     """
 
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, Type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
+    def returns_none(*args, **kwargs) -> None:
+        return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv_msg = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = ParamRefreshTimeout.recv_msg_false_value
+            self.wait_for_message = droneStatus.drone.wait_for_message
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none  # type: ignore[method-assign]
             self.old_param_index = (
                 droneStatus.drone.paramsController.current_param_index
             )
@@ -93,50 +67,25 @@ class ParamRefreshTimeout:
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv_msg
+            droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
             droneStatus.drone.paramsController.current_param_index = (
                 self.old_param_index
             )
 
 
-class NoAcknowledgementMessage:
-    """Context manager that replaces the mavlink recv_match function in drone.master with a function that returns False
-    causing no acknowledgement messages to be received when used in the MotorTestController tests
-    """
-
+class WaitForMessageReturnsNone:
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = (
-                NoAcknowledgementMessage.recv_msg_false_value
-            )
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
-
-
-class RecvMsgReturnsNone:
-    @staticmethod
-    def recv_match_false(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> None:
+    def returns_none(*args, **kwargs) -> None:
         return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = RecvMsgReturnsNone.recv_match_false
+            self.wait_for_message = droneStatus.drone.wait_for_message
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none  # type: ignore[method-assign]
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
+            droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
 
 
 class SetAircraftType:

@@ -1,7 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import FakeTCP, NoAcknowledgementMessage
+from .helpers import FakeTCP, WaitForMessageReturnsNone
 
 
 def validate_motor_test_values(
@@ -179,7 +179,7 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
         )
 
     # Motor test not started due to not receiving acknowledgement message
-    with NoAcknowledgementMessage():
+    with WaitForMessageReturnsNone():
         run_motor_test(
             droneStatus,
             test_func,
@@ -296,7 +296,7 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
         )
 
     # Motor test not started due to not receiving acknowledgement message
-    with NoAcknowledgementMessage():
+    with WaitForMessageReturnsNone():
         run_motor_test(
             droneStatus,
             test_func,
@@ -413,7 +413,7 @@ def test_testAllMotors(client: SocketIOTestClient, droneStatus):
         )
 
     # Motor test not started due to not receiving acknowledgement message
-    with NoAcknowledgementMessage():
+    with WaitForMessageReturnsNone():
         run_motor_test(
             droneStatus,
             test_func,

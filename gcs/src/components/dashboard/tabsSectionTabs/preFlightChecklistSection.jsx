@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
 import { Accordion, Button, FileInput, Modal, Tabs, TextInput } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
+import { useLocalStorage, useTimeout } from "@mantine/hooks"
 
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
@@ -23,26 +23,19 @@ import { showErrorNotification } from "../../../helpers/notification.js"
 import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { pushChecklist, selectChecklists } from "../../../redux/slices/checklistSlice.js"
+
 export default function PreFlightChecklistTab({ tabPadding }) {
-  const [preFlightChecklistItems, setPreFlightChecklistItems] = useLocalStorage(
-    { key: "preFlightCheckList", defaultValue: [] },
-  )
+  const dispatch = useDispatch()
+  const preFlightChecklistItems = useSelector(selectChecklists)
 
   // New checklist
   const [uploadedFile, setUploadedFile] = useState(null) // Needed so we can reset the uploaded file each click to avoid missed clicks as we use onChange for FileInput
   const [showNewChecklistModal, setNewChecklistModal] = useState(false)
   const [newChecklistName, setNewChecklistName] = useState("")
   const fileUploadRef = useRef()
-
-  function deleteChecklist(toDelete) {
-    var final = []
-    preFlightChecklistItems.map((element) => {
-      if (element != toDelete) {
-        final.push(element)
-      }
-    })
-    setPreFlightChecklistItems(final)
-  }
 
   function doesChecklistExist(name) {
     return preFlightChecklistItems.find((element) => element.name.toLowerCase() == name.toLowerCase()) !== undefined
@@ -70,13 +63,12 @@ export default function PreFlightChecklistTab({ tabPadding }) {
       showErrorNotification("Name cannot be empty")
     }
 
-    preFlightChecklistItems.push({
+    dispatch(pushChecklist({
       name: name,
       value: value
-    })
+    }))
     setNewChecklistModal(false)
     setNewChecklistName("")
-    setPreFlightChecklistItems(preFlightChecklistItems)
   }
 
   useEffect(() => {
@@ -111,26 +103,24 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   return (
     <Tabs.Panel value="preFlightChecklist">
       <div className={tabPadding}>
-        {/* List, known issue of not opening the same list if name was changed but it's not worth it */}
+        {/* The list of checklist */}
         <Accordion variant="separated">
           {preFlightChecklistItems.map((item) => (
             <Accordion.Item
-              key={item.name}
+              key={item.id}
               value={item.name}
             >
               <Accordion.Control>{item.name}</Accordion.Control>
               <Accordion.Panel>
                 <CheckListArea
-                  items={item.value}
-                  saveItems={(e) => {
-                    item.value = e
-                    setPreFlightChecklistItems(preFlightChecklistItems)
-                  }}
-                  deleteChecklist={() => deleteChecklist(item)}
-                  name={item.name}
-                  setName={(e) => {
-                    item.name = e
-                  }}
+                  id={item.id}
+                  // items={item.value}
+                  // saveItems={(e) => {
+                    // item.value = e
+                    // setPreFlightChecklistItems(preFlightChecklistItems)
+                  // }}
+                  // deleteChecklist={() => dispatch(deleteChecklistByName(item.name))}
+                  // name={item.name}
                 />
               </Accordion.Panel>
             </Accordion.Item>

@@ -18,17 +18,16 @@ import tailwindConfig from "../../../../tailwind.config.js"
 import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function CheckListArea({
-  name,
-  items,
-  saveItems,
-  deleteChecklist,
-  setName,
-}) {
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { deleteChecklistById, selectChecklistById, setChecklistValueById, setNewChecklistName } from "../../../redux/slices/checklistSlice.js"
+
+export default function CheckListArea({id}) {
+  const dispatch = useDispatch()
+  const checklist = useSelector(selectChecklistById(id))
+
   const [showDeleteModal, setDeleteModal] = useState(false)
   const [editCheckListModal, setEditCheckListModal] = useState(false)
-  const [checkListName, setChecklistName] = useState(name)
-  const [checkBoxList, setCheckboxList] = useState(items)
   const [checkBoxListString, setCheckboxListString] = useState(
     generateCheckboxListString(),
   )
@@ -38,7 +37,7 @@ export default function CheckListArea({
   function generateCheckboxListString(set = false) {
     // Go from list to string, returns0
     var final = "<ul>"
-    checkBoxList.map((element) => {
+    checklist.value.map((element) => {
       final += "<li><p>" + element.name + "</p></li>"
     })
 
@@ -52,7 +51,7 @@ export default function CheckListArea({
 
   function generateCheckboxList(defaultCheck = false) {
     var final = generateCheckListObjectFromHTMLString(checkBoxListString, defaultCheck)
-    setCheckboxList(final)
+    dispatch(setChecklistValueById({ id: checklist.id, value: final }))
   }
 
   function toggleCheck() {
@@ -71,25 +70,25 @@ export default function CheckListArea({
           checked:
             elementName == name
               ? value
-              : checkBoxList.find((e) => e.name == elementName).checked,
+              : checklist.value.find((e) => e.name == elementName).checked,
           name: elementName,
         })
       })
-    setCheckboxList(final)
+    dispatch(setChecklistValueById({ id: checklist.id, value: final }))
   }
 
   function exportList() {
     const downloadElement = document.createElement("a")
     const file = new Blob([checkBoxListString], {type: "text/plain"})
     downloadElement.href = URL.createObjectURL(file)
-    downloadElement.download = `${checkListName}.checklist`
+    downloadElement.download = `${checklist.name}.checklist`
     document.body.appendChild(downloadElement)
     downloadElement.click()
     document.body.removeChild(downloadElement)
   }
 
   function generateMappedItems() {
-    return checkBoxList.map((element) => {
+    return checklist.value.map((element) => {
       return (
         <Checkbox
           checked={element.checked}
@@ -103,8 +102,8 @@ export default function CheckListArea({
 
   useEffect(() => {
     setMappedItems(generateMappedItems())
-    saveItems(checkBoxList)
-  }, [checkBoxList])
+    dispatch(setChecklistValueById({ id: checklist.id, value: checklist.value }))
+  }, [checklist.value])
 
   return (
     <>
@@ -172,9 +171,10 @@ export default function CheckListArea({
 
       {/* Edit mode */}
       <EditCheckList
+        passedName={checklist.name}
         opened={editCheckListModal}
         close={() => setEditCheckListModal(false)}
-        nameSet={[checkListName, setChecklistName, (e) => setName(e)]}
+        checklistId={checklist.id}
         checkListSet={[checkBoxListString, setCheckboxListString]}
         generateCheckboxListString={generateCheckboxListString}
         generateCheckboxList={generateCheckboxList}
@@ -202,7 +202,7 @@ export default function CheckListArea({
           </Button>
           <Button
             color={tailwindColors.green[600]}
-            onClick={() => deleteChecklist()}
+            onClick={() => dispatch(deleteChecklistById(checklist.id))}
             data-autofocus
           >
             Yes, Continue

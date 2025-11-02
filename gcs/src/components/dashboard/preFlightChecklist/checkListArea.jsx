@@ -78,8 +78,12 @@ export default function CheckListArea({id}) {
   }
 
   function exportList() {
+    // Remove id from checklist before exporting as it gets regenerated on importing (that's what id: _ does)
+    let {id: _, ...sanitizedChecklist} = checklist 
     const downloadElement = document.createElement("a")
-    const file = new Blob([checkBoxListString], {type: "text/plain"})
+    const file = new Blob([JSON.stringify(sanitizedChecklist)], {type: "text/plain"})
+
+    // Simulating clicking a link to download
     downloadElement.href = URL.createObjectURL(file)
     downloadElement.download = `${checklist.name}.checklist`
     document.body.appendChild(downloadElement)

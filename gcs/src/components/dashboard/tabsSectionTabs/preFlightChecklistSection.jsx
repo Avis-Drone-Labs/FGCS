@@ -87,9 +87,8 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     // Read text
     reader.onload = () => {
       var text = reader.result
-      var title = file.name.split(".")[0]
-      var checkListObject = generateCheckListObjectFromHTMLString(text)
-      createNewChecklist(title, checkListObject)
+      var checkListObject = JSON.parse(text)
+      createNewChecklist(checkListObject.name, checkListObject.value)
     }
     reader.readAsText(file)
   }

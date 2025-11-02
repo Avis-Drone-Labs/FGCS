@@ -48,7 +48,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   function doesChecklistExist(name) {
     return (
       preFlightChecklistItems.find(
-        (element) => element.name.toLowerCase() == name.toLowerCase(),
+        (element) => element.name.toLowerCase() === name.toLowerCase(),
       ) !== undefined
     )
   }
@@ -71,8 +71,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
       ]
     }
 
-    if (name == "") {
+    if (name === "") {
       showErrorNotification("Name cannot be empty")
+      return
     }
 
     dispatch(
@@ -101,15 +102,21 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     // Read text
     reader.onload = () => {
       var text = reader.result
-      var checkListObject = JSON.parse(text)
-      createNewChecklist(checkListObject.name, checkListObject.value)
+      let checklistObject
+      try {
+        checklistObject = JSON.parse(text)
+      } catch {
+        showErrorNotification("Invalid JSON in checklist file.")
+        return
+      }
+      createNewChecklist(checklistObject.name, checklistObject.value)
     }
     reader.readAsText(file)
   }
 
   // Reset checklist upload when changed (needed so we don't miss clicks)
   useEffect(() => {
-    if (uploadedFile == null) return
+    if (uploadedFile === null) return
     setUploadedFile(null)
   }, [uploadedFile])
 
@@ -122,9 +129,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
             <Accordion.Item key={item.id} value={item.name}>
               <Accordion.Control>{item.name}</Accordion.Control>
               <Accordion.Panel>
-                <CheckListArea
-                  id={item.id}
-                />
+                <CheckListArea id={item.id} />
               </Accordion.Panel>
             </Accordion.Item>
           ))}

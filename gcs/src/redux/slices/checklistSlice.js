@@ -53,20 +53,20 @@ const checklistSlice = createSlice({
 })
 
 function doesItemExistById(state, id) {
-  return state.items.find((element) => element.id == id)
+  return state.items.find((element) => element.id === id)
 }
 
 function doesItemExistByName(state, name) {
   return (
     state.items.find(
-      (element) => element.name.toLowerCase() == name.toLowerCase(),
+      (element) => element.name.toLowerCase() === name.toLowerCase(),
     ) !== undefined
   )
 }
 
 export const selectChecklistById = (id) =>
   createSelector([checklistSlice.selectors.selectChecklists], (items) =>
-    items.find((element) => element.id == id),
+    items.find((element) => element.id === id),
   )
 
 export const {

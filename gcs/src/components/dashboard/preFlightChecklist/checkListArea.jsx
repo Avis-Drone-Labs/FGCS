@@ -80,13 +80,17 @@ export default function CheckListArea({ id }) {
         var elementName = element.split("</p>")[0].trim()
         final.push({
           checked:
-            elementName == name
+            elementName === name
               ? value
-              : checklist.value.find((e) => e.name == elementName).checked,
+              : checklist.value.find((e) => e.name === elementName).checked,
           name: elementName,
         })
       })
-    dispatch(setChecklistValueById({ id: checklist.id, value: final }))
+
+    // Check our checklist value is not the same as the updated one to stop unnecessary redux calls
+    if (JSON.stringify(checklist.value) !== JSON.stringify(final)) {
+      dispatch(setChecklistValueById({ id: checklist.id, value: final }))
+    }
   }
 
   function exportList() {

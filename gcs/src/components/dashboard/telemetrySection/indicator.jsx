@@ -21,6 +21,14 @@ const box = {
   position: "absolute",
   top: 0,
   left: 0,
+
+  // Stops dragging
+  "user-drag": "none",
+  "-webkit-user-drag": "none",
+  "user-select": "none",
+  "-moz-user-select": "none",
+  "-webkit-user-select": "none",
+  "-ms-user-select": "none",
 }
 
 // Custom instrument styling for each indicator below

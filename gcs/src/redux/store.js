@@ -29,7 +29,7 @@ const rootReducer = combineSlices(
   statusTextSlice,
   paramsSlice,
   configSlice,
-  checklistSlice
+  checklistSlice,
 )
 
 export const store = configureStore({

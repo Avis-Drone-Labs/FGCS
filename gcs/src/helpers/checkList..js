@@ -1,7 +1,9 @@
-export function generateCheckListObjectFromHTMLString(HTMLString, defaultCheck = false) {
+export function generateCheckListObjectFromHTMLString(
+  HTMLString,
+  defaultCheck = false,
+) {
   var final = []
-  HTMLString
-    .split("<li><p>")
+  HTMLString.split("<li><p>")
     .splice(1)
     .map((element) => {
       var text = element.split("</p>")[0].trim()

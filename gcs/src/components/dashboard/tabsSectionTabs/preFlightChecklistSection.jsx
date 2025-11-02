@@ -7,8 +7,14 @@
 import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { Accordion, Button, FileInput, Modal, Tabs, TextInput } from "@mantine/core"
-import { useLocalStorage, useTimeout } from "@mantine/hooks"
+import {
+  Accordion,
+  Button,
+  FileInput,
+  Modal,
+  Tabs,
+  TextInput,
+} from "@mantine/core"
 
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
@@ -20,12 +26,14 @@ import { AddCommand } from "../../spotlight/commandHandler.js"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 import { showErrorNotification } from "../../../helpers/notification.js"
-import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { pushChecklist, selectChecklists } from "../../../redux/slices/checklistSlice.js"
+import {
+  pushChecklist,
+  selectChecklists,
+} from "../../../redux/slices/checklistSlice.js"
 
 export default function PreFlightChecklistTab({ tabPadding }) {
   const dispatch = useDispatch()
@@ -38,7 +46,11 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   const fileUploadRef = useRef()
 
   function doesChecklistExist(name) {
-    return preFlightChecklistItems.find((element) => element.name.toLowerCase() == name.toLowerCase()) !== undefined
+    return (
+      preFlightChecklistItems.find(
+        (element) => element.name.toLowerCase() == name.toLowerCase(),
+      ) !== undefined
+    )
   }
 
   function createNewChecklist(name, value) {
@@ -47,8 +59,8 @@ export default function PreFlightChecklistTab({ tabPadding }) {
     }
     if (doesChecklistExist(name)) {
       // In the future we can make this show a popup and allow them to change the name
-      showErrorNotification(`A checklist called '${name}' already exists`)  
-      return  
+      showErrorNotification(`A checklist called '${name}' already exists`)
+      return
     }
     if (!value) {
       value = [
@@ -63,10 +75,12 @@ export default function PreFlightChecklistTab({ tabPadding }) {
       showErrorNotification("Name cannot be empty")
     }
 
-    dispatch(pushChecklist({
-      name: name,
-      value: value
-    }))
+    dispatch(
+      pushChecklist({
+        name: name,
+        value: value,
+      }),
+    )
     setNewChecklistModal(false)
     setNewChecklistName("")
   }
@@ -74,7 +88,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   useEffect(() => {
     AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
   }, [])
-  
+
   // Import checklist
   function uploadChecklist(file) {
     if (file === null) return
@@ -105,18 +119,15 @@ export default function PreFlightChecklistTab({ tabPadding }) {
         {/* The list of checklist */}
         <Accordion variant="separated">
           {preFlightChecklistItems.map((item) => (
-            <Accordion.Item
-              key={item.id}
-              value={item.name}
-            >
+            <Accordion.Item key={item.id} value={item.name}>
               <Accordion.Control>{item.name}</Accordion.Control>
               <Accordion.Panel>
                 <CheckListArea
                   id={item.id}
                   // items={item.value}
                   // saveItems={(e) => {
-                    // item.value = e
-                    // setPreFlightChecklistItems(preFlightChecklistItems)
+                  // item.value = e
+                  // setPreFlightChecklistItems(preFlightChecklistItems)
                   // }}
                   // deleteChecklist={() => dispatch(deleteChecklistByName(item.name))}
                   // name={item.name}
@@ -141,7 +152,14 @@ export default function PreFlightChecklistTab({ tabPadding }) {
 
         {/* File input for import (hidden and controlled via a click from a function) */}
         <div hidden>
-          <FileInput ref={fileUploadRef} value={uploadedFile} onChange={(file) => {setUploadedFile(file); uploadChecklist(file)}} />
+          <FileInput
+            ref={fileUploadRef}
+            value={uploadedFile}
+            onChange={(file) => {
+              setUploadedFile(file)
+              uploadChecklist(file)
+            }}
+          />
         </div>
 
         {/* New checklist modal */}

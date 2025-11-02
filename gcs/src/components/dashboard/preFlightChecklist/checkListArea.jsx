@@ -12,7 +12,12 @@ import { ActionIcon, Button, Checkbox, Modal, Tooltip } from "@mantine/core"
 import EditCheckList from "./checkListEdit.jsx"
 
 // Styling imports
-import { IconCheckbox, IconEdit, IconFileExport, IconTrashX } from "@tabler/icons-react"
+import {
+  IconCheckbox,
+  IconEdit,
+  IconFileExport,
+  IconTrashX,
+} from "@tabler/icons-react"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../../tailwind.config.js"
 import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
@@ -20,9 +25,13 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { deleteChecklistById, selectChecklistById, setChecklistValueById, setNewChecklistName } from "../../../redux/slices/checklistSlice.js"
+import {
+  deleteChecklistById,
+  selectChecklistById,
+  setChecklistValueById,
+} from "../../../redux/slices/checklistSlice.js"
 
-export default function CheckListArea({id}) {
+export default function CheckListArea({ id }) {
   const dispatch = useDispatch()
   const checklist = useSelector(selectChecklistById(id))
 
@@ -50,7 +59,10 @@ export default function CheckListArea({id}) {
   }
 
   function generateCheckboxList(defaultCheck = false) {
-    var final = generateCheckListObjectFromHTMLString(checkBoxListString, defaultCheck)
+    var final = generateCheckListObjectFromHTMLString(
+      checkBoxListString,
+      defaultCheck,
+    )
     dispatch(setChecklistValueById({ id: checklist.id, value: final }))
   }
 
@@ -79,9 +91,12 @@ export default function CheckListArea({id}) {
 
   function exportList() {
     // Remove id from checklist before exporting as it gets regenerated on importing (that's what id: _ does)
-    let {id: _, ...sanitizedChecklist} = checklist 
+    let { ...sanitizedChecklist } = checklist
+    delete sanitizedChecklist.id
     const downloadElement = document.createElement("a")
-    const file = new Blob([JSON.stringify(sanitizedChecklist)], {type: "text/plain"})
+    const file = new Blob([JSON.stringify(sanitizedChecklist)], {
+      type: "text/plain",
+    })
 
     // Simulating clicking a link to download
     downloadElement.href = URL.createObjectURL(file)
@@ -106,7 +121,9 @@ export default function CheckListArea({id}) {
 
   useEffect(() => {
     setMappedItems(generateMappedItems())
-    dispatch(setChecklistValueById({ id: checklist.id, value: checklist.value }))
+    dispatch(
+      setChecklistValueById({ id: checklist.id, value: checklist.value }),
+    )
   }, [checklist.value])
 
   return (

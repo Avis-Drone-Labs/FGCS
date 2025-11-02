@@ -90,7 +90,7 @@ export default function CheckListArea({ id }) {
   }
 
   function exportList() {
-    // Remove id from checklist before exporting as it gets regenerated on importing (that's what id: _ does)
+    // Remove id from checklist before exporting as it gets regenerated on importing
     let { ...sanitizedChecklist } = checklist
     delete sanitizedChecklist.id
     const downloadElement = document.createElement("a")

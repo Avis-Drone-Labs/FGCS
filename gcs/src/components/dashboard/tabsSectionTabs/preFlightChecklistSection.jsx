@@ -124,13 +124,6 @@ export default function PreFlightChecklistTab({ tabPadding }) {
               <Accordion.Panel>
                 <CheckListArea
                   id={item.id}
-                  // items={item.value}
-                  // saveItems={(e) => {
-                  // item.value = e
-                  // setPreFlightChecklistItems(preFlightChecklistItems)
-                  // }}
-                  // deleteChecklist={() => dispatch(deleteChecklistByName(item.name))}
-                  // name={item.name}
                 />
               </Accordion.Panel>
             </Accordion.Item>

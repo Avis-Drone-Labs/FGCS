@@ -331,7 +331,6 @@ function MapSectionNonMemo({
               lat={position.latitude}
               lon={position.longitude}
               zoom={initialViewState.zoom}
-              showHeadingLine={true}
             />
           )}
 

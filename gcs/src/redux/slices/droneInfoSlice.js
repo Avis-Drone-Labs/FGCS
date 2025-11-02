@@ -1,10 +1,18 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
+import { bearing, distance } from "@turf/turf"
 import { defaultDataMessages } from "../../helpers/dashboardDefaultDataMessages"
+import { centiDegToDeg, intToCoord } from "../../helpers/dataFormatters"
 import {
   getActiveEKFFlags,
   getFlightModeMap,
   MAV_STATE,
 } from "../../helpers/mavlinkConstants"
+
+// TODO: Make this configurable in the future?
+const GPS_TRACK_MAX_LENGTH = 300
+
+const minGpsSpeedForHeading = 0.5 // m/s
+const minGpsDistanceForHeading = 0.5 // meters
 
 const droneInfoSlice = createSlice({
   name: "droneInfo",
@@ -26,6 +34,8 @@ const droneInfoSlice = createSlice({
       alt: 0.0,
       relativeAlt: 0.0,
     },
+    gpsTrack: [],
+    gpsTrackHeading: 0,
     homePosition: {
       lat: 0,
       lon: 0,
@@ -45,6 +55,8 @@ const droneInfoSlice = createSlice({
     gpsRawIntData: {
       fixType: 0,
       satellitesVisible: 0,
+      velocity: 0,
+      courseOverGround: 0,
     },
     rssi: 0.0,
     notificationSound: "",
@@ -165,6 +177,8 @@ const droneInfoSlice = createSlice({
         state.gpsRawIntData.satellitesVisible =
           action.payload.satellites_visible
         state.gpsRawIntData.fixType = action.payload.fix_type
+        state.gpsRawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
+        state.gpsRawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
       }
     },
     setOnboardControlSensorsEnabled: (state, action) => {
@@ -227,36 +241,40 @@ const droneInfoSlice = createSlice({
     setVibrationData: (state, action) => {
       state.vibrationData = action.payload
     },
+    appendToGpsTrack: (state, action) => {
+      if (state.gpsTrack.length >= GPS_TRACK_MAX_LENGTH) {
+        state.gpsTrack.shift()
+      }
+      state.gpsTrack.push(action.payload)
+    },
+    resetGpsTrack: (state) => {
+      state.gpsTrack = []
+    },
+    setGpsTrackHeading: (state, action) => {
+      state.gpsTrackHeading = action.payload
+    },
   },
   selectors: {
     selectFlightSwVersion: (state) => state.flightSwVersion,
-
     selectAttitude: (state) => state.attitudeData,
     selectTelemetry: (state) => state.telemetryData,
-
     selectGPS: (state) => state.gpsData,
-    selectHeading: (state) => (state.gpsData.hdg ? state.gpsData.hdg / 100 : 0),
-
+    selectHeading: (state) => centiDegToDeg(state.gpsData.hdg),
     selectHomePosition: (state) => state.homePosition,
-
     selectNavController: (state) => state.navControllerData,
     selectDesiredBearing: (state) => state.navControllerData.navBearing,
-
     selectHeartbeat: (state) => state.heartbeatData,
     selectArmed: (state) => state.heartbeatData.baseMode & 128,
     selectNotificationSound: (state) => state.notificationSound,
     selectFlightMode: (state) => state.heartbeatData.customMode,
     selectSystemStatus: (state) => MAV_STATE[state.heartbeatData.systemStatus],
-
     selectPrearmEnabled: (state) =>
       state.onboardControlSensorsEnabled & 268435456,
-
     selectGPSRawInt: (state) => state.gpsRawIntData,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
-
     selectGuidedModePinData: (state) => state.guidedModePinData,
     selectExtraDroneData: (state) => state.extraDroneData,
     selectStatusText: (state) => state.statusText,
@@ -265,6 +283,8 @@ const droneInfoSlice = createSlice({
     selectEkfStatusReportData: (state) => state.ekfStatusReportData,
     selectEkfCalculatedStatus: (state) => state.ekfCalculatedStatus,
     selectVibrationData: (state) => state.vibrationData,
+    selectGpsTrack: (state) => state.gpsTrack,
+    selectGpsTrackHeading: (state) => state.gpsTrackHeading,
   },
 })
 
@@ -290,6 +310,9 @@ export const {
   setGuidedModePinData,
   setEkfStatusReportData,
   setVibrationData,
+  appendToGpsTrack,
+  resetGpsTrack,
+  setGpsTrackHeading,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -341,6 +364,45 @@ export const selectFlightModeString = createSelector(
   },
 )
 
+export const calculateGpsTrackHeadingThunk = () => (dispatch, getState) => {
+  // If the GPS speed is above a certain threshold, use the COG directly
+  // Otherwise, calculate the bearing from the last two GPS points if the distance is above a threshold
+  const { gpsTrack, gpsRawIntData } = getState().droneInfo
+
+  let computedBearing = null
+  let computedDistance = null
+
+  if (gpsTrack.length > 2) {
+    const lastPos = gpsTrack[gpsTrack.length - 1]
+    const secondLastPos = gpsTrack[gpsTrack.length - 2]
+    const convertedLastPos = [intToCoord(lastPos.lon), intToCoord(lastPos.lat)]
+    const convertedSecondLastPos = [
+      intToCoord(secondLastPos.lon),
+      intToCoord(secondLastPos.lat),
+    ]
+    computedDistance = distance(convertedLastPos, convertedSecondLastPos, {
+      units: "meters",
+    })
+    computedBearing = bearing(convertedLastPos, convertedSecondLastPos) - 180
+    if (computedBearing < 0) {
+      computedBearing += 360
+    }
+  }
+
+  const gpsVel = gpsRawIntData.velocity
+  const gpsCog = gpsRawIntData.courseOverGround
+  if (gpsVel >= minGpsSpeedForHeading && gpsCog !== null) {
+    dispatch(setGpsTrackHeading(gpsCog))
+  } else if (
+    computedDistance !== null &&
+    computedDistance >= minGpsDistanceForHeading
+  ) {
+    dispatch(setGpsTrackHeading(computedBearing))
+  } else {
+    // Keep previous heading
+  }
+}
+
 export const {
   selectFlightSwVersion,
   selectAttitude,
@@ -367,6 +429,8 @@ export const {
   selectEkfStatusReportData,
   selectEkfCalculatedStatus,
   selectVibrationData,
+  selectGpsTrack,
+  selectGpsTrackHeading,
 } = droneInfoSlice.selectors
 
 export default droneInfoSlice

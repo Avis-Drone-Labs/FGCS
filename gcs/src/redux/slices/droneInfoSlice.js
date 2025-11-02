@@ -372,7 +372,7 @@ export const calculateGpsTrackHeadingThunk = () => (dispatch, getState) => {
   let computedBearing = null
   let computedDistance = null
 
-  if (gpsTrack.length > 2) {
+  if (gpsTrack.length >= 2) {
     const lastPos = gpsTrack[gpsTrack.length - 1]
     const secondLastPos = gpsTrack[gpsTrack.length - 2]
     const convertedLastPos = [intToCoord(lastPos.lon), intToCoord(lastPos.lat)]
@@ -383,7 +383,7 @@ export const calculateGpsTrackHeadingThunk = () => (dispatch, getState) => {
     computedDistance = distance(convertedLastPos, convertedSecondLastPos, {
       units: "meters",
     })
-    computedBearing = bearing(convertedLastPos, convertedSecondLastPos) - 180
+    computedBearing = bearing(convertedSecondLastPos, convertedLastPos)
     if (computedBearing < 0) {
       computedBearing += 360
     }

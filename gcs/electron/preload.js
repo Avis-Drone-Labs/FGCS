@@ -7,7 +7,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "fla:get-recent-logs",
   "fla:clear-recent-logs",
   "fla:get-messages",
-  "missions:get-save-mission-file-path",
+  "app:get-save-file-path",
   "app:get-node-env",
   "app:get-version",
   "app:is-mac",

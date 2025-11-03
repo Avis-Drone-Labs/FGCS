@@ -23,6 +23,7 @@ def create_app(debug: bool = False) -> Flask:
         debug: Boolean value for if the debugging should be True or False
     """
     from app.endpoints import endpoints
+    from app.endpoints.telemetry_namespace import TelemetryNamespace
 
     app = Flask(__name__)
     app.debug = debug
@@ -32,4 +33,8 @@ def create_app(debug: bool = False) -> Flask:
 
     logger.info("Initialising app")
     socketio.init_app(app)
+
+    # Register telemetry namespace
+    socketio.on_namespace(TelemetryNamespace("/telemetry"))
+
     return app

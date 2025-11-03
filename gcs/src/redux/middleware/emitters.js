@@ -46,10 +46,12 @@ import {
   showDashboardMissionFetchingNotificationThunk,
 } from "../slices/missionSlice"
 import {
+  emitExportParamsToFile,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
 } from "../slices/paramsSlice"
+import { resetMessages } from "../slices/statusTextSlice"
 
 export function handleEmitters(socket, store, action) {
   if (!socket) return
@@ -73,7 +75,10 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitConnectToDrone,
-      callback: () => socket.socket.emit("connect_to_drone", action.payload),
+      callback: () => {
+        socket.socket.emit("connect_to_drone", action.payload)
+        store.dispatch(resetMessages())
+      },
     },
     {
       emitter: emitStartForwarding,
@@ -265,6 +270,14 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetMultipleParams,
       callback: () => socket.socket.emit("set_multiple_params", action.payload),
+    },
+    {
+      emitter: emitExportParamsToFile,
+      callback: () => {
+        socket.socket.emit("export_params_to_file", {
+          file_path: action.payload.filePath,
+        })
+      },
     },
 
     /*

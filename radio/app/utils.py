@@ -1,3 +1,4 @@
+import logging
 import sys
 from typing import Any, List, Optional
 
@@ -8,6 +9,8 @@ from typing_extensions import TypedDict
 from app.customTypes import Number, VehicleType
 
 from . import socketio
+
+logger = logging.getLogger("fgcs")
 
 
 def getComPort() -> str:
@@ -98,12 +101,26 @@ def commandAccepted(response: Any, command: int) -> bool:
     Returns:
         True if the command has been accepted, False otherwise.
     """
-    return bool(
-        response
-        and command
-        and response.command == command
-        and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
-    )
+    if command is None:
+        logger.warning("Command is None, cannot check if command accepted")
+        return False
+
+    if response is None:
+        logger.warning(f"Response is None, cannot check if command {command} accepted")
+        return False
+
+    if response.command != command:
+        logger.warning(
+            f"Command {command} does not match response command {response.command}"
+        )
+        logger.debug(f"Full response: {response.to_dict()}, command: {command}")
+        return False
+
+    if response.result != mavutil.mavlink.MAV_RESULT_ACCEPTED:
+        logger.warning(f"Command {command} not accepted, result: {response.result}")
+        return False
+
+    return True
 
 
 def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) -> int:
@@ -188,7 +205,7 @@ def sendMessage(msg: Any) -> None:
     """
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
-    socketio.emit("incoming_msg", data)
+    socketio.emit("incoming_msg", data, namespace="/telemetry")
 
 
 FIXED_WING_TYPES = [

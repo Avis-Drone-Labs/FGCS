@@ -101,7 +101,7 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage } from "../slices/statusTextSlice.js"
+import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({

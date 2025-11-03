@@ -348,3 +348,30 @@ class ParamsController:
         else:
             self.drone.logger.error(f"Invalid params type, got {type(params)}")
             return {}
+
+    def exportParamsToFile(self, file_path: str) -> Response:
+        """
+        Export all cached parameters to a file.
+
+        Args:
+            file_path (str): The path to the file to export to
+
+        Returns:
+            Response: The response from the export operation
+        """
+        try:
+            with open(file_path, "w") as f:
+                # order params alphabetically by param_id
+                ordered_params = sorted(self.params, key=lambda k: k["param_id"])
+                for param in ordered_params:
+                    f.write(f"{param['param_id'].upper()},{param['param_value']}\n")
+            return {
+                "success": True,
+                "message": f"Parameters exported successfully to {file_path}",
+            }
+        except Exception as e:
+            self.drone.logger.error(f"Failed to export params to file: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to export params to file: {e}",
+            }

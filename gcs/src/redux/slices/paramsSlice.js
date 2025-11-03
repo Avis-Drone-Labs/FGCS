@@ -101,6 +101,7 @@ const paramsSlice = createSlice({
     emitRebootAutopilot: () => {},
     emitRefreshParams: () => {},
     emitSetMultipleParams: () => {},
+    emitExportParamsToFile: () => {},
   },
   selectors: {
     selectRebootData: (state) => state.rebootData,
@@ -134,10 +135,11 @@ export const {
   updateModifiedParamValue,
   deleteModifiedParam,
   resetParamState,
+  setHasFetchedOnce,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
-  setHasFetchedOnce,
+  emitExportParamsToFile,
 } = paramsSlice.actions
 export const {
   selectRebootData,

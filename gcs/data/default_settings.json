@@ -12,12 +12,6 @@
       "options": ["satellite", "hybrid", "streets", "outdoor"],
       "display": "Map Style"
     },
-    "interfaceLanguage": {
-      "default": "English",
-      "type": "option",
-      "options": ["English"],
-      "display": "Interface Language"
-    },
     "autoCheckForUpdates": {
       "default": true,
       "type": "boolean",

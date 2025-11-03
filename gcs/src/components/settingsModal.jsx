@@ -64,14 +64,12 @@ function TextSetting({ settingName, hidden, matches }) {
   }, [newValue])
 
   return (
-    <div>
-      <Input
-        value={newValue ?? ""}
-        onChange={(e) => setNewValue(e.currentTarget.value)}
-        type={hidden ? "password" : "text"}
-      />
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-    </div>
+    <TextInput
+      value={newValue ?? ""}
+      onChange={(e) => setNewValue(e.currentTarget.value)}
+      type={hidden ? "password" : "text"}
+      error={error}
+    />
   )
 }
 
@@ -104,7 +102,7 @@ function NumberSetting({ settingName, range }) {
       value={getSetting(settingName)}
       onChange={(e) => {
         const num = e.currentTarget.value
-        if (isValidNumber(num, range)) setSetting(settingName, num)
+        if (isValidNumber(num, range)) setSetting(settingName, Number(num))
       }}
     />
   )
@@ -472,15 +470,16 @@ function Setting({ settingName, df, initialValue }) {
       className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && df.type != "extendableText" && "items-center"} px-10 `}
     >
       <div className="space-y-px relative">
-        <Tooltip disabled={!changedFromDefault} label="reset to default">
-          <button
-            className={`absolute right-full top-1.5 pr-1.5 ${!changedFromDefault && "text-gray-600"}`}
-            disabled={!changedFromDefault}
-            onClick={resetToDefault}
-          >
-            <IconRestore size={16} />
-          </button>
-        </Tooltip>
+        {changedFromDefault && (
+          <Tooltip label="reset to default">
+            <button
+              className="absolute right-full top-1.5 pr-1.5"
+              onClick={resetToDefault}
+            >
+              <IconRestore size={16} />
+            </button>
+          </Tooltip>
+        )}
         <div>{df.display}:</div>
         <p className="text-gray-400 text-sm">{df.description}</p>
         {df.requireRestart && (
@@ -678,7 +677,7 @@ function SettingsModal() {
           <Button
             color="red"
             onClick={() => {
-              window.ipcRenderer.send("app:restart")
+              window.ipcRenderer.send("window:force-reload")
             }}
           >
             Restart Now

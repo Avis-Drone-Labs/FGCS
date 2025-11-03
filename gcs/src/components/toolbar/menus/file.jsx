@@ -3,7 +3,6 @@
 */
 
 // Local Imports
-import packageJson from "../../../../package.json"
 import { useSettings } from "../../../helpers/settings"
 import Divider from "./divider"
 import MenuItem from "./menuItem"
@@ -24,8 +23,6 @@ export default function FileMenu(props) {
           window.ipcRenderer.invoke("app:open-about-window")
         }}
       />
-      <MenuItem name="Current Version" />
-      <Divider />
       <MenuItem
         name="Report a Bug"
         link={true}

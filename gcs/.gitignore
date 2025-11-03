@@ -39,3 +39,7 @@ yarn.lock
 # Generated parameter files
 gen_apm_params_def_copter.json
 gen_apm_params_def_plane.json
+
+# Yarn-related files to ignore
+.yarn/
+.yarnrc.yml

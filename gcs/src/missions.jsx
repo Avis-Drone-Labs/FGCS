@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid"
 // Custom component and helpers
 import { Button, Divider, Tabs } from "@mantine/core"
 import Layout from "./components/layout"
+import FenceItemsTable from "./components/missions/fenceItemsTable"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
@@ -43,10 +44,41 @@ export default function Missions() {
 
   const [activeTab, setActiveTab] = useState("mission")
 
-  // Mission
+  // Mission - Test data for development
   const [missionItems, setMissionItems] = useSessionStorage({
     key: "missionItems",
-    defaultValue: [],
+    defaultValue: [
+      {
+        id: uuidv4(),
+        seq: 0,
+        command: 16, // MAV_CMD_NAV_WAYPOINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 52.78031970, // Original waypoint 1
+        y: -0.70979300, // Original waypoint 1
+        z: 30.0, // altitude
+      },
+      {
+        id: uuidv4(),
+        seq: 1,
+        command: 16, // MAV_CMD_NAV_WAYPOINT
+        frame: 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        current: 0,
+        autocontinue: 1,
+        param1: 0.0,
+        param2: 0.0,
+        param3: 0.0,
+        param4: 0.0,
+        x: 52.78122830, // Original waypoint 2
+        y: -0.70989490, // Original waypoint 2
+        z: 30.0, // altitude
+      }
+    ],
   })
   const [fenceItems, setFenceItems] = useSessionStorage({
     key: "fenceItems",
@@ -72,6 +104,7 @@ export default function Missions() {
 
   // System data
   const [navControllerOutputData, setNavControllerOutputData] = useState({})
+  const [isUploading, setIsUploading] = useState(false)
 
   const incomingMessageHandler = useCallback(
     () => ({
@@ -135,10 +168,20 @@ export default function Missions() {
       showSuccessNotification(`${data.mission_type} read successfully`)
     })
 
+    socket.on("upload_mission_result", (data) => {
+      setIsUploading(false)
+      if (data.success) {
+        showSuccessNotification(data.message)
+      } else {
+        showErrorNotification(data.message)
+      }
+    })
+
     return () => {
       socket.off("incoming_msg")
       socket.off("home_position_result")
       socket.off("current_mission")
+      socket.off("upload_mission_result")
     }
   }, [connected])
 
@@ -159,6 +202,7 @@ export default function Missions() {
     return missionItem
   }
 
+
   function updateMissionItem(updatedMissionItem) {
     setMissionItems((prevItems) =>
       prevItems.map((item) =>
@@ -177,13 +221,79 @@ export default function Missions() {
       ),
     )
   }
+  function updateFenceItem(updatedFenceItem) {
+    setFenceItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === updatedFenceItem.id
+          ? { ...item, ...updatedFenceItem }
+          : item,
+      ),
+    )
+  }
 
   function readMissionFromDrone() {
     socket.emit("get_current_mission", { type: activeTab })
   }
 
   function writeMissionToDrone() {
-    return
+    if (!connected) {
+      showErrorNotification("Not connected to drone")
+      return
+    }
+
+    if (isUploading) {
+      showErrorNotification("Mission upload already in progress")
+      return
+    }
+
+    let missionData = []
+    if (activeTab === "mission") {
+      missionData = missionItems
+    } else if (activeTab === "fence") {
+      missionData = fenceItems
+    } else if (activeTab === "rally") {
+      missionData = rallyItems
+    }
+
+    if (missionData.length === 0) {
+      showErrorNotification(`No ${activeTab} items to upload`)
+      return
+    }
+    
+    setIsUploading(true)
+
+    // Convert mission items to the format expected by the backend
+    const formattedMissionData = missionData.map((item, index) => {
+      const formatted = {
+        seq: index,
+        frame: item.frame || 3, // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        command: item.command || 16, // MAV_CMD_NAV_WAYPOINT
+        current: item.current || 0,
+        autocontinue: item.autocontinue || 1,
+        param1: item.param1 || 0.0,
+        param2: item.param2 || 0.0,
+        param3: item.param3 || 0.0,
+        param4: item.param4 || 0.0,
+        x: Math.round((item.x || 0) * 1e7), // latitude as integer (1e7 * degrees)
+        y: Math.round((item.y || 0) * 1e7), // longitude as integer (1e7 * degrees)
+        z: item.z || 0.0, // altitude
+      }
+      
+      return formatted
+    })
+
+    socket.emit("upload_mission", {
+      type: activeTab,
+      mission_data: formattedMissionData,
+    })
+
+    // Set a timeout to handle cases where the upload might hang
+    setTimeout(() => {
+      if (isUploading) {
+        setIsUploading(false)
+        showErrorNotification("Mission upload timed out. Please try again.")
+      }
+    }, 30000) // 30 second timeout
   }
 
   function importMissionFromFile() {
@@ -232,12 +342,14 @@ export default function Missions() {
                     onClick={() => {
                       writeMissionToDrone()
                     }}
-                    disabled={!connected}
+                    disabled={!connected || isUploading}
+                    loading={isUploading}
                     className="grow"
                   >
-                    Write {activeTab}
+                    {isUploading ? `Uploading ${activeTab}...` : `Write ${activeTab}`}
                   </Button>
                 </div>
+
 
                 <Divider className="my-1" />
 
@@ -334,7 +446,12 @@ export default function Missions() {
                       updateMissionItem={updateMissionItem}
                     />
                   </Tabs.Panel>
-                  <Tabs.Panel value="fence"></Tabs.Panel>
+                  <Tabs.Panel value="fence">
+                    <FenceItemsTable
+                      fenceItems={fenceItems}
+                      updateFenceItem={updateFenceItem}
+                    />
+                  </Tabs.Panel>
                   <Tabs.Panel value="rally">
                     <RallyItemsTable
                       rallyItems={rallyItems}

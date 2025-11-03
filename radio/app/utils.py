@@ -187,10 +187,40 @@ def sendMessage(msg: Any) -> None:
 
 def wpToMissionItemInt(
     wp: mavutil.mavlink.MAVLink_message,
+    mission_type: int = 0,
 ) -> mavutil.mavlink.MAVLink_message:
     if wp.get_type() == "MISSION_ITEM_INT":
-        return wp
+        # Create a new message with the correct mission_type
+        wp_int = mavutil.mavlink.MAVLink_mission_item_int_message(
+            wp.target_system,
+            wp.target_component,
+            wp.seq,
+            wp.frame,
+            wp.command,
+            wp.current,
+            wp.autocontinue,
+            wp.param1,
+            wp.param2,
+            wp.param3,
+            wp.param4,
+            wp.x,  # Already in integer format
+            wp.y,  # Already in integer format
+            wp.z,
+            mission_type,
+        )
+        return wp_int
 
+    # Convert from float degrees to integer format
+    # Ensure values are within int32 range
+    x_int = int(wp.x * 1e7)
+    y_int = int(wp.y * 1e7)
+    
+    # Clamp to int32 range
+    max_int32 = 2147483647
+    min_int32 = -2147483648
+    x_int = max(min_int32, min(max_int32, x_int))
+    y_int = max(min_int32, min(max_int32, y_int))
+    
     wp_int = mavutil.mavlink.MAVLink_mission_item_int_message(
         wp.target_system,
         wp.target_component,
@@ -203,10 +233,10 @@ def wpToMissionItemInt(
         wp.param2,
         wp.param3,
         wp.param4,
-        int(wp.x * 1e7),
-        int(wp.y * 1e7),
+        x_int,
+        y_int,
         wp.z,
-        wp.mission_type,
+        mission_type,
     )
     return wp_int
 

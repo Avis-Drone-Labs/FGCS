@@ -454,6 +454,124 @@ class MissionController:
             "message": f"Waypoint file loaded {loader.count()} points successfully",
         }
 
+    def loadMissionData(self, mission_data: List[dict], mission_type: int) -> Response:
+        """
+        Loads mission data from frontend into the mission loader.
+
+        Args:
+            mission_data (List[dict]): List of mission items from frontend
+            mission_type (int): The type of mission to load. Currently only supports 0=Mission.
+        """
+        # Only support regular missions for now
+        if mission_type != TYPE_MISSION:
+            return {
+                "success": False,
+                "message": f"Only regular missions are supported (mission_type={mission_type}). Fence and rally support is disabled.",
+            }
+
+        loader = self.missionLoader
+
+        # Clear existing mission data
+        loader.clear()
+
+        if not mission_data:
+            return {
+                "success": True,
+                "message": "Mission data loaded successfully (empty mission)",
+            }
+
+        try:
+            for i, item in enumerate(mission_data):
+                # Clamp coordinates to int32 range to prevent overflow
+                x_coord = item.get("x", 0)
+                y_coord = item.get("y", 0)
+                
+                # If coordinates are too large, they're likely already multiplied by 1e7 twice
+                # Check if they're out of reasonable range and divide if needed
+                max_safe_value = 900000000  # ~90 degrees * 1e7
+                min_safe_value = -900000000
+                
+                if abs(x_coord) > max_safe_value:
+                    x_coord = int(x_coord / 1e7)
+                if abs(y_coord) > max_safe_value:
+                    y_coord = int(y_coord / 1e7)
+                
+                # Clamp to int32 range
+                x_coord = max(-2147483648, min(2147483647, x_coord))
+                y_coord = max(-2147483648, min(2147483647, y_coord))
+                
+                # Create mission item INT directly from frontend data
+                mission_item = mavutil.mavlink.MAVLink_mission_item_int_message(
+                    self.drone.target_system,
+                    self.drone.target_component,
+                    item.get("seq", 0),
+                    item.get("frame", 3),  # MAV_FRAME_GLOBAL_RELATIVE_ALT
+                    item.get("command", 16),  # Use actual command from frontend
+                    item.get("current", 0),
+                    item.get("autocontinue", 1),
+                    item.get("param1", 0.0),
+                    item.get("param2", 0.0),
+                    item.get("param3", 0.0),
+                    item.get("param4", 0.0),
+                    x_coord,
+                    y_coord,
+                    item.get("z", 0.0),  # altitude
+                    0,  # mission_type (will be set during upload)
+                )
+                loader.add(mission_item)
+
+            self.drone.logger.info(
+                f"Loaded {len(mission_data)} mission items into loader"
+            )
+            
+            return {
+                "success": True,
+                "message": f"Mission data loaded successfully with {len(mission_data)} items",
+            }
+
+        except Exception as e:
+            self.drone.logger.error(f"Error loading mission data: {str(e)}")
+            return {
+                "success": False,
+                "message": f"Failed to load mission data: {str(e)}",
+            }
+
+    def uploadMissionData(self, mission_data: List[dict], mission_type: int) -> Response:
+        """
+        Loads mission data from frontend and uploads it to the drone.
+
+        Args:
+            mission_data (List[dict]): List of mission items from frontend
+            mission_type (int): The type of mission to upload. Currently only supports 0=Mission.
+        """
+        self.drone.logger.info(f"Starting mission upload process for type {mission_type}")
+        self.drone.logger.debug(f"Mission data received: {len(mission_data)} items")
+        
+        # Explicitly clear the loader to ensure clean state
+        # This fixes the issue where writes would fail if a read happened first
+        self.missionLoader.clear()
+        self.drone.logger.info("Cleared mission loader to ensure clean state")
+        
+        # First load the mission data into the loader
+        self.drone.logger.info("Loading mission data into loader...")
+        load_result = self.loadMissionData(mission_data, mission_type)
+        if not load_result.get("success"):
+            self.drone.logger.error(f"Failed to load mission data: {load_result}")
+            return load_result
+
+        self.drone.logger.info("Mission data loaded successfully")
+        
+        # Then upload the mission to the drone
+        self.drone.logger.info("Uploading mission to drone...")
+        upload_result = self.uploadMission(mission_type)
+        
+        if upload_result.get("success"):
+            self.drone.logger.info("Mission upload completed successfully")
+        else:
+            self.drone.logger.error(f"Mission upload failed: {upload_result}")
+            
+        return upload_result
+
     def uploadMission(self, mission_type: int) -> Response:
         """
         Uploads the current mission to the drone.
@@ -468,27 +586,36 @@ class MissionController:
         if mission_type == TYPE_MISSION:
             loader = self.missionLoader
         elif mission_type == TYPE_FENCE:
-            loader = self.fenceLoader
+            # Use mission loader for fence items to avoid compatibility issues
+            loader = self.missionLoader
         else:
-            loader = self.rallyLoader
+            # Use mission loader for rally items to avoid compatibility issues
+            loader = self.missionLoader
 
         if loader.count() == 0:
+            self.drone.logger.error(f"No waypoints loaded for mission")
             return {
                 "success": False,
-                "message": f"No waypoints loaded for the mission type of {mission_type}",
+                "message": "No waypoints loaded",
             }
 
-        clear_mission_response = self.clearMission(mission_type)
+        # For fence and rally, clear as mission type 0 for SITL compatibility
+        clear_mission_type = 0 if mission_type in [TYPE_FENCE, TYPE_RALLY] else mission_type
+        clear_mission_response = self.clearMission(clear_mission_type)
         if not clear_mission_response.get("success"):
+            self.drone.logger.error(f"Clear mission failed: {clear_mission_response}")
             return clear_mission_response
 
         self.drone.is_listening = False
+
+        # For fence and rally, use mission type 0 to avoid SITL compatibility issues
+        upload_mission_type = 0 if mission_type in [TYPE_FENCE, TYPE_RALLY] else mission_type
 
         self.drone.master.mav.mission_count_send(
             self.drone.target_system,
             self.drone.target_component,
             loader.count(),
-            mission_type=mission_type,
+            mission_type=upload_mission_type,
         )
 
         try:
@@ -498,28 +625,22 @@ class MissionController:
                     blocking=True,
                     timeout=2,
                 )
+                
                 if not response:
                     self.drone.is_listening = True
-
                     return {
                         "success": False,
                         "message": "Could not upload mission, mission request not received",
                     }
                 elif response.msgname == "MISSION_ACK" and response.type != 0:
-                    self.drone.logger.error(
-                        f"Error uploading mission, mission ack response: {response.type}"
-                    )
                     return {
                         "success": False,
                         "message": "Could not upload mission, received mission acknowledgement error",
                     }
-                elif response.mission_type == mission_type:
-                    self.drone.logger.debug(
-                        f"Sending mission item {response.seq} out of {loader.count()}"
-                    )
-                    self.drone.master.mav.send(
-                        wpToMissionItemInt(loader.item(response.seq))
-                    )
+                elif response.mission_type == upload_mission_type:
+                    item_to_send = loader.item(response.seq)
+                    converted_item = wpToMissionItemInt(item_to_send, upload_mission_type)
+                    self.drone.master.mav.send(converted_item)
 
                     if response.seq == loader.count() - 1:
                         mission_ack_response = self.drone.master.recv_match(
@@ -534,17 +655,13 @@ class MissionController:
                         if (
                             mission_ack_response
                             and mission_ack_response.type == 0
-                            and mission_ack_response.mission_type == mission_type
+                            and mission_ack_response.mission_type == upload_mission_type
                         ):
-                            self.drone.logger.info("Uploaded mission successfully")
                             return {
                                 "success": True,
                                 "message": "Mission uploaded successfully",
                             }
                         else:
-                            self.drone.logger.error(
-                                f"Error uploading mission, mission ack response: {mission_ack_response.type}"
-                            )
                             return {
                                 "success": False,
                                 "message": "Could not upload mission, not received mission acknowledgement",

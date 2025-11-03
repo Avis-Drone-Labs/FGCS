@@ -1,3 +1,4 @@
+from typing import List
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
@@ -11,6 +12,11 @@ class CurrentMissionType(TypedDict):
 
 class ControlMissionType(TypedDict):
     action: str
+
+
+class UploadMissionType(TypedDict):
+    type: str
+    mission_data: List[dict]
 
 
 @socketio.on("get_current_mission")
@@ -122,3 +128,45 @@ def controlMission(data: ControlMissionType) -> None:
         result = droneStatus.drone.missionController.restartMission()
 
     socketio.emit("mission_control_result", result)
+
+
+@socketio.on("upload_mission")
+def uploadMission(data: UploadMissionType) -> None:
+    """
+    Uploads mission data to the drone, only works if missions screen is loaded.
+    """
+    if droneStatus.state != "missions":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the missions screen to upload a mission."},
+        )
+        fgcs_logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="upload mission")
+
+    mission_type = data.get("type")
+    mission_data = data.get("mission_data", [])
+    mission_type_array = ["mission", "fence", "rally"]
+
+    if mission_type not in mission_type_array:
+        socketio.emit(
+            "upload_mission_result",
+            {
+                "success": False,
+                "message": f"Invalid mission type. Must be 'mission', 'fence', or 'rally', got {mission_type}.",
+            },
+        )
+        fgcs_logger.error(f"Invalid mission type for upload: {mission_type}")
+        return
+
+    fgcs_logger.info(f"Uploading {mission_type} mission with {len(mission_data)} items")
+    fgcs_logger.debug(f"Mission data: {mission_data}")
+    
+    result = droneStatus.drone.missionController.uploadMissionData(
+        mission_data, mission_type_array.index(mission_type)
+    )
+
+    fgcs_logger.info(f"Upload result: {result}")
+    socketio.emit("upload_mission_result", result)

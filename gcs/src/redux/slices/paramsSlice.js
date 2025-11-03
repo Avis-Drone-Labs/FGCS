@@ -13,6 +13,9 @@ const paramsSlice = createSlice({
     fetchingVarsProgress: { progress: 0, param_id: "" },
     searchValue: "",
     hasFetchedOnce: false,
+    loadParamsFileModalOpen: false,
+    loadedFileName: "",
+    loadedParams: [],
   },
   reducers: {
     setRebootData: (state, action) => {
@@ -96,6 +99,15 @@ const paramsSlice = createSlice({
     setHasFetchedOnce: (state, action) => {
       state.hasFetchedOnce = action.payload
     },
+    setLoadParamsFileModalOpen: (state, action) => {
+      state.loadParamsFileModalOpen = action.payload
+    },
+    setLoadedFileName: (state, action) => {
+      state.loadedFileName = action.payload
+    },
+    setLoadedParams: (state, action) => {
+      state.loadedParams = action.payload
+    },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
@@ -117,6 +129,9 @@ const paramsSlice = createSlice({
     selectFetchingVarsProgress: (state) => state.fetchingVarsProgress,
     selectParamSearchValue: (state) => state.searchValue,
     selectHasFetchedOnce: (state) => state.hasFetchedOnce,
+    selectLoadParamsFileModalOpen: (state) => state.loadParamsFileModalOpen,
+    selectLoadedFileName: (state) => state.loadedFileName,
+    selectLoadedParams: (state) => state.loadedParams,
   },
 })
 
@@ -136,6 +151,9 @@ export const {
   deleteModifiedParam,
   resetParamState,
   setHasFetchedOnce,
+  setLoadParamsFileModalOpen,
+  setLoadedFileName,
+  setLoadedParams,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -153,6 +171,9 @@ export const {
   selectShowModifiedParams,
   selectParamSearchValue,
   selectHasFetchedOnce,
+  selectLoadParamsFileModalOpen,
+  selectLoadedFileName,
+  selectLoadedParams,
 } = paramsSlice.selectors
 
 export default paramsSlice

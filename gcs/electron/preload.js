@@ -32,6 +32,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:open-ekf-status-window",
   "app:update-vibe-status",
   "app:open-vibe-status-window",
+  "params:load-params-from-file",
 ]
 
 const ALLOWED_SEND_CHANNELS = [

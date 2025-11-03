@@ -41,7 +41,7 @@ import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
-
+import { readParamsFile } from "./utils/paramsFile"
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -485,6 +485,40 @@ app.whenReady().then(() => {
     }
     const result = await dialog.showSaveDialog(window, options)
     return result
+  })
+
+  ipcMain.handle("params:load-params-from-file", async (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) {
+      throw new Error("No active window found")
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ["openFile"],
+      filters: [
+        { name: "Param File", extensions: ["param"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    })
+
+    if (!canceled && filePaths.length > 0) {
+      const filePath = filePaths[0]
+      try {
+        const params = readParamsFile(filePath)
+        return {
+          success: true,
+          path: filePath,
+          name: path.basename(filePath),
+          params: params,
+        }
+      } catch (err) {
+        console.error("Error reading param file:", err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    }
   })
 
   ipcMain.handle("app:get-node-env", () =>

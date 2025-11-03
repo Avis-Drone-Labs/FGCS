@@ -157,6 +157,7 @@ export default function StatusBar(props) {
       >
         <p className="text-sm text-blue-200">Current heading</p>
         <p className="text-sm text-red-200">Desired heading</p>
+        <p className="text-sm text-green-200">GPS track heading</p>
       </div>
       <div className="m-2">
         <AlertSection />

@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   selectFlightModeString,
   selectGPS,
+  selectGpsTrack,
   selectGuidedModePinData,
   selectHomePosition,
 } from "../../redux/slices/droneInfoSlice"
@@ -43,6 +44,7 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { showInfoNotification } from "../../helpers/notification"
 import { emitReposition } from "../../redux/slices/droneConnectionSlice"
+import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
@@ -57,6 +59,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const homePosition = useSelector(selectHomePosition) // use actual home position
   const flightModeString = useSelector(selectFlightModeString)
   const guidedModePinData = useSelector(selectGuidedModePinData)
+  const gpsTrack = useSelector(selectGpsTrack)
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -233,7 +236,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
               lat={position.latitude}
               lon={position.longitude}
               zoom={initialViewState.zoom}
-              showHeadingLine={true}
             />
           )}
 
@@ -274,6 +276,18 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
               lon={intToCoord(homePosition.lon)}
             />
           )}
+
+        {/* Show GPS track */}
+        {gpsTrack.length > 1 && (
+          <DrawLineCoordinates
+            coordinates={gpsTrack.map((point) => [
+              intToCoord(point.lon),
+              intToCoord(point.lat),
+            ])}
+            colour={tailwindColors.violet[400]}
+            width={5}
+          />
+        )}
 
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
           <form

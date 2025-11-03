@@ -50,6 +50,9 @@ import {
   updateGripperConfigParam,
 } from "../slices/configSlice.js"
 import {
+  appendToGpsTrack,
+  calculateGpsTrackHeadingThunk,
+  resetGpsTrack,
   setAttitudeData,
   setBatteryData,
   setDroneAircraftType,
@@ -98,7 +101,7 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage } from "../slices/statusTextSlice.js"
+import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -182,6 +185,13 @@ const socketMiddleware = (store) => {
         break
       case "GLOBAL_POSITION_INT":
         store.dispatch(setGpsData(msg))
+        store.dispatch(
+          appendToGpsTrack({
+            lat: msg.lat,
+            lon: msg.lon,
+          }),
+        )
+        store.dispatch(calculateGpsTrackHeadingThunk())
         break
       case "NAV_CONTROLLER_OUTPUT":
         store.dispatch(setNavControllerOutput(msg))
@@ -199,6 +209,7 @@ const socketMiddleware = (store) => {
         break
       case "GPS_RAW_INT":
         store.dispatch(setGpsRawIntData(msg))
+        store.dispatch(calculateGpsTrackHeadingThunk())
         break
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!
@@ -355,6 +366,8 @@ const socketMiddleware = (store) => {
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
           store.dispatch(setShowMotorTestWarningModal(true))
+          store.dispatch(resetMessages())
+          store.dispatch(resetGpsTrack())
         })
 
         // Link stats

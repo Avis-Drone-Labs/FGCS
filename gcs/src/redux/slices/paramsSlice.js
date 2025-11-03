@@ -55,12 +55,15 @@ const paramsSlice = createSlice({
     },
     appendModifiedParams: (state, action) => {
       state.modifiedParams = state.modifiedParams.concat(action.payload)
+      console.log(state.modifiedParams)
 
       // Delete where initial_value and param_value are the same, this is the case when someone deletes the input and puts it in again
       // as the same - very niche case but can happen
       state.modifiedParams = state.modifiedParams.filter(
         (item) => item.initial_value !== item.param_value,
       )
+
+      // TODO: If we append already existing param_ids, we should update them instead of having duplicates
     },
     updateParamValue: (state, action) => {
       state.params = state.params.map((item) =>
@@ -76,6 +79,8 @@ const paramsSlice = createSlice({
           ? { ...item, param_value: action.payload.param_value }
           : item,
       )
+
+      console.log(state.modifiedParams)
 
       // Delete where initial_value and param_value are the same
       state.modifiedParams = state.modifiedParams.filter(

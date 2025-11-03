@@ -8,7 +8,9 @@ import { Button, Modal, Table, TextInput } from "@mantine/core"
 // Redux
 import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { showSuccessNotification } from "../../helpers/notification"
 import {
+  appendModifiedParams,
   selectLoadedFileName,
   selectLoadedParams,
   selectLoadParamsFileModalOpen,
@@ -22,6 +24,21 @@ export default function LoadParamsFileModal() {
   const loadedParams = useSelector(selectLoadedParams)
 
   const [paramSearchValue, setParamSearchValue] = useState("")
+
+  function acceptLoadedParams() {
+    dispatch(
+      appendModifiedParams(
+        loadedParams.map((param) => ({
+          param_id: param.id,
+          param_value: param.newValue,
+        })),
+      ),
+    )
+    dispatch(setLoadParamsFileModalOpen(false))
+    showSuccessNotification(
+      `Successfully loaded ${loadedParams.length} parameters from ${loadedFileName}`,
+    )
+  }
 
   return (
     <Modal
@@ -71,10 +88,7 @@ export default function LoadParamsFileModal() {
             </Table.Tbody>
           </Table>
         </Table.ScrollContainer>
-        <Button
-          onClick={() => dispatch(setLoadParamsFileModalOpen(false))}
-          color="green"
-        >
+        <Button onClick={acceptLoadedParams} color="green">
           Load params
         </Button>
       </div>

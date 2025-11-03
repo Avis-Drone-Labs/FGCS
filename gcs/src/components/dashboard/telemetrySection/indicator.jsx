@@ -23,7 +23,7 @@ const box = {
   left: 0,
 
   // Stops dragging
-  "WebkitUserDrag": "none",
+  WebkitUserDrag: "none",
 }
 
 // Custom instrument styling for each indicator below

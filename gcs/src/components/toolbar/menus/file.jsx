@@ -24,7 +24,7 @@ export default function FileMenu(props) {
           window.ipcRenderer.invoke("app:open-about-window")
         }}
       />
-      <MenuItem name="Current Version" shortcut={packageJson.version} />
+      <MenuItem name="Current Version" />
       <Divider />
       <MenuItem
         name="Report a Bug"

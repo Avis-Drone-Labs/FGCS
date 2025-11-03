@@ -23,12 +23,7 @@ const box = {
   left: 0,
 
   // Stops dragging
-  "user-drag": "none",
-  "-webkit-user-drag": "none",
-  "user-select": "none",
-  "-moz-user-select": "none",
-  "-webkit-user-select": "none",
-  "-ms-user-select": "none",
+  WebkitUserDrag: "none",
 }
 
 // Custom instrument styling for each indicator below

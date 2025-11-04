@@ -490,14 +490,26 @@ export async function retrieveMessages(_event, requestedMessages) {
     const categoryName = label.slice(0, slash)
     const fieldName = label.slice(slash + 1)
 
+    const series = logData[categoryName]
+    const len = series.length
+    // return typed arrays to reduce IPC serialization overhead
+    // Time as Float64 (microseconds or ms depending on log), values as Float32 for size efficiency
+    const x = new Float64Array(len)
+    const y = new Float32Array(len)
+
+    for (let j = 0; j < len; j++) {
+      const point = series[j]
+      // Fall back to 0 if missing
+      x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
+      const vy = point[fieldName]
+      y[j] = typeof vy === "number" ? vy : 0
+    }
+
     datasets.push({
-      label: label,
+      label,
       yAxisID: getUnit(categoryName, fieldName, formatMessages, units),
-      // I guess this is the expensive part. We're looping through every data point
-      data: logData[categoryName].map((d) => ({
-        x: d.TimeUS,
-        y: d[fieldName],
-      })),
+      x,
+      y,
     })
   }
 

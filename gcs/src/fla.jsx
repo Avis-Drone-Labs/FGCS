@@ -126,8 +126,8 @@ export default function FLA() {
           "fla:get-messages",
           labelsToFetch,
         )
-        if (newDatasets) {
-          // Dispatch to add the new data to our master cache in Redux
+
+        if (Array.isArray(newDatasets) && newDatasets.length > 0) {
           dispatch(setBaseChartData([...(baseChartData || []), ...newDatasets]))
         }
       }
@@ -141,12 +141,32 @@ export default function FLA() {
   const visibleDataWithColors = useMemo(() => {
     if (!baseChartData) return []
 
+    const toChartPoints = (ds) => {
+      // If already in Chart.js format, return as is
+      if (Array.isArray(ds.data)) return ds.data
+      // If typed arrays present, build point objects lazily for visible series only
+      if (ds && ds.x instanceof Float64Array && ds.y instanceof Float32Array) {
+        const len = Math.min(ds.x.length, ds.y.length)
+        const points = new Array(len)
+        for (let i = 0; i < len; i++) {
+          points[i] = { x: ds.x[i], y: ds.y[i] }
+        }
+        return points
+      }
+      // Last resort: empty
+      return []
+    }
+
     return baseChartData
       .filter((dataset) => requestedLabels.has(dataset.label))
       .map((dataset) => {
         const color = customColors[dataset.label] || "#000000"
+        const chartData = toChartPoints(dataset)
         return {
-          ...dataset,
+          // Preserve label and unit; ensure .data is present for Chart.js
+          label: dataset.label,
+          yAxisID: dataset.yAxisID,
+          data: chartData,
           borderColor: color,
           backgroundColor: hexToRgba(color, 0.5),
         }

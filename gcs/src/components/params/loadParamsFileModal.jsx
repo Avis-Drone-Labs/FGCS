@@ -31,6 +31,8 @@ export default function LoadParamsFileModal() {
         loadedParams.map((param) => ({
           param_id: param.id,
           param_value: param.newValue,
+          param_type: param.type,
+          initial_value: param.oldValue,
         })),
       ),
     )

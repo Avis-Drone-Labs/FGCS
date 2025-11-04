@@ -109,6 +109,10 @@ export default function Params() {
     const result = await window.ipcRenderer.invoke(
       "params:load-params-from-file",
     )
+    if (!result) {
+      return
+    }
+
     if (result.success) {
       dispatch(setLoadedFileName(result.name))
 
@@ -126,6 +130,7 @@ export default function Params() {
               id: key,
               oldValue: cleanFloat(existingParam.param_value),
               newValue: cleanFloat(value),
+              type: existingParam.param_type,
             })
           }
         } else {
@@ -133,6 +138,7 @@ export default function Params() {
             id: key,
             oldValue: null,
             newValue: cleanFloat(value),
+            type: null,
           })
         }
       }

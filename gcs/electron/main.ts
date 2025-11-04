@@ -519,6 +519,8 @@ app.whenReady().then(() => {
         }
       }
     }
+
+    return null
   })
 
   ipcMain.handle("app:get-node-env", () =>

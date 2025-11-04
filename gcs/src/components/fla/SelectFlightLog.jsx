@@ -117,9 +117,12 @@ export default function SelectFlightLog({ getLogSummary }) {
     ))
   }, [recentFgcsLogs, handleFile])
 
-  const logsExist =
-    recentLogItems === null ||
-    (recentFgcsLogs !== null && recentLogItems.length === 0)
+  const logsExist = useMemo(() => {
+    return (
+      recentLogItems === null ||
+      (recentFgcsLogs !== null && recentLogItems.length === 0)
+    )
+  }, [recentLogItems, recentFgcsLogs])
 
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
@@ -147,11 +150,10 @@ export default function SelectFlightLog({ getLogSummary }) {
               type="always"
               scrollbars="y"
               mah={250}
-              scrollbarSize={"10px"}
-              offsetScrollbars={"present"}
+              offsetScrollbars="present"
             >
-              {logsExist === true ? (
-                <p className="w-full mt-4 mb-4 text-center text-falcongrey-400 text-sm">
+              {logsExist ? (
+                <p className="w-full my-4 text-center text-falcongrey-400 text-sm">
                   No recent logs
                 </p>
               ) : (

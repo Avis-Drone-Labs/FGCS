@@ -54,15 +54,33 @@ const paramsSlice = createSlice({
       state.showModifiedParams = !state.showModifiedParams
     },
     appendModifiedParams: (state, action) => {
-      state.modifiedParams = state.modifiedParams.concat(action.payload)
+      for (let newParam of action.payload) {
+        // If param already exists, update it instead of appending
+        const existingIndex = state.modifiedParams.findIndex(
+          (item) => item.param_id === newParam.param_id,
+        )
+        if (existingIndex !== -1) {
+          state.modifiedParams[existingIndex] = {
+            ...state.modifiedParams[existingIndex],
+            param_value: newParam.param_value,
+          }
 
-      // Delete where initial_value and param_value are the same, this is the case when someone deletes the input and puts it in again
-      // as the same - very niche case but can happen
-      state.modifiedParams = state.modifiedParams.filter(
-        (item) => item.initial_value !== item.param_value,
-      )
-
-      // TODO: If we append already existing param_ids, we should update them instead of having duplicates
+          if (
+            state.modifiedParams[existingIndex].initial_value ===
+            newParam.param_value
+          ) {
+            // Remove if the new value is the same as the initial value
+            state.modifiedParams.splice(existingIndex, 1)
+          }
+        } else {
+          if (newParam.initial_value === newParam.param_value) {
+            // Don't append if the new value is the same as the initial value
+            continue
+          } else {
+            state.modifiedParams.push(newParam)
+          }
+        }
+      }
     },
     updateParamValue: (state, action) => {
       state.params = state.params.map((item) =>

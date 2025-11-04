@@ -196,7 +196,7 @@ class ParamsController:
             param_type = param.get("param_type", None)
             param.pop("initial_value", None)  # Remove initial value if it exists
 
-            if param_id is None or param_value is None or param_type is None:
+            if param_id is None or param_value is None:
                 self.drone.logger.error(f"Invalid parameter data: {param}, skipping")
                 continue
 
@@ -220,7 +220,7 @@ class ParamsController:
         self,
         param_name: str,
         param_value: Number,
-        param_type: int,
+        param_type: Optional[int],
         retries: int = 3,
     ) -> bool:
         """
@@ -247,27 +247,29 @@ class ParamsController:
             ):
                 # need to encode as a float for sending - not being used
                 if param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT8:
-                    struct.pack(">xxxB", int(param_value))
+                    vstr = struct.pack(">xxxB", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT8:
-                    struct.pack(">xxxb", int(param_value))
+                    vstr = struct.pack(">xxxb", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT16:
-                    struct.pack(">xxH", int(param_value))
+                    vstr = struct.pack(">xxH", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT16:
-                    struct.pack(">xxh", int(param_value))
+                    vstr = struct.pack(">xxh", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT32:
-                    struct.pack(">I", int(param_value))
+                    vstr = struct.pack(">I", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT32:
-                    struct.pack(">i", int(param_value))
+                    vstr = struct.pack(">i", int(param_value))
                 else:
                     self.drone.logger.error(
                         "can't send %s of type %u" % (param_name, param_type)
                     )
                     return False
-
-            vfloat = float(param_value)
-        except struct.error as e:
+                vfloat = struct.unpack(">f", vstr)[0]  # unpack returns a tuple
+            else:
+                vfloat = float(param_value)
+        except (struct.error, ValueError) as e:
             self.drone.logger.error(
-                f"Could not set parameter {param_name} with value {param_value}: {e}"
+                f"Could not set parameter {param_name} with value {param_value}",
+                exc_info=e,
             )
             return False
 
@@ -283,7 +285,6 @@ class ParamsController:
                     param_name.upper(), vfloat, parm_type=param_type
                 )
 
-                # Wait for parameter acknowledgment using the new system
                 ack = self.drone.wait_for_message(
                     "PARAM_VALUE",
                     self.controller_id,
@@ -292,11 +293,23 @@ class ParamsController:
 
                 if ack:
                     got_ack = True
-                    self.drone.logger.debug(
-                        f"Got parameter saving ack for {param_name} for value {param_value}"
-                    )
-                    self.saveParam(ack.param_id, ack.param_value, ack.param_type)
-                    break
+                    if ack.param_id != param_name:
+                        self.drone.logger.warning(
+                            f"Parameter ack name mismatch: expected {param_name}, got {ack.param_id}"
+                        )
+                        got_ack = False
+                        continue
+                    elif ack.param_value != param_value:
+                        self.drone.logger.warning(
+                            f"Could not set {param_name} to {param_value}, keeping value as {ack.param_value} instead"
+                        )
+                        break
+                    else:
+                        self.drone.logger.debug(
+                            f"Got parameter saving ack for {param_name} for value {param_value}"
+                        )
+                        self.saveParam(ack.param_id, ack.param_value, ack.param_type)
+                        break
 
             if not got_ack:
                 self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")

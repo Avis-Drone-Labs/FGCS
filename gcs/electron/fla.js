@@ -492,14 +492,14 @@ export async function retrieveMessages(_event, requestedMessages) {
 
     const series = logData[categoryName]
     const len = series.length
-    // return typed arrays to reduce IPC serialization overhead
-    // Time as Float64 (microseconds or ms depending on log), values as Float32 for size efficiency
+    // use typed arrays to reduce IPC serialization overhead
+    // Time as Float64, values as Float32 for size efficiency
     const x = new Float64Array(len)
     const y = new Float32Array(len)
 
     for (let j = 0; j < len; j++) {
       const point = series[j]
-      // Fall back to 0 if missing
+      // making sure all the entries are numbers
       x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
       const vy = point[fieldName]
       y[j] = typeof vy === "number" ? vy : 0

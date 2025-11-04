@@ -48,9 +48,6 @@ export default function FLA() {
   const customColors = useSelector(selectCustomColors)
   const baseChartData = useSelector(selectBaseChartData)
 
-  // Local states
-  const [chartData, setLocalChartData] = useState({ datasets: [] })
-
   /**
    * Dispatch the lightweight summary info to Redux
    */
@@ -82,7 +79,6 @@ export default function FLA() {
   function closeLogFile() {
     dispatch(setFile(null))
     dispatch(setLogMessages(null))
-    setLocalChartData({ datasets: [] })
     dispatch(setMessageFilters(null))
     dispatch(setCustomColors({}))
     dispatch(setUtcAvailable(false))
@@ -126,9 +122,18 @@ export default function FLA() {
           "fla:get-messages",
           labelsToFetch,
         )
-
+        // Unpack and Cache
         if (Array.isArray(newDatasets) && newDatasets.length > 0) {
-          dispatch(setBaseChartData([...(baseChartData || []), ...newDatasets]))
+          const transformed = newDatasets.map((ds) => {
+            if (Array.isArray(ds?.data)) return ds
+            const len = Math.min(ds.x.length, ds.y.length)
+            const points = new Array(len)
+            for (let i = 0; i < len; i++) {
+              points[i] = { x: ds.x[i], y: ds.y[i] }
+            }
+            return { label: ds.label, yAxisID: ds.yAxisID, data: points }
+          })
+          dispatch(setBaseChartData([...(baseChartData || []), ...transformed]))
         }
       }
       fetchMissingData()
@@ -141,50 +146,27 @@ export default function FLA() {
   const visibleDataWithColors = useMemo(() => {
     if (!baseChartData) return []
 
-    const toChartPoints = (ds) => {
-      // If already in Chart.js format, return as is
-      if (Array.isArray(ds.data)) return ds.data
-      // If typed arrays present, build point objects lazily for visible series only
-      if (ds && ds.x instanceof Float64Array && ds.y instanceof Float32Array) {
-        const len = Math.min(ds.x.length, ds.y.length)
-        const points = new Array(len)
-        for (let i = 0; i < len; i++) {
-          points[i] = { x: ds.x[i], y: ds.y[i] }
-        }
-        return points
-      }
-      // Last resort: empty
-      return []
-    }
-
     return baseChartData
       .filter((dataset) => requestedLabels.has(dataset.label))
       .map((dataset) => {
         const color = customColors[dataset.label] || "#000000"
-        const chartData = toChartPoints(dataset)
         return {
-          // Preserve label and unit; ensure .data is present for Chart.js
-          label: dataset.label,
-          yAxisID: dataset.yAxisID,
-          data: chartData,
+          ...dataset,
           borderColor: color,
           backgroundColor: hexToRgba(color, 0.5),
         }
       })
   }, [baseChartData, customColors, requestedLabels])
 
-  // Step 4: Update the chart's state.
-  // This is now very simple and just syncs the memoized data to the local state.
-  useEffect(() => {
-    setLocalChartData({ datasets: visibleDataWithColors })
-  }, [visibleDataWithColors])
-
   return (
     <Layout currentPage="fla">
       {messageFilters === null ? (
         <SelectFlightLog getLogSummary={getLogSummary} />
       ) : (
-        <MainDisplay closeLogFile={closeLogFile} chartData={chartData} />
+        <MainDisplay
+          closeLogFile={closeLogFile}
+          chartData={{ datasets: visibleDataWithColors }}
+        />
       )}
     </Layout>
   )

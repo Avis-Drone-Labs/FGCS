@@ -28,6 +28,25 @@ import {
 import EkfDisplay from "./ekfDisplay"
 import VibeDisplay from "./vibeDisplay"
 
+const mockTelemetry = {
+  airspeed: 999,
+  groundspeed: 32.89,
+  altitude_amsl: 128.45,
+  altitude_relative: 3.25,
+  heading: 270.42,
+  yaw: 269.8,
+  waypoint_distance: 49.73,
+  home_distance: 128.2,
+};
+
+const mockGps = { fix_type: 3, eph: 1.2, satellites_visible: 10 };
+const mockNavController = { nav_state: "AUTO" };
+const mockBattery = {
+  voltages: [11850, 11840, 11845, 11843],
+  current_battery: 3050,
+  battery_remaining: 98,
+};
+
 export default function TelemetrySection({
   calcIndicatorSize,
   calcIndicatorPadding,
@@ -36,17 +55,23 @@ export default function TelemetrySection({
 }) {
   const prearmEnabled = useSelector(selectPrearmEnabled)
   const flightMode = useSelector(selectFlightModeString)
-  const gpsData = useSelector(selectGPS)
+  //const gpsData = useSelector(selectGPS)
   const isArmed = useSelector(selectArmed)
-  const telemetryData = useSelector(selectTelemetry)
+  //const telemetryData = useSelector(selectTelemetry)
   const attitudeData = useSelector(selectAttitude)
-  const navControllerOutputData = useSelector(selectNavController)
-  const batteryData = useSelector(selectBatteryData)
+ // const navControllerOutputData = useSelector(selectNavController)
+  //const batteryData = useSelector(selectBatteryData)
   const heartbeatData = useSelector(selectHeartbeat)
   const homePosition = useSelector(selectHomePosition)
   const systemStatus = MAV_STATE[heartbeatData.systemStatus]
 
   const [distToHome, setDistToHome] = useState(0)
+
+  const gpsData = mockGps;
+  const telemetryData = mockTelemetry;
+  const navControllerOutputData = mockNavController;
+  const batteryData = mockBattery;
+
 
   useEffect(() => {
     // Calculate distance from current pos to home pos
@@ -118,11 +143,13 @@ export default function TelemetrySection({
           </div>
 
           {/* Attitude indicator image */}
-          <AttitudeIndicator
-            roll={attitudeData.roll * (180 / Math.PI)}
-            pitch={attitudeData.pitch * (180 / Math.PI)}
-            size={`${calcIndicatorSize()}px`}
-          />
+          <div className="flex-shrink-0">
+            <AttitudeIndicator
+              roll={attitudeData.roll * (180 / Math.PI)}
+              pitch={attitudeData.pitch * (180 / Math.PI)}
+              size={`${calcIndicatorSize()}px`}
+            />
+          </div>
 
           {/* AMSL and AREL values */}
           <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
@@ -170,10 +197,12 @@ export default function TelemetrySection({
           </div>
 
           {/* Heading indicator image */}
-          <HeadingIndicator
-            heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            size={`${calcIndicatorSize()}px`}
-          />
+          <div className="flex-shrink-0">
+            <HeadingIndicator
+              heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+              size={`${calcIndicatorSize()}px`}
+            />
+          </div>
 
           {/* YAW and HOME values */}
           <div

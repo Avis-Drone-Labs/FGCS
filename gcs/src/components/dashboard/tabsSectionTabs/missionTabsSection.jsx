@@ -68,13 +68,6 @@ const MissionInfo = ({ navControllerOutputData }) => {
           <span className="font-bold"> Waypoint: </span> {currentMission.seq}/
           {currentMission.total}
         </p>
-        <p>
-          <span className="font-bold">Distance to WP: </span>{" "}
-          {(navControllerOutputData.wp_dist
-            ? navControllerOutputData.wp_dist
-            : 0
-          ).toFixed(2)}
-        </p>
       </div>
     </>
   )

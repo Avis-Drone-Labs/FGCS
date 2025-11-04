@@ -100,7 +100,7 @@ export default function SelectFlightLog({ getLogSummary }) {
     return recentFgcsLogs.map((log, idx) => (
       <div
         key={idx}
-        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
+        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-600 hover:rounded-sm"
         onClick={() => handleFile(log)}
       >
         <p>{log.name} </p>
@@ -117,6 +117,10 @@ export default function SelectFlightLog({ getLogSummary }) {
     ))
   }, [recentFgcsLogs, handleFile])
 
+  const logsExist =
+    recentLogItems === null ||
+    (recentFgcsLogs !== null && recentLogItems.length === 0)
+
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
@@ -124,18 +128,36 @@ export default function SelectFlightLog({ getLogSummary }) {
           <Button onClick={selectFile} loading={loadingFile}>
             Analyse a log
           </Button>
-          <Button color="red" variant="filled" onClick={clearFgcsLogs}>
+          <Button
+            disabled={logsExist}
+            color="red"
+            variant="filled"
+            onClick={clearFgcsLogs}
+          >
             Clear Logs
           </Button>
         </div>
-        <Divider size="sm" orientation="vertical" />
+        <Divider size="xs" orientation="vertical" />
         <div className="relative">
           <LoadingOverlay visible={recentFgcsLogs === null || loadingFile} />
           <div className="flex flex-col items-center gap-2">
             <p className="font-bold">Recent FGCS telemetry logs</p>
-            <ScrollArea h={250} offsetScrollbars>
-              {recentLogItems}
-            </ScrollArea>
+            <ScrollArea.Autosize
+              className="relative"
+              type="always"
+              scrollbars="y"
+              mah={250}
+              scrollbarSize={"10px"}
+              offsetScrollbars={"present"}
+            >
+              {logsExist === true ? (
+                <p className="w-full mt-4 mb-4 text-center text-falcongrey-400 text-sm">
+                  No recent logs
+                </p>
+              ) : (
+                recentLogItems
+              )}
+            </ScrollArea.Autosize>
           </div>
         </div>
       </div>

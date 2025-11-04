@@ -274,7 +274,6 @@ export default function Navbar() {
                 />
                 <TextInput
                   label="IP Address"
-                  description="Enter the IP Address"
                   placeholder="127.0.0.1"
                   value={ip}
                   onChange={(event) =>
@@ -284,7 +283,6 @@ export default function Navbar() {
                 />
                 <TextInput
                   label="Port"
-                  description="Enter the port number"
                   placeholder="5760"
                   value={port}
                   onChange={(event) =>

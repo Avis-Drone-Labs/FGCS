@@ -54,7 +54,7 @@ export default function MissionTabsSection({
   )
 }
 
-const MissionInfo = ({ navControllerOutputData }) => {
+const MissionInfo = () => {
   const currentMission = useSelector(selectCurrentMission)
   return (
     <>

@@ -293,13 +293,14 @@ class ParamsController:
 
                 if ack:
                     got_ack = True
-                    if ack.param_id != param_name:
+                    if ack.param_id.upper() != param_name.upper():
                         self.drone.logger.warning(
                             f"Parameter ack name mismatch: expected {param_name}, got {ack.param_id}"
                         )
                         got_ack = False
                         continue
-                    elif ack.param_value != param_value:
+                    elif abs(ack.param_value - param_value) > 0.0001:
+                        # Use a small tolerance for float comparison
                         self.drone.logger.warning(
                             f"Could not set {param_name} to {param_value}, keeping value as {ack.param_value} instead"
                         )

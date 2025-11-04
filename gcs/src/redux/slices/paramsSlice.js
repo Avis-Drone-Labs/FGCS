@@ -76,9 +76,9 @@ const paramsSlice = createSlice({
           if (newParam.initial_value === newParam.param_value) {
             // Don't append if the new value is the same as the initial value
             continue
-          } else {
-            state.modifiedParams.push(newParam)
           }
+
+          state.modifiedParams.push(newParam)
         }
       }
     },

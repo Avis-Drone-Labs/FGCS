@@ -124,12 +124,16 @@ export default function Params() {
         }
 
         const existingParam = params.find((param) => param.param_id === key)
+        const cleanedNewValue = cleanFloat(value)
+
         if (existingParam) {
-          if (cleanFloat(existingParam.param_value) !== cleanFloat(value)) {
+          const cleanedOldValue = cleanFloat(existingParam.param_value)
+
+          if (cleanedOldValue !== cleanedNewValue) {
             loadedParamsList.push({
               id: key,
-              oldValue: cleanFloat(existingParam.param_value),
-              newValue: cleanFloat(value),
+              oldValue: cleanedOldValue,
+              newValue: cleanedNewValue,
               type: existingParam.param_type,
             })
           }
@@ -137,7 +141,7 @@ export default function Params() {
           loadedParamsList.push({
             id: key,
             oldValue: null,
-            newValue: cleanFloat(value),
+            newValue: cleanedNewValue,
             type: null,
           })
         }

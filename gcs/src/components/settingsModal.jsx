@@ -17,7 +17,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
-import { Tooltip } from "@mantine/core"
+import { ActionIcon, Tooltip } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 import DefaultSettings from "../../data/default_settings.json"
 import {
@@ -449,7 +449,8 @@ function Setting({ settingName, df, initialValue }) {
       )
 
     setChangedFromDefault(
-      JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
+      !["[]", '""'].includes(JSON.stringify(df.default)) &&
+        JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
     )
   }, [getSetting(settingName)])
 
@@ -471,14 +472,17 @@ function Setting({ settingName, df, initialValue }) {
     >
       <div className="space-y-px relative">
         {changedFromDefault && (
-          <Tooltip label="reset to default">
-            <button
-              className="absolute right-full top-1.5 pr-1.5"
-              onClick={resetToDefault}
-            >
-              <IconRestore size={16} />
-            </button>
-          </Tooltip>
+          <div className="absolute right-full pr-1.5">
+            <Tooltip label="Reset to default">
+              <ActionIcon
+                variant="transparent"
+                color="gray"
+                onClick={resetToDefault}
+              >
+                <IconRestore size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </div>
         )}
         <div>{df.display}:</div>
         <p className="text-gray-400 text-sm">{df.description}</p>
@@ -617,7 +621,7 @@ function SettingsModal() {
                 {Object.keys(groupedSettings).map((group) => (
                   <div className="pb-2" key={group}>
                     {group !== "Ungrouped" && (
-                      <h2 className="text-lg font-semibold text-white px-10 pb-2">
+                      <h2 className="text-lg font-semibold px-10 pb-2">
                         {group}
                       </h2>
                     )}

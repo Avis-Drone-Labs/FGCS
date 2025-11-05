@@ -45,13 +45,6 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     height: 197 * scale,
   }) // Default 16:9 aspect ratio
 
-  useEffect(() => {
-    setVideoDimensions({
-      width: Math.round(350 * scale),
-      height: Math.round(197 * scale),
-    })
-  }, [scale])
-
   const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
   const [isPoppedOut, setIsPoppedOut] = useState(false) // Track if video is popped out
 
@@ -71,21 +64,6 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     dispatch(setVideoMaximized(true))
   }
 
-  function updateScale(newScale) {
-    const clampedScale = Math.max(1, Math.min(3, newScale)) // Clamp between 1x and 3x
-    dispatch(setVideoScale(clampedScale))
-
-    // Recalculate dimensions based on new scale
-    const baseWidth = 350
-    const newWidth = baseWidth * clampedScale
-    const newHeight = Math.round(newWidth / baseAspectRatio)
-
-    setVideoDimensions({
-      width: newWidth,
-      height: newHeight,
-    })
-  }
-
   function handleResizeStart(e) {
     const startX = e.clientX
     const startScale = scale
@@ -94,7 +72,8 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       const deltaX = e.clientX - startX
       const scaleChange = deltaX / 200 // Adjust sensitivity
       const newScale = startScale + scaleChange
-      updateScale(newScale)
+      const clampedScale = Math.max(1, Math.min(3, newScale)) // Clamp between 1x and 3x
+      dispatch(setVideoScale(clampedScale))
     }
 
     const handleMouseUp = () => {
@@ -259,6 +238,18 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       setError(`Failed to stop stream: ${error.message}`)
     }
   }
+
+  useEffect(() => {
+    // Handle window resizing
+    const baseWidth = 350
+    const newWidth = baseWidth * scale
+    const newHeight = Math.round(newWidth / baseAspectRatio)
+
+    setVideoDimensions({
+      width: newWidth,
+      height: newHeight,
+    })
+  }, [scale])
 
   useEffect(() => {
     // Listen for video window close events

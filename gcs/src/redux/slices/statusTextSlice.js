@@ -7,6 +7,9 @@ const statusTextSlice = createSlice({
     pushMessage: (state, action) => {
       state.messages.unshift(action.payload)
     },
+    resetMessages: (state) => {
+      state.messages = []
+    },
   },
   selectors: {
     selectMessages: (state) => {
@@ -15,7 +18,7 @@ const statusTextSlice = createSlice({
   },
 })
 
-export const { pushMessage } = statusTextSlice.actions
+export const { pushMessage, resetMessages } = statusTextSlice.actions
 export const { selectMessages } = statusTextSlice.selectors
 
 export default statusTextSlice

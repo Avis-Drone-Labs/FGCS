@@ -32,3 +32,17 @@ export function getPositionFrameName(frameId) {
 
   return frameName || "UNKNOWN"
 }
+
+export function centiDegToDeg(val) {
+  if (val === null || val === undefined) {
+    return null
+  }
+  try {
+    if (parseInt(val) === 65535) {
+      return null
+    }
+    return parseFloat(val) / 100.0
+  } catch (e) {
+    return null
+  }
+}

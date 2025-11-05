@@ -18,18 +18,23 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import {
   selectDesiredBearing,
+  selectGpsTrackHeading,
   selectHeading,
 } from "../../redux/slices/droneInfoSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function DroneMarker({
-  lat,
-  lon,
-  zoom = null,
-  showHeadingLine = false,
-}) {
+export default function DroneMarker({ lat, lon, zoom = null }) {
   const heading = useSelector(selectHeading)
   const desiredBearing = useSelector(selectDesiredBearing)
+  const gpsTrackHeading = useSelector(selectGpsTrackHeading)
+
+  function calculateBearingLineEnd(bearing) {
+    return [
+      [lon, lat],
+      destination(point([lon, lat]), zoom ? 25000 / 2 ** zoom : 1, bearing)
+        .geometry.coordinates,
+    ]
+  }
 
   return (
     <>
@@ -41,16 +46,9 @@ export default function DroneMarker({
         />
       </Marker>
 
-      {showHeadingLine && (
+      {heading !== null && (
         <DrawLineCoordinates
-          coordinates={[
-            [lon, lat],
-            destination(
-              point([lon, lat]),
-              zoom ? 25000 / 2 ** zoom : 1,
-              heading,
-            ).geometry.coordinates,
-          ]}
+          coordinates={calculateBearingLineEnd(heading)}
           colour={tailwindColors.blue[200]}
           width={3}
         />
@@ -58,15 +56,16 @@ export default function DroneMarker({
 
       {desiredBearing !== null && (
         <DrawLineCoordinates
-          coordinates={[
-            [lon, lat],
-            destination(
-              point([lon, lat]),
-              zoom ? 25000 / 2 ** zoom : 1,
-              desiredBearing,
-            ).geometry.coordinates,
-          ]}
+          coordinates={calculateBearingLineEnd(desiredBearing)}
           colour={tailwindColors.red[200]}
+          width={3}
+        />
+      )}
+
+      {gpsTrackHeading !== null && (
+        <DrawLineCoordinates
+          coordinates={calculateBearingLineEnd(gpsTrackHeading)}
+          colour={tailwindColors.green[200]}
           width={3}
         />
       )}

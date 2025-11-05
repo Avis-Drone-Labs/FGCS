@@ -29,14 +29,19 @@ import registerAboutIPC, {
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
+import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
+import registerRTSPStreamIPC, {
+  cleanupAllRTSPStreams,
+} from "./modules/rtspStream"
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
+import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
+
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -227,11 +232,13 @@ function createWindow() {
     frame: false,
   })
 
-  registerWebcamIPC(win)
+  registerVideoIPC(win)
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
   registerVibeStatusIPC()
+  registerFFmpegBinaryIPC()
+  registerRTSPStreamIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -281,6 +288,13 @@ function setMainMenu() {
           label: "About FGCS",
           click: () => {
             openAboutPopout()
+          },
+        },
+        {
+          label: "Settings",
+          accelerator: "Cmd+,",
+          click: () => {
+            win?.webContents.send("settings:open")
           },
         },
         { type: "separator" },
@@ -384,11 +398,12 @@ function startBackend() {
 }
 
 function closeWindows() {
-  destroyWebcamWindow()
+  destroyVideoWindow()
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
   destroyVibeStatusWindow()
+  cleanupAllRTSPStreams()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -462,18 +477,15 @@ app.whenReady().then(() => {
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", getMessages)
 
-  // Save mission file
-  ipcMain.handle(
-    "missions:get-save-mission-file-path",
-    async (event, options) => {
-      const window = BrowserWindow.fromWebContents(event.sender)
-      if (!window) {
-        throw new Error("No active window found")
-      }
-      const result = await dialog.showSaveDialog(window, options)
-      return result
-    },
-  )
+  // Open native save dialog
+  ipcMain.handle("app:get-save-file-path", async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) {
+      throw new Error("No active window found")
+    }
+    const result = await dialog.showSaveDialog(window, options)
+    return result
+  })
 
   ipcMain.handle("app:get-node-env", () =>
     app.isPackaged ? "production" : "development",

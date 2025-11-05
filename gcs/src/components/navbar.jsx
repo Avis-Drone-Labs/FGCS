@@ -20,6 +20,7 @@ import {
   SegmentedControl,
   Select,
   Tabs,
+  Text,
   TextInput,
   Tooltip,
 } from "@mantine/core"
@@ -39,6 +40,8 @@ import {
   emitConnectToDrone,
   emitDisconnectFromDrone,
   emitGetComPorts,
+  emitStartForwarding,
+  emitStopForwarding,
   selectBaudrate,
   selectComPorts,
   selectConnectedToDrone,
@@ -48,7 +51,10 @@ import {
   selectConnectionType,
   selectCurrentPage,
   selectFetchingComPorts,
+  selectForwardingAddress,
+  selectForwardingAddressModalOpened,
   selectIp,
+  selectIsForwarding,
   selectNetworkType,
   selectPort,
   selectSelectedComPorts,
@@ -57,6 +63,8 @@ import {
   setConnecting,
   setConnectionModal,
   setConnectionType,
+  setForwardingAddress,
+  setForwardingAddressModalOpened,
   setIp,
   setNetworkType,
   setPort,
@@ -77,6 +85,7 @@ export default function Navbar() {
   // Redux
   const dispatch = useDispatch()
   const openedModal = useSelector(selectConnectionModal)
+  const forwardingModalOpened = useSelector(selectForwardingAddressModalOpened)
 
   const connecting = useSelector(selectConnecting)
   const connectedToDrone = useSelector(selectConnectedToDrone)
@@ -92,6 +101,8 @@ export default function Navbar() {
   const ip = useSelector(selectIp)
   const port = useSelector(selectPort)
   const droneConnectionStatus = useSelector(selectConnectionStatus)
+  const forwardingAddress = useSelector(selectForwardingAddress)
+  const isForwarding = useSelector(selectIsForwarding)
 
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
@@ -105,6 +116,7 @@ export default function Navbar() {
           baud: parseInt(selectedBaudRate),
           wireless: wireless,
           connectionType: type,
+          forwardingAddress: forwardingAddress,
         }),
       )
     } else if (type === ConnectionType.Network) {
@@ -119,6 +131,7 @@ export default function Navbar() {
           baud: 115200,
           wireless: true,
           connectionType: type,
+          forwardingAddress: forwardingAddress,
         }),
       )
     } else {
@@ -261,7 +274,6 @@ export default function Navbar() {
                 />
                 <TextInput
                   label="IP Address"
-                  description="Enter the IP Address"
                   placeholder="127.0.0.1"
                   value={ip}
                   onChange={(event) =>
@@ -271,7 +283,6 @@ export default function Navbar() {
                 />
                 <TextInput
                   label="Port"
-                  description="Enter the port number"
                   placeholder="5760"
                   value={port}
                   onChange={(event) =>
@@ -281,6 +292,12 @@ export default function Navbar() {
               </div>
             </Tabs.Panel>
           </Tabs>
+
+          {isForwarding && (
+            <Text mb={16} c="dimmed" size="sm">
+              Note: MAVLink packets will be forwarded to {forwardingAddress}
+            </Text>
+          )}
 
           <Group justify="space-between" className="pt-4">
             <Button
@@ -326,6 +343,70 @@ export default function Navbar() {
               />
             </>
           )}
+      </Modal>
+
+      <Modal
+        opened={forwardingModalOpened}
+        onClose={() => {
+          dispatch(setForwardingAddressModalOpened(false))
+        }}
+        title="Forward MAVLink packets"
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+        styles={{
+          content: {
+            borderRadius: "0.5rem",
+          },
+        }}
+      >
+        <Text mb={16} c="dimmed" size="sm">
+          Note: Any GCS or application receiving forwarded MAVLink packets
+          cannot send data back to the aircraft. The data is sent in a one-way
+          manner only.
+        </Text>
+        <TextInput
+          label="Forwarding Address"
+          description={
+            isForwarding
+              ? "MAVLink packets are being forwarded to this address"
+              : "Enter the address to forward MAVLink packets to"
+          }
+          placeholder="e.g. udpout:192.168.1.10:14550"
+          value={forwardingAddress}
+          onChange={(event) =>
+            dispatch(setForwardingAddress(event.currentTarget.value))
+          }
+          data-autofocus
+          disabled={isForwarding}
+        />
+
+        {isForwarding ? (
+          <Button
+            className="mt-8"
+            variant="filled"
+            color={tailwindColors.red[600]}
+            onClick={() => {
+              dispatch(emitStopForwarding())
+            }}
+          >
+            Stop Forwarding
+          </Button>
+        ) : (
+          <Button
+            className="mt-8"
+            variant="filled"
+            color={tailwindColors.green[600]}
+            onClick={() => {
+              dispatch(emitStartForwarding())
+              dispatch(setForwardingAddressModalOpened(false))
+            }}
+          >
+            Start Forwarding
+          </Button>
+        )}
       </Modal>
 
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">

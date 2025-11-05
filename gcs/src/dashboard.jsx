@@ -51,7 +51,8 @@ import ResizableInfoBox from "./components/dashboard/resizableInfoBox"
 import StatusBar, { StatusSection } from "./components/dashboard/statusBar"
 import StatusMessages from "./components/dashboard/statusMessages"
 import TabsSection from "./components/dashboard/tabsSection"
-import TelemetrySection from "./components/dashboard/telemetry"
+import TelemetrySection from "./components/dashboard/telemetrySection/telemetry"
+import VideoWidget from "./components/dashboard/videoWidget"
 import Layout from "./components/layout"
 
 // Tailwind styling
@@ -232,45 +233,48 @@ export default function Dashboard() {
           mapRef={mapRef}
         />
 
-        {connectedToDrone && (
-          <div className="absolute bottom-0 right-0 z-20">
-            <ResizableBox
-              height={messagesPanelSize.height}
-              width={messagesPanelSize.width}
-              minConstraints={[600, 150]}
-              maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
-              resizeHandles={["nw"]}
-              handle={(_, ref) => (
-                <span className={"custom-handle-nw"} ref={ref} />
-              )}
-              handleSize={[32, 32]}
-              onResize={(_, { size }) => {
-                setMessagesPanelSize({ width: size.width, height: size.height })
-              }}
-            >
-              <>
-                {/* Show a "Waiting for message area" */}
-                {statustextMessages.length == 0 && (
-                  <StatusMessages
-                    messages={[
-                      {
-                        timestamp: "0",
-                        text: `Waiting for messages from ${aircraftTypeString}`,
-                        severity: 7,
-                      },
-                    ]}
-                    className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
-                  />
-                )}
-                {/* Show real messages */}
+        {/* Video Widget for RTSP streams */}
+        <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
+
+        <div className="absolute bottom-0 right-0 z-20">
+          <ResizableBox
+            height={messagesPanelSize.height}
+            width={messagesPanelSize.width}
+            minConstraints={[600, 150]}
+            maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
+            resizeHandles={["nw"]}
+            handle={(_, ref) => (
+              <span className={"custom-handle-nw"} ref={ref} />
+            )}
+            handleSize={[32, 32]}
+            onResize={(_, { size }) => {
+              setMessagesPanelSize({ width: size.width, height: size.height })
+            }}
+          >
+            <>
+              {/* Show a "Waiting for message area" */}
+              {statustextMessages.length == 0 && (
                 <StatusMessages
-                  messages={statustextMessages}
+                  messages={[
+                    {
+                      timestamp: null,
+                      text: connectedToDrone
+                        ? `Waiting for messages from ${aircraftTypeString}`
+                        : "Not connected to drone",
+                      severity: 7,
+                    },
+                  ]}
                   className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
                 />
-              </>
-            </ResizableBox>
-          </div>
-        )}
+              )}
+              {/* Show real messages */}
+              <StatusMessages
+                messages={statustextMessages}
+                className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
+              />
+            </>
+          </ResizableBox>
+        </div>
       </div>
     </Layout>
   )

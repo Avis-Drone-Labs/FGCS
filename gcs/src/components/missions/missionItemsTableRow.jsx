@@ -19,6 +19,7 @@ import {
   COPTER_MISSION_ITEM_COMMANDS_LIST,
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
+import { COMMONLY_USED_MISSION_TABLE_LABELS } from "../../helpers/mavlinkConstants"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -39,6 +40,9 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
     selectDrawingMissionItemByIdx(missionItemIndex),
   )
 
+  // Commonly used section
+  const commonlyUsedTag = "-com-used"
+
   function getDisplayCommandName(commandName) {
     if (commandName.startsWith("MAV_CMD_NAV_")) {
       commandName = commandName.replace("MAV_CMD_NAV_", "")
@@ -55,10 +59,28 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       commandsList = PLANE_MISSION_ITEM_COMMANDS_LIST
     }
 
-    return Object.entries(commandsList).map(([key, value]) => ({
+    const mappedList = Object.entries(commandsList).map(([key, value]) => ({
       value: key,
       label: getDisplayCommandName(value),
     }))
+    const sorted = mappedList.sort((a, b) => (a.label < b.label ? -1 : 1))
+    return sorted
+  }
+
+  function getCommonlyUsedCommands() {
+    const commands = getAvailableCommands()
+    const filteredCommands = commands.filter((a) =>
+      COMMONLY_USED_MISSION_TABLE_LABELS.includes(a.label),
+    )
+    return filteredCommands.map((a) => ({
+      value: a.value + commonlyUsedTag,
+      label: a.label,
+    }))
+  }
+
+  function getCommonlyUsedIds() {
+    const commands = getCommonlyUsedCommands()
+    return commands.map((a) => a.value)
   }
 
   function updateMissionItemData(key, newVal) {
@@ -75,12 +97,27 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       <TableTd>{missionItem.seq}</TableTd>
       <TableTd>
         <Select
-          data={getAvailableCommands()}
-          value={missionItem.command.toString()}
+          data={[
+            { group: "Commonly Used", items: getCommonlyUsedCommands() },
+            { group: "All commands", items: getAvailableCommands() },
+          ]}
+          value={
+            getCommonlyUsedIds().includes(
+              missionItem.command.toString() + commonlyUsedTag,
+            )
+              ? missionItem.command.toString() + commonlyUsedTag
+              : missionItem.command.toString()
+          }
           onChange={(value) =>
-            updateMissionItemData("command", parseInt(value))
+            updateMissionItemData(
+              "command",
+              parseInt(value.replace(commonlyUsedTag, "")),
+            )
           }
           allowDeselect={false}
+          classNames={{ dropdown: "!min-w-fit" }}
+          comboboxProps={{ position: "top-start" }}
+          searchable
         />
       </TableTd>
       <TableTd>
@@ -133,27 +170,31 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
         />
       </TableTd>
       <TableTd>{getPositionFrameName(missionItem.frame)}</TableTd>
-      <TableTd className="flex flex-row gap-2">
-        <ActionIcon
-          onClick={() =>
-            dispatch(reorderDrawingItem({ id: missionItem.id, increment: -1 }))
-          }
-        >
-          <IconArrowUp size={20} />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() =>
-            dispatch(reorderDrawingItem({ id: missionItem.id, increment: 1 }))
-          }
-        >
-          <IconArrowDown size={20} />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() => dispatch(removeDrawingItem(missionItem.id))}
-          color="red"
-        >
-          <IconTrash size={20} />
-        </ActionIcon>
+      <TableTd className="h-full">
+        <div className="flex flex-row gap-2">
+          <ActionIcon
+            onClick={() =>
+              dispatch(
+                reorderDrawingItem({ id: missionItem.id, increment: -1 }),
+              )
+            }
+          >
+            <IconArrowUp size={20} />
+          </ActionIcon>
+          <ActionIcon
+            onClick={() =>
+              dispatch(reorderDrawingItem({ id: missionItem.id, increment: 1 }))
+            }
+          >
+            <IconArrowDown size={20} />
+          </ActionIcon>
+          <ActionIcon
+            onClick={() => dispatch(removeDrawingItem(missionItem.id))}
+            color="red"
+          >
+            <IconTrash size={20} />
+          </ActionIcon>
+        </div>
       </TableTd>
     </TableTr>
   )

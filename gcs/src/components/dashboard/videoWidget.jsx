@@ -25,8 +25,10 @@ import Webcam from "react-webcam"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import {
   selectVideoMaximized,
+  selectVideoScale,
   selectVideoSource,
   setVideoMaximized,
+  setVideoScale,
   setVideoSource,
 } from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
@@ -34,15 +36,15 @@ import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 export default function VideoWidget({ telemetryPanelWidth }) {
   const videoSource = useSelector(selectVideoSource)
   const isMaximized = useSelector(selectVideoMaximized)
+  const scale = useSelector(selectVideoScale) // Scale factor for resizing
   const dispatch = useDispatch()
 
   const [error, setError] = useState(null)
   const [videoDimensions, setVideoDimensions] = useState({
-    width: 350,
-    height: 197,
+    width: 350 * scale,
+    height: 197 * scale,
   }) // Default 16:9 aspect ratio
   const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
-  const [scale, setScale] = useState(1) // Scale factor for resizing
   const [isPoppedOut, setIsPoppedOut] = useState(false) // Track if video is popped out
 
   const [
@@ -63,7 +65,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
   function updateScale(newScale) {
     const clampedScale = Math.max(1, Math.min(3, newScale)) // Clamp between 1x and 3x
-    setScale(clampedScale)
+    dispatch(setVideoScale(clampedScale))
 
     // Recalculate dimensions based on new scale
     const baseWidth = 350

@@ -5,7 +5,7 @@
 */
 
 // Base imports
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 
 // 3rd Party Imports
 import { useDispatch, useSelector } from "react-redux"
@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { hexToRgba } from "./components/fla/utils"
 
 // Custom components and helpers
+import { PRELOAD_LABELS } from "./components/fla/constants.js"
 import { logEventIds } from "./components/fla/logEventIds.js"
 
 import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
@@ -48,9 +49,6 @@ export default function FLA() {
   const customColors = useSelector(selectCustomColors)
   const baseChartData = useSelector(selectBaseChartData)
 
-  // Local states
-  const [chartData, setLocalChartData] = useState({ datasets: [] })
-
   /**
    * Dispatch the lightweight summary info to Redux
    */
@@ -76,13 +74,17 @@ export default function FLA() {
       ),
     )
     dispatch(setBaseChartData([]))
+    // Fire off preload in the background without blocking
+    const labelsToPreload = PRELOAD_LABELS[summary.logType]
+    if (labelsToPreload && labelsToPreload.length > 0) {
+      setTimeout(() => fetchData(labelsToPreload), 0)
+    }
   }
 
   // Close file
   function closeLogFile() {
     dispatch(setFile(null))
     dispatch(setLogMessages(null))
-    setLocalChartData({ datasets: [] })
     dispatch(setMessageFilters(null))
     dispatch(setCustomColors({}))
     dispatch(setUtcAvailable(false))
@@ -91,6 +93,30 @@ export default function FLA() {
     dispatch(setLogType("dataflash"))
     dispatch(setCanSavePreset(false))
     dispatch(setBaseChartData([]))
+  }
+
+  async function fetchData(labelsToFetch) {
+    const newDatasets = await window.ipcRenderer.invoke(
+      "fla:get-messages",
+      labelsToFetch,
+    )
+    // Unpack and Cache
+    if (Array.isArray(newDatasets) && newDatasets.length > 0) {
+      const transformed = newDatasets.map((ds) => {
+        if (Array.isArray(ds?.data)) return ds
+        const len = Math.min(ds.x.length, ds.y.length)
+        const points = new Array(len)
+        for (let i = 0; i < len; i++) {
+          points[i] = { x: ds.x[i], y: ds.y[i] }
+        }
+        return { label: ds.label, yAxisID: ds.yAxisID, data: points }
+      })
+      // Deduplicate by label: new datasets override old ones
+      const existing = baseChartData || []
+      const newLabels = new Set(transformed.map((ds) => ds.label))
+      const filteredExisting = existing.filter((ds) => !newLabels.has(ds.label))
+      dispatch(setBaseChartData([...filteredExisting, ...transformed]))
+    }
   }
 
   // Step 1: Memoize the calculation of which labels are currently requested.
@@ -121,19 +147,9 @@ export default function FLA() {
 
     if (labelsToFetch.length > 0) {
       console.log("Cache miss. Fetching:", labelsToFetch)
-      const fetchMissingData = async () => {
-        const newDatasets = await window.ipcRenderer.invoke(
-          "fla:get-messages",
-          labelsToFetch,
-        )
-        if (newDatasets) {
-          // Dispatch to add the new data to our master cache in Redux
-          dispatch(setBaseChartData([...(baseChartData || []), ...newDatasets]))
-        }
-      }
-      fetchMissingData()
+      fetchData(labelsToFetch)
     }
-  }, [requestedLabels, baseChartData, dispatch])
+  }, [requestedLabels, baseChartData])
 
   // Step 3: Memoize the final chart data.
   // This filters the master cache and applies colors. It only re-runs if
@@ -153,18 +169,15 @@ export default function FLA() {
       })
   }, [baseChartData, customColors, requestedLabels])
 
-  // Step 4: Update the chart's state.
-  // This is now very simple and just syncs the memoized data to the local state.
-  useEffect(() => {
-    setLocalChartData({ datasets: visibleDataWithColors })
-  }, [visibleDataWithColors])
-
   return (
     <Layout currentPage="fla">
       {messageFilters === null ? (
         <SelectFlightLog getLogSummary={getLogSummary} />
       ) : (
-        <MainDisplay closeLogFile={closeLogFile} chartData={chartData} />
+        <MainDisplay
+          closeLogFile={closeLogFile}
+          chartData={{ datasets: visibleDataWithColors }}
+        />
       )}
     </Layout>
   )

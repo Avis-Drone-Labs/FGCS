@@ -453,7 +453,7 @@ export default async function openFile(event, filePath) {
 }
 
 // on-demand retrieval of messages
-export async function retrieveMessages(_event, requestedMessages) {
+export async function getMessages(_event, requestedMessages) {
   // each requestedMessage should be of the form `${requestedMessageName}/${requestedFieldName}`
   // like ['ARM/ArmState', 'ARSP/Airspeed']
 
@@ -461,7 +461,7 @@ export async function retrieveMessages(_event, requestedMessages) {
 
   if (!logData) {
     console.error(
-      "retrieveMessages: logData is null or undefined. Unable to retrieve messages.",
+      "getMessages: logData is null or undefined. Unable to retrieve messages.",
     )
     return {
       success: false,
@@ -490,14 +490,35 @@ export async function retrieveMessages(_event, requestedMessages) {
     const categoryName = label.slice(0, slash)
     const fieldName = label.slice(slash + 1)
 
+    // Validate existence of requestedMessage in our log
+    const fmt = formatMessages[categoryName]
+    const hasField = fmt?.fields.includes(fieldName)
+
+    const series = logData[categoryName]
+
+    if (!hasField || !Array.isArray(series) || series.length === 0) {
+      // Skip unknown or unavailable labels
+      continue
+    }
+
+    const len = series.length
+    // use typed arrays to reduce IPC serialization overhead
+    // Time as Float64, values as Float32 for size efficiency
+    const x = new Float64Array(len)
+    const y = new Float32Array(len)
+
+    for (let j = 0; j < len; j++) {
+      const point = series[j]
+      // making sure all the entries are numbers
+      x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
+      y[j] = typeof point[fieldName] === "number" ? point[fieldName] : 0
+    }
+
     datasets.push({
-      label: label,
+      label,
       yAxisID: getUnit(categoryName, fieldName, formatMessages, units),
-      // I guess this is the expensive part. We're looping through every data point
-      data: logData[categoryName].map((d) => ({
-        x: d.TimeUS,
-        y: d[fieldName],
-      })),
+      x,
+      y,
     })
   }
 

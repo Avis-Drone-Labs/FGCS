@@ -142,7 +142,7 @@ export default function FLA() {
       console.log("Cache miss. Fetching:", labelsToFetch)
       fetchData(labelsToFetch)
     }
-  }, [requestedLabels, baseChartData, dispatch])
+  }, [requestedLabels, baseChartData])
 
   // Step 3: Memoize the final chart data.
   // This filters the master cache and applies colors. It only re-runs if

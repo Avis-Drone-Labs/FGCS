@@ -16,12 +16,7 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-import openFile, {
-  clearRecentFiles,
-  getRecentFiles,
-  getMessages,
-  // @ts-expect-error - no types available
-} from "./fla"
+import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -42,15 +37,7 @@ import registerVibeStatusIPC, {
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 import { readParamsFile } from "./utils/paramsFile"
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.js
-// │
+
 process.env.DIST = path.join(__dirname, "../dist")
 process.env.VITE_PUBLIC = app.isPackaged
   ? process.env.DIST

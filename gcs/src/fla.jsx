@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { hexToRgba } from "./components/fla/utils"
 
 // Custom components and helpers
+import { PRELOAD_LABELS } from "./components/fla/constants.js"
 import { logEventIds } from "./components/fla/logEventIds.js"
 
 import SelectFlightLog from "./components/fla/SelectFlightLog.jsx"
@@ -73,6 +74,8 @@ export default function FLA() {
       ),
     )
     dispatch(setBaseChartData([]))
+    // Fire off preload in the background without blocking
+    setTimeout(() => fetchData(PRELOAD_LABELS[summary.logType]), 0)
   }
 
   // Close file
@@ -87,6 +90,26 @@ export default function FLA() {
     dispatch(setLogType("dataflash"))
     dispatch(setCanSavePreset(false))
     dispatch(setBaseChartData([]))
+  }
+
+  async function fetchData (labelsToFetch){
+    const newDatasets = await window.ipcRenderer.invoke(
+      "fla:get-messages",
+      labelsToFetch,
+    )
+    // Unpack and Cache
+    if (Array.isArray(newDatasets) && newDatasets.length > 0) {
+      const transformed = newDatasets.map((ds) => {
+        if (Array.isArray(ds?.data)) return ds
+        const len = Math.min(ds.x.length, ds.y.length)
+        const points = new Array(len)
+        for (let i = 0; i < len; i++) {
+          points[i] = { x: ds.x[i], y: ds.y[i] }
+        }
+        return { label: ds.label, yAxisID: ds.yAxisID, data: points }
+      })
+      dispatch(setBaseChartData([...(baseChartData || []), ...transformed]))
+    }
   }
 
   // Step 1: Memoize the calculation of which labels are currently requested.
@@ -117,26 +140,7 @@ export default function FLA() {
 
     if (labelsToFetch.length > 0) {
       console.log("Cache miss. Fetching:", labelsToFetch)
-      const fetchMissingData = async () => {
-        const newDatasets = await window.ipcRenderer.invoke(
-          "fla:get-messages",
-          labelsToFetch,
-        )
-        // Unpack and Cache
-        if (Array.isArray(newDatasets) && newDatasets.length > 0) {
-          const transformed = newDatasets.map((ds) => {
-            if (Array.isArray(ds?.data)) return ds
-            const len = Math.min(ds.x.length, ds.y.length)
-            const points = new Array(len)
-            for (let i = 0; i < len; i++) {
-              points[i] = { x: ds.x[i], y: ds.y[i] }
-            }
-            return { label: ds.label, yAxisID: ds.yAxisID, data: points }
-          })
-          dispatch(setBaseChartData([...(baseChartData || []), ...transformed]))
-        }
-      }
-      fetchMissingData()
+      fetchData(labelsToFetch)
     }
   }, [requestedLabels, baseChartData, dispatch])
 

@@ -19,7 +19,7 @@ import packageInfo from "../package.json"
 import openFile, {
   clearRecentFiles,
   getRecentFiles,
-  retrieveMessages,
+  getMessages,
   // @ts-expect-error - no types available
 } from "./fla"
 import registerAboutIPC, {
@@ -460,7 +460,7 @@ app.whenReady().then(() => {
   ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Load Messages on demand
-  ipcMain.handle("fla:get-messages", retrieveMessages)
+  ipcMain.handle("fla:get-messages", getMessages)
 
   // Save mission file
   ipcMain.handle(

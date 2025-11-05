@@ -511,8 +511,7 @@ export async function getMessages(_event, requestedMessages) {
       const point = series[j]
       // making sure all the entries are numbers
       x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
-      const vy = point[fieldName]
-      y[j] = typeof vy === "number" ? vy : 0
+      y[j] = typeof point[fieldName] === "number" ? point[fieldName] : 0
     }
 
     datasets.push({

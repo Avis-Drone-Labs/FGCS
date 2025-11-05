@@ -13,6 +13,9 @@ const paramsSlice = createSlice({
     fetchingVarsProgress: { progress: 0, param_id: "" },
     searchValue: "",
     hasFetchedOnce: false,
+    loadParamsFileModalOpen: false,
+    loadedFileName: "",
+    loadedParams: [],
   },
   reducers: {
     setRebootData: (state, action) => {
@@ -51,13 +54,33 @@ const paramsSlice = createSlice({
       state.showModifiedParams = !state.showModifiedParams
     },
     appendModifiedParams: (state, action) => {
-      state.modifiedParams = state.modifiedParams.concat(action.payload)
+      for (let newParam of action.payload) {
+        // If param already exists, update it instead of appending
+        const existingIndex = state.modifiedParams.findIndex(
+          (item) => item.param_id === newParam.param_id,
+        )
+        if (existingIndex !== -1) {
+          state.modifiedParams[existingIndex] = {
+            ...state.modifiedParams[existingIndex],
+            param_value: newParam.param_value,
+          }
 
-      // Delete where initial_value and param_value are the same, this is the case when someone deletes the input and puts it in again
-      // as the same - very niche case but can happen
-      state.modifiedParams = state.modifiedParams.filter(
-        (item) => item.initial_value !== item.param_value,
-      )
+          if (
+            state.modifiedParams[existingIndex].initial_value ===
+            newParam.param_value
+          ) {
+            // Remove if the new value is the same as the initial value
+            state.modifiedParams.splice(existingIndex, 1)
+          }
+        } else {
+          if (newParam.initial_value === newParam.param_value) {
+            // Don't append if the new value is the same as the initial value
+            continue
+          }
+
+          state.modifiedParams.push(newParam)
+        }
+      }
     },
     updateParamValue: (state, action) => {
       state.params = state.params.map((item) =>
@@ -96,6 +119,15 @@ const paramsSlice = createSlice({
     setHasFetchedOnce: (state, action) => {
       state.hasFetchedOnce = action.payload
     },
+    setLoadParamsFileModalOpen: (state, action) => {
+      state.loadParamsFileModalOpen = action.payload
+    },
+    setLoadedFileName: (state, action) => {
+      state.loadedFileName = action.payload
+    },
+    setLoadedParams: (state, action) => {
+      state.loadedParams = action.payload
+    },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
@@ -117,6 +149,9 @@ const paramsSlice = createSlice({
     selectFetchingVarsProgress: (state) => state.fetchingVarsProgress,
     selectParamSearchValue: (state) => state.searchValue,
     selectHasFetchedOnce: (state) => state.hasFetchedOnce,
+    selectLoadParamsFileModalOpen: (state) => state.loadParamsFileModalOpen,
+    selectLoadedFileName: (state) => state.loadedFileName,
+    selectLoadedParams: (state) => state.loadedParams,
   },
 })
 
@@ -136,6 +171,9 @@ export const {
   deleteModifiedParam,
   resetParamState,
   setHasFetchedOnce,
+  setLoadParamsFileModalOpen,
+  setLoadedFileName,
+  setLoadedParams,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -153,6 +191,9 @@ export const {
   selectShowModifiedParams,
   selectParamSearchValue,
   selectHasFetchedOnce,
+  selectLoadParamsFileModalOpen,
+  selectLoadedFileName,
+  selectLoadedParams,
 } = paramsSlice.selectors
 
 export default paramsSlice

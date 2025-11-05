@@ -14,6 +14,7 @@ import {
   IconPower,
   IconRefresh,
   IconTool,
+  IconUpload,
 } from "@tabler/icons-react"
 
 // Styling imports
@@ -41,7 +42,7 @@ import {
   toggleShowModifiedParams,
 } from "../../redux/slices/paramsSlice.js"
 
-export default function ParamsToolbar() {
+export default function ParamsToolbar({ loadParamsFromFile }) {
   const dispatch = useDispatch()
   const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
@@ -143,6 +144,15 @@ export default function ParamsToolbar() {
         color={tailwindColors.blue[600]}
       >
         Save params to file
+      </Button>
+
+      <Button
+        size="sm"
+        rightSection={<IconUpload size={14} />}
+        onClick={loadParamsFromFile}
+        color={tailwindColors.blue[600]}
+      >
+        Load params from file
       </Button>
     </div>
   )

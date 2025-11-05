@@ -89,7 +89,7 @@ const RowItem = memo(({ index, style }) => {
         <ValueInput index={index} paramDef={paramDef} className="grow" />
         {hasBeenModified && (
           <Tooltip
-            label={`Reset to previous value of ${paramPreviousValue.param_value}`}
+            label={`Reset to previous value of ${paramPreviousValue?.param_value}`}
           >
             <ActionIcon
               size="lg"

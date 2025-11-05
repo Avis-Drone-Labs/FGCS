@@ -22,6 +22,9 @@ import { Row } from "./components/params/row.jsx"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
+import LoadParamsFileModal from "./components/params/loadParamsFileModal.jsx"
+import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
+import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   emitRefreshParams,
@@ -36,8 +39,21 @@ import {
   selectShownParams,
   setFetchingVars,
   setHasFetchedOnce,
+  setLoadedFileName,
+  setLoadedParams,
+  setLoadParamsFileModalOpen,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
+
+function cleanFloat(value, decimals = 5) {
+  if (typeof value === "number") {
+    return Number(value.toFixed(decimals))
+  }
+  if (!isNaN(value)) {
+    return Number(parseFloat(value).toFixed(decimals))
+  }
+  return value
+}
 
 export default function Params() {
   const dispatch = useDispatch()
@@ -57,12 +73,6 @@ export default function Params() {
   // Fetch progress states
   const fetchingVars = useSelector(selectFetchingVars)
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
-
-  function fetchParams() {
-    dispatch(setFetchingVars(true))
-    dispatch(emitRefreshParams())
-    dispatch(setHasFetchedOnce(true))
-  }
 
   // Reset state if we loose connection
   useEffect(() => {
@@ -89,9 +99,68 @@ export default function Params() {
     dispatch(setShownParams(filteredParams))
   }, [debouncedSearchValue, showModifiedParams, params, modifiedParams])
 
+  function fetchParams() {
+    dispatch(setFetchingVars(true))
+    dispatch(emitRefreshParams())
+    dispatch(setHasFetchedOnce(true))
+  }
+
+  async function loadParamsFromFile() {
+    const result = await window.ipcRenderer.invoke(
+      "params:load-params-from-file",
+    )
+    if (!result) {
+      return
+    }
+
+    if (result.success) {
+      dispatch(setLoadedFileName(result.name))
+
+      // Only keep params that are different to the current ones
+      const loadedParamsList = []
+      for (const [key, value] of Object.entries(result.params)) {
+        if (EXCLUDE_PARAMS_LOAD.includes(key)) {
+          continue
+        }
+
+        const existingParam = params.find((param) => param.param_id === key)
+        const cleanedNewValue = cleanFloat(value)
+
+        if (existingParam) {
+          const cleanedOldValue = cleanFloat(existingParam.param_value)
+
+          if (cleanedOldValue !== cleanedNewValue) {
+            loadedParamsList.push({
+              id: key,
+              oldValue: cleanedOldValue,
+              newValue: cleanedNewValue,
+              type: existingParam.param_type,
+            })
+          }
+        } else {
+          loadedParamsList.push({
+            id: key,
+            oldValue: null,
+            newValue: cleanedNewValue,
+            type: null,
+          })
+        }
+      }
+      dispatch(setLoadedParams(loadedParamsList))
+      dispatch(setLoadParamsFileModalOpen(true))
+    } else {
+      showErrorNotification(
+        `Error loading params from file: ${
+          result.error || "Please try again."
+        }`,
+      )
+    }
+  }
+
   return (
     <Layout currentPage="params">
       <AutopilotRebootModal />
+      <LoadParamsFileModal />
 
       {connected ? (
         <>
@@ -112,7 +181,7 @@ export default function Params() {
 
           {Object.keys(params).length > 0 && !fetchingVars && (
             <div className="w-full h-full contents">
-              <ParamsToolbar />
+              <ParamsToolbar loadParamsFromFile={loadParamsFromFile} />
 
               <div className="h-full w-2/3 mx-auto">
                 <AutoSizer>

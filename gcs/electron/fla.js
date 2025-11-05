@@ -497,7 +497,7 @@ export async function getMessages(_event, requestedMessages) {
     const series = logData[categoryName]
 
     if (!hasField || !Array.isArray(series) || series.length === 0) {
-      // Skip unknown or unavailable labels to make preload calls resilient
+      // Skip unknown or unavailable labels
       continue
     }
 

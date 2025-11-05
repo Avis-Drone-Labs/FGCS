@@ -75,7 +75,9 @@ export default function FLA() {
     )
     dispatch(setBaseChartData([]))
     // Fire off preload in the background without blocking
-    setTimeout(() => fetchData(PRELOAD_LABELS[summary.logType]), 0)
+    if (PRELOAD_LABELS.hasOwnProperty(summary.logType)) {
+      setTimeout(() => fetchData(PRELOAD_LABELS[summary.logType]), 0)
+    }
   }
 
   // Close file

@@ -19,7 +19,7 @@ import {
   getUnit,
   processFlightModes,
   sortObjectByKeys,
-} from "./utils/fla-utils"
+} from "./utils/flaUtils"
 
 // Type definitions
 interface FormatMessage {

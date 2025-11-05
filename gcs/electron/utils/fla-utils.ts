@@ -1,4 +1,58 @@
-const ignoredMessages = [
+// Type definitions for fla-utils
+interface MessageObject {
+  name: string
+  type?: number
+  TimeUS?: number
+  Instance?: number
+  Inst?: number
+  [key: string]: string | number | undefined
+}
+
+interface FormatMessage {
+  length: number
+  name: string
+  type: number
+  format: string
+  fields: string[]
+  units?: string
+  multiplier?: string
+}
+
+interface LoadedLogMessages {
+  [messageName: string]:
+    | MessageObject[]
+    | { [key: string]: FormatMessage }
+    | { [key: string]: string }
+    | string
+    | null
+}
+
+interface FilterState {
+  [messageName: string]: { [fieldName: string]: boolean }
+}
+
+interface FieldStats {
+  min: number
+  max: number
+  sum: number
+  count: number
+}
+
+interface MeanValues {
+  [fieldKey: string]: {
+    mean: string
+    max: string
+    min: string
+  }
+}
+
+interface ExpandResult {
+  updatedMessages: LoadedLogMessages
+  updatedFilters: FilterState
+  updatedFormats: { [key: string]: FormatMessage }
+}
+
+const ignoredMessages: string[] = [
   "ERR",
   "EV",
   "MSG",
@@ -9,9 +63,19 @@ const ignoredMessages = [
   "format",
   "aircraftType",
 ]
-const ignoredKeys = ["TimeUS", "function", "source", "result", "time_boot_ms"]
+const ignoredKeys: string[] = [
+  "TimeUS",
+  "function",
+  "source",
+  "result",
+  "time_boot_ms",
+]
 
-export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
+export function gpsToUTC(
+  gpsWeek: number,
+  gms: number,
+  leapSeconds: number = 18,
+): Date {
   // GPS epoch starts at 1980-01-06 00:00:00 UTC
   const gpsEpoch = new Date(Date.UTC(1980, 0, 6))
 
@@ -30,12 +94,14 @@ export function gpsToUTC(gpsWeek, gms, leapSeconds = 18) {
  * Structure:
  * { "MESSAGE_TYPE/FIELD_NAME": { mean: value, min: value, max: value }, ... }
  */
-export function calculateMeanValues(loadedLogMessages) {
+export function calculateMeanValues(
+  loadedLogMessages: LoadedLogMessages,
+): MeanValues | null {
   if (!loadedLogMessages) return null
 
   // Cache Set for O(1) lookups
   const ignoredMessagesSet = new Set(ignoredMessages)
-  const means = {}
+  const means: MeanValues = {}
 
   // Process data directly without building intermediate arrays
   Object.keys(loadedLogMessages)
@@ -44,7 +110,7 @@ export function calculateMeanValues(loadedLogMessages) {
       const messageData = loadedLogMessages[key]
       if (!Array.isArray(messageData) || messageData.length === 0) return
 
-      const fieldStats = {}
+      const fieldStats: { [fieldKey: string]: FieldStats } = {}
 
       for (let i = 0; i < messageData.length; i++) {
         const message = messageData[i]
@@ -99,12 +165,17 @@ export function calculateMeanValues(loadedLogMessages) {
  * //   "AHR2": { "Roll": false, "Pitch": false, "Yaw": false }
  * // }
  */
-export function buildDefaultMessageFilters(loadedLogMessages) {
-  const logMessageFilterDefaultState = {}
+export function buildDefaultMessageFilters(
+  loadedLogMessages: LoadedLogMessages,
+): FilterState {
+  const logMessageFilterDefaultState: FilterState = {}
 
   // Cache keys and create Sets for O(1) lookups
   const messageKeys = Object.keys(loadedLogMessages)
-  const formatKeys = Object.keys(loadedLogMessages["format"])
+  const formatData = loadedLogMessages["format"] as
+    | { [key: string]: FormatMessage }
+    | undefined
+  const formatKeys = Object.keys(formatData || {})
   const ignoredMessagesSet = new Set(ignoredMessages)
   const ignoredKeysSet = new Set(ignoredKeys)
 
@@ -113,24 +184,34 @@ export function buildDefaultMessageFilters(loadedLogMessages) {
     .filter((key) => messageKeys.includes(key) && !ignoredMessagesSet.has(key))
     .sort()
     .forEach((key) => {
-      const fieldsState = {}
+      const fieldsState: { [fieldName: string]: boolean } = {}
       // Set all field states to false if they're not ignored
-      loadedLogMessages["format"][key].fields.forEach((field) => {
-        if (!ignoredKeysSet.has(field)) {
-          fieldsState[field] = false
-        }
-      })
+      const formatMessage = formatData?.[key]
+      if (formatMessage?.fields) {
+        formatMessage.fields.forEach((field: string) => {
+          if (!ignoredKeysSet.has(field)) {
+            fieldsState[field] = false
+          }
+        })
+      }
       logMessageFilterDefaultState[key] = fieldsState
     })
 
   return logMessageFilterDefaultState
 }
 
-export function processFlightModes(logType, loadedLogMessages) {
+export function processFlightModes(
+  logType: string,
+  loadedLogMessages: LoadedLogMessages,
+): MessageObject[] {
   if (logType === "dataflash") {
-    return loadedLogMessages.MODE
+    const modeData = loadedLogMessages["MODE"]
+    return Array.isArray(modeData) ? modeData : []
   } else if (logType === "fgcs_telemetry") {
-    return getHeartbeatMessages(loadedLogMessages.HEARTBEAT)
+    const heartbeatData = loadedLogMessages["HEARTBEAT"]
+    return getHeartbeatMessages(
+      Array.isArray(heartbeatData) ? heartbeatData : [],
+    )
   } else {
     return []
   }
@@ -140,8 +221,10 @@ export function processFlightModes(logType, loadedLogMessages) {
  * For fgcs_telemetry logs:
  * Extracts heartbeat messages where mode changes occur
  */
-export function getHeartbeatMessages(heartbeatMessages) {
-  const modeMessages = []
+export function getHeartbeatMessages(
+  heartbeatMessages: MessageObject[],
+): MessageObject[] {
+  const modeMessages: MessageObject[] = []
   for (let i = 0; i < heartbeatMessages.length; i++) {
     const msg = heartbeatMessages[i]
     if (modeMessages.length === 0 || i === heartbeatMessages.length - 1) {
@@ -160,15 +243,18 @@ export function getHeartbeatMessages(heartbeatMessages) {
 /**
  * Calculates GPS offset for UTC conversion
  */
-export function calcGPSOffset(loadedLogMessages) {
-  if (!loadedLogMessages["GPS"] || !loadedLogMessages["GPS"][0]) {
+export function calcGPSOffset(
+  loadedLogMessages: LoadedLogMessages,
+): number | null {
+  const gpsData = loadedLogMessages["GPS"]
+  if (!Array.isArray(gpsData) || !gpsData[0]) {
     return null
   }
 
-  const messageObj = loadedLogMessages["GPS"][0]
+  const messageObj = gpsData[0]
   if (messageObj.GWk !== undefined && messageObj.GMS !== undefined) {
-    const utcTime = gpsToUTC(messageObj.GWk, messageObj.GMS)
-    const offset = utcTime.getTime() - messageObj.TimeUS / 1000
+    const utcTime = gpsToUTC(messageObj.GWk as number, messageObj.GMS as number)
+    const offset = utcTime.getTime() - (messageObj.TimeUS as number) / 1000
     return offset
   }
 
@@ -178,17 +264,23 @@ export function calcGPSOffset(loadedLogMessages) {
 /**
  * Converts TimeUS to UTC for all messages
  */
-export function convertTimeUStoUTC(logMessages, gpsOffset) {
+export function convertTimeUStoUTC(
+  logMessages: LoadedLogMessages,
+  gpsOffset: number,
+): LoadedLogMessages {
   // This still takes some time for some reason
-  const convertedMessages = { ...logMessages }
+  const convertedMessages: LoadedLogMessages = { ...logMessages }
 
   Object.keys(convertedMessages)
     .filter((key) => key !== "format" && key !== "units")
     .forEach((key) => {
-      convertedMessages[key] = convertedMessages[key].map((message) => ({
-        ...message,
-        TimeUS: message.TimeUS / 1000 + gpsOffset,
-      }))
+      const messages = convertedMessages[key]
+      if (Array.isArray(messages)) {
+        convertedMessages[key] = messages.map((message: MessageObject) => ({
+          ...message,
+          TimeUS: (message.TimeUS as number) / 1000 + gpsOffset,
+        }))
+      }
     })
 
   return convertedMessages
@@ -197,10 +289,12 @@ export function convertTimeUStoUTC(logMessages, gpsOffset) {
 /**
  * Sorts object keys alphabetically
  */
-export function sortObjectByKeys(obj) {
+export function sortObjectByKeys<T>(obj: { [key: string]: T }): {
+  [key: string]: T
+} {
   const result = Object.keys(obj)
     .sort()
-    .reduce((acc, key) => {
+    .reduce((acc: { [key: string]: T }, key: string) => {
       acc[key] = obj[key]
       return acc
     }, {})
@@ -211,23 +305,38 @@ export function sortObjectByKeys(obj) {
 /**
  * Expands ESC messages into separate arrays based on Instance
  */
-export function expandESCMessages(logMessages, filterState) {
+export function expandESCMessages(
+  logMessages: LoadedLogMessages,
+  filterState: FilterState,
+): ExpandResult {
   const escData = logMessages["ESC"]
-  if (!escData?.length) {
+  if (!Array.isArray(escData) || !escData.length) {
+    const formatData = logMessages["format"]
     return {
       updatedMessages: logMessages,
       updatedFilters: filterState,
-      updatedFormats: logMessages["format"],
+      updatedFormats:
+        typeof formatData === "object" &&
+        formatData !== null &&
+        !Array.isArray(formatData)
+          ? (formatData as { [key: string]: FormatMessage })
+          : {},
     }
   }
 
-  const updatedMessages = { ...logMessages }
-  const updatedFilters = { ...filterState }
-  const updatedFormats = { ...logMessages["format"] }
+  const updatedMessages: LoadedLogMessages = { ...logMessages }
+  const updatedFilters: FilterState = { ...filterState }
+  const formatData = logMessages["format"]
+  const updatedFormats: { [key: string]: FormatMessage } =
+    typeof formatData === "object" &&
+    formatData !== null &&
+    !Array.isArray(formatData)
+      ? { ...(formatData as { [key: string]: FormatMessage }) }
+      : {}
 
-  escData.forEach((escMessage) => {
-    const escName = `ESC${escMessage["Instance"] + 1}`
-    const newEscData = {
+  escData.forEach((escMessage: MessageObject) => {
+    const escName = `ESC${(escMessage["Instance"] as number) + 1}`
+    const newEscData: MessageObject = {
       ...escMessage,
       name: escName,
     }
@@ -241,7 +350,10 @@ export function expandESCMessages(logMessages, filterState) {
       }
     }
 
-    updatedMessages[escName].push(newEscData)
+    const targetArray = updatedMessages[escName]
+    if (Array.isArray(targetArray)) {
+      targetArray.push(newEscData)
+    }
   })
 
   delete updatedMessages["ESC"]
@@ -257,8 +369,13 @@ export function expandESCMessages(logMessages, filterState) {
 /**
  * Expands BAT messages into separate arrays based on Instance
  */
-export function expandBATMessages(logMessages, filterState, formatsWithESC) {
-  if (!logMessages["BAT"]) {
+export function expandBATMessages(
+  logMessages: LoadedLogMessages,
+  filterState: FilterState,
+  formatsWithESC: { [key: string]: FormatMessage },
+): ExpandResult {
+  const batData = logMessages["BAT"]
+  if (!Array.isArray(batData)) {
     return {
       updatedMessages: logMessages,
       updatedFilters: filterState,
@@ -266,13 +383,13 @@ export function expandBATMessages(logMessages, filterState, formatsWithESC) {
     }
   }
 
-  const updatedMessages = { ...logMessages }
-  const updatedFilters = { ...filterState }
-  const updatedFormats = { ...formatsWithESC }
+  const updatedMessages: LoadedLogMessages = { ...logMessages }
+  const updatedFilters: FilterState = { ...filterState }
+  const updatedFormats: { [key: string]: FormatMessage } = { ...formatsWithESC }
 
-  logMessages["BAT"].forEach((battData) => {
+  batData.forEach((battData: MessageObject) => {
     const instanceValue = battData["Instance"] ?? battData["Inst"]
-    const battName = `BAT${(instanceValue ?? 0) + 1}`
+    const battName = `BAT${((instanceValue as number) ?? 0) + 1}`
 
     if (!updatedMessages[battName]) {
       updatedMessages[battName] = []
@@ -283,10 +400,13 @@ export function expandBATMessages(logMessages, filterState, formatsWithESC) {
       }
     }
 
-    updatedMessages[battName].push({
-      ...battData,
-      name: battName,
-    })
+    const targetArray = updatedMessages[battName]
+    if (Array.isArray(targetArray)) {
+      targetArray.push({
+        ...battData,
+        name: battName,
+      })
+    }
   })
 
   delete updatedMessages["BAT"]
@@ -300,17 +420,22 @@ export function expandBATMessages(logMessages, filterState, formatsWithESC) {
 }
 
 // Memoization cache for getUnit function
-const unitCache = new Map()
+const unitCache = new Map<string, string>()
 
-export function clearUnitCache() {
+export function clearUnitCache(): void {
   unitCache.clear()
 }
 
-export function getUnit(messageName, fieldName, formatMessages, units) {
+export function getUnit(
+  messageName: string,
+  fieldName: string,
+  formatMessages: { [key: string]: FormatMessage },
+  units: { [key: string]: string },
+): string {
   // Create cache key
   const cacheKey = `${messageName}/${fieldName}`
   if (unitCache.has(cacheKey)) {
-    return unitCache.get(cacheKey)
+    return unitCache.get(cacheKey) as string
   }
 
   // TODO: Find out why this is here

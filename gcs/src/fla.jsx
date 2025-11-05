@@ -112,10 +112,10 @@ export default function FLA() {
         return { label: ds.label, yAxisID: ds.yAxisID, data: points }
       })
       // Deduplicate by label: new datasets override old ones
-      const existing = baseChartData || [];
-      const newLabels = new Set(transformed.map(ds => ds.label));
-      const filteredExisting = existing.filter(ds => !newLabels.has(ds.label));
-      dispatch(setBaseChartData([...filteredExisting, ...transformed]));
+      const existing = baseChartData || []
+      const newLabels = new Set(transformed.map((ds) => ds.label))
+      const filteredExisting = existing.filter((ds) => !newLabels.has(ds.label))
+      dispatch(setBaseChartData([...filteredExisting, ...transformed]))
     }
   }
 

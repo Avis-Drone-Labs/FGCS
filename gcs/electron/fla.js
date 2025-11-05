@@ -492,7 +492,7 @@ export async function getMessages(_event, requestedMessages) {
 
     // Validate existence of requestedMessage in our log
     const fmt = formatMessages[categoryName]
-    const hasField = fmt.fields.includes(fieldName)
+    const hasField = fmt?.fields.includes(fieldName)
 
     const series = logData[categoryName]
 

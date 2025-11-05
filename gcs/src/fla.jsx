@@ -92,7 +92,7 @@ export default function FLA() {
     dispatch(setBaseChartData([]))
   }
 
-  async function fetchData (labelsToFetch){
+  async function fetchData(labelsToFetch) {
     const newDatasets = await window.ipcRenderer.invoke(
       "fla:get-messages",
       labelsToFetch,

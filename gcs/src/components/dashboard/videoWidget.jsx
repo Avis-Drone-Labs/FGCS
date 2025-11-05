@@ -44,6 +44,14 @@ export default function VideoWidget({ telemetryPanelWidth }) {
     width: 350 * scale,
     height: 197 * scale,
   }) // Default 16:9 aspect ratio
+
+  useEffect(() => {
+    setVideoDimensions({
+      width: Math.round(350 * scale),
+      height: Math.round(197 * scale),
+    })
+  }, [scale])
+
   const [baseAspectRatio, setBaseAspectRatio] = useState(16 / 9) // Track original aspect ratio
   const [isPoppedOut, setIsPoppedOut] = useState(false) // Track if video is popped out
 

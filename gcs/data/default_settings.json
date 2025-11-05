@@ -12,18 +12,6 @@
       "options": ["satellite", "hybrid", "streets", "outdoor"],
       "display": "Map Style"
     },
-    "port": {
-      "default": "4237",
-      "type": "number",
-      "range": [0, 65535],
-      "display": "Backend Port"
-    },
-    "interfaceLanguage": {
-      "default": "English",
-      "type": "option",
-      "options": ["English"],
-      "display": "Interface Language"
-    },
     "autoCheckForUpdates": {
       "default": true,
       "type": "boolean",
@@ -42,7 +30,8 @@
       "type": "number",
       "range": [0, 100000],
       "display": "Maximum Altitude Alert",
-      "suffix": "m"
+      "suffix": "m",
+      "group": "Altitude"
     },
     "minAltitudeAlerts": {
       "description": "You'll be notified when the relative altitude of a drone goes below these values.",
@@ -50,15 +39,17 @@
       "type": "extendableNumber",
       "range": [0, 100000],
       "display": "Minimum Altitude Alerts",
-      "suffix": "m"
+      "suffix": "m",
+      "group": "Altitude"
     },
     "batteryAlert": {
       "description": "You'll be notified when the battery percentage falls below these values.",
-      "default": [50, 20, 10],
+      "default": [10, 20, 50],
       "type": "extendableNumber",
       "range": [0, 100],
       "display": "Battery Alert",
-      "suffix": "%"
+      "suffix": "%",
+      "group": "Battery"
     }
   },
   "Video": {

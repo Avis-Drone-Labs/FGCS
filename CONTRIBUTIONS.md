@@ -20,7 +20,7 @@ Fill out the details as asked.
 
 **2. Starting work on a ticket**
 
-Once you have created a ticket that you would like to work on or have found one previously made; click on the text to open the ticket and, in the top right corner, click the blue text "Assign Yourself" so that it becomes your job and noone else will try and take it on.
+Once you have created a ticket that you would like to work on or have found one previously made; click on the text to open the ticket and, in the top right corner, click the blue text "Assign Yourself" so that it becomes your job and no one else will try and take it on.
 
 <img width="453" height="127" alt="image" src="https://github.com/user-attachments/assets/8f1569bb-4954-45fe-83be-23b7895af38c" />
 

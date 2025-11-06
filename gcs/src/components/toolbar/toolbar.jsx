@@ -15,9 +15,17 @@ import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
 
+// Redux
+
+import { useSelector } from "react-redux"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
+
+
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false)
   const [isMac, setIsMac] = useState(false)
+
+  const connectedToDrone = useSelector(selectConnectedToDrone)
 
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {
@@ -26,6 +34,10 @@ export default function Toolbar() {
   }, [])
 
   const onClose = () => {
+	if (connectedToDrone) {
+		console.log("ISSUING WARNING");
+	}
+
 	window.ipcRenderer.send("window:close", [])
   }
 

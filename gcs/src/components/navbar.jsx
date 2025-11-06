@@ -452,7 +452,7 @@ export default function Navbar() {
             to="/config"
             className={twMerge(
               linkClassName,
-              currentPage.startsWith("config") && "text-falconred font-bold",
+              currentPage?.startsWith("config") && "text-falconred font-bold",
             )}
           >
             Config

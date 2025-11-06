@@ -78,7 +78,7 @@ Then, in the top right click reviewers then CoPilot (GitHub Pro required). CoPil
 
 Finally, request the "Avis Code team" as a reviewer, and one of the official code reviewers will look over your work.
 
-If they deem it suitable to merged, you will be cleared to merge; alternatively, changes will be suggested which you will make and then request another review.
+If they deem it suitable to merge, you will be cleared to merge; alternatively, changes will be suggested which you will make and then request another review.
 
 
 

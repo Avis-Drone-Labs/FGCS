@@ -25,6 +25,10 @@ export default function Toolbar() {
     })
   }, [])
 
+  const onClose = () => {
+	window.ipcRenderer.send("window:close", [])
+  }
+
   return (
     <>
       <div
@@ -100,9 +104,7 @@ export default function Toolbar() {
             <div
               title="Close"
               className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500"
-              onClick={() => {
-                window.ipcRenderer.send("window:close", [])
-              }}
+              onClick={() => onClose()}
               label="Close"
             >
               <CloseIcon className="stroke-slate-400 group-hover:stroke-white" />

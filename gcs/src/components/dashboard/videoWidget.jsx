@@ -240,7 +240,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
   }
 
   useEffect(() => {
-    // Handle window resizing
+    // Update video dimensions when scale changes
     const baseWidth = 350
     const newWidth = baseWidth * scale
     const newHeight = Math.round(newWidth / baseAspectRatio)
@@ -249,7 +249,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
       width: newWidth,
       height: newHeight,
     })
-  }, [scale])
+  }, [scale, baseAspectRatio])
 
   useEffect(() => {
     // Listen for video window close events

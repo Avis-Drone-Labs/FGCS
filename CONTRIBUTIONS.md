@@ -6,7 +6,7 @@ GitHub Pro, free as a student.
 
 **1. Creating a ticket**
 
-Navigate to the Kanban board on github, decide which column your ticket falls under and click the add item button at the bottom.
+Navigate to the Kanban board on GitHub, decide which column your ticket falls under and click the add item button at the bottom.
 
 <img width="502" height="334" alt="image" src="https://github.com/user-attachments/assets/32b8043b-3b3a-4ebd-9137-f15a3b299259" />
 

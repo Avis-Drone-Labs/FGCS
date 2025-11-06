@@ -46,7 +46,7 @@ Assuming you have set up the repo correctly, confirm you are working on the corr
 
 Once you are happy with the work you have done on a ticket - navigate to the LHS of VSc and select the "Source Control" tab.
 
-Right click the files you want to commit and click "Stage Changes". Confirm the correct files are under the staged changes banner"
+Right click the files you want to commit and click "Stage Changes". Confirm the correct files are under the staged changes banner.
 
 <img width="437" height="198" alt="image" src="https://github.com/user-attachments/assets/cc5a60b1-c609-47c3-8f6a-732b6e08b997" />
 

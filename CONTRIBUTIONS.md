@@ -74,7 +74,7 @@ or
 
 Navigate to the ticket again and open a pull request. Wait until the automatic tests are ran and fix any changes suggested by those.
 
-Then, in the top right click reviewers then CoPilot (GitHub Pro required). CoPilot with then offer a code review, it is strongly suggested you make these changes.
+Then, in the top right click reviewers then Copilot (GitHub Pro required). Copilot will then offer a code review, it is strongly suggested you make these changes.
 
 Finally, request the "Avis Code team" as a reviewer, and one of the official code reviewers will look over your work.
 

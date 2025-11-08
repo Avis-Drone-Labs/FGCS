@@ -16,10 +16,18 @@ const ignoredMessages: string[] = [
   "VER",
   "TIMESYNC",
   "PARAM_VALUE",
+  "TSYN",
+  "UNIT",
+  "FILE",
+  "FMTU",
+  "FMT",
+  "MULT",
+  "PARM",
   "units",
   "format",
   "aircraftType",
 ]
+
 const ignoredKeys: string[] = [
   "TimeUS",
   "function",

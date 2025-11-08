@@ -16,61 +16,52 @@ import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
 
-
 // Redux
 import { useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
 import { Button, Group, Modal } from "@mantine/core"
 
-
 // Tailwind
 import tailwindConfig from "../../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-
 function ConfirmExitModal() {
-
-	return (
-		<Modal
-			opened={false}
-			onClose={() => {
-			}}
-			title="Confirm Quit"
-			centered
-			overlayProps={{
-				backgroundOpacity: 0.55,
-				blur: 3,
-			}}
-			styles={{
-				content: {
-				borderRadius: "0.5rem",
-				},
-			}}
-			withCloseButton={true}
-			>
-
-			<Group justify="space-between" className="pt-4">
-			<Button
-				variant="filled"
-				color={tailwindColors.red[600]}
-				onClick={() => {
-				}}
-			>
-				Close
-			</Button>
-			<Button
-				variant="filled"
-				type="submit"
-				color={tailwindColors.green[600]}
-			>
-				Connect
-			</Button>
-			</Group>
-
-		</Modal>
-	)
+  return (
+    <Modal
+      opened={false}
+      onClose={() => {}}
+      title="Confirm Quit"
+      centered
+      overlayProps={{
+        backgroundOpacity: 0.55,
+        blur: 3,
+      }}
+      styles={{
+        content: {
+          borderRadius: "0.5rem",
+        },
+      }}
+      withCloseButton={true}
+    >
+      <Group justify="space-between" className="pt-4">
+        <Button
+          variant="filled"
+          color={tailwindColors.red[600]}
+          onClick={() => {}}
+        >
+          Close
+        </Button>
+        <Button
+          variant="filled"
+          type="submit"
+          color={tailwindColors.green[600]}
+        >
+          Connect
+        </Button>
+      </Group>
+    </Modal>
+  )
 }
-
 
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false)
@@ -86,11 +77,9 @@ export default function Toolbar() {
   }, [])
 
   const onClose = () => {
-	if (connectedToDrone) {
-		setConfirmModelOpen(true);
-	}
-
-
+    if (connectedToDrone) {
+      setConfirmModelOpen(true)
+    }
   }
 
   return (
@@ -177,8 +166,7 @@ export default function Toolbar() {
         )}
       </div>
 
-		<ConfirmExitModal></ConfirmExitModal>
-
+      <ConfirmExitModal></ConfirmExitModal>
     </>
   )
 }

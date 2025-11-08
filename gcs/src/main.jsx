@@ -22,6 +22,9 @@ import AppContent from "./components/mainContent.jsx"
 import { Provider } from "react-redux"
 import { store } from "./redux/store.js"
 
+// Helper imports
+import { showErrorNotification } from "./helpers/notification"
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
   <MantineProvider defaultColorScheme="dark" theme={CustomMantineTheme}>
@@ -39,4 +42,9 @@ postMessage({ payload: "removeLoading" }, "*")
 // Use contextBridge
 window.ipcRenderer.on("main-process-message", (_event, message) => {
   console.log(message)
+})
+
+window.ipcRenderer.on("app:error", (_event, message) => {
+  console.log("src/main.jsx")
+  showErrorNotification(message)
 })

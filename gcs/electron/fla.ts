@@ -10,6 +10,17 @@ import createRecentLogsManager from "./utils/recentLogManager"
 
 import DataflashParser from "./utils/dataflashParser"
 
+import type {
+  AircraftType,
+  Dataset,
+  FormatMessage,
+  LogSummary,
+  LogType,
+  MessageObject,
+  Messages,
+  ParseResult,
+} from "./types/flaTypes"
+
 import {
   buildDefaultMessageFilters,
   calcGPSOffset,
@@ -21,80 +32,6 @@ import {
   processFlightModes,
   sortObjectByKeys,
 } from "./utils/flaUtils"
-
-// Format messages
-interface FormatMessage {
-  length: number // e.g, 48 (in bytes)
-  name: string // e.g., "CTUN"
-  type: number // e.g., 0
-  format: string // e.g., "QccccffffBffi"
-  fields: string[] // e.g., ["TimeUS", "Roll", "Pitch", "RdO", "As", "SAs", "GU"]
-  units?: string | string[] // e.g., "sdddd---n-n-n" or ["s", "deg", "deg", "deg", "deg", "UNKNOWN", ...]
-  multipliers?: string | string[] // e.g., "FBBBB---000-B" or ["F", "B", "B", "B", "B", "UNKNOWN", ...]
-}
-
-// The other keys depend on the message type and they represent the individual
-// fields of the message.
-interface MessageObject {
-  name: string // e.g., "XKY1"
-  type?: number // e.g., 58
-  TimeUS?: number // e.g., 1274721512
-  [key: string]: string | number | undefined
-}
-
-// Dict with message name as key and array of message objects as value
-// Other keys are format, units and aircraftType for log metadata
-// Units are a mapping from single character to SI unit, e.g. { "k": "deg/s/s"}
-// AircraftType is a string like "copter", "plane", "quadplane" or null
-interface Messages {
-  // Metadata properties
-  format: { [key: string]: FormatMessage }
-  units: { [key: string]: string }
-  aircraftType: AircraftType
-
-  // Message data - use index signature for dynamic message types
-  [messageName: string]:
-    | MessageObject[] // For dynamic message types like "CTUN", "ATT", etc.
-    | { [key: string]: FormatMessage } // For the "format" property
-    | { [key: string]: string } // For the "units" property
-    | AircraftType // For the "aircraftType" property
-}
-
-type AircraftType = "copter" | "plane" | "quadplane" | null
-
-interface ParseResult {
-  success: boolean
-  error?: string
-  summary?: LogSummary
-}
-
-interface LogSummary {
-  formatMessages: { [key: string]: FormatMessage }
-  utcAvailable: boolean
-  logEvents: MessageObject[]
-  flightModeMessages: MessageObject[]
-  logType: string
-  messageFilters: Record<string, unknown>
-  messageMeans: Record<
-    string,
-    { mean: string; max: string; min: string }
-  > | null
-  aircraftType: AircraftType
-}
-
-interface Dataset {
-  label: string
-  yAxisID: string
-  x: Float64Array
-  y: Float32Array
-}
-
-type LogType =
-  | "dataflash_bin"
-  | "dataflash_log"
-  | "fgcs_telemetry"
-  | "mp_telemetry"
-  | null
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
 const recentLogsManager = createRecentLogsManager()
@@ -119,7 +56,6 @@ async function parseDataflashLogFile(
     const units: { [key: string]: string } = {}
     const messages: Messages = {
       format: formatMessages,
-      units: units,
       aircraftType: null,
     }
 
@@ -272,7 +208,6 @@ async function parseDataflashLogFile(
 
       // Add format messages to messages for later digesting and return
       messages["format"] = formatMessages
-      messages["units"] = units
       messages["aircraftType"] = aircraftType
 
       webContents.send("fla:log-parse-progress", {
@@ -518,7 +453,6 @@ function processAndSaveLogData(
   logData = {
     ...finalMessages,
     format: finalFormats,
-    units: finalMessages.units as { [key: string]: string },
     aircraftType: aircraftType,
   } // Save the complete data with required properties
   defaultMessageFilters = sortObjectByKeys(finalFilters)

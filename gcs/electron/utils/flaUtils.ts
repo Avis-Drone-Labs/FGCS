@@ -1,56 +1,13 @@
 // Type definitions for fla-utils
-interface MessageObject {
-  name: string
-  type?: number
-  TimeUS?: number
-  Instance?: number
-  Inst?: number
-  [key: string]: string | number | undefined
-}
-
-interface FormatMessage {
-  length: number
-  name: string
-  type: number
-  format: string
-  fields: string[]
-  units?: string | string[]
-  multipliers?: string | string[]
-}
-
-interface LoadedLogMessages {
-  [messageName: string]:
-    | MessageObject[]
-    | { [key: string]: FormatMessage }
-    | { [key: string]: string }
-    | string
-    | null
-}
-
-interface FilterState {
-  [messageName: string]: { [fieldName: string]: boolean }
-}
-
-interface FieldStats {
-  min: number
-  max: number
-  sum: number
-  count: number
-}
-
-interface MeanValues {
-  [fieldKey: string]: {
-    mean: string
-    max: string
-    min: string
-  }
-}
-
-interface ExpandResult {
-  updatedMessages: LoadedLogMessages
-  updatedFilters: FilterState
-  updatedFormats: { [key: string]: FormatMessage }
-}
+import type {
+  ExpandResult,
+  FieldStats,
+  FilterState,
+  FormatMessage,
+  LoadedLogMessages,
+  MeanValues,
+  MessageObject,
+} from "../types/flaTypes"
 
 const ignoredMessages: string[] = [
   "ERR",

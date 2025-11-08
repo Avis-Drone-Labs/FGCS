@@ -22,9 +22,6 @@ import AppContent from "./components/mainContent.jsx"
 import { Provider } from "react-redux"
 import { store } from "./redux/store.js"
 
-// Helper imports
-import { showErrorNotification } from "./helpers/notification.js"
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <MantineProvider defaultColorScheme='dark'>
   <MantineProvider defaultColorScheme="dark" theme={CustomMantineTheme}>

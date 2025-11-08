@@ -30,3 +30,16 @@ function transformMessages(messages) {
   }
   return transformedMessages
 }
+
+function getFormatMessages(types) {
+  const formatMessages = {}
+  for (const [messageName, messageDef] of Object.entries(types)) {
+    formatMessages[messageName] = {
+      name: messageName,
+      fields: messageDef.expressions,
+      units: messageDef.units,
+      multipliers: messageDef.multipliers,
+    }
+  }
+  return formatMessages
+}

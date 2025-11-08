@@ -4,7 +4,6 @@
 // fields of the message.
 export interface MessageObject {
   name: string // e.g., "XKY1"
-  type?: number // e.g., 58
   TimeUS?: number // e.g., 1274721512
   Instance?: number
   Inst?: number
@@ -13,7 +12,6 @@ export interface MessageObject {
 
 // Format messages
 export interface FormatMessage {
-  length: number // e.g, 48 (in bytes)
   name: string // e.g., "CTUN"
   type: number // e.g., 0
   format: string // e.g., "QccccffffBffi"

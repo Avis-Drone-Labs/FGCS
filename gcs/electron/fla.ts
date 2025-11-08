@@ -69,13 +69,11 @@ async function parseDataflashLogFile(
       if (messageName === "FMT") {
         // Message defining the format of messages in this file
         const definedMessageType = parseInt(splitLineData[1])
-        const definedMessageLength = parseInt(splitLineData[2])
         const definedMessageName = splitLineData[3].trim()
         const definedMessageFormat = splitLineData[4].trim()
         const fields = splitLineData.slice(5).map((f) => f.trim())
 
         formatMessages[definedMessageName] = {
-          length: definedMessageLength,
           name: definedMessageName,
           type: definedMessageType,
           format: definedMessageFormat,
@@ -139,7 +137,6 @@ async function parseDataflashLogFile(
 
           const messageObj: MessageObject = {
             name: messageName,
-            type: formatMessage.type,
           }
 
           const fields = formatMessage.fields
@@ -274,7 +271,6 @@ async function parseFgcsTelemetryLogFile(
         }
         formatMessages[messageName] = {
           fields,
-          length: 0,
           name: messageName,
           type: 0,
           format: "",

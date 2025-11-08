@@ -14,12 +14,10 @@ import {
   buildDefaultMessageFilters,
   calcGPSOffset,
   calculateMeanValues,
-  clearUnitCache,
   convertTimeUStoUTC,
   expandBATMessages,
   expandESCMessages,
   getFileExtension,
-  getUnit,
   processFlightModes,
   sortObjectByKeys,
 } from "./utils/flaUtils"
@@ -31,8 +29,8 @@ interface FormatMessage {
   type: number // e.g., 0
   format: string // e.g., "QccccffffBffi"
   fields: string[] // e.g., ["TimeUS", "Roll", "Pitch", "RdO", "As", "SAs", "GU"]
-  units?: string // e.g., "sdddd---n-n-n"
-  multiplier?: string // e.g., "FBBBB---000-B"
+  units?: string | string[] // e.g., "sdddd---n-n-n" or ["s", "deg", "deg", "deg", "deg", "UNKNOWN", ...]
+  multipliers?: string | string[] // e.g., "FBBBB---000-B" or ["F", "B", "B", "B", "B", "UNKNOWN", ...]
 }
 
 // The other keys depend on the message type and they represent the individual
@@ -168,7 +166,7 @@ async function parseDataflashLogFile(
           const formatMessage = formatMessages[formatMessageName]
           if (formatMessage.type === messageType) {
             formatMessage.units = messageUnits
-            formatMessage.multiplier = messageMultiplier
+            formatMessage.multipliers = messageMultiplier
           }
         }
       } else if (messageName === "MULT") {
@@ -244,6 +242,34 @@ async function parseDataflashLogFile(
     })
 
     rl.on("close", () => {
+      // Convert units strings to arrays of actual unit descriptions
+      Object.values(formatMessages).forEach((formatMessage) => {
+        if (formatMessage.units && typeof formatMessage.units === "string") {
+          const unitsArray: string[] = []
+          for (let i = 0; i < formatMessage.units.length; i++) {
+            const unitChar = formatMessage.units[i]
+            const unitDescription = units[unitChar] || "UNKNOWN"
+            unitsArray.push(unitDescription)
+          }
+          // Replace the string with the array
+          formatMessage.units = unitsArray
+        }
+
+        // Convert multipliers strings to arrays of individual multiplier characters
+        if (
+          formatMessage.multipliers &&
+          typeof formatMessage.multipliers === "string"
+        ) {
+          const multipliersArray: string[] = []
+          for (let i = 0; i < formatMessage.multipliers.length; i++) {
+            const multiplierChar = formatMessage.multipliers[i]
+            multipliersArray.push(multiplierChar)
+          }
+          // Replace the string with the array
+          formatMessage.multipliers = multipliersArray
+        }
+      })
+
       // Add format messages to messages for later digesting and return
       messages["format"] = formatMessages
       messages["units"] = units
@@ -384,6 +410,7 @@ function parseDataflashBinFile(
 
   const parser = new DataflashParser()
   const processedData = parser.processData(fileArrayBuffer)
+
   console.log(processedData)
   console.log(processedData.types.CTUN)
   console.log(processedData.messages.ATT)
@@ -450,7 +477,6 @@ function processAndSaveLogData(
   loadedLogMessages: Messages,
   logType: string,
 ): LogSummary {
-  clearUnitCache() // Clear cache when loading new file
   const aircraftType = loadedLogMessages.aircraftType
   // delete loadedLogMessages["aircraftType"]
 
@@ -550,7 +576,9 @@ export default async function openFile(
           stats.size,
           event.sender,
         )
-        console.log(messages.units)
+        // // save processedData to json file
+        const jsonFilePath = "dataflash__log_parser_new_output" + ".json"
+        fs.writeFileSync(jsonFilePath, JSON.stringify(messages, null, 2))
       } else if (logType === "fgcs_telemetry") {
         messages = await parseFgcsTelemetryLogFile(
           rl,
@@ -571,6 +599,10 @@ export default async function openFile(
     if (messages !== null) {
       // returns a lightweight summary after processing
       const summary = processAndSaveLogData(messages, logType)
+
+      // save processedData to json file
+      const jsonFilePath = "dataflash_log_summary_output" + ".json"
+      fs.writeFileSync(jsonFilePath, JSON.stringify(summary, null, 2))
       // add recent file
       recentLogsManager.addRecentLog(filePath)
       return { success: true, summary }
@@ -610,7 +642,6 @@ export async function getMessages(
 
   const formatMessages =
     (logData.format as { [key: string]: FormatMessage }) || {}
-  const units = (logData.units as { [key: string]: string }) || {}
   const datasets: Dataset[] = []
 
   // Loop through the list of requested messages and transform each of them
@@ -638,6 +669,15 @@ export async function getMessages(
       continue
     }
 
+    // Get unit for this field from the format message
+    let unit = "UNKNOWN"
+    if (fmt?.units && Array.isArray(fmt.units)) {
+      const fieldIndex = fmt.fields.indexOf(fieldName)
+      if (fieldIndex !== -1 && fieldIndex < fmt.units.length) {
+        unit = fmt.units[fieldIndex]
+      }
+    }
+
     const len = series.length
     // use typed arrays to reduce IPC serialization overhead
     // Time as Float64, values as Float32 for size efficiency
@@ -653,7 +693,7 @@ export async function getMessages(
 
     datasets.push({
       label,
-      yAxisID: getUnit(categoryName, fieldName, formatMessages, units),
+      yAxisID: unit,
       x,
       y,
     })

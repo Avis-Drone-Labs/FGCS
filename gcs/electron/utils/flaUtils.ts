@@ -14,8 +14,8 @@ interface FormatMessage {
   type: number
   format: string
   fields: string[]
-  units?: string
-  multiplier?: string
+  units?: string | string[]
+  multipliers?: string | string[]
 }
 
 interface LoadedLogMessages {
@@ -417,48 +417,6 @@ export function expandBATMessages(
   updatedMessages["format"] = updatedFormats
 
   return { updatedMessages, updatedFilters, updatedFormats }
-}
-
-// Memoization cache for getUnit function
-const unitCache = new Map<string, string>()
-
-export function clearUnitCache(): void {
-  unitCache.clear()
-}
-
-export function getUnit(
-  messageName: string,
-  fieldName: string,
-  formatMessages: { [key: string]: FormatMessage },
-  units: { [key: string]: string },
-): string {
-  // Create cache key
-  const cacheKey = `${messageName}/${fieldName}`
-  if (unitCache.has(cacheKey)) {
-    return unitCache.get(cacheKey) as string
-  }
-
-  // TODO: Find out why this is here
-  let normalizedMessageName = messageName
-  if (messageName.includes("ESC")) {
-    normalizedMessageName = "ESC"
-  }
-
-  let result = "UNKNOWN"
-  if (normalizedMessageName in formatMessages) {
-    const formatMessage = formatMessages[normalizedMessageName]
-    const fieldIndex = formatMessage.fields.indexOf(fieldName)
-    if (fieldIndex !== -1 && formatMessage.units) {
-      const unitId = formatMessage.units[fieldIndex]
-      if (unitId in units) {
-        result = units[unitId]
-      }
-    }
-  }
-
-  // Cache the result
-  unitCache.set(cacheKey, result)
-  return result
 }
 
 export function getFileExtension(filePath: string): string | null {

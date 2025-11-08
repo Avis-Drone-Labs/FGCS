@@ -1,4 +1,8 @@
-import type { FormatMessage, MessageObject } from "../types/flaTypes"
+import type {
+  AircraftType,
+  FormatMessage,
+  MessageObject,
+} from "../types/flaTypes"
 
 interface RawMessageData {
   time_boot_ms?: { [index: number]: number }
@@ -88,7 +92,7 @@ function getFormatMessages(types: RawTypes): FormatMessages {
   return formatMessages
 }
 
-function getAircraftTypeFromMavType(mavType: number | null): string | null {
+function getAircraftTypeFromMavType(mavType: number): AircraftType {
   if (mavType === 1) {
     return "plane"
   } else if (mavType === 2) {

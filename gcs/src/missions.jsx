@@ -239,14 +239,14 @@ export default function Missions() {
       "window:select-file-in-explorer",
       [{ name: "Waypoint files", extensions: ["waypoints", "txt"] }],
     )
-    if (result.success) {
+    if (result?.success) {
       dispatch(
         emitImportMissionFromFile({
           type: activeTabRef.current,
           file_path: result.path,
         }),
       )
-    } else {
+    } else if (result) {
       showErrorNotification(result.message)
     }
   }

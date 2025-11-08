@@ -38,9 +38,9 @@ export default function SelectFlightLog({ getLogSummary }) {
       "window:select-file-in-explorer",
       [{ name: "Flight Logs", extensions: ["log", "ftlog"] }],
     )
-    if (result.success) {
+    if (result?.success) {
       handleFile(result)
-    } else {
+    } else if (result) {
       showErrorNotification(result.message)
     }
   }

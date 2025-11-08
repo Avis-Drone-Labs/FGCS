@@ -219,7 +219,7 @@ Math.degrees = function (radians) {
 }
 
 class DataflashParser {
-  constructor(send_postMessage) {
+  constructor(send_postMessage, progressCallback) {
     this.buffer = null
     this.data = null
     this.FMT = []
@@ -235,6 +235,7 @@ class DataflashParser {
     this.sent = false
     this.messageTypes = {}
     this.send_postMessage = send_postMessage == null ? false : send_postMessage
+    this.progressCallback = progressCallback
     this.mavtype = MAV_TYPE_QUADROTOR
   }
 
@@ -594,9 +595,9 @@ class DataflashParser {
           }
         }
 
-        if (this.send_postMessage && i % 1000 === 0) {
+        if (i % 1000 === 0 && this.progressCallback) {
           const perc = (100 * i) / len
-          self.postMessage({ percentage: perc })
+          this.progressCallback(perc)
         }
       }
 
@@ -621,7 +622,11 @@ class DataflashParser {
         }
       }
       if (this.send_postMessage) {
-        self.postMessage({ percentage: 100 })
+        if (this.progressCallback) {
+          this.progressCallback(100)
+        }
+      } else if (this.progressCallback) {
+        this.progressCallback(100)
       }
 
       return
@@ -647,7 +652,9 @@ class DataflashParser {
       if (name.indexOf("FMT") === -1) {
         this.postData({ messageType: name, messageList: this.messages[name] })
       }
-      self.postMessage({ percentage: 100 })
+      if (this.progressCallback) {
+        this.progressCallback(100)
+      }
     }
   }
 
@@ -743,9 +750,9 @@ class DataflashParser {
           this.offset += 1
         }
       }
-      if (this.send_postMessage && this.offset - lastOffset > 50000) {
+      if (this.offset - lastOffset > 50000 && this.progressCallback) {
         const perc = (100 * this.offset) / this.buffer.byteLength
-        self.postMessage({ percentage: perc })
+        this.progressCallback(perc)
         lastOffset = this.offset
       }
     }
@@ -775,9 +782,13 @@ class DataflashParser {
     }
 
     if (this.send_postMessage) {
-      self.postMessage({ percentage: 100 })
+      if (this.progressCallback) {
+        this.progressCallback(100)
+      }
       self.postMessage({ messages: this.messages })
       this.sent = true
+    } else if (this.progressCallback) {
+      this.progressCallback(100)
     }
   }
 

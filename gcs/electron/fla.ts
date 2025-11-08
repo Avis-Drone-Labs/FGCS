@@ -11,6 +11,7 @@ import createRecentLogsManager from "./utils/recentLogManager"
 import DataflashParser from "./utils/dataflashParser"
 
 import {
+  getAircraftTypeFromMavType,
   getFormatMessages,
   transformMessages,
 } from "./utils/dataflashParserUtils"
@@ -26,7 +27,6 @@ import type {
   ParseResult,
 } from "./types/flaTypes"
 
-import { getAircraftTypeFromMavType } from "./utils/dataflashParserUtils"
 import {
   buildDefaultMessageFilters,
   calcGPSOffset,
@@ -344,7 +344,17 @@ function parseDataflashBinFile(
     fileBuffer.byteOffset + fileBuffer.byteLength,
   )
 
-  const parser = new DataflashParser()
+  // Throttle progress updates to at most once every UPDATE_THROTTLE_MS
+  let lastUpdateTime = 0
+  const progressCallback = (percent: number) => {
+    const now = Date.now()
+    if (now - lastUpdateTime > UPDATE_THROTTLE_MS || percent === 100) {
+      lastUpdateTime = now
+      webContents.send("fla:log-parse-progress", { percent })
+    }
+  }
+
+  const parser = new DataflashParser(null, progressCallback)
   const processedData = parser.processData(fileArrayBuffer)
 
   const parsedData: Messages = {

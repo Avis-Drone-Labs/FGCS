@@ -200,7 +200,7 @@ ipcMain.handle("window:select-file-in-explorer", async (_event, filters) => {
     } catch (err) {
       return {
         success: false,
-        message: "File is inaccessible or deleted",
+        message: err instanceof Error ? err.message : "File is inaccessible or deleted",
       }
     }
   }

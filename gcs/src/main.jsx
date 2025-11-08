@@ -45,6 +45,5 @@ window.ipcRenderer.on("main-process-message", (_event, message) => {
 })
 
 window.ipcRenderer.on("app:error", (_event, message) => {
-  console.log("src/main.jsx")
   showErrorNotification(message)
 })

@@ -1,4 +1,13 @@
-// https://github.com/Williangalvani/JsDataflashParser/blob/d8967f6e4b4415492ea7d9b1adb1a6dc026f2b75/parser.js
+/**
+ * Portions of this file are adapted from:
+ *   https://github.com/Williangalvani/JsDataflashParser/blob/d8967f6e4b4415492ea7d9b1adb1a6dc026f2b75/parser.js
+ *
+ * Original source is licensed under the MIT License:
+ *   Copyright (c) Willian Galvani
+ *   See https://github.com/Williangalvani/JsDataflashParser/blob/d8967f6e4b4415492ea7d9b1adb1a6dc026f2b75/LICENSE
+ *
+ * Modifications have been made from the original source.
+ */
 
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable no-control-regex */

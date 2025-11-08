@@ -9,21 +9,73 @@
 import { useEffect, useState } from "react"
 
 // Custom Imports
+import resolveConfig from "tailwindcss/resolveConfig.js"
 import SpotlightComponent from "../spotlight/spotlight.jsx"
 import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
 
-// Redux
 
+// Redux
 import { useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
+import { Button, Group, Modal } from "@mantine/core"
+
+
+// Tailwind
+import tailwindConfig from "../../../tailwind.config.js"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+
+function ConfirmExitModal() {
+
+	return (
+		<Modal
+			opened={false}
+			onClose={() => {
+			}}
+			title="Confirm Quit"
+			centered
+			overlayProps={{
+				backgroundOpacity: 0.55,
+				blur: 3,
+			}}
+			styles={{
+				content: {
+				borderRadius: "0.5rem",
+				},
+			}}
+			withCloseButton={true}
+			>
+
+			<Group justify="space-between" className="pt-4">
+			<Button
+				variant="filled"
+				color={tailwindColors.red[600]}
+				onClick={() => {
+				}}
+			>
+				Close
+			</Button>
+			<Button
+				variant="filled"
+				type="submit"
+				color={tailwindColors.green[600]}
+			>
+				Connect
+			</Button>
+			</Group>
+
+		</Modal>
+	)
+}
 
 
 export default function Toolbar() {
   const [areMenusActive, setMenusActive] = useState(false)
   const [isMac, setIsMac] = useState(false)
+  const [confirmModelOpen, setConfirmModelOpen] = useState(false)
 
   const connectedToDrone = useSelector(selectConnectedToDrone)
 
@@ -35,10 +87,10 @@ export default function Toolbar() {
 
   const onClose = () => {
 	if (connectedToDrone) {
-		console.log("ISSUING WARNING");
+		setConfirmModelOpen(true);
 	}
 
-	window.ipcRenderer.send("window:close", [])
+
   }
 
   return (
@@ -124,6 +176,9 @@ export default function Toolbar() {
           </div>
         )}
       </div>
+
+		<ConfirmExitModal></ConfirmExitModal>
+
     </>
   )
 }

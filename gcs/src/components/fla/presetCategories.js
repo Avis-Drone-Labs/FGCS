@@ -10,8 +10,8 @@
  *   - deleteCustomPreset: Function to remove a custom preset
  *   - findExistingPreset: Function to check for duplicate presets
  */
-import { useState, useEffect } from "react"
 import _ from "lodash"
+import { useEffect, useState } from "react"
 
 const dataflashPresetCategories = [
   {
@@ -182,7 +182,8 @@ const fgcsTelemetryPresetCategories = [
 ]
 
 const initialPresetCategories = {
-  dataflash: dataflashPresetCategories,
+  dataflash_log: dataflashPresetCategories,
+  dataflash_bin: dataflashPresetCategories,
   fgcs_telemetry: fgcsTelemetryPresetCategories,
   custom_dataflash: [
     {

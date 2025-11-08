@@ -450,7 +450,7 @@ function processAndSaveLogData(
   let finalMessages = { ...expandedMessages }
   let gpsOffset: number | null = null
   let utcAvailable = false
-  if (finalMessages.GPS && logType === "dataflash") {
+  if (finalMessages.GPS && logType === "dataflash_log") {
     gpsOffset = calcGPSOffset(finalMessages)
     if (gpsOffset !== null) {
       finalMessages = convertTimeUStoUTC(finalMessages, gpsOffset)

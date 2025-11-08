@@ -460,3 +460,10 @@ export function getUnit(
   unitCache.set(cacheKey, result)
   return result
 }
+
+export function getFileExtension(filePath: string): string | null {
+  const reFileExtension = /(?:\.([^.]+))?$/ // https://stackoverflow.com/a/680982
+  const ext = reFileExtension.exec(filePath)?.[1]
+
+  return ext ? ext.toLowerCase() : null
+}

@@ -217,8 +217,8 @@ export default function Missions() {
               "param2": line[5],
               "param3": line[6],
               "param4": line[7],
-              "x": line[8],
-              "y": line[9],
+              "x": line[8] * (10 ** 7),
+              "y": line[9] * (10 ** 7),
               "z": line[10],
               "autocontinue": line[11],
             }
@@ -245,8 +245,8 @@ export default function Missions() {
               "param2": missionItem.params[1],
               "param3": missionItem.params[2],
               "param4": missionItem.params[3],
-              "x": missionItem.params[4],
-              "y": missionItem.params[5],
+              "x": missionItem.params[4] * (10 ** 7),
+              "y": missionItem.params[5] * (10 ** 7),
               "z": missionItem.params[6],
               "autocontinue": missionItem.autocontinue ? 1 : 0,
             }

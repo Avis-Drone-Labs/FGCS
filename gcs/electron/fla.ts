@@ -234,7 +234,6 @@ async function parseFgcsTelemetryLogFile(
   const formatMessages: { [key: string]: FormatMessage } = {}
   const messages: Messages = {
     format: formatMessages,
-    units: {},
     aircraftType: null,
   }
 
@@ -349,6 +348,7 @@ function parseDataflashBinFile(
 
   const parsedData: Messages = {
     format: getFormatMessages(processedData.types),
+    aircraftType: null,
     ...transformMessages(processedData.messages),
   }
   webContents.send("fla:log-parse-progress", {
@@ -418,7 +418,6 @@ function processAndSaveLogData(
   logType: string,
 ): LogSummary {
   const aircraftType = loadedLogMessages.aircraftType
-  // delete loadedLogMessages["aircraftType"]
 
   const initialFilters = buildDefaultMessageFilters(loadedLogMessages)
 
@@ -535,9 +534,6 @@ export default async function openFile(
       // returns a lightweight summary after processing
       const summary = processAndSaveLogData(messages, logType)
 
-      // save processedData to json file
-      const jsonFilePath = "dataflash_log_summary_output" + ".json"
-      fs.writeFileSync(jsonFilePath, JSON.stringify(summary, null, 2))
       // add recent file
       recentLogsManager.addRecentLog(filePath)
       return { success: true, summary }

@@ -1,8 +1,22 @@
-import type { MessageObject } from "../types/flaTypes"
+import type { FormatMessage, MessageObject } from "../types/flaTypes"
 
 interface RawMessageData {
   time_boot_ms?: { [index: number]: number }
   [fieldName: string]: { [index: number]: number | string } | undefined
+}
+
+interface MessageDefinition {
+  expressions: string[]
+  units?: string | string[]
+  multipliers?: string | string[]
+}
+
+interface RawTypes {
+  [messageName: string]: MessageDefinition
+}
+
+interface FormatMessages {
+  [messageName: string]: FormatMessage
 }
 
 function transformMessageData(messageData: RawMessageData): MessageObject[] {
@@ -11,7 +25,7 @@ function transformMessageData(messageData: RawMessageData): MessageObject[] {
   // Each field is an object with the key being an index and the value being
   // the actual data point value.
   // We need to convert that into an array of objects where each object has
-  // a name, type, typeUS and rest of the keys are the fields with their values.
+  // a name, type, timeUS and rest of the keys are the fields with their values.
   if (
     messageData.time_boot_ms === null ||
     messageData.time_boot_ms === undefined
@@ -50,7 +64,6 @@ interface TransformedMessages {
 function transformMessages(messages: RawMessages): TransformedMessages {
   const transformedMessages: TransformedMessages = {}
   for (const [messageName, messageData] of Object.entries(messages)) {
-    console.log(messageName)
     const transformedMessageData = transformMessageData(messageData)
     // Set the name on each message object
     transformedMessageData.forEach((msg) => {
@@ -61,25 +74,6 @@ function transformMessages(messages: RawMessages): TransformedMessages {
   return transformedMessages
 }
 
-interface MessageDefinition {
-  expressions: string[]
-  units?: string | string[]
-  multipliers?: string | string[]
-}
-
-interface RawTypes {
-  [messageName: string]: MessageDefinition
-}
-
-interface FormatMessages {
-  [messageName: string]: {
-    name: string
-    fields: string[]
-    units?: string | string[]
-    multipliers?: string | string[]
-  }
-}
-
 function getFormatMessages(types: RawTypes): FormatMessages {
   const formatMessages: FormatMessages = {}
   for (const [messageName, messageDef] of Object.entries(types)) {
@@ -88,6 +82,7 @@ function getFormatMessages(types: RawTypes): FormatMessages {
       fields: messageDef.expressions,
       units: messageDef.units,
       multipliers: messageDef.multipliers,
+      format: "",
     }
   }
   return formatMessages

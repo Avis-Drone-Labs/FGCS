@@ -13,7 +13,7 @@ export interface MessageObject {
 // Format messages
 export interface FormatMessage {
   name: string // e.g., "CTUN"
-  type: number // e.g., 0
+  type?: number // e.g., 0
   format: string // e.g., "QccccffffBffi"
   fields: string[] // e.g., ["TimeUS", "Roll", "Pitch", "RdO", "As", "SAs", "GU"]
   units?: string | string[] // e.g., "sdddd---n-n-n" or ["s", "deg", "deg", "deg", "deg", "UNKNOWN", ...]

@@ -88,4 +88,14 @@ function getFormatMessages(types: RawTypes): FormatMessages {
   return formatMessages
 }
 
-export { getFormatMessages, transformMessages }
+function getAircraftTypeFromMavType(mavType: number | null): string | null {
+  if (mavType === 1) {
+    return "plane"
+  } else if (mavType === 2) {
+    return "copter"
+  }
+
+  return null
+}
+
+export { getAircraftTypeFromMavType, getFormatMessages, transformMessages }

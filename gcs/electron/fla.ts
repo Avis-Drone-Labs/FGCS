@@ -26,6 +26,7 @@ import type {
   ParseResult,
 } from "./types/flaTypes"
 
+import { getAircraftTypeFromMavType } from "./utils/dataflashParserUtils"
 import {
   buildDefaultMessageFilters,
   calcGPSOffset,
@@ -348,7 +349,7 @@ function parseDataflashBinFile(
 
   const parsedData: Messages = {
     format: getFormatMessages(processedData.types),
-    aircraftType: null,
+    aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
     ...transformMessages(processedData.messages),
   }
   webContents.send("fla:log-parse-progress", {

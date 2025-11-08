@@ -226,6 +226,7 @@ class DataflashParser {
     this.sent = false
     this.messageTypes = {}
     this.send_postMessage = send_postMessage == null ? false : send_postMessage
+    this.mavtype = MAV_TYPE_QUADROTOR
   }
 
   // Return array for given data type with length len
@@ -772,30 +773,30 @@ class DataflashParser {
   }
 
   getModeString(cmode) {
-    let mavtype
     const msgs = this.messages.MSG
     for (const i in msgs.Message) {
       if (msgs.Message.hasOwnProperty(i)) {
         if (msgs.Message[i].toLowerCase().includes("arduplane")) {
-          mavtype = MAV_TYPE_FIXED_WING
-          return getModeMap(mavtype)[cmode]
+          this.mavtype = MAV_TYPE_FIXED_WING
+          return getModeMap(this.mavtype)[cmode]
         } else if (msgs.Message[i].toLowerCase().includes("arducopter")) {
-          mavtype = MAV_TYPE_QUADROTOR
-          return getModeMap(mavtype)[cmode]
+          this.mavtype = MAV_TYPE_QUADROTOR
+          return getModeMap(this.mavtype)[cmode]
         } else if (msgs.Message[i].toLowerCase().includes("ardusub")) {
-          mavtype = MAV_TYPE_SUBMARINE
-          return getModeMap(mavtype)[cmode]
+          this.mavtype = MAV_TYPE_SUBMARINE
+          return getModeMap(this.mavtype)[cmode]
         } else if (msgs.Message[i].toLowerCase().includes("rover")) {
-          mavtype = MAV_TYPE_GROUND_ROVER
-          return getModeMap(mavtype)[cmode]
+          this.mavtype = MAV_TYPE_GROUND_ROVER
+          return getModeMap(this.mavtype)[cmode]
         } else if (msgs.Message[i].toLowerCase().includes("tracker")) {
-          mavtype = MAV_TYPE_ANTENNA_TRACKER
-          return getModeMap(mavtype)[cmode]
+          this.mavtype = MAV_TYPE_ANTENNA_TRACKER
+          return getModeMap(this.mavtype)[cmode]
         }
       }
     }
     console.log("defaulting to quadcopter")
-    return getModeMap(MAV_TYPE_QUADROTOR)[cmode]
+    this.mavtype = MAV_TYPE_QUADROTOR
+    return getModeMap(this.mavtype)[cmode]
   }
 
   concatTypedArrays(a, b) {
@@ -1098,6 +1099,10 @@ class DataflashParser {
     }
 
     return ret
+  }
+
+  getMavType() {
+    return this.mavtype
   }
 }
 

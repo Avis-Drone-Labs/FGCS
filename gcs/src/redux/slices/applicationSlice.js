@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit"
-import droneConnectionSlice from "./droneConnectionSlice"
 
 const initialState = {
   confirmExitModalOpen: false,
@@ -28,4 +27,4 @@ export const {
 	selectConfirmExitModalOpen
 } = applicationSlice.selectors
 
-export default droneConnectionSlice
+export default applicationSlice

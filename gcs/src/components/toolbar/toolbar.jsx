@@ -17,20 +17,28 @@ import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
 
 // Redux
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
 import { Button, Group, Modal } from "@mantine/core"
 
 // Tailwind
 import tailwindConfig from "../../../tailwind.config.js"
+import { selectConfirmExitModalOpen, setConfirmExitModalOpen } from "../../redux/slices/applicationSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 function ConfirmExitModal() {
+	const dispatch = useDispatch();
+	const modalOpen = useSelector(selectConfirmExitModalOpen)
+
+	const confirmExit= () => {
+		window.ipcRenderer.send("window:close", [])
+	}
+
   return (
     <Modal
-      opened={false}
-      onClose={() => {}}
-      title="Confirm Quit"
+      opened={modalOpen}
+      onClose={() => dispatch(setConfirmExitModalOpen(false))}
+      title="Confirm Application Exit"
       centered
       overlayProps={{
         backgroundOpacity: 0.55,
@@ -46,17 +54,17 @@ function ConfirmExitModal() {
       <Group justify="space-between" className="pt-4">
         <Button
           variant="filled"
-          color={tailwindColors.red[600]}
-          onClick={() => {}}
+          onClick={() => dispatch(setConfirmExitModalOpen(false))}
         >
-          Close
+          Cancel
         </Button>
         <Button
           variant="filled"
           type="submit"
-          color={tailwindColors.green[600]}
+          color={tailwindColors.red[600]}
+		  onClick={() => confirmExit()}
         >
-          Connect
+          Exit
         </Button>
       </Group>
     </Modal>
@@ -64,9 +72,9 @@ function ConfirmExitModal() {
 }
 
 export default function Toolbar() {
+  const dispatch = useDispatch()
   const [areMenusActive, setMenusActive] = useState(false)
   const [isMac, setIsMac] = useState(false)
-  const [confirmModelOpen, setConfirmModelOpen] = useState(false)
 
   const connectedToDrone = useSelector(selectConnectedToDrone)
 
@@ -78,8 +86,10 @@ export default function Toolbar() {
 
   const onClose = () => {
     if (connectedToDrone) {
-      setConfirmModelOpen(true)
-    }
+		dispatch(setConfirmExitModalOpen(true))
+    } else {
+		window.ipcRenderer.send("window:close", [])
+	}
   }
 
   return (

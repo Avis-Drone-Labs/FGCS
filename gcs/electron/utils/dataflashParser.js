@@ -1,6 +1,8 @@
 // https://github.com/Williangalvani/JsDataflashParser/blob/d8967f6e4b4415492ea7d9b1adb1a6dc026f2b75/parser.js
 
 /* eslint-disable no-prototype-builtins */
+/* eslint-disable no-control-regex */
+
 const MAV_TYPE_FIXED_WING = 1 // Fixed wing aircraft.
 const MAV_TYPE_QUADROTOR = 2 // Quadrotor
 const MAV_TYPE_COAXIAL = 3 // Coaxial helicopter
@@ -858,6 +860,13 @@ class DataflashParser {
     }
     // Find the fist log message with timestamp
     let first_time_offset
+    // Helper to record first offset of time stamp
+    function update_first_offset(new_msg_offset, TimeUS_offset) {
+      const time_offset = new_msg_offset + TimeUS_offset
+      if (first_time_offset == null || time_offset < first_time_offset) {
+        first_time_offset = time_offset
+      }
+    }
     for (const msg of this.FMT) {
       if (msg == null) {
         // Invalid message type
@@ -874,26 +883,18 @@ class DataflashParser {
       // Offset of timestamp within message
       const TimeUS_offset = msg.FormatOffset[time_index]
 
-      // Helper to record first offset of time stamp
-      function update_first_offset(new_msg_offset) {
-        const time_offset = new_msg_offset + TimeUS_offset
-        if (first_time_offset == null || time_offset < first_time_offset) {
-          first_time_offset = time_offset
-        }
-      }
-
       // Offset of message, only check first, assume time never goes backwards
       if ("InstancesOffsetArray" in msg) {
         // Multiple instances
         for (const inst of Object.values(msg.InstancesOffsetArray)) {
           if (inst.length > 0) {
-            update_first_offset(inst[0])
+            update_first_offset(inst[0], TimeUS_offset)
           }
         }
       } else {
         // Single instance
         if (msg.OffsetArray.length > 0) {
-          update_first_offset(msg.OffsetArray[0])
+          update_first_offset(msg.OffsetArray[0], TimeUS_offset)
         }
       }
     }

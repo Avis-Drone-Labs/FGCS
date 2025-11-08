@@ -30,7 +30,7 @@ const rootReducer = combineSlices(
   statusTextSlice,
   paramsSlice,
   configSlice,
-  applicationSlice
+  applicationSlice,
 )
 
 export const store = configureStore({

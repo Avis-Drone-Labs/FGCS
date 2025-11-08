@@ -20,11 +20,7 @@ const applicationSlice = createSlice({
   },
 })
 
-export const {
-	setConfirmExitModalOpen
-} = applicationSlice.actions
-export const {
-	selectConfirmExitModalOpen
-} = applicationSlice.selectors
+export const { setConfirmExitModalOpen } = applicationSlice.actions
+export const { selectConfirmExitModalOpen } = applicationSlice.selectors
 
 export default applicationSlice

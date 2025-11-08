@@ -23,16 +23,19 @@ import { Button, Group, Modal } from "@mantine/core"
 
 // Tailwind
 import tailwindConfig from "../../../tailwind.config.js"
-import { selectConfirmExitModalOpen, setConfirmExitModalOpen } from "../../redux/slices/applicationSlice.js"
+import {
+  selectConfirmExitModalOpen,
+  setConfirmExitModalOpen,
+} from "../../redux/slices/applicationSlice.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 function ConfirmExitModal() {
-	const dispatch = useDispatch();
-	const modalOpen = useSelector(selectConfirmExitModalOpen)
+  const dispatch = useDispatch()
+  const modalOpen = useSelector(selectConfirmExitModalOpen)
 
-	const confirmExit= () => {
-		window.ipcRenderer.send("window:close", [])
-	}
+  const confirmExit = () => {
+    window.ipcRenderer.send("window:close", [])
+  }
 
   return (
     <Modal
@@ -62,7 +65,7 @@ function ConfirmExitModal() {
           variant="filled"
           type="submit"
           color={tailwindColors.red[600]}
-		  onClick={() => confirmExit()}
+          onClick={() => confirmExit()}
         >
           Exit
         </Button>
@@ -86,10 +89,10 @@ export default function Toolbar() {
 
   const onClose = () => {
     if (connectedToDrone) {
-		dispatch(setConfirmExitModalOpen(true))
+      dispatch(setConfirmExitModalOpen(true))
     } else {
-		window.ipcRenderer.send("window:close", [])
-	}
+      window.ipcRenderer.send("window:close", [])
+    }
   }
 
   return (

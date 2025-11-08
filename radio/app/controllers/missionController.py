@@ -356,6 +356,115 @@ class MissionController:
                 "message": "Failed to restart mission, serial exception",
             }
 
+    def pauseMission(self) -> Response:
+        """
+        Pauses the current mission by switching to GUIDED mode and holding position.
+        The drone will hold its current position and can resume the mission.
+
+        Returns:
+            Dict: The response of the mission pause request
+        """
+
+        self.drone.is_listening = False
+
+        # Use GUIDED mode (4) for both copter and plane
+        # GUIDED mode allows us to hold position while maintaining mission context
+        # Copter: mode 4 = Guided
+        # Plane: mode 15 = Guided
+        guided_mode = 4  # GUIDED mode for copter
+
+        # Check if it's a plane (frame type 1)
+        if hasattr(self.drone, 'frame_type') and self.drone.frame_type == 1:
+            guided_mode = 15  # GUIDED mode for plane
+
+        self.drone.logger.info(f"Attempting to pause mission by setting mode to {guided_mode} (GUIDED)")
+
+        self.drone.sendCommand(
+            message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+            param1=1,  # MAV_MODE_FLAG_CUSTOM_MODE_ENABLED
+            param2=guided_mode,
+        )
+
+        try:
+            response = self.drone.master.recv_match(
+                type="COMMAND_ACK", blocking=True, timeout=3
+            )
+
+            self.drone.is_listening = True
+
+            self.drone.logger.info(f"Pause command response: {response}")
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
+                self.drone.logger.info("Mission paused successfully - switched to GUIDED mode")
+                return {
+                    "success": True,
+                    "message": "Mission paused - holding position",
+                }
+            else:
+                self.drone.logger.warning("Failed to pause mission - command not accepted")
+                return {
+                    "success": False,
+                    "message": "Failed to pause mission",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            self.drone.logger.error("Failed to pause mission - serial exception")
+            return {
+                "success": False,
+                "message": "Failed to pause mission, serial exception",
+            }
+
+    def resumeMission(self) -> Response:
+        """
+        Resumes the mission by switching back to AUTO mode.
+        The drone will continue the mission from where it was paused.
+
+        Returns:
+            Dict: The response of the mission resume request
+        """
+        
+        self.drone.is_listening = False
+
+        # AUTO mode is 3 for both copter and plane
+        auto_mode = 3
+
+        self.drone.logger.info("Attempting to resume mission by setting mode to AUTO")
+
+        self.drone.sendCommand(
+            message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+            param1=1,  # MAV_MODE_FLAG_CUSTOM_MODE_ENABLED
+            param2=auto_mode,
+        )
+
+        try:
+            response = self.drone.master.recv_match(
+                type="COMMAND_ACK", blocking=True, timeout=3
+            )
+
+            self.drone.is_listening = True
+
+            self.drone.logger.info(f"Resume command response: {response}")
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
+                self.drone.logger.info("Mission resumed successfully - switched to AUTO mode")
+                return {
+                    "success": True,
+                    "message": "Mission resumed",
+                }
+            else:
+                self.drone.logger.warning("Failed to resume mission - command not accepted")
+                return {
+                    "success": False,
+                    "message": "Failed to resume mission",
+                }
+        except serial.serialutil.SerialException:
+            self.drone.is_listening = True
+            self.drone.logger.error("Failed to resume mission - serial exception")
+            return {
+                "success": False,
+                "message": "Failed to resume mission, serial exception",
+            }
+
     def clearMission(self, mission_type: int) -> Response:
         """
         Clears the specified mission type from the drone.

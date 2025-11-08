@@ -99,12 +99,12 @@ def getCurrentMissionAll() -> None:
 @socketio.on("control_mission")
 def controlMission(data: ControlMissionType) -> None:
     """
-    Controls the current mission based on the action, only works if dashboard screen is loaded.
+    Controls the current mission based on the action, only works if dashboard or missions screen is loaded.
     """
-    if droneStatus.state != "dashboard":
+    if droneStatus.state not in ["dashboard", "missions"]:
         socketio.emit(
             "params_error",
-            {"message": "You must be on the dashboard screen to control a mission."},
+            {"message": "You must be on the dashboard or missions screen to control a mission."},
         )
         fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
@@ -114,7 +114,9 @@ def controlMission(data: ControlMissionType) -> None:
 
     action = data.get("action", None)
 
-    if action not in ["start", "restart"]:
+    fgcs_logger.info(f"Received mission control action: {action}")
+
+    if action not in ["start", "restart", "pause", "resume"]:
         socketio.emit(
             "params_error",
             {"message": f"Invalid action for controlling the mission, got {action}."},
@@ -126,6 +128,14 @@ def controlMission(data: ControlMissionType) -> None:
         result = droneStatus.drone.missionController.startMission()
     elif action == "restart":
         result = droneStatus.drone.missionController.restartMission()
+    elif action == "pause":
+        fgcs_logger.info("Pausing mission...")
+        result = droneStatus.drone.missionController.pauseMission()
+        fgcs_logger.info(f"Pause result: {result}")
+    elif action == "resume":
+        fgcs_logger.info("Resuming mission...")
+        result = droneStatus.drone.missionController.resumeMission()
+        fgcs_logger.info(f"Resume result: {result}")
 
     socketio.emit("mission_control_result", result)
 

@@ -1,41 +1,16 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-var */
+// https://github.com/Williangalvani/JsDataflashParser/blob/d8967f6e4b4415492ea7d9b1adb1a6dc026f2b75/parser.js
+
 /* eslint-disable no-prototype-builtins */
-const MAV_TYPE_GENERIC = 0 // Generic micro air vehicle.
 const MAV_TYPE_FIXED_WING = 1 // Fixed wing aircraft.
 const MAV_TYPE_QUADROTOR = 2 // Quadrotor
 const MAV_TYPE_COAXIAL = 3 // Coaxial helicopter
 const MAV_TYPE_HELICOPTER = 4 // Normal helicopter with tail rotor.
 const MAV_TYPE_ANTENNA_TRACKER = 5 // Ground installation
-const MAV_TYPE_GCS = 6 // Operator control unit / ground control station
-const MAV_TYPE_AIRSHIP = 7 // Airship, controlled
-const MAV_TYPE_FREE_BALLOON = 8 // Free balloon, uncontrolled
-const MAV_TYPE_ROCKET = 9 // Rocket
 const MAV_TYPE_GROUND_ROVER = 10 // Ground rover
-const MAV_TYPE_SURFACE_BOAT = 11 // Surface vessel, boat, ship
 const MAV_TYPE_SUBMARINE = 12 // Submarine
 const MAV_TYPE_HEXAROTOR = 13 // Hexarotor
 const MAV_TYPE_OCTOROTOR = 14 // Octorotor
 const MAV_TYPE_TRICOPTER = 15 // Tricopter
-const MAV_TYPE_FLAPPING_WING = 16 // Flapping wing
-const MAV_TYPE_KITE = 17 // Kite
-const MAV_TYPE_ONBOARD_CONTROLLER = 18 // Onboard companion controller
-const MAV_TYPE_VTOL_DUOROTOR = 19 // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter
-const MAV_TYPE_VTOL_QUADROTOR = 20 // Quad-rotor VTOL using a V-shaped quad config in vertical operation.
-// Tailsitter.
-const MAV_TYPE_VTOL_TILTROTOR = 21 // Tiltrotor VTOL
-const MAV_TYPE_VTOL_RESERVED2 = 22 // VTOL reserved 2
-const MAV_TYPE_VTOL_RESERVED3 = 23 // VTOL reserved 3
-const MAV_TYPE_VTOL_RESERVED4 = 24 // VTOL reserved 4
-const MAV_TYPE_VTOL_RESERVED5 = 25 // VTOL reserved 5
-const MAV_TYPE_GIMBAL = 26 // Onboard gimbal
-const MAV_TYPE_ADSB = 27 // Onboard ADSB peripheral
-const MAV_TYPE_PARAFOIL = 28 // Steerable, nonrigid airfoil
-const MAV_TYPE_DODECAROTOR = 29 // Dodecarotor
-const MAV_TYPE_CAMERA = 30 // Camera
-const MAV_TYPE_CHARGING_STATION = 31 // Charging station
-const MAV_TYPE_FLARM = 32 // Onboard FLARM collision avoidance system
-const MAV_TYPE_ENUM_END = 33 //
 
 const modeMappingApm = {
   0: "MANUAL",
@@ -1082,26 +1057,8 @@ class DataflashParser {
     this.messageTypes = messageTypes
 
     if (msgs === undefined) {
-      // Default messages
-      msgs = [
-        "CMD",
-        "MSG",
-        "FILE",
-        "MODE",
-        "AHR2",
-        "ATT",
-        "GPS",
-        "POS",
-        "XKQ1",
-        "XKQ",
-        "NKQ1",
-        "NKQ2",
-        "XKQ2",
-        "PARM",
-        "MSG",
-        "STAT",
-        "EV",
-      ]
+      // All messages
+      msgs = Object.keys(messageTypes)
     }
     for (const msg of msgs) {
       this.parseAtOffset(msg)

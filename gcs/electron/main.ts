@@ -197,7 +197,10 @@ ipcMain.handle("window:select-file-in-explorer", async (_event, filters) => {
         size: stats.size,
       }
     } catch (err) {
-      getWindow()?.webContents.send("app:error", "File is inaccessible or deleted")
+      getWindow()?.webContents.send(
+        "app:error",
+        "File is inaccessible or deleted",
+      )
       return null
     }
   }

@@ -5,10 +5,17 @@ function transformMessageData(messageData) {
   // the actual data point value.
   // We need to convert that into an array of objects where each object has
   // a name, type, typeUS and rest of the keys are the fields with their values.
+  if (
+    messageData.time_boot_ms === null ||
+    messageData.time_boot_ms === undefined
+  ) {
+    return []
+  }
   const maxIndexValue = Object.entries(messageData.time_boot_ms).length
   const transformedData = []
   for (let i = 0; i < maxIndexValue; i++) {
     const entry = {}
+
     for (const [key, value] of Object.entries(messageData)) {
       if (key === "time_boot_ms") {
         entry.TimeUS = value[i]
@@ -24,6 +31,7 @@ function transformMessageData(messageData) {
 function transformMessages(messages) {
   const transformedMessages = {}
   for (const [messageName, messageData] of Object.entries(messages)) {
+    console.log(messageName)
     const transformedMessageData = transformMessageData(messageData)
     transformedMessageData.name = messageName
     transformedMessages[messageName] = transformedMessageData
@@ -43,3 +51,5 @@ function getFormatMessages(types) {
   }
   return formatMessages
 }
+
+export { getFormatMessages, transformMessages }

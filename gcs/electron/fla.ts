@@ -10,6 +10,11 @@ import createRecentLogsManager from "./utils/recentLogManager"
 
 import DataflashParser from "./utils/dataflashParser"
 
+import {
+  getFormatMessages,
+  transformMessages,
+} from "./utils/dataflashParserUtils"
+
 import type {
   AircraftType,
   Dataset,
@@ -331,7 +336,7 @@ async function parseFgcsTelemetryLogFile(
 function parseDataflashBinFile(
   filePath: string,
   webContents: WebContents,
-): Messages | null {
+): Messages {
   // Read file as ArrayBuffer
   const fileBuffer = fs.readFileSync(filePath)
   const fileArrayBuffer = fileBuffer.buffer.slice(
@@ -342,10 +347,14 @@ function parseDataflashBinFile(
   const parser = new DataflashParser()
   const processedData = parser.processData(fileArrayBuffer)
 
-  console.log(processedData)
-  console.log(processedData.types.CTUN)
-  console.log(processedData.messages.ATT)
-  return null // TODO: implement returning Messages object
+  const parsedData: Messages = {
+    format: getFormatMessages(processedData.types),
+    ...transformMessages(processedData.messages),
+  }
+  webContents.send("fla:log-parse-progress", {
+    percent: 100,
+  })
+  return parsedData
 }
 
 async function determineLogFileType(filePath: string): Promise<LogType> {
@@ -492,6 +501,9 @@ export default async function openFile(
     if (logType === "dataflash_bin") {
       console.log("Dataflash BIN parsing not yet implemented")
       messages = parseDataflashBinFile(filePath, event.sender)
+      // save processedData to json file
+      const jsonFilePath = "dataflash_bin_parser_new_output" + ".json"
+      fs.writeFileSync(jsonFilePath, JSON.stringify(messages, null, 2))
     } else {
       const fileStream = fs.createReadStream(filePath)
       const rl = readline.createInterface({
@@ -506,8 +518,8 @@ export default async function openFile(
           stats.size,
           event.sender,
         )
-        // // save processedData to json file
-        const jsonFilePath = "dataflash__log_parser_new_output" + ".json"
+        // save processedData to json file
+        const jsonFilePath = "dataflash_log_parser_new_output" + ".json"
         fs.writeFileSync(jsonFilePath, JSON.stringify(messages, null, 2))
       } else if (logType === "fgcs_telemetry") {
         messages = await parseFgcsTelemetryLogFile(

@@ -104,7 +104,9 @@ def controlMission(data: ControlMissionType) -> None:
     if droneStatus.state not in ["dashboard", "missions"]:
         socketio.emit(
             "params_error",
-            {"message": "You must be on the dashboard or missions screen to control a mission."},
+            {
+                "message": "You must be on the dashboard or missions screen to control a mission."
+            },
         )
         fgcs_logger.debug(f"Current state: {droneStatus.state}")
         return
@@ -173,7 +175,7 @@ def uploadMission(data: UploadMissionType) -> None:
 
     fgcs_logger.info(f"Uploading {mission_type} mission with {len(mission_data)} items")
     fgcs_logger.debug(f"Mission data: {mission_data}")
-    
+
     result = droneStatus.drone.missionController.uploadMissionData(
         mission_data, mission_type_array.index(mission_type)
     )

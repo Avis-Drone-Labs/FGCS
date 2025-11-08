@@ -31,11 +31,11 @@ export default function MissionTabsSection({
 
   // Update missionPaused state based on current flight mode
   useEffect(() => {
-    // GUIDED mode = 4 for copter, 15 for plane
+    // GUIDED mode = copter 4, plane 15
     const guidedModeNumber = aircraftType === 1 ? 15 : 4
     const isInGuidedMode = currentFlightModeNumber === guidedModeNumber
-    
-    // Only update if the state doesn't match the actual mode
+
+    // only update if the state doesn't match the actual mode
     if (isInGuidedMode !== missionPaused) {
       setMissionPaused(isInGuidedMode)
     }

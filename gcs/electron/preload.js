@@ -58,7 +58,6 @@ const ALLOWED_ON_CHANNELS = [
   "app:send-ekf-status",
   "app:send-vibe-status",
   "settings:open",
-  "app:error",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

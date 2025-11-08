@@ -499,11 +499,7 @@ export default async function openFile(
     let messages: Messages | null = null
 
     if (logType === "dataflash_bin") {
-      console.log("Dataflash BIN parsing not yet implemented")
       messages = parseDataflashBinFile(filePath, event.sender)
-      // save processedData to json file
-      const jsonFilePath = "dataflash_bin_parser_new_output" + ".json"
-      fs.writeFileSync(jsonFilePath, JSON.stringify(messages, null, 2))
     } else {
       const fileStream = fs.createReadStream(filePath)
       const rl = readline.createInterface({
@@ -518,9 +514,6 @@ export default async function openFile(
           stats.size,
           event.sender,
         )
-        // save processedData to json file
-        const jsonFilePath = "dataflash_log_parser_new_output" + ".json"
-        fs.writeFileSync(jsonFilePath, JSON.stringify(messages, null, 2))
       } else if (logType === "fgcs_telemetry") {
         messages = await parseFgcsTelemetryLogFile(
           rl,

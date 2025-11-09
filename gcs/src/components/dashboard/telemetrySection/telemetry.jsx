@@ -87,7 +87,7 @@ export default function TelemetrySection({
       </div>
 
       {/* Indicators */}
-      <div className="flex items-center flex-col justify-evenly @xl:flex-row">
+      <div className="flex items-center flex-col justify-evenly @3xl:flex-row">
         {/* Attitude Indicator */}
         <div
           className="flex flex-row items-center justify-center"
@@ -203,9 +203,13 @@ export default function TelemetrySection({
       </div>
 
       {/* EKF and VIBE labels */}
-      <div className="flex flex-row items-center justify-center gap-10 my-4">
-        <EkfDisplay telemetryFontSize={telemetryFontSize} />
-        <VibeDisplay telemetryFontSize={telemetryFontSize} />
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center my-4">
+        <div /> {/* left filler column */}
+        <div className="flex justify-center gap-10">
+          <EkfDisplay telemetryFontSize={telemetryFontSize} />
+          <VibeDisplay telemetryFontSize={telemetryFontSize} />
+        </div>
+        <div /> {/* right filler column */}
       </div>
 
       {/* Battery information */}

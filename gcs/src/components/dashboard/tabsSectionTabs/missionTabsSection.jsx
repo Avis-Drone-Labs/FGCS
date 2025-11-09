@@ -17,6 +17,7 @@ import {
 // Helper
 import { socket } from "../../../helpers/socket"
 import { NoConnectionMsg } from "../tabsSection"
+import { useState, useEffect } from "react"
 
 export default function MissionTabsSection({
   connected,
@@ -26,6 +27,20 @@ export default function MissionTabsSection({
   currentFlightModeNumber,
   aircraftType,
 }) {
+  const [missionPaused, setMissionPaused] = useState(false)
+
+  // Update missionPaused state based on current flight mode
+  useEffect(() => {
+    // GUIDED mode = copter 4, plane 15
+    const guidedModeNumber = aircraftType === 1 ? 15 : 4
+    const isInGuidedMode = currentFlightModeNumber === guidedModeNumber
+
+    // only update if the state doesn't match the actual mode
+    if (isInGuidedMode !== missionPaused) {
+      setMissionPaused(isInGuidedMode)
+    }
+  }, [currentFlightModeNumber, aircraftType, missionPaused])
+
   return (
     <Tabs.Panel value="mission">
       <div className={tabPadding}>
@@ -43,6 +58,8 @@ export default function MissionTabsSection({
             <AutoStartRestartMission
               aircraftType={aircraftType}
               currentFlightModeNumber={currentFlightModeNumber}
+              missionPaused={missionPaused}
+              setMissionPaused={setMissionPaused}
             />
           </div>
         )}
@@ -76,7 +93,12 @@ const MissionInfo = ({ currentMissionData, navControllerOutputData }) => {
   )
 }
 
-const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
+const AutoStartRestartMission = ({
+  aircraftType,
+  currentFlightModeNumber,
+  missionPaused,
+  setMissionPaused,
+}) => {
   // this is repeated code, will be updated after socket functionality is changed
   function setNewFlightMode(modeNumber) {
     if (modeNumber === null || modeNumber === currentFlightModeNumber) {
@@ -101,6 +123,16 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
 
   function readCurrentMission() {
     socket.emit("get_current_mission_all")
+  }
+
+  function pauseMission() {
+    controlMission("pause")
+    setMissionPaused(true)
+  }
+
+  function resumeMission() {
+    controlMission("resume")
+    setMissionPaused(false)
   }
 
   return (
@@ -140,6 +172,21 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
           className="grow"
         >
           Restart Mission
+        </Button>
+
+        {/** Pause/Resume Mission */}
+        <Button
+          onClick={() => {
+            if (missionPaused) {
+              resumeMission()
+            } else {
+              pauseMission()
+            }
+          }}
+          className="grow"
+          color={missionPaused ? "green" : "yellow"}
+        >
+          {missionPaused ? "Resume Mission" : "Pause Mission"}
         </Button>
 
         <Button onClick={readCurrentMission} className="grow">

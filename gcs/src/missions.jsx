@@ -297,7 +297,77 @@ export default function Missions() {
   }
 
   function importMissionFromFile() {
-    return
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".mission,.waypoints"
+    input.onchange = (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const content = event.target.result
+        const extension = file.name.split(".").pop().toLowerCase()
+        if (extension === "waypoints") {
+          const lines = content.split(/\r?\n/)
+          const missionItemsWithIds = []
+          for (let i = 1; i < lines.length; i++){
+            let line = lines[i].split("\t").map((x) => parseFloat(x))
+            if (line.length!=12) continue
+            let newMissionItem = {
+              "mavpackettype": "MISSION_ITEM_INT",
+              "target_system": 255,
+              "target_component": 0,
+              "mission_type": 0,
+              "seq": line[0],
+              "current": line[1],
+              "frame": line[2],
+              "command": line[3],
+              "param1": line[4],
+              "param2": line[5],
+              "param3": line[6],
+              "param4": line[7],
+              "x": line[8] * (10 ** 7),
+              "y": line[9] * (10 ** 7),
+              "z": line[10],
+              "autocontinue": line[11],
+            }
+            missionItemsWithIds.push(addIdToItem(newMissionItem))
+          }
+          setMissionItems(missionItemsWithIds)
+        } else if (extension === "mission") {
+          const json = JSON.parse(content)
+
+          const missionItemsWithIds = []
+          const missionItems = json.mission.items
+          for (let i = 0; i < missionItems.length; i++){
+            let missionItem = missionItems[i]
+            let newMissionItem = {
+              "mavpackettype": "MISSION_ITEM_INT",
+              "target_system": 255,
+              "target_component": 0,
+              "mission_type": 0,
+              "seq": i,
+              "current": 0,
+              "frame": missionItem.frame,
+              "command": missionItem.command,
+              "param1": missionItem.params[0],
+              "param2": missionItem.params[1],
+              "param3": missionItem.params[2],
+              "param4": missionItem.params[3],
+              "x": missionItem.params[4] * (10 ** 7),
+              "y": missionItem.params[5] * (10 ** 7),
+              "z": missionItem.params[6],
+              "autocontinue": missionItem.autocontinue ? 1 : 0,
+            }
+            missionItemsWithIds.push(addIdToItem(newMissionItem))
+          }
+          setMissionItems(missionItemsWithIds)
+        }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
   }
 
   function saveMissionToFile() {

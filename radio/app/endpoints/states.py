@@ -78,9 +78,6 @@ def set_state(data: SetStateType) -> None:
         droneStatus.drone.setupSingleDataStream(
             mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS
         )
-        droneStatus.drone.setupSingleDataStream(
-            mavutil.mavlink.MAV_DATA_STREAM_POSITION
-        )
         for message in STATES_MESSAGE_LISTENERS["missions"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
     elif droneStatus.state == "graphs":

@@ -258,27 +258,25 @@ class ParamsController:
                 param_type is not None
                 and param_type != mavutil.mavlink.MAV_PARAM_TYPE_REAL32
             ):
-                # need to encode as a float for sending - not being used
+                # need to encode as a float for sending - not being used, just here to validate type I guess?
                 if param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT8:
-                    vstr = struct.pack(">xxxB", int(param_value))
+                    struct.pack(">xxxB", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT8:
-                    vstr = struct.pack(">xxxb", int(param_value))
+                    struct.pack(">xxxb", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT16:
-                    vstr = struct.pack(">xxH", int(param_value))
+                    struct.pack(">xxH", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT16:
-                    vstr = struct.pack(">xxh", int(param_value))
+                    struct.pack(">xxh", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT32:
-                    vstr = struct.pack(">I", int(param_value))
+                    struct.pack(">I", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT32:
-                    vstr = struct.pack(">i", int(param_value))
+                    struct.pack(">i", int(param_value))
                 else:
                     self.drone.logger.error(
                         "can't send %s of type %u" % (param_name, param_type)
                     )
                     return False
-                vfloat = struct.unpack(">f", vstr)[0]  # unpack returns a tuple
-            else:
-                vfloat = float(param_value)
+            vfloat = float(param_value)
         except (struct.error, ValueError) as e:
             self.drone.logger.error(
                 f"Could not set parameter {param_name} with value {param_value}",

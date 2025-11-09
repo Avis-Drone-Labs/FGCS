@@ -15,7 +15,7 @@ export default function ParamsFailedToWriteModal() {
     <Modal
       opened={opened}
       onClose={() => dispatch(setParamsFailedToWriteModalOpen(false))}
-      title={`Failed to write ${paramsFailedToWriteList.length} parameter(s)`}
+      title={`Failed to write ${paramsFailedToWriteList.length} parameter${paramsFailedToWriteList.length > 1 ? "s" : ""}`}
       centered
       overlayProps={{
         backgroundOpacity: 0.55,

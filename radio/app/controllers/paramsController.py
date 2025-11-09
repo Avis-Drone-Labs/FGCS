@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread, current_thread
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -178,7 +178,7 @@ class ParamsController:
     def setMultipleParams(
         self,
         params_list: list[IncomingParam],
-        progress_update_callback: Optional[callable],
+        progress_update_callback: Optional[Callable],
     ) -> Response:
         """
         Sets multiple parameters on the drone.
@@ -217,10 +217,14 @@ class ParamsController:
                 }
                 if not done:
                     params_could_not_set.append(param)
-                    progress_update_callback_data['message'] = f"Failed to write {param_id}"
+                    progress_update_callback_data["message"] = (
+                        f"Failed to write {param_id}"
+                    )
                 else:
                     params_set_successfully.append(param)
-                    progress_update_callback_data['message'] = f"Wrote {param_id} successfully"
+                    progress_update_callback_data["message"] = (
+                        f"Wrote {param_id} successfully"
+                    )
 
                 if progress_update_callback:
                     progress_update_callback(progress_update_callback_data)

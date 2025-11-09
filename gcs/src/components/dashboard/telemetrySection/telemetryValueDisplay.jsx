@@ -11,7 +11,7 @@ export default function TelemetryValueDisplay({ title, value, fs, widthCh=8 }) {
         style={{
           fontSize: `${fs * 1.25}rem`,
           lineHeight: `${fs * 1.75}rem`,
-          width: `${widthCh}ch`, // reserve space, e.g. "-999.99" approx 8ch
+          width: `${widthCh}ch`, // ch relative to "0" width across fonts
         }}
         aria-label={`${title} value`}
       >

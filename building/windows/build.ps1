@@ -12,7 +12,6 @@ Param (
   [string]$Version
 )
 
-Write-Output "Building backend"
 Write-Output "Assuming location is FGCS\building\windows"
 Set-Location ../../
 

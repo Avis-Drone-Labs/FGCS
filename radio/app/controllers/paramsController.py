@@ -175,7 +175,11 @@ class ParamsController:
             # Always release the message type when done
             self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> Response:
+    def setMultipleParams(
+        self,
+        params_list: list[IncomingParam],
+        progress_update_callback: Optional[callable],
+    ) -> Response:
         """
         Sets multiple parameters on the drone.
 
@@ -189,8 +193,9 @@ class ParamsController:
             return {"success": False, "message": "No parameters to set"}
 
         params_set_successfully = []
+        total_num_of_params = len(params_list)
 
-        for param in params_list:
+        for idx, param in enumerate(params_list):
             param_id = param.get("param_id", None)
             param_value = param.get("param_value", None)
             param_type = param.get("param_type", None)
@@ -208,6 +213,14 @@ class ParamsController:
                 }
             else:
                 params_set_successfully.append(param)
+                if progress_update_callback:
+                    progress_update_callback(
+                        {
+                            "param_id": param_id,
+                            "current_index": idx + 1,
+                            "total_params": total_num_of_params,
+                        }
+                    )
 
         return {
             "success": True,
@@ -291,6 +304,8 @@ class ParamsController:
                     save_timeout,
                 )
 
+                saved_param = False
+
                 if ack:
                     got_ack = True
                     if ack.param_id.upper() != param_name.upper():
@@ -304,18 +319,23 @@ class ParamsController:
                         self.drone.logger.warning(
                             f"Could not set {param_name} to {param_value}, keeping value as {ack.param_value} instead"
                         )
+                        self.drone.logger.debug(
+                            f"Ack: {ack.to_dict()}, param_name: {param_name}, param_value: {param_value}"
+                        )
+                        saved_param = False
                         break
                     else:
                         self.drone.logger.debug(
                             f"Got parameter saving ack for {param_name} for value {param_value}"
                         )
                         self.saveParam(ack.param_id, ack.param_value, ack.param_type)
+                        saved_param = True
                         break
 
             if not got_ack:
                 self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
 
-            return got_ack
+            return saved_param
         except serial.serialutil.SerialException:
             self.drone.logger.error(f"Serial exception setting parameter {param_name}")
             return False

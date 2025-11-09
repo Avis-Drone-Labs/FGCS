@@ -90,6 +90,7 @@ import {
   setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
+  resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
   setFetchingVars,
   setFetchingVarsProgress,
@@ -97,6 +98,8 @@ import {
   setModifiedParams,
   setParams,
   setParamSearchValue,
+  setParamsWriteProgressData,
+  setParamsWriteProgressModalOpen,
   setRebootData,
   setShownParams,
   updateParamValue,
@@ -136,6 +139,7 @@ const ParamSpecificSocketEvents = Object.freeze({
   onParamSetSuccess: "param_set_success",
   onParamError: "params_error",
   onExportParamsResult: "export_params_result",
+  onSetMultipleParamsProgress: "set_multiple_params_progress",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -559,11 +563,15 @@ const socketMiddleware = (store) => {
           for (let param of msg.data) {
             store.dispatch(updateParamValue(param))
           }
+          store.dispatch(resetParamsWriteProgressData())
+          store.dispatch(setParamsWriteProgressModalOpen(false))
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
           showErrorNotification(msg.message)
           store.dispatch(setFetchingVars(false))
+          store.dispatch(resetParamsWriteProgressData())
+          store.dispatch(setParamsWriteProgressModalOpen(false))
         })
 
         socket.socket.on(
@@ -574,6 +582,19 @@ const socketMiddleware = (store) => {
             } else {
               showErrorNotification(msg.message)
             }
+          },
+        )
+
+        socket.socket.on(
+          ParamSpecificSocketEvents.onSetMultipleParamsProgress,
+          (msg) => {
+            store.dispatch(
+              setParamsWriteProgressData({
+                param_id: msg.param_id,
+                current_index: msg.current_index,
+                total_params: msg.total_params,
+              }),
+            )
           },
         )
 

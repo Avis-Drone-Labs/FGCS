@@ -16,6 +16,12 @@ const paramsSlice = createSlice({
     loadParamsFileModalOpen: false,
     loadedFileName: "",
     loadedParams: [],
+    paramsWriteProgressData: {
+      param_id: "",
+      current_index: 0,
+      total_params: 0,
+    },
+    paramsWriteProgressModalOpen: false,
   },
   reducers: {
     setRebootData: (state, action) => {
@@ -128,6 +134,19 @@ const paramsSlice = createSlice({
     setLoadedParams: (state, action) => {
       state.loadedParams = action.payload
     },
+    setParamsWriteProgressData: (state, action) => {
+      state.paramsWriteProgressData = action.payload
+    },
+    resetParamsWriteProgressData: (state) => {
+      state.paramsWriteProgressData = {
+        param_id: "",
+        current_index: 0,
+        total_params: 0,
+      }
+    },
+    setParamsWriteProgressModalOpen: (state, action) => {
+      state.paramsWriteProgressModalOpen = action.payload
+    },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
@@ -152,6 +171,9 @@ const paramsSlice = createSlice({
     selectLoadParamsFileModalOpen: (state) => state.loadParamsFileModalOpen,
     selectLoadedFileName: (state) => state.loadedFileName,
     selectLoadedParams: (state) => state.loadedParams,
+    selectParamsWriteProgressData: (state) => state.paramsWriteProgressData,
+    selectParamsWriteProgressModalOpen: (state) =>
+      state.paramsWriteProgressModalOpen,
   },
 })
 
@@ -174,6 +196,9 @@ export const {
   setLoadParamsFileModalOpen,
   setLoadedFileName,
   setLoadedParams,
+  setParamsWriteProgressData,
+  resetParamsWriteProgressData,
+  setParamsWriteProgressModalOpen,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -194,6 +219,8 @@ export const {
   selectLoadParamsFileModalOpen,
   selectLoadedFileName,
   selectLoadedParams,
+  selectParamsWriteProgressData,
+  selectParamsWriteProgressModalOpen,
 } = paramsSlice.selectors
 
 export default paramsSlice

@@ -390,10 +390,6 @@ const socketMiddleware = (store) => {
           )
         })
 
-        socket.telemetrySocket.on("connect_error", (error) => {
-          console.error("Telemetry socket connection error:", error)
-        })
-
         // I don't understand whatsoever why this doesn't work with the standard
         // on method.
         socket.telemetrySocket.onAny((eventName, ...args) => {

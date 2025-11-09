@@ -14,6 +14,34 @@ class SetStateType(TypedDict):
     state: str
 
 
+GLOBAL_MESSAGE_LISTENERS = ["HEARTBEAT", "STATUSTEXT", "GLOBAL_POSITION_INT"]
+
+STATES_MESSAGE_LISTENERS = {
+    "dashboard": [
+        "VFR_HUD",
+        "BATTERY_STATUS",
+        "ATTITUDE",
+        "ALTITUDE",
+        "NAV_CONTROLLER_OUTPUT",
+        "SYS_STATUS",
+        "GPS_RAW_INT",
+        "RC_CHANNELS",
+        "ESC_TELEMETRY_5_TO_8",
+        "MISSION_CURRENT",
+        "EKF_STATUS_REPORT",
+        "VIBRATION",
+    ],
+    "missions": [
+        "NAV_CONTROLLER_OUTPUT",
+    ],
+    "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],
+    "config.flight_modes": [
+        "RC_CHANNELS",
+    ],
+    "config.rc": ["RC_CHANNELS"],
+}
+
+
 @socketio.on("set_state")
 def set_state(data: SetStateType) -> None:
     """
@@ -31,78 +59,50 @@ def set_state(data: SetStateType) -> None:
 
     droneStatus.state = newState
 
-    message_listeners = {
-        "dashboard": [
-            "VFR_HUD",
-            "BATTERY_STATUS",
-            "GLOBAL_POSITION_INT",
-            "ATTITUDE",
-            "ALTITUDE",
-            "NAV_CONTROLLER_OUTPUT",
-            "HEARTBEAT",
-            "SYS_STATUS",
-            "GPS_RAW_INT",
-            "RC_CHANNELS",
-            "ESC_TELEMETRY_5_TO_8",
-            "MISSION_CURRENT",
-            "EKF_STATUS_REPORT",
-            "VIBRATION",
-        ],
-        "missions": ["GLOBAL_POSITION_INT", "NAV_CONTROLLER_OUTPUT", "HEARTBEAT"],
-        "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],
-        "config.flight_modes": ["RC_CHANNELS", "HEARTBEAT"],
-        "config.rc": ["RC_CHANNELS", "HEARTBEAT"],
-    }
-
     droneStatus.drone.logger.info(f"Changing state to {droneStatus.state}")
 
-    # Always send STATUSTEXT messages
-    droneStatus.drone.addMessageListener("STATUSTEXT", sendMessage)
+    # Reset all data streams
+    droneStatus.drone.stopAllDataStreams()
+
+    # Always setup position stream to get GLOBAL_POSITION_INT messages
+    droneStatus.drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_POSITION)
+
+    for message in GLOBAL_MESSAGE_LISTENERS:
+        droneStatus.drone.addMessageListener(message, sendMessage)
 
     if droneStatus.state == "dashboard":
         droneStatus.drone.setupDataStreams()
-        for message in message_listeners["dashboard"]:
+        for message in STATES_MESSAGE_LISTENERS["dashboard"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
-    if droneStatus.state == "missions":
-        droneStatus.drone.stopAllDataStreams()
+    elif droneStatus.state == "missions":
         droneStatus.drone.setupSingleDataStream(
             mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS
         )
         droneStatus.drone.setupSingleDataStream(
             mavutil.mavlink.MAV_DATA_STREAM_POSITION
         )
-        for message in message_listeners["missions"]:
+        for message in STATES_MESSAGE_LISTENERS["missions"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
     elif droneStatus.state == "graphs":
-        droneStatus.drone.stopAllDataStreams()
-
         droneStatus.drone.setupSingleDataStream(
             mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS
         )
         droneStatus.drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA1)
         droneStatus.drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_EXTRA2)
 
-        for message in message_listeners["graphs"]:
+        for message in STATES_MESSAGE_LISTENERS["graphs"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
-    elif droneStatus.state == "params":
-        droneStatus.drone.stopAllDataStreams()
-    elif droneStatus.state == "config":
-        droneStatus.drone.stopAllDataStreams()
     elif droneStatus.state == "config.flight_modes":
-        droneStatus.drone.stopAllDataStreams()
-
         droneStatus.drone.sendDataStreamRequestMessage(
             mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 2
         )
 
-        for message in message_listeners["config.flight_modes"]:
+        for message in STATES_MESSAGE_LISTENERS["config.flight_modes"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
     elif droneStatus.state == "config.rc":
-        droneStatus.drone.stopAllDataStreams()
-
         droneStatus.drone.sendDataStreamRequestMessage(
             mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
         )
 
-        for message in message_listeners["config.rc"]:
+        for message in STATES_MESSAGE_LISTENERS["config.rc"]:
             droneStatus.drone.addMessageListener(message, sendMessage)

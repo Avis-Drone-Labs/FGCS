@@ -4,16 +4,48 @@
 
   .EXAMPLE
   .\build.ps1 -Version "0.1.8-alpha"
+  .\build.ps1
 #>
 
 Param (
-  [Parameter(Mandatory = $true)]
+  [Parameter(Mandatory = $false)]
   [string]$Version
 )
 
 Write-Output "Building backend"
 Write-Output "Assuming location is FGCS\building\windows"
 Set-Location ../../
+
+# Read and display current version from package.json
+Write-Output "Reading current version from package.json..."
+$packageJsonPath = ".\gcs\package.json"
+if (Test-Path $packageJsonPath) {
+  $packageJson = Get-Content $packageJsonPath | ConvertFrom-Json
+  $currentVersion = $packageJson.version
+  Write-Output "Current version: $currentVersion"
+
+  # Prompt for version if not provided
+  if (-not $Version) {
+    $Version = Read-Host "Enter new version number"
+    if (-not $Version) {
+      Write-Error "Version is required to continue"
+      exit 1
+    }
+  }
+
+  Write-Output "New version will be: $Version"
+} else {
+  Write-Warning "Could not find package.json at $packageJsonPath"
+
+  # Still prompt for version if package.json not found
+  if (-not $Version) {
+    $Version = Read-Host "Enter version number"
+    if (-not $Version) {
+      Write-Error "Version is required to continue"
+      exit 1
+    }
+  }
+}
 
 Write-Output "Building backend"
 Set-Location radio

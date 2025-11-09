@@ -3,25 +3,6 @@ import tailwindConfig from "../../../tailwind.config.js"
 
 export const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export const ignoredMessages = [
-  "ERR",
-  "EV",
-  "MSG",
-  "VER",
-  "TIMESYNC",
-  "PARAM_VALUE",
-  "units",
-  "format",
-  "aircraftType",
-]
-export const ignoredKeys = [
-  "TimeUS",
-  "function",
-  "source",
-  "result",
-  "time_boot_ms",
-]
-
 export const colorPalette = [
   "#36a2eb",
   "#ff6383",

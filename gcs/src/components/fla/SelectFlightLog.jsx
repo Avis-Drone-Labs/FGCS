@@ -36,7 +36,7 @@ export default function SelectFlightLog({ getLogSummary }) {
   const selectFile = async () => {
     const result = await window.ipcRenderer.invoke(
       "window:select-file-in-explorer",
-      [{ name: "Flight Logs", extensions: ["log", "ftlog"] }],
+      [{ name: "Flight Logs", extensions: ["bin", "log", "ftlog"] }],
     )
     if (result?.success) {
       handleFile(result)

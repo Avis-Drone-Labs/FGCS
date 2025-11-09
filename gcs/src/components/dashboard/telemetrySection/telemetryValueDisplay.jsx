@@ -1,4 +1,9 @@
-export default function TelemetryValueDisplay({ title, value, fs, widthCh=8 }) {
+export default function TelemetryValueDisplay({
+  title,
+  value,
+  fs,
+  widthCh = 8,
+}) {
   return (
     <div className="flex flex-col items-center">
       <span className="font-bold" style={{ lineHeight: `${fs * 1.2}rem` }}>

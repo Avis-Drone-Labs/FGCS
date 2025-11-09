@@ -22,6 +22,8 @@ const paramsSlice = createSlice({
       total_params: 0,
     },
     paramsWriteProgressModalOpen: false,
+    paramsFailedToWrite: [],
+    paramsFailedToWriteModalOpen: false,
   },
   reducers: {
     setRebootData: (state, action) => {
@@ -147,6 +149,12 @@ const paramsSlice = createSlice({
     setParamsWriteProgressModalOpen: (state, action) => {
       state.paramsWriteProgressModalOpen = action.payload
     },
+    setParamsFailedToWrite: (state, action) => {
+      state.paramsFailedToWrite = action.payload
+    },
+    setParamsFailedToWriteModalOpen: (state, action) => {
+      state.paramsFailedToWriteModalOpen = action.payload
+    },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
@@ -174,6 +182,9 @@ const paramsSlice = createSlice({
     selectParamsWriteProgressData: (state) => state.paramsWriteProgressData,
     selectParamsWriteProgressModalOpen: (state) =>
       state.paramsWriteProgressModalOpen,
+    selectParamsFailedToWrite: (state) => state.paramsFailedToWrite,
+    selectParamsFailedToWriteModalOpen: (state) =>
+      state.paramsFailedToWriteModalOpen,
   },
 })
 
@@ -199,6 +210,8 @@ export const {
   setParamsWriteProgressData,
   resetParamsWriteProgressData,
   setParamsWriteProgressModalOpen,
+  setParamsFailedToWrite,
+  setParamsFailedToWriteModalOpen,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -221,6 +234,8 @@ export const {
   selectLoadedParams,
   selectParamsWriteProgressData,
   selectParamsWriteProgressModalOpen,
+  selectParamsFailedToWrite,
+  selectParamsFailedToWriteModalOpen,
 } = paramsSlice.selectors
 
 export default paramsSlice

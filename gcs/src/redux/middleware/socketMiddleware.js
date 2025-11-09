@@ -27,6 +27,7 @@ import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
   showErrorNotification,
   showSuccessNotification,
+  showWarningNotification,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
@@ -98,6 +99,8 @@ import {
   setModifiedParams,
   setParams,
   setParamSearchValue,
+  setParamsFailedToWrite,
+  setParamsFailedToWriteModalOpen,
   setParamsWriteProgressData,
   setParamsWriteProgressModalOpen,
   setRebootData,
@@ -557,14 +560,42 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(ParamSpecificSocketEvents.onParamSetSuccess, (msg) => {
-          showSuccessNotification(msg.message)
-          store.dispatch(setModifiedParams([]))
+          const paramsSetSuccessfully = msg.data.params_set_successfully
+          const paramsNotSet = msg.data.params_could_not_set
+          if (paramsNotSet.length > 0 && paramsSetSuccessfully.length > 0) {
+            showWarningNotification(msg.message)
+          } else if (paramsNotSet.length > 0) {
+            showErrorNotification(msg.message)
+          } else {
+            showSuccessNotification(msg.message)
+          }
+
+          const modifiedParams = store.getState().paramsSlice.modifiedParams
+
+          // Only clear the params that got set successfully
+          store.dispatch(
+            setModifiedParams(
+              modifiedParams.filter(
+                (param) =>
+                  !paramsSetSuccessfully.some(
+                    (setParam) => setParam.param_id === param.param_id,
+                  ),
+              ),
+            ),
+          )
+
           // Update the param in the params list also
-          for (let param of msg.data) {
+          for (let param of paramsSetSuccessfully) {
             store.dispatch(updateParamValue(param))
           }
+
           store.dispatch(resetParamsWriteProgressData())
           store.dispatch(setParamsWriteProgressModalOpen(false))
+
+          if (paramsNotSet.length !== 0) {
+            store.dispatch(setParamsFailedToWrite(paramsNotSet))
+            store.dispatch(setParamsFailedToWriteModalOpen(true))
+          }
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
@@ -590,6 +621,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             store.dispatch(
               setParamsWriteProgressData({
+                message: msg.message,
                 param_id: msg.param_id,
                 current_index: msg.current_index,
                 total_params: msg.total_params,

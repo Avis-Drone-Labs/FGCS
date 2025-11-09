@@ -30,8 +30,8 @@ export default function ParamsWriteModal() {
       }}
     >
       <div className="flex flex-col items-center justify-center mt-4">
-        {progressData.param_id && (
-          <p className="text-center mb-2">{progressData.param_id}</p>
+        {progressData.message && (
+          <p className="text-center mb-2">{progressData.message}</p>
         )}
 
         {progressPercentage !== null && progressPercentage !== undefined && (

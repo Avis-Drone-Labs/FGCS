@@ -14,6 +14,7 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 export const redColor = tailwindColors.red[600]
 export const greenColor = tailwindColors.green[600]
 export const blueColor = tailwindColors.blue[600]
+export const yellowColor = tailwindColors.yellow[600]
 
 const notificationTheme = {
   style: {
@@ -36,6 +37,15 @@ export function showSuccessNotification(message) {
     title: "Success",
     message: message,
     color: greenColor,
+    ...notificationTheme,
+  })
+}
+
+export function showWarningNotification(message) {
+  notifications.show({
+    title: "Warning",
+    message: message,
+    color: yellowColor,
     ...notificationTheme,
   })
 }

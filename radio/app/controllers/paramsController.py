@@ -193,40 +193,67 @@ class ParamsController:
             return {"success": False, "message": "No parameters to set"}
 
         params_set_successfully = []
+        params_could_not_set = []
         total_num_of_params = len(params_list)
 
-        for idx, param in enumerate(params_list):
-            param_id = param.get("param_id", None)
-            param_value = param.get("param_value", None)
-            param_type = param.get("param_type", None)
-            param.pop("initial_value", None)  # Remove initial value if it exists
+        try:
+            for idx, param in enumerate(params_list):
+                param_id = param.get("param_id", None)
+                param_value = param.get("param_value", None)
+                param_type = param.get("param_type", None)
+                param.pop("initial_value", None)  # Remove initial value if it exists
 
-            if param_id is None or param_value is None:
-                self.drone.logger.error(f"Invalid parameter data: {param}, skipping")
-                continue
-
-            done = self.setParam(param_id, param_value, param_type)
-            if not done:
-                return {
-                    "success": False,
-                    "message": f"Failed to set parameter {param_id}",
-                }
-            else:
-                params_set_successfully.append(param)
-                if progress_update_callback:
-                    progress_update_callback(
-                        {
-                            "param_id": param_id,
-                            "current_index": idx + 1,
-                            "total_params": total_num_of_params,
-                        }
+                if param_id is None or param_value is None:
+                    self.drone.logger.error(
+                        f"Invalid parameter data: {param}, skipping"
                     )
+                    continue
 
-        return {
-            "success": True,
-            "message": "All parameters set successfully",
-            "data": params_set_successfully,
-        }
+                done = self.setParam(param_id, param_value, param_type)
+                progress_update_callback_data = {
+                    "param_id": param_id,
+                    "current_index": idx + 1,
+                    "total_params": total_num_of_params,
+                }
+                if not done:
+                    params_could_not_set.append(param)
+                    progress_update_callback_data['message'] = f"Failed to write {param_id}"
+                else:
+                    params_set_successfully.append(param)
+                    progress_update_callback_data['message'] = f"Wrote {param_id} successfully"
+
+                if progress_update_callback:
+                    progress_update_callback(progress_update_callback_data)
+
+            response_message = "All parameters set successfully"
+
+            if len(params_could_not_set) and len(params_set_successfully):
+                # Some params got set but some didn't
+                response_message = f"Set {len(params_set_successfully)} parameters, but could not set {len(params_could_not_set)} parameters"
+            elif len(params_could_not_set) or len(params_could_not_set) == len(
+                params_list
+            ):
+                # Some params did not get set and there are none set successfully or all of the params did not get set successfully
+                response_message = (
+                    f"Could not set {len(params_could_not_set)} parameters"
+                )
+
+            return {
+                "success": True,
+                "message": response_message,
+                "data": {
+                    "params_set_successfully": params_set_successfully,
+                    "params_could_not_set": params_could_not_set,
+                },
+            }
+        except Exception as e:
+            self.drone.logger.error(
+                "Exception while setting multiple params", exc_info=e
+            )
+            return {
+                "success": False,
+                "message": f"Exception while setting parameters: {str(e)}",
+            }
 
     @sendingCommandLock
     def setParam(
@@ -235,6 +262,7 @@ class ParamsController:
         param_value: Number,
         param_type: Optional[int],
         retries: int = 3,
+        save_timeout: Number = 1.5,
     ) -> bool:
         """
         Sets a single parameter on the drone.
@@ -249,7 +277,6 @@ class ParamsController:
             bool: True if the parameter was set, False if it failed
         """
         got_ack = False
-        save_timeout = 5
 
         try:
             # Check if value fits inside the param type

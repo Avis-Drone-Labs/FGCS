@@ -13,6 +13,7 @@ class ExportParamsFileType(TypedDict):
 
 
 class MultipleParamsProgressDataType(TypedDict):
+    message: str
     param_id: str
     current_index: int
     total_params: int

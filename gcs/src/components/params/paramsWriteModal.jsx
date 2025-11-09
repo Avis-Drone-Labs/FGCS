@@ -34,15 +34,13 @@ export default function ParamsWriteModal() {
           <p className="text-center mb-2">{progressData.message}</p>
         )}
 
-        {progressPercentage !== null && progressPercentage !== undefined && (
-          <Progress
-            animated
-            size="lg"
-            transitionDuration={300}
-            value={progressPercentage}
-            className="w-full mx-auto my-auto"
-          />
-        )}
+        <Progress
+          animated
+          size="lg"
+          transitionDuration={300}
+          value={progressPercentage}
+          className="w-full mx-auto my-auto"
+        />
       </div>
     </Modal>
   )

@@ -234,9 +234,7 @@ class ParamsController:
             if len(params_could_not_set) and len(params_set_successfully):
                 # Some params got set but some didn't
                 response_message = f"Set {len(params_set_successfully)} parameters, but could not set {len(params_could_not_set)} parameters"
-            elif len(params_could_not_set) or len(params_could_not_set) == len(
-                params_list
-            ):
+            elif len(params_could_not_set):
                 # Some params did not get set and there are none set successfully or all of the params did not get set successfully
                 response_message = (
                     f"Could not set {len(params_could_not_set)} parameters"

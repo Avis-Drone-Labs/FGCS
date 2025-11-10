@@ -7,11 +7,7 @@ rebooting the autopilot
 
 // 3rd party imports
 import { Button, TextInput, Tooltip } from "@mantine/core"
-import {
-  IconEye,
-  IconPower,
-  IconTool
-} from "@tabler/icons-react"
+import { IconEye, IconPower, IconTool } from "@tabler/icons-react"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -23,12 +19,11 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   emitRebootAutopilot,
   resetParamState,
-  selectModifiedParams,
   selectParamSearchValue,
   selectShowModifiedParams,
   setAutoPilotRebootModalOpen,
   setParamSearchValue,
-  toggleShowModifiedParams
+  toggleShowModifiedParams,
 } from "../../redux/slices/paramsSlice.js"
 
 export default function ParamsToolbar() {
@@ -46,7 +41,9 @@ export default function ParamsToolbar() {
     <div className="flex justify-between gap-4 m-4">
       <div className="grow flex gap-4">
         <Tooltip
-          label={showModifiedParams ? "Show all params" : "Show modified params"}
+          label={
+            showModifiedParams ? "Show all params" : "Show modified params"
+          }
           position="bottom"
         >
           <Button
@@ -54,7 +51,11 @@ export default function ParamsToolbar() {
             onClick={() => dispatch(toggleShowModifiedParams())}
             color={tailwindColors.orange[600]}
           >
-            {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
+            {showModifiedParams ? (
+              <IconEye size={14} />
+            ) : (
+              <IconTool size={14} />
+            )}
           </Button>
         </Tooltip>
 

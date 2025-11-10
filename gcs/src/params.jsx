@@ -186,7 +186,8 @@ export default function Params() {
       dispatch(setLoadParamsFileModalOpen(true))
     } else {
       showErrorNotification(
-        `Error loading params from file: ${result.error || "Please try again."
+        `Error loading params from file: ${
+          result.error || "Please try again."
         }`,
       )
     }
@@ -215,15 +216,14 @@ export default function Params() {
             >
               <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-4">
-                  <Button
-                    onClick={refreshCallback}
-                    className="grow"
-                  >
+                  <Button onClick={refreshCallback} className="grow">
                     Refresh params
                   </Button>
                   <Button
                     disabled={!modifiedParams.length}
-                    onClick={() => dispatch(emitSetMultipleParams(modifiedParams))}
+                    onClick={() =>
+                      dispatch(emitSetMultipleParams(modifiedParams))
+                    }
                     className="grow"
                   >
                     Write params
@@ -231,16 +231,10 @@ export default function Params() {
                 </div>
                 <Divider />
                 <div className="flex flex-col gap-4">
-                  <Button
-                    onClick={saveParamsToFile}
-                    className="grow"
-                  >
+                  <Button onClick={saveParamsToFile} className="grow">
                     Save to file
                   </Button>
-                  <Button
-                    onClick={loadParamsFromFile}
-                    className="grow"
-                  >
+                  <Button onClick={loadParamsFromFile} className="grow">
                     Load from file
                   </Button>
                 </div>
@@ -291,7 +285,8 @@ export default function Params() {
                   </p>
                   <Button onClick={() => fetchParams()}>Fetch Params</Button>
                 </div>
-              )}</div>
+              )}
+            </div>
           </div>
         </div>
       ) : (

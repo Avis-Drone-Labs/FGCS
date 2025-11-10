@@ -8,13 +8,9 @@ rebooting the autopilot
 // 3rd party imports
 import { Button, TextInput, Tooltip } from "@mantine/core"
 import {
-  IconDownload,
   IconEye,
-  IconPencil,
   IconPower,
-  IconRefresh,
-  IconTool,
-  IconUpload,
+  IconTool
 } from "@tabler/icons-react"
 
 // Styling imports
@@ -25,36 +21,20 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
-  emitExportParamsToFile,
   emitRebootAutopilot,
-  emitRefreshParams,
-  emitSetMultipleParams,
   resetParamState,
   selectModifiedParams,
   selectParamSearchValue,
   selectShowModifiedParams,
   setAutoPilotRebootModalOpen,
-  setFetchingVars,
-  setModifiedParams,
-  setParams,
   setParamSearchValue,
-  setShownParams,
-  toggleShowModifiedParams,
+  toggleShowModifiedParams
 } from "../../redux/slices/paramsSlice.js"
 
-export default function ParamsToolbar({ loadParamsFromFile }) {
+export default function ParamsToolbar() {
   const dispatch = useDispatch()
-  const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
   const searchValue = useSelector(selectParamSearchValue)
-
-  function refreshCallback() {
-    dispatch(setParams([]))
-    dispatch(setModifiedParams([]))
-    dispatch(setShownParams([]))
-    dispatch(emitRefreshParams())
-    dispatch(setFetchingVars(true))
-  }
 
   function rebootCallback() {
     dispatch(emitRebootAutopilot())
@@ -62,71 +42,31 @@ export default function ParamsToolbar({ loadParamsFromFile }) {
     dispatch(resetParamState())
   }
 
-  async function saveParamsToFile() {
-    const options = {
-      title: "Save parameters to a file",
-      filters: [
-        { name: "Param File", extensions: ["param"] },
-        { name: "All Files", extensions: ["*"] },
-      ],
-    }
-
-    const result = await window.ipcRenderer.invoke(
-      "app:get-save-file-path",
-      options,
-    )
-
-    if (!result.canceled) {
-      dispatch(
-        emitExportParamsToFile({
-          filePath: result.filePath,
-        }),
-      )
-    }
-  }
-
   return (
-    <div className="flex justify-center space-x-4">
-      <Tooltip
-        label={showModifiedParams ? "Show all params" : "Show modified params"}
-        position="bottom"
-      >
-        <Button
-          size="sm"
-          onClick={() => dispatch(toggleShowModifiedParams())}
-          color={tailwindColors.orange[600]}
+    <div className="flex justify-between gap-4 m-4">
+      <div className="grow flex gap-4">
+        <Tooltip
+          label={showModifiedParams ? "Show all params" : "Show modified params"}
+          position="bottom"
         >
-          {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
-        </Button>
-      </Tooltip>
+          <Button
+            size="sm"
+            onClick={() => dispatch(toggleShowModifiedParams())}
+            color={tailwindColors.orange[600]}
+          >
+            {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
+          </Button>
+        </Tooltip>
 
-      <TextInput
-        className="w-1/3"
-        placeholder="Search by parameter name"
-        value={searchValue}
-        onChange={(event) =>
-          dispatch(setParamSearchValue(event.currentTarget.value))
-        }
-      />
-
-      <Button
-        size="sm"
-        rightSection={<IconPencil size={14} />}
-        disabled={!modifiedParams.length}
-        onClick={() => dispatch(emitSetMultipleParams(modifiedParams))}
-        color={tailwindColors.green[600]}
-      >
-        Write params
-      </Button>
-
-      <Button
-        size="sm"
-        rightSection={<IconRefresh size={14} />}
-        onClick={refreshCallback}
-        color={tailwindColors.blue[600]}
-      >
-        Refresh params
-      </Button>
+        <TextInput
+          className="w-1/3"
+          placeholder="Search by parameter name"
+          value={searchValue}
+          onChange={(event) =>
+            dispatch(setParamSearchValue(event.currentTarget.value))
+          }
+        />
+      </div>
 
       <Button
         size="sm"
@@ -135,24 +75,6 @@ export default function ParamsToolbar({ loadParamsFromFile }) {
         color={tailwindColors.red[600]}
       >
         Reboot FC
-      </Button>
-
-      <Button
-        size="sm"
-        rightSection={<IconDownload size={14} />}
-        onClick={saveParamsToFile}
-        color={tailwindColors.blue[600]}
-      >
-        Save params to file
-      </Button>
-
-      <Button
-        size="sm"
-        rightSection={<IconUpload size={14} />}
-        onClick={loadParamsFromFile}
-        color={tailwindColors.blue[600]}
-      >
-        Load params from file
       </Button>
     </div>
   )

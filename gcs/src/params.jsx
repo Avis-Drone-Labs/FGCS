@@ -14,6 +14,11 @@ import { ResizableBox } from "react-resizable"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
 
+// Styling imports
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config.js"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 // Custom components, helpers, and data
 import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
@@ -48,6 +53,7 @@ import {
   setModifiedParams,
   setParams,
   setShownParams,
+  toggleShowModifiedParams,
 } from "./redux/slices/paramsSlice.js"
 
 function cleanFloat(value, decimals = 5) {
@@ -116,6 +122,12 @@ export default function Params() {
     dispatch(setShownParams([]))
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
+  }
+
+  function rebootCallback() {
+    dispatch(emitRebootAutopilot())
+    dispatch(setAutoPilotRebootModalOpen(true))
+    dispatch(resetParamState())
   }
 
   async function saveParamsToFile() {
@@ -202,9 +214,9 @@ export default function Params() {
           <div className="flex flex-1 overflow-hidden">
             {!fetchingVars && (
               <ResizableBox
-                width={200}
+                width={225}
                 height={Infinity}
-                minConstraints={[200, Infinity]}
+                minConstraints={[225, Infinity]}
                 maxConstraints={[600, Infinity]}
                 resizeHandles={["e"]}
                 axis="x"
@@ -237,6 +249,23 @@ export default function Params() {
                       Load from file
                     </Button>
                   </div>
+                  <Divider />
+                  <div className="flex flex-col gap-4">
+                    <Button
+                      size="sm"
+                      onClick={() => dispatch(toggleShowModifiedParams())}
+                      color={tailwindColors.orange[600]}
+                    >
+                      {showModifiedParams ? "Show all params" : "Show modified params"}
+                    </Button>
+                    <Button
+                      onClick={rebootCallback}
+                      color={tailwindColors.red[600]}
+                    >
+                      Reboot FC
+                    </Button>
+                  </div>
+
                 </div>
               </ResizableBox>
             )}

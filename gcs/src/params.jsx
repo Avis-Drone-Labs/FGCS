@@ -186,8 +186,7 @@ export default function Params() {
       dispatch(setLoadParamsFileModalOpen(true))
     } else {
       showErrorNotification(
-        `Error loading params from file: ${
-          result.error || "Please try again."
+        `Error loading params from file: ${result.error || "Please try again."
         }`,
       )
     }
@@ -201,45 +200,46 @@ export default function Params() {
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">
           <div className="flex flex-1 overflow-hidden">
-            {/* Resizable Sidebar */}
-            <ResizableBox
-              width={200}
-              height={Infinity}
-              minConstraints={[200, Infinity]}
-              maxConstraints={[600, Infinity]}
-              resizeHandles={["e"]}
-              axis="x"
-              handle={
-                <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
-              }
-              className="relative bg-falcongrey-800 overflow-y-auto"
-            >
-              <div className="flex flex-col gap-4 p-4">
-                <div className="flex flex-col gap-4">
-                  <Button onClick={refreshCallback} className="grow">
-                    Refresh params
-                  </Button>
-                  <Button
-                    disabled={!modifiedParams.length}
-                    onClick={() =>
-                      dispatch(emitSetMultipleParams(modifiedParams))
-                    }
-                    className="grow"
-                  >
-                    Write params
-                  </Button>
+            {!fetchingVars && (
+              <ResizableBox
+                width={200}
+                height={Infinity}
+                minConstraints={[200, Infinity]}
+                maxConstraints={[600, Infinity]}
+                resizeHandles={["e"]}
+                axis="x"
+                handle={
+                  <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
+                }
+                className="relative bg-falcongrey-800 overflow-y-auto"
+              >
+                <div className="flex flex-col gap-4 p-4">
+                  <div className="flex flex-col gap-4">
+                    <Button onClick={refreshCallback} className="grow">
+                      Refresh params
+                    </Button>
+                    <Button
+                      disabled={!modifiedParams.length}
+                      onClick={() =>
+                        dispatch(emitSetMultipleParams(modifiedParams))
+                      }
+                      className="grow"
+                    >
+                      Write params
+                    </Button>
+                  </div>
+                  <Divider />
+                  <div className="flex flex-col gap-4">
+                    <Button onClick={saveParamsToFile} className="grow">
+                      Save to file
+                    </Button>
+                    <Button onClick={loadParamsFromFile} className="grow">
+                      Load from file
+                    </Button>
+                  </div>
                 </div>
-                <Divider />
-                <div className="flex flex-col gap-4">
-                  <Button onClick={saveParamsToFile} className="grow">
-                    Save to file
-                  </Button>
-                  <Button onClick={loadParamsFromFile} className="grow">
-                    Load from file
-                  </Button>
-                </div>
-              </div>
-            </ResizableBox>
+              </ResizableBox>
+            )}
 
             {/* Main content area */}
             <div className="flex-1 flex flex-col overflow-hidden">

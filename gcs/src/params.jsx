@@ -260,7 +260,7 @@ export default function Params() {
 
               {Object.keys(params).length > 0 && !fetchingVars && (
                 <div className="h-full contents">
-                  <ParamsToolbar loadParamsFromFile={loadParamsFromFile} />
+                  <ParamsToolbar />
 
                   <div className="h-full">
                     <AutoSizer>

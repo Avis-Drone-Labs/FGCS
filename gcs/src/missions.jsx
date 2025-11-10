@@ -370,9 +370,67 @@ export default function Missions() {
     input.click()
   }
 
-  function saveMissionToFile() {
+function saveMissionToFile() {
+  let missionData = []
+  if (activeTab === "mission") {
+    missionData = missionItems
+  } else if (activeTab === "fence") {
+    missionData = fenceItems
+  } else if (activeTab === "rally") {
+    missionData = rallyItems
+  }
+
+  if (missionData.length === 0) {
+    showErrorNotification(`No ${activeTab} items to save`)
     return
   }
+
+
+  const toDegrees = (value) => {
+    if (value == null) return 0
+    if (Math.abs(value) > 1000) {
+      return intToCoord(value)
+    }
+    return value
+  }
+
+  let fileContent = "QGC WPL 110\n"
+
+  missionData.forEach((item, index) => {
+    const lat = toDegrees(item.x || 0)
+    const lon = toDegrees(item.y || 0)
+
+    const line = [
+      item.seq ?? index,   
+      item.current ?? 0,
+      item.frame ?? 3,
+      item.command ?? 16,
+      item.param1 ?? 0,
+      item.param2 ?? 0,
+      item.param3 ?? 0,
+      item.param4 ?? 0,
+      lat.toFixed(7),
+      lon.toFixed(7),
+      item.z ?? 0,
+      item.autocontinue ?? 1,
+    ]
+
+    fileContent += line.join("\t") + "\n"
+  })
+
+  const blob = new Blob([fileContent], { type: "text/plain" })
+  const link = document.createElement("a")
+  link.href = URL.createObjectURL(blob)
+  link.download = `${activeTab}_mission_${new Date()
+    .toISOString()
+    .split("T")[0]}.waypoints`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  showSuccessNotification(`Saved ${activeTab} mission to file`)
+}
+
 
   return (
     <Layout currentPage="missions">

@@ -76,12 +76,12 @@ export default function ValueInput({ index, paramDef, className }) {
     } else {
       // Otherwise add it to modified params
       dispatch(
-        appendModifiedParams({
+        appendModifiedParams([{
           param_id: param.param_id,
           param_value: value,
           param_type: param.param_type,
           initial_value: param.param_value,
-        }),
+        }]),
       )
     }
   }

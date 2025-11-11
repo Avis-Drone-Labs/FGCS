@@ -34,6 +34,7 @@ import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   emitExportParamsToFile,
+  emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
   resetParamState,
@@ -45,6 +46,7 @@ import {
   selectParamSearchValue,
   selectShowModifiedParams,
   selectShownParams,
+  setAutoPilotRebootModalOpen,
   setFetchingVars,
   setHasFetchedOnce,
   setLoadedFileName,
@@ -53,7 +55,6 @@ import {
   setModifiedParams,
   setParams,
   setShownParams,
-  toggleShowModifiedParams,
 } from "./redux/slices/paramsSlice.js"
 
 function cleanFloat(value, decimals = 5) {
@@ -198,7 +199,8 @@ export default function Params() {
       dispatch(setLoadParamsFileModalOpen(true))
     } else {
       showErrorNotification(
-        `Error loading params from file: ${result.error || "Please try again."
+        `Error loading params from file: ${
+          result.error || "Please try again."
         }`,
       )
     }
@@ -252,20 +254,12 @@ export default function Params() {
                   <Divider />
                   <div className="flex flex-col gap-4">
                     <Button
-                      size="sm"
-                      onClick={() => dispatch(toggleShowModifiedParams())}
-                      color={tailwindColors.orange[600]}
-                    >
-                      {showModifiedParams ? "Show all params" : "Show modified params"}
-                    </Button>
-                    <Button
                       onClick={rebootCallback}
                       color={tailwindColors.red[600]}
                     >
                       Reboot FC
                     </Button>
                   </div>
-
                 </div>
               </ResizableBox>
             )}

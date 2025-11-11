@@ -23,6 +23,8 @@ import { Row } from "./components/params/row.jsx"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import LoadParamsFileModal from "./components/params/loadParamsFileModal.jsx"
+import ParamsFailedToWriteModal from "./components/params/paramsFailedToWriteModal.jsx"
+import ParamsWriteModal from "./components/params/paramsWriteModal.jsx"
 import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
 import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
@@ -161,6 +163,8 @@ export default function Params() {
     <Layout currentPage="params">
       <AutopilotRebootModal />
       <LoadParamsFileModal />
+      <ParamsWriteModal />
+      <ParamsFailedToWriteModal />
 
       {connected ? (
         <>

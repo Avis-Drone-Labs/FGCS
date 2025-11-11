@@ -50,6 +50,7 @@ import {
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
+  setParamsWriteProgressModalOpen,
 } from "../slices/paramsSlice"
 import { resetMessages } from "../slices/statusTextSlice"
 
@@ -269,7 +270,10 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitSetMultipleParams,
-      callback: () => socket.socket.emit("set_multiple_params", action.payload),
+      callback: () => {
+        socket.socket.emit("set_multiple_params", action.payload)
+        store.dispatch(setParamsWriteProgressModalOpen(true))
+      },
     },
     {
       emitter: emitExportParamsToFile,

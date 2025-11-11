@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import Thread, current_thread
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -175,7 +175,11 @@ class ParamsController:
             # Always release the message type when done
             self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
-    def setMultipleParams(self, params_list: list[IncomingParam]) -> Response:
+    def setMultipleParams(
+        self,
+        params_list: list[IncomingParam],
+        progress_update_callback: Optional[Callable],
+    ) -> Response:
         """
         Sets multiple parameters on the drone.
 
@@ -189,31 +193,69 @@ class ParamsController:
             return {"success": False, "message": "No parameters to set"}
 
         params_set_successfully = []
+        params_could_not_set = []
+        total_num_of_params = len(params_list)
 
-        for param in params_list:
-            param_id = param.get("param_id", None)
-            param_value = param.get("param_value", None)
-            param_type = param.get("param_type", None)
-            param.pop("initial_value", None)  # Remove initial value if it exists
+        try:
+            for idx, param in enumerate(params_list):
+                param_id = param.get("param_id", None)
+                param_value = param.get("param_value", None)
+                param_type = param.get("param_type", None)
+                param.pop("initial_value", None)  # Remove initial value if it exists
 
-            if param_id is None or param_value is None:
-                self.drone.logger.error(f"Invalid parameter data: {param}, skipping")
-                continue
+                if param_id is None or param_value is None:
+                    self.drone.logger.error(
+                        f"Invalid parameter data: {param}, skipping"
+                    )
+                    continue
 
-            done = self.setParam(param_id, param_value, param_type)
-            if not done:
-                return {
-                    "success": False,
-                    "message": f"Failed to set parameter {param_id}",
+                done = self.setParam(param_id, param_value, param_type)
+                progress_update_callback_data = {
+                    "param_id": param_id,
+                    "current_index": idx + 1,
+                    "total_params": total_num_of_params,
                 }
-            else:
-                params_set_successfully.append(param)
+                if not done:
+                    params_could_not_set.append(param)
+                    progress_update_callback_data["message"] = (
+                        f"Failed to write {param_id}"
+                    )
+                else:
+                    params_set_successfully.append(param)
+                    progress_update_callback_data["message"] = (
+                        f"Wrote {param_id} successfully"
+                    )
 
-        return {
-            "success": True,
-            "message": "All parameters set successfully",
-            "data": params_set_successfully,
-        }
+                if progress_update_callback:
+                    progress_update_callback(progress_update_callback_data)
+
+            response_message = "All parameters set successfully"
+
+            if len(params_could_not_set) and len(params_set_successfully):
+                # Some params got set but some didn't
+                response_message = f"Set {len(params_set_successfully)} parameters, but could not set {len(params_could_not_set)} parameters"
+            elif len(params_could_not_set):
+                # Some params did not get set and there are none set successfully or all of the params did not get set successfully
+                response_message = (
+                    f"Could not set {len(params_could_not_set)} parameters"
+                )
+
+            return {
+                "success": True,
+                "message": response_message,
+                "data": {
+                    "params_set_successfully": params_set_successfully,
+                    "params_could_not_set": params_could_not_set,
+                },
+            }
+        except Exception as e:
+            self.drone.logger.error(
+                "Exception while setting multiple params", exc_info=e
+            )
+            return {
+                "success": False,
+                "message": f"Exception while setting parameters: {str(e)}",
+            }
 
     @sendingCommandLock
     def setParam(
@@ -222,6 +264,7 @@ class ParamsController:
         param_value: Number,
         param_type: Optional[int],
         retries: int = 3,
+        save_timeout: Number = 1.5,
     ) -> bool:
         """
         Sets a single parameter on the drone.
@@ -236,7 +279,6 @@ class ParamsController:
             bool: True if the parameter was set, False if it failed
         """
         got_ack = False
-        save_timeout = 5
 
         try:
             # Check if value fits inside the param type
@@ -245,27 +287,25 @@ class ParamsController:
                 param_type is not None
                 and param_type != mavutil.mavlink.MAV_PARAM_TYPE_REAL32
             ):
-                # need to encode as a float for sending - not being used
+                # need to encode as a float for sending - not being used, just here to validate type I guess?
                 if param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT8:
-                    vstr = struct.pack(">xxxB", int(param_value))
+                    struct.pack(">xxxB", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT8:
-                    vstr = struct.pack(">xxxb", int(param_value))
+                    struct.pack(">xxxb", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT16:
-                    vstr = struct.pack(">xxH", int(param_value))
+                    struct.pack(">xxH", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT16:
-                    vstr = struct.pack(">xxh", int(param_value))
+                    struct.pack(">xxh", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_UINT32:
-                    vstr = struct.pack(">I", int(param_value))
+                    struct.pack(">I", int(param_value))
                 elif param_type == mavutil.mavlink.MAV_PARAM_TYPE_INT32:
-                    vstr = struct.pack(">i", int(param_value))
+                    struct.pack(">i", int(param_value))
                 else:
                     self.drone.logger.error(
                         "can't send %s of type %u" % (param_name, param_type)
                     )
                     return False
-                vfloat = struct.unpack(">f", vstr)[0]  # unpack returns a tuple
-            else:
-                vfloat = float(param_value)
+            vfloat = float(param_value)
         except (struct.error, ValueError) as e:
             self.drone.logger.error(
                 f"Could not set parameter {param_name} with value {param_value}",
@@ -291,6 +331,8 @@ class ParamsController:
                     save_timeout,
                 )
 
+                saved_param = False
+
                 if ack:
                     got_ack = True
                     if ack.param_id.upper() != param_name.upper():
@@ -304,18 +346,23 @@ class ParamsController:
                         self.drone.logger.warning(
                             f"Could not set {param_name} to {param_value}, keeping value as {ack.param_value} instead"
                         )
+                        self.drone.logger.debug(
+                            f"Ack: {ack.to_dict()}, param_name: {param_name}, param_value: {param_value}"
+                        )
+                        saved_param = False
                         break
                     else:
                         self.drone.logger.debug(
                             f"Got parameter saving ack for {param_name} for value {param_value}"
                         )
                         self.saveParam(ack.param_id, ack.param_value, ack.param_type)
+                        saved_param = True
                         break
 
             if not got_ack:
                 self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
 
-            return got_ack
+            return saved_param
         except serial.serialutil.SerialException:
             self.drone.logger.error(f"Serial exception setting parameter {param_name}")
             return False

@@ -9,21 +9,91 @@
 import { useEffect, useState } from "react"
 
 // Custom Imports
+import resolveConfig from "tailwindcss/resolveConfig.js"
 import SpotlightComponent from "../spotlight/spotlight.jsx"
 import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
 
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
+import { Button, Group, Modal } from "@mantine/core"
+
+// Tailwind
+import tailwindConfig from "../../../tailwind.config.js"
+import {
+  selectConfirmExitModalOpen,
+  setConfirmExitModalOpen,
+} from "../../redux/slices/applicationSlice.js"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+function ConfirmExitModal() {
+  const dispatch = useDispatch()
+  const modalOpen = useSelector(selectConfirmExitModalOpen)
+
+  const confirmExit = () => {
+    window.ipcRenderer.send("window:close", [])
+  }
+
+  return (
+    <Modal
+      opened={modalOpen}
+      onClose={() => dispatch(setConfirmExitModalOpen(false))}
+      title="Confirm Application Exit"
+      centered
+      overlayProps={{
+        backgroundOpacity: 0.55,
+        blur: 3,
+      }}
+      styles={{
+        content: {
+          borderRadius: "0.5rem",
+        },
+      }}
+      withCloseButton={true}
+    >
+      <Group justify="space-between" className="pt-4">
+        <Button
+          variant="filled"
+          onClick={() => dispatch(setConfirmExitModalOpen(false))}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="filled"
+          type="submit"
+          color={tailwindColors.red[600]}
+          onClick={() => confirmExit()}
+        >
+          Exit
+        </Button>
+      </Group>
+    </Modal>
+  )
+}
+
 export default function Toolbar() {
+  const dispatch = useDispatch()
   const [areMenusActive, setMenusActive] = useState(false)
   const [isMac, setIsMac] = useState(false)
+
+  const connectedToDrone = useSelector(selectConnectedToDrone)
 
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {
       setIsMac(result)
     })
   }, [])
+
+  const onClose = () => {
+    if (connectedToDrone) {
+      dispatch(setConfirmExitModalOpen(true))
+    } else {
+      window.ipcRenderer.send("window:close", [])
+    }
+  }
 
   return (
     <>
@@ -100,9 +170,7 @@ export default function Toolbar() {
             <div
               title="Close"
               className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500"
-              onClick={() => {
-                window.ipcRenderer.send("window:close", [])
-              }}
+              onClick={() => onClose()}
               label="Close"
             >
               <CloseIcon className="stroke-slate-400 group-hover:stroke-white" />
@@ -110,6 +178,8 @@ export default function Toolbar() {
           </div>
         )}
       </div>
+
+      <ConfirmExitModal></ConfirmExitModal>
     </>
   )
 }

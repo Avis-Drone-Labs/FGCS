@@ -40,7 +40,7 @@ export default function ParamsToolbar() {
           size="sm"
           onClick={() => dispatch(toggleShowModifiedParams())}
           color={tailwindColors.orange[600]}
-          disabled={modifiedParams.length == 0}
+          disabled={modifiedParams.length === 0}
         >
           {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
         </Button>

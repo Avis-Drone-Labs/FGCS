@@ -39,7 +39,6 @@ export default function TelemetrySection({
   const gpsData = useSelector(selectGPS)
   const isArmed = useSelector(selectArmed)
   const telemetryData = useSelector(selectTelemetry)
-
   const attitudeData = useSelector(selectAttitude)
   const navControllerOutputData = useSelector(selectNavController)
   const batteryData = useSelector(selectBatteryData)
@@ -212,9 +211,13 @@ export default function TelemetrySection({
       </div>
 
       {/* EKF and VIBE labels */}
-      <div className="flex flex-row items-center justify-center gap-10 my-4">
-        <EkfDisplay telemetryFontSize={telemetryFontSize} />
-        <VibeDisplay telemetryFontSize={telemetryFontSize} />
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center my-4">
+        <div /> {/* left filler column */}
+        <div className="flex justify-center gap-10">
+          <EkfDisplay telemetryFontSize={telemetryFontSize} />
+          <VibeDisplay telemetryFontSize={telemetryFontSize} />
+        </div>
+        <div /> {/* right filler column */}
       </div>
 
       {/* Battery information */}

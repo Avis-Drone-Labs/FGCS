@@ -187,9 +187,7 @@ export default function TelemetrySection({
 
           {/* YAW and HOME values */}
           <div className="justify-self-start w-[8ch]" ref={sideBarRef}>
-            <div
-              className="flex flex-col items-center justify-center space-y-4 text-center min-w-14"
-            >
+            <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
               <p className="text-sm">m</p>
               <TelemetryValueDisplay
                 title="WP"

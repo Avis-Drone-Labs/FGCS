@@ -25,6 +25,7 @@ import NoDroneConnected from "./components/noDroneConnected.jsx"
 import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
+import { AddCommand } from "./components/spotlight/commandHandler"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -130,6 +131,10 @@ export default function Params() {
     dispatch(setAutoPilotRebootModalOpen(true))
     dispatch(resetParamState())
   }
+
+  useEffect(() => {
+    AddCommand("reboot_autopilot", rebootCallback)
+  }, [])
 
   async function saveParamsToFile() {
     const options = {

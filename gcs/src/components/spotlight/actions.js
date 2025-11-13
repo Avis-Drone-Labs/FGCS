@@ -135,3 +135,11 @@ AddSpotlightAction(
     RunCommand("new_preflight_checklist")
   },
 )
+AddSpotlightAction(
+  "reboot_autopilot",
+  "Reboot Autopilot",
+  "command",
+  () => {
+    RunCommand("reboot_autopilot")
+  },
+)

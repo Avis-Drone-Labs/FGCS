@@ -189,7 +189,6 @@ export default function TelemetrySection({
           <div className="justify-self-start w-[8ch]" ref={sideBarRef}>
             <div
               className="flex flex-col items-center justify-center space-y-4 text-center min-w-14"
-              ref={sideBarRef}
             >
               <p className="text-sm">m</p>
               <TelemetryValueDisplay

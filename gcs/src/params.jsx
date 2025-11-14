@@ -24,6 +24,7 @@ import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
+import { useRebootCallback } from "./helpers/useRebootCallback.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -33,7 +34,6 @@ import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   emitExportParamsToFile,
-  emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
   resetParamState,
@@ -45,7 +45,6 @@ import {
   selectParamSearchValue,
   selectShowModifiedParams,
   selectShownParams,
-  setAutoPilotRebootModalOpen,
   setFetchingVars,
   setHasFetchedOnce,
   setLoadedFileName,
@@ -64,15 +63,6 @@ function cleanFloat(value, decimals = 5) {
     return Number(parseFloat(value).toFixed(decimals))
   }
   return value
-}
-
-export function useRebootCallback() {
-  const dispatch = useDispatch()
-  return () => {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    dispatch(resetParamState())
-  }
 }
 
 export default function Params() {

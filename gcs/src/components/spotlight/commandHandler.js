@@ -8,7 +8,7 @@ import { useHotkeys } from "@mantine/hooks"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
-import { useRebootCallback } from "../../params"
+import { useRebootCallback } from "../../helpers/useRebootCallback"
 
 let commands = []
 

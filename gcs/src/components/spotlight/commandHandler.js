@@ -15,7 +15,7 @@ let commands = []
 export function Commands() {
   let navigate = useNavigate()
   const [isMac, setIsMac] = useState(false)
-  let rebootCallback = useRebootCallback()
+  const rebootCallback = useRebootCallback()
 
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {

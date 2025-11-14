@@ -8,7 +8,7 @@ import {
 } from "../redux/slices/paramsSlice.js"
 
 /**
- * Hook that returns a callback to repoot the autopilot.
+ * Hook that returns a callback to reboot the autopilot.
  * Displays reboot modal and resets params.
  * @returns Callback to reboot autopilot
  */

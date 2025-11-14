@@ -51,9 +51,7 @@ export function Commands() {
   AddCommand("open_settings", () => {
     open()
   })
-  AddCommand("reboot_autopilot", () => {
-    rebootCallback()
-  })
+  AddCommand("reboot_autopilot", rebootCallback)
 
   // Register hotkeys
   useHotkeys([

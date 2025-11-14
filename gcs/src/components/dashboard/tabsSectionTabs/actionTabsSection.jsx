@@ -175,9 +175,7 @@ const ArmTakeoffLandAction = () => {
 
         {/** Reboot Button */}
         <Button
-          onClick={() => {
-            rebootCallback()
-          }}
+          onClick={rebootCallback}
           color={tailwindColors.red[600]}
           className="grow"
         >

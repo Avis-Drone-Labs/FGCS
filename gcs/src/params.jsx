@@ -68,6 +68,15 @@ function cleanFloat(value, decimals = 5) {
   return value
 }
 
+export function useRebootCallback() {
+  const dispatch = useDispatch()
+  return () => {
+    dispatch(emitRebootAutopilot())
+    dispatch(setAutoPilotRebootModalOpen(true))
+    dispatch(resetParamState())
+  }
+}
+
 export default function Params() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
@@ -86,6 +95,9 @@ export default function Params() {
   // Fetch progress states
   const fetchingVars = useSelector(selectFetchingVars)
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
+
+  //
+  const rebootCallback = useRebootCallback()
 
   // Reset state if we loose connection
   useEffect(() => {
@@ -125,16 +137,6 @@ export default function Params() {
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
   }
-
-  function rebootCallback() {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    dispatch(resetParamState())
-  }
-
-  useEffect(() => {
-    AddCommand("reboot_autopilot", rebootCallback)
-  }, [])
 
   async function saveParamsToFile() {
     const options = {

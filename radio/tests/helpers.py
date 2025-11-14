@@ -102,7 +102,7 @@ class SetAircraftType:
             droneStatus.drone.aircraft_type = self.old_aircraftType
 
 
-def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
+def send_and_received(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 
     Parameters
@@ -115,7 +115,7 @@ def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> 
     Returns
     -------
     dict
-        The data recieved from the client
+        The data received from the client
     """
     (
         socketio_client.emit(endpoint, args)

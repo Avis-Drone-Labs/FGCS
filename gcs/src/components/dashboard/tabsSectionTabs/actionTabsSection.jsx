@@ -10,6 +10,11 @@ import { useEffect, useMemo, useState } from "react"
 import { Button, NumberInput, Popover, Select, Tabs } from "@mantine/core"
 import { useLocalStorage } from "@mantine/hooks"
 
+// Styling imports
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../../../../tailwind.config"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 // Mavlink
 import { getFlightModeMap } from "../../../helpers/mavlinkConstants"
 
@@ -27,6 +32,7 @@ import {
 } from "../../../redux/slices/droneInfoSlice"
 
 import { NoConnectionMsg } from "../tabsSection"
+import { useRebootCallback } from "../../../params"
 
 export default function ActionTabsSection({
   connected,
@@ -113,6 +119,7 @@ const ArmTakeoffLandAction = () => {
     defaultValue: 10,
   })
   const isArmed = useSelector(selectArmed)
+  const rebootCallback = useRebootCallback()
 
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
@@ -164,6 +171,17 @@ const ArmTakeoffLandAction = () => {
           className="grow"
         >
           Land
+        </Button>
+
+        {/** Reboot Button */}
+        <Button
+          onClick={() => {
+            rebootCallback()
+          }}
+          color={tailwindColors.red[600]}
+          className="grow"
+        >
+          Reboot FC
         </Button>
       </div>
     </>

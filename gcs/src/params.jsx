@@ -22,7 +22,6 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Custom components, helpers, and data
 import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
-import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
 import { AddCommand } from "./components/spotlight/commandHandler"
@@ -215,7 +214,6 @@ export default function Params() {
 
   return (
     <Layout currentPage="params">
-      <AutopilotRebootModal />
       <LoadParamsFileModal />
 
       {connected ? (

@@ -24,7 +24,6 @@ import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
-import { AddCommand } from "./components/spotlight/commandHandler"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -79,6 +78,7 @@ export function useRebootCallback() {
 export default function Params() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
+  const rebootCallback = useRebootCallback()
 
   // Parameter states
   const hasFetchedOnce = useSelector(selectHasFetchedOnce)
@@ -94,9 +94,6 @@ export default function Params() {
   // Fetch progress states
   const fetchingVars = useSelector(selectFetchingVars)
   const fetchingVarsProgress = useSelector(selectFetchingVarsProgress)
-
-  //
-  const rebootCallback = useRebootCallback()
 
   // Reset state if we loose connection
   useEffect(() => {

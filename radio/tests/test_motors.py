@@ -13,11 +13,11 @@ def assert_motorResult(
     err: Optional[str] = None,
 ) -> None:
     """
-    Takes the data recieved from the socketio test client and asserts that it matches the given
+    Takes the data received from the socketio test client and asserts that it matches the given
     expected values
 
     Args:
-        data (dict): The data recieved using `client.get_recieved()`
+        data (dict): The data received using `client.get_received()`
         success (bool): Whether the request should have been successful or not
         motor (str, optional): Which motor the request should have tested, default `None`
         err (str, optional): What the error message should have been, default `None`
@@ -42,7 +42,7 @@ def send_testOneMotor(
         duration (int): The duration of the test
 
     Returns:
-        dict: The data recieved from the client using `.get_recieved()`
+        dict: The data received from the client using `.get_received()`
     """
     client.emit(
         "test_one_motor",
@@ -66,7 +66,7 @@ def send_testMotors(
         duration (int): The duration of the test
 
     Returns:
-        dict: The data recieved from the client using `.get_recieved()`
+        dict: The data received from the client using `.get_received()`
     """
     client.emit(
         "test_all_motors" if test_all else "test_motor_sequence",

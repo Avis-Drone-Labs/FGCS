@@ -548,10 +548,13 @@ def test_exportMissionToFile_missionExportSuccess(
         "message": f"Waypoint file saved 8 points successfully to {export_file_path}",
     }
     assert os.path.exists(export_file_path)
-    with open(export_file_path, "r") as f, open(
-        os.path.join(MISSION_FILES_PATH, "exported_mission_check.txt"),
-        "r",
-    ) as f_expected:
+    with (
+        open(export_file_path, "r") as f,
+        open(
+            os.path.join(MISSION_FILES_PATH, "exported_mission_check.txt"),
+            "r",
+        ) as f_expected,
+    ):
         assert f.read() == f_expected.read()
 
 
@@ -581,10 +584,13 @@ def test_exportMissionToFile_fenceExportSuccess(
         "message": f"Waypoint file saved 13 points successfully to {export_file_path}",
     }
     assert os.path.exists(export_file_path)
-    with open(export_file_path, "r") as f, open(
-        os.path.join(MISSION_FILES_PATH, "exported_fence_check.txt"),
-        "r",
-    ) as f_expected:
+    with (
+        open(export_file_path, "r") as f,
+        open(
+            os.path.join(MISSION_FILES_PATH, "exported_fence_check.txt"),
+            "r",
+        ) as f_expected,
+    ):
         assert f.read() == f_expected.read()
 
 
@@ -614,10 +620,13 @@ def test_exportMissionToFile_rallyExportSuccess(
         "message": f"Waypoint file saved 2 points successfully to {export_file_path}",
     }
     assert os.path.exists(export_file_path)
-    with open(export_file_path, "r") as f, open(
-        os.path.join(MISSION_FILES_PATH, "exported_rally_check.txt"),
-        "r",
-    ) as f_expected:
+    with (
+        open(export_file_path, "r") as f,
+        open(
+            os.path.join(MISSION_FILES_PATH, "exported_rally_check.txt"),
+            "r",
+        ) as f_expected,
+    ):
         assert f.read() == f_expected.read()
 
 

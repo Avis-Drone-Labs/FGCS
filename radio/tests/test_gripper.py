@@ -5,7 +5,7 @@ from flask_socketio import SocketIOTestClient
 from pymavlink import mavutil
 
 from . import falcon_test
-from .helpers import FakeTCP, NoDrone, send_and_recieve
+from .helpers import FakeTCP, NoDrone, send_and_receive
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -32,56 +32,56 @@ def run_once_after_all_tests():
 def test_gripperEnabled(socketio_client: SocketIOTestClient, droneStatus):
     # Failure on wrong drone state
     droneStatus.state = "params"
-    assert send_and_recieve("get_gripper_enabled") == {
+    assert send_and_receive("get_gripper_enabled") == {
         "message": "You must be on the config screen to access the gripper."
     }
 
     # Failure with no drone connected
     droneStatus.state = "config"
     with NoDrone():
-        assert send_and_recieve("get_gripper_enabled") == {
+        assert send_and_receive("get_gripper_enabled") == {
             "message": "You must be connected to the drone to access the gripper."
         }
 
     # Correct result on config page
-    assert send_and_recieve("get_gripper_enabled") is True
+    assert send_and_receive("get_gripper_enabled") is True
 
 
 @falcon_test(pass_drone_status=True)
 def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
     # Failure on wrong drone state
     droneStatus.state = "params"
-    assert send_and_recieve("set_gripper", "release") == {
+    assert send_and_receive("set_gripper", "release") == {
         "message": "You must be on the config screen to access the gripper."
     }
 
     # Failure with no drone connected
     droneStatus.state = "config"
     with NoDrone():
-        assert send_and_recieve("set_gripper", "release") == {
+        assert send_and_receive("set_gripper", "release") == {
             "message": "You must be connected to the drone to access the gripper."
         }
 
     # Failure on incorrect gripper value
-    assert send_and_recieve("set_gripper", "testgrippervalue") == {
+    assert send_and_receive("set_gripper", "testgrippervalue") == {
         "message": 'Gripper action must be either "release" or "grab"'
     }
 
     # Success on release
-    assert send_and_recieve("set_gripper", "release") == {
+    assert send_and_receive("set_gripper", "release") == {
         "success": True,
         "message": "Setting gripper to release",
     }
 
     # Success on grab
-    assert send_and_recieve("set_gripper", "grab") == {
+    assert send_and_receive("set_gripper", "grab") == {
         "success": True,
         "message": "Setting gripper to grab",
     }
 
     # Serial exception handled correctly
     with FakeTCP():
-        assert send_and_recieve("set_gripper", "grab") == {
+        assert send_and_receive("set_gripper", "grab") == {
             "success": False,
             "message": "Setting gripper failed, serial exception",
         }
@@ -95,8 +95,8 @@ def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> No
     # Allow time for gripper to be updated
     time.sleep(0.5)
 
-    assert send_and_recieve("get_gripper_enabled") is False
-    assert send_and_recieve("set_gripper", "release") == {
+    assert send_and_receive("get_gripper_enabled") is False
+    assert send_and_receive("set_gripper", "release") == {
         "success": False,
         "message": "Gripper is not enabled",
     }

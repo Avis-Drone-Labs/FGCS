@@ -199,7 +199,7 @@ export default function TelemetrySection({
               />
               <TelemetryValueDisplay
                 title="HOME"
-                value={distToHome}
+                value={distToHome.toFixed(2)}
                 fs={telemetryFontSize}
               />
             </div>

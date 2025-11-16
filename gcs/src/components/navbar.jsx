@@ -166,7 +166,7 @@ export default function Navbar() {
     const handler = () => dispatch(setForwardingAddressModalOpened(true))
     window.ipcRenderer.on("mavlink-forwarding:open", handler)
     return () =>
-      window.ipcRenderer.removeListener("mavlink-forwarding:open", handler)
+      window.ipcRenderer.removeAllListeners("mavlink-forwarding:open")
   }, [dispatch])
 
   const linkClassName =

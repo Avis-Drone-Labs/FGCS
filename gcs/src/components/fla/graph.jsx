@@ -276,9 +276,9 @@ export default function Graph({ data, openPresetModal }) {
             labelContent = PLANE_MODES_FLIGHT_MODE_MAP[modeNumber] || modeNumber
           }
         } else if (flightMode.name === "HEARTBEAT") {
-          modeNumber = flightMode.mode
+          modeNumber = flightMode.custom_mode
           // Check if the aircraft type is a plane or copter to select the correct flight mode
-          if (flightMode === 1) {
+          if (flightMode.type === 1) {
             labelContent = PLANE_MODES_FLIGHT_MODE_MAP[modeNumber] || modeNumber
           } else {
             labelContent =

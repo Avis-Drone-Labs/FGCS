@@ -8,10 +8,16 @@
 import { useEffect } from "react"
 
 // 3rd Party Imports
-import { Button, Progress } from "@mantine/core"
+import { Button, Divider, Progress } from "@mantine/core"
 import { useDebouncedValue } from "@mantine/hooks"
+import { ResizableBox } from "react-resizable"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
+
+// Styling imports
+import resolveConfig from "tailwindcss/resolveConfig"
+import tailwindConfig from "../tailwind.config.js"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom components, helpers, and data
 import Layout from "./components/layout.jsx"
@@ -29,7 +35,10 @@ import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
 import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
+  emitExportParamsToFile,
+  emitRebootAutopilot,
   emitRefreshParams,
+  emitSetMultipleParams,
   resetParamState,
   selectFetchingVars,
   selectFetchingVarsProgress,
@@ -39,11 +48,14 @@ import {
   selectParamSearchValue,
   selectShowModifiedParams,
   selectShownParams,
+  setAutoPilotRebootModalOpen,
   setFetchingVars,
   setHasFetchedOnce,
   setLoadedFileName,
   setLoadedParams,
   setLoadParamsFileModalOpen,
+  setModifiedParams,
+  setParams,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
 
@@ -107,6 +119,43 @@ export default function Params() {
     dispatch(setHasFetchedOnce(true))
   }
 
+  function refreshCallback() {
+    dispatch(setParams([]))
+    dispatch(setModifiedParams([]))
+    dispatch(setShownParams([]))
+    dispatch(emitRefreshParams())
+    dispatch(setFetchingVars(true))
+  }
+
+  function rebootCallback() {
+    dispatch(emitRebootAutopilot())
+    dispatch(setAutoPilotRebootModalOpen(true))
+    dispatch(resetParamState())
+  }
+
+  async function saveParamsToFile() {
+    const options = {
+      title: "Save parameters to a file",
+      filters: [
+        { name: "Param File", extensions: ["param"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    }
+
+    const result = await window.ipcRenderer.invoke(
+      "app:get-save-file-path",
+      options,
+    )
+
+    if (!result.canceled) {
+      dispatch(
+        emitExportParamsToFile({
+          filePath: result.filePath,
+        }),
+      )
+    }
+  }
+
   async function loadParamsFromFile() {
     const result = await window.ipcRenderer.invoke(
       "params:load-params-from-file",
@@ -167,51 +216,106 @@ export default function Params() {
       <ParamsFailedToWriteModal />
 
       {connected ? (
-        <>
-          {fetchingVars && (
-            <div className="my-auto">
-              {fetchingVarsProgress.param_id && (
-                <p className="text-center my-4">
-                  Fetched {fetchingVarsProgress.param_id}
-                </p>
-              )}
-              <Progress
-                radius="xs"
-                value={fetchingVarsProgress.progress}
-                className="w-1/3 mx-auto my-auto"
-              />
-            </div>
-          )}
-
-          {Object.keys(params).length > 0 && !fetchingVars && (
-            <div className="w-full h-full contents">
-              <ParamsToolbar loadParamsFromFile={loadParamsFromFile} />
-
-              <div className="h-full w-2/3 mx-auto">
-                <AutoSizer>
-                  {({ height, width }) => (
-                    <FixedSizeList
-                      height={height}
-                      width={width}
-                      itemSize={120}
-                      itemCount={shownParams.length}
+        <div className="flex flex-col h-screen overflow-hidden">
+          <div className="flex flex-1 overflow-hidden">
+            {!fetchingVars && (
+              <ResizableBox
+                width={225}
+                height={Infinity}
+                minConstraints={[225, Infinity]}
+                maxConstraints={[600, Infinity]}
+                resizeHandles={["e"]}
+                axis="x"
+                handle={
+                  <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
+                }
+                className="relative bg-falcongrey-800 overflow-y-auto"
+              >
+                <div className="flex flex-col gap-4 p-4">
+                  <div className="flex flex-col gap-4">
+                    <Button onClick={refreshCallback} className="grow">
+                      Refresh params
+                    </Button>
+                    <Button
+                      disabled={!modifiedParams.length}
+                      onClick={() =>
+                        dispatch(emitSetMultipleParams(modifiedParams))
+                      }
+                      className="grow"
                     >
-                      {Row}
-                    </FixedSizeList>
+                      Write params
+                    </Button>
+                  </div>
+                  <Divider />
+                  <div className="flex flex-col gap-4">
+                    <Button onClick={saveParamsToFile} className="grow">
+                      Save to file
+                    </Button>
+                    <Button onClick={loadParamsFromFile} className="grow">
+                      Load from file
+                    </Button>
+                  </div>
+                  <Divider />
+                  <div className="flex flex-col gap-4">
+                    <Button
+                      onClick={rebootCallback}
+                      color={tailwindColors.red[600]}
+                    >
+                      Reboot FC
+                    </Button>
+                  </div>
+                </div>
+              </ResizableBox>
+            )}
+
+            {/* Main content area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {fetchingVars && (
+                <div className="my-auto">
+                  {fetchingVarsProgress.param_id && (
+                    <p className="text-center my-4">
+                      Fetched {fetchingVarsProgress.param_id}
+                    </p>
                   )}
-                </AutoSizer>
-              </div>
+                  <Progress
+                    radius="xs"
+                    value={fetchingVarsProgress.progress}
+                    className="w-1/3 mx-auto my-auto"
+                  />
+                </div>
+              )}
+
+              {Object.keys(params).length > 0 && !fetchingVars && (
+                <div className="h-full contents">
+                  <ParamsToolbar />
+
+                  <div className="h-full">
+                    <AutoSizer>
+                      {({ height, width }) => (
+                        <FixedSizeList
+                          height={height}
+                          width={width}
+                          itemSize={120}
+                          itemCount={shownParams.length}
+                        >
+                          {Row}
+                        </FixedSizeList>
+                      )}
+                    </AutoSizer>
+                  </div>
+                </div>
+              )}
+              {Object.keys(params).length === 0 && !fetchingVars && (
+                <div className="flex flex-col my-auto mx-auto">
+                  <p className="text-center my-4">
+                    No parameters found, try fetching them again.
+                  </p>
+                  <Button onClick={() => fetchParams()}>Fetch Params</Button>
+                </div>
+              )}
             </div>
-          )}
-          {Object.keys(params).length === 0 && !fetchingVars && (
-            <div className="flex flex-col my-auto mx-auto">
-              <p className="text-center my-4">
-                No parameters found, try fetching them again.
-              </p>
-              <Button onClick={() => fetchParams()}>Fetch Params</Button>
-            </div>
-          )}
-        </>
+          </div>
+        </div>
       ) : (
         <NoDroneConnected tab="params" />
       )}

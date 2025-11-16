@@ -1,56 +1,13 @@
 // Type definitions for fla-utils
-interface MessageObject {
-  name: string
-  type?: number
-  TimeUS?: number
-  Instance?: number
-  Inst?: number
-  [key: string]: string | number | undefined
-}
-
-interface FormatMessage {
-  length: number
-  name: string
-  type: number
-  format: string
-  fields: string[]
-  units?: string
-  multiplier?: string
-}
-
-interface LoadedLogMessages {
-  [messageName: string]:
-    | MessageObject[]
-    | { [key: string]: FormatMessage }
-    | { [key: string]: string }
-    | string
-    | null
-}
-
-interface FilterState {
-  [messageName: string]: { [fieldName: string]: boolean }
-}
-
-interface FieldStats {
-  min: number
-  max: number
-  sum: number
-  count: number
-}
-
-interface MeanValues {
-  [fieldKey: string]: {
-    mean: string
-    max: string
-    min: string
-  }
-}
-
-interface ExpandResult {
-  updatedMessages: LoadedLogMessages
-  updatedFilters: FilterState
-  updatedFormats: { [key: string]: FormatMessage }
-}
+import type {
+  ExpandResult,
+  FieldStats,
+  FilterState,
+  FormatMessage,
+  LoadedLogMessages,
+  MeanValues,
+  MessageObject,
+} from "../types/flaTypes"
 
 const ignoredMessages: string[] = [
   "ERR",
@@ -59,10 +16,18 @@ const ignoredMessages: string[] = [
   "VER",
   "TIMESYNC",
   "PARAM_VALUE",
+  "TSYN",
+  "UNIT",
+  "FILE",
+  "FMTU",
+  "FMT",
+  "MULT",
+  "PARM",
   "units",
   "format",
   "aircraftType",
 ]
+
 const ignoredKeys: string[] = [
   "TimeUS",
   "function",
@@ -204,7 +169,7 @@ export function processFlightModes(
   logType: string,
   loadedLogMessages: LoadedLogMessages,
 ): MessageObject[] {
-  if (logType === "dataflash") {
+  if (logType === "dataflash_log" || logType === "dataflash_bin") {
     const modeData = loadedLogMessages["MODE"]
     return Array.isArray(modeData) ? modeData : []
   } else if (logType === "fgcs_telemetry") {
@@ -246,7 +211,14 @@ export function getHeartbeatMessages(
 export function calcGPSOffset(
   loadedLogMessages: LoadedLogMessages,
 ): number | null {
-  const gpsData = loadedLogMessages["GPS"]
+  if (!loadedLogMessages) return null
+
+  if (!("GPS" in loadedLogMessages) && !("GPS[0]" in loadedLogMessages)) {
+    return null
+  }
+
+  const gpsData = loadedLogMessages["GPS"] || loadedLogMessages["GPS[0]"]
+
   if (!Array.isArray(gpsData) || !gpsData[0]) {
     return null
   }
@@ -419,44 +391,9 @@ export function expandBATMessages(
   return { updatedMessages, updatedFilters, updatedFormats }
 }
 
-// Memoization cache for getUnit function
-const unitCache = new Map<string, string>()
+export function getFileExtension(filePath: string): string | null {
+  const reFileExtension = /(?:\.([^.]+))?$/ // https://stackoverflow.com/a/680982
+  const ext = reFileExtension.exec(filePath)?.[1]
 
-export function clearUnitCache(): void {
-  unitCache.clear()
-}
-
-export function getUnit(
-  messageName: string,
-  fieldName: string,
-  formatMessages: { [key: string]: FormatMessage },
-  units: { [key: string]: string },
-): string {
-  // Create cache key
-  const cacheKey = `${messageName}/${fieldName}`
-  if (unitCache.has(cacheKey)) {
-    return unitCache.get(cacheKey) as string
-  }
-
-  // TODO: Find out why this is here
-  let normalizedMessageName = messageName
-  if (messageName.includes("ESC")) {
-    normalizedMessageName = "ESC"
-  }
-
-  let result = "UNKNOWN"
-  if (normalizedMessageName in formatMessages) {
-    const formatMessage = formatMessages[normalizedMessageName]
-    const fieldIndex = formatMessage.fields.indexOf(fieldName)
-    if (fieldIndex !== -1 && formatMessage.units) {
-      const unitId = formatMessage.units[fieldIndex]
-      if (unitId in units) {
-        result = units[unitId]
-      }
-    }
-  }
-
-  // Cache the result
-  unitCache.set(cacheKey, result)
-  return result
+  return ext ? ext.toLowerCase() : null
 }

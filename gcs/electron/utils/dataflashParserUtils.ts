@@ -47,6 +47,7 @@ function transformMessageData(messageData: RawMessageData): MessageObject[] {
       if (value && typeof value === "object") {
         if (key === "time_boot_ms") {
           entry.TimeUS = value[i] as number
+          entry.TimeUS = entry.TimeUS * 1000 // Convert ms to us
         } else {
           entry[key] = value[i]
         }

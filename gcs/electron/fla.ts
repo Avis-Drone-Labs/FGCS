@@ -628,7 +628,11 @@ export async function getMessages(
     if (fmt?.units && Array.isArray(fmt.units)) {
       const fieldIndex = fmt.fields.indexOf(fieldName)
       if (fieldIndex !== -1 && fieldIndex < fmt.units.length) {
-        unit = fmt.units[fieldIndex]
+        const retrievedUnit = fmt.units[fieldIndex]
+        // Only use the retrieved unit if it's a non-empty string
+        if (retrievedUnit && retrievedUnit.trim()) {
+          unit = retrievedUnit
+        }
       }
     }
 

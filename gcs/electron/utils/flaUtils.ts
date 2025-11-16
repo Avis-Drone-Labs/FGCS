@@ -169,7 +169,7 @@ export function processFlightModes(
   logType: string,
   loadedLogMessages: LoadedLogMessages,
 ): MessageObject[] {
-  if (logType === "dataflash") {
+  if (logType === "dataflash_log" || logType === "dataflash_bin") {
     const modeData = loadedLogMessages["MODE"]
     return Array.isArray(modeData) ? modeData : []
   } else if (logType === "fgcs_telemetry") {

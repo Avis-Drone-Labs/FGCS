@@ -38,6 +38,7 @@ import { Line } from "react-chartjs-2"
 // Redux imports
 import { useDispatch, useSelector } from "react-redux"
 import {
+  selectAircraftType,
   selectCanSavePreset,
   selectFlightModeMessages,
   selectLogEvents,
@@ -102,6 +103,7 @@ export default function Graph({ data, openPresetModal }) {
   const events = useSelector(selectLogEvents)
   const flightModes = useSelector(selectFlightModeMessages)
   const canSavePreset = useSelector(selectCanSavePreset)
+  const aircraftType = useSelector(selectAircraftType)
 
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
@@ -246,18 +248,13 @@ export default function Graph({ data, openPresetModal }) {
       const flightModeColorsMap = {}
       flightModes.forEach((flightMode, index) => {
         if (flightMode.name === "MODE") {
+          if (flightMode.Mode in flightModeColorsMap) return
+
           flightModeColorsMap[flightMode.Mode] = colors[index]
         } else if (flightMode.name === "HEARTBEAT") {
-          // Check if the flight mode is a plane or copter to select the correct flight mode
-          if (flightMode === 1) {
-            flightModeColorsMap[
-              PLANE_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
-            ] = colors[index]
-          } else {
-            flightModeColorsMap[
-              COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
-            ] = colors[index]
-          }
+          if (flightMode.custom_mode in flightModeColorsMap) return
+
+          flightModeColorsMap[flightMode.custom_mode] = colors[index]
         }
       })
 
@@ -268,20 +265,29 @@ export default function Graph({ data, openPresetModal }) {
 
         // Depending on log file, set different annotation config options
         var labelContent = ""
+        var modeNumber = 0
         var xMax = "end"
         if (flightMode.name === "MODE") {
-          labelContent = flightMode.Mode
-        } else if (flightMode.name === "HEARTBEAT") {
-          // Check if the flight mode is a plane or copter to select the correct flight mode
-          if (flightMode === 1) {
-            labelContent = PLANE_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+          modeNumber = flightMode.Mode
+          if (aircraftType === "copter") {
+            labelContent =
+              COPTER_MODES_FLIGHT_MODE_MAP[modeNumber] || modeNumber
           } else {
-            labelContent = COPTER_MODES_FLIGHT_MODE_MAP[flightMode.custom_mode]
+            labelContent = PLANE_MODES_FLIGHT_MODE_MAP[modeNumber] || modeNumber
+          }
+        } else if (flightMode.name === "HEARTBEAT") {
+          modeNumber = flightMode.mode
+          // Check if the aircraft type is a plane or copter to select the correct flight mode
+          if (flightMode === 1) {
+            labelContent = PLANE_MODES_FLIGHT_MODE_MAP[modeNumber] || modeNumber
+          } else {
+            labelContent =
+              COPTER_MODES_FLIGHT_MODE_MAP[modeNumber] || modeNumber
           }
           xMax = flightModes[0].TimeUS
         }
 
-        const backgroundColor = flightModeColorsMap[labelContent]
+        const backgroundColor = flightModeColorsMap[modeNumber]
 
         // https://stackoverflow.com/a/8179549/10077669
         const labelColor = backgroundColor.replace(/[^,]+(?=\))/, "1")

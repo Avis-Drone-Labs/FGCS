@@ -605,7 +605,7 @@ class DataflashParser {
     }
 
     const has_instance = "InstancesOffsetArray" in msg_FMT
-    console.log(name, has_instance ? "has instances" : "has no instances")
+    // console.log(name, has_instance ? "has instances" : "has no instances")
 
     if (has_instance) {
       // Parse instances

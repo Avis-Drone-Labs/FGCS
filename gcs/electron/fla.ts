@@ -13,6 +13,7 @@ import DataflashParser from "./utils/dataflashParser"
 import {
   getAircraftTypeFromMavType,
   getFormatMessages,
+  normalizeFormatMessageNames,
   transformMessages,
 } from "./utils/dataflashParserUtils"
 
@@ -357,10 +358,17 @@ function parseDataflashBinFile(
   const parser = new DataflashParser(null, progressCallback)
   const processedData = parser.processData(fileArrayBuffer)
 
+  const transformedMessages = transformMessages(processedData.messages)
+  const formatMessages = getFormatMessages(processedData.types)
+  const normalizedFormatMessages = normalizeFormatMessageNames(
+    formatMessages,
+    Object.keys(transformedMessages),
+  )
+
   const parsedData: Messages = {
-    format: getFormatMessages(processedData.types),
+    format: normalizedFormatMessages,
     aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
-    ...transformMessages(processedData.messages),
+    ...transformedMessages,
   }
   webContents.send("fla:log-parse-progress", {
     percent: 100,
@@ -450,7 +458,11 @@ function processAndSaveLogData(
   let finalMessages = { ...expandedMessages }
   let gpsOffset: number | null = null
   let utcAvailable = false
-  if (finalMessages.GPS && logType === "dataflash_log") {
+
+  if (
+    (finalMessages.GPS || finalMessages["GPS[0]"]) &&
+    (logType === "dataflash_log" || logType === "dataflash_bin")
+  ) {
     gpsOffset = calcGPSOffset(finalMessages)
     if (gpsOffset !== null) {
       finalMessages = convertTimeUStoUTC(finalMessages, gpsOffset)

@@ -76,7 +76,9 @@ function transformMessages(messages: RawMessages): TransformedMessages {
     })
     transformedMessages[messageName] = transformedMessageData
   }
-  return transformedMessages
+
+  // Normalize message names to remove [0] suffix when there's only one instance
+  return normalizeMessageNames(transformedMessages)
 }
 
 function getFormatMessages(types: RawTypes): FormatMessages {
@@ -103,4 +105,100 @@ function getAircraftTypeFromMavType(mavType: number): AircraftType {
   return null
 }
 
-export { getAircraftTypeFromMavType, getFormatMessages, transformMessages }
+function normalizeFormatMessageNames(
+  formatMessages: FormatMessages,
+  messageNames: string[],
+): FormatMessages {
+  const normalizedFormatMessages: FormatMessages = {}
+
+  // Create a set of normalized message names for quick lookup
+  const normalizedNameMap: { [originalName: string]: string } = {}
+
+  // First, identify all base message types and their instances
+  const messageGroups: { [baseName: string]: string[] } = {}
+
+  for (const messageName of messageNames) {
+    const match = messageName.match(/^(.+)\[(\d+)\]$/)
+    if (match) {
+      const baseName = match[1]
+      if (!messageGroups[baseName]) {
+        messageGroups[baseName] = []
+      }
+      messageGroups[baseName].push(messageName)
+    }
+  }
+
+  // Build mapping of original names to normalized names
+  for (const [baseName, instances] of Object.entries(messageGroups)) {
+    if (instances.length === 1 && instances[0].endsWith("[0]")) {
+      normalizedNameMap[instances[0]] = baseName
+    } else {
+      instances.forEach((instanceName) => {
+        normalizedNameMap[instanceName] = instanceName
+      })
+    }
+  }
+
+  // Apply normalization to format messages
+  for (const [messageName, formatMessage] of Object.entries(formatMessages)) {
+    const normalizedName = normalizedNameMap[messageName] || messageName
+    normalizedFormatMessages[normalizedName] = {
+      ...formatMessage,
+      name: normalizedName,
+    }
+  }
+
+  return normalizedFormatMessages
+}
+
+function normalizeMessageNames(
+  messages: TransformedMessages,
+): TransformedMessages {
+  const normalizedMessages: TransformedMessages = {}
+
+  // First, identify all base message types and their instances
+  const messageGroups: { [baseName: string]: string[] } = {}
+
+  for (const messageName of Object.keys(messages)) {
+    const match = messageName.match(/^(.+)\[(\d+)\]$/)
+    if (match) {
+      const baseName = match[1]
+      if (!messageGroups[baseName]) {
+        messageGroups[baseName] = []
+      }
+      messageGroups[baseName].push(messageName)
+    } else {
+      // Regular message without instance suffix
+      normalizedMessages[messageName] = messages[messageName]
+    }
+  }
+
+  // Process each message group
+  for (const [baseName, instances] of Object.entries(messageGroups)) {
+    if (instances.length === 1 && instances[0].endsWith("[0]")) {
+      // Single instance with [0] suffix - rename to base name
+      const newName = baseName
+      normalizedMessages[newName] = messages[instances[0]]
+
+      // Update the name property in each message object
+      normalizedMessages[newName].forEach((msg) => {
+        msg.name = newName
+      })
+    } else {
+      // Multiple instances - keep original names
+      instances.forEach((instanceName) => {
+        normalizedMessages[instanceName] = messages[instanceName]
+      })
+    }
+  }
+
+  return normalizedMessages
+}
+
+export {
+  getAircraftTypeFromMavType,
+  getFormatMessages,
+  normalizeFormatMessageNames,
+  normalizeMessageNames,
+  transformMessages,
+}

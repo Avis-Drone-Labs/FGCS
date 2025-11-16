@@ -211,7 +211,14 @@ export function getHeartbeatMessages(
 export function calcGPSOffset(
   loadedLogMessages: LoadedLogMessages,
 ): number | null {
-  const gpsData = loadedLogMessages["GPS"]
+  if (!loadedLogMessages) return null
+
+  if (!("GPS" in loadedLogMessages) && !("GPS[0]" in loadedLogMessages)) {
+    return null
+  }
+
+  const gpsData = loadedLogMessages["GPS"] || loadedLogMessages["GPS[0]"]
+
   if (!Array.isArray(gpsData) || !gpsData[0]) {
     return null
   }

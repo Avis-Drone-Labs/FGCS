@@ -1,5 +1,5 @@
-import { useDispatch } from "react-redux"
 import { useCallback } from "react"
+import { useDispatch } from "react-redux"
 
 import {
   emitRebootAutopilot,
@@ -9,7 +9,7 @@ import {
 
 /**
  * Hook that returns a callback to reboot the autopilot.
- * Displays reboot modal and resets params.
+ * Initiates autopilot reboot, displays status modal, and resets params.
  * @returns Callback to reboot autopilot
  */
 export function useRebootCallback() {

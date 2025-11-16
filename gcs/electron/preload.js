@@ -58,6 +58,7 @@ const ALLOWED_ON_CHANNELS = [
   "app:send-ekf-status",
   "app:send-vibe-status",
   "settings:open",
+  "mavlink-forwarding:open",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

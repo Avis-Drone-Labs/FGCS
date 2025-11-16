@@ -304,13 +304,6 @@ function setMainMenu() {
     {
       label: "View",
       submenu: [
-        {
-          label: "Connection Stats",
-          click: () => {
-            openLinkStatsWindow()
-          },
-        },
-        { type: "separator" },
         { role: "reload" },
         { role: "forceReload" },
         { role: "toggleDevTools" },
@@ -320,6 +313,23 @@ function setMainMenu() {
         { role: "zoomOut" },
         { type: "separator" },
         { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Advanced",
+      submenu: [
+        {
+          label: "Connection Stats",
+          click: () => {
+            openLinkStatsWindow()
+          },
+        },
+        {
+          label: "MAVLink Forwarding",
+          click: () => {
+            win?.webContents.send("mavlink-forwarding:open")
+          },
+        },
       ],
     },
   ]

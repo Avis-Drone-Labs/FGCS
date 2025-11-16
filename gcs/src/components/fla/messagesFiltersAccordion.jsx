@@ -68,6 +68,16 @@ export default function MessagesFiltersAccordion() {
     dispatch(setCanSavePreset(hasSelectedFilters))
   }
 
+  function getMessageDescription(messageName) {
+    // Check if there is a [ index ] suffix
+    const baseMessageName = messageName.replace(/\[\d+\]$/, "")
+    if (logMessageDescriptions[baseMessageName]) {
+      return logMessageDescriptions[baseMessageName]
+    }
+
+    return logMessageDescriptions[messageName] || null
+  }
+
   return (
     <Accordion multiple={true}>
       {Object.keys(messageFilters).map((messageName) => (
@@ -75,7 +85,7 @@ export default function MessagesFiltersAccordion() {
           <Accordion.Control className="rounded-md">
             <p>{messageName}</p>
             <p className="text-sm italic text-gray-500">
-              {logMessageDescriptions[messageName]}
+              {getMessageDescription(messageName)}
             </p>
           </Accordion.Control>
           <Accordion.Panel>

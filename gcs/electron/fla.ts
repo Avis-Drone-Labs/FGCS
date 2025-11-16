@@ -8,74 +8,37 @@ import readline from "readline"
 
 import createRecentLogsManager from "./utils/recentLogManager"
 
+import DataflashParser from "./utils/dataflashParser"
+
+import {
+  getAircraftTypeFromMavType,
+  getFormatMessages,
+  normalizeFormatMessageNames,
+  transformMessages,
+} from "./utils/dataflashParserUtils"
+
+import type {
+  AircraftType,
+  Dataset,
+  FormatMessage,
+  LogSummary,
+  LogType,
+  MessageObject,
+  Messages,
+  ParseResult,
+} from "./types/flaTypes"
+
 import {
   buildDefaultMessageFilters,
   calcGPSOffset,
   calculateMeanValues,
-  clearUnitCache,
   convertTimeUStoUTC,
   expandBATMessages,
   expandESCMessages,
-  getUnit,
+  getFileExtension,
   processFlightModes,
   sortObjectByKeys,
 } from "./utils/flaUtils"
-
-// Type definitions
-interface FormatMessage {
-  length: number
-  name: string
-  type: number
-  format: string
-  fields: string[]
-  units?: string
-  multiplier?: string
-}
-
-interface MessageObject {
-  name: string
-  type?: number
-  TimeUS?: number
-  [key: string]: string | number | undefined
-}
-
-interface Messages {
-  [messageName: string]:
-    | MessageObject[]
-    | { [key: string]: FormatMessage }
-    | { [key: string]: string }
-    | string
-    | null
-}
-
-interface ParseResult {
-  success: boolean
-  error?: string
-  summary?: LogSummary
-}
-
-interface LogSummary {
-  formatMessages: { [key: string]: FormatMessage }
-  utcAvailable: boolean
-  logEvents: MessageObject[]
-  flightModeMessages: MessageObject[]
-  logType: string
-  messageFilters: Record<string, unknown>
-  messageMeans: Record<
-    string,
-    { mean: string; max: string; min: string }
-  > | null
-  aircraftType: string | null
-}
-
-interface Dataset {
-  label: string
-  yAxisID: string
-  x: Float64Array
-  y: Float32Array
-}
-
-type LogType = "dataflash" | "fgcs_telemetry" | "mp_telemetry" | null
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
 const recentLogsManager = createRecentLogsManager()
@@ -93,12 +56,15 @@ async function parseDataflashLogFile(
 
   return new Promise((resolve, reject) => {
     const stringTypes = new Set(["n", "N", "Z", "M"])
-    let aircraftType: string | null = null
+    let aircraftType: AircraftType = null
     let lastUpdateTime = 0
 
     const formatMessages: { [key: string]: FormatMessage } = {}
-    const messages: Messages = {}
     const units: { [key: string]: string } = {}
+    const messages: Messages = {
+      format: formatMessages,
+      aircraftType: null,
+    }
 
     rl.on("line", (line: string) => {
       // Skip empty lines early
@@ -110,13 +76,11 @@ async function parseDataflashLogFile(
       if (messageName === "FMT") {
         // Message defining the format of messages in this file
         const definedMessageType = parseInt(splitLineData[1])
-        const definedMessageLength = parseInt(splitLineData[2])
         const definedMessageName = splitLineData[3].trim()
         const definedMessageFormat = splitLineData[4].trim()
         const fields = splitLineData.slice(5).map((f) => f.trim())
 
         formatMessages[definedMessageName] = {
-          length: definedMessageLength,
           name: definedMessageName,
           type: definedMessageType,
           format: definedMessageFormat,
@@ -143,7 +107,7 @@ async function parseDataflashLogFile(
           const formatMessage = formatMessages[formatMessageName]
           if (formatMessage.type === messageType) {
             formatMessage.units = messageUnits
-            formatMessage.multiplier = messageMultiplier
+            formatMessage.multipliers = messageMultiplier
           }
         }
       } else if (messageName === "MULT") {
@@ -180,7 +144,6 @@ async function parseDataflashLogFile(
 
           const messageObj: MessageObject = {
             name: messageName,
-            type: formatMessage.type,
           }
 
           const fields = formatMessage.fields
@@ -219,9 +182,36 @@ async function parseDataflashLogFile(
     })
 
     rl.on("close", () => {
+      // Convert units strings to arrays of actual unit descriptions
+      Object.values(formatMessages).forEach((formatMessage) => {
+        if (formatMessage.units && typeof formatMessage.units === "string") {
+          const unitsArray: string[] = []
+          for (let i = 0; i < formatMessage.units.length; i++) {
+            const unitChar = formatMessage.units[i]
+            const unitDescription = units[unitChar] || "UNKNOWN"
+            unitsArray.push(unitDescription)
+          }
+          // Replace the string with the array
+          formatMessage.units = unitsArray
+        }
+
+        // Convert multipliers strings to arrays of individual multiplier characters
+        if (
+          formatMessage.multipliers &&
+          typeof formatMessage.multipliers === "string"
+        ) {
+          const multipliersArray: string[] = []
+          for (let i = 0; i < formatMessage.multipliers.length; i++) {
+            const multiplierChar = formatMessage.multipliers[i]
+            multipliersArray.push(multiplierChar)
+          }
+          // Replace the string with the array
+          formatMessage.multipliers = multipliersArray
+        }
+      })
+
       // Add format messages to messages for later digesting and return
       messages["format"] = formatMessages
-      messages["units"] = units
       messages["aircraftType"] = aircraftType
 
       webContents.send("fla:log-parse-progress", {
@@ -244,7 +234,10 @@ async function parseFgcsTelemetryLogFile(
   webContents: WebContents,
 ): Promise<Messages> {
   const formatMessages: { [key: string]: FormatMessage } = {}
-  const messages: Messages = {}
+  const messages: Messages = {
+    format: formatMessages,
+    aircraftType: null,
+  }
 
   let lastUpdateTime = 0
 
@@ -284,7 +277,6 @@ async function parseFgcsTelemetryLogFile(
         }
         formatMessages[messageName] = {
           fields,
-          length: 0,
           name: messageName,
           type: 0,
           format: "",
@@ -342,24 +334,68 @@ async function parseFgcsTelemetryLogFile(
   })
 }
 
-function determineLogFileType(filePath: string, firstLine: string): LogType {
-  const reFileExtension = /(?:\.([^.]+))?$/ // https://stackoverflow.com/a/680982
-  const ext = reFileExtension.exec(filePath)?.[1]
+function parseDataflashBinFile(
+  filePath: string,
+  webContents: WebContents,
+): Messages {
+  // Read file as ArrayBuffer
+  const fileBuffer = fs.readFileSync(filePath)
+  const fileArrayBuffer = fileBuffer.buffer.slice(
+    fileBuffer.byteOffset,
+    fileBuffer.byteOffset + fileBuffer.byteLength,
+  )
+
+  // Throttle progress updates to at most once every UPDATE_THROTTLE_MS
+  let lastUpdateTime = 0
+  const progressCallback = (percent: number) => {
+    const now = Date.now()
+    if (now - lastUpdateTime > UPDATE_THROTTLE_MS || percent === 100) {
+      lastUpdateTime = now
+      webContents.send("fla:log-parse-progress", { percent })
+    }
+  }
+
+  const parser = new DataflashParser(null, progressCallback)
+  const processedData = parser.processData(fileArrayBuffer)
+
+  const transformedMessages = transformMessages(processedData.messages)
+  const formatMessages = getFormatMessages(processedData.types)
+  const normalizedFormatMessages = normalizeFormatMessageNames(
+    formatMessages,
+    Object.keys(transformedMessages),
+  )
+
+  const parsedData: Messages = {
+    format: normalizedFormatMessages,
+    aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
+    ...transformedMessages,
+  }
+  webContents.send("fla:log-parse-progress", {
+    percent: 100,
+  })
+  return parsedData
+}
+
+async function determineLogFileType(filePath: string): Promise<LogType> {
+  const ext = getFileExtension(filePath)
 
   const extensionToTypeMap: { [key: string]: LogType } = {
-    log: "dataflash",
+    bin: "dataflash_bin",
+    log: "dataflash_log",
     ftlog: "fgcs_telemetry",
     // exclude txt from map as txt's are ambiguous
   }
 
-  if (ext !== undefined && ext !== "txt" && ext in extensionToTypeMap) {
+  if (ext !== null && ext !== "txt" && ext in extensionToTypeMap) {
     return extensionToTypeMap[ext]
   } else {
     // Try to figure out the type of log file from the first line of the file
+    const firstLine = await getFirstLine(filePath)
+
     if (
       firstLine === "FMT, 128, 89, FMT, BBnNZ, Type,Length,Name,Format,Columns"
     ) {
-      return "dataflash"
+      return "dataflash_log"
     } else if (firstLine.includes("==START_TIME==")) {
       return "fgcs_telemetry"
     } else if (firstLine.match(/\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}:\d{2}/)) {
@@ -400,10 +436,7 @@ function processAndSaveLogData(
   loadedLogMessages: Messages,
   logType: string,
 ): LogSummary {
-  clearUnitCache() // Clear cache when loading new file
-  const aircraftType =
-    (loadedLogMessages["aircraftType"] as string | null) || null
-  delete loadedLogMessages["aircraftType"]
+  const aircraftType = loadedLogMessages.aircraftType
 
   const initialFilters = buildDefaultMessageFilters(loadedLogMessages)
 
@@ -425,7 +458,11 @@ function processAndSaveLogData(
   let finalMessages = { ...expandedMessages }
   let gpsOffset: number | null = null
   let utcAvailable = false
-  if (finalMessages.GPS && logType === "dataflash") {
+
+  if (
+    (finalMessages.GPS || finalMessages["GPS[0]"]) &&
+    (logType === "dataflash_log" || logType === "dataflash_bin")
+  ) {
     gpsOffset = calcGPSOffset(finalMessages)
     if (gpsOffset !== null) {
       finalMessages = convertTimeUStoUTC(finalMessages, gpsOffset)
@@ -440,7 +477,11 @@ function processAndSaveLogData(
   // 6. Process flight modes
   const flightModeMessages = processFlightModes(logType, finalMessages)
 
-  logData = finalMessages // Save the complete data
+  logData = {
+    ...finalMessages,
+    format: finalFormats,
+    aircraftType: aircraftType,
+  } // Save the complete data with required properties
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
   // 8. Return the summary object
@@ -471,50 +512,51 @@ export default async function openFile(
       return { success: false, error: "Log file is empty." }
     }
 
-    // Read the first line to determine log type
-    const firstLine = await getFirstLine(filePath)
-    const logType = determineLogFileType(filePath, firstLine)
+    const logType = await determineLogFileType(filePath)
 
     if (logType === null) {
       return { success: false, error: "Unknown log file type" }
     }
 
-    const fileStream = fs.createReadStream(filePath)
-    const rl = readline.createInterface({
-      input: fileStream,
-      crlfDelay: Infinity,
-    })
-
     let messages: Messages | null = null
 
-    if (logType === "dataflash") {
-      messages = await parseDataflashLogFile(
-        rl,
-        fileStream,
-        stats.size,
-        event.sender,
-      )
-    } else if (logType === "fgcs_telemetry") {
-      messages = await parseFgcsTelemetryLogFile(
-        rl,
-        fileStream,
-        stats.size,
-        event.sender,
-      )
-    } else if (logType === "mp_telemetry") {
-      // TODO: implement
-      // messages = await parseMpTelemetryLogFile(fileLines, event.sender)
-      return {
-        success: false,
-        error: "MP telemetry parsing not yet implemented",
-      }
+    if (logType === "dataflash_bin") {
+      messages = parseDataflashBinFile(filePath, event.sender)
     } else {
-      return { success: false, error: "Unknown log file type" }
+      const fileStream = fs.createReadStream(filePath)
+      const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+      })
+
+      if (logType === "dataflash_log") {
+        messages = await parseDataflashLogFile(
+          rl,
+          fileStream,
+          stats.size,
+          event.sender,
+        )
+      } else if (logType === "fgcs_telemetry") {
+        messages = await parseFgcsTelemetryLogFile(
+          rl,
+          fileStream,
+          stats.size,
+          event.sender,
+        )
+      } else if (logType === "mp_telemetry") {
+        // TODO: implement
+        // messages = await parseMpTelemetryLogFile(fileLines, event.sender)
+        return {
+          success: false,
+          error: "MP telemetry parsing not yet implemented",
+        }
+      }
     }
 
     if (messages !== null) {
       // returns a lightweight summary after processing
       const summary = processAndSaveLogData(messages, logType)
+
       // add recent file
       recentLogsManager.addRecentLog(filePath)
       return { success: true, summary }
@@ -554,7 +596,6 @@ export async function getMessages(
 
   const formatMessages =
     (logData.format as { [key: string]: FormatMessage }) || {}
-  const units = (logData.units as { [key: string]: string }) || {}
   const datasets: Dataset[] = []
 
   // Loop through the list of requested messages and transform each of them
@@ -582,6 +623,19 @@ export async function getMessages(
       continue
     }
 
+    // Get unit for this field from the format message
+    let unit = "UNKNOWN"
+    if (fmt?.units && Array.isArray(fmt.units)) {
+      const fieldIndex = fmt.fields.indexOf(fieldName)
+      if (fieldIndex !== -1 && fieldIndex < fmt.units.length) {
+        const retrievedUnit = fmt.units[fieldIndex]
+        // Only use the retrieved unit if it's a non-empty string
+        if (retrievedUnit && retrievedUnit.trim()) {
+          unit = retrievedUnit
+        }
+      }
+    }
+
     const len = series.length
     // use typed arrays to reduce IPC serialization overhead
     // Time as Float64, values as Float32 for size efficiency
@@ -597,7 +651,7 @@ export async function getMessages(
 
     datasets.push({
       label,
-      yAxisID: getUnit(categoryName, fieldName, formatMessages, units),
+      yAxisID: unit,
       x,
       y,
     })

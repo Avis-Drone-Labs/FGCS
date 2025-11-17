@@ -5,42 +5,40 @@ export const ConnectionType = {
   Network: "network",
 }
 
-const droneConnectionSlice = createSlice({
-  name: "droneConnection",
-  initialState: {
-    // drone connection status
-    connecting: false,
-    connected: false,
-    connection_modal: false,
-    connection_status: {
-      message: "",
-      progress: 0,
-    },
+const initialState = {
+  // drone connection status
+  connecting: false,
+  connected: false,
+  connection_modal: false,
+  connection_status: {
+    message: "",
+    progress: 0,
+  },
 
-    // aircraft type
-    aircraft_type: 0,
+  // aircraft type
+  aircraft_type: 0,
 
-    // drone connection parameters
-    wireless: true, // local
-    baudrate: "9600", // local
-    connection_type: ConnectionType.Serial, // local
+  // drone connection parameters
+  wireless: true, // local
+  baudrate: "9600", // local
+  connection_type: ConnectionType.Serial, // local
 
-    // com ports
-    fetching_com_ports: false,
-    com_ports: [],
-    selected_com_ports: null,
+  // com ports
+  fetching_com_ports: false,
+  com_ports: [],
+  selected_com_ports: null,
 
-    // network parameters
-    network_type: "tcp", // local
-    ip: "127.0.0.1", // local
-    port: "5760", // local
+  // network parameters
+  network_type: "tcp", // local
+  ip: "127.0.0.1", // local
+  port: "5760", // local
 
-    forwardingAddress: "", // local
-    isForwarding: false, // local
-    forwardingAddressModalOpened: false,
+  forwardingAddress: "", // local
+  isForwarding: false, // local
+  forwardingAddressModalOpened: false,
 
-    currentPage: "dashboard",
-    outsideVisibility: false, // local
+  currentPage: "dashboard",
+  outsideVisibility: false, // local
 
   videoSource: null,
   videoMaximized: false,

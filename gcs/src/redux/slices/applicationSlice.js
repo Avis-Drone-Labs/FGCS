@@ -1,12 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit"
 
-const initialState = {
-  confirmExitModalOpen: false,
-}
-
 const applicationSlice = createSlice({
   name: "application",
-  initialState,
+  initialState: { confirmExitModalOpen: false },
   reducers: {
     // Setters
     setConfirmExitModalOpen: (state, action) => {

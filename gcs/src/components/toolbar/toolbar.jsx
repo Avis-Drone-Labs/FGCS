@@ -9,70 +9,17 @@
 import { useEffect, useState } from "react"
 
 // Custom Imports
-import resolveConfig from "tailwindcss/resolveConfig.js"
 import SpotlightComponent from "../spotlight/spotlight.jsx"
 import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
+import ConfirmExitModal from "./confirmExitModal.jsx"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
-import { Button, Group, Modal } from "@mantine/core"
-
-// Tailwind
-import tailwindConfig from "../../../tailwind.config.js"
-import {
-  selectConfirmExitModalOpen,
-  setConfirmExitModalOpen,
-} from "../../redux/slices/applicationSlice.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
-function ConfirmExitModal() {
-  const dispatch = useDispatch()
-  const modalOpen = useSelector(selectConfirmExitModalOpen)
-
-  const confirmExit = () => {
-    window.ipcRenderer.send("window:close", [])
-  }
-
-  return (
-    <Modal
-      opened={modalOpen}
-      onClose={() => dispatch(setConfirmExitModalOpen(false))}
-      title="Confirm Application Exit"
-      centered
-      overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 3,
-      }}
-      styles={{
-        content: {
-          borderRadius: "0.5rem",
-        },
-      }}
-      withCloseButton={true}
-    >
-      <Group justify="space-between" className="pt-4">
-        <Button
-          variant="filled"
-          onClick={() => dispatch(setConfirmExitModalOpen(false))}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="filled"
-          type="submit"
-          color={tailwindColors.red[600]}
-          onClick={() => confirmExit()}
-        >
-          Exit
-        </Button>
-      </Group>
-    </Modal>
-  )
-}
+import { setConfirmExitModalOpen } from "../../redux/slices/applicationSlice.js"
 
 export default function Toolbar() {
   const dispatch = useDispatch()

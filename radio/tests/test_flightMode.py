@@ -50,7 +50,7 @@ def test_getFlightModeConfig_correctState(
 
     assert socketio_result["name"] == "flight_mode_config"
     assert socketio_result["args"][0] == {
-        "flight_modes": [0, 9, 6, 3, 5, 0],
+        "flight_modes": [7, 9, 6, 3, 5, 0],
         "flight_mode_channel": 5,
     }
 

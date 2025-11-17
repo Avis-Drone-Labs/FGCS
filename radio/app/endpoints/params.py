@@ -12,6 +12,22 @@ class ExportParamsFileType(TypedDict):
     file_path: str
 
 
+class MultipleParamsProgressDataType(TypedDict):
+    message: str
+    param_id: str
+    current_index: int
+    total_params: int
+
+
+def setMultipleParamsProgressUpdateCallback(
+    data: MultipleParamsProgressDataType,
+) -> None:
+    """
+    Callback function to emit progress updates when setting multiple parameters.
+    """
+    socketio.emit("set_multiple_params_progress", data)
+
+
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list: List[Any]) -> None:
     """
@@ -32,7 +48,9 @@ def set_multiple_params(params_list: List[Any]) -> None:
     if not droneStatus.drone:
         return
 
-    response = droneStatus.drone.paramsController.setMultipleParams(params_list)
+    response = droneStatus.drone.paramsController.setMultipleParams(
+        params_list, setMultipleParamsProgressUpdateCallback
+    )
     if response.get("success"):
         socketio.emit("param_set_success", response)
     else:

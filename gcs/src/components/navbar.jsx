@@ -162,6 +162,13 @@ export default function Navbar() {
     }
   }, [comPorts, selectedComPort])
 
+  useEffect(() => {
+    const handler = () => dispatch(setForwardingAddressModalOpened(true))
+    window.ipcRenderer.on("mavlink-forwarding:open", handler)
+    return () =>
+      window.ipcRenderer.removeAllListeners("mavlink-forwarding:open")
+  }, [dispatch])
+
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
 
@@ -452,7 +459,7 @@ export default function Navbar() {
             to="/config"
             className={twMerge(
               linkClassName,
-              currentPage === "config" && "text-falconred font-bold",
+              currentPage?.startsWith("config") && "text-falconred font-bold",
             )}
           >
             Config

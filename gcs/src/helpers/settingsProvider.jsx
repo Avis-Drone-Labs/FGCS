@@ -39,7 +39,7 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => {
     const handler = () => open()
     window.ipcRenderer.on("settings:open", handler)
-    return () => window.ipcRenderer.removeListener("settings:open", handler)
+    return () => window.ipcRenderer.removeAllListeners("settings:open")
   }, [open])
 
   const setSetting = (setting, value) => {

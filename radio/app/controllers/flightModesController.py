@@ -137,7 +137,7 @@ class FlightModesController:
         Args:
             flightmode (int): The numeric value for the current flight mode setting
         Returns:
-            A message to show if the drone recieved the message and succesfully set the new mode
+            A message to show if the drone received the message and successfully set the new mode
         """
         if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
             return {
@@ -185,7 +185,7 @@ class FlightModesController:
         """
         Set the drone's flight mode to Guided mode.
         Returns:
-            A message to show if the drone recieved the message and succesfully set the new mode
+            A message to show if the drone received the message and successfully set the new mode
         """
 
         mode = mavutil.mavlink.COPTER_MODE_GUIDED

@@ -1,19 +1,19 @@
 from flask_socketio import SocketIOTestClient
 
 from . import falcon_test
-from .helpers import NoDrone, send_and_recieve
+from .helpers import NoDrone, send_and_receive
 
 
 @falcon_test(pass_drone_status=True)
 def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Failure on no drone connection
     with NoDrone():
-        assert send_and_recieve("set_state", "dashboard") == {
+        assert send_and_receive("set_state", "dashboard") == {
             "message": "Must be connected to the drone to set the drone state."
         }
 
     # Failure on no state sent
-    assert send_and_recieve("set_state", {}) == {
+    assert send_and_receive("set_state", {}) == {
         "message": "Request to endpoint set_state missing value for parameter: state."
     }
 
@@ -28,19 +28,19 @@ def test_setState(socketio_client: SocketIOTestClient, droneStatus) -> None:
 
     socketio_client.emit("set_state", {"state": "graphs"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 4
+    assert len(droneStatus.drone.message_listeners) == 6
 
     droneStatus.drone.message_listeners = {}
 
     socketio_client.emit("set_state", {"state": "config.flight_modes"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 3
+    assert len(droneStatus.drone.message_listeners) == 4
 
     droneStatus.drone.message_listeners = {}
 
     socketio_client.emit("set_state", {"state": "config.rc"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 3
+    assert len(droneStatus.drone.message_listeners) == 4
 
     droneStatus.drone.message_listeners = {}
 

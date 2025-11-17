@@ -192,13 +192,19 @@ ipcMain.handle("window:select-file-in-explorer", async (_event, filters) => {
     try {
       const stats = fs.statSync(filePath)
       return {
+        success: true,
         path: filePath,
         name: path.basename(filePath),
         size: stats.size,
       }
     } catch (err) {
-      // File is inaccessible or deleted
-      return null
+      return {
+        success: false,
+        message:
+          err instanceof Error
+            ? err.message
+            : "File is inaccessible or deleted",
+      }
     }
   }
   return null
@@ -298,13 +304,6 @@ function setMainMenu() {
     {
       label: "View",
       submenu: [
-        {
-          label: "Connection Stats",
-          click: () => {
-            openLinkStatsWindow()
-          },
-        },
-        { type: "separator" },
         { role: "reload" },
         { role: "forceReload" },
         { role: "toggleDevTools" },
@@ -314,6 +313,23 @@ function setMainMenu() {
         { role: "zoomOut" },
         { type: "separator" },
         { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Advanced",
+      submenu: [
+        {
+          label: "Connection Stats",
+          click: () => {
+            openLinkStatsWindow()
+          },
+        },
+        {
+          label: "MAVLink Forwarding",
+          click: () => {
+            win?.webContents.send("mavlink-forwarding:open")
+          },
+        },
       ],
     },
   ]

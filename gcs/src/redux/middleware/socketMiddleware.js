@@ -12,6 +12,8 @@ import {
   emitGetComPorts,
   emitIsConnectedToDrone,
   setComPorts,
+  emitStartForwarding,
+  selectIsForwarding,
   setConnected,
   setConnecting,
   setConnectionModal,
@@ -531,6 +533,8 @@ const socketMiddleware = (store) => {
             store.dispatch(setAutoPilotRebootModalOpen(false))
             showSuccessNotification(msg.message)
             store.dispatch(setRebootData({}))
+            const isForwarding = selectIsForwarding(store.getState())
+            if (isForwarding) store.dispatch(emitStartForwarding())
           }
         })
 

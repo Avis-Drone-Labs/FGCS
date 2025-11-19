@@ -24,17 +24,26 @@ import Navbar from "./navbar"
 
 // Redux
 import { ErrorBoundary } from "react-error-boundary"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { initSocket } from "../redux/slices/socketSlice"
+import { selectConnectedToDrone } from "../redux/slices/droneConnectionSlice"
 import AlertProvider from "./dashboard/alerts/alertProvider"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 
 export default function AppContent() {
   // Setup sockets for redux
   const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   useEffect(() => {
     dispatch(initSocket())
   }, [])
+
+  // Send connection state changes to main so it can own quit policy on macOS
+  useEffect(() => {
+    try {
+      window.ipcRenderer.send("app:connected-state", connectedToDrone)
+    } catch {}
+  }, [connectedToDrone])
 
   return (
     <SettingsProvider>

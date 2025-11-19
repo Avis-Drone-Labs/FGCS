@@ -57,6 +57,8 @@ if (process.platform === "linux") {
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
+let isConnectedToDrone = false
+let quittingApproved = false
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
@@ -136,6 +138,11 @@ ipcMain.handle("settings:fetch-settings", () => {
 })
 ipcMain.handle("settings:save-settings", (_, settings) => {
   saveUserConfiguration(settings)
+})
+
+// Cache connection state from renderer
+ipcMain.on("app:connected-state", (_event, connected: any) => {
+  isConnectedToDrone = Boolean(connected)
 })
 
 ipcMain.handle("app:is-mac", () => {
@@ -431,12 +438,46 @@ app.on("window-all-closed", () => {
 
 // To ensure that the backend process is killed with Cmd + Q on macOS,
 // listen to the before-quit event.
-app.on("before-quit", () => {
-  if (process.platform === "darwin" && pythonBackend) {
-    console.log("Stopping backend")
-    spawnSync("pkill", ["-f", "fgcs_backend"])
-    pythonBackend = null
-    closeWindows()
+app.on("before-quit", (e) => {
+  if (process.platform !== "darwin") return
+
+  // User already approved, let it proceed without re-prompting
+  if (quittingApproved) return
+
+  if (isConnectedToDrone && win && !win.isDestroyed()) {
+    e.preventDefault()
+    const choice = dialog.showMessageBoxSync(win, {
+      type: "warning",
+      buttons: ["Cancel", "Quit"],
+      defaultId: 0,
+      title: "Confirm Quit",
+      message: "Are you sure you want to quit FGCS?",
+      detail: "You are connected to an aircraft.",
+    })
+    if (choice === 1) {
+      quittingApproved = true
+      if (pythonBackend) {
+        console.log("Stopping backend")
+        spawnSync("pkill", ["-f", "fgcs_backend"])
+        pythonBackend = null
+      }
+      // Close all popout windows
+      closeWindows()
+      // Destroy main window
+      if (win && !win.isDestroyed()) {
+        win.destroy()
+      }
+      app.quit()
+    }
+    // choice === 0 (Cancel): do nothing, quit is prevented
+  } else {
+    // Not connected or no window: stop backend and proceed
+    if (pythonBackend) {
+      console.log("Stopping backend")
+      spawnSync("pkill", ["-f", "fgcs_backend"])
+      pythonBackend = null
+      closeWindows()
+    }
   }
 })
 

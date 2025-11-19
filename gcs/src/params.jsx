@@ -22,9 +22,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Custom components, helpers, and data
 import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
-import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
+import { useRebootCallback } from "./helpers/useRebootCallback.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -36,7 +36,6 @@ import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   emitExportParamsToFile,
-  emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
   resetParamState,
@@ -48,7 +47,6 @@ import {
   selectParamSearchValue,
   selectShowModifiedParams,
   selectShownParams,
-  setAutoPilotRebootModalOpen,
   setFetchingVars,
   setHasFetchedOnce,
   setLoadedFileName,
@@ -72,6 +70,7 @@ function cleanFloat(value, decimals = 5) {
 export default function Params() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
+  const rebootCallback = useRebootCallback()
 
   // Parameter states
   const hasFetchedOnce = useSelector(selectHasFetchedOnce)
@@ -125,12 +124,6 @@ export default function Params() {
     dispatch(setShownParams([]))
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
-  }
-
-  function rebootCallback() {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    dispatch(resetParamState())
   }
 
   async function saveParamsToFile() {
@@ -210,7 +203,6 @@ export default function Params() {
 
   return (
     <Layout currentPage="params">
-      <AutopilotRebootModal />
       <LoadParamsFileModal />
       <ParamsWriteModal />
       <ParamsFailedToWriteModal />

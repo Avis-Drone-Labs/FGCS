@@ -8,12 +8,14 @@ import { useHotkeys } from "@mantine/hooks"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
+import { useRebootCallback } from "../../helpers/useRebootCallback"
 
 let commands = []
 
 export function Commands() {
   let navigate = useNavigate()
   const [isMac, setIsMac] = useState(false)
+  const rebootCallback = useRebootCallback()
 
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {
@@ -49,6 +51,7 @@ export function Commands() {
   AddCommand("open_settings", () => {
     open()
   })
+  AddCommand("reboot_autopilot", rebootCallback)
 
   // Register hotkeys
   useHotkeys([

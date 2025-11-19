@@ -141,7 +141,7 @@ ipcMain.handle("settings:save-settings", (_, settings) => {
 })
 
 // Cache connection state from renderer
-ipcMain.on("app:connected-state", (_event, connected: any) => {
+ipcMain.on("app:connected-state", (_event, connected: boolean) => {
   isConnectedToDrone = Boolean(connected)
 })
 

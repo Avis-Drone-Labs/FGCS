@@ -42,7 +42,10 @@ export default function AppContent() {
   useEffect(() => {
     try {
       window.ipcRenderer.send("app:connected-state", connectedToDrone)
-    } catch {}
+    } catch {
+      // Ignore IPC errors if main process isn't ready
+      console.log("IPC Call Failed: app:connected-state")
+    }
   }, [connectedToDrone])
 
   return (

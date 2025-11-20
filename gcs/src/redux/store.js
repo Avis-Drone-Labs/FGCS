@@ -2,7 +2,7 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 import logAnalyserSlice from "./slices/logAnalyserSlice"
 import socketSlice from "./slices/socketSlice"
-
+import applicationSlice from "./slices/applicationSlice"
 import socketMiddleware from "./middleware/socketMiddleware"
 import configSlice from "./slices/configSlice"
 import droneConnectionSlice, {
@@ -30,6 +30,7 @@ const rootReducer = combineSlices(
   statusTextSlice,
   paramsSlice,
   configSlice,
+  applicationSlice,
 )
 
 export const store = configureStore({

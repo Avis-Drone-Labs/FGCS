@@ -16,8 +16,6 @@ def rebootAutopilot() -> None:
     if not droneStatus.drone:
         return
 
-    # TODO: Add forwarding address handling here too
-
     port = droneStatus.drone.port
     baud = droneStatus.drone.baud
     wireless = droneStatus.drone.wireless
@@ -25,6 +23,7 @@ def rebootAutopilot() -> None:
     droneDisconnectCb = droneStatus.drone.droneDisconnectCb
     droneConnectStatusCb = droneStatus.drone.droneConnectStatusCb
     linkDebugStatsCb = droneStatus.drone.linkDebugStatsCb
+    forwarding_address = droneStatus.drone.forwarding_address
 
     socketio.emit("disconnected_from_drone")
 
@@ -51,6 +50,7 @@ def rebootAutopilot() -> None:
             port,
             baud=baud,
             wireless=wireless,
+            forwarding_address=forwarding_address,
             droneErrorCb=droneErrorCb,
             droneDisconnectCb=droneDisconnectCb,
             droneConnectStatusCb=droneConnectStatusCb,

@@ -309,7 +309,7 @@ export default function Navbar() {
           <Group justify="space-between" className="pt-4">
             <Button
               variant="filled"
-              color={tailwindColors.red[600]}
+              color={"red"}
               onClick={() => {
                 dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
@@ -321,7 +321,7 @@ export default function Navbar() {
             <Button
               variant="filled"
               type="submit"
-              color={tailwindColors.green[600]}
+              color={"green"}
               disabled={
                 !connectedToSocket ||
                 (connectionType == ConnectionType.Serial &&
@@ -509,11 +509,7 @@ export default function Navbar() {
           {connectedToSocket ? (
             <Button
               onClick={connectedToDrone ? disconnect : connectToDroneFromButton}
-              color={
-                connectedToDrone
-                  ? tailwindColors.falconred[800]
-                  : tailwindColors.green[600]
-              }
+              color={connectedToDrone ? "red" : "green"}
               radius="xs"
             >
               {connectedToDrone ? "Disconnect" : "Connect"}

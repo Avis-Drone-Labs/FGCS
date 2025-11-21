@@ -16,6 +16,14 @@ const paramsSlice = createSlice({
     loadParamsFileModalOpen: false,
     loadedFileName: "",
     loadedParams: [],
+    paramsWriteProgressData: {
+      param_id: "",
+      current_index: 0,
+      total_params: 0,
+    },
+    paramsWriteProgressModalOpen: false,
+    paramsFailedToWrite: [],
+    paramsFailedToWriteModalOpen: false,
   },
   reducers: {
     setRebootData: (state, action) => {
@@ -128,6 +136,25 @@ const paramsSlice = createSlice({
     setLoadedParams: (state, action) => {
       state.loadedParams = action.payload
     },
+    setParamsWriteProgressData: (state, action) => {
+      state.paramsWriteProgressData = action.payload
+    },
+    resetParamsWriteProgressData: (state) => {
+      state.paramsWriteProgressData = {
+        param_id: "",
+        current_index: 0,
+        total_params: 0,
+      }
+    },
+    setParamsWriteProgressModalOpen: (state, action) => {
+      state.paramsWriteProgressModalOpen = action.payload
+    },
+    setParamsFailedToWrite: (state, action) => {
+      state.paramsFailedToWrite = action.payload
+    },
+    setParamsFailedToWriteModalOpen: (state, action) => {
+      state.paramsFailedToWriteModalOpen = action.payload
+    },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
@@ -152,6 +179,12 @@ const paramsSlice = createSlice({
     selectLoadParamsFileModalOpen: (state) => state.loadParamsFileModalOpen,
     selectLoadedFileName: (state) => state.loadedFileName,
     selectLoadedParams: (state) => state.loadedParams,
+    selectParamsWriteProgressData: (state) => state.paramsWriteProgressData,
+    selectParamsWriteProgressModalOpen: (state) =>
+      state.paramsWriteProgressModalOpen,
+    selectParamsFailedToWrite: (state) => state.paramsFailedToWrite,
+    selectParamsFailedToWriteModalOpen: (state) =>
+      state.paramsFailedToWriteModalOpen,
   },
 })
 
@@ -174,6 +207,11 @@ export const {
   setLoadParamsFileModalOpen,
   setLoadedFileName,
   setLoadedParams,
+  setParamsWriteProgressData,
+  resetParamsWriteProgressData,
+  setParamsWriteProgressModalOpen,
+  setParamsFailedToWrite,
+  setParamsFailedToWriteModalOpen,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -194,6 +232,10 @@ export const {
   selectLoadParamsFileModalOpen,
   selectLoadedFileName,
   selectLoadedParams,
+  selectParamsWriteProgressData,
+  selectParamsWriteProgressModalOpen,
+  selectParamsFailedToWrite,
+  selectParamsFailedToWriteModalOpen,
 } = paramsSlice.selectors
 
 export default paramsSlice

@@ -591,7 +591,7 @@ function SettingsModal() {
           defaultValue="General"
           orientation="vertical"
           className="bg-falcongrey-900"
-          color="#BA1B0B"
+          color="red"
           h="50vh"
           styles={{ list: { width: "15%" } }}
         >

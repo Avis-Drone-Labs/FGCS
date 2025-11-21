@@ -26,12 +26,6 @@ import {
   selectGetGripperEnabled,
 } from "./redux/slices/configSlice"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config"
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 export default function Config() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
@@ -56,7 +50,7 @@ export default function Config() {
         <div className="w-full h-full">
           <Tabs
             orientation="vertical"
-            color={tailwindColors.falconred[800]}
+            color={"red"}
             className="h-full"
             keepMounted={false}
             value={activeTab}

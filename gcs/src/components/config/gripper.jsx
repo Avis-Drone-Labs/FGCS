@@ -16,11 +16,6 @@ import {
   Tooltip,
 } from "@mantine/core"
 
-// Styling Imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 // Data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
 import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
@@ -148,16 +143,10 @@ export default function Gripper() {
         overlayProps={{ blur: 2 }}
       />
       <div className="flex flex-row gap-2">
-        <Button
-          onClick={() => setGripper("release")}
-          color={tailwindColors.falconred[800]}
-        >
+        <Button onClick={() => setGripper("release")} color={"red"}>
           Release Gripper
         </Button>
-        <Button
-          onClick={() => setGripper("grab")}
-          color={tailwindColors.falconred[800]}
-        >
+        <Button onClick={() => setGripper("grab")} color={"red"}>
           Grab Gripper
         </Button>
       </div>

@@ -444,7 +444,7 @@ export default function Graph({ data, openPresetModal }) {
         <MantineTooltip label="Clear Filters">
           <Button
             className="min-h-8 max-h-8"
-            color={tailwindColors.red[500]}
+            color={"red"}
             onClick={clearFilters}
           >
             Clear Filters
@@ -454,7 +454,7 @@ export default function Graph({ data, openPresetModal }) {
           <MantineTooltip label="Save Preset">
             <Button
               className="min-h-8 max-h-8"
-              color={tailwindColors.green[600]}
+              color={"green"}
               onClick={() => {
                 openPresetModal()
               }}

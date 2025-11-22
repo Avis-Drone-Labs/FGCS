@@ -32,6 +32,10 @@ import { AddCommand } from "./spotlight/commandHandler.js"
 
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
+import {
+  useConnectToDroneFromButtonCallback,
+  useDisconnectFromDroneCallback
+} from "../helpers/droneConnectionCallbacks.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -108,6 +112,10 @@ export default function Navbar() {
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
   const currentPage = useSelector(selectCurrentPage)
 
+  // Drone connection
+  const connectToDroneFromButtonCallback = useConnectToDroneFromButtonCallback()
+  const disconnectFromDroneCallback = useDisconnectFromDroneCallback()
+
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
       dispatch(
@@ -140,21 +148,6 @@ export default function Navbar() {
 
     dispatch(setConnecting(true))
   }
-
-  // All seems to be broken, made a ticket for joe to look into: https://github.com/orgs/Avis-Drone-Labs/projects/10/views/1?pane=issue&itemId=124913361
-  function disconnect() {
-    dispatch(emitDisconnectFromDrone())
-  }
-
-  function connectToDroneFromButton() {
-    dispatch(emitGetComPorts())
-    dispatch(setConnectionModal(true))
-  }
-
-  useEffect(() => {
-    AddCommand("connect_to_drone", connectToDroneFromButton)
-    AddCommand("disconnect_from_drone", disconnect)
-  }, [])
 
   useEffect(() => {
     if (!comPorts.includes(selectedComPort)) {
@@ -508,7 +501,7 @@ export default function Navbar() {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connectedToDrone ? disconnect : connectToDroneFromButton}
+              onClick={connectedToDrone ? disconnectFromDroneCallback : connectToDroneFromButtonCallback}
               color={
                 connectedToDrone
                   ? tailwindColors.falconred[800]

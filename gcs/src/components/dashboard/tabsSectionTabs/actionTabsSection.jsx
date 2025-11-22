@@ -32,7 +32,7 @@ import {
 } from "../../../redux/slices/droneInfoSlice"
 
 import { NoConnectionMsg } from "../tabsSection"
-import { useRebootCallback } from "../../../helpers/useRebootCallback"
+import { useRebootCallback } from "../../../helpers/droneConnectionCallbacks"
 
 export default function ActionTabsSection({
   connected,

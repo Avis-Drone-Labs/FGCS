@@ -180,7 +180,7 @@ const droneInfoSlice = createSlice({
         state.gpsRawIntData.fixType = action.payload.fix_type
         state.gpsRawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
         state.gpsRawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
-        state.gpsRawIntData.hdop = action.payload.hdop
+        state.gpsRawIntData.hdop = action.payload.hdop ?? 0
       }
     },
     setOnboardControlSensorsEnabled: (state, action) => {

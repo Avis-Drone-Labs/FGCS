@@ -214,10 +214,26 @@ const socketMiddleware = (store) => {
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
         )
         break
-      case "GPS_RAW_INT":
-        store.dispatch(setGpsRawIntData(msg))
+      case "GPS_RAW_INT": {
+        // MAVLink GPS_RAW_INT provides 'eph' (HDOP * 100).
+        // Backend may also send a normalised 'hdop' field depending on version.
+        // Prefer 'hdop' if present, otherwise derive it from 'eph'.
+        const hdop =
+          msg.hdop != null  //Backend already normalised HDOP?
+            ? msg.hdop
+            : msg.eph != null //Othrwise derive HDOP from eph
+              ? msg.eph / 100.0
+              : null
+
+        store.dispatch(
+          setGpsRawIntData({
+            ...msg,
+            hdop,
+          }),
+        )
         store.dispatch(calculateGpsTrackHeadingThunk())
         break
+}
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!
         store.dispatch(setRSSIData(msg.rssi))

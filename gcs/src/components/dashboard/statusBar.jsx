@@ -9,7 +9,12 @@ import { cloneElement, useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { Tooltip } from "@mantine/core"
-import { IconClock, IconNetwork, IconNetworkOff, IconGps } from "@tabler/icons-react"
+import {
+  IconClock,
+  IconNetwork,
+  IconNetworkOff,
+  IconGps,
+} from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"

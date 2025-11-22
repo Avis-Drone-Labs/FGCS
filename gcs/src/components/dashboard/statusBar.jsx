@@ -9,7 +9,7 @@ import { cloneElement, useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { Tooltip } from "@mantine/core"
-import { IconClock, IconNetwork, IconNetworkOff, IconGps} from "@tabler/icons-react"
+import { IconClock, IconNetwork, IconNetworkOff, IconGps } from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"
@@ -140,7 +140,7 @@ export default function StatusBar(props) {
       >
         {props.children}
 
-        {hdop != null && (
+        {hdop > 0 && (
           <StatusSection
             icon={<IconGps />}
             value={hdop.toFixed(2)}

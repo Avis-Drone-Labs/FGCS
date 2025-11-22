@@ -219,9 +219,9 @@ const socketMiddleware = (store) => {
         // Backend may also send a normalised 'hdop' field depending on version.
         // Prefer 'hdop' if present, otherwise derive it from 'eph'.
         const hdop =
-          msg.hdop != null  //Backend already normalised HDOP?
+          msg.hdop != null  // Backend already normalised HDOP?
             ? msg.hdop
-            : msg.eph != null //Otherwise derive HDOP from eph
+            : msg.eph != null // Otherwise derive HDOP from eph
               ? msg.eph / 100.0
               : null
 

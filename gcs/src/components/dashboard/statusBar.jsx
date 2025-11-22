@@ -9,13 +9,14 @@ import { cloneElement, useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { Tooltip } from "@mantine/core"
-import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
+import { IconClock, IconNetwork, IconNetworkOff, IconGps} from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"
 import {
   selectBatteryData,
   selectTelemetry,
+  selectGPSRawInt,
 } from "../../redux/slices/droneInfoSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
@@ -42,6 +43,8 @@ export default function StatusBar(props) {
   const [time, setTime] = useState(moment())
   const batteryData = useSelector(selectBatteryData)
   const telemetryData = useSelector(selectTelemetry)
+  const gpsRawIntData = useSelector(selectGPSRawInt)
+  const hdop = gpsRawIntData?.hdop
 
   // Update clock every second
   useEffect(() => {
@@ -136,6 +139,15 @@ export default function StatusBar(props) {
         style={{ backgroundColor: GetOutsideVisibilityColor() }}
       >
         {props.children}
+
+        {hdop != null && (
+          <StatusSection
+            icon={<IconGps />}
+            value={hdop.toFixed(2)}
+            tooltip="GPS HDOP"
+          />
+        )}
+
         <StatusSection
           icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}
           value=""

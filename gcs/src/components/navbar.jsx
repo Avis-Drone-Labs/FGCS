@@ -27,14 +27,11 @@ import {
 import { useSessionStorage } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
-// Local imports
-import { AddCommand } from "./spotlight/commandHandler.js"
-
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
 import {
   useConnectToDroneFromButtonCallback,
-  useDisconnectFromDroneCallback
+  useDisconnectFromDroneCallback,
 } from "../helpers/droneConnectionCallbacks.js"
 
 // Redux
@@ -501,7 +498,11 @@ export default function Navbar() {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connectedToDrone ? disconnectFromDroneCallback : connectToDroneFromButtonCallback}
+              onClick={
+                connectedToDrone
+                  ? disconnectFromDroneCallback
+                  : connectToDroneFromButtonCallback
+              }
               color={
                 connectedToDrone
                   ? tailwindColors.falconred[800]

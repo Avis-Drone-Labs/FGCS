@@ -12,7 +12,7 @@ import {
   useRebootCallback,
   useConnectToDroneFromButtonCallback,
   useDisconnectFromDroneCallback,
- } from "../../helpers/droneConnectionCallbacks"
+} from "../../helpers/droneConnectionCallbacks"
 
 let commands = []
 

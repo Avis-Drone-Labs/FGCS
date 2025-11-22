@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux"
 import {
   emitGetComPorts,
   setConnectionModal,
-  emitDisconnectFromDrone
+  emitDisconnectFromDrone,
 } from "../redux/slices/droneConnectionSlice.js"
 
 import {

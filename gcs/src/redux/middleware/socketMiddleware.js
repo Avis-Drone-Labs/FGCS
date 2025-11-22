@@ -221,7 +221,7 @@ const socketMiddleware = (store) => {
         const hdop =
           msg.hdop != null  //Backend already normalised HDOP?
             ? msg.hdop
-            : msg.eph != null //Othrwise derive HDOP from eph
+            : msg.eph != null //Otherwise derive HDOP from eph
               ? msg.eph / 100.0
               : null
 

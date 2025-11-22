@@ -39,7 +39,6 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   ConnectionType,
   emitConnectToDrone,
-  emitDisconnectFromDrone,
   emitGetComPorts,
   emitStartForwarding,
   emitStopForwarding,

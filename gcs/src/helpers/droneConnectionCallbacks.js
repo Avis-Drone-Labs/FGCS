@@ -27,6 +27,12 @@ export function useRebootCallback() {
   }, [dispatch])
 }
 
+/**
+ * Hook that returns a callback to initiate a connection to the drone
+ * via a button click. Fetches available COM ports and opens the
+ * connection modal.
+ * @returns Callback to connect to the drone
+ */
 export function useConnectToDroneFromButtonCallback() {
   const dispatch = useDispatch()
   return useCallback(() => {
@@ -35,6 +41,11 @@ export function useConnectToDroneFromButtonCallback() {
   }, [dispatch])
 }
 
+/**
+ * Hook that returns a callback to disconnect from the drone.
+ * Initiates the disconnect procedure.
+ * @returns Callback to disconnect from the drone
+ */
 export function useDisconnectFromDroneCallback() {
   const dispatch = useDispatch()
   return useCallback(() => {

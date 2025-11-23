@@ -13,7 +13,6 @@ import {
   IconClock,
   IconNetwork,
   IconNetworkOff,
-  IconTarget,
 } from "@tabler/icons-react"
 
 // Redux
@@ -21,7 +20,6 @@ import { useSelector } from "react-redux"
 import {
   selectBatteryData,
   selectTelemetry,
-  selectGPSRawInt,
 } from "../../redux/slices/droneInfoSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
@@ -48,8 +46,6 @@ export default function StatusBar(props) {
   const [time, setTime] = useState(moment())
   const batteryData = useSelector(selectBatteryData)
   const telemetryData = useSelector(selectTelemetry)
-  const gpsRawIntData = useSelector(selectGPSRawInt)
-  const hdop = gpsRawIntData?.hdop
 
   // Update clock every second
   useEffect(() => {

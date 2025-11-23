@@ -79,9 +79,7 @@ export default function Dashboard() {
   const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
 
   const hdopDisplay =
-    fixType === 0 || hdop == null || hdop === 0
-      ? "NO GPS"
-      : hdop.toFixed(2)
+    fixType === 0 || hdop == null || hdop === 0 ? "NO GPS" : hdop.toFixed(2)
 
   const connectedToDrone = useSelector(selectConnectedToDrone)
 

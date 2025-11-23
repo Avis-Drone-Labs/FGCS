@@ -8,6 +8,7 @@ import { Route, Routes } from "react-router-dom"
 import SettingsModal from "./settingsModal"
 import { Commands } from "./spotlight/commandHandler"
 import Toolbar from "./toolbar/toolbar"
+import AutopilotRebootModal from "./params/autopilotRebootModal.jsx"
 
 // Wrappers
 import { SettingsProvider } from "../helpers/settingsProvider"
@@ -71,6 +72,7 @@ export default function AppContent() {
             <Route path="/fla" element={<FLA />} />
           </Routes>
           <Commands />
+          <AutopilotRebootModal />
         </ErrorBoundary>
       </SingleRunWrapper>
     </SettingsProvider>

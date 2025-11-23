@@ -100,6 +100,7 @@ const droneInfoSlice = createSlice({
   reducers: {
     setFlightSwVersion: (state, action) => {
       state.flightSwVersion = action.payload
+      window.ipcRenderer.send("window:page-title-updated", action.payload)
     },
     setHeartbeatData: (state, action) => {
       if (

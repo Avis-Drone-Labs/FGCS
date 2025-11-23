@@ -47,6 +47,7 @@ const ALLOWED_SEND_CHANNELS = [
   "window:zoom-in",
   "window:zoom-out",
   "window:open-file-in-explorer",
+  "window:page-title-updated",
 ]
 
 const ALLOWED_ON_CHANNELS = [

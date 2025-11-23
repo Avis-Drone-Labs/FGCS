@@ -77,6 +77,12 @@ export default function Dashboard() {
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
   const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
+
+  const hdopDisplay =
+    fixType === 0 || hdop == null || hdop === 0
+      ? "NO GPS"
+      : hdop.toFixed(2)
+
   const connectedToDrone = useSelector(selectConnectedToDrone)
 
   // Telemetry panel sizing
@@ -200,7 +206,7 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconTarget />}
-            value={hdop != null ? hdop.toFixed(2) : "—"}
+            value={hdopDisplay}
             tooltip="GPS HDOP (precision)"
           />
           <StatusSection

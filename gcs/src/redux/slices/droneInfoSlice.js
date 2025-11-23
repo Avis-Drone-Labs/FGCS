@@ -100,7 +100,10 @@ const droneInfoSlice = createSlice({
   reducers: {
     setFlightSwVersion: (state, action) => {
       state.flightSwVersion = action.payload
-      window.ipcRenderer.send("window:page-title-updated", action.payload)
+      window.ipcRenderer.send(
+        "window:update-title",
+        "FGCS - ArduPlane " + action.payload,
+      )
     },
     setHeartbeatData: (state, action) => {
       if (

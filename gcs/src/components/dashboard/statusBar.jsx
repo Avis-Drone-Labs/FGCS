@@ -145,13 +145,13 @@ export default function StatusBar(props) {
       >
         {props.children}
 
-        {hdop > 0 && (
+
           <StatusSection
             icon={<IconGps />}
-            value={hdop.toFixed(2)}
+            value={hdop != null ? hdop.toFixed(2) : "No HDOP available"}
             tooltip="GPS HDOP"
           />
-        )}
+
 
         <StatusSection
           icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}

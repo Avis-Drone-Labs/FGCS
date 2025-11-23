@@ -25,6 +25,7 @@ STATES_MESSAGE_LISTENERS = {
         "NAV_CONTROLLER_OUTPUT",
         "SYS_STATUS",
         "GPS_RAW_INT",
+        "GPS2_RAW",
         "RC_CHANNELS",
         "ESC_TELEMETRY_5_TO_8",
         "MISSION_CURRENT",

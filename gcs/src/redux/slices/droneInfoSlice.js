@@ -288,6 +288,7 @@ const droneInfoSlice = createSlice({
     selectPrearmEnabled: (state) =>
       state.onboardControlSensorsEnabled & 268435456,
     selectGPSRawInt: (state) => state.gpsRawIntData,
+    selectGPS2RawInt: (state) => state.gps2RawIntData,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
     selectBatteryData: (state) =>

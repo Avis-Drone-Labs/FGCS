@@ -219,7 +219,7 @@ const socketMiddleware = (store) => {
         store.dispatch(setGpsRawIntData(msg))
         store.dispatch(calculateGpsTrackHeadingThunk())
         break
-      case "GPS2_RAW_INT":
+      case "GPS2_RAW":
         store.dispatch(setGps2RawIntData(msg))
         break
       case "RC_CHANNELS":

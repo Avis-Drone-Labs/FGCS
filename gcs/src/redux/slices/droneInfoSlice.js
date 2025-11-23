@@ -58,6 +58,13 @@ const droneInfoSlice = createSlice({
       velocity: 0,
       courseOverGround: 0,
     },
+    gps2RawIntData: {
+      fixType: 0,
+      satellitesVisible: 0,
+      velocity: 0,
+      courseOverGround: 0,
+      hdop: 0,
+    },
     rssi: 0.0,
     notificationSound: "",
     aircraftType: 0, // TODO: This should be in local storage but I have no idea how :D,
@@ -181,6 +188,16 @@ const droneInfoSlice = createSlice({
         state.gpsRawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
       }
     },
+    setGps2RawIntData: (state, action) => {
+      if (action.payload !== state.gpsRawIntData) {
+        state.gpsRawIntData.satellitesVisible =
+          action.payload.satellites_visible
+        state.gpsRawIntData.fixType = action.payload.fix_type
+        state.gpsRawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
+        state.gpsRawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
+        state.gpsRawIntData.hdop = action.payload.hdop ?? 0
+      }
+    },
     setOnboardControlSensorsEnabled: (state, action) => {
       if (action.payload !== state.onboardControlSensorsEnabled) {
         state.onboardControlSensorsEnabled = action.payload
@@ -301,6 +318,7 @@ export const {
   setAttitudeData,
   setNavControllerOutput,
   setGpsRawIntData,
+  setGps2RawIntData,
   setBatteryData,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -415,6 +433,7 @@ export const {
   selectArmed,
   selectPrearmEnabled,
   selectGPSRawInt,
+  selectGPS2RawInt,
   selectRSSI,
   selectHeading,
   selectSystemStatus,

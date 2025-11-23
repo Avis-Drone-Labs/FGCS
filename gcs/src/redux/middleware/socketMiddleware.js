@@ -216,14 +216,7 @@ const socketMiddleware = (store) => {
         break
       case "GPS_RAW_INT": {
         // MAVLink GPS_RAW_INT provides 'eph' (HDOP * 100).
-        // Backend may also send a normalised 'hdop' field depending on version.
-        // Prefer 'hdop' if present, otherwise derive it from 'eph'.
-        const hdop =
-          msg.hdop != null // Backend already normalised HDOP?
-            ? msg.hdop
-            : msg.eph != null // Otherwise derive HDOP from eph
-              ? msg.eph / 100.0
-              : null
+        const hdop = msg.eph != null ? msg.eph / 100.0 : null
 
         store.dispatch(
           setGpsRawIntData({

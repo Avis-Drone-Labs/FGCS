@@ -9,11 +9,6 @@ import { useEffect, useState } from "react"
 // 3rd Party Imports
 import { Button, Modal, NumberInput } from "@mantine/core"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 // Custom helper function
 import { MOTOR_LETTER_LABELS } from "../../helpers/mavlinkConstants"
 
@@ -117,7 +112,7 @@ export default function MotorTestPanel() {
 
           <div className="mx-auto">
             <Button
-              color={tailwindColors.green[600]}
+              color={"green"}
               onClick={() => dispatch(setShowMotorTestWarningModal(false))}
             >
               Continue

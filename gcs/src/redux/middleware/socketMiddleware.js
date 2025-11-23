@@ -62,6 +62,7 @@ import {
   setFlightSwVersion,
   setGpsData,
   setGpsRawIntData,
+  setGps2RawIntData,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -217,6 +218,9 @@ const socketMiddleware = (store) => {
       case "GPS_RAW_INT":
         store.dispatch(setGpsRawIntData(msg))
         store.dispatch(calculateGpsTrackHeadingThunk())
+        break
+      case "GPS2_RAW_INT":
+        store.dispatch(setGps2RawIntData(msg))
         break
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!

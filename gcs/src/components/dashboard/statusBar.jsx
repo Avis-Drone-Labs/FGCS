@@ -13,7 +13,7 @@ import {
   IconClock,
   IconNetwork,
   IconNetworkOff,
-  IconGps,
+  IconTarget,
 } from "@tabler/icons-react"
 
 // Redux
@@ -144,14 +144,6 @@ export default function StatusBar(props) {
         style={{ backgroundColor: GetOutsideVisibilityColor() }}
       >
         {props.children}
-
-
-          <StatusSection
-            icon={<IconGps />}
-            value={hdop != null ? hdop.toFixed(2) : "No HDOP available"}
-            tooltip="GPS HDOP"
-          />
-
 
         <StatusSection
           icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}

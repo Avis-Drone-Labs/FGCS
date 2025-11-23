@@ -220,6 +220,12 @@ const socketMiddleware = (store) => {
         store.dispatch(calculateGpsTrackHeadingThunk())
         break
       case "GPS2_RAW":
+        console.log("GPS2_RAW:", {
+          fix_type: msg.fix_type,
+          sats: msg.satellites_visible,
+          vel: msg.vel,
+          cog: msg.cog,
+        })
         store.dispatch(setGps2RawIntData(msg))
         break
       case "RC_CHANNELS":

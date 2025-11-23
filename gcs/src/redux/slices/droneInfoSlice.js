@@ -190,12 +190,12 @@ const droneInfoSlice = createSlice({
     },
     setGps2RawIntData: (state, action) => {
       if (action.payload !== state.gpsRawIntData) {
-        state.gpsRawIntData.satellitesVisible =
+        state.gps2RawIntData.satellitesVisible =
           action.payload.satellites_visible
-        state.gpsRawIntData.fixType = action.payload.fix_type
-        state.gpsRawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
-        state.gpsRawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
-        state.gpsRawIntData.hdop = action.payload.hdop ?? 0
+        state.gps2RawIntData.fixType = action.payload.fix_type
+        state.gps2RawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
+        state.gps2RawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
+        state.gps2RawIntData.hdop = action.payload.hdop ?? 0
       }
     },
     setOnboardControlSensorsEnabled: (state, action) => {

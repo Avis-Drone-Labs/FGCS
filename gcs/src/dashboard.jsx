@@ -39,6 +39,9 @@ import {
   soundPlayed,
 } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
+import { selectCurrentMission } from "./redux/slices/missionSlice"
+
+import { useSettings } from "./helpers/settings"
 
 // Helper javascript files
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
@@ -63,6 +66,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
+import lowBatterySound from "./assets/sounds/lowbattery.mp3"
+import waypointReachedSound from "./assets/sounds/waypointreached.mp3"
+import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -77,6 +83,9 @@ export default function Dashboard() {
   const armedNotification = useSelector(selectNotificationSound)
   const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
   const connectedToDrone = useSelector(selectConnectedToDrone)
+  const currentMission = useSelector(selectCurrentMission)
+
+  const { getSetting } = useSettings()
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -112,14 +121,60 @@ export default function Dashboard() {
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
+  const [playLowBattery] = useSound(lowBatterySound, { volume: 0.1 })
+  const [playWaypointReached] = useSound(waypointReachedSound, { volume: 0.1 })
+  const [playFlightModeChanged] = useSound(flightModeChangedSound, {
+    volume: 0.1,
+  })
+
+  const currentMissionSeqRef = useRef(currentMission.seq)
 
   // Play queued arming sounds
   useEffect(() => {
-    if (armedNotification !== "") {
-      armedNotification === "armed" ? playArmed() : playDisarmed()
-      dispatch(soundPlayed())
+    if (!getSetting("General.speechAnnouncements")) {
+      return
     }
-  }, [armedNotification, playArmed, playDisarmed, dispatch])
+    switch (armedNotification) {
+      case "armed":
+        playArmed()
+        break
+      case "disarmed":
+        playDisarmed()
+        break
+      case "mode_change":
+        playFlightModeChanged()
+        break
+      case "low_battery":
+        playLowBattery()
+        break
+      default:
+        break
+    }
+    dispatch(soundPlayed())
+  }, [
+    armedNotification,
+    playArmed,
+    playDisarmed,
+    playLowBattery,
+    dispatch,
+    getSetting("General.speechAnnouncements"),
+  ])
+
+  useEffect(() => {
+    if (currentMission.seq > currentMissionSeqRef.current) {
+      if (!getSetting("General.speechAnnouncements")) {
+        return
+      }
+      playWaypointReached()
+      dispatch(soundPlayed())
+      currentMissionSeqRef.current = currentMission.seq
+    }
+  }, [
+    currentMission.seq,
+    playWaypointReached,
+    dispatch,
+    getSetting("General.speechAnnouncements"),
+  ])
 
   // Following drone logic
   useEffect(() => {

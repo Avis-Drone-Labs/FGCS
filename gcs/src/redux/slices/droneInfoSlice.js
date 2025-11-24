@@ -96,6 +96,7 @@ const droneInfoSlice = createSlice({
       },
       lastGraphResultsMessage: false,
     },
+    lowBatteryAlerted: false,
   },
   reducers: {
     setFlightSwVersion: (state, action) => {
@@ -114,6 +115,10 @@ const droneInfoSlice = createSlice({
         state.notificationSound = "disarmed"
       }
       state.heartbeatData.baseMode = action.payload.base_mode
+
+      if (action.payload.custom_mode !== state.heartbeatData.customMode) {
+        state.notificationSound = "mode_change"
+      }
       state.heartbeatData.customMode = action.payload.custom_mode
       state.heartbeatData.systemStatus = action.payload.system_status
     },
@@ -125,6 +130,10 @@ const droneInfoSlice = createSlice({
         Object.assign(battery, action.payload)
       } else {
         state.batteryData.push(action.payload)
+      }
+      if (action.payload.battery_remaining <= 97 && !state.lowBatteryAlerted) {
+        state.notificationSound = "low_battery"
+        state.lowBatteryAlerted = true
       }
     },
     soundPlayed: (state) => {

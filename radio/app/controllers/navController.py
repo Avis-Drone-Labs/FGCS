@@ -41,13 +41,13 @@ class NavController:
         max_attempts = 3
         time_delay_between_attempts = 1
 
-        for attempt in range(max_attempts):
-            if not self.drone.reserve_message_type("HOME_POSITION", self.controller_id):
-                return {
-                    "success": False,
-                    "message": "Could not reserve HOME_POSITION messages",
-                }
+        if not self.drone.reserve_message_type("HOME_POSITION", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve HOME_POSITION messages",
+            }
 
+        for attempt in range(max_attempts):
             try:
                 self.drone.sendCommand(
                     mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
@@ -87,6 +87,7 @@ class NavController:
                 self.drone.logger.warning(
                     f"Serial exception on attempt {attempt + 1}/{max_attempts}"
                 )
+                break
             finally:
                 self.drone.release_message_type("HOME_POSITION", self.controller_id)
 

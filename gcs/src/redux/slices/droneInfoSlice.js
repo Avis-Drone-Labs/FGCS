@@ -131,7 +131,7 @@ const droneInfoSlice = createSlice({
       } else {
         state.batteryData.push(action.payload)
       }
-      if (action.payload.battery_remaining <= 97 && !state.lowBatteryAlerted) {
+      if (action.payload.battery_remaining <= 20 && !state.lowBatteryAlerted) {
         state.notificationSound = "low_battery"
         state.lowBatteryAlerted = true
       }

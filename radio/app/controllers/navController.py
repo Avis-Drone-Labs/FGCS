@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from threading import current_thread
 from typing import TYPE_CHECKING
 
@@ -34,52 +35,66 @@ class NavController:
     def getHomePosition(self) -> Response:
         """
         Request the current home position from the drone.
+        Retries up to 3 times with 1 second delay between attempts.
         """
-        if not self.drone.reserve_message_type("HOME_POSITION", self.controller_id):
-            return {
-                "success": False,
-                "message": "Could not reserve HOME_POSITION messages",
-            }
 
-        try:
-            self.drone.sendCommand(
-                mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-                param1=mavutil.mavlink.MAVLINK_MSG_ID_HOME_POSITION,
-            )
+        max_attempts = 3
+        time_delay_between_attempts = 1
 
-            response = self.drone.wait_for_message(
-                "HOME_POSITION", self.controller_id, timeout=1.5
-            )
-
-            if response:
-                self.drone.logger.info("Home position received")
-
-                home_position = {
-                    "lat": response.latitude,
-                    "lon": response.longitude,
-                    "alt": response.altitude,
-                }
-
-                return {
-                    "success": True,
-                    "message": "Home position received",
-                    "data": home_position,
-                }
-            else:
-                self.drone.logger.warning("Could not get home position")
+        for attempt in range(max_attempts):
+            if not self.drone.reserve_message_type("HOME_POSITION", self.controller_id):
                 return {
                     "success": False,
-                    "message": "Could not get home position",
+                    "message": "Could not reserve HOME_POSITION messages",
                 }
 
-        except serial.serialutil.SerialException:
-            self.drone.logger.warning("Could not get home position, serial exception")
-            return {
-                "success": False,
-                "message": "Could not get home position, serial exception",
-            }
-        finally:
-            self.drone.release_message_type("HOME_POSITION", self.controller_id)
+            try:
+                self.drone.sendCommand(
+                    mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+                    param1=mavutil.mavlink.MAVLINK_MSG_ID_HOME_POSITION,
+                )
+
+                response = self.drone.wait_for_message(
+                    "HOME_POSITION", self.controller_id, timeout=1.5
+                )
+
+                if response:
+                    self.drone.logger.info(
+                        f"Home position received on attempt {attempt + 1}"
+                    )
+
+                    home_position = {
+                        "lat": response.latitude,
+                        "lon": response.longitude,
+                        "alt": response.altitude,
+                    }
+
+                    return {
+                        "success": True,
+                        "message": "Home position received",
+                        "data": home_position,
+                    }
+                else:
+                    self.drone.logger.warning(
+                        f"Could not get home position (attempt {attempt + 1}/{max_attempts})"
+                    )
+
+                    # If this isn't the last attempt, wait before retrying
+                    if attempt < max_attempts - 1:
+                        time.sleep(time_delay_between_attempts)
+
+            except serial.serialutil.SerialException:
+                self.drone.logger.warning(
+                    f"Serial exception on attempt {attempt + 1}/{max_attempts}"
+                )
+            finally:
+                self.drone.release_message_type("HOME_POSITION", self.controller_id)
+
+        # If we get here, all attempts have failed
+        return {
+            "success": False,
+            "message": f"Could not get home position after {max_attempts} attempts",
+        }
 
     @sendingCommandLock
     def setHomePosition(self, lat: float, lon: float, alt: float) -> Response:

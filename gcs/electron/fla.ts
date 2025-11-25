@@ -26,6 +26,7 @@ import type {
   MessageObject,
   Messages,
   ParseResult,
+  RecentLog,
 } from "./types/flaTypes"
 
 import {
@@ -408,7 +409,7 @@ async function determineLogFileType(filePath: string): Promise<LogType> {
 }
 
 // New function to get recent files
-export function getRecentFiles(): string[] {
+export function getRecentFiles(): RecentLog[] {
   return recentLogsManager.getRecentLogs()
 }
 

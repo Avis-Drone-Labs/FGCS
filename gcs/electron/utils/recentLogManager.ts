@@ -15,7 +15,7 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
       if (fs.existsSync(recentLogsPath)) {
         const data = fs.readFileSync(recentLogsPath, "utf8")
         const parsed = JSON.parse(data)
-        
+
         // Backward compatibility: convert array of strings to array of objects
         if (Array.isArray(parsed)) {
           return parsed.map((item) => {

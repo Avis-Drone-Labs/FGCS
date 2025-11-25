@@ -501,16 +501,22 @@ app.whenReady().then(() => {
           `Expected recentLogs to be an array, but got ${typeof recentLogs}`,
         )
       }
-      return recentLogs.map((log) => {
-        const logName = path.basename(log.path)
-        const fileStats = fs.statSync(log.path)
-        return {
-          name: logName,
-          path: log.path,
-          size: fileStats.size,
-          timestamp: new Date(log.timestamp),
-        }
-      })
+      return recentLogs
+        .map((log) => {
+          try {
+            const logName = path.basename(log.path)
+            const fileStats = fs.statSync(log.path)
+            return {
+              name: logName,
+              path: log.path,
+              size: fileStats.size,
+              timestamp: new Date(log.timestamp),
+            }
+          } catch {
+            return null
+          }
+        })
+        .filter((log) => log !== null)
     } catch (error) {
       return []
     }

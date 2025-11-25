@@ -20,16 +20,25 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
         if (Array.isArray(parsed)) {
           return parsed.map((item) => {
             if (typeof item === "string") {
-              // Old format: use atime as fallback
+              // Old format: use mtime as fallback
               try {
                 const stats = fs.statSync(item)
-                return { path: item, timestamp: stats.atime.getTime() }
+                return { path: item, timestamp: stats.mtime.getTime() }
               } catch {
                 return { path: item, timestamp: Date.now() }
               }
             }
-            // New format: already an object
-            return item
+            // New format: validate and return
+            if (
+              typeof item === "object" &&
+              item !== null &&
+              "path" in item &&
+              "timestamp" in item
+            ) {
+              return item as RecentLog
+            }
+            // Invalid format: treat as current time
+            return { path: String(item), timestamp: Date.now() }
           })
         }
         return []

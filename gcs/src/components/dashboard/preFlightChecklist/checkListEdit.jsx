@@ -10,11 +10,6 @@ import ListItem from "@tiptap/extension-list-item"
 import { RichTextEditor } from "@mantine/tiptap"
 import { Node } from "@tiptap/core"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../../tailwind.config.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 export default function EditCheckList({
   opened,
   close,
@@ -97,7 +92,7 @@ export default function EditCheckList({
             editor={editor}
             classNames={{ content: "!list-disc" }}
           >
-            {/* 
+            {/*
               Going to keep this for future use with code blocks, no need to delete.
               <RichTextEditor.Toolbar sticky stickyOffset={60}>
                 <RichTextEditor.ControlsGroup>
@@ -117,15 +112,11 @@ export default function EditCheckList({
                 generateCheckboxListString(true)
               }}
               variant="filled"
-              color={tailwindColors.red[600]}
+              color={"red"}
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="filled"
-              color={tailwindColors.green[600]}
-            >
+            <Button type="submit" variant="filled" color={"green"}>
               Save
             </Button>
           </div>

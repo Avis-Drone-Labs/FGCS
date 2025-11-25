@@ -76,10 +76,7 @@ import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 // Styling imports
 import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../tailwind.config.js"
 import { showErrorNotification } from "../helpers/notification.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
   // Redux
@@ -309,7 +306,7 @@ export default function Navbar() {
           <Group justify="space-between" className="pt-4">
             <Button
               variant="filled"
-              color={tailwindColors.red[600]}
+              color={"red"}
               onClick={() => {
                 dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
@@ -321,7 +318,7 @@ export default function Navbar() {
             <Button
               variant="filled"
               type="submit"
-              color={tailwindColors.green[600]}
+              color={"green"}
               disabled={
                 !connectedToSocket ||
                 (connectionType == ConnectionType.Serial &&
@@ -394,7 +391,7 @@ export default function Navbar() {
           <Button
             className="mt-8"
             variant="filled"
-            color={tailwindColors.red[600]}
+            color={"red"}
             onClick={() => {
               dispatch(emitStopForwarding())
             }}
@@ -405,7 +402,7 @@ export default function Navbar() {
           <Button
             className="mt-8"
             variant="filled"
-            color={tailwindColors.green[600]}
+            color={"green"}
             onClick={() => {
               dispatch(emitStartForwarding())
               dispatch(setForwardingAddressModalOpened(false))
@@ -509,11 +506,7 @@ export default function Navbar() {
           {connectedToSocket ? (
             <Button
               onClick={connectedToDrone ? disconnect : connectToDroneFromButton}
-              color={
-                connectedToDrone
-                  ? tailwindColors.falconred[800]
-                  : tailwindColors.green[600]
-              }
+              color={connectedToDrone ? "red.8" : "green"}
               radius="xs"
             >
               {connectedToDrone ? "Disconnect" : "Connect"}

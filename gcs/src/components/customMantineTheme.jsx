@@ -26,6 +26,18 @@ export const CustomMantineTheme = createTheme({
       tailwindColors.falcongrey[900],
       tailwindColors.falcongrey[950],
     ],
+    red: [
+      tailwindColors.falconred[100],
+      tailwindColors.falconred[200],
+      tailwindColors.falconred[300],
+      tailwindColors.falconred[400],
+      tailwindColors.falconred[500],
+      tailwindColors.falconred[600],
+      tailwindColors.falconred[700],
+      tailwindColors.falconred[800],
+      tailwindColors.falconred[900],
+      tailwindColors.falconred[950],
+    ],
   },
   cursorType: "pointer",
 })

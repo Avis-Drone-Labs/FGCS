@@ -194,7 +194,9 @@ const droneInfoSlice = createSlice({
           action.payload.satellites_visible
         state.gps2RawIntData.fixType = action.payload.fix_type
         state.gps2RawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
-        state.gps2RawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
+        state.gps2RawIntData.courseOverGround = centiDegToDeg(
+          action.payload.cog,
+        )
         state.gps2RawIntData.hdop = action.payload.hdop ?? 0
       }
     },

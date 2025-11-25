@@ -78,8 +78,7 @@ export default function Dashboard() {
   const armedNotification = useSelector(selectNotificationSound)
   const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
 
-  const hdopDisplay =
-    fixType === 0 || hdop == null || hdop === 0 ? "NO GPS" : hdop.toFixed(2)
+  const hdopDisplay = hdop != null ? hdop.toFixed(2) : "0.00"
 
   const connectedToDrone = useSelector(selectConnectedToDrone)
 

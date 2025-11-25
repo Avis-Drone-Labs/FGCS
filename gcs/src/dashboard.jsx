@@ -204,7 +204,7 @@ export default function Dashboard() {
           <StatusSection
             icon={<IconTarget />}
             value={hdopDisplay}
-            tooltip="GPS HDOP (precision)"
+            tooltip="GPS HDoP"
           />
           <StatusSection
             icon={<IconGps />}

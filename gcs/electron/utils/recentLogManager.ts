@@ -2,11 +2,6 @@ import { app } from "electron"
 import * as fs from "fs"
 import * as path from "path"
 
-interface RecentLog {
-  path: string
-  lastAccessTime: string
-}
-
 export default function createRecentLogsManager(maxRecentLogs: number = 10) {
   // JSON file to hold paths to recently opened logs
   const recentLogsPath: string = path.join(
@@ -14,24 +9,13 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
     "recentLogs.json",
   )
 
-  function loadRecentLogs(): RecentLog[] {
+  function loadRecentLogs(): string[] {
     try {
       if (fs.existsSync(recentLogsPath)) {
         const data = fs.readFileSync(recentLogsPath, "utf8")
         const parsed = JSON.parse(data)
-        
-        // Backward compatibility: convert old string[] format to new object format
-        if (Array.isArray(parsed)) {
-          if (parsed.length > 0 && typeof parsed[0] === "string") {
-            // Old format detected, convert to new format
-            return parsed.map((filePath: string) => ({
-              path: filePath,
-              lastAccessTime: new Date().toISOString(),
-            }))
-          }
-          return parsed
-        }
-        return []
+        // Ensure we return an array of strings
+        return Array.isArray(parsed) ? parsed : []
       }
       return []
     } catch (error) {
@@ -40,7 +24,7 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
     }
   }
 
-  let recentLogs: RecentLog[] = loadRecentLogs()
+  let recentLogs: string[] = loadRecentLogs()
 
   function saveRecentLogs(): void {
     try {
@@ -53,13 +37,10 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
   return {
     addRecentLog(filePath: string): void {
       // Remove the file if it already exists in the list
-      recentLogs = recentLogs.filter((log) => log.path !== filePath)
+      recentLogs = recentLogs.filter((file: string) => file !== filePath)
 
-      // Add the file to the beginning of the list with current timestamp
-      recentLogs.unshift({
-        path: filePath,
-        lastAccessTime: new Date().toISOString(),
-      })
+      // Add the file to the beginning of the list
+      recentLogs.unshift(filePath)
 
       // Trim the list if it exceeds the maximum allowed
       if (recentLogs.length > maxRecentLogs) {
@@ -68,10 +49,10 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
       saveRecentLogs()
     },
 
-    getRecentLogs(): RecentLog[] {
+    getRecentLogs(): string[] {
       // Filter out files that no longer exist
-      const existingFiles = recentLogs.filter((log) =>
-        fs.existsSync(log.path),
+      const existingFiles: string[] = recentLogs.filter((file: string) =>
+        fs.existsSync(file),
       )
 
       // Update the list if files were removed

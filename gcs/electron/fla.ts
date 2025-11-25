@@ -408,7 +408,7 @@ async function determineLogFileType(filePath: string): Promise<LogType> {
 }
 
 // New function to get recent files
-export function getRecentFiles() {
+export function getRecentFiles(): string[] {
   return recentLogsManager.getRecentLogs()
 }
 

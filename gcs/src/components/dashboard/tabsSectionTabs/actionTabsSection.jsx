@@ -27,6 +27,7 @@ import {
 } from "../../../redux/slices/droneInfoSlice"
 
 import { NoConnectionMsg } from "../tabsSection"
+import { useRebootCallback } from "../../../helpers/useRebootCallback"
 
 export default function ActionTabsSection({
   connected,
@@ -113,6 +114,7 @@ const ArmTakeoffLandAction = () => {
     defaultValue: 10,
   })
   const isArmed = useSelector(selectArmed)
+  const rebootCallback = useRebootCallback()
 
   function armDisarm(arm, force = false) {
     // TODO: Add force arm ability
@@ -164,6 +166,11 @@ const ArmTakeoffLandAction = () => {
           className="grow"
         >
           Land
+        </Button>
+
+        {/** Reboot Button */}
+        <Button onClick={rebootCallback} color={"red"} className="grow">
+          Reboot FC
         </Button>
       </div>
     </>

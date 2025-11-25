@@ -8,6 +8,7 @@ import { Route, Routes } from "react-router-dom"
 import SettingsModal from "./settingsModal"
 import { Commands } from "./spotlight/commandHandler"
 import Toolbar from "./toolbar/toolbar"
+import AutopilotRebootModal from "./params/autopilotRebootModal.jsx"
 
 // Wrappers
 import { SettingsProvider } from "../helpers/settingsProvider"
@@ -24,17 +25,29 @@ import Navbar from "./navbar"
 
 // Redux
 import { ErrorBoundary } from "react-error-boundary"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { initSocket } from "../redux/slices/socketSlice"
+import { selectConnectedToDrone } from "../redux/slices/droneConnectionSlice"
 import AlertProvider from "./dashboard/alerts/alertProvider"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 
 export default function AppContent() {
   // Setup sockets for redux
   const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   useEffect(() => {
     dispatch(initSocket())
   }, [])
+
+  // Send connection state changes to main so it can own quit policy on macOS
+  useEffect(() => {
+    try {
+      window.ipcRenderer.send("app:connected-state", connectedToDrone)
+    } catch {
+      // Ignore IPC errors if main process isn't ready
+      console.log("IPC Call Failed: app:connected-state")
+    }
+  }, [connectedToDrone])
 
   return (
     <SettingsProvider>
@@ -59,6 +72,7 @@ export default function AppContent() {
             <Route path="/fla" element={<FLA />} />
           </Routes>
           <Commands />
+          <AutopilotRebootModal />
         </ErrorBoundary>
       </SingleRunWrapper>
     </SettingsProvider>

@@ -51,14 +51,14 @@ export default function TelemetrySection({
   useEffect(() => {
     // Calculate distance from current pos to home pos
     if (gpsData.lat && gpsData.lon && homePosition.lat && homePosition.lon) {
-      const distToHome = distance(
+      const distToHomeCalculated = distance(
         [intToCoord(gpsData.lon), intToCoord(gpsData.lat)],
         [intToCoord(homePosition.lon), intToCoord(homePosition.lat)],
         {
           units: "meters",
         },
       )
-      setDistToHome(distToHome.toFixed(2))
+      setDistToHome(distToHomeCalculated)
     }
   }, [gpsData, homePosition])
 
@@ -87,121 +87,134 @@ export default function TelemetrySection({
       </div>
 
       {/* Indicators */}
-      <div className="flex items-center flex-col justify-evenly @xl:flex-row">
+      <div className="flex items-center flex-col justify-evenly @2xl:flex-row">
         {/* Attitude Indicator */}
         <div
-          className="flex flex-row items-center justify-center"
+          className="grid items-center grid-cols-[8ch_auto_8ch]"
           style={{
             paddingTop: `${calcIndicatorPadding()}px`,
             paddingBottom: `${calcIndicatorPadding()}px`,
           }}
         >
-          <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
-            {/* AS and GS values */}
-            <p className="text-sm text-center">ms&#8315;&#185;</p>
-            <TelemetryValueDisplay
-              title="AS"
-              value={(telemetryData.airspeed
-                ? telemetryData.airspeed
-                : 0
-              ).toFixed(2)}
-              fs={telemetryFontSize}
-            />
-            <TelemetryValueDisplay
-              title="GS"
-              value={(telemetryData.groundspeed
-                ? telemetryData.groundspeed
-                : 0
-              ).toFixed(2)}
-              fs={telemetryFontSize}
-            />
+          <div className="justify-self-end w-[8ch]">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
+              {/* AS and GS values */}
+              <p className="text-sm text-center">ms&#8315;&#185;</p>
+              <TelemetryValueDisplay
+                title="AS"
+                value={(telemetryData.airspeed
+                  ? telemetryData.airspeed
+                  : 0
+                ).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+              <TelemetryValueDisplay
+                title="GS"
+                value={(telemetryData.groundspeed
+                  ? telemetryData.groundspeed
+                  : 0
+                ).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+            </div>
           </div>
 
           {/* Attitude indicator image */}
-          <AttitudeIndicator
-            roll={attitudeData.roll * (180 / Math.PI)}
-            pitch={attitudeData.pitch * (180 / Math.PI)}
-            size={`${calcIndicatorSize()}px`}
-          />
+          <div className="justify-self-center flex-shrink-0">
+            <AttitudeIndicator
+              roll={attitudeData.roll * (180 / Math.PI)}
+              pitch={attitudeData.pitch * (180 / Math.PI)}
+              size={`${calcIndicatorSize()}px`}
+            />
+          </div>
 
           {/* AMSL and AREL values */}
-          <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
-            <p className="text-sm text-center">m</p>
-            <TelemetryValueDisplay
-              title="AMSL"
-              value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
-              fs={telemetryFontSize}
-            />
-            <TelemetryValueDisplay
-              title="AREL"
-              value={(gpsData.relative_alt
-                ? gpsData.relative_alt / 1000
-                : 0
-              ).toFixed(2)}
-              fs={telemetryFontSize}
-            />
+          <div className="justify-self-start w-[8ch]">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
+              <p className="text-sm text-center">m</p>
+              <TelemetryValueDisplay
+                title="AMSL"
+                value={(gpsData.alt ? gpsData.alt / 1000 : 0).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+              <TelemetryValueDisplay
+                title="AREL"
+                value={(gpsData.relative_alt
+                  ? gpsData.relative_alt / 1000
+                  : 0
+                ).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+            </div>
           </div>
         </div>
 
         {/* Heading Indicator */}
         <div
-          className="flex flex-row items-center justify-center"
+          className="grid items-center grid-cols-[8ch_auto_8ch]"
           style={{
             paddingTop: `${calcIndicatorPadding()}px`,
             paddingBottom: `${calcIndicatorPadding()}px`,
           }}
         >
-          <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
-            {/* HDG and WP values */}
-            <p className="text-sm text-center">deg &#176;</p>
-            <TelemetryValueDisplay
-              title="HDG"
-              value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
-              fs={telemetryFontSize}
-            />
-            <TelemetryValueDisplay
-              title="YAW"
-              value={(attitudeData.yaw
-                ? attitudeData.yaw * (180 / Math.PI)
-                : 0
-              ).toFixed(2)}
-              fs={telemetryFontSize}
-            />
+          <div className="justify-self-end w-[8ch]">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
+              {/* HDG and WP values */}
+              <p className="text-sm text-center">deg &#176;</p>
+              <TelemetryValueDisplay
+                title="HDG"
+                value={(gpsData.hdg ? gpsData.hdg / 100 : 0).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+              <TelemetryValueDisplay
+                title="YAW"
+                value={(attitudeData.yaw
+                  ? attitudeData.yaw * (180 / Math.PI)
+                  : 0
+                ).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+            </div>
           </div>
 
           {/* Heading indicator image */}
-          <HeadingIndicator
-            heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
-            size={`${calcIndicatorSize()}px`}
-          />
+          <div className="justify-self-center flex-shrink-0">
+            <HeadingIndicator
+              heading={gpsData.hdg ? gpsData.hdg / 100 : 0}
+              size={`${calcIndicatorSize()}px`}
+            />
+          </div>
 
           {/* YAW and HOME values */}
-          <div
-            className="flex flex-col items-center justify-center space-y-4 text-center min-w-14"
-            ref={sideBarRef}
-          >
-            <p className="text-sm">m</p>
-            <TelemetryValueDisplay
-              title="WP"
-              value={(navControllerOutputData.wpDist
-                ? navControllerOutputData.wpDist
-                : 0
-              ).toFixed(2)}
-              fs={telemetryFontSize}
-            />
-            <TelemetryValueDisplay
-              title="HOME"
-              value={distToHome}
-              fs={telemetryFontSize}
-            />
+          <div className="justify-self-start w-[8ch]" ref={sideBarRef}>
+            <div className="flex flex-col items-center justify-center space-y-4 text-center min-w-14">
+              <p className="text-sm">m</p>
+              <TelemetryValueDisplay
+                title="WP"
+                value={(navControllerOutputData.wpDist
+                  ? navControllerOutputData.wpDist
+                  : 0
+                ).toFixed(2)}
+                fs={telemetryFontSize}
+              />
+              <TelemetryValueDisplay
+                title="HOME"
+                value={distToHome.toFixed(2)}
+                fs={telemetryFontSize}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* EKF and VIBE labels */}
-      <div className="flex flex-row items-center justify-center gap-10 my-4">
-        <EkfDisplay telemetryFontSize={telemetryFontSize} />
-        <VibeDisplay telemetryFontSize={telemetryFontSize} />
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center my-4">
+        <div /> {/* left filler column */}
+        <div className="flex justify-center gap-10">
+          <EkfDisplay telemetryFontSize={telemetryFontSize} />
+          <VibeDisplay telemetryFontSize={telemetryFontSize} />
+        </div>
+        <div /> {/* right filler column */}
       </div>
 
       {/* Battery information */}

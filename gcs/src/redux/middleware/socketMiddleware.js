@@ -27,6 +27,7 @@ import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
   showErrorNotification,
   showSuccessNotification,
+  showWarningNotification,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
@@ -90,6 +91,7 @@ import {
   setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
+  resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
   setFetchingVars,
   setFetchingVarsProgress,
@@ -97,6 +99,10 @@ import {
   setModifiedParams,
   setParams,
   setParamSearchValue,
+  setParamsFailedToWrite,
+  setParamsFailedToWriteModalOpen,
+  setParamsWriteProgressData,
+  setParamsWriteProgressModalOpen,
   setRebootData,
   setShownParams,
   updateParamValue,
@@ -136,6 +142,7 @@ const ParamSpecificSocketEvents = Object.freeze({
   onParamSetSuccess: "param_set_success",
   onParamError: "params_error",
   onExportParamsResult: "export_params_result",
+  onSetMultipleParamsProgress: "set_multiple_params_progress",
 })
 
 const MissionSpecificSocketEvents = Object.freeze({
@@ -207,10 +214,19 @@ const socketMiddleware = (store) => {
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
         )
         break
-      case "GPS_RAW_INT":
-        store.dispatch(setGpsRawIntData(msg))
+      case "GPS_RAW_INT": {
+        // MAVLink GPS_RAW_INT provides 'eph' (HDOP * 100).
+        const hdop = msg.eph != null ? msg.eph / 100.0 : null
+
+        store.dispatch(
+          setGpsRawIntData({
+            ...msg,
+            hdop,
+          }),
+        )
         store.dispatch(calculateGpsTrackHeadingThunk())
         break
+      }
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!
         store.dispatch(setRSSIData(msg.rssi))
@@ -549,17 +565,49 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(ParamSpecificSocketEvents.onParamSetSuccess, (msg) => {
-          showSuccessNotification(msg.message)
-          store.dispatch(setModifiedParams([]))
+          const paramsSetSuccessfully = msg.data.params_set_successfully
+          const paramsNotSet = msg.data.params_could_not_set
+          if (paramsNotSet.length > 0 && paramsSetSuccessfully.length > 0) {
+            showWarningNotification(msg.message)
+          } else if (paramsNotSet.length > 0) {
+            showErrorNotification(msg.message)
+          } else {
+            showSuccessNotification(msg.message)
+          }
+
+          const modifiedParams = store.getState().paramsSlice.modifiedParams
+
+          // Only clear the params that got set successfully
+          store.dispatch(
+            setModifiedParams(
+              modifiedParams.filter(
+                (param) =>
+                  !paramsSetSuccessfully.some(
+                    (setParam) => setParam.param_id === param.param_id,
+                  ),
+              ),
+            ),
+          )
+
           // Update the param in the params list also
-          for (let param of msg.data) {
+          for (let param of paramsSetSuccessfully) {
             store.dispatch(updateParamValue(param))
+          }
+
+          store.dispatch(resetParamsWriteProgressData())
+          store.dispatch(setParamsWriteProgressModalOpen(false))
+
+          if (paramsNotSet.length !== 0) {
+            store.dispatch(setParamsFailedToWrite(paramsNotSet))
+            store.dispatch(setParamsFailedToWriteModalOpen(true))
           }
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
           showErrorNotification(msg.message)
           store.dispatch(setFetchingVars(false))
+          store.dispatch(resetParamsWriteProgressData())
+          store.dispatch(setParamsWriteProgressModalOpen(false))
         })
 
         socket.socket.on(
@@ -570,6 +618,20 @@ const socketMiddleware = (store) => {
             } else {
               showErrorNotification(msg.message)
             }
+          },
+        )
+
+        socket.socket.on(
+          ParamSpecificSocketEvents.onSetMultipleParamsProgress,
+          (msg) => {
+            store.dispatch(
+              setParamsWriteProgressData({
+                message: msg.message,
+                param_id: msg.param_id,
+                current_index: msg.current_index,
+                total_params: msg.total_params,
+              }),
+            )
           },
         )
 

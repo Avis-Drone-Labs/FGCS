@@ -14,27 +14,23 @@ import { ResizableBox } from "react-resizable"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 // Custom components, helpers, and data
 import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
-import AutopilotRebootModal from "./components/params/autopilotRebootModal.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
+import { useRebootCallback } from "./helpers/useRebootCallback.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import LoadParamsFileModal from "./components/params/loadParamsFileModal.jsx"
+import ParamsFailedToWriteModal from "./components/params/paramsFailedToWriteModal.jsx"
+import ParamsWriteModal from "./components/params/paramsWriteModal.jsx"
 import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
 import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import {
   emitExportParamsToFile,
-  emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
   resetParamState,
@@ -46,7 +42,6 @@ import {
   selectParamSearchValue,
   selectShowModifiedParams,
   selectShownParams,
-  setAutoPilotRebootModalOpen,
   setFetchingVars,
   setHasFetchedOnce,
   setLoadedFileName,
@@ -70,6 +65,7 @@ function cleanFloat(value, decimals = 5) {
 export default function Params() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
+  const rebootCallback = useRebootCallback()
 
   // Parameter states
   const hasFetchedOnce = useSelector(selectHasFetchedOnce)
@@ -123,12 +119,6 @@ export default function Params() {
     dispatch(setShownParams([]))
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
-  }
-
-  function rebootCallback() {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    dispatch(resetParamState())
   }
 
   async function saveParamsToFile() {
@@ -208,8 +198,9 @@ export default function Params() {
 
   return (
     <Layout currentPage="params">
-      <AutopilotRebootModal />
       <LoadParamsFileModal />
+      <ParamsWriteModal />
+      <ParamsFailedToWriteModal />
 
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">
@@ -253,10 +244,7 @@ export default function Params() {
                   </div>
                   <Divider />
                   <div className="flex flex-col gap-4">
-                    <Button
-                      onClick={rebootCallback}
-                      color={tailwindColors.red[600]}
-                    >
+                    <Button onClick={rebootCallback} color={"red"}>
                       Reboot FC
                     </Button>
                   </div>

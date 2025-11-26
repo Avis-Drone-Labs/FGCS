@@ -25,7 +25,6 @@ import { useSettings } from "../../helpers/settings"
 import AlertSection from "./alerts/alert"
 import { AlertCategory, AlertSeverity } from "./alerts/alertConstants"
 import { useAlerts } from "./alerts/alertContext"
-import { GPS_FIX_TYPES } from "../../helpers/mavlinkConstants"
 
 export function StatusSection({ icon, value, tooltip }) {
   return (

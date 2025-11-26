@@ -203,11 +203,13 @@ export default function Dashboard() {
             value={GPS_FIX_TYPES[fixType]}
             tooltip="GPS fix type"
           />
-          <StatusSection
-            icon={<IconRadar />}
-            value={secondaryGpsFixLabel}
-            tooltip={"GPS2 fix type"}
-          />
+          {hasSecondaryGps && (
+            <StatusSection
+              icon={<IconRadar />}
+              value={secondaryGpsFixLabel}
+              tooltip="GPS2 fix type"
+            />
+          )}
           <StatusSection
             icon={<IconGps />}
             value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${

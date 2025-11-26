@@ -65,6 +65,7 @@ const droneInfoSlice = createSlice({
       courseOverGround: 0,
       hdop: 0,
     },
+    hasSecondaryGps: false,
     rssi: 0.0,
     notificationSound: "",
     aircraftType: 0, // TODO: This should be in local storage but I have no idea how :D,
@@ -198,6 +199,8 @@ const droneInfoSlice = createSlice({
           action.payload.cog,
         )
         state.gps2RawIntData.hdop = action.payload.hdop ?? 0
+
+        state.hasSecondaryGps = true //Reducer called => gps2 exists
       }
     },
     setOnboardControlSensorsEnabled: (state, action) => {
@@ -291,6 +294,7 @@ const droneInfoSlice = createSlice({
       state.onboardControlSensorsEnabled & 268435456,
     selectGPSRawInt: (state) => state.gpsRawIntData,
     selectGPS2RawInt: (state) => state.gps2RawIntData,
+    selectHasSecondaryGps: (state) => state.hasSecondaryGps,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
     selectBatteryData: (state) =>
@@ -437,6 +441,7 @@ export const {
   selectPrearmEnabled,
   selectGPSRawInt,
   selectGPS2RawInt,
+  selectHasSecondaryGps,
   selectRSSI,
   selectHeading,
   selectSystemStatus,

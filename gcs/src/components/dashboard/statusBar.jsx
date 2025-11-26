@@ -13,7 +13,6 @@ import {
   IconClock,
   IconNetwork,
   IconNetworkOff,
-  IconSatellite,
 } from "@tabler/icons-react"
 
 // Redux
@@ -21,7 +20,6 @@ import { useSelector } from "react-redux"
 import {
   selectBatteryData,
   selectTelemetry,
-  selectGPS2RawInt,
 } from "../../redux/slices/droneInfoSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
@@ -49,16 +47,6 @@ export default function StatusBar(props) {
   const [time, setTime] = useState(moment())
   const batteryData = useSelector(selectBatteryData)
   const telemetryData = useSelector(selectTelemetry)
-  const gps2 = useSelector(selectGPS2RawInt)
-
-  // Only show secondary GPS label if we've seen a non-zero fix type
-  const hasSecondaryGps =
-    gps2 && (gps2.fixType > 0 || gps2.satellitesVisible > 0)
-
-  const secondaryGpsFixLabel =
-    hasSecondaryGps && gps2.fixType >= 0 && gps2.fixType < GPS_FIX_TYPES.length
-      ? GPS_FIX_TYPES[gps2.fixType]
-      : null
 
   // Update clock every second
   useEffect(() => {
@@ -153,17 +141,6 @@ export default function StatusBar(props) {
         style={{ backgroundColor: GetOutsideVisibilityColor() }}
       >
         {props.children}
-        {secondaryGpsFixLabel && (
-          <StatusSection
-            icon={<IconSatellite />}
-            value={secondaryGpsFixLabel}
-            tooltip={`Secondary GPS fix: ${secondaryGpsFixLabel}${
-              gps2?.satellitesVisible
-                ? ` (${gps2.satellitesVisible} satellites)`
-                : ""
-            }`}
-          />
-        )}
         <StatusSection
           icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}
           value=""

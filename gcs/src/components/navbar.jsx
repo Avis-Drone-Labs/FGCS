@@ -499,11 +499,7 @@ export default function Navbar() {
                   ? disconnectFromDroneCallback
                   : connectToDroneFromButtonCallback
               }
-              color={
-                connectedToDrone
-                  ? "red.8" 
-                  : "green"
-              }
+              color={connectedToDrone ? "red.8" : "green"}
               radius="xs"
             >
               {connectedToDrone ? "Disconnect" : "Connect"}

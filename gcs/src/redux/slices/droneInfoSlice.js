@@ -202,7 +202,7 @@ const droneInfoSlice = createSlice({
         )
         state.gps2RawIntData.hdop = action.payload.hdop ?? 0
 
-        state.hasSecondaryGps = true //Reducer called => gps2 exists
+        state.hasSecondaryGps = true // Reducer called => gps2 exists
       }
     },
     setOnboardControlSensorsEnabled: (state, action) => {

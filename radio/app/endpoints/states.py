@@ -65,6 +65,9 @@ def set_state(data: SetStateType) -> None:
     # Reset all data streams
     droneStatus.drone.stopAllDataStreams()
 
+    # Remove all existing message listeners
+    droneStatus.drone.clearAllMessageListeners()
+
     # Always setup position stream to get GLOBAL_POSITION_INT messages
     droneStatus.drone.setupSingleDataStream(mavutil.mavlink.MAV_DATA_STREAM_POSITION)
 

@@ -22,6 +22,7 @@ import {
   IconGps,
   IconRadar,
   IconSatellite,
+  IconTarget,
 } from "@tabler/icons-react"
 import { ResizableBox } from "react-resizable"
 
@@ -77,7 +78,10 @@ export default function Dashboard() {
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
-  const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
+  const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
+
+  const hdopDisplay = hdop != null ? hdop.toFixed(2) : "0.00"
+
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const gps2 = useSelector(selectGPS2RawInt)
   const hasSecondaryGps = useSelector(selectHasSecondaryGps)
@@ -210,6 +214,11 @@ export default function Dashboard() {
               tooltip="GPS2 fix type"
             />
           )}
+          <StatusSection
+            icon={<IconTarget />}
+            value={hdopDisplay}
+            tooltip="GPS HDoP"
+          />
           <StatusSection
             icon={<IconGps />}
             value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${

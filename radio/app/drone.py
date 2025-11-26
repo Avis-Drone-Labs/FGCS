@@ -522,6 +522,10 @@ class Drone:
             return True
         return False
 
+    def clearAllMessageListeners(self) -> None:
+        """Clears all message listeners."""
+        self.message_listeners.clear()
+
     def reserve_message_type(self, message_type: str, controller_id: str) -> bool:
         """Reserve a message type for exclusive controller use.
 
@@ -1173,8 +1177,7 @@ class Drone:
     def close(self) -> None:
         """Close the connection to the drone."""
         self.logger.info(f"Cleaning up resources for drone at {self}")
-        for message_id in copy.deepcopy(self.message_listeners):
-            self.removeMessageListener(message_id)
+        self.clearAllMessageListeners()
 
         self.is_active.clear()
 

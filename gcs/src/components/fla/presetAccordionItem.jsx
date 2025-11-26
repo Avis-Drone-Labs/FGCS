@@ -14,10 +14,6 @@ import { IconInfoCircle, IconTrash } from "@tabler/icons-react"
 import _ from "lodash"
 import { colorPalette } from "./constants.js"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config"
-
 import { useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
@@ -34,8 +30,6 @@ import {
   setCustomColors,
   setMessageFilters,
 } from "../../redux/slices/logAnalyserSlice.js"
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Utility function to convert a string to title case
 function toTitleCase(str) {
@@ -197,7 +191,7 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
                   <MantineTooltip label="Delete Preset">
                     <ActionIcon
                       variant="light"
-                      color={tailwindColors.red[500]}
+                      color={"red"}
                       onClick={() => handleDeleteCustomPreset(preset.name)}
                     >
                       <IconTrash size={18} />

@@ -14,16 +14,33 @@ import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
+import ConfirmExitModal from "./confirmExitModal.jsx"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
+import { setConfirmExitModalOpen } from "../../redux/slices/applicationSlice.js"
 
 export default function Toolbar() {
+  const dispatch = useDispatch()
   const [areMenusActive, setMenusActive] = useState(false)
   const [isMac, setIsMac] = useState(false)
+
+  const connectedToDrone = useSelector(selectConnectedToDrone)
 
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {
       setIsMac(result)
     })
   }, [])
+
+  const onClose = () => {
+    if (connectedToDrone) {
+      dispatch(setConfirmExitModalOpen(true))
+    } else {
+      window.ipcRenderer.send("window:close", [])
+    }
+  }
 
   return (
     <>
@@ -100,9 +117,7 @@ export default function Toolbar() {
             <div
               title="Close"
               className="px-3 flex items-center h-full no-drag cursor-pointer group hover:bg-red-500"
-              onClick={() => {
-                window.ipcRenderer.send("window:close", [])
-              }}
+              onClick={() => onClose()}
               label="Close"
             >
               <CloseIcon className="stroke-slate-400 group-hover:stroke-white" />
@@ -110,6 +125,8 @@ export default function Toolbar() {
           </div>
         )}
       </div>
+
+      <ConfirmExitModal></ConfirmExitModal>
     </>
   )
 }

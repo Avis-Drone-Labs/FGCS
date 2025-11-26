@@ -13,9 +13,6 @@ import EditCheckList from "./checkListEdit.jsx"
 
 // Styling imports
 import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../../tailwind.config.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function CheckListArea({
   name,
@@ -182,14 +179,11 @@ export default function CheckListArea({
         withCloseButton={false}
       >
         <div className="flex w-full justify-between pt-4">
-          <Button
-            color={tailwindColors.red[600]}
-            onClick={() => setDeleteModal(false)}
-          >
+          <Button color={"red"} onClick={() => setDeleteModal(false)}>
             No, cancel
           </Button>
           <Button
-            color={tailwindColors.green[600]}
+            color={"green"}
             onClick={() => deleteChecklist()}
             data-autofocus
           >

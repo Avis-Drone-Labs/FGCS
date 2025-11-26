@@ -82,7 +82,7 @@ export default function Dashboard() {
   const gps2 = useSelector(selectGPS2RawInt)
   const hasSecondaryGps = useSelector(selectHasSecondaryGps)
 
-  const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType];
+  const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({

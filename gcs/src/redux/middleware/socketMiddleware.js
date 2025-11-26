@@ -229,7 +229,16 @@ const socketMiddleware = (store) => {
         break
       }
       case "GPS2_RAW":
-        store.dispatch(setGps2RawIntData(msg))
+        // MAVLink GPS2_RAW provides 'eph' (HDOP * 100).
+        const hdop = msg.eph != null ? msg.eph / 100.0 : null
+
+        store.dispatch(
+          setGps2RawIntData({
+            ...msg,
+            hdop,
+          }),
+        )
+        store.dispatch(calculateGpsTrackHeadingThunk())
         break
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!

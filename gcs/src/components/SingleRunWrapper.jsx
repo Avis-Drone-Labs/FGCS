@@ -123,12 +123,7 @@ export default function SingleRunWrapper({ children }) {
           fixes.
         </p>
         <div className="flex gap-x-2 mt-5">
-          <Button
-            component="a"
-            onClick={closeForever}
-            fullWidth
-            color={tailwindColors.red[600]}
-          >
+          <Button component="a" onClick={closeForever} fullWidth color={"red"}>
             Skip update
           </Button>
           <Button

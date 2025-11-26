@@ -20,12 +20,6 @@ import {
   setMessageFilters,
 } from "../../redux/slices/logAnalyserSlice.js"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config.js"
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 function ChartDataCard({ item, unit, messageMeans }) {
   const dispatch = useDispatch()
   const messageFilters = useSelector(selectMessageFilters)
@@ -86,7 +80,7 @@ function ChartDataCard({ item, unit, messageMeans }) {
         </p>
         <ActionIcon
           variant="subtle"
-          color={tailwindColors.red[500]}
+          color={"red"}
           onClick={() => removeDataset(item.label)}
         >
           <IconTrash size={18} />

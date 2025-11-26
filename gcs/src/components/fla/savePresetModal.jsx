@@ -1,6 +1,3 @@
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../tailwind.config.js"
 // Third party imports
 import { Button, Group, Modal, TextInput } from "@mantine/core"
 import { useState } from "react"
@@ -17,8 +14,6 @@ import {
   selectMessageFilters,
   setCanSavePreset,
 } from "../../redux/slices/logAnalyserSlice.js"
-
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function SavePresetModal({
   isSavePresetModalOpen,
@@ -116,7 +111,7 @@ export default function SavePresetModal({
         <Group justify="space-between" className="pt-4">
           <Button
             variant="filled"
-            color={tailwindColors.red[500]}
+            color={"red"}
             onClick={() => {
               setPresetName("")
               closeSavePresetModal()
@@ -127,7 +122,7 @@ export default function SavePresetModal({
           <Button
             variant="filled"
             type="submit"
-            color={tailwindColors.green[600]}
+            color={"green"}
             disabled={!presetName.trim()}
           >
             Save

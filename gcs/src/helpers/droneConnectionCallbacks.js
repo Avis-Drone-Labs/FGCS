@@ -1,10 +1,13 @@
 import { useCallback } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
+
+import { showErrorNotification } from "./notification.js"
 
 import {
   emitGetComPorts,
   setConnectionModal,
   emitDisconnectFromDrone,
+  selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice.js"
 
 import {
@@ -20,11 +23,16 @@ import {
  */
 export function useRebootCallback() {
   const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   return useCallback(() => {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    dispatch(resetParamState())
-  }, [dispatch])
+    if (connectedToDrone) {
+      dispatch(emitRebootAutopilot())
+      dispatch(setAutoPilotRebootModalOpen(true))
+      dispatch(resetParamState())
+    } else {
+      showErrorNotification("Cannot reboot: no drone connected.")
+    }
+  }, [dispatch, connectedToDrone])
 }
 
 /**
@@ -35,10 +43,15 @@ export function useRebootCallback() {
  */
 export function useConnectToDroneFromButtonCallback() {
   const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   return useCallback(() => {
-    dispatch(emitGetComPorts())
-    dispatch(setConnectionModal(true))
-  }, [dispatch])
+    if (!connectedToDrone) {
+      dispatch(emitGetComPorts())
+      dispatch(setConnectionModal(true))
+    } else {
+      showErrorNotification("Cannot connect: already connected.")
+    }
+  }, [dispatch, connectedToDrone])
 }
 
 /**
@@ -48,7 +61,12 @@ export function useConnectToDroneFromButtonCallback() {
  */
 export function useDisconnectFromDroneCallback() {
   const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   return useCallback(() => {
-    dispatch(emitDisconnectFromDrone())
-  }, [dispatch])
+    if (connectedToDrone) {
+      dispatch(emitDisconnectFromDrone())
+    } else {
+      showErrorNotification("Cannot disconnect: no drone connected.")
+    }
+  }, [dispatch, connectedToDrone])
 }

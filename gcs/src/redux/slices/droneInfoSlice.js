@@ -59,6 +59,14 @@ const droneInfoSlice = createSlice({
       courseOverGround: 0,
       hdop: 0,
     },
+    gps2RawIntData: {
+      fixType: 0,
+      satellitesVisible: 0,
+      velocity: 0,
+      courseOverGround: 0,
+      hdop: 0,
+    },
+    hasSecondaryGps: false,
     rssi: 0.0,
     notificationSound: "",
     aircraftType: 0, // TODO: This should be in local storage but I have no idea how :D,
@@ -183,6 +191,20 @@ const droneInfoSlice = createSlice({
         state.gpsRawIntData.hdop = action.payload.hdop ?? 0
       }
     },
+    setGps2RawIntData: (state, action) => {
+      if (action.payload !== state.gps2RawIntData) {
+        state.gps2RawIntData.satellitesVisible =
+          action.payload.satellites_visible
+        state.gps2RawIntData.fixType = action.payload.fix_type
+        state.gps2RawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
+        state.gps2RawIntData.courseOverGround = centiDegToDeg(
+          action.payload.cog,
+        )
+        state.gps2RawIntData.hdop = action.payload.hdop ?? 0
+
+        state.hasSecondaryGps = true // Reducer called => gps2 exists
+      }
+    },
     setOnboardControlSensorsEnabled: (state, action) => {
       if (action.payload !== state.onboardControlSensorsEnabled) {
         state.onboardControlSensorsEnabled = action.payload
@@ -273,6 +295,8 @@ const droneInfoSlice = createSlice({
     selectPrearmEnabled: (state) =>
       state.onboardControlSensorsEnabled & 268435456,
     selectGPSRawInt: (state) => state.gpsRawIntData,
+    selectGPS2RawInt: (state) => state.gps2RawIntData,
+    selectHasSecondaryGps: (state) => state.hasSecondaryGps,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
     selectBatteryData: (state) =>
@@ -303,6 +327,7 @@ export const {
   setAttitudeData,
   setNavControllerOutput,
   setGpsRawIntData,
+  setGps2RawIntData,
   setBatteryData,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -417,6 +442,8 @@ export const {
   selectArmed,
   selectPrearmEnabled,
   selectGPSRawInt,
+  selectGPS2RawInt,
+  selectHasSecondaryGps,
   selectRSSI,
   selectHeading,
   selectSystemStatus,

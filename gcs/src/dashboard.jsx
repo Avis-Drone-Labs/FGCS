@@ -35,9 +35,11 @@ import {
   selectDroneCoords,
   selectFlightMode,
   selectGPSRawInt,
+  selectGPS2RawInt,
   selectNotificationSound,
   selectRSSI,
   soundPlayed,
+  selectHasSecondaryGps,
 } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
 
@@ -81,6 +83,10 @@ export default function Dashboard() {
   const hdopDisplay = hdop != null ? hdop.toFixed(2) : "0.00"
 
   const connectedToDrone = useSelector(selectConnectedToDrone)
+  const gps2 = useSelector(selectGPS2RawInt)
+  const hasSecondaryGps = useSelector(selectHasSecondaryGps)
+
+  const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -201,6 +207,13 @@ export default function Dashboard() {
             value={GPS_FIX_TYPES[fixType]}
             tooltip="GPS fix type"
           />
+          {hasSecondaryGps && (
+            <StatusSection
+              icon={<IconRadar />}
+              value={secondaryGpsFixLabel}
+              tooltip="GPS2 fix type"
+            />
+          )}
           <StatusSection
             icon={<IconTarget />}
             value={hdopDisplay}

@@ -136,6 +136,7 @@ export default function StatusBar(props) {
         style={{ backgroundColor: GetOutsideVisibilityColor() }}
       >
         {props.children}
+
         <StatusSection
           icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}
           value=""

@@ -27,18 +27,18 @@ import {
 import { useSessionStorage } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
-// Local imports
-import { AddCommand } from "./spotlight/commandHandler.js"
-
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
+import {
+  useConnectToDroneFromButtonCallback,
+  useDisconnectFromDroneCallback,
+} from "../helpers/droneConnectionCallbacks.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
   ConnectionType,
   emitConnectToDrone,
-  emitDisconnectFromDrone,
   emitGetComPorts,
   emitStartForwarding,
   emitStopForwarding,
@@ -76,10 +76,7 @@ import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 // Styling imports
 import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../tailwind.config.js"
 import { showErrorNotification } from "../helpers/notification.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
   // Redux
@@ -107,6 +104,10 @@ export default function Navbar() {
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
   const currentPage = useSelector(selectCurrentPage)
+
+  // Drone connection
+  const connectToDroneFromButtonCallback = useConnectToDroneFromButtonCallback()
+  const disconnectFromDroneCallback = useDisconnectFromDroneCallback()
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
@@ -140,21 +141,6 @@ export default function Navbar() {
 
     dispatch(setConnecting(true))
   }
-
-  // All seems to be broken, made a ticket for joe to look into: https://github.com/orgs/Avis-Drone-Labs/projects/10/views/1?pane=issue&itemId=124913361
-  function disconnect() {
-    dispatch(emitDisconnectFromDrone())
-  }
-
-  function connectToDroneFromButton() {
-    dispatch(emitGetComPorts())
-    dispatch(setConnectionModal(true))
-  }
-
-  useEffect(() => {
-    AddCommand("connect_to_drone", connectToDroneFromButton)
-    AddCommand("disconnect_from_drone", disconnect)
-  }, [])
 
   useEffect(() => {
     if (!comPorts.includes(selectedComPort)) {
@@ -309,7 +295,7 @@ export default function Navbar() {
           <Group justify="space-between" className="pt-4">
             <Button
               variant="filled"
-              color={tailwindColors.red[600]}
+              color={"red"}
               onClick={() => {
                 dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
@@ -321,7 +307,7 @@ export default function Navbar() {
             <Button
               variant="filled"
               type="submit"
-              color={tailwindColors.green[600]}
+              color={"green"}
               disabled={
                 !connectedToSocket ||
                 (connectionType == ConnectionType.Serial &&
@@ -394,7 +380,7 @@ export default function Navbar() {
           <Button
             className="mt-8"
             variant="filled"
-            color={tailwindColors.red[600]}
+            color={"red"}
             onClick={() => {
               dispatch(emitStopForwarding())
             }}
@@ -405,7 +391,7 @@ export default function Navbar() {
           <Button
             className="mt-8"
             variant="filled"
-            color={tailwindColors.green[600]}
+            color={"green"}
             onClick={() => {
               dispatch(emitStartForwarding())
               dispatch(setForwardingAddressModalOpened(false))
@@ -508,12 +494,12 @@ export default function Navbar() {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connectedToDrone ? disconnect : connectToDroneFromButton}
-              color={
+              onClick={
                 connectedToDrone
-                  ? tailwindColors.falconred[800]
-                  : tailwindColors.green[600]
+                  ? disconnectFromDroneCallback
+                  : connectToDroneFromButtonCallback
               }
+              color={connectedToDrone ? "red.8" : "green"}
               radius="xs"
             >
               {connectedToDrone ? "Disconnect" : "Connect"}

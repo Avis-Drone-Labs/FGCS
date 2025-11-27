@@ -14,17 +14,12 @@ import { ResizableBox } from "react-resizable"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { FixedSizeList } from "react-window"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../tailwind.config.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 // Custom components, helpers, and data
 import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
 import { Row } from "./components/params/row.jsx"
-import { useRebootCallback } from "./helpers/useRebootCallback.js"
+import { useRebootCallback } from "./helpers/droneConnectionCallbacks.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -249,10 +244,7 @@ export default function Params() {
                   </div>
                   <Divider />
                   <div className="flex flex-col gap-4">
-                    <Button
-                      onClick={rebootCallback}
-                      color={tailwindColors.red[600]}
-                    >
+                    <Button onClick={rebootCallback} color={"red"}>
                       Reboot FC
                     </Button>
                   </div>

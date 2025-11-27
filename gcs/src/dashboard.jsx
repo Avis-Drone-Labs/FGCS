@@ -22,6 +22,7 @@ import {
   IconGps,
   IconRadar,
   IconSatellite,
+  IconTarget,
 } from "@tabler/icons-react"
 import { ResizableBox } from "react-resizable"
 
@@ -34,9 +35,11 @@ import {
   selectDroneCoords,
   selectFlightMode,
   selectGPSRawInt,
+  selectGPS2RawInt,
   selectNotificationSound,
   selectRSSI,
   soundPlayed,
+  selectHasSecondaryGps,
 } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
 import { selectCurrentMission } from "./redux/slices/missionSlice"
@@ -81,11 +84,18 @@ export default function Dashboard() {
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
-  const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
+  const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
+
+  const hdopDisplay = hdop != null ? hdop.toFixed(2) : "0.00"
+
   const connectedToDrone = useSelector(selectConnectedToDrone)
   const currentMission = useSelector(selectCurrentMission)
 
   const { getSetting } = useSettings()
+  const gps2 = useSelector(selectGPS2RawInt)
+  const hasSecondaryGps = useSelector(selectHasSecondaryGps)
+
+  const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -251,6 +261,18 @@ export default function Dashboard() {
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[fixType]}
             tooltip="GPS fix type"
+          />
+          {hasSecondaryGps && (
+            <StatusSection
+              icon={<IconRadar />}
+              value={secondaryGpsFixLabel}
+              tooltip="GPS2 fix type"
+            />
+          )}
+          <StatusSection
+            icon={<IconTarget />}
+            value={hdopDisplay}
+            tooltip="GPS HDoP"
           />
           <StatusSection
             icon={<IconGps />}

@@ -238,7 +238,6 @@ const socketMiddleware = (store) => {
             hdop,
           }),
         )
-        store.dispatch(calculateGpsTrackHeadingThunk())
         break
       }
       case "RC_CHANNELS":

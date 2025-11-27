@@ -62,6 +62,7 @@ import {
   setFlightSwVersion,
   setGpsData,
   setGpsRawIntData,
+  setGps2RawIntData,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -214,10 +215,31 @@ const socketMiddleware = (store) => {
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
         )
         break
-      case "GPS_RAW_INT":
-        store.dispatch(setGpsRawIntData(msg))
+      case "GPS_RAW_INT": {
+        // MAVLink GPS_RAW_INT provides 'eph' (HDOP * 100).
+        const hdop = msg.eph != null ? msg.eph / 100.0 : null
+
+        store.dispatch(
+          setGpsRawIntData({
+            ...msg,
+            hdop,
+          }),
+        )
         store.dispatch(calculateGpsTrackHeadingThunk())
         break
+      }
+      case "GPS2_RAW": {
+        // MAVLink GPS2_RAW provides 'eph' (HDOP * 100).
+        const hdop = msg.eph != null ? msg.eph / 100.0 : null
+
+        store.dispatch(
+          setGps2RawIntData({
+            ...msg,
+            hdop,
+          }),
+        )
+        break
+      }
       case "RC_CHANNELS":
         // NOTE: UNABLE TO TEST IN SIMULATOR!
         store.dispatch(setRSSIData(msg.rssi))

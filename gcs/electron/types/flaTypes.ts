@@ -107,3 +107,8 @@ export type LogType =
   | "fgcs_telemetry"
   | "mp_telemetry"
   | null
+
+export interface RecentLog {
+  path: string
+  timestamp: number
+}

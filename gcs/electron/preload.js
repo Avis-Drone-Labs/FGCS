@@ -48,6 +48,8 @@ const ALLOWED_SEND_CHANNELS = [
   "window:zoom-out",
   "window:open-file-in-explorer",
   "window:update-title",
+  // app state updates
+  "app:connected-state",
 ]
 
 const ALLOWED_ON_CHANNELS = [

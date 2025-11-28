@@ -48,12 +48,17 @@ def waitUntilCalibrated() -> bool:
 
     start_time = time.time()
 
-    while sensor_health[-1] != 1467063343:
-        testLogger.debug("Systems calibrating")
-        time.sleep(0.1)
-        if time.time() - start_time > timeout:
-            testLogger.error("Timeout waiting for systems to calibrate")
-            return False
+    try:
+        while sensor_health[-1] != 1467063343:
+            testLogger.debug("Systems calibrating")
+            if time.time() - start_time > timeout:
+                testLogger.error("Timeout waiting for systems to calibrate")
+                return False
+            time.sleep(0.1)
+    finally:
+        droneStatus.drone.stopAllDataStreams()
+
+        droneStatus.drone.removeMessageListener("SYS_STATUS")
 
     getLogger("test").info("All systems calibrated successfully")
     droneStatus.drone.stopAllDataStreams()
@@ -89,5 +94,7 @@ def pytest_sessionstart(session):
     calibration_success = waitUntilCalibrated()
 
     if not calibration_success:
-        print("\033[1;31;40mDRONE FAILED TO CALIBRATE, EXITING TESTS\033[0m")
+        print(
+            "\033[1;31;40mDRONE FAILED TO CALIBRATE WITHIN TIMEOUT, EXITING TESTS\033[0m"
+        )
         pytest.exit(1)

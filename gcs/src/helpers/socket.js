@@ -3,10 +3,12 @@ import { io } from "socket.io-client"
 
 class SocketConnection {
   socket
+  telemetrySocket
   socketEndpoint = import.meta.env.VITE_BACKEND_URL
 
   constructor() {
     this.socket = io(this.socketEndpoint)
+    this.telemetrySocket = io(this.socketEndpoint + "/telemetry")
   }
 }
 

@@ -507,7 +507,32 @@ export function getActiveEKFFlags(statusValue) {
   return activeFlags
 }
 
+export const COMMONLY_USED_MISSION_TABLE_LABELS = [
+  "WAYPOINT",
+  "RETURN_TO_LAUNCH",
+  "TAKEOFF",
+  "LOITER_UNLIM",
+  "LAND",
+]
+
 export const EKF_STATUS_WARNING_LEVEL = 0.5
 export const EKF_STATUS_DANGER_LEVEL = 0.8
 export const VIBE_STATUS_WARNING_LEVEL = 30
 export const VIBE_STATUS_DANGER_LEVEL = 60
+
+export const EXCLUDE_PARAMS_LOAD = [
+  "ARSPD_OFFSET",
+  "CMD_INDEX",
+  "CMD_TOTAL",
+  "FENCE_TOTAL",
+  "FORMAT_VERSION",
+  "GND_ABS_PRESS",
+  "GND_TEMP",
+  "LOG_LASTFILE",
+  "MIS_TOTAL",
+  "SYSID_SW_MREV",
+  "SYS_NUM_RESETS",
+  "STAT_BOOTCNT",
+  "STAT_RESET",
+  "STAT_RUNTIME",
+]

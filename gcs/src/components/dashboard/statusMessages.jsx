@@ -68,9 +68,11 @@ export default function StatusMessages(props) {
               key={index}
               className={getMessageOutsideVisibilityClassNames()}
             >
-              <p className="text-gray-400">
-                {moment.unix(message.timestamp).format("HH:mm:ss")}
-              </p>
+              {message.timestamp !== null && (
+                <p className="text-gray-400">
+                  {moment.unix(message.timestamp).format("HH:mm:ss")}
+                </p>
+              )}
               <p className={getSeverityClassNames(message.severity)}>
                 {message.text}
               </p>

@@ -31,7 +31,7 @@ export async function getSharedElectronApp(): Promise<ElectronApplication> {
   sharedMainWindow = await sharedElectronApp.waitForEvent("window", {
     predicate: async (window) => {
       const title = await window.title()
-      return title === "FGCS"
+      return title.includes("FGCS")
     },
     timeout: 30000,
   })

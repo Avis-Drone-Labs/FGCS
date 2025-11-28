@@ -18,7 +18,7 @@ import { readableBytes } from "./utils"
 /**
  * Initial FLA screen for selecting or uploading a flight log file.
  */
-export default function SelectFlightLog({ processLoadedFile }) {
+export default function SelectFlightLog({ getLogSummary }) {
   const dispatch = useDispatch()
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
@@ -36,10 +36,12 @@ export default function SelectFlightLog({ processLoadedFile }) {
   const selectFile = async () => {
     const result = await window.ipcRenderer.invoke(
       "window:select-file-in-explorer",
-      [{ name: "Flight Logs", extensions: ["log", "ftlog"] }],
+      [{ name: "Flight Logs", extensions: ["bin", "log", "ftlog"] }],
     )
-    if (result) {
+    if (result?.success) {
       handleFile(result)
+    } else if (result) {
+      showErrorNotification(result.message)
     }
   }
 
@@ -58,6 +60,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
           `Starting to load file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
         )
 
+        // the result contains a lightweight summary of the log
         const result = await window.ipcRenderer.invoke(
           "fla:open-file",
           file.path,
@@ -70,7 +73,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
           return
         }
 
-        await processLoadedFile(result)
+        await getLogSummary(result)
         showSuccessNotification(`${file.name} loaded successfully`)
         console.timeEnd(`Loading file: ${file.name}`)
       } catch (error) {
@@ -81,7 +84,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
         setLoadingFileProgress(0)
       }
     },
-    [dispatch, processLoadedFile],
+    [dispatch, getLogSummary],
   )
 
   useEffect(() => {
@@ -99,7 +102,7 @@ export default function SelectFlightLog({ processLoadedFile }) {
     return recentFgcsLogs.map((log, idx) => (
       <div
         key={idx}
-        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-700 hover:rounded-sm w-80"
+        className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-600 hover:rounded-sm"
         onClick={() => handleFile(log)}
       >
         <p>{log.name} </p>
@@ -116,6 +119,13 @@ export default function SelectFlightLog({ processLoadedFile }) {
     ))
   }, [recentFgcsLogs, handleFile])
 
+  const logsExist = useMemo(() => {
+    return (
+      recentLogItems === null ||
+      (recentFgcsLogs !== null && recentLogItems.length === 0)
+    )
+  }, [recentLogItems, recentFgcsLogs])
+
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
@@ -123,18 +133,35 @@ export default function SelectFlightLog({ processLoadedFile }) {
           <Button onClick={selectFile} loading={loadingFile}>
             Analyse a log
           </Button>
-          <Button color="red" variant="filled" onClick={clearFgcsLogs}>
+          <Button
+            disabled={logsExist}
+            color="red"
+            variant="filled"
+            onClick={clearFgcsLogs}
+          >
             Clear Logs
           </Button>
         </div>
-        <Divider size="sm" orientation="vertical" />
+        <Divider size="xs" orientation="vertical" />
         <div className="relative">
           <LoadingOverlay visible={recentFgcsLogs === null || loadingFile} />
           <div className="flex flex-col items-center gap-2">
             <p className="font-bold">Recent FGCS telemetry logs</p>
-            <ScrollArea h={250} offsetScrollbars>
-              {recentLogItems}
-            </ScrollArea>
+            <ScrollArea.Autosize
+              className="relative"
+              type="always"
+              scrollbars="y"
+              mah={250}
+              offsetScrollbars="present"
+            >
+              {logsExist ? (
+                <p className="w-full my-4 text-center text-falcongrey-400 text-sm">
+                  No recent logs
+                </p>
+              ) : (
+                recentLogItems
+              )}
+            </ScrollArea.Autosize>
           </div>
         </div>
       </div>

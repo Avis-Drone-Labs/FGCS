@@ -22,6 +22,7 @@ import {
   IconGps,
   IconRadar,
   IconSatellite,
+  IconTarget,
 } from "@tabler/icons-react"
 import { ResizableBox } from "react-resizable"
 
@@ -34,11 +35,16 @@ import {
   selectDroneCoords,
   selectFlightMode,
   selectGPSRawInt,
+  selectGPS2RawInt,
   selectNotificationSound,
   selectRSSI,
   soundPlayed,
+  selectHasSecondaryGps,
 } from "./redux/slices/droneInfoSlice"
 import { selectMessages } from "./redux/slices/statusTextSlice"
+import { selectCurrentMission } from "./redux/slices/missionSlice"
+
+import { useSettings } from "./helpers/settings"
 
 // Helper javascript files
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
@@ -51,7 +57,8 @@ import ResizableInfoBox from "./components/dashboard/resizableInfoBox"
 import StatusBar, { StatusSection } from "./components/dashboard/statusBar"
 import StatusMessages from "./components/dashboard/statusMessages"
 import TabsSection from "./components/dashboard/tabsSection"
-import TelemetrySection from "./components/dashboard/telemetry"
+import TelemetrySection from "./components/dashboard/telemetrySection/telemetry"
+import VideoWidget from "./components/dashboard/videoWidget"
 import Layout from "./components/layout"
 
 // Tailwind styling
@@ -62,6 +69,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
+import lowBatterySound from "./assets/sounds/lowbattery.mp3"
+import waypointReachedSound from "./assets/sounds/waypointreached.mp3"
+import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -74,8 +84,18 @@ export default function Dashboard() {
   const batteryData = useSelector(selectBatteryData)
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
-  const { fixType, satellitesVisible } = useSelector(selectGPSRawInt)
+  const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
+
+  const hdopDisplay = hdop != null ? hdop.toFixed(2) : "0.00"
+
   const connectedToDrone = useSelector(selectConnectedToDrone)
+  const currentMission = useSelector(selectCurrentMission)
+
+  const { getSetting } = useSettings()
+  const gps2 = useSelector(selectGPS2RawInt)
+  const hasSecondaryGps = useSelector(selectHasSecondaryGps)
+
+  const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -111,14 +131,60 @@ export default function Dashboard() {
   // Sounds
   const [playArmed] = useSound(armSound, { volume: 0.1 })
   const [playDisarmed] = useSound(disarmSound, { volume: 0.1 })
+  const [playLowBattery] = useSound(lowBatterySound, { volume: 0.1 })
+  const [playWaypointReached] = useSound(waypointReachedSound, { volume: 0.1 })
+  const [playFlightModeChanged] = useSound(flightModeChangedSound, {
+    volume: 0.1,
+  })
+
+  const currentMissionSeqRef = useRef(currentMission.seq)
 
   // Play queued arming sounds
   useEffect(() => {
-    if (armedNotification !== "") {
-      armedNotification === "armed" ? playArmed() : playDisarmed()
-      dispatch(soundPlayed())
+    if (!getSetting("General.speechAnnouncements")) {
+      return
     }
-  }, [armedNotification, playArmed, playDisarmed, dispatch])
+    switch (armedNotification) {
+      case "armed":
+        playArmed()
+        break
+      case "disarmed":
+        playDisarmed()
+        break
+      case "mode_change":
+        playFlightModeChanged()
+        break
+      case "low_battery":
+        playLowBattery()
+        break
+      default:
+        break
+    }
+    dispatch(soundPlayed())
+  }, [
+    armedNotification,
+    playArmed,
+    playDisarmed,
+    playLowBattery,
+    dispatch,
+    getSetting("General.speechAnnouncements"),
+  ])
+
+  useEffect(() => {
+    if (currentMission.seq > currentMissionSeqRef.current) {
+      if (!getSetting("General.speechAnnouncements")) {
+        return
+      }
+      playWaypointReached()
+      dispatch(soundPlayed())
+      currentMissionSeqRef.current = currentMission.seq
+    }
+  }, [
+    currentMission.seq,
+    playWaypointReached,
+    dispatch,
+    getSetting("General.speechAnnouncements"),
+  ])
 
   // Following drone logic
   useEffect(() => {
@@ -196,6 +262,18 @@ export default function Dashboard() {
             value={GPS_FIX_TYPES[fixType]}
             tooltip="GPS fix type"
           />
+          {hasSecondaryGps && (
+            <StatusSection
+              icon={<IconRadar />}
+              value={secondaryGpsFixLabel}
+              tooltip="GPS2 fix type"
+            />
+          )}
+          <StatusSection
+            icon={<IconTarget />}
+            value={hdopDisplay}
+            tooltip="GPS HDoP"
+          />
           <StatusSection
             icon={<IconGps />}
             value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${
@@ -232,45 +310,48 @@ export default function Dashboard() {
           mapRef={mapRef}
         />
 
-        {connectedToDrone && (
-          <div className="absolute bottom-0 right-0 z-20">
-            <ResizableBox
-              height={messagesPanelSize.height}
-              width={messagesPanelSize.width}
-              minConstraints={[600, 150]}
-              maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
-              resizeHandles={["nw"]}
-              handle={(_, ref) => (
-                <span className={"custom-handle-nw"} ref={ref} />
-              )}
-              handleSize={[32, 32]}
-              onResize={(_, { size }) => {
-                setMessagesPanelSize({ width: size.width, height: size.height })
-              }}
-            >
-              <>
-                {/* Show a "Waiting for message area" */}
-                {statustextMessages.length == 0 && (
-                  <StatusMessages
-                    messages={[
-                      {
-                        timestamp: "0",
-                        text: `Waiting for messages from ${aircraftTypeString}`,
-                        severity: 7,
-                      },
-                    ]}
-                    className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
-                  />
-                )}
-                {/* Show real messages */}
+        {/* Video Widget for RTSP streams */}
+        <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
+
+        <div className="absolute bottom-0 right-0 z-20">
+          <ResizableBox
+            height={messagesPanelSize.height}
+            width={messagesPanelSize.width}
+            minConstraints={[600, 150]}
+            maxConstraints={[viewportWidth - 200, viewportHeight - 200]}
+            resizeHandles={["nw"]}
+            handle={(_, ref) => (
+              <span className={"custom-handle-nw"} ref={ref} />
+            )}
+            handleSize={[32, 32]}
+            onResize={(_, { size }) => {
+              setMessagesPanelSize({ width: size.width, height: size.height })
+            }}
+          >
+            <>
+              {/* Show a "Waiting for message area" */}
+              {statustextMessages.length == 0 && (
                 <StatusMessages
-                  messages={statustextMessages}
+                  messages={[
+                    {
+                      timestamp: null,
+                      text: connectedToDrone
+                        ? `Waiting for messages from ${aircraftTypeString}`
+                        : "Not connected to drone",
+                      severity: 7,
+                    },
+                  ]}
                   className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
                 />
-              </>
-            </ResizableBox>
-          </div>
-        )}
+              )}
+              {/* Show real messages */}
+              <StatusMessages
+                messages={statustextMessages}
+                className={`bg-[${tailwindColors.falcongrey["TRANSLUCENT"]}] h-full lucent max-w-1/2 object-fill text-xl`}
+              />
+            </>
+          </ResizableBox>
+        </div>
       </div>
     </Layout>
   )

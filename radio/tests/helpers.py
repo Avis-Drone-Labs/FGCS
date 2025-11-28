@@ -1,7 +1,9 @@
-from typing import Optional, Union
+import time
+from typing import List, Optional, Union
 
 import pytest
 from app import droneStatus, logger
+from app.customTypes import Number
 from serial.serialutil import SerialException
 
 from . import socketio_client
@@ -9,12 +11,11 @@ from . import socketio_client
 
 class FakeTCP:
     """
-    Context manager that replaces the mavlink mavtcp recv_match method in `droneStatus.drone.master` with one that raises a
-    `serial.serialutils.SerialException`. Use if you want to simulate a serial issue for a unit test.
+    Context manager that replaces master mavlink functions with ones that raise SerialException
     """
 
     @staticmethod
-    def recv_match_override(
+    def return_serial_exception(
         condition=None, type=None, blocking=False, timeout=None
     ) -> None:
         raise SerialException(
@@ -22,15 +23,13 @@ class FakeTCP:
         )
 
     def __enter__(self) -> None:
-        # Replace drone mavtcp recv_match function with one that raises SerialException
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = FakeTCP.recv_match_override
+            self.old_send = droneStatus.drone.master.mav.send
+            droneStatus.drone.master.mav.send = FakeTCP.return_serial_exception
 
     def __exit__(self, type, value, traceback) -> None:
-        # Reset recv_match method
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
+            droneStatus.drone.master.mav.send = self.old_send
 
 
 class NoDrone:
@@ -50,42 +49,19 @@ class NoDrone:
         droneStatus.drone = self.oldDrone
 
 
-class ParamSetTimeout:
-    """Context manager that replaces the mavlink recv_match function in drone.master with a function that return a None value
-    to cause the set multipleparams function to timeout
-    """
-
-    @staticmethod
-    def recv_match_null_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> None:
-        return None
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = ParamSetTimeout.recv_match_null_value
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
-
-
 class ParamRefreshTimeout:
     """Context manager that replaces the mavlink recv_msg function in drone.master with a function that returns a False value
     and sets current_param_index to -1 to cause the refresh_params function to timeout with no params received from the drone
     """
 
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, Type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
+    def returns_none(*args, **kwargs) -> None:
+        return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv_msg = droneStatus.drone.master.recv_msg
-            droneStatus.drone.master.recv_msg = ParamRefreshTimeout.recv_msg_false_value
+            self.wait_for_message = droneStatus.drone.wait_for_message
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none  # type: ignore[method-assign]
             self.old_param_index = (
                 droneStatus.drone.paramsController.current_param_index
             )
@@ -93,50 +69,25 @@ class ParamRefreshTimeout:
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_msg = self.old_recv_msg
+            droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
             droneStatus.drone.paramsController.current_param_index = (
                 self.old_param_index
             )
 
 
-class NoAcknowledgementMessage:
-    """Context manager that replaces the mavlink recv_match function in drone.master with a function that returns False
-    causing no acknowledgement messages to be received when used in the MotorTestController tests
-    """
-
+class WaitForMessageReturnsNone:
     @staticmethod
-    def recv_msg_false_value(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> bool:
-        return False
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = (
-                NoAcknowledgementMessage.recv_msg_false_value
-            )
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
-
-
-class RecvMsgReturnsNone:
-    @staticmethod
-    def recv_match_false(
-        condition=None, type=None, blocking=False, timeout=None
-    ) -> None:
+    def returns_none(*args, **kwargs) -> None:
         return None
 
     def __enter__(self) -> None:
         if droneStatus.drone is not None:
-            self.old_recv = droneStatus.drone.master.recv_match
-            droneStatus.drone.master.recv_match = RecvMsgReturnsNone.recv_match_false
+            self.wait_for_message = droneStatus.drone.wait_for_message
+            droneStatus.drone.wait_for_message = WaitForMessageReturnsNone.returns_none  # type: ignore[method-assign]
 
     def __exit__(self, type, value, traceback) -> None:
         if droneStatus.drone is not None:
-            droneStatus.drone.master.recv_match = self.old_recv
+            droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
 
 
 class SetAircraftType:
@@ -153,7 +104,7 @@ class SetAircraftType:
             droneStatus.drone.aircraft_type = self.old_aircraftType
 
 
-def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
+def send_and_receive(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 
     Parameters
@@ -166,7 +117,7 @@ def send_and_recieve(endpoint: str, args: Optional[Union[dict, str]] = None) -> 
     Returns
     -------
     dict
-        The data recieved from the client
+        The data received from the client
     """
     (
         socketio_client.emit(endpoint, args)
@@ -191,3 +142,98 @@ def gps_failure():
     droneStatus.drone.logger.info("Disabling SIM_GPS_DISABLE")
     droneStatus.drone.master.param_set_send("SIM_GPS_DISABLE", 0.0, 2)
     droneStatus.drone.master.param_set_send("SIM_GPS2_DISABLE", 0.0, 2)
+
+
+def set_params(params: List[tuple[str, Number, int]]) -> None:
+    """Sets multiple parameters on the drone with robust retry logic"""
+    if droneStatus.drone is None:
+        raise RuntimeError("No drone connected to set parameters on.")
+
+    for param in params:
+        param_name, param_value, param_type = param
+        max_retries = 5
+        retry_count = 0
+        param_set_successfully = False
+
+        while retry_count < max_retries and not param_set_successfully:
+            try:
+                # Clear any pending messages first to avoid stale responses
+                droneStatus.drone.master.recv_match(
+                    type="PARAM_VALUE", blocking=False, timeout=0.1
+                )
+
+                # Send parameter set command
+                logger.debug(
+                    f"Attempt {retry_count + 1}: Setting {param_name} to {param_value} (type: {param_type})"
+                )
+                droneStatus.drone.master.mav.param_set_send(
+                    droneStatus.drone.master.target_system,
+                    droneStatus.drone.master.target_component,
+                    param_name.encode("utf-8"),
+                    param_value,
+                    param_type,
+                )
+
+                # Wait for ACK with exponential backoff timeout
+                base_timeout = 2 + (retry_count * 0.5)  # Increase timeout with retries
+                start_time = time.time()
+
+                while time.time() - start_time < base_timeout:
+                    message = droneStatus.drone.master.recv_match(
+                        type="PARAM_VALUE", blocking=False, timeout=0.1
+                    )
+
+                    if message is not None:
+                        # Check if it's the parameter we're looking for
+                        if message.param_id == param_name:
+                            # Verify the value was actually set correctly
+                            received_value = message.param_value
+                            if (
+                                abs(received_value - param_value) < 0.001
+                            ):  # Allow for floating point precision
+                                logger.info(
+                                    f"Successfully set {param_name} to {param_value} (confirmed: {received_value})"
+                                )
+                                param_set_successfully = True
+                                break
+                            else:
+                                logger.warning(
+                                    f"Parameter {param_name} was set but value mismatch: expected {param_value}, got {received_value}"
+                                )
+                        else:
+                            # Got a different parameter response, keep waiting
+                            logger.debug(
+                                f"Received PARAM_VALUE for {message.param_id}, waiting for {param_name}"
+                            )
+
+                    time.sleep(0.02)  # Reduced polling interval for faster response
+
+                if not param_set_successfully:
+                    # Timeout occurred
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        backoff_delay = 0.1 * (2**retry_count)  # Exponential backoff
+                        logger.warning(
+                            f"Timeout setting {param_name}, retrying in {backoff_delay:.1f}s... ({retry_count}/{max_retries})"
+                        )
+                        time.sleep(backoff_delay)
+                    else:
+                        error_msg = (
+                            f"Failed to set {param_name} after {max_retries} attempts"
+                        )
+                        raise RuntimeError(error_msg)
+            except Exception as e:
+                retry_count += 1
+                if retry_count < max_retries:
+                    backoff_delay = 0.2 * (2**retry_count)
+                    logger.warning(
+                        f"Error setting {param_name}: {e}, retrying in {backoff_delay:.1f}s... ({retry_count}/{max_retries})"
+                    )
+                    time.sleep(backoff_delay)
+                else:
+                    error_msg = f"Failed after {max_retries} attempts: {e}"
+                    raise RuntimeError(error_msg)
+
+        time.sleep(0.1)
+
+    logger.info(f"Successfully set all {len(params)} parameters")

@@ -10,9 +10,11 @@ import { RunCommand } from "./commandHandler"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
 const badgeColor = tailwindColors.falcongrey[600]
 
-export let actions = []
+export const actions = []
+
 function AddSpotlightAction(
   id,
   label,
@@ -133,3 +135,6 @@ AddSpotlightAction(
     RunCommand("new_preflight_checklist")
   },
 )
+AddSpotlightAction("reboot_autopilot", "Reboot Autopilot", "command", () => {
+  RunCommand("reboot_autopilot")
+})

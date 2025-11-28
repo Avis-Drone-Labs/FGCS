@@ -1,7 +1,23 @@
+import pytest
 from flask_socketio.test_client import SocketIOTestClient
+from pymavlink.mavutil import mavlink
 
 from . import falcon_test
-from .helpers import NoDrone
+from .helpers import NoDrone, set_params
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_function():
+    """
+    Setup parameters before all tests run
+    """
+
+    params = [
+        ("FRAME_TYPE", 0, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FRAME_CLASS", 1, mavlink.MAV_PARAM_TYPE_UINT8),
+    ]
+
+    set_params(params)
 
 
 @falcon_test(pass_drone_status=True)

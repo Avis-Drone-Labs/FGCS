@@ -11,6 +11,11 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../tailwind.config.js"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
+export const redColor = tailwindColors.red[600]
+export const greenColor = tailwindColors.green[600]
+export const blueColor = tailwindColors.blue[600]
+export const yellowColor = tailwindColors.yellow[600]
+
 const notificationTheme = {
   style: {
     backgroundColor: tailwindColors.falcongrey[800],
@@ -22,7 +27,7 @@ export function showErrorNotification(message) {
   notifications.show({
     title: "Error",
     message: message,
-    color: tailwindColors.red[600],
+    color: redColor,
     ...notificationTheme,
   })
 }
@@ -31,7 +36,16 @@ export function showSuccessNotification(message) {
   notifications.show({
     title: "Success",
     message: message,
-    color: tailwindColors.green[600],
+    color: greenColor,
+    ...notificationTheme,
+  })
+}
+
+export function showWarningNotification(message) {
+  notifications.show({
+    title: "Warning",
+    message: message,
+    color: yellowColor,
     ...notificationTheme,
   })
 }
@@ -40,7 +54,7 @@ export function showInfoNotification(message) {
   notifications.show({
     title: "Info",
     message: message,
-    color: tailwindColors.blue[600],
+    color: blueColor,
     ...notificationTheme,
   })
 }
@@ -49,7 +63,7 @@ export function showNotification(title, message) {
   notifications.show({
     title: title,
     message: message,
-    color: tailwindColors.blue[600],
+    color: blueColor,
     ...notificationTheme,
   })
 }
@@ -67,14 +81,15 @@ export function showLoadingNotification(title, message) {
   return id
 }
 
-export function closeLoadingNotification(id, title, message) {
+export function closeLoadingNotification(id, title, message, options = {}) {
   notifications.update({
     id: id,
     title: title,
     message: message,
     loading: false,
     autoClose: 2000,
-    color: tailwindColors.green[600],
+    color: greenColor,
+    ...options,
     ...notificationTheme,
   })
 }

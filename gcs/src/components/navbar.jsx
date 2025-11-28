@@ -20,25 +20,28 @@ import {
   SegmentedControl,
   Select,
   Tabs,
+  Text,
   TextInput,
   Tooltip,
 } from "@mantine/core"
 import { useSessionStorage } from "@mantine/hooks"
 import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 
-// Local imports
-import { AddCommand } from "./spotlight/commandHandler.js"
-
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
+import {
+  useConnectToDroneFromButtonCallback,
+  useDisconnectFromDroneCallback,
+} from "../helpers/droneConnectionCallbacks.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
   ConnectionType,
   emitConnectToDrone,
-  emitDisconnectFromDrone,
   emitGetComPorts,
+  emitStartForwarding,
+  emitStopForwarding,
   selectBaudrate,
   selectComPorts,
   selectConnectedToDrone,
@@ -48,7 +51,10 @@ import {
   selectConnectionType,
   selectCurrentPage,
   selectFetchingComPorts,
+  selectForwardingAddress,
+  selectForwardingAddressModalOpened,
   selectIp,
+  selectIsForwarding,
   selectNetworkType,
   selectPort,
   selectSelectedComPorts,
@@ -57,6 +63,8 @@ import {
   setConnecting,
   setConnectionModal,
   setConnectionType,
+  setForwardingAddress,
+  setForwardingAddressModalOpened,
   setIp,
   setNetworkType,
   setPort,
@@ -68,15 +76,13 @@ import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 // Styling imports
 import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../tailwind.config.js"
 import { showErrorNotification } from "../helpers/notification.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function Navbar() {
   // Redux
   const dispatch = useDispatch()
   const openedModal = useSelector(selectConnectionModal)
+  const forwardingModalOpened = useSelector(selectForwardingAddressModalOpened)
 
   const connecting = useSelector(selectConnecting)
   const connectedToDrone = useSelector(selectConnectedToDrone)
@@ -92,10 +98,16 @@ export default function Navbar() {
   const ip = useSelector(selectIp)
   const port = useSelector(selectPort)
   const droneConnectionStatus = useSelector(selectConnectionStatus)
+  const forwardingAddress = useSelector(selectForwardingAddress)
+  const isForwarding = useSelector(selectIsForwarding)
 
   // Panel is open/closed
   const [outOfDate] = useSessionStorage({ key: "outOfDate" })
   const currentPage = useSelector(selectCurrentPage)
+
+  // Drone connection
+  const connectToDroneFromButtonCallback = useConnectToDroneFromButtonCallback()
+  const disconnectFromDroneCallback = useDisconnectFromDroneCallback()
 
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
@@ -105,6 +117,7 @@ export default function Navbar() {
           baud: parseInt(selectedBaudRate),
           wireless: wireless,
           connectionType: type,
+          forwardingAddress: forwardingAddress,
         }),
       )
     } else if (type === ConnectionType.Network) {
@@ -119,6 +132,7 @@ export default function Navbar() {
           baud: 115200,
           wireless: true,
           connectionType: type,
+          forwardingAddress: forwardingAddress,
         }),
       )
     } else {
@@ -128,26 +142,18 @@ export default function Navbar() {
     dispatch(setConnecting(true))
   }
 
-  // All seems to be broken, made a ticket for joe to look into: https://github.com/orgs/Avis-Drone-Labs/projects/10/views/1?pane=issue&itemId=124913361
-  function disconnect() {
-    dispatch(emitDisconnectFromDrone())
-  }
-
-  function connectToDroneFromButton() {
-    dispatch(emitGetComPorts())
-    dispatch(setConnectionModal(true))
-  }
-
-  useEffect(() => {
-    AddCommand("connect_to_drone", connectToDroneFromButton)
-    AddCommand("disconnect_from_drone", disconnect)
-  }, [])
-
   useEffect(() => {
     if (!comPorts.includes(selectedComPort)) {
       dispatch(setSelectedComPorts(null))
     }
   }, [comPorts, selectedComPort])
+
+  useEffect(() => {
+    const handler = () => dispatch(setForwardingAddressModalOpened(true))
+    window.ipcRenderer.on("mavlink-forwarding:open", handler)
+    return () =>
+      window.ipcRenderer.removeAllListeners("mavlink-forwarding:open")
+  }, [dispatch])
 
   const linkClassName =
     "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
@@ -261,7 +267,6 @@ export default function Navbar() {
                 />
                 <TextInput
                   label="IP Address"
-                  description="Enter the IP Address"
                   placeholder="127.0.0.1"
                   value={ip}
                   onChange={(event) =>
@@ -271,7 +276,6 @@ export default function Navbar() {
                 />
                 <TextInput
                   label="Port"
-                  description="Enter the port number"
                   placeholder="5760"
                   value={port}
                   onChange={(event) =>
@@ -282,10 +286,16 @@ export default function Navbar() {
             </Tabs.Panel>
           </Tabs>
 
+          {isForwarding && (
+            <Text mb={16} c="dimmed" size="sm">
+              Note: MAVLink packets will be forwarded to {forwardingAddress}
+            </Text>
+          )}
+
           <Group justify="space-between" className="pt-4">
             <Button
               variant="filled"
-              color={tailwindColors.red[600]}
+              color={"red"}
               onClick={() => {
                 dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
@@ -297,7 +307,7 @@ export default function Navbar() {
             <Button
               variant="filled"
               type="submit"
-              color={tailwindColors.green[600]}
+              color={"green"}
               disabled={
                 !connectedToSocket ||
                 (connectionType == ConnectionType.Serial &&
@@ -326,6 +336,70 @@ export default function Navbar() {
               />
             </>
           )}
+      </Modal>
+
+      <Modal
+        opened={forwardingModalOpened}
+        onClose={() => {
+          dispatch(setForwardingAddressModalOpened(false))
+        }}
+        title="Forward MAVLink packets"
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+        styles={{
+          content: {
+            borderRadius: "0.5rem",
+          },
+        }}
+      >
+        <Text mb={16} c="dimmed" size="sm">
+          Note: Any GCS or application receiving forwarded MAVLink packets
+          cannot send data back to the aircraft. The data is sent in a one-way
+          manner only.
+        </Text>
+        <TextInput
+          label="Forwarding Address"
+          description={
+            isForwarding
+              ? "MAVLink packets are being forwarded to this address"
+              : "Enter the address to forward MAVLink packets to"
+          }
+          placeholder="e.g. udpout:192.168.1.10:14550"
+          value={forwardingAddress}
+          onChange={(event) =>
+            dispatch(setForwardingAddress(event.currentTarget.value))
+          }
+          data-autofocus
+          disabled={isForwarding}
+        />
+
+        {isForwarding ? (
+          <Button
+            className="mt-8"
+            variant="filled"
+            color={"red"}
+            onClick={() => {
+              dispatch(emitStopForwarding())
+            }}
+          >
+            Stop Forwarding
+          </Button>
+        ) : (
+          <Button
+            className="mt-8"
+            variant="filled"
+            color={"green"}
+            onClick={() => {
+              dispatch(emitStartForwarding())
+              dispatch(setForwardingAddressModalOpened(false))
+            }}
+          >
+            Start Forwarding
+          </Button>
+        )}
       </Modal>
 
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">
@@ -371,7 +445,7 @@ export default function Navbar() {
             to="/config"
             className={twMerge(
               linkClassName,
-              currentPage === "config" && "text-falconred font-bold",
+              currentPage?.startsWith("config") && "text-falconred font-bold",
             )}
           >
             Config
@@ -420,12 +494,12 @@ export default function Navbar() {
           {/* Button to connect to drone */}
           {connectedToSocket ? (
             <Button
-              onClick={connectedToDrone ? disconnect : connectToDroneFromButton}
-              color={
+              onClick={
                 connectedToDrone
-                  ? tailwindColors.falconred[800]
-                  : tailwindColors.green[600]
+                  ? disconnectFromDroneCallback
+                  : connectToDroneFromButtonCallback
               }
+              color={connectedToDrone ? "red.8" : "green"}
               radius="xs"
             >
               {connectedToDrone ? "Disconnect" : "Connect"}

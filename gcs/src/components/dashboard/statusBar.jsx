@@ -9,7 +9,6 @@ import { cloneElement, useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { Tooltip } from "@mantine/core"
-import { useInterval } from "@mantine/hooks"
 import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
 // Redux
@@ -23,9 +22,9 @@ import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 // Helper imports
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { useSettings } from "../../helpers/settings"
-import AlertSection, { AlertCategory, AlertSeverity } from "./alert"
-
-import { useAlerts } from "./alertProvider"
+import AlertSection from "./alerts/alert"
+import { AlertCategory, AlertSeverity } from "./alerts/alertConstants"
+import { useAlerts } from "./alerts/alertContext"
 
 export function StatusSection({ icon, value, tooltip }) {
   return (
@@ -41,14 +40,13 @@ export function StatusSection({ icon, value, tooltip }) {
 export default function StatusBar(props) {
   const isConnectedToSocket = useSelector(selectIsConnectedToSocket)
   const [time, setTime] = useState(moment())
-  const updateClock = useInterval(() => setTime(moment()), 1000)
   const batteryData = useSelector(selectBatteryData)
   const telemetryData = useSelector(selectTelemetry)
 
-  // Start clock
+  // Update clock every second
   useEffect(() => {
-    updateClock.start()
-    return () => updateClock.stop()
+    const id = setInterval(() => setTime(moment()), 1000)
+    return () => clearInterval(id)
   }, [])
 
   // Alerts
@@ -138,6 +136,7 @@ export default function StatusBar(props) {
         style={{ backgroundColor: GetOutsideVisibilityColor() }}
       >
         {props.children}
+
         <StatusSection
           icon={isConnectedToSocket ? <IconNetwork /> : <IconNetworkOff />}
           value=""
@@ -159,6 +158,7 @@ export default function StatusBar(props) {
       >
         <p className="text-sm text-blue-200">Current heading</p>
         <p className="text-sm text-red-200">Desired heading</p>
+        <p className="text-sm text-green-200">GPS track heading</p>
       </div>
       <div className="m-2">
         <AlertSection />

@@ -16,8 +16,7 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-// @ts-expect-error - no types available
-import openFile, { clearRecentFiles, getRecentFiles } from "./fla"
+import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -25,23 +24,20 @@ import registerAboutIPC, {
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
+import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
 } from "./modules/linkStatsWindow"
+import registerRTSPStreamIPC, {
+  cleanupAllRTSPStreams,
+} from "./modules/rtspStream"
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
-import registerWebcamIPC, { destroyWebcamWindow } from "./modules/webcamWindow"
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.js
-// │
+import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
+import { readParamsFile } from "./utils/paramsFile"
+
 process.env.DIST = path.join(__dirname, "../dist")
 process.env.VITE_PUBLIC = app.isPackaged
   ? process.env.DIST
@@ -61,6 +57,8 @@ if (process.platform === "linux") {
 
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
+let isConnectedToDrone = false
+let quittingApproved = false
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
@@ -142,6 +140,11 @@ ipcMain.handle("settings:save-settings", (_, settings) => {
   saveUserConfiguration(settings)
 })
 
+// Cache connection state from renderer
+ipcMain.on("app:connected-state", (_event, connected: boolean) => {
+  isConnectedToDrone = Boolean(connected)
+})
+
 ipcMain.handle("app:is-mac", () => {
   return process.platform == "darwin"
 })
@@ -196,16 +199,25 @@ ipcMain.handle("window:select-file-in-explorer", async (_event, filters) => {
     try {
       const stats = fs.statSync(filePath)
       return {
+        success: true,
         path: filePath,
         name: path.basename(filePath),
         size: stats.size,
       }
     } catch (err) {
-      // File is inaccessible or deleted
-      return null
+      return {
+        success: false,
+        message:
+          err instanceof Error
+            ? err.message
+            : "File is inaccessible or deleted",
+      }
     }
   }
   return null
+})
+ipcMain.on("window:update-title", async (_event, value) => {
+  getWindow()?.setTitle(value)
 })
 
 function createWindow() {
@@ -215,6 +227,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
     },
+    title: "FGCS",
     show: false,
     alwaysOnTop: true,
     minWidth: 750,
@@ -223,11 +236,13 @@ function createWindow() {
     frame: false,
   })
 
-  registerWebcamIPC(win)
+  registerVideoIPC(win)
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
   registerVibeStatusIPC()
+  registerFFmpegBinaryIPC()
+  registerRTSPStreamIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -261,6 +276,17 @@ function createWindow() {
     closeWithBackend()
   })
 
+  // Listen for key events to trigger hard refresh
+  win.webContents.on("before-input-event", (event, input) => {
+    const controlKeyPressed =
+      process.platform === "darwin" ? input.meta : input.control
+
+    if (controlKeyPressed && input.key === "r") {
+      event.preventDefault() // Prevent default refresh
+      win?.webContents.reloadIgnoringCache() // Perform hard refresh
+    }
+  })
+
   // Set Main Menu on Mac Only
   if (process.platform === "darwin") {
     setMainMenu()
@@ -279,6 +305,13 @@ function setMainMenu() {
             openAboutPopout()
           },
         },
+        {
+          label: "Settings",
+          accelerator: "Cmd+,",
+          click: () => {
+            win?.webContents.send("settings:open")
+          },
+        },
         { type: "separator" },
         {
           label: "Report a bug",
@@ -293,13 +326,6 @@ function setMainMenu() {
     {
       label: "View",
       submenu: [
-        {
-          label: "Connection Stats",
-          click: () => {
-            openLinkStatsWindow()
-          },
-        },
-        { type: "separator" },
         { role: "reload" },
         { role: "forceReload" },
         { role: "toggleDevTools" },
@@ -309,6 +335,23 @@ function setMainMenu() {
         { role: "zoomOut" },
         { type: "separator" },
         { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Advanced",
+      submenu: [
+        {
+          label: "Connection Stats",
+          click: () => {
+            openLinkStatsWindow()
+          },
+        },
+        {
+          label: "MAVLink Forwarding",
+          click: () => {
+            win?.webContents.send("mavlink-forwarding:open")
+          },
+        },
       ],
     },
   ]
@@ -380,11 +423,12 @@ function startBackend() {
 }
 
 function closeWindows() {
-  destroyWebcamWindow()
+  destroyVideoWindow()
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
   destroyVibeStatusWindow()
+  cleanupAllRTSPStreams()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -409,12 +453,46 @@ app.on("window-all-closed", () => {
 
 // To ensure that the backend process is killed with Cmd + Q on macOS,
 // listen to the before-quit event.
-app.on("before-quit", () => {
-  if (process.platform === "darwin" && pythonBackend) {
-    console.log("Stopping backend")
-    spawnSync("pkill", ["-f", "fgcs_backend"])
-    pythonBackend = null
-    closeWindows()
+app.on("before-quit", (e) => {
+  if (process.platform !== "darwin") return
+
+  // User already approved, let it proceed without re-prompting
+  if (quittingApproved) return
+
+  if (isConnectedToDrone && win && !win.isDestroyed()) {
+    e.preventDefault()
+    const choice = dialog.showMessageBoxSync(win, {
+      type: "warning",
+      buttons: ["Cancel", "Quit"],
+      defaultId: 0,
+      title: "Confirm Quit",
+      message: "Are you sure you want to quit FGCS?",
+      detail: "You are connected to an aircraft.",
+    })
+    if (choice === 1) {
+      quittingApproved = true
+      if (pythonBackend) {
+        console.log("Stopping backend")
+        spawnSync("pkill", ["-f", "fgcs_backend"])
+        pythonBackend = null
+      }
+      // Close all popout windows
+      closeWindows()
+      // Destroy main window
+      if (win && !win.isDestroyed()) {
+        win.destroy()
+      }
+      app.quit()
+    }
+    // choice === 0 (Cancel): do nothing, quit is prevented
+  } else {
+    // Not connected or no window: stop backend and proceed
+    if (pythonBackend) {
+      console.log("Stopping backend")
+      spawnSync("pkill", ["-f", "fgcs_backend"])
+      pythonBackend = null
+      closeWindows()
+    }
   }
 })
 
@@ -438,16 +516,22 @@ app.whenReady().then(() => {
           `Expected recentLogs to be an array, but got ${typeof recentLogs}`,
         )
       }
-      return recentLogs.map((logPath) => {
-        const logName = path.basename(logPath)
-        const fileStats = fs.statSync(logPath)
-        return {
-          name: logName,
-          path: logPath,
-          size: fileStats.size,
-          timestamp: fileStats.mtime,
-        }
-      })
+      return recentLogs
+        .map((log) => {
+          try {
+            const logName = path.basename(log.path)
+            const fileStats = fs.statSync(log.path)
+            return {
+              name: logName,
+              path: log.path,
+              size: fileStats.size,
+              timestamp: new Date(log.timestamp),
+            }
+          } catch {
+            return null
+          }
+        })
+        .filter((log) => log !== null)
     } catch (error) {
       return []
     }
@@ -455,18 +539,54 @@ app.whenReady().then(() => {
   // Clear recent logs
   ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
-  // Save mission file
-  ipcMain.handle(
-    "missions:get-save-mission-file-path",
-    async (event, options) => {
-      const window = BrowserWindow.fromWebContents(event.sender)
-      if (!window) {
-        throw new Error("No active window found")
+  // Load Messages on demand
+  ipcMain.handle("fla:get-messages", getMessages)
+
+  // Open native save dialog
+  ipcMain.handle("app:get-save-file-path", async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) {
+      throw new Error("No active window found")
+    }
+    const result = await dialog.showSaveDialog(window, options)
+    return result
+  })
+
+  ipcMain.handle("params:load-params-from-file", async (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) {
+      throw new Error("No active window found")
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ["openFile"],
+      filters: [
+        { name: "Param File", extensions: ["param"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    })
+
+    if (!canceled && filePaths.length > 0) {
+      const filePath = filePaths[0]
+      try {
+        const params = readParamsFile(filePath)
+        return {
+          success: true,
+          path: filePath,
+          name: path.basename(filePath),
+          params: params,
+        }
+      } catch (err) {
+        console.error("Error reading param file:", err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
       }
-      const result = await dialog.showSaveDialog(window, options)
-      return result
-    },
-  )
+    }
+
+    return null
+  })
 
   ipcMain.handle("app:get-node-env", () =>
     app.isPackaged ? "production" : "development",

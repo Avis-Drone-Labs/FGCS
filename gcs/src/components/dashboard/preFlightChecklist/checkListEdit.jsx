@@ -13,11 +13,6 @@ import ListItem from "@tiptap/extension-list-item"
 import { RichTextEditor } from "@mantine/tiptap"
 import { Node } from "@tiptap/core"
 
-// Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../../tailwind.config.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-
 // Redux
 import { useDispatch } from "react-redux"
 import { setNewChecklistName } from "../../../redux/slices/checklistSlice.js"

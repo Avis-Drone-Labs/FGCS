@@ -60,7 +60,7 @@ def inject_params():
         return
 
     inject_param_file = os.path.join(PARAM_FILES_PATH, "inject_params.parm")
-    inject_params = []
+    inject_params_list = []
     with open(inject_param_file, "r") as f:
         for line in f:
             if line.startswith("#") or line.strip() == "":
@@ -71,11 +71,13 @@ def inject_params():
                 param_value = float(parts[1])
                 # We don't care/need param_type for setting params here
                 # Plus we can't get it from the .parm file anyways
-                inject_params.append({"param_id": param_id, "param_value": param_value})
+                inject_params_list.append(
+                    {"param_id": param_id, "param_value": param_value}
+                )
 
     old_params = drone.paramsController.params.copy()
 
-    drone.paramsController.params = inject_params
+    drone.paramsController.params = inject_params_list
 
     yield  # this is where the testing happens
 
@@ -585,6 +587,7 @@ def test_exportParamsToFile_success(
 ) -> None:
     export_file_path = os.path.join(PARAM_FILES_PATH, "exported_params.parm")
 
+    droneStatus.state = "params"
     socketio_client.emit("export_params_to_file", {"file_path": export_file_path})
     socketio_result = socketio_client.get_received()[0]
 

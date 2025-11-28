@@ -146,6 +146,9 @@ def gps_failure():
 
 def set_params(params: List[tuple[str, Number, int]]) -> None:
     """Sets multiple parameters on the drone with robust retry logic"""
+    if droneStatus.drone is None:
+        raise RuntimeError("No drone connected to set parameters on.")
+
     for param in params:
         param_name, param_value, param_type = param
         max_retries = 5

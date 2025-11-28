@@ -32,6 +32,13 @@ const MarkerPin = React.memo(
 
     return (
       <div
+        onMouseDown={(e) => {
+          // Prevent right-click from initiating a drag on the marker
+          if (e.button === 2) {
+            e.preventDefault()
+            e.stopPropagation()
+          }
+        }}
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()

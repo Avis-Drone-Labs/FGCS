@@ -272,6 +272,17 @@ function createWindow() {
     closeWithBackend()
   })
 
+  // Listen for key events to trigger hard refresh
+  win.webContents.on("before-input-event", (event, input) => {
+    const controlKeyPressed =
+      process.platform === "darwin" ? input.meta : input.control
+
+    if (controlKeyPressed && input.key === "r") {
+      event.preventDefault() // Prevent default refresh
+      win?.webContents.reloadIgnoringCache() // Perform hard refresh
+    }
+  })
+
   // Set Main Menu on Mac Only
   if (process.platform === "darwin") {
     setMainMenu()

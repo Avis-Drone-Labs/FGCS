@@ -263,7 +263,8 @@ class NavController:
             return guidedModeSetResult
 
         try:
-            if self.drone.aircraft_type == VehicleType.FIXED_WING.value:
+            # drone.aircraft_type == 1 for fixed wing. Check customTypes.py
+            if self.drone.aircraft_type == 1:
                 with self.drone.sending_command_lock:
                     # https://mavlink.io/en/messages/common.html#MISSION_ITEM_INT
                     # https://ardupilot.org/dev/docs/plane-commands-in-guided-mode.html

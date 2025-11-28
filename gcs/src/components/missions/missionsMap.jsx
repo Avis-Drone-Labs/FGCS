@@ -294,7 +294,9 @@ function MapSectionNonMemo({
         onDragStart={onDragstart}
         onContextMenu={(e) => {
           e.preventDefault()
+          // get map container
           const canvas = e.target.getCanvas()
+          // use helper to get point inside container
           const pt = getContainerPointFromEvent(e.originalEvent ?? e, canvas)
           dispatch(
             updateContextMenuState({

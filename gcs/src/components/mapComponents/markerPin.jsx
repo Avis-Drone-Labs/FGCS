@@ -46,9 +46,11 @@ const MarkerPin = React.memo(
         onContextMenu={(e) => {
           e.preventDefault()
           e.stopPropagation()
+          // get map container
           const container = e.currentTarget.closest(
             ".maplibregl-map, .mapboxgl-map",
           )
+          // use helper to get point inside container
           const pt = getContainerPointFromEvent(e.nativeEvent, container)
           dispatch(
             updateContextMenuState({

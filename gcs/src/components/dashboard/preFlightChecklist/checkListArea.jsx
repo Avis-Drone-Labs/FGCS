@@ -14,8 +14,8 @@ import EditCheckList from "./checkListEdit.jsx"
 // Styling imports
 import {
   IconCheckbox,
+  IconDownload,
   IconEdit,
-  IconFileExport,
   IconTrashX,
 } from "@tabler/icons-react"
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -142,10 +142,7 @@ export default function CheckListArea({ id }) {
                 radius="md"
                 onClick={() => toggleCheck()}
               >
-                <IconCheckbox
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={1.5}
-                />
+                <IconCheckbox size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Edit List">
@@ -154,22 +151,12 @@ export default function CheckListArea({ id }) {
                 radius="md"
                 onClick={() => setEditCheckListModal(true)}
               >
-                <IconEdit
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={1.5}
-                />
+                <IconEdit size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Export List">
-              <ActionIcon
-                variant="light"
-                radius="md"
-                onClick={() => exportList()}
-              >
-                <IconFileExport
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={1.5}
-                />
+              <ActionIcon variant="light" onClick={() => exportList()}>
+                <IconDownload size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
           </div>
@@ -182,10 +169,7 @@ export default function CheckListArea({ id }) {
                 radius="md"
                 onClick={() => setDeleteModal(true)}
               >
-                <IconTrashX
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={1.5}
-                />
+                <IconTrashX size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
           </div>

@@ -85,7 +85,13 @@ if (outsideVisibility !== null) {
 
 const preFlightChecklist = localStorage.getItem("preFlightChecklist")
 if (preFlightChecklist !== null) {
-  store.dispatch(setChecklistItems(JSON.parse(preFlightChecklist)))
+  try {
+    store.dispatch(setChecklistItems(JSON.parse(preFlightChecklist)))
+  } catch {
+    console.log(
+      "Failed to parse JSON from pre flight checklist items, reseting to blank array.",
+    )
+  }
 }
 
 const selectedRealtimeGraphs = localStorage.getItem("selectedRealtimeGraphs")

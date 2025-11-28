@@ -106,7 +106,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
       try {
         checklistObject = JSON.parse(text)
       } catch {
-        showErrorNotification("Invalid JSON in checklist file.")
+        showErrorNotification("Invalid JSON in checklist file")
         return
       }
       createNewChecklist(checklistObject.name, checklistObject.value)

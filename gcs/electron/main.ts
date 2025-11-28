@@ -216,6 +216,9 @@ ipcMain.handle("window:select-file-in-explorer", async (_event, filters) => {
   }
   return null
 })
+ipcMain.on("window:update-title", async (_event, value) => {
+  getWindow()?.setTitle(value)
+})
 
 function createWindow() {
   win = new BrowserWindow({
@@ -224,6 +227,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
     },
+    title: "FGCS",
     show: false,
     alwaysOnTop: true,
     minWidth: 750,
@@ -270,6 +274,17 @@ function createWindow() {
 
   win.on("close", () => {
     closeWithBackend()
+  })
+
+  // Listen for key events to trigger hard refresh
+  win.webContents.on("before-input-event", (event, input) => {
+    const controlKeyPressed =
+      process.platform === "darwin" ? input.meta : input.control
+
+    if (controlKeyPressed && input.key === "r") {
+      event.preventDefault() // Prevent default refresh
+      win?.webContents.reloadIgnoringCache() // Perform hard refresh
+    }
   })
 
   // Set Main Menu on Mac Only

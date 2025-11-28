@@ -3,9 +3,23 @@ from typing import Any, List, Optional, Union
 
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
+from pymavlink.mavutil import mavlink
 
 from . import falcon_test
-from .helpers import ParamRefreshTimeout, WaitForMessageReturnsNone
+from .helpers import ParamRefreshTimeout, WaitForMessageReturnsNone, set_params
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_function():
+    """
+    Setup parameters before all tests run
+    """
+
+    params = [
+        ("ACRO_BAL_ROLL", 1, mavlink.MAV_PARAM_TYPE_REAL32),
+    ]
+
+    set_params(params)
 
 
 def send_and_receive_params(
@@ -83,7 +97,7 @@ def test_setMultipleParams_invalidData(
     socketio_result = send_and_receive_params(
         socketio_client,
         "set_multiple_params",
-        [{"param_id": "RC_11MAX", "param_value": 1950, "param_type": 11}],
+        [{"param_id": "RANDOM_ERR_PARAM", "param_value": 1950, "param_type": 11}],
     )
 
     assert socketio_result["name"] == "param_set_success"
@@ -92,7 +106,7 @@ def test_setMultipleParams_invalidData(
         "message": "Could not set 1 parameters",
         "data": {
             "params_could_not_set": [
-                {"param_id": "RC_11MAX", "param_value": 1950, "param_type": 11}
+                {"param_id": "RANDOM_ERR_PARAM", "param_value": 1950, "param_type": 11}
             ],
             "params_set_successfully": [],
         },

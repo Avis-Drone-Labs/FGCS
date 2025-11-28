@@ -226,6 +226,9 @@ pytest
 # Run with verbose output
 pytest -v
 
+# Stop on first failure
+pytest -x
+
 # Run specific test file
 pytest tests/test_params.py
 

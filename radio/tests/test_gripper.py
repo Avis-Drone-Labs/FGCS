@@ -3,9 +3,23 @@ import time
 import pytest
 from flask_socketio import SocketIOTestClient
 from pymavlink import mavutil
+from pymavlink.mavutil import mavlink
 
 from . import falcon_test
-from .helpers import FakeTCP, NoDrone, send_and_receive
+from .helpers import FakeTCP, NoDrone, send_and_receive, set_params
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_function():
+    """
+    Setup parameters before all tests run
+    """
+
+    params = [
+        ("GRIP_ENABLE", 1, mavlink.MAV_PARAM_TYPE_UINT8),
+    ]
+
+    set_params(params)
 
 
 @pytest.fixture(scope="module", autouse=True)

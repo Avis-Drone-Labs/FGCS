@@ -274,7 +274,10 @@ function createWindow() {
 
   // Listen for key events to trigger hard refresh
   win.webContents.on("before-input-event", (event, input) => {
-    if (input.control && input.key === "r") {
+    const controlKeyPressed =
+      process.platform === "darwin" ? input.meta : input.control
+
+    if (controlKeyPressed && input.key === "r") {
       event.preventDefault() // Prevent default refresh
       win?.webContents.reloadIgnoringCache() // Perform hard refresh
     }

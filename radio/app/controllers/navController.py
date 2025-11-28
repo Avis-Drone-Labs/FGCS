@@ -279,9 +279,9 @@ class NavController:
                         self.loiter_radius,  # param2 (acceptance radius)
                         0,  # param3 (pass through waypoint)
                         float("nan"),  # param4 (desired yaw angle)
-                        int(lat * 1e7), 
+                        int(lat * 1e7),
                         int(lon * 1e7),
-                        alt, # altitude in meters
+                        alt,  # altitude in meters
                         mavutil.mavlink.MAV_MISSION_TYPE_MISSION,
                     )
 

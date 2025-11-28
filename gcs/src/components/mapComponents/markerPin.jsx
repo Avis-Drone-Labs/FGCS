@@ -40,7 +40,7 @@ const MarkerPin = React.memo(
           dispatch(
             updateContextMenuState({
               isOpen: true,
-              position: { x: e.clientX, y: e.clientY }, // absolute screen coords
+              position: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY }, // map container-relative coords
               gpsCoords: { lat: lat, lng: lon },
               markerId: id,
             }),

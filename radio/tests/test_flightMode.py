@@ -26,7 +26,7 @@ def setup_function():
 
     from app import droneStatus
 
-    droneStatus.drone.flightModesController.refreshData()
+    droneStatus.drone.flightModesController.refreshData()  # Refresh flight mode data
 
 
 @pytest.fixture(scope="module", autouse=True)

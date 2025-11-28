@@ -47,6 +47,10 @@ def setup_function():
 
     set_params(params)
 
+    from app import droneStatus
+
+    droneStatus.drone.rcController.fetchParams()  # Refresh RC data
+
 
 @falcon_test(pass_drone_status=True)
 def test_getRcConfig_wrongState(socketio_client: SocketIOTestClient, droneStatus):

@@ -10,6 +10,7 @@ cfgv==3.4.0
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
+coverage==7.12.0
 distlib==0.3.7
 fastjsonschema==2.19.1
 filelock==3.13.1
@@ -51,6 +52,7 @@ pyinstaller-hooks-contrib==2025.1
 pymavlink==2.4.40
 pyserial==3.5
 pytest==8.3.4
+pytest-cov==7.0.0
 pytest-timeout==2.4.0
 python-dateutil==2.8.2
 python-dotenv==1.0.1

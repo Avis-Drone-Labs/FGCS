@@ -10,6 +10,7 @@ import { Tooltip } from "@mantine/core"
 import { Marker } from "react-map-gl"
 import { useDispatch } from "react-redux"
 import { coordToInt } from "../../helpers/dataFormatters"
+import { getContainerPointFromEvent } from "../../helpers/pointer"
 import {
   updateContextMenuState,
   updateDrawingItem,
@@ -37,10 +38,15 @@ const MarkerPin = React.memo(
         }}
         onContextMenu={(e) => {
           e.preventDefault()
+          e.stopPropagation()
+          const container = e.currentTarget.closest(
+            ".maplibregl-map, .mapboxgl-map",
+          )
+          const pt = getContainerPointFromEvent(e.nativeEvent, container)
           dispatch(
             updateContextMenuState({
               isOpen: true,
-              position: { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY }, // map container-relative coords
+              position: { x: pt.x, y: pt.y },
               gpsCoords: { lat: lat, lng: lon },
               markerId: id,
             }),

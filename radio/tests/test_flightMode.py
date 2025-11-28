@@ -1,10 +1,32 @@
-import time
-
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
+from pymavlink.mavutil import mavlink
 
 from . import falcon_test
-from .helpers import NoDrone
+from .helpers import NoDrone, set_params
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_function():
+    """
+    Setup parameters before all tests run
+    """
+
+    params = [
+        ("FLTMODE1", 7, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FLTMODE2", 9, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FLTMODE3", 6, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FLTMODE4", 3, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FLTMODE5", 5, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FLTMODE6", 0, mavlink.MAV_PARAM_TYPE_UINT8),
+        ("FLTMODE_CH", 6, mavlink.MAV_PARAM_TYPE_UINT8),
+    ]
+
+    set_params(params)
+
+    from app import droneStatus
+
+    droneStatus.drone.flightModesController.refreshData()  # Refresh flight mode data
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -14,16 +36,9 @@ def run_once_after_all_tests():
     """
     from app import droneStatus
 
-    droneStatus.drone.paramsController.getAllParams()
-    time.sleep(1)
-    while droneStatus.drone.paramsController.is_requesting_params:
-        pass
-
-    yield
-    from . import socketio_client
-
-    socketio_client.emit("set_current_flight_mode", {"newFlightMode": 0})
-    socketio_client.get_received()[0]
+    # Use pymavlink to set the current flight mode to 0 after tests
+    drone = droneStatus.drone
+    drone.master.set_mode(0)
 
 
 @falcon_test(pass_drone_status=True)
@@ -51,7 +66,7 @@ def test_getFlightModeConfig_correctState(
     assert socketio_result["name"] == "flight_mode_config"
     assert socketio_result["args"][0] == {
         "flight_modes": [7, 9, 6, 3, 5, 0],
-        "flight_mode_channel": 5,
+        "flight_mode_channel": 6,
     }
 
 

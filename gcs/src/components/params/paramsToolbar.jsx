@@ -7,13 +7,7 @@ rebooting the autopilot
 
 // 3rd party imports
 import { Button, TextInput, Tooltip } from "@mantine/core"
-import {
-  IconEye,
-  IconPencil,
-  IconPower,
-  IconRefresh,
-  IconTool,
-} from "@tabler/icons-react"
+import { IconEye, IconTool } from "@tabler/icons-react"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -23,44 +17,21 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
-  emitRebootAutopilot,
-  emitRefreshParams,
-  emitSetMultipleParams,
-  resetParamState,
   selectModifiedParams,
   selectParamSearchValue,
   selectShowModifiedParams,
-  setAutoPilotRebootModalOpen,
-  setFetchingVars,
-  setModifiedParams,
-  setParams,
   setParamSearchValue,
-  setShownParams,
   toggleShowModifiedParams,
 } from "../../redux/slices/paramsSlice.js"
 
 export default function ParamsToolbar() {
   const dispatch = useDispatch()
+  const searchValue = useSelector(selectParamSearchValue)
   const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
-  const searchValue = useSelector(selectParamSearchValue)
-
-  function refreshCallback() {
-    dispatch(setParams([]))
-    dispatch(setModifiedParams([]))
-    dispatch(setShownParams([]))
-    dispatch(emitRefreshParams())
-    dispatch(setFetchingVars(true))
-  }
-
-  function rebootCallback() {
-    dispatch(emitRebootAutopilot())
-    dispatch(setAutoPilotRebootModalOpen(true))
-    dispatch(resetParamState())
-  }
 
   return (
-    <div className="flex justify-center space-x-4">
+    <div className="flex items-center gap-4 m-4">
       <Tooltip
         label={showModifiedParams ? "Show all params" : "Show modified params"}
         position="bottom"
@@ -69,16 +40,11 @@ export default function ParamsToolbar() {
           size="sm"
           onClick={() => dispatch(toggleShowModifiedParams())}
           color={tailwindColors.orange[600]}
+          disabled={modifiedParams.length === 0}
         >
-          {" "}
-          {showModifiedParams ? (
-            <IconEye size={14} />
-          ) : (
-            <IconTool size={14} />
-          )}{" "}
+          {showModifiedParams ? <IconEye size={14} /> : <IconTool size={14} />}
         </Button>
       </Tooltip>
-
       <TextInput
         className="w-1/3"
         placeholder="Search by parameter name"
@@ -87,37 +53,6 @@ export default function ParamsToolbar() {
           dispatch(setParamSearchValue(event.currentTarget.value))
         }
       />
-
-      <Button
-        size="sm"
-        rightSection={<IconPencil size={14} />}
-        disabled={!modifiedParams.length}
-        onClick={() => dispatch(emitSetMultipleParams(modifiedParams))}
-        color={tailwindColors.green[600]}
-      >
-        {" "}
-        Save params{" "}
-      </Button>
-
-      <Button
-        size="sm"
-        rightSection={<IconRefresh size={14} />}
-        onClick={refreshCallback}
-        color={tailwindColors.blue[600]}
-      >
-        {" "}
-        Refresh params{" "}
-      </Button>
-
-      <Button
-        size="sm"
-        rightSection={<IconPower size={14} />}
-        onClick={rebootCallback}
-        color={tailwindColors.red[600]}
-      >
-        {" "}
-        Reboot FC{" "}
-      </Button>
     </div>
   )
 }

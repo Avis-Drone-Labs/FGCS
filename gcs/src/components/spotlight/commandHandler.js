@@ -8,12 +8,20 @@ import { useHotkeys } from "@mantine/hooks"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { useSettings } from "../../helpers/settings"
+import {
+  useRebootCallback,
+  useConnectToDroneFromButtonCallback,
+  useDisconnectFromDroneCallback,
+} from "../../helpers/droneConnectionCallbacks"
 
 let commands = []
 
 export function Commands() {
   let navigate = useNavigate()
   const [isMac, setIsMac] = useState(false)
+  const rebootCallback = useRebootCallback()
+  const connectToDroneFromButtonCallback = useConnectToDroneFromButtonCallback()
+  const disconnectFromDroneCallback = useDisconnectFromDroneCallback()
 
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {
@@ -49,6 +57,9 @@ export function Commands() {
   AddCommand("open_settings", () => {
     open()
   })
+  AddCommand("reboot_autopilot", rebootCallback)
+  AddCommand("connect_to_drone", connectToDroneFromButtonCallback)
+  AddCommand("disconnect_from_drone", disconnectFromDroneCallback)
 
   // Register hotkeys
   useHotkeys([

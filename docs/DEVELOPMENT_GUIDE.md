@@ -226,6 +226,9 @@ pytest
 # Run with verbose output
 pytest -v
 
+# Stop on first failure
+pytest -x
+
 # Run specific test file
 pytest tests/test_params.py
 
@@ -236,7 +239,7 @@ pytest --fc -s
 pytest -k "test_param_set"
 
 # Generate coverage report
-pytest --cov=app --cov-report=html
+pytest --cov=app --cov-report=html tests/
 ```
 
 ### Frontend Testing

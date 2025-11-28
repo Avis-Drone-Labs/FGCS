@@ -36,6 +36,12 @@ export const SettingsProvider = ({ children }) => {
     fetchSettings()
   }, [])
 
+  useEffect(() => {
+    const handler = () => open()
+    window.ipcRenderer.on("settings:open", handler)
+    return () => window.ipcRenderer.removeAllListeners("settings:open")
+  }, [open])
+
   const setSetting = (setting, value) => {
     if (settings === null) return
 

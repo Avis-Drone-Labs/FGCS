@@ -6,14 +6,22 @@ const ALLOWED_INVOKE_CHANNELS = [
   "fla:open-file",
   "fla:get-recent-logs",
   "fla:clear-recent-logs",
-  "missions:get-save-mission-file-path",
+  "fla:get-messages",
+  "app:get-save-file-path",
   "app:get-node-env",
   "app:get-version",
   "app:is-mac",
   "settings:fetch-settings",
   "settings:save-settings",
-  "app:open-webcam-window",
-  "app:close-webcam-window",
+  "app:open-video-window",
+  "app:close-video-window",
+  "app:start-rtsp-stream",
+  "app:stop-rtsp-stream",
+  "app:get-current-stream-url",
+  "ffmpeg:get-binary-info",
+  "ffmpeg:download-binary",
+  "ffmpeg:delete-binary",
+  "ffmpeg:check-binary-exists",
   "app:open-about-window",
   "app:close-about-window",
   "app:open-link-stats-window",
@@ -24,6 +32,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:open-ekf-status-window",
   "app:update-vibe-status",
   "app:open-vibe-status-window",
+  "params:load-params-from-file",
 ]
 
 const ALLOWED_SEND_CHANNELS = [
@@ -38,15 +47,21 @@ const ALLOWED_SEND_CHANNELS = [
   "window:zoom-in",
   "window:zoom-out",
   "window:open-file-in-explorer",
+  "window:update-title",
+  // app state updates
+  "app:connected-state",
 ]
 
 const ALLOWED_ON_CHANNELS = [
   "main-process-message",
-  "app:webcam-closed",
+  "app:video-closed",
+  "app:stream-stopped",
   "app:send-link-stats",
   "fla:log-parse-progress",
   "app:send-ekf-status",
   "app:send-vibe-status",
+  "settings:open",
+  "mavlink-forwarding:open",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

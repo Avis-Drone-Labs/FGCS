@@ -23,10 +23,7 @@ import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
 import { AddCommand } from "../../spotlight/commandHandler.js"
 
 // Styling imports
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../../tailwind.config.js"
 import { showErrorNotification } from "../../../helpers/notification.js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -191,16 +188,10 @@ export default function PreFlightChecklistTab({ tabPadding }) {
             </div>
 
             <div className="flex w-full justify-between pt-6">
-              <Button
-                color={tailwindColors.red[600]}
-                onClick={() => setNewChecklistModal(false)}
-              >
+              <Button color={"red"} onClick={() => setNewChecklistModal(false)}>
                 Cancel
               </Button>
-              <Button
-                color={tailwindColors.green[600]}
-                onClick={() => createNewChecklist()}
-              >
+              <Button color={"green"} onClick={() => createNewChecklist()}>
                 Create
               </Button>
             </div>

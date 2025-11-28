@@ -59,15 +59,17 @@ const RowItem = memo(({ index, style }) => {
   }, [aircraftType, param])
 
   return (
-    <div style={style} className="flex flex-row items-center space-x-4">
-      <div className="flex flex-row w-2/12 gap-x-2">
+    <div
+      style={style}
+      className="flex items-center px-8 gap-6 border-t border-neutral-700"
+    >
+      <div className="flex items-center w-2/12 gap-x-2">
         <Tooltip label={paramDef?.DisplayName ?? null} position="top-start">
           <p>{param.param_id}</p>
         </Tooltip>
 
         {paramDef?.Values && paramDef?.Range && (
           <Tooltip
-            className="self-center"
             label={
               <div className="text-wrap max-w-80">
                 {Object.keys(paramDef?.Values).map((key) => {
@@ -89,7 +91,7 @@ const RowItem = memo(({ index, style }) => {
         <ValueInput index={index} paramDef={paramDef} className="grow" />
         {hasBeenModified && (
           <Tooltip
-            label={`Reset to previous value of ${paramPreviousValue.param_value}`}
+            label={`Reset to previous value of ${paramPreviousValue?.param_value}`}
           >
             <ActionIcon
               size="lg"

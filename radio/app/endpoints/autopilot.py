@@ -23,14 +23,22 @@ def rebootAutopilot() -> None:
     droneDisconnectCb = droneStatus.drone.droneDisconnectCb
     droneConnectStatusCb = droneStatus.drone.droneConnectStatusCb
     linkDebugStatsCb = droneStatus.drone.linkDebugStatsCb
+    forwarding_address = droneStatus.drone.forwarding_address
 
     socketio.emit("disconnected_from_drone")
 
-    droneStatus.drone.rebootAutopilot()
+    reboot_success = droneStatus.drone.rebootAutopilot()
 
-    while droneStatus.drone.is_active.is_set():
-        print("Waiting for drone to disconnect...")
-        time.sleep(0.05)
+    if not reboot_success:
+        logger.error("Failed to send reboot command to autopilot.")
+        socketio.emit(
+            "reboot_autopilot",
+            {
+                "success": False,
+                "message": "Failed to send reboot command to autopilot.",
+            },
+        )
+        return
 
     droneStatus.drone = None
 
@@ -42,6 +50,7 @@ def rebootAutopilot() -> None:
             port,
             baud=baud,
             wireless=wireless,
+            forwarding_address=forwarding_address,
             droneErrorCb=droneErrorCb,
             droneDisconnectCb=droneDisconnectCb,
             droneConnectStatusCb=droneConnectStatusCb,

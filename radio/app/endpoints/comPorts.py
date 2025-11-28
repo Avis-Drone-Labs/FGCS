@@ -1,5 +1,6 @@
 import sys
 import time
+from typing import Optional
 
 from serial.tools import list_ports
 from typing_extensions import TypedDict
@@ -7,7 +8,12 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.drone import Drone
-from app.utils import droneConnectStatusCb, droneErrorCb, getComPortNames
+from app.utils import (
+    droneConnectStatusCb,
+    droneErrorCb,
+    getComPortNames,
+    getFlightSwVersionString,
+)
 
 
 class ConnectionDataType(TypedDict):
@@ -15,6 +21,7 @@ class ConnectionDataType(TypedDict):
     baud: int
     wireless: bool
     connectionType: str
+    forwarding_address: Optional[str]
 
 
 class LinkStatsType(TypedDict):
@@ -109,7 +116,18 @@ def connectToDrone(data: ConnectionDataType) -> None:
         socketio.emit(
             "connection_error",
             {
-                "message": f"Expected integer value for baud, recieved {type(baud).__name__}."
+                "message": f"Expected integer value for baud, received {type(baud).__name__}."
+            },
+        )
+        droneStatus.drone = None
+        return
+
+    forwarding_address = data.get("forwardingAddress", None)
+    if forwarding_address is not None and not isinstance(forwarding_address, str):
+        socketio.emit(
+            "connection_error",
+            {
+                "message": f"Expected string value for forwarding address, received {type(forwarding_address).__name__}."
             },
         )
         droneStatus.drone = None
@@ -119,6 +137,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         port,
         wireless=data.get("wireless", True),
         baud=baud,
+        forwarding_address=forwarding_address,
         droneErrorCb=droneErrorCb,
         droneDisconnectCb=disconnectFromDrone,
         droneConnectStatusCb=droneConnectStatusCb,
@@ -136,7 +155,13 @@ def connectToDrone(data: ConnectionDataType) -> None:
     # Sleeping for buffer time, if errors occur try changing back to 1 second
     time.sleep(0.2)
     logger.debug("Created drone instance")
-    socketio.emit("connected_to_drone", {"aircraft_type": drone.aircraft_type})
+    socketio.emit(
+        "connected_to_drone",
+        {
+            "aircraft_type": drone.aircraft_type,
+            "flight_sw_version": getFlightSwVersionString(drone.flight_sw_version),
+        },
+    )
 
 
 @socketio.on("disconnect_from_drone")

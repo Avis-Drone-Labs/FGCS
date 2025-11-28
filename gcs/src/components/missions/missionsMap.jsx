@@ -58,6 +58,7 @@ import {
   updateContextMenuState,
 } from "../../redux/slices/missionSlice"
 import ContextMenuSpecificCommandItems from "../mapComponents/contextMenuSpecificCommandItems"
+import { getContainerPointFromEvent } from "../../helpers/pointer"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -293,10 +294,14 @@ function MapSectionNonMemo({
         onDragStart={onDragstart}
         onContextMenu={(e) => {
           e.preventDefault()
+          // get map container
+          const canvas = e.target.getCanvas()
+          // use helper to get point inside container
+          const pt = getContainerPointFromEvent(e.originalEvent ?? e, canvas)
           dispatch(
             updateContextMenuState({
               isOpen: true,
-              position: e.point,
+              position: pt,
               gpsCoords: e.lngLat,
               markerId: null,
             }),
@@ -331,7 +336,6 @@ function MapSectionNonMemo({
               lat={position.latitude}
               lon={position.longitude}
               zoom={initialViewState.zoom}
-              showHeadingLine={true}
             />
           )}
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from threading import current_thread
 from typing import TYPE_CHECKING, List, Union
 
 import serial
@@ -30,6 +31,7 @@ class FlightModesController:
         Args:
             drone (Drone): The main drone object
         """
+        self.controller_id = f"flightmodes_{current_thread().ident}"
 
         self.drone = drone
 
@@ -86,18 +88,12 @@ class FlightModesController:
 
         if mode_number < 1 or mode_number > 6:
             self.drone.logger.error(
-                "Invalid flight mode number, must be between 1 and 6 inclusive."
+                f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}."
             )
             return {
                 "success": False,
                 "message": f"Invalid flight mode number, must be between 1 and 6 inclusive, got {mode_number}.",
             }
-
-        param_type = 2
-
-        param_set_success = self.drone.paramsController.setParam(
-            f"FLTMODE{mode_number}", flight_mode, param_type
-        )
 
         if self.drone.aircraft_type == 1:
             if (flight_mode < 0) or (flight_mode > 24):
@@ -113,6 +109,11 @@ class FlightModesController:
                     "message": f"Invalid copter flight mode, must be between 0 and 27 inclusive, got {flight_mode}",
                 }
             mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
+
+        param_type = 2
+        param_set_success = self.drone.paramsController.setParam(
+            f"FLTMODE{mode_number}", flight_mode, param_type
+        )
 
         if param_set_success:
             self.drone.logger.info(f"Flight mode {mode_number} set to {mode_name}")
@@ -136,48 +137,55 @@ class FlightModesController:
         Args:
             flightmode (int): The numeric value for the current flight mode setting
         Returns:
-            A message to show if the drone recieved the message and succesfully set the new mode
+            A message to show if the drone received the message and successfully set the new mode
         """
-        self.drone.is_listening = False
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
         time.sleep(0.3)
-        self.drone.sendCommand(
-            message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
-            param1=1,
-            param2=flightMode,
-            param3=0,
-            param4=0,
-            param5=0,
-            param6=0,
-            param7=0,
-        )
 
         try:
-            response = self.drone.master.recv_match(
-                type="COMMAND_ACK", blocking=True, timeout=3
+            self.drone.sendCommand(
+                message=mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+                param1=1,
+                param2=flightMode,
+                param3=0,
+                param4=0,
+                param5=0,
+                param6=0,
+                param7=0,
+            )
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_SET_MODE,
             )
 
             if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_MODE):
-                self.drone.is_listening = True
                 self.drone.logger.info("Flight mode set successfully")
                 return {"success": True, "message": "Flight mode set successfully"}
             else:
-                self.drone.is_listening = True
                 return {
                     "success": False,
-                    "message": "Could not set flight mode",
+                    "message": "Could not set flight mode, command not accepted",
                 }
         except serial.serialutil.SerialException:
-            self.drone.is_listening = True
             return {
                 "success": False,
                 "message": "Could not set flight mode, serial exception",
             }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
     def setGuidedMode(self) -> Response:
         """
         Set the drone's flight mode to Guided mode.
         Returns:
-            A message to show if the drone recieved the message and succesfully set the new mode
+            A message to show if the drone received the message and successfully set the new mode
         """
 
         mode = mavutil.mavlink.COPTER_MODE_GUIDED

@@ -1,10 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 import containerQueries from "@tailwindcss/container-queries"
+
 export default {
   content: [
-    "./index.html",
-    "./webcam.html",
-    "./aboutWindow.html",
+    "./*.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
@@ -13,7 +12,7 @@ export default {
       colors: {
         falconred: {
           950: "#BA1B0B",
-          900: "#D8210E",
+          900: "#D8210E", // Mantine "red"
           800: "#EC3623",
           700: "#E74C3C",
           600: "#EB6D60",

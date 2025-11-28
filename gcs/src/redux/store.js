@@ -2,13 +2,15 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 import logAnalyserSlice from "./slices/logAnalyserSlice"
 import socketSlice from "./slices/socketSlice"
-
+import applicationSlice from "./slices/applicationSlice"
 import socketMiddleware from "./middleware/socketMiddleware"
 import configSlice from "./slices/configSlice"
 import droneConnectionSlice, {
   setBaudrate,
   setConnectionType,
+  setForwardingAddress,
   setIp,
+  setIsForwarding,
   setNetworkType,
   setOutsideVisibility,
   setPort,
@@ -30,6 +32,7 @@ const rootReducer = combineSlices(
   paramsSlice,
   configSlice,
   checklistSlice,
+  applicationSlice,
 )
 
 export const store = configureStore({
@@ -76,6 +79,16 @@ if (ip !== null) {
 const port = localStorage.getItem("port")
 if (port !== null) {
   store.dispatch(setPort(port))
+}
+
+const forwardingAddress = localStorage.getItem("forwardingAddress")
+if (forwardingAddress !== null) {
+  store.dispatch(setForwardingAddress(forwardingAddress))
+}
+
+const isForwarding = localStorage.getItem("isForwarding")
+if (isForwarding !== null) {
+  store.dispatch(setIsForwarding(isForwarding === "true"))
 }
 
 const outsideVisibility = localStorage.getItem("outsideVisibility")
@@ -165,11 +178,6 @@ const updateJSONLocalStorageIfChanged = (key, newValue) => {
 
 // Update states when a new message comes in
 store.subscribe(() => {
-  // Temporary: Skip store subscription for FLA route to avoid delaying UI updates
-  if (window.location.hash === "#/fla") {
-    return
-  }
-
   const store_mut = store.getState()
 
   if (typeof store_mut.droneConnection.wireless === "boolean") {
@@ -210,6 +218,20 @@ store.subscribe(() => {
 
   if (typeof store_mut.droneConnection.port === "string") {
     updateLocalStorageIfChanged("port", store_mut.droneConnection.port)
+  }
+
+  if (typeof store_mut.droneConnection.forwardingAddress === "string") {
+    updateLocalStorageIfChanged(
+      "forwardingAddress",
+      store_mut.droneConnection.forwardingAddress,
+    )
+  }
+
+  if (typeof store_mut.droneConnection.isForwarding === "boolean") {
+    updateLocalStorageIfChanged(
+      "isForwarding",
+      store_mut.droneConnection.isForwarding,
+    )
   }
 
   if (typeof store_mut.droneConnection.outsideVisibility === "boolean") {

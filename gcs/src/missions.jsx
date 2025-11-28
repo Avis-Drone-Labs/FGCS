@@ -239,13 +239,15 @@ export default function Missions() {
       "window:select-file-in-explorer",
       [{ name: "Waypoint files", extensions: ["waypoints", "txt"] }],
     )
-    if (result) {
+    if (result?.success) {
       dispatch(
         emitImportMissionFromFile({
           type: activeTabRef.current,
           file_path: result.path,
         }),
       )
+    } else if (result) {
+      showErrorNotification(result.message)
     }
   }
 
@@ -260,7 +262,7 @@ export default function Missions() {
     }
 
     const result = await window.ipcRenderer.invoke(
-      "missions:get-save-mission-file-path",
+      "app:get-save-file-path",
       options,
     )
 

@@ -2,39 +2,52 @@
   The main wrapper for the app
 */
 
-import { Route, Routes } from "react-router-dom"
 import { useEffect } from "react"
+import { Route, Routes } from "react-router-dom"
 
-import Toolbar from "./toolbar/toolbar"
 import SettingsModal from "./settingsModal"
 import { Commands } from "./spotlight/commandHandler"
+import Toolbar from "./toolbar/toolbar"
+import AutopilotRebootModal from "./params/autopilotRebootModal.jsx"
 
 // Wrappers
-import SingleRunWrapper from "./SingleRunWrapper"
 import { SettingsProvider } from "../helpers/settingsProvider"
+import SingleRunWrapper from "./SingleRunWrapper"
 
 // Routes
+import Config from "../config"
+import Dashboard from "../dashboard"
 import FLA from "../fla"
 import Graphs from "../graphs"
 import Missions from "../missions"
 import Params from "../params"
-import Config from "../config"
-import Dashboard from "../dashboard"
 import Navbar from "./navbar"
 
 // Redux
-import { useDispatch } from "react-redux"
 import { ErrorBoundary } from "react-error-boundary"
-import AlertProvider from "./dashboard/alertProvider"
-import ErrorBoundaryFallback from "./error/errorBoundary"
+import { useDispatch, useSelector } from "react-redux"
 import { initSocket } from "../redux/slices/socketSlice"
+import { selectConnectedToDrone } from "../redux/slices/droneConnectionSlice"
+import AlertProvider from "./dashboard/alerts/alertProvider"
+import ErrorBoundaryFallback from "./error/errorBoundary"
 
 export default function AppContent() {
   // Setup sockets for redux
   const dispatch = useDispatch()
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   useEffect(() => {
     dispatch(initSocket())
   }, [])
+
+  // Send connection state changes to main so it can own quit policy on macOS
+  useEffect(() => {
+    try {
+      window.ipcRenderer.send("app:connected-state", connectedToDrone)
+    } catch {
+      // Ignore IPC errors if main process isn't ready
+      console.log("IPC Call Failed: app:connected-state")
+    }
+  }, [connectedToDrone])
 
   return (
     <SettingsProvider>
@@ -59,6 +72,7 @@ export default function AppContent() {
             <Route path="/fla" element={<FLA />} />
           </Routes>
           <Commands />
+          <AutopilotRebootModal />
         </ErrorBoundary>
       </SingleRunWrapper>
     </SettingsProvider>

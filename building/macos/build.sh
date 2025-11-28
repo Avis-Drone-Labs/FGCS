@@ -2,18 +2,43 @@
 set -euo pipefail
 
 # Build FGCS for macOS (arm64 by default). Run from any directory.
-# Usage: ./build.sh <version>
+# Usage: ./build.sh [version]
+# If no version is provided, the script will show current version and prompt for new one
 
-if [[ ${1:-} == "" ]]; then
-  echo "Usage: $0 <version>"
-  echo "Example: $0 0.2.0-alpha"
-  exit 1
-fi
-
-VERSION="$1"
+VERSION="${1:-}"
 
 echo "Assuming location is FGCS/building/macos"
 cd ../../
+
+# Read and display current version from package.json
+echo "Reading current version from package.json..."
+PACKAGE_JSON_PATH="./gcs/package.json"
+if [[ -f "$PACKAGE_JSON_PATH" ]]; then
+  CURRENT_VERSION=$(grep '"version"' "$PACKAGE_JSON_PATH" | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+  echo "Current version: $CURRENT_VERSION"
+
+  # Prompt for version if not provided
+  if [[ -z "$VERSION" ]]; then
+    read -p "Enter new version number: " VERSION
+    if [[ -z "$VERSION" ]]; then
+      echo "Error: Version is required to continue"
+      exit 1
+    fi
+  fi
+
+  echo "New version will be: $VERSION"
+else
+  echo "Warning: Could not find package.json at $PACKAGE_JSON_PATH"
+
+  # Still prompt for version if package.json not found
+  if [[ -z "$VERSION" ]]; then
+    read -p "Enter version number: " VERSION
+    if [[ -z "$VERSION" ]]; then
+      echo "Error: Version is required to continue"
+      exit 1
+    fi
+  fi
+fi
 
 echo "Building backend"
 cd radio

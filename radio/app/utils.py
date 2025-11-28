@@ -1,5 +1,6 @@
+import logging
 import sys
-from typing import Any, List
+from typing import Any, List, Optional
 
 from pymavlink import mavutil
 from serial.tools import list_ports
@@ -8,6 +9,8 @@ from typing_extensions import TypedDict
 from app.customTypes import Number, VehicleType
 
 from . import socketio
+
+logger = logging.getLogger("fgcs")
 
 
 def getComPort() -> str:
@@ -98,12 +101,26 @@ def commandAccepted(response: Any, command: int) -> bool:
     Returns:
         True if the command has been accepted, False otherwise.
     """
-    return bool(
-        response
-        and command
-        and response.command == command
-        and response.result == mavutil.mavlink.MAV_RESULT_ACCEPTED
-    )
+    if command is None:
+        logger.warning("Command is None, cannot check if command accepted")
+        return False
+
+    if response is None:
+        logger.warning(f"Response is None, cannot check if command {command} accepted")
+        return False
+
+    if response.command != command:
+        logger.warning(
+            f"Command {command} does not match response command {response.command}"
+        )
+        logger.debug(f"Full response: {response.to_dict()}, command: {command}")
+        return False
+
+    if response.result != mavutil.mavlink.MAV_RESULT_ACCEPTED:
+        logger.warning(f"Command {command} not accepted, result: {response.result}")
+        return False
+
+    return True
 
 
 def normalisePwmValue(val: float, min_val: float = 1000, max_val: float = 2000) -> int:
@@ -188,7 +205,7 @@ def sendMessage(msg: Any) -> None:
     """
     data = msg.to_dict()
     data["timestamp"] = msg._timestamp
-    socketio.emit("incoming_msg", data)
+    socketio.emit("incoming_msg", data, namespace="/telemetry")
 
 
 FIXED_WING_TYPES = [
@@ -235,3 +252,36 @@ def sendingCommandLock(func):
             lock.release()
 
     return wrapper
+
+
+def decodeFlightSwVersion(v: Optional[int]) -> Optional[tuple[int, int, int, int]]:
+    """
+    Decode a packed uint32 flight_sw_version into major.minor.patch and extra byte.
+    Format (conventional MAVLink): [major:8][minor:8][patch:8][extra:8]
+    Returns:
+        A tuple of (major, minor, patch, extra) or None if input is None
+    """
+    if v is None:
+        return None
+    v &= 0xFFFFFFFF
+    major = (v >> 24) & 0xFF
+    minor = (v >> 16) & 0xFF
+    patch = (v >> 8) & 0xFF
+    extra = v & 0xFF
+
+    return (major, minor, patch, extra)
+
+
+def getFlightSwVersionString(v: Optional[tuple[int, int, int, int]]) -> str:
+    """
+    Convert flight_sw_version tuple into a human-readable string.
+    """
+    if v is None:
+        return ""
+
+    major, minor, patch, extra = v
+
+    if extra != 0:
+        return f"{major}.{minor}.{patch} ({extra:02x})"
+    else:
+        return f"{major}.{minor}.{patch}"

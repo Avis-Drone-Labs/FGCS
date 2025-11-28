@@ -7,7 +7,7 @@ from serial.tools import list_ports
 
 from . import socketio_client
 from .conftest import setupDrone
-from .helpers import send_and_recieve
+from .helpers import send_and_receive
 
 VALID_DRONE_PORT: str
 
@@ -45,7 +45,7 @@ def get_comport_name(port):
 def test_getComPort() -> None:
     # TODO: we should automate different OS environments for our unit tests maybe?
     assert (
-        send_and_recieve("get_com_ports")
+        send_and_receive("get_com_ports")
         == [
             f"{get_comport_name(port)}: {port.description}"
             for port in list_ports.comports()
@@ -56,28 +56,28 @@ def test_getComPort() -> None:
 
 def test_connectToDrone_badType() -> None:
     # Failure on bad connection type
-    assert send_and_recieve("connect_to_drone", {}) == {
+    assert send_and_receive("connect_to_drone", {}) == {
         "message": "Connection type not specified."
     }
-    assert send_and_recieve("connect_to_drone", {"connectionType": "testtype"}) == {
+    assert send_and_receive("connect_to_drone", {"connectionType": "testtype"}) == {
         "message": "Connection type not specified."
     }
 
 
 def test_connectToDrone_badPort() -> None:
     # Failure on no port specified
-    assert send_and_recieve("connect_to_drone", {"connectionType": "serial"}) == {
+    assert send_and_receive("connect_to_drone", {"connectionType": "serial"}) == {
         "message": "COM port not specified."
     }
-    assert send_and_recieve("connect_to_drone", {"connectionType": "network"}) == {
+    assert send_and_receive("connect_to_drone", {"connectionType": "network"}) == {
         "message": "Connection address not specified."
     }
 
     # Failure on bad port specified
-    assert send_and_recieve(
+    assert send_and_receive(
         "connect_to_drone", {"connectionType": "serial", "port": "testport"}
     ) == {"message": "COM port not found."}
-    assert send_and_recieve(
+    assert send_and_receive(
         "connect_to_drone", {"connectionType": "serial", "port": "COM10:5761"}
     ) == {"message": "COM port not found."}
 
@@ -109,7 +109,10 @@ def test_connectToDrone_validConnection() -> None:
     socketio_client.emit(
         "connect_to_drone", {"connectionType": connectionType, "port": VALID_DRONE_PORT}
     )
-    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
+    assert socketio_client.get_received()[-1]["args"][0] == {
+        "flight_sw_version": "4.7.0",
+        "aircraft_type": 2,
+    }
     assert droneStatus.drone is not None
     assert droneStatus.drone.port == VALID_DRONE_PORT
     assert droneStatus.drone.baud == 57600
@@ -119,7 +122,10 @@ def test_connectToDrone_validConnection() -> None:
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
     )
-    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
+    assert socketio_client.get_received()[-1]["args"][0] == {
+        "flight_sw_version": "4.7.0",
+        "aircraft_type": 2,
+    }
     assert droneStatus.drone is not None
     assert droneStatus.drone.baud == 9600
 
@@ -133,13 +139,13 @@ def test_connectToDrone_badBaud() -> None:
     )
 
     # Failure on invalid baud rate value
-    assert send_and_recieve(
+    assert send_and_receive(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": -1},
     ) == {
         "message": f"{-1} is an invalid baudrate. Valid baud rates are {Drone.getValidBaudrates()}"
     }
-    assert send_and_recieve(
+    assert send_and_receive(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 110},
     ) == {
@@ -147,14 +153,14 @@ def test_connectToDrone_badBaud() -> None:
     }
 
     # Failure on invalid baud rate types
-    assert send_and_recieve(
+    assert send_and_receive(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600.0},
-    ) == {"message": "Expected integer value for baud, recieved float."}
-    assert send_and_recieve(
+    ) == {"message": "Expected integer value for baud, received float."}
+    assert send_and_receive(
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": "9600"},
-    ) == {"message": "Expected integer value for baud, recieved str."}
+    ) == {"message": "Expected integer value for baud, received str."}
 
 
 def test_disconnectFromDrone() -> None:
@@ -170,7 +176,10 @@ def test_disconnectFromDrone() -> None:
         "connect_to_drone",
         {"connectionType": connectionType, "port": VALID_DRONE_PORT, "baud": 9600},
     )
-    assert socketio_client.get_received()[-1]["args"][0] == {"aircraft_type": 2}
+    assert socketio_client.get_received()[-1]["args"][0] == {
+        "flight_sw_version": "4.7.0",
+        "aircraft_type": 2,
+    }
 
     socketio_client.emit("disconnect_from_drone")
     assert socketio_client.get_received()[0]["name"] == "disconnected_from_drone"

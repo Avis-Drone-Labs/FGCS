@@ -1,10 +1,10 @@
+import time
+from logging import getLogger
+
 import app.droneStatus as droneStatus  # noqa: F401
 import pytest
-import time
-
 from app.drone import Drone
 from app.utils import getComPort
-from logging import getLogger
 from pymavlink import mavutil
 
 
@@ -26,7 +26,7 @@ def setupDrone(connectionString: str) -> bool:
     return True
 
 
-def waitUntilCalibrated() -> None:
+def waitUntilCalibrated() -> bool:
     """Requests SYS_STATUS messages and blocks until the message indicates that the sensor
     health is in order. It is always 1467063343 when the sensors are healthy
     """
@@ -36,6 +36,7 @@ def waitUntilCalibrated() -> None:
     testLogger = getLogger("test")
     testLogger.info("Waiting until systems have calibrated")
     sensor_health = [0]
+    timeout = 5  # seconds
 
     def set_sensor_health(statustext):
         sensor_health.append(int(statustext.onboard_control_sensors_health))
@@ -45,12 +46,18 @@ def waitUntilCalibrated() -> None:
         mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS
     )
 
+    start_time = time.time()
+
     while sensor_health[-1] != 1467063343:
         testLogger.debug("Systems calibrating")
         time.sleep(0.1)
+        if time.time() - start_time > timeout:
+            testLogger.error("Timeout waiting for systems to calibrate")
+            return False
 
     getLogger("test").info("All systems calibrated successfully")
     droneStatus.drone.stopAllDataStreams()
+    return True
 
 
 def pytest_addoption(parser):
@@ -79,4 +86,8 @@ def pytest_sessionstart(session):
         print("\033[1;31;40mFAILED TO CONNECT TO DRONE, EXITING TESTS\033[0m")
         pytest.exit(1)
 
-    waitUntilCalibrated()
+    calibration_success = waitUntilCalibrated()
+
+    if not calibration_success:
+        print("\033[1;31;40mDRONE FAILED TO CALIBRATE, EXITING TESTS\033[0m")
+        pytest.exit(1)

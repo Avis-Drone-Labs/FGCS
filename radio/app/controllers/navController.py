@@ -5,7 +5,7 @@ from threading import current_thread
 from typing import TYPE_CHECKING
 
 import serial
-from app.customTypes import Response
+from app.customTypes import Response, VehicleType
 from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 
@@ -247,6 +247,9 @@ class NavController:
         """
         Tells the drone to reposition to the specified GPS coordinates.
 
+        For fixed-wing aircraft (planes), this uses a mission waypoint with current=2
+        to avoid overwriting the mission. For multirotors, this uses SET_POSITION_TARGET_GLOBAL_INT.
+
         Args:
             lat (float): The latitude to go to.
             lon (float): The longitude to go to.
@@ -260,27 +263,56 @@ class NavController:
             return guidedModeSetResult
 
         try:
-            with self.drone.sending_command_lock:
-                self.drone.master.mav.set_position_target_global_int_send(
-                    0,
-                    self.drone.target_system,
-                    self.drone.target_component,
-                    mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
-                    65016,  # Bitmask to ignore all values except for x, y and z
-                    int(lat * 1e7),
-                    int(lon * 1e7),
-                    alt,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                )
+            if self.drone.aircraft_type == VehicleType.FIXED_WING.value:
+                with self.drone.sending_command_lock:
+                    # https://mavlink.io/en/messages/common.html#MISSION_ITEM_INT
+                    # https://ardupilot.org/dev/docs/plane-commands-in-guided-mode.html
+                    self.drone.master.mav.mission_item_int_send(
+                        self.drone.target_system,
+                        self.drone.target_component,
+                        0,  # seq
+                        mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT,
+                        2,  # current=2 means guided mode target, doesn't overwrite mission
+                        1,  # Autocontinue to next waypoint. 0: false, 1: true.
+                        0,  # param1 (hold time)
+                        self.loiter_radius,  # param2 (acceptance radius)
+                        0,  # param3 (pass through waypoint)
+                        float("nan"),  # param4 (desired yaw angle)
+                        int(lat * 1e7), 
+                        int(lon * 1e7),
+                        alt, # altitude in meters
+                        mavutil.mavlink.MAV_MISSION_TYPE_MISSION,
+                    )
 
-            self.drone.logger.info(f"Reposition command sent to {lat}, {lon}, {alt}m")
+                self.drone.logger.info(
+                    f"Reposition command (mission waypoint) sent to {lat}, {lon}, {alt}m for fixed-wing"
+                )
+            else:
+                # ArduCopter/Multirotor uses SET_POSITION_TARGET_GLOBAL_INT
+                with self.drone.sending_command_lock:
+                    self.drone.master.mav.set_position_target_global_int_send(
+                        0,
+                        self.drone.target_system,
+                        self.drone.target_component,
+                        mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+                        65016,  # Bitmask to ignore all values except for x, y and z
+                        int(lat * 1e7),
+                        int(lon * 1e7),
+                        alt,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    )
+
+                self.drone.logger.info(
+                    f"Reposition command sent to {lat}, {lon}, {alt}m for multirotor"
+                )
 
             return {
                 "success": True,

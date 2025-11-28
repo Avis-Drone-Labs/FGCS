@@ -102,7 +102,7 @@ if (preFlightChecklist !== null) {
     store.dispatch(setChecklistItems(JSON.parse(preFlightChecklist)))
   } catch {
     console.log(
-      "Failed to parse JSON from pre flight checklist items, reseting to blank array.",
+      "Failed to parse JSON from pre flight checklist items, resetting to blank array.",
     )
   }
 }

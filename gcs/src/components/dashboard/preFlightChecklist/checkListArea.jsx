@@ -7,21 +7,16 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { ActionIcon, Button, Checkbox, Modal, Tooltip } from "@mantine/core"
-
-// Local Imports
-import EditCheckList from "./checkListEdit.jsx"
-
-// Styling imports
 import {
   IconCheckbox,
   IconDownload,
   IconEdit,
   IconTrashX,
 } from "@tabler/icons-react"
-import resolveConfig from "tailwindcss/resolveConfig"
-import tailwindConfig from "../../../../tailwind.config.js"
+
+// Local Imports
+import EditCheckList from "./checkListEdit.jsx"
 import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -207,11 +202,11 @@ export default function CheckListArea({ id }) {
             No, cancel
           </Button>
           <Button
-            color={tailwindColors.green[600]}
+            color="green"
             onClick={() => dispatch(deleteChecklistById(checklist.id))}
             data-autofocus
           >
-            Yes, Continue
+            Yes, Delete
           </Button>
         </div>
       </Modal>

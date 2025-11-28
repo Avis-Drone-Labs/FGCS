@@ -5,7 +5,7 @@ from threading import current_thread
 from typing import TYPE_CHECKING
 
 import serial
-from app.customTypes import Response, VehicleType
+from app.customTypes import Response
 from app.utils import commandAccepted, sendingCommandLock
 from pymavlink import mavutil
 

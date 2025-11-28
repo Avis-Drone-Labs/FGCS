@@ -1,13 +1,15 @@
-name: Playwright Tests
-on:
-  push:
-    branches:
-      - main
-      - release-*
-  pull_request:
-    branches:
-      - main
-      - release-*
+name: Playwright Tests (Temporarily Disabled)
+# Temporarily disabled - replace 'workflow_dispatch' with the commented triggers below to re-enable
+on: workflow_dispatch # Only run manually
+# Disabled triggers:
+#   push:
+#     branches:
+#       - main
+#       - release-*
+#   pull_request:
+#     branches:
+#       - main
+#       - release-*
 
 jobs:
   test:

@@ -2,6 +2,9 @@
   The modal to edit a checklist
 */
 
+// Native Imports
+import { useState } from "react"
+
 // 3rd Party Imports
 import { Button, Modal, TextInput } from "@mantine/core"
 import { useEditor } from "@tiptap/react"
@@ -10,15 +13,21 @@ import ListItem from "@tiptap/extension-list-item"
 import { RichTextEditor } from "@mantine/tiptap"
 import { Node } from "@tiptap/core"
 
+// Redux
+import { useDispatch } from "react-redux"
+import { setNewChecklistName } from "../../../redux/slices/checklistSlice.js"
+
 export default function EditCheckList({
   opened,
   close,
-  nameSet,
+  passedName,
+  checklistId,
   checkListSet,
   generateCheckboxListString,
   generateCheckboxList,
 }) {
-  const [name, setName, finaliseName] = nameSet // Finalise changes it in the selected accordion (ik annoying...)
+  const dispatch = useDispatch()
+  const [name, setName] = useState(passedName)
   const [checkboxList, setCheckboxList] = checkListSet
 
   const Document = Node.create({
@@ -69,7 +78,7 @@ export default function EditCheckList({
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          finaliseName(name)
+          dispatch(setNewChecklistName({ id: checklistId, newName: name }))
           generateCheckboxList()
           close()
         }}

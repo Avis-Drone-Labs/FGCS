@@ -485,6 +485,17 @@ function processAndSaveLogData(
   } // Save the complete data with required properties
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
+  // 7. Get firmware version from VER message if available
+  let firmwareVersion: string | null = null
+  if (
+    loadedLogMessages.VER !== null &&
+    loadedLogMessages.VER !== undefined &&
+    Array.isArray(loadedLogMessages.VER) &&
+    loadedLogMessages.VER.length > 0
+  ) {
+    firmwareVersion = (loadedLogMessages.VER[0].FWS as string) || null
+  }
+
   // 8. Return the summary object
   return {
     formatMessages: finalFormats,
@@ -495,6 +506,7 @@ function processAndSaveLogData(
     messageFilters: defaultMessageFilters,
     messageMeans: means,
     aircraftType,
+    firmwareVersion,
   }
 }
 

@@ -22,18 +22,19 @@ import MainDisplay from "./components/fla/mainDisplay.jsx"
 import Layout from "./components/layout.jsx"
 import { showErrorNotification } from "./helpers/notification.js"
 import {
-  selectCustomColors,
   selectBaseChartData,
+  selectCustomColors,
   selectMessageFilters,
   // Selectors
   setAircraftType,
+  setBaseChartData,
   setCanSavePreset,
   setColorIndex,
   setCustomColors,
   setFile,
+  setFirmwareVersion,
   setFlightModeMessages,
   setFormatMessages,
-  setBaseChartData,
   setLogEvents,
   setLogMessages,
   setLogType,
@@ -58,6 +59,7 @@ export default function FLA() {
       showErrorNotification("Error loading file, no summary found.")
       return
     }
+    dispatch(setFirmwareVersion(summary.firmwareVersion))
     dispatch(setLogType(summary.logType))
     dispatch(setAircraftType(summary.aircraftType))
     dispatch(setFormatMessages(summary.formatMessages))

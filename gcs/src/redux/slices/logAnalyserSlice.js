@@ -17,6 +17,7 @@ const logAnalyserSlice = createSlice({
     colorIndex: 0,
     aircraftType: null,
     canSavePreset: false,
+    firmwareVersion: null,
   },
   reducers: {
     setFile: (state, action) => {
@@ -64,6 +65,9 @@ const logAnalyserSlice = createSlice({
     setCanSavePreset: (state, action) => {
       state.canSavePreset = action.payload
     },
+    setFirmwareVersion: (state, action) => {
+      state.firmwareVersion = action.payload
+    },
   },
   selectors: {
     selectFile: (state) => state.file,
@@ -81,6 +85,7 @@ const logAnalyserSlice = createSlice({
     selectColorIndex: (state) => state.colorIndex,
     selectAircraftType: (state) => state.aircraftType,
     selectCanSavePreset: (state) => state.canSavePreset,
+    selectFirmwareVersion: (state) => state.firmwareVersion,
   },
 })
 
@@ -100,6 +105,7 @@ export const {
   setColorIndex,
   setAircraftType,
   setCanSavePreset,
+  setFirmwareVersion,
 } = logAnalyserSlice.actions
 
 export const {
@@ -118,6 +124,7 @@ export const {
   selectColorIndex,
   selectAircraftType,
   selectCanSavePreset,
+  selectFirmwareVersion,
 } = logAnalyserSlice.selectors
 
 export default logAnalyserSlice

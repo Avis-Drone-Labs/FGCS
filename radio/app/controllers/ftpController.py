@@ -28,7 +28,19 @@ class FtpController:
         self.list_result: List[mavftp.DirectoryEntry] = []
         self.list_temp_result: List[mavftp.DirectoryEntry] = []
 
-        print(self.listFiles("/"))
+        self._sendFtpCommand(
+            mavftp_op.FTP_OP(
+                self.seq,
+                self.session,
+                mavftp_op.OP_ResetSessions,
+                0,
+                0,
+                0,
+                0,
+                None,
+            )
+        )
+        self._processFtpResponse("reset_sessions")
 
     def _sendFtpCommand(self, op: mavftp_op.FTP_OP) -> None:
         """
@@ -121,10 +133,9 @@ class FtpController:
                     }
 
                 # Handle list directory responses
-                if response_op.req_opcode == mavftp_op.OP_ListDirectory:
-                    self.drone.logger.info(
-                        f"Directory listing received with {response_op.size} bytes"
-                    )
+                if response_op.req_opcode == mavftp_op.OP_ResetSessions:
+                    return self._handleResetSessionsResponse(response_op)
+                elif response_op.req_opcode == mavftp_op.OP_ListDirectory:
                     handling_finished = self._handleListFilesResponse(response_op)
 
                     if handling_finished:
@@ -201,6 +212,36 @@ class FtpController:
             payload,
         )
 
+    def _handleResetSessionsResponse(self, response_op: mavftp_op.FTP_OP) -> Response:
+        """
+        Handle the response for a reset sessions operation.
+
+        Args:
+            response_op (mavftp_op.FTP_OP): The FTP operation response to handle.
+
+        Returns:
+            Response: A response object indicating success or failure.
+        """
+        if response_op is None:
+            self.drone.logger.error("No response op for reset sessions operation")
+            return {
+                "success": False,
+                "message": "Failed to reset sessions",
+            }
+
+        if response_op.opcode == mavftp_op.OP_Ack:
+            self.drone.logger.info("Sessions reset successfully")
+            return {
+                "success": True,
+                "message": "Sessions reset successfully",
+            }
+        else:
+            self.drone.logger.error("Failed to reset sessions")
+            return {
+                "success": False,
+                "message": "Failed to reset sessions",
+            }
+
     def _handleListFilesResponse(self, response_op: mavftp_op.FTP_OP) -> bool:
         """
         Handle the response for a list files operation.
@@ -212,10 +253,8 @@ class FtpController:
             bool: True if the listing is complete, False otherwise.
         """
         if response_op is None:
-            return {
-                "success": False,
-                "message": "Failed to get directory listing",
-            }
+            self.drone.logger.error("No response op for list files operation")
+            return True
 
         output: List[mavftp.DirectoryEntry] = []
 
@@ -244,6 +283,10 @@ class FtpController:
                     output.append(
                         mavftp.DirectoryEntry(name=name, is_dir=False, size_b=size)
                     )
+
+            if self.last_op is None or self.last_op.payload is None:
+                self.drone.logger.error("No last operation or payload for list files")
+                return True
 
             encoded_path = self.last_op.payload
             more_list_files_op = mavftp_op.FTP_OP(

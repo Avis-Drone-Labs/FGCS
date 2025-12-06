@@ -328,8 +328,13 @@ class FtpController:
         """
         dict_list = []
         for entry in entries:
-            if entry.name in [".", ".."]:
+            if entry.name == ".":
                 calculated_path = path
+            elif entry.name == "..":
+                if path in ["", "/"]:
+                    calculated_path = path
+                else:
+                    calculated_path = "/".join(path.split("/")[:-1]) or "/"
             else:
                 if path == "":
                     calculated_path = entry.name

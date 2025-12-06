@@ -17,6 +17,7 @@ from serial.serialutil import SerialException
 from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
 from app.controllers.frameController import FrameController
+from app.controllers.ftpController import FtpController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
@@ -121,6 +122,7 @@ class Drone:
             "Setting up the frame controller",
             "Setting up the RC controller",
             "Setting up the nav controller",
+            "Setting up the FTP controller",
             "Connection complete",
         ]
 
@@ -256,7 +258,7 @@ class Drone:
 
         self.setupControllers()
 
-        self.sendConnectionStatusUpdate(12)
+        self.sendConnectionStatusUpdate(13)
 
         self.sendStatusTextMessage(
             mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
@@ -295,6 +297,9 @@ class Drone:
 
         self.sendConnectionStatusUpdate(11)
         self.navController = NavController(self)
+
+        self.sendConnectionStatusUpdate(12)
+        self.ftpController = FtpController(self)
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)

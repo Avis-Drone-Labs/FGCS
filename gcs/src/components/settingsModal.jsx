@@ -580,17 +580,17 @@ function SettingsModal() {
         opened={opened}
         size={"50%"}
         styles={{
-          content: { backgroundColor: "rgb(23 26 27)" },
-          header: { backgroundColor: "rgb(23 26 27)" },
+          content: { backgroundColor: "dark" },
+          header: { backgroundColor: "dark" },
         }}
-        bg="bg-falcongrey-900"
+        bg="dark"
         radius="15px"
         shadow="xs"
       >
         <Tabs
           defaultValue="General"
           orientation="vertical"
-          className="bg-falcongrey-900"
+          className="dark"
           color="red"
           h="50vh"
           styles={{ list: { width: "15%" } }}

@@ -314,21 +314,37 @@ class FtpController:
         return False
 
     def _convertDirectoryEntriesToDicts(
-        self, entries: List[mavftp.DirectoryEntry]
+        self, entries: List[mavftp.DirectoryEntry], path: str = ""
     ) -> List[dict]:
         """
         Convert a list of DirectoryEntry objects to a list of dictionaries.
 
         Args:
             entries (List[mavftp.DirectoryEntry]): The list of directory entries.
+            path (str): The directory path (not used in conversion).
 
         Returns:
             List[dict]: The list of directory entries as dictionaries.
         """
         dict_list = []
         for entry in entries:
+            if entry.name in [".", ".."]:
+                calculated_path = path
+            else:
+                if path == "":
+                    calculated_path = entry.name
+                elif path == "/":
+                    calculated_path = f"/{entry.name}"
+                else:
+                    calculated_path = f"{path}/{entry.name}"
+
             dict_list.append(
-                {"name": entry.name, "is_dir": entry.is_dir, "size_b": entry.size_b}
+                {
+                    "name": entry.name,
+                    "path": calculated_path,
+                    "is_dir": entry.is_dir,
+                    "size_b": entry.size_b,
+                }
             )
 
         return dict_list
@@ -366,6 +382,8 @@ class FtpController:
         self.list_result = []
         self.list_temp_result = []
 
+        self.drone.logger.info(f"Listing files in directory: {path}")
+
         self._sendFtpCommand(op)
         response = self._processFtpResponse("list_files")
 
@@ -375,5 +393,5 @@ class FtpController:
         return {
             "success": True,
             "message": "Directory listing retrieved successfully",
-            "data": self._convertDirectoryEntriesToDicts(self.list_result),
+            "data": self._convertDirectoryEntriesToDicts(self.list_result, path),
         }

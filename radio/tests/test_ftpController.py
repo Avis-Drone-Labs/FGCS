@@ -13,11 +13,13 @@ def test_convertDirectoryEntriesToDicts_success(
         mavftp.DirectoryEntry(name="folder1", is_dir=True, size_b=0),
     ]
 
-    result = droneStatus.drone.ftpController.convertDirectoryEntriesToDicts(entries)
+    result = droneStatus.drone.ftpController.convertDirectoryEntriesToDicts(
+        entries, "/"
+    )
 
     assert result == [
-        {"name": "file1.txt", "is_dir": False, "size_b": 1234},
-        {"name": "folder1", "is_dir": True, "size_b": 0},
+        {"name": "file1.txt", "path": "/file1.txt", "is_dir": False, "size_b": 1234},
+        {"name": "folder1", "path": "/folder1", "is_dir": True, "size_b": 0},
     ]
 
 

@@ -405,6 +405,10 @@ class FtpController:
         if response.get("success", False) is False:
             return response
 
+        self.drone.logger.info(
+            f"Successfully listed {len(self.list_result)} files in directory: {path}"
+        )
+
         return {
             "success": True,
             "message": "Directory listing retrieved successfully",

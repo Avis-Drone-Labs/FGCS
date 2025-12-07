@@ -10,6 +10,9 @@ const ftpSlice = createSlice({
     setCurrentPath: (state, action) => {
       state.currentPath = action.payload
     },
+    resetFiles: (state) => {
+      state.files = []
+    },
     addFiles: (state, action) => {
       // Filter out any files that are "." or ".." or already exist in top level files
       const filteredNewFiles = action.payload.filter((newFile) => {
@@ -71,7 +74,8 @@ const ftpSlice = createSlice({
   },
 })
 
-export const { setCurrentPath, addFiles, emitListFiles } = ftpSlice.actions
+export const { setCurrentPath, resetFiles, addFiles, emitListFiles } =
+  ftpSlice.actions
 
 export const { selectCurrentPath, selectFiles } = ftpSlice.selectors
 

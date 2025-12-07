@@ -74,7 +74,7 @@ import {
   setTelemetryData,
   setVibrationData,
 } from "../slices/droneInfoSlice"
-import { addFiles } from "../slices/ftpSlice.js"
+import { addFiles, resetFiles } from "../slices/ftpSlice.js"
 import {
   addIdToItem,
   closeDashboardMissionFetchingNotificationNoSuccessThunk,
@@ -403,6 +403,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setShowMotorTestWarningModal(true))
           store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
+          store.dispatch(resetFiles())
         })
 
         // Link stats

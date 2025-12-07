@@ -8,11 +8,15 @@
 // 3rd party imports
 
 // Redux
-import { Group, Tree } from "@mantine/core"
+import { Button, Group, Tree } from "@mantine/core"
 import { IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react"
 import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { emitListFiles, selectFiles } from "../../redux/slices/ftpSlice"
+import {
+  emitListFiles,
+  resetFiles,
+  selectFiles,
+} from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
   const dispatch = useDispatch()
@@ -61,6 +65,14 @@ export default function Ftp() {
 
   return (
     <div className="flex flex-col gap-4 mx-4">
+      <Button
+        onClick={() => {
+          dispatch(resetFiles())
+        }}
+        w={"fit-content"}
+      >
+        Refresh files
+      </Button>
       <Tree
         data={convertedFiles}
         levelOffset={23}

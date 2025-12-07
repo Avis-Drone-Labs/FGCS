@@ -11,11 +11,11 @@ const ftpSlice = createSlice({
       state.currentPath = action.payload
     },
     addFiles: (state, action) => {
-      // Filter out any files are "." or ".." or already exist in top level files
+      // Filter out any files that are "." or ".." or already exist in top level files
       const filteredNewFiles = action.payload.filter((newFile) => {
         return (
-          newFile.name != "." &&
-          newFile.name != ".." &&
+          newFile.name !== "." &&
+          newFile.name !== ".." &&
           !state.files.some(
             (existingFile) => existingFile.path === newFile.path,
           )
@@ -24,8 +24,12 @@ const ftpSlice = createSlice({
 
       for (const file of filteredNewFiles) {
         // Find parent directory
-        const parentPath = file.path.split("/").slice(0, -1).join("/")
+        let parentPath = file.path.split("/").slice(0, -1).join("/")
         if (parentPath === "") {
+          parentPath = "/"
+        }
+
+        if (parentPath === "/") {
           // Add top level files since they don't exist already
           state.files.push(file)
           continue
@@ -51,6 +55,10 @@ const ftpSlice = createSlice({
             parentDir.children = []
           }
           parentDir.children.push(file)
+        } else {
+          console.warn(
+            `File "${file.name}" with path "${file.path}" could not be added because its parent directory "${parentPath}" is missing in state`,
+          )
         }
       }
     },

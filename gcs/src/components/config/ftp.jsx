@@ -49,7 +49,7 @@ export default function Ftp() {
     if (files.length === 0) {
       dispatch(emitListFiles({ path: "/" }))
     }
-  }, [files.length])
+  }, [files.length, dispatch])
 
   function handleFileClick(node) {
     if (node.is_dir) {

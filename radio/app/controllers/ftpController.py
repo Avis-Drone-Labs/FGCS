@@ -271,6 +271,10 @@ class FtpController:
                     self.drone.logger.warning(f"Error decoding directory entry: {e}")
                     continue
 
+                if len(decoded_entry) == 0:
+                    self.drone.logger.warning("Received empty directory entry")
+                    continue
+
                 if decoded_entry[0] == "D":
                     output.append(
                         mavftp.DirectoryEntry(
@@ -278,11 +282,17 @@ class FtpController:
                         )
                     )
                 elif decoded_entry[0] == "F":
-                    (name, size_str) = decoded_entry[1:].split("\t")
-                    size = int(size_str)
-                    output.append(
-                        mavftp.DirectoryEntry(name=name, is_dir=False, size_b=size)
-                    )
+                    try:
+                        (name, size_str) = decoded_entry[1:].split("\t")
+                        size = int(size_str)
+                        output.append(
+                            mavftp.DirectoryEntry(name=name, is_dir=False, size_b=size)
+                        )
+                    except Exception as e:
+                        self.drone.logger.warning(
+                            f"Error parsing file entry '{decoded_entry}': {e}"
+                        )
+                        continue
 
             if self.last_op is None or self.last_op.payload is None:
                 self.drone.logger.error("No last operation or payload for list files")
@@ -304,7 +314,7 @@ class FtpController:
             response_op.opcode == mavftp_op.OP_Nack
             and response_op.payload is not None
             and len(response_op.payload) == 1
-            and response_op.payload[0] == 6
+            and response_op.payload[0] == mavftp.FtpError.EndOfFile.value
         ):
             self.list_result = self.list_temp_result
             return True
@@ -321,7 +331,7 @@ class FtpController:
 
         Args:
             entries (List[mavftp.DirectoryEntry]): The list of directory entries.
-            path (str): The directory path (not used in conversion).
+            path (str): The directory path, used in conversion.
 
         Returns:
             List[dict]: The list of directory entries as dictionaries.

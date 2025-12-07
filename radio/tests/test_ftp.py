@@ -31,6 +31,7 @@ def test_listFiles_noPath_success(socketio_client: SocketIOTestClient, droneStat
             {"name": "..", "path": "/", "is_dir": True, "size_b": 0},
             {"name": "@ROMFS", "path": "/@ROMFS", "is_dir": True, "size_b": 0},
             {"name": "@SYS", "path": "/@SYS", "is_dir": True, "size_b": 0},
+            {"name": "logs", "path": "/logs", "is_dir": True, "size_b": 0},
             {"name": "terrain", "path": "/terrain", "is_dir": True, "size_b": 0},
         ],
     }
@@ -64,6 +65,7 @@ def test_listFiles_homePath_success(socketio_client: SocketIOTestClient, droneSt
             {"name": "..", "path": "/", "is_dir": True, "size_b": 0},
             {"name": "@ROMFS", "path": "/@ROMFS", "is_dir": True, "size_b": 0},
             {"name": "@SYS", "path": "/@SYS", "is_dir": True, "size_b": 0},
+            {"name": "logs", "path": "/logs", "is_dir": True, "size_b": 0},
             {"name": "terrain", "path": "/terrain", "is_dir": True, "size_b": 0},
         ],
     }

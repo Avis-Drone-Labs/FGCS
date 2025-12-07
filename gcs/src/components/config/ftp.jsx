@@ -8,7 +8,7 @@
 // 3rd party imports
 
 // Redux
-import { Button, Group, Tree } from "@mantine/core"
+import { Button, Group, LoadingOverlay, Tree } from "@mantine/core"
 import { IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react"
 import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -16,11 +16,14 @@ import {
   emitListFiles,
   resetFiles,
   selectFiles,
+  selectLoadingListFiles,
 } from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
   const dispatch = useDispatch()
   const files = useSelector(selectFiles)
+  const loadingListFiles = useSelector(selectLoadingListFiles)
+
   const convertedFiles = useMemo(() => {
     if (!files || files.length === 0) return []
     return files.map((file) => {
@@ -64,7 +67,15 @@ export default function Ftp() {
   }
 
   return (
-    <div className="flex flex-col gap-4 mx-4">
+    <div className="flex flex-col gap-4 mx-4 relative w-fit">
+      <LoadingOverlay
+        visible={loadingListFiles}
+        zIndex={1000}
+        overlayProps={{ blur: 2 }}
+      />
+
+      {loadingListFiles && <p>Loading files...</p>}
+
       <Button
         onClick={() => {
           dispatch(resetFiles())
@@ -75,19 +86,18 @@ export default function Ftp() {
       </Button>
       <Tree
         data={convertedFiles}
-        levelOffset={23}
         renderNode={({ node, expanded, elementProps }) => (
           <Group gap={5} {...elementProps} key={node.name}>
             {node.is_dir ? (
               <>
                 {expanded ? (
-                  <IconFolderOpen size={14} />
+                  <IconFolderOpen size={20} />
                 ) : (
-                  <IconFolder size={14} />
+                  <IconFolder size={20} />
                 )}
               </>
             ) : (
-              <IconFile size={14} />
+              <IconFile size={20} />
             )}
 
             <span

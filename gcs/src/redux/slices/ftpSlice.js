@@ -3,13 +3,10 @@ import { createSlice } from "@reduxjs/toolkit"
 const ftpSlice = createSlice({
   name: "ftp",
   initialState: {
-    currentPath: "/",
     files: [],
+    loadingListFiles: false,
   },
   reducers: {
-    setCurrentPath: (state, action) => {
-      state.currentPath = action.payload
-    },
     resetFiles: (state) => {
       state.files = []
     },
@@ -65,18 +62,21 @@ const ftpSlice = createSlice({
         }
       }
     },
+    setLoadingListFiles: (state, action) => {
+      state.loadingListFiles = action.payload
+    },
 
     emitListFiles: () => {},
   },
   selectors: {
-    selectCurrentPath: (state) => state.currentPath,
     selectFiles: (state) => state.files,
+    selectLoadingListFiles: (state) => state.loadingListFiles,
   },
 })
 
-export const { setCurrentPath, resetFiles, addFiles, emitListFiles } =
+export const { resetFiles, addFiles, setLoadingListFiles, emitListFiles } =
   ftpSlice.actions
 
-export const { selectCurrentPath, selectFiles } = ftpSlice.selectors
+export const { selectFiles, selectLoadingListFiles } = ftpSlice.selectors
 
 export default ftpSlice

@@ -74,7 +74,11 @@ import {
   setTelemetryData,
   setVibrationData,
 } from "../slices/droneInfoSlice"
-import { addFiles, resetFiles } from "../slices/ftpSlice.js"
+import {
+  addFiles,
+  resetFiles,
+  setLoadingListFiles,
+} from "../slices/ftpSlice.js"
 import {
   addIdToItem,
   closeDashboardMissionFetchingNotificationNoSuccessThunk,
@@ -1072,6 +1076,7 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(FtpSpecificSocketEvents.onListFilesResult, (msg) => {
+          store.dispatch(setLoadingListFiles(false))
           if (msg.success) {
             store.dispatch(addFiles(msg.data))
           } else {

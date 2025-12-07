@@ -20,7 +20,7 @@ def listFiles(data: ListFilesType) -> None:
     if droneStatus.state != "config":
         socketio.emit(
             "params_error",
-            {"message": "You must be on the config screen to access FTP operations."},
+            {"message": "You must be on the config screen to access FTP operations"},
         )
         logger.debug(f"Current state: {droneStatus.state}")
         return

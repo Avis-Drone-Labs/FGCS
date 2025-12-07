@@ -87,7 +87,7 @@ export default function Ftp() {
       <Tree
         data={convertedFiles}
         renderNode={({ node, expanded, elementProps }) => (
-          <Group gap={5} {...elementProps} key={node.name}>
+          <Group gap={5} {...elementProps} key={node.path}>
             {node.is_dir ? (
               <>
                 {expanded ? (

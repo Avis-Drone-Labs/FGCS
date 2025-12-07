@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import struct
+import time
 from threading import current_thread
 from typing import TYPE_CHECKING, List, Optional
 
@@ -85,7 +86,6 @@ class FtpController:
         Returns:
             Response: A response object indicating success or failure.
         """
-        import time
 
         if not self.drone.reserve_message_type(
             "FILE_TRANSFER_PROTOCOL", self.controller_id

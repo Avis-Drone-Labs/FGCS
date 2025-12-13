@@ -109,17 +109,19 @@ export default function MainDisplay({ closeLogFile, chartData }) {
       <div className="w-full h-full pr-4 min-w-0 flex flex-col">
         <Graph data={chartData} openPresetModal={openSavePresetModal} />
         {/* Plots Setup */}
-        <div className="grid grid-cols-5 gap-4 pt-4">
-          {chartData.datasets.map((item) => (
-            <Fragment key={item.label}>
-              <ChartDataCard
-                item={item}
-                unit={item.yAxisID} // item.yAxisID is the unit
-                messageMeans={messageMeans}
-              />
-            </Fragment>
-          ))}
-        </div>
+        <ScrollArea.Autosize>
+          <div className="grid grid-cols-5 gap-4 pt-4">
+            {chartData.datasets.map((item) => (
+              <Fragment key={item.label}>
+                <ChartDataCard
+                  item={item}
+                  unit={item.yAxisID} // item.yAxisID is the unit
+                  messageMeans={messageMeans}
+                />
+              </Fragment>
+            ))}
+          </div>
+        </ScrollArea.Autosize>
         <SavePresetModal
           isSavePresetModalOpen={isSavePresetModalOpen}
           closeSavePresetModal={closeSavePresetModal}

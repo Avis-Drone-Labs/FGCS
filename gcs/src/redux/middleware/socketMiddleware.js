@@ -522,7 +522,7 @@ const socketMiddleware = (store) => {
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
           if (!msg.success) {
             // Check if this was a disarm attempt and was not a force disarm
-            if (msg.was_disarming && !msg.was_force) {
+            if (msg.data?.was_disarming && !msg.data?.was_force) {
               store.dispatch(setForceDisarmModalOpened(true))
             } else {
               showErrorNotification(msg.message)

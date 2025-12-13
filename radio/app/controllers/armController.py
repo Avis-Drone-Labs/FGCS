@@ -35,12 +35,23 @@ class ArmController:
             Response: The response from the arm command
         """
         if self.drone.armed:
-            return {"success": False, "message": "Already armed"}
+            return {
+                "success": False,
+                "message": "Already armed",
+                "data": {
+                    "was_disarming": False,
+                    "was_force": force,
+                },
+            }
 
         if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
             return {
                 "success": False,
                 "message": "Could not reserve COMMAND_ACK messages",
+                "data": {
+                    "was_disarming": False,
+                    "was_force": force,
+                },
             }
 
         try:
@@ -63,19 +74,37 @@ class ArmController:
                 while not self.drone.armed:
                     time.sleep(0.05)
                 self.drone.logger.debug("ARMED")
-                return {"success": True, "message": "Armed successfully"}
+                return {
+                    "success": False,
+                    "message": "Armed successfully",
+                    "data": {
+                        "was_disarming": False,
+                        "was_force": force,
+                    },
+                }
             else:
                 self.drone.logger.debug("Arming failed")
                 return {
                     "success": False,
                     "message": "Could not arm, command not accepted",
+                    "data": {
+                        "was_disarming": False,
+                        "was_force": force,
+                    },
                 }
 
         except Exception as e:
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-            return {"success": False, "message": "Could not arm, serial exception"}
+            return {
+                "success": False,
+                "message": "Could not arm, serial exception",
+                "data": {
+                    "was_disarming": False,
+                    "was_force": force,
+                },
+            }
         finally:
             self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
@@ -91,12 +120,23 @@ class ArmController:
             Response: The response from the disarm command
         """
         if not self.drone.armed:
-            return {"success": False, "message": "Already disarmed"}
+            return {
+                "success": False,
+                "message": "Already disarmed",
+                "data": {
+                    "was_disarming": True,
+                    "was_force": force,
+                },
+            }
 
         if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
             return {
                 "success": False,
                 "message": "Could not reserve COMMAND_ACK messages",
+                "data": {
+                    "was_disarming": True,
+                    "was_force": force,
+                },
             }
 
         try:
@@ -119,12 +159,23 @@ class ArmController:
                 while self.drone.armed:
                     time.sleep(0.05)
                 self.drone.logger.debug("DISARMED")
-                return {"success": True, "message": "Disarmed successfully"}
+                return {
+                    "success": True,
+                    "message": "Disarmed successfully",
+                    "data": {
+                        "was_disarming": True,
+                        "was_force": force,
+                    },
+                }
             else:
                 self.drone.logger.debug("Could not disarm, command not accepted")
                 return {
                     "success": False,
                     "message": "Could not disarm, command not accepted",
+                    "data": {
+                        "was_disarming": True,
+                        "was_force": force,
+                    },
                 }
 
         except Exception as e:

@@ -38,8 +38,10 @@ def test_arm_disarm_normal(socketio_client: SocketIOTestClient, droneStatus) -> 
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": True,
         "message": "Armed successfully",
-        "was_disarming": False,
-        "was_force": False,
+        "data": {
+            "was_disarming": False,
+            "was_force": False,
+        },
     }
     assert_drone_armed(droneStatus, armed=True)
 
@@ -48,8 +50,10 @@ def test_arm_disarm_normal(socketio_client: SocketIOTestClient, droneStatus) -> 
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": False,
         "message": "Already armed",
-        "was_disarming": False,
-        "was_force": False,
+        "data": {
+            "was_disarming": False,
+            "was_force": False,
+        },
     }
     assert_drone_armed(droneStatus, armed=True)
 
@@ -57,8 +61,10 @@ def test_arm_disarm_normal(socketio_client: SocketIOTestClient, droneStatus) -> 
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": True,
         "message": "Disarmed successfully",
-        "was_disarming": True,
-        "was_force": False,
+        "data": {
+            "was_disarming": True,
+            "was_force": False,
+        },
     }
     assert_drone_armed(droneStatus, armed=False)
 
@@ -67,8 +73,10 @@ def test_arm_disarm_normal(socketio_client: SocketIOTestClient, droneStatus) -> 
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": False,
         "message": "Already disarmed",
-        "was_disarming": True,
-        "was_force": False,
+        "data": {
+            "was_disarming": True,
+            "was_force": False,
+        },
     }
     assert_drone_armed(droneStatus, armed=False)
 
@@ -81,8 +89,10 @@ def test_arm_disarm_force(socketio_client: SocketIOTestClient, droneStatus) -> N
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": True,
         "message": "Armed successfully",
-        "was_disarming": False,
-        "was_force": True,
+        "data": {
+            "was_disarming": False,
+            "was_force": True,
+        },
     }
     assert_drone_armed(droneStatus, armed=True)
 
@@ -91,8 +101,10 @@ def test_arm_disarm_force(socketio_client: SocketIOTestClient, droneStatus) -> N
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": False,
         "message": "Already armed",
-        "was_disarming": False,
-        "was_force": True,
+        "data": {
+            "was_disarming": False,
+            "was_force": True,
+        },
     }
     assert_drone_armed(droneStatus, armed=True)
 
@@ -100,8 +112,10 @@ def test_arm_disarm_force(socketio_client: SocketIOTestClient, droneStatus) -> N
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": True,
         "message": "Disarmed successfully",
-        "was_disarming": True,
-        "was_force": True,
+        "data": {
+            "was_disarming": False,
+            "was_force": True,
+        },
     }
     assert_drone_armed(droneStatus, armed=False)
 
@@ -110,8 +124,10 @@ def test_arm_disarm_force(socketio_client: SocketIOTestClient, droneStatus) -> N
     assert socketio_client.get_received()[0]["args"][0] == {
         "success": False,
         "message": "Already disarmed",
-        "was_disarming": True,
-        "was_force": True,
+        "data": {
+            "was_disarming": False,
+            "was_force": True,
+        },
     }
     assert_drone_armed(droneStatus, armed=False)
 
@@ -123,15 +139,19 @@ def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
         assert socketio_client.get_received()[0]["args"][0] == {
             "success": False,
             "message": "Could not arm, serial exception",
-            "was_disarming": False,
-            "was_force": False,
+            "data": {
+                "was_disarming": False,
+                "was_force": False,
+            },
         }
         socketio_client.emit("arm_disarm", {"arm": True, "force": True})
         assert socketio_client.get_received()[0]["args"][0] == {
             "success": False,
             "message": "Could not arm, serial exception",
-            "was_disarming": False,
-            "was_force": True,
+            "data": {
+                "was_disarming": False,
+                "was_force": True,
+            },
         }
 
     socketio_client.emit("arm_disarm", {"arm": True})
@@ -141,15 +161,19 @@ def test_arm_disarm_exception(socketio_client: SocketIOTestClient, droneStatus):
         assert socketio_client.get_received()[1]["args"][0] == {
             "success": False,
             "message": "Could not disarm, serial exception",
-            "was_disarming": True,
-            "was_force": False,
+            "data": {
+                "was_disarming": True,
+                "was_force": False,
+            },
         }
         socketio_client.emit("arm_disarm", {"arm": False, "force": True})
         assert socketio_client.get_received()[0]["args"][0] == {
             "success": False,
             "message": "Could not disarm, serial exception",
-            "was_disarming": True,
-            "was_force": True,
+            "data": {
+                "was_disarming": True,
+                "was_force": True,
+            },
         }
     socketio_client.emit("arm_disarm", {"arm": False})
     socketio_client.get_received()
@@ -181,27 +205,4 @@ def test_arm_disarm_wrong_args(socketio_client: SocketIOTestClient, droneStatus)
     assert result["name"] == "drone_error"
     assert result["args"][0] == {
         "message": "Request to endpoint arm_disarm missing value for parameter: arm."
-    }
-
-
-@pytest.mark.skip("GPS failure fixture is broken")
-def test_arm_no_gps(gps_failure) -> None:
-    from . import socketio_client
-
-    # Test losing GPS lock when attempting to arm. Assert needs to be outside the context manager because
-    socketio_client.emit("arm_disarm", {"arm": True})
-
-    assert socketio_client.get_received()[0]["args"][0] == {
-        "success": False,
-        "message": "Could not arm, command not accepted",
-        "was_disarming": False,
-        "was_force": False,
-    }
-    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
-
-    assert socketio_client.get_received()[0]["args"][0] == {
-        "success": True,
-        "message": "Armed successfully",
-        "was_disarming": False,
-        "was_force": True,
     }

@@ -1,5 +1,8 @@
 name: Run Python Plane Tests
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:

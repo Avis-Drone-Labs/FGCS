@@ -1,0 +1,47 @@
+name: Run Python Tests with plane SITL
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - radio/**
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - radio/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      service-name-1:
+        image: kushmakkapati/ardupilot_sitl:latest
+        env:
+          VEHICLE: ArduPlane
+        ports:
+          - 5760:5760
+        options: >-
+          --name ardupilot-plane
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: radio
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          python -m pip install -r requirements.txt
+
+      - name: Test with pytest
+        working-directory: radio
+        timeout-minutes: 15
+        run: pytest -m "not copter_only" --log-cli-level=DEBUG

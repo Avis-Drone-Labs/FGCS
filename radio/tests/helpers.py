@@ -90,20 +90,6 @@ class WaitForMessageReturnsNone:
             droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
 
 
-class SetAircraftType:
-    def __init__(self, aircraftType: int):
-        self.aircraftType = aircraftType
-
-    def __enter__(self) -> None:
-        if droneStatus.drone is not None:
-            self.old_aircraftType = droneStatus.drone.aircraft_type
-            droneStatus.drone.aircraft_type = self.aircraftType
-
-    def __exit__(self, type, value, traceback) -> None:
-        if droneStatus.drone is not None:
-            droneStatus.drone.aircraft_type = self.old_aircraftType
-
-
 def send_and_receive(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
     """Sends a request to the socketio test client and returns the response
 

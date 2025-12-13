@@ -43,6 +43,8 @@ const initialState = {
   videoSource: null,
   videoMaximized: false,
   videoScale: 1,
+
+  forceDisarmModalOpened: false,
 }
 
 const droneConnectionSlice = createSlice({
@@ -143,6 +145,9 @@ const droneConnectionSlice = createSlice({
     setVideoScale: (state, action) => {
       state.videoScale = action.payload
     },
+    setForceDisarmModalOpened: (state, action) => {
+      state.forceDisarmModalOpened = action.payload
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -187,6 +192,7 @@ const droneConnectionSlice = createSlice({
     selectVideoSource: (state) => state.videoSource,
     selectVideoMaximized: (state) => state.videoMaximized,
     selectVideoScale: (state) => state.videoScale,
+    selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
   },
 })
 
@@ -213,6 +219,7 @@ export const {
   setVideoSource,
   setVideoMaximized,
   setVideoScale,
+  setForceDisarmModalOpened,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -254,6 +261,7 @@ export const {
   selectVideoSource,
   selectVideoMaximized,
   selectVideoScale,
+  selectForceDisarmModalOpened,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

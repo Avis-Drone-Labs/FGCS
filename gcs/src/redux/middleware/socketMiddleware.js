@@ -17,6 +17,7 @@ import {
   setConnectionModal,
   setConnectionStatus,
   setFetchingComPorts,
+  setForceDisarmModalOpened,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
 
@@ -60,9 +61,9 @@ import {
   setEkfStatusReportData,
   setExtraData,
   setFlightSwVersion,
+  setGps2RawIntData,
   setGpsData,
   setGpsRawIntData,
-  setGps2RawIntData,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -519,7 +520,14 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
-          if (!msg.success) showErrorNotification(msg.message)
+          if (!msg.success) {
+            // Check if this was a disarm attempt and was not a force disarm
+            if (msg.was_disarming && !msg.was_force) {
+              store.dispatch(setForceDisarmModalOpened(true))
+            } else {
+              showErrorNotification(msg.message)
+            }
+          }
         })
 
         socket.socket.on(

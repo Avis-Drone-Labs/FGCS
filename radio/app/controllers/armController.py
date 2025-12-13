@@ -47,7 +47,7 @@ class ArmController:
             self.drone.sendCommand(
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 param1=1,  # 0=disarm, 1=arm
-                param2=2989 if force else 0,  # force arm/disarm
+                param2=21196 if force else 0,  # force arm/disarm
             )
 
             response = self.drone.wait_for_message(
@@ -103,7 +103,7 @@ class ArmController:
             self.drone.sendCommand(
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 param1=0,  # 0=disarm, 1=arm
-                param2=2989 if force else 0,  # force arm/disarm
+                param2=21196 if force else 0,  # force arm/disarm
             )
 
             response = self.drone.wait_for_message(

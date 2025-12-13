@@ -2,7 +2,7 @@ from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
 from app import socketio
-from app.utils import notConnectedError, missingParameterError
+from app.utils import missingParameterError, notConnectedError
 
 
 class ArmDisarmType(TypedDict):
@@ -31,5 +31,9 @@ def arm(data: ArmDisarmType) -> None:
         result = droneStatus.drone.armController.arm(force)
     else:
         result = droneStatus.drone.armController.disarm(force)
+
+    # Add flag to indicate if this was a disarm attempt
+    result["was_disarming"] = not arm
+    result["was_force"] = force
 
     socketio.emit("arm_disarm", result)

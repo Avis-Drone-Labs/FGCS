@@ -1,4 +1,4 @@
-name: Run Python Tests with plane SITL
+name: Run Python Plane Tests
 
 on:
   push:

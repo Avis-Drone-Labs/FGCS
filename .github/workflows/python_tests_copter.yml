@@ -1,4 +1,4 @@
-name: Run Python Tests copter SITL
+name: Run Python Copter Tests
 
 on:
   push:

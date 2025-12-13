@@ -137,7 +137,7 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
 
     for param in params:
         param_name, param_value, param_type = param
-        max_retries = 5
+        max_retries = 7
         retry_count = 0
         param_set_successfully = False
 
@@ -198,7 +198,7 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
                     # Timeout occurred
                     retry_count += 1
                     if retry_count < max_retries:
-                        backoff_delay = 0.1 * (2**retry_count)  # Exponential backoff
+                        backoff_delay = 0.2 * (2**retry_count)  # Exponential backoff
                         logger.warning(
                             f"Timeout setting {param_name}, retrying in {backoff_delay:.1f}s... ({retry_count}/{max_retries})"
                         )

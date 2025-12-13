@@ -193,6 +193,7 @@ const droneInfoSlice = createSlice({
         action.payload.groundspeed >= 0.5 &&
         action.payload.alt >= 1
       ) {
+        // Aircraft is armed, is not already flying, groundspeed is above 0.5 m/s and altitude is above 1 m
         state.isFlying = true
       }
     },

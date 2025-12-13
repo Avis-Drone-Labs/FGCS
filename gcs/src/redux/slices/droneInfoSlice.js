@@ -26,6 +26,10 @@ const droneInfoSlice = createSlice({
     telemetryData: {
       airspeed: 0.0,
       groundspeed: 0.0,
+      alt: 0.0,
+      climb: 0.0,
+      heading: 0.0,
+      throttle: 0.0,
     },
     gpsData: {
       lat: 0.0,
@@ -106,6 +110,8 @@ const droneInfoSlice = createSlice({
       lastGraphResultsMessage: false,
     },
     lowBatteryAlerted: false,
+    isArmed: false,
+    isFlying: false,
   },
   reducers: {
     setFlightSwVersion: (state, action) => {
@@ -120,11 +126,14 @@ const droneInfoSlice = createSlice({
         action.payload.base_mode & 128 &&
         !(state.heartbeatData.baseMode & 128)
       ) {
+        state.isArmed = true
         state.notificationSound = "armed"
       } else if (
         !(action.payload.base_mode & 128) &&
         state.heartbeatData.baseMode & 128
       ) {
+        state.isArmed = false
+        state.isFlying = false
         state.notificationSound = "disarmed"
       }
       state.heartbeatData.baseMode = action.payload.base_mode
@@ -169,8 +178,22 @@ const droneInfoSlice = createSlice({
       }
     },
     setTelemetryData: (state, action) => {
-      if (action.payload !== state.telemetryData) {
-        state.telemetryData = action.payload
+      state.telemetryData = {
+        airspeed: action.payload.airspeed,
+        groundspeed: action.payload.groundspeed,
+        alt: action.payload.alt,
+        climb: action.payload.climb,
+        heading: action.payload.heading,
+        throttle: action.payload.throttle,
+      }
+
+      if (
+        state.isArmed &&
+        !state.isFlying &&
+        action.payload.groundspeed >= 0.5 &&
+        action.payload.alt >= 1
+      ) {
+        state.isFlying = true
       }
     },
     setGpsData: (state, action) => {
@@ -301,7 +324,8 @@ const droneInfoSlice = createSlice({
     selectNavController: (state) => state.navControllerData,
     selectDesiredBearing: (state) => state.navControllerData.navBearing,
     selectHeartbeat: (state) => state.heartbeatData,
-    selectArmed: (state) => state.heartbeatData.baseMode & 128,
+    selectIsArmed: (state) => state.isArmed,
+    selectIsFlying: (state) => state.isFlying,
     selectNotificationSound: (state) => state.notificationSound,
     selectFlightMode: (state) => state.heartbeatData.customMode,
     selectSystemStatus: (state) => MAV_STATE[state.heartbeatData.systemStatus],
@@ -452,7 +476,8 @@ export const {
   selectNavController,
   selectDesiredBearing,
   selectHeartbeat,
-  selectArmed,
+  selectIsArmed,
+  selectIsFlying,
   selectPrearmEnabled,
   selectGPSRawInt,
   selectGPS2RawInt,

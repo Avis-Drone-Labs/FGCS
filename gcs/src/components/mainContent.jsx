@@ -28,26 +28,34 @@ import { ErrorBoundary } from "react-error-boundary"
 import { useDispatch, useSelector } from "react-redux"
 import { initSocket } from "../redux/slices/socketSlice"
 import { selectConnectedToDrone } from "../redux/slices/droneConnectionSlice"
+import { selectIsArmed, selectIsFlying } from "../redux/slices/droneInfoSlice"
 import AlertProvider from "./dashboard/alerts/alertProvider"
 import ErrorBoundaryFallback from "./error/errorBoundary"
 
 export default function AppContent() {
-  // Setup sockets for redux
   const dispatch = useDispatch()
+
   const connectedToDrone = useSelector(selectConnectedToDrone)
+  const isArmed = useSelector(selectIsArmed)
+  const isFlying = useSelector(selectIsFlying)
+
+  // Setup sockets for redux
   useEffect(() => {
     dispatch(initSocket())
   }, [])
 
-  // Send connection state changes to main so it can own quit policy on macOS
+  // Send drone state to main for appropriate quit messages
   useEffect(() => {
     try {
-      window.ipcRenderer.send("app:connected-state", connectedToDrone)
+      window.ipcRenderer.send("app:drone-state", {
+        connectedToDrone,
+        isArmed,
+        isFlying,
+      })
     } catch {
-      // Ignore IPC errors if main process isn't ready
-      console.log("IPC Call Failed: app:connected-state")
+      console.log("IPC Call Failed: app:drone-state")
     }
-  }, [connectedToDrone])
+  }, [connectedToDrone, isArmed, isFlying])
 
   return (
     <SettingsProvider>

@@ -58,6 +58,8 @@ if (process.platform === "linux") {
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
 let isConnectedToDrone = false
+let isArmed = false
+let isFlying = false
 let quittingApproved = false
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -141,8 +143,10 @@ ipcMain.handle("settings:save-settings", (_, settings) => {
 })
 
 // Cache connection state from renderer
-ipcMain.on("app:connected-state", (_event, connected: boolean) => {
-  isConnectedToDrone = Boolean(connected)
+ipcMain.on("app:drone-state", (_event, obj) => {
+  isConnectedToDrone = Boolean(obj.connectedToDrone)
+  isArmed = Boolean(obj.isArmed)
+  isFlying = Boolean(obj.isFlying)
 })
 
 ipcMain.handle("app:is-mac", () => {
@@ -451,6 +455,16 @@ app.on("window-all-closed", () => {
   closeWithBackend()
 })
 
+function getExitMessage() {
+  if (isFlying) {
+    return "The aircraft is currently flying."
+  } else if (isArmed) {
+    return "The aircraft is currently armed."
+  } else {
+    return "You are connected to an aircraft."
+  }
+}
+
 // To ensure that the backend process is killed with Cmd + Q on macOS,
 // listen to the before-quit event.
 app.on("before-quit", (e) => {
@@ -467,7 +481,7 @@ app.on("before-quit", (e) => {
       defaultId: 0,
       title: "Confirm Quit",
       message: "Are you sure you want to quit FGCS?",
-      detail: "You are connected to an aircraft.",
+      detail: getExitMessage(),
     })
     if (choice === 1) {
       quittingApproved = true

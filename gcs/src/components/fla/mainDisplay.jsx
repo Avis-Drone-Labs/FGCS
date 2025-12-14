@@ -5,6 +5,7 @@ import { useSelector } from "react-redux"
 import {
   selectAircraftType,
   selectFile,
+  selectFirmwareVersion,
   selectMessageMeans,
 } from "../../redux/slices/logAnalyserSlice.js"
 import ChartDataCard from "./chartDataCard.jsx"
@@ -22,6 +23,7 @@ export default function MainDisplay({ closeLogFile, chartData }) {
   const file = useSelector(selectFile)
   const aircraftType = useSelector(selectAircraftType)
   const messageMeans = useSelector(selectMessageMeans)
+  const firmwareVersion = useSelector(selectFirmwareVersion)
 
   // Shared presets state for all children (presets + modal)
   const {
@@ -69,10 +71,16 @@ export default function MainDisplay({ closeLogFile, chartData }) {
           </div>
           <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
             <div className="whitespace-nowrap">Aircraft Type:</div>
-            <div className="text-white ml-auto truncate max-w-[200px]">
+            <div className="text-white ml-auto">
               {aircraftType ?? "No Aircraft Type"}
             </div>
           </div>
+          {firmwareVersion !== null && (
+            <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
+              <div className="whitespace-nowrap">Firmware Version:</div>
+              <div className="text-white ml-auto">{firmwareVersion}</div>
+            </div>
+          )}
         </div>
         <ScrollArea className="h-full max-h-[90%]">
           <Accordion multiple={true}>

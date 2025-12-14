@@ -92,6 +92,7 @@ export interface LogSummary {
     { mean: string; max: string; min: string }
   > | null
   aircraftType: AircraftType
+  firmwareVersion: string | null
 }
 
 export interface Dataset {

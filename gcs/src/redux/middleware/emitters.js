@@ -35,6 +35,7 @@ import {
   setCurrentPage,
   setIsForwarding,
 } from "../slices/droneConnectionSlice"
+import { emitListFiles, setLoadingListFiles } from "../slices/ftpSlice"
 import {
   emitControlMission,
   emitExportMissionToFile,
@@ -371,6 +372,15 @@ export function handleEmitters(socket, store, action) {
           param_id: action.payload.param_id,
           value: action.payload.value,
         })
+      },
+    },
+    {
+      emitter: emitListFiles,
+      callback: () => {
+        socket.socket.emit("list_files", {
+          path: action.payload.path,
+        })
+        store.dispatch(setLoadingListFiles(true))
       },
     },
   ]

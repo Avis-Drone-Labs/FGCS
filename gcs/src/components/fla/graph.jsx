@@ -394,7 +394,7 @@ export default function Graph({ data, openPresetModal }) {
   return (
     <div>
       <Line ref={chartRef} options={config} data={data} />
-      <div className="flex flex-row gap-2 pt-2">
+      <div className="flex flex-row gap-2 py-2">
         <MantineTooltip label="Zoom in">
           <ActionIcon
             variant="filled"

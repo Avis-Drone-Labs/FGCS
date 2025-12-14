@@ -1,5 +1,5 @@
 // Custom Imports
-import { Group, Modal, Button, Text } from "@mantine/core"
+import { Button, Group, Modal, Text } from "@mantine/core"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -11,14 +11,30 @@ import {
 // Tailwind
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import {
+  selectIsArmed,
+  selectIsFlying,
+} from "../../redux/slices/droneInfoSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function ConfirmExitModal() {
   const dispatch = useDispatch()
   const modalOpen = useSelector(selectConfirmExitModalOpen)
+  const isArmed = useSelector(selectIsArmed)
+  const isFlying = useSelector(selectIsFlying)
 
   const confirmExit = () => {
     window.ipcRenderer.send("window:close")
+  }
+
+  function getExitMessage() {
+    if (isFlying) {
+      return "The aircraft is currently flying, are you sure you want to quit FGCS?"
+    } else if (isArmed) {
+      return "The aircraft is currently armed, are you sure you want to quit FGCS?"
+    } else {
+      return "You are connected to an aircraft, are you sure you want to quit FGCS?"
+    }
   }
 
   return (
@@ -38,8 +54,8 @@ export default function ConfirmExitModal() {
       }}
       withCloseButton={false}
     >
-      <Text mb={16} c="dimmed" size="sm">
-        You are connected to an aircraft, are you sure you want to quit FGCS?
+      <Text mb={16} c="dimmed" size="md">
+        {getExitMessage()}
       </Text>
       <Group justify="space-between" className="pt-4">
         <Button

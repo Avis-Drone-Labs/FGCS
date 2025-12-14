@@ -14,13 +14,13 @@ import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { intToCoord } from "../../../helpers/dataFormatters"
 import {
-  selectArmed,
   selectAttitude,
   selectBatteryData,
   selectFlightModeString,
   selectGPS,
   selectHeartbeat,
   selectHomePosition,
+  selectIsArmed,
   selectNavController,
   selectPrearmEnabled,
   selectTelemetry,
@@ -37,7 +37,7 @@ export default function TelemetrySection({
   const prearmEnabled = useSelector(selectPrearmEnabled)
   const flightMode = useSelector(selectFlightModeString)
   const gpsData = useSelector(selectGPS)
-  const isArmed = useSelector(selectArmed)
+  const isArmed = useSelector(selectIsArmed)
   const telemetryData = useSelector(selectTelemetry)
   const attitudeData = useSelector(selectAttitude)
   const navControllerOutputData = useSelector(selectNavController)

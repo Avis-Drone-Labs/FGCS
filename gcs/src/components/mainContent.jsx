@@ -47,7 +47,11 @@ export default function AppContent() {
   // Send drone state to main for appropriate quit messages
   useEffect(() => {
     try {
-      window.ipcRenderer.send("app:drone-state", { connectedToDrone, isArmed, isFlying })
+      window.ipcRenderer.send("app:drone-state", {
+        connectedToDrone,
+        isArmed,
+        isFlying,
+      })
     } catch {
       console.log("IPC Call Failed: app:drone-state")
     }

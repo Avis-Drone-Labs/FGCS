@@ -81,7 +81,6 @@ import {
   setIsReadingFile,
   setLoadingListFiles,
   setReadFileBytes,
-  setReadingFilePath,
 } from "../slices/ftpSlice.js"
 import {
   addIdToItem,
@@ -413,6 +412,8 @@ const socketMiddleware = (store) => {
           store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
           store.dispatch(resetFiles())
+          store.dispatch(setIsReadingFile(false))
+          store.dispatch(setReadFileBytes(null))
         })
 
         // Link stats
@@ -1098,7 +1099,6 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(FtpSpecificSocketEvents.onReadFileResult, (msg) => {
           store.dispatch(setIsReadingFile(false))
-          store.dispatch(setReadingFilePath(null))
           if (msg.success) {
             showSuccessNotification(msg.message)
             store.dispatch(setReadFileBytes(msg.data))

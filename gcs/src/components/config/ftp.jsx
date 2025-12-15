@@ -8,7 +8,7 @@
 // 3rd party imports
 
 // Redux
-import { Button, Group, LoadingOverlay, ScrollArea, Tree } from "@mantine/core"
+import { Button, Group, LoadingOverlay, Tree } from "@mantine/core"
 import { IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react"
 import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -17,17 +17,16 @@ import {
   emitReadFile,
   resetFiles,
   selectFiles,
+  selectIsReadingFile,
   selectLoadingListFiles,
   selectReadFileBytes,
-  selectReadingFilePath,
-  setReadingFilePath,
 } from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
   const dispatch = useDispatch()
   const files = useSelector(selectFiles)
   const loadingListFiles = useSelector(selectLoadingListFiles)
-  const readFilePath = useSelector(selectReadingFilePath)
+  const isReadingFile = useSelector(selectIsReadingFile)
   const readFileBytes = useSelector(selectReadFileBytes)
 
   const convertedFiles = useMemo(() => {
@@ -88,8 +87,13 @@ export default function Ftp() {
         dispatch(emitListFiles({ path: node.path }))
       }
     } else {
-      dispatch(setReadingFilePath(node.path))
       dispatch(emitReadFile({ path: node.path }))
+    }
+  }
+
+  function downloadReadFile() {
+    if (fileContentString && fileContentString.success) {
+      console.log("Downloading file...")
     }
   }
 
@@ -138,10 +142,21 @@ export default function Ftp() {
       </div>
       <div className="flex flex-col gap-4 flex-1">
         {fileContentString !== null && (
-          <div className="flex flex-col p-4 border border-falcongrey-600 rounded bg-falcongrey-800">
-            <p className="mb-2">{readFilePath}</p>
-            <h3 className="mb-2">File Content:</h3>
-            <ScrollArea.Autosize>
+          <div className="flex flex-col relative gap-2">
+            <LoadingOverlay
+              visible={isReadingFile}
+              zIndex={1000}
+              overlayProps={{ blur: 2 }}
+            />
+            <Button
+              disabled={!fileContentString || !fileContentString.success}
+              onClick={downloadReadFile}
+              w={"fit-content"}
+            >
+              Download
+            </Button>
+
+            <div className="p-4 border border-falcongrey-600 rounded bg-falcongrey-800">
               {fileContentString.success ? (
                 <pre className="whitespace-pre-wrap break-all">
                   {fileContentString.content}
@@ -149,7 +164,7 @@ export default function Ftp() {
               ) : (
                 <p className="text-red-500">{fileContentString.content}</p>
               )}
-            </ScrollArea.Autosize>
+            </div>
           </div>
         )}
       </div>

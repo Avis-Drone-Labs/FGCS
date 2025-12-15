@@ -5,6 +5,8 @@ const ftpSlice = createSlice({
   initialState: {
     files: [],
     loadingListFiles: false,
+    readingFilePath: null,
+    isReadingFile: false,
   },
   reducers: {
     resetFiles: (state) => {
@@ -65,18 +67,40 @@ const ftpSlice = createSlice({
     setLoadingListFiles: (state, action) => {
       state.loadingListFiles = action.payload
     },
+    setReadingFilePath: (state, action) => {
+      state.readingFilePath = action.payload
+    },
+    setIsReadingFile: (state, action) => {
+      state.isReadingFile = action.payload
+    },
 
     emitListFiles: () => {},
+    emitReadFile: () => {},
   },
   selectors: {
     selectFiles: (state) => state.files,
     selectLoadingListFiles: (state) => state.loadingListFiles,
+    selectReadingFilePath: (state) => state.readingFilePath,
+    selectIsReadingFile: (state) => state.isReadingFile,
   },
 })
 
-export const { resetFiles, addFiles, setLoadingListFiles, emitListFiles } =
-  ftpSlice.actions
+export const {
+  resetFiles,
+  addFiles,
+  setLoadingListFiles,
+  setReadingFilePath,
+  setIsReadingFile,
 
-export const { selectFiles, selectLoadingListFiles } = ftpSlice.selectors
+  emitListFiles,
+  emitReadFile,
+} = ftpSlice.actions
+
+export const {
+  selectFiles,
+  selectLoadingListFiles,
+  selectReadingFilePath,
+  selectIsReadingFile,
+} = ftpSlice.selectors
 
 export default ftpSlice

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import struct
 import time
+from io import BytesIO
 from threading import current_thread
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from app.customTypes import Number, Response
 from pymavlink import mavftp, mavftp_op
@@ -25,9 +26,22 @@ class FtpController:
         self.seq: int = 0
         self.session: int = 0
         self.last_op: Optional[mavftp_op.FTP_OP] = None
+
+        # Directory listing state
         self.dir_offset: int = 0
         self.list_result: List[mavftp.DirectoryEntry] = []
         self.list_temp_result: List[mavftp.DirectoryEntry] = []
+
+        # Read/download state
+        self.read_buffer: BytesIO = BytesIO()
+        self.read_total: int = 0
+        self.read_gaps: List[Tuple[int, int]] = []  # List of (offset, size) tuples
+        self.reached_eof: bool = False
+        self.requested_size: int = 0
+        self.requested_offset: int = 0
+        self.remote_file_size: Optional[int] = None
+        self.burst_size: int = 80  # Default burst size
+        self.last_burst_read: Optional[float] = None
 
         self._sendFtpCommand(
             mavftp_op.FTP_OP(
@@ -132,16 +146,41 @@ class FtpController:
                         "message": "Session terminated successfully",
                     }
 
-                # Handle list directory responses
                 if response_op.req_opcode == mavftp_op.OP_ResetSessions:
                     return self._handleResetSessionsResponse(response_op)
                 elif response_op.req_opcode == mavftp_op.OP_ListDirectory:
+                    # Handle list directory response
                     handling_finished = self._handleListFilesResponse(response_op)
 
                     if handling_finished:
                         return {
                             "success": True,
                             "message": "Directory listing retrieved successfully",
+                        }
+                elif response_op.req_opcode == mavftp_op.OP_OpenFileRO:
+                    # Handle file open response
+                    success = self._handleOpenFileReadOnlyResponse(response_op)
+                    if not success:
+                        return {
+                            "success": False,
+                            "message": "Failed to open file for reading",
+                        }
+                    # Continue listening for burst read responses
+                elif response_op.req_opcode == mavftp_op.OP_BurstReadFile:
+                    # Handle burst read response
+                    is_complete = self._handleBurstReadResponse(response_op)
+                    if is_complete:
+                        return {
+                            "success": True,
+                            "message": "File read completed successfully",
+                        }
+                elif response_op.req_opcode == mavftp_op.OP_ReadFile:
+                    # Handle gap fill response
+                    is_complete = self._handleReadFileResponse(response_op)
+                    if is_complete:
+                        return {
+                            "success": True,
+                            "message": "File read completed successfully",
                         }
                 else:
                     self.drone.logger.info(
@@ -414,3 +453,318 @@ class FtpController:
             "message": "Directory listing retrieved successfully",
             "data": self._convertDirectoryEntriesToDicts(self.list_result, path),
         }
+
+    def readFile(
+        self, path: str, size: Optional[int] = None, offset: int = 0
+    ) -> Response:
+        """
+        Read/download a file from the drone using MAVFTP.
+
+        Args:
+            path (str): The file path to read.
+            size (Optional[int]): Number of bytes to read. If None, reads entire file.
+            offset (int): Offset in bytes to start reading from.
+
+        Returns:
+            Response: A response object containing the file data or error message.
+        """
+        if not path:
+            return {
+                "success": False,
+                "message": "Path cannot be empty",
+            }
+
+        # Reset read state
+        self.read_buffer = BytesIO()
+        self.read_total = 0
+        self.read_gaps = []
+        self.reached_eof = False
+        self.requested_offset = offset
+        self.requested_size = (
+            size if size is not None else 0
+        )  # 0 means read entire file
+        self.remote_file_size = None
+        self.last_burst_read = None
+
+        # Send OpenFileRO command
+        encoded_path = bytearray(path, "ascii")
+        op = mavftp_op.FTP_OP(
+            self.seq,
+            self.session,
+            mavftp_op.OP_OpenFileRO,
+            len(encoded_path),
+            0,
+            0,
+            0,
+            encoded_path,
+        )
+
+        self.drone.logger.info(
+            f"Reading file: {path} (offset={offset}, size={size if size else 'entire file'})"
+        )
+
+        self._sendFtpCommand(op)
+        response = self._processFtpResponse("read_file", timeout=30)
+
+        if response.get("success", False) is False:
+            return response
+
+        # Extract the requested portion of the data
+        self.read_buffer.seek(0)
+        all_data = self.read_buffer.read()
+
+        if self.requested_size > 0:
+            # Return only the requested size from the requested offset
+            result_data = all_data[
+                self.requested_offset : self.requested_offset + self.requested_size
+            ]
+        else:
+            # Return entire file
+            result_data = all_data
+
+        self.drone.logger.info(
+            f"Successfully read {len(result_data)} bytes from file: {path}"
+        )
+
+        return {
+            "success": True,
+            "message": "File read successfully",
+            "data": result_data,
+        }
+
+    def _handleOpenFileReadOnlyResponse(self, response_op: mavftp_op.FTP_OP) -> bool:
+        """
+        Handle the response for an OpenFileRO operation.
+
+        Args:
+            response_op (mavftp_op.FTP_OP): The FTP operation response to handle.
+
+        Returns:
+            bool: True if the operation was successful and should continue reading.
+        """
+        if response_op.opcode == mavftp_op.OP_Ack:
+            # Extract file size from payload if present
+            if (
+                response_op.size == 4
+                and response_op.payload
+                and len(response_op.payload) >= 4
+            ):
+                self.remote_file_size = (
+                    response_op.payload[0]
+                    | (response_op.payload[1] << 8)
+                    | (response_op.payload[2] << 16)
+                    | (response_op.payload[3] << 24)
+                )
+                if self.remote_file_size is None:
+                    self.drone.logger.error("Failed to extract remote file size")
+                    return False
+
+                self.drone.logger.info(
+                    f"Remote file size: {self.remote_file_size} bytes"
+                )
+
+                # If no specific size was requested, read the entire file
+                if self.requested_size == 0:
+                    self.requested_size = self.remote_file_size
+
+            # Position the buffer at the requested offset
+            self.read_buffer.seek(self.requested_offset)
+
+            # Send first burst read request
+            burst_read_op = mavftp_op.FTP_OP(
+                self.seq,
+                self.session,
+                mavftp_op.OP_BurstReadFile,
+                self.burst_size,
+                0,
+                0,
+                self.requested_offset,
+                None,
+            )
+            self.last_burst_read = time.time()
+            self._sendFtpCommand(burst_read_op)
+            return True
+        else:
+            # NACK or error
+            self.drone.logger.error(
+                f"Failed to open file for reading: opcode={response_op.opcode}"
+            )
+            return False
+
+    def _handleBurstReadResponse(self, response_op: mavftp_op.FTP_OP) -> bool:
+        """
+        Handle the response for a BurstReadFile operation.
+
+        Args:
+            response_op (mavftp_op.FTP_OP): The FTP operation response to handle.
+
+        Returns:
+            bool: True if reading is complete, False if more data is expected.
+        """
+        if response_op.opcode == mavftp_op.OP_Ack and response_op.payload:
+            self.last_burst_read = time.time()
+            current_pos = self.read_buffer.tell()
+
+            if response_op.offset < current_pos:
+                # Writing an earlier portion - check if it fills a gap
+                gap = (response_op.offset, len(response_op.payload))
+                if gap in self.read_gaps:
+                    self.read_gaps.remove(gap)
+                    self.drone.logger.debug(
+                        f"Filled gap at offset {gap[0]}, size {gap[1]}"
+                    )
+                else:
+                    self.drone.logger.debug(
+                        f"Duplicate data at offset {response_op.offset}"
+                    )
+                    return False
+
+                # Write the payload and return to current position
+                self.read_buffer.seek(response_op.offset)
+                self.read_buffer.write(response_op.payload)
+                self.read_total += len(response_op.payload)
+                self.read_buffer.seek(current_pos)
+
+            elif response_op.offset > current_pos:
+                # We have a gap
+                gap_size = response_op.offset - current_pos
+                gap = (current_pos, gap_size)
+
+                # Split large gaps into smaller chunks
+                max_chunk = self.burst_size
+                remaining_offset = current_pos
+                remaining_size = gap_size
+
+                while remaining_size > 0:
+                    chunk_size = min(remaining_size, max_chunk)
+                    self.read_gaps.append((remaining_offset, chunk_size))
+                    remaining_offset += chunk_size
+                    remaining_size -= chunk_size
+
+                self.drone.logger.debug(
+                    f"Gap detected: {gap_size} bytes at offset {current_pos}"
+                )
+
+                # Write the payload
+                self.read_buffer.seek(response_op.offset)
+                self.read_buffer.write(response_op.payload)
+                self.read_total += len(response_op.payload)
+
+            else:
+                # Sequential write
+                self.read_buffer.write(response_op.payload)
+                self.read_total += len(response_op.payload)
+
+            # Check if burst is complete
+            if response_op.burst_complete:
+                if 0 < response_op.size < self.burst_size:
+                    # EOF reached
+                    self.reached_eof = True
+                    self.drone.logger.debug(
+                        f"EOF reached at {self.read_buffer.tell()} bytes with {len(self.read_gaps)} gaps"
+                    )
+
+                    if len(self.read_gaps) == 0:
+                        # All data received
+                        return True
+
+                    # Request missing gaps
+                    self._requestGaps()
+                    return False
+                else:
+                    # Continue reading
+                    next_offset = response_op.offset + response_op.size
+                    burst_read_op = mavftp_op.FTP_OP(
+                        self.seq,
+                        self.session,
+                        mavftp_op.OP_BurstReadFile,
+                        self.burst_size,
+                        0,
+                        0,
+                        next_offset,
+                        None,
+                    )
+                    self._sendFtpCommand(burst_read_op)
+                    return False
+
+        elif response_op.opcode == mavftp_op.OP_Nack:
+            # Check error code
+            if response_op.payload and len(response_op.payload) > 0:
+                error_code = response_op.payload[0]
+                if error_code == mavftp.FtpError.EndOfFile.value:
+                    self.reached_eof = True
+                    self.drone.logger.debug(
+                        f"EOF (NACK) at {self.read_buffer.tell()} bytes with {len(self.read_gaps)} gaps"
+                    )
+
+                    if len(self.read_gaps) == 0:
+                        return True
+
+                    # Request missing gaps
+                    self._requestGaps()
+                    return False
+                else:
+                    self.drone.logger.error(f"Read error: error code {error_code}")
+                    return True  # Stop reading
+
+        return False
+
+    def _handleReadFileResponse(self, response_op: mavftp_op.FTP_OP) -> bool:
+        """
+        Handle the response for a ReadFile (gap fill) operation.
+
+        Args:
+            response_op (mavftp_op.FTP_OP): The FTP operation response to handle.
+
+        Returns:
+            bool: True if reading is complete, False otherwise.
+        """
+        if response_op.opcode == mavftp_op.OP_Ack and response_op.payload:
+            gap = (response_op.offset, response_op.size)
+
+            if gap in self.read_gaps:
+                self.read_gaps.remove(gap)
+                current_pos = self.read_buffer.tell()
+
+                # Write gap data
+                self.read_buffer.seek(response_op.offset)
+                self.read_buffer.write(response_op.payload)
+                self.read_total += len(response_op.payload)
+                self.read_buffer.seek(current_pos)
+
+                self.drone.logger.debug(
+                    f"Filled gap at offset {response_op.offset}, size {response_op.size}"
+                )
+
+                # Check if all gaps are filled
+                if len(self.read_gaps) == 0 and (
+                    self.reached_eof or self.read_total >= self.requested_size
+                ):
+                    return True
+
+        elif response_op.opcode == mavftp_op.OP_Nack:
+            self.drone.logger.error(
+                f"Failed to read gap at offset {response_op.offset}"
+            )
+
+        return False
+
+    def _requestGaps(self) -> None:
+        """Request missing data chunks (gaps) using OP_ReadFile."""
+        for gap_offset, gap_size in self.read_gaps[
+            :5
+        ]:  # Request up to 5 gaps at a time
+            read_op = mavftp_op.FTP_OP(
+                self.seq,
+                self.session,
+                mavftp_op.OP_ReadFile,
+                gap_size,
+                0,
+                0,
+                gap_offset,
+                None,
+            )
+            self._sendFtpCommand(read_op)
+            self.drone.logger.debug(
+                f"Requesting gap: offset={gap_offset}, size={gap_size}"
+            )

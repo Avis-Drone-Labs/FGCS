@@ -9,6 +9,10 @@ class ListFilesType(TypedDict):
     path: str
 
 
+class ReadFileType(TypedDict):
+    path: str
+
+
 @socketio.on("list_files")
 def listFiles(data: ListFilesType) -> None:
     """
@@ -33,3 +37,41 @@ def listFiles(data: ListFilesType) -> None:
     result = droneStatus.drone.ftpController.listFiles(path)
 
     socketio.emit("list_files_result", result)
+
+
+@socketio.on("read_file")
+def readFile(data: ReadFileType) -> None:
+    """
+    Read/download a file from the drone's FTP server
+
+    Args:
+        data: The data from the client, this contains "path" which is the file path to read/download
+    """
+    if droneStatus.state != "config":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access FTP operations"},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="read file")
+
+    path = data.get("path", None)
+    if path is None:
+        socketio.emit(
+            "read_file_result", {"success": False, "message": "Missing file path"}
+        )
+        return
+
+    result = droneStatus.drone.ftpController.readFile(path)
+
+    # Save file if read was successful as test
+    if result.get("success"):
+        local_path = f"downloaded_{path.replace('/', '_')}"
+        with open(local_path, "wb") as f:
+            f.write(droneStatus.drone.ftpController.read_buffer.getvalue())
+        logger.info(f"File downloaded and saved to {local_path}")
+
+    socketio.emit("read_file_result", result)

@@ -14,9 +14,11 @@ import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   emitListFiles,
+  emitReadFile,
   resetFiles,
   selectFiles,
   selectLoadingListFiles,
+  setReadingFilePath,
 } from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
@@ -63,6 +65,9 @@ export default function Ftp() {
       if (node.children === undefined) {
         dispatch(emitListFiles({ path: node.path }))
       }
+    } else {
+      dispatch(setReadingFilePath(node.path))
+      dispatch(emitReadFile({ path: node.path }))
     }
   }
 

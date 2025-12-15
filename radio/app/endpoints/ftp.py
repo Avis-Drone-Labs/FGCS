@@ -67,11 +67,4 @@ def readFile(data: ReadFileType) -> None:
 
     result = droneStatus.drone.ftpController.readFile(path)
 
-    # Save file if read was successful as test
-    if result.get("success"):
-        local_path = f"downloaded_{path.replace('/', '_')}"
-        with open(local_path, "wb") as f:
-            f.write(droneStatus.drone.ftpController.read_buffer.getvalue())
-        logger.info(f"File downloaded and saved to {local_path}")
-
     socketio.emit("read_file_result", result)

@@ -80,6 +80,7 @@ import {
   resetFiles,
   setIsReadingFile,
   setLoadingListFiles,
+  setReadFileBytes,
   setReadingFilePath,
 } from "../slices/ftpSlice.js"
 import {
@@ -1100,6 +1101,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setReadingFilePath(null))
           if (msg.success) {
             showSuccessNotification(msg.message)
+            store.dispatch(setReadFileBytes(msg.data))
           } else {
             showErrorNotification(msg.message)
           }

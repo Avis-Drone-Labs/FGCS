@@ -586,6 +586,15 @@ class FtpController:
             return True
         else:
             # NACK or error
+            if (
+                response_op.opcode == mavftp_op.OP_Nack
+                and response_op.payload is not None
+                and len(response_op.payload) == 1
+                and response_op.payload[0] == mavftp.FtpError.FileNotFound.value
+            ):
+                self.drone.logger.error(f"File not found: opcode={response_op.opcode}")
+                return False
+
             self.drone.logger.error(
                 f"Failed to open file for reading: opcode={response_op.opcode}"
             )

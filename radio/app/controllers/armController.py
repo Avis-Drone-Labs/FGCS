@@ -34,20 +34,26 @@ class ArmController:
         Returns:
             Response: The response from the arm command
         """
+        return_data = {
+            "was_disarming": False,
+            "was_force": force,
+        }
+
         if self.drone.armed:
-            return {"success": False, "message": "Already armed"}
+            return {"success": False, "message": "Already armed", "data": return_data}
 
         if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
             return {
                 "success": False,
                 "message": "Could not reserve COMMAND_ACK messages",
+                "data": return_data,
             }
 
         try:
             self.drone.sendCommand(
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 param1=1,  # 0=disarm, 1=arm
-                param2=2989 if force else 0,  # force arm/disarm
+                param2=21196 if force else 0,  # force arm/disarm
             )
 
             response = self.drone.wait_for_message(
@@ -63,19 +69,28 @@ class ArmController:
                 while not self.drone.armed:
                     time.sleep(0.05)
                 self.drone.logger.debug("ARMED")
-                return {"success": True, "message": "Armed successfully"}
+                return {
+                    "success": True,
+                    "message": "Armed successfully",
+                    "data": return_data,
+                }
             else:
                 self.drone.logger.debug("Arming failed")
                 return {
                     "success": False,
                     "message": "Could not arm, command not accepted",
+                    "data": return_data,
                 }
 
         except Exception as e:
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-            return {"success": False, "message": "Could not arm, serial exception"}
+            return {
+                "success": False,
+                "message": "Could not arm, serial exception",
+                "data": return_data,
+            }
         finally:
             self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
@@ -90,20 +105,30 @@ class ArmController:
         Returns:
             Response: The response from the disarm command
         """
+        return_data = {
+            "was_disarming": True,
+            "was_force": force,
+        }
+
         if not self.drone.armed:
-            return {"success": False, "message": "Already disarmed"}
+            return {
+                "success": False,
+                "message": "Already disarmed",
+                "data": return_data,
+            }
 
         if not self.drone.reserve_message_type("COMMAND_ACK", self.controller_id):
             return {
                 "success": False,
                 "message": "Could not reserve COMMAND_ACK messages",
+                "data": return_data,
             }
 
         try:
             self.drone.sendCommand(
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 param1=0,  # 0=disarm, 1=arm
-                param2=2989 if force else 0,  # force arm/disarm
+                param2=21196 if force else 0,  # force arm/disarm
             )
 
             response = self.drone.wait_for_message(
@@ -119,18 +144,27 @@ class ArmController:
                 while self.drone.armed:
                     time.sleep(0.05)
                 self.drone.logger.debug("DISARMED")
-                return {"success": True, "message": "Disarmed successfully"}
+                return {
+                    "success": True,
+                    "message": "Disarmed successfully",
+                    "data": return_data,
+                }
             else:
                 self.drone.logger.debug("Could not disarm, command not accepted")
                 return {
                     "success": False,
                     "message": "Could not disarm, command not accepted",
+                    "data": return_data,
                 }
 
         except Exception as e:
             self.drone.logger.error(e, exc_info=True)
             if self.drone.droneErrorCb:
                 self.drone.droneErrorCb(str(e))
-            return {"success": False, "message": "Could not disarm, serial exception"}
+            return {
+                "success": False,
+                "message": "Could not disarm, serial exception",
+                "data": return_data,
+            }
         finally:
             self.drone.release_message_type("COMMAND_ACK", self.controller_id)

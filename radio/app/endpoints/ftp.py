@@ -21,7 +21,7 @@ def listFiles(data: ListFilesType) -> None:
     Args:
         data: The data from the client, this contains "path" which is the directory path to list files from
     """
-    if droneStatus.state != "config":
+    if "config" not in droneStatus.state:
         socketio.emit(
             "params_error",
             {"message": "You must be on the config screen to access FTP operations"},
@@ -47,7 +47,7 @@ def readFile(data: ReadFileType) -> None:
     Args:
         data: The data from the client, this contains "path" which is the file path to read/download
     """
-    if droneStatus.state != "config":
+    if "config" not in droneStatus.state:
         socketio.emit(
             "params_error",
             {"message": "You must be on the config screen to access FTP operations"},

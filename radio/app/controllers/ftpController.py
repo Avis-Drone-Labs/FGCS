@@ -634,7 +634,6 @@ class FtpController:
             elif response_op.offset > current_pos:
                 # We have a gap
                 gap_size = response_op.offset - current_pos
-                gap = (current_pos, gap_size)
 
                 # Split large gaps into smaller chunks
                 max_chunk = self.burst_size

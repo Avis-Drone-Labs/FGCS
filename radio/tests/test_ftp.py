@@ -182,8 +182,6 @@ def test_readFile_emptyPath_failure(socketio_client: SocketIOTestClient, droneSt
 
 @falcon_test(pass_drone_status=True)
 def test_readFile_validFile_success(socketio_client: SocketIOTestClient, droneStatus):
-    import os
-
     droneStatus.state = "config"
     socketio_client.emit("read_file", {"path": "/@ROMFS/locations.txt"})
     socketio_result = socketio_client.get_received()[0]

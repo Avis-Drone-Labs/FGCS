@@ -555,16 +555,13 @@ class FtpController:
                     | (response_op.payload[2] << 16)
                     | (response_op.payload[3] << 24)
                 )
-                if self.remote_file_size is None:
-                    self.drone.logger.error("Failed to extract remote file size")
-                    return False
 
                 self.drone.logger.info(
                     f"Remote file size: {self.remote_file_size} bytes"
                 )
 
                 # If no specific size was requested, read the entire file
-                if self.requested_size == 0:
+                if self.requested_size == 0 and self.remote_file_size is not None:
                     self.requested_size = self.remote_file_size
 
             # Position the buffer at the requested offset

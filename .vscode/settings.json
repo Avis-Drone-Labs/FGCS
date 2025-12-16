@@ -21,7 +21,5 @@
     "statustext",
     "SUAS"
   ],
-  "mypy-type-checker.args": [
-    "\"mypy-type-checker.args\" = [\"--config-file=/mypy.ini\"]"
-  ]
+  "mypy-type-checker.args": ["--config-file=/mypy.ini"]
 }

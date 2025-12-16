@@ -69,6 +69,6 @@ def readFile(data: ReadFileType) -> None:
 
     # Convert bytes to list for SocketIO serialization
     if result.get("success") and "data" in result:
-        result["data"] = list(result["data"])
+        result["data"]["file_data"] = list(result.get("data", {}).get("file_data", []))
 
     socketio.emit("read_file_result", result)

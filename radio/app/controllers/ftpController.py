@@ -529,7 +529,7 @@ class FtpController:
         return {
             "success": True,
             "message": "File read successfully",
-            "data": result_data,
+            "data": {"file_data": result_data, "file_name": path.split("/")[-1]},
         }
 
     def _handleOpenFileReadOnlyResponse(self, response_op: mavftp_op.FTP_OP) -> bool:

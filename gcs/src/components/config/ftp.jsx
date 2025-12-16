@@ -13,13 +13,17 @@ import { IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react"
 import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification"
+import {
   emitListFiles,
   emitReadFile,
   resetFiles,
   selectFiles,
   selectIsReadingFile,
   selectLoadingListFiles,
-  selectReadFileBytes,
+  selectReadFileData,
 } from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
@@ -27,7 +31,7 @@ export default function Ftp() {
   const files = useSelector(selectFiles)
   const loadingListFiles = useSelector(selectLoadingListFiles)
   const isReadingFile = useSelector(selectIsReadingFile)
-  const readFileBytes = useSelector(selectReadFileBytes)
+  const readFileData = useSelector(selectReadFileData)
 
   const convertedFiles = useMemo(() => {
     if (!files || files.length === 0) return []
@@ -58,12 +62,12 @@ export default function Ftp() {
   }, [files])
 
   const fileContentString = useMemo(() => {
-    if (readFileBytes) {
+    if (readFileData) {
       try {
         const decoder = new TextDecoder("utf-8")
         return {
           success: true,
-          content: decoder.decode(new Uint8Array(readFileBytes)),
+          content: decoder.decode(new Uint8Array(readFileData.file_data)),
         }
       } catch (e) {
         return {
@@ -73,7 +77,7 @@ export default function Ftp() {
       }
     }
     return null
-  }, [readFileBytes])
+  }, [readFileData])
 
   useEffect(() => {
     if (files.length === 0) {
@@ -91,9 +95,33 @@ export default function Ftp() {
     }
   }
 
-  function downloadReadFile() {
+  async function downloadReadFile() {
     if (fileContentString && fileContentString.success) {
-      console.log("Downloading file...")
+      const options = {
+        title: "Save file",
+        defaultPath: readFileData.file_name,
+        filters: [{ name: "All Files", extensions: ["*"] }],
+      }
+
+      const result = await window.ipcRenderer.invoke(
+        "app:get-save-file-path",
+        options,
+      )
+
+      if (!result.canceled && result.filePath) {
+        const saveResult = await window.ipcRenderer.invoke("app:save-file", {
+          filePath: result.filePath,
+          content: readFileData.file_data,
+        })
+
+        if (saveResult.success) {
+          showSuccessNotification(
+            `File saved successfully to: ${result.filePath}`,
+          )
+        } else {
+          showErrorNotification("Error saving file:", saveResult.error)
+        }
+      }
     }
   }
 
@@ -150,7 +178,9 @@ export default function Ftp() {
             />
             <Button
               disabled={!fileContentString || !fileContentString.success}
-              onClick={downloadReadFile}
+              onClick={async () => {
+                await downloadReadFile()
+              }}
               w={"fit-content"}
             >
               Download

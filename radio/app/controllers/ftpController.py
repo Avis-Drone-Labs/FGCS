@@ -471,7 +471,7 @@ class FtpController:
         if not path:
             return {
                 "success": False,
-                "message": "Path cannot be empty",
+                "message": "File path cannot be empty",
             }
 
         # Reset read state

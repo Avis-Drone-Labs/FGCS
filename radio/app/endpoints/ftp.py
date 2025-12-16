@@ -67,4 +67,8 @@ def readFile(data: ReadFileType) -> None:
 
     result = droneStatus.drone.ftpController.readFile(path)
 
+    # Convert bytes to list for SocketIO serialization
+    if result.get("success") and "data" in result:
+        result["data"] = list(result["data"])
+
     socketio.emit("read_file_result", result)

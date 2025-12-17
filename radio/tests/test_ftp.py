@@ -193,7 +193,8 @@ def test_readFile_validFile_success(socketio_client: SocketIOTestClient, droneSt
     assert socketio_result["name"] == "read_file_result"
     assert socketio_result["args"][0]["success"] is True
     assert socketio_result["args"][0]["message"] == "File read successfully"
-    assert socketio_result["args"][0]["data"] == list(expected_content)
+    assert socketio_result["args"][0]["data"]["file_data"] == list(expected_content)
+    assert socketio_result["args"][0]["data"]["file_name"] == "locations.txt"
 
 
 @falcon_test(pass_drone_status=True)

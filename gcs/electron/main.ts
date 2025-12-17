@@ -566,6 +566,27 @@ app.whenReady().then(() => {
     return result
   })
 
+  ipcMain.handle(
+    "app:save-file",
+    async (
+      _event,
+      { filePath, content }: { filePath: string; content: number[] },
+    ) => {
+      try {
+        // Convert number array to Buffer for fs.writeFileSync
+        const buffer = Buffer.from(content)
+        fs.writeFileSync(filePath, buffer as unknown as string)
+        return { success: true }
+      } catch (err) {
+        console.error("Error saving file:", err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    },
+  )
+
   ipcMain.handle("params:load-params-from-file", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender)
     if (!window) {

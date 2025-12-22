@@ -18,6 +18,7 @@ import { FixedSizeList } from "react-window"
 import Layout from "./components/layout.jsx"
 import NoDroneConnected from "./components/noDroneConnected.jsx"
 import ParamsToolbar from "./components/params/paramsToolbar.jsx"
+import ParamsTree from "./components/params/paramsTree.jsx"
 import { Row } from "./components/params/row.jsx"
 import { useRebootCallback } from "./helpers/droneConnectionCallbacks.js"
 
@@ -207,18 +208,18 @@ export default function Params() {
           <div className="flex flex-1 overflow-hidden">
             {!fetchingVars && (
               <ResizableBox
-                width={225}
+                width={325}
                 height={Infinity}
-                minConstraints={[225, Infinity]}
+                minConstraints={[275, Infinity]}
                 maxConstraints={[600, Infinity]}
                 resizeHandles={["e"]}
                 axis="x"
                 handle={
                   <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
                 }
-                className="relative bg-falcongrey-800 overflow-y-auto"
+                className="relative bg-falcongrey-800 overflow-hidden flex flex-col"
               >
-                <div className="flex flex-col gap-4 p-4">
+                <div className="flex flex-col gap-4 p-4 flex-shrink-0">
                   <div className="flex flex-col gap-4">
                     <Button onClick={refreshCallback} className="grow">
                       Refresh params
@@ -248,7 +249,9 @@ export default function Params() {
                       Reboot FC
                     </Button>
                   </div>
+                  <Divider />
                 </div>
+                <ParamsTree />
               </ResizableBox>
             )}
 

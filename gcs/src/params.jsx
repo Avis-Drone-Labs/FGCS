@@ -118,44 +118,41 @@ export default function Params() {
   function checkArmedOrFlying(callback) {
     if (isArmed || isFlying) {
       // Store the callback to execute after confirmation
-      dispatch(setPendingFetchAction(() => callback))
+      dispatch(setPendingFetchAction(callback))
       dispatch(setFetchParamsWarningModalOpen(true))
       return true
     }
     return false
   }
 
-  function executePendingFetch() {
-    // This is called by the modal when user confirms
+  function fetchParamsForFirstTime() {
     dispatch(setFetchingVars(true))
     dispatch(emitRefreshParams())
     dispatch(setHasFetchedOnce(true))
+    dispatch(setPendingFetchAction(null))
   }
 
   function fetchParams() {
-    if (checkArmedOrFlying(executePendingFetch)) {
+    if (checkArmedOrFlying(fetchParamsForFirstTime)) {
       return
     }
-    executePendingFetch()
+    fetchParamsForFirstTime()
   }
 
   function refreshCallback() {
-    if (
-      checkArmedOrFlying(() => {
-        dispatch(setParams([]))
-        dispatch(setModifiedParams([]))
-        dispatch(setShownParams([]))
-        dispatch(emitRefreshParams())
-        dispatch(setFetchingVars(true))
-      })
-    ) {
-      return
-    }
     dispatch(setParams([]))
     dispatch(setModifiedParams([]))
     dispatch(setShownParams([]))
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
+    dispatch(setPendingFetchAction(null))
+  }
+
+  function refreshParams() {
+    if (checkArmedOrFlying(refreshCallback)) {
+      return
+    }
+    rebootCallback()
   }
 
   async function saveParamsToFile() {
@@ -235,7 +232,7 @@ export default function Params() {
 
   return (
     <Layout currentPage="params">
-      <FetchParamsWarningModal onConfirm={executePendingFetch} />
+      <FetchParamsWarningModal />
       <LoadParamsFileModal />
       <ParamsWriteModal />
       <ParamsFailedToWriteModal />
@@ -258,7 +255,7 @@ export default function Params() {
               >
                 <div className="flex flex-col gap-4 p-4">
                   <div className="flex flex-col gap-4">
-                    <Button onClick={refreshCallback} className="grow">
+                    <Button onClick={refreshParams} className="grow">
                       Refresh params
                     </Button>
                     <Button

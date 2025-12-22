@@ -10,18 +10,20 @@ import { useDispatch, useSelector } from "react-redux"
 import { selectIsFlying } from "../../redux/slices/droneInfoSlice"
 import {
   selectFetchParamsWarningModalOpen,
+  selectPendingFetchAction,
   setFetchParamsWarningModalOpen,
 } from "../../redux/slices/paramsSlice"
 
-export default function FetchParamsWarningModal({ onConfirm }) {
+export default function FetchParamsWarningModal() {
   const dispatch = useDispatch()
   const opened = useSelector(selectFetchParamsWarningModalOpen)
+  const pendingFetchAction = useSelector(selectPendingFetchAction)
   const isFlying = useSelector(selectIsFlying)
 
   function handleConfirm() {
     dispatch(setFetchParamsWarningModalOpen(false))
-    if (onConfirm) {
-      onConfirm()
+    if (pendingFetchAction) {
+      pendingFetchAction()
     }
   }
 

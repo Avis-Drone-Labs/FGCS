@@ -203,19 +203,25 @@ export default function Dashboard() {
   }
 
   function calcBigTextFontSize() {
-    let w = telemetryPanelSize.width
     const BREAKPOINT_SM = 350.0
-    if (w < BREAKPOINT_SM) return 1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM
+    const w = telemetryPanelSize.width
+
+    if (w < BREAKPOINT_SM) {
+      return 1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM
+    }
+
     return 1.0
   }
 
   function calcIndicatorSize() {
-    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56
+    const sideBarWidth = sideBarRef.current
+      ? sideBarRef.current.clientWidth
+      : 56
     return Math.min(telemetryPanelSize.width - (sideBarWidth + 24) * 2, 190)
   }
 
   function calcIndicatorPadding() {
-    let sideBarHeight = sideBarRef.current
+    const sideBarHeight = sideBarRef.current
       ? sideBarRef.current.clientHeight
       : 164
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
@@ -272,23 +278,27 @@ export default function Dashboard() {
               tooltip="GPS2 fix type"
             />
           )}
-          <StatusSection
-            icon={<IconTarget />}
-            value={hdopDisplay}
-            tooltip="GPS HDoP"
-          />
-          <StatusSection
-            icon={<IconGps />}
-            value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${
-              lon !== undefined ? lon.toFixed(7) : 0
-            })`}
-            tooltip="GPS (lat, lon)"
-          />
-          <StatusSection
-            icon={<IconSatellite />}
-            value={satellitesVisible}
-            tooltip="Satellites visible"
-          />
+          {fixType !== 0 && (
+            <>
+              <StatusSection
+                icon={<IconTarget />}
+                value={hdopDisplay}
+                tooltip="GPS HDoP"
+              />
+              <StatusSection
+                icon={<IconGps />}
+                value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${
+                  lon !== undefined ? lon.toFixed(7) : 0
+                })`}
+                tooltip="GPS (lat, lon)"
+              />
+              <StatusSection
+                icon={<IconSatellite />}
+                value={satellitesVisible}
+                tooltip="Satellites visible"
+              />
+            </>
+          )}
           <StatusSection
             icon={<IconAntenna />}
             value={rssi}

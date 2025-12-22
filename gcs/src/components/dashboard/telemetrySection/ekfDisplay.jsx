@@ -27,7 +27,7 @@ export default function EkfDisplay({ telemetryFontSize }) {
     <div
       className="font-bold hover:cursor-pointer"
       style={{
-        fontSize: `${telemetryFontSize * 1.25}rem`,
+        fontSize: `${telemetryFontSize * 1.5}rem`,
         lineHeight: `${telemetryFontSize * 1.75}rem`,
         color: textColour,
       }}

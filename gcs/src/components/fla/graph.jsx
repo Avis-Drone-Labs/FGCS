@@ -215,11 +215,21 @@ export default function Graph({ data, openPresetModal }) {
   }
 
   function openParamsWindow() {
-    console.log("Opening FLA Params Window with params")
-    window.ipcRenderer.invoke("app:open-fla-params-window", {
-      params,
-      fileName,
-    })
+    try {
+      if (!window || !window.ipcRenderer || !window.ipcRenderer.invoke) {
+        showErrorNotification(
+          "IPC renderer is not available to open the FLA Params Window.",
+        )
+        return
+      }
+
+      window.ipcRenderer.invoke("app:open-fla-params-window", {
+        params,
+        fileName,
+      })
+    } catch (error) {
+      showErrorNotification(error)
+    }
   }
 
   useEffect(() => {

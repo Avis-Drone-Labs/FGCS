@@ -76,7 +76,6 @@ export default function FLA() {
         })),
       ),
     )
-    console.log(summary.params)
     dispatch(setParams(summary.params))
     dispatch(setBaseChartData([]))
     // Fire off preload in the background without blocking

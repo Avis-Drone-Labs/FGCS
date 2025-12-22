@@ -12,9 +12,14 @@ export default function FlaParamsWindow() {
   const { ref, height: searchBarHeight } = useElementSize()
 
   useEffect(() => {
-    window.ipcRenderer.on("app:send-fla-params", (_event, params) => {
+    const handler = (_event, params) => {
       setParams(params)
-    })
+    }
+    window.ipcRenderer.on("app:send-fla-params", handler)
+
+    return () => {
+      window.ipcRenderer.removeListener("app:send-fla-params", handler)
+    }
   }, [])
 
   if (!params) {
@@ -52,7 +57,6 @@ export default function FlaParamsWindow() {
                   .toLowerCase()
                   .includes(paramSearchValue.toLowerCase()),
               )
-              .sort((a, b) => a.name.localeCompare(b.name))
               .map((param) => (
                 <Table.Tr key={param.name}>
                   <Table.Td>{param.name}</Table.Td>

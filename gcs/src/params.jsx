@@ -23,12 +23,14 @@ import { useRebootCallback } from "./helpers/droneConnectionCallbacks.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
+import FetchParamsWarningModal from "./components/params/fetchParamsWarningModal.jsx"
 import LoadParamsFileModal from "./components/params/loadParamsFileModal.jsx"
 import ParamsFailedToWriteModal from "./components/params/paramsFailedToWriteModal.jsx"
 import ParamsWriteModal from "./components/params/paramsWriteModal.jsx"
 import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
 import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
+import { selectIsArmed, selectIsFlying } from "./redux/slices/droneInfoSlice.js"
 import {
   emitExportParamsToFile,
   emitRefreshParams,
@@ -43,12 +45,14 @@ import {
   selectShowModifiedParams,
   selectShownParams,
   setFetchingVars,
+  setFetchParamsWarningModalOpen,
   setHasFetchedOnce,
   setLoadedFileName,
   setLoadedParams,
   setLoadParamsFileModalOpen,
   setModifiedParams,
   setParams,
+  setPendingFetchAction,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
 
@@ -66,6 +70,10 @@ export default function Params() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const rebootCallback = useRebootCallback()
+
+  // Drone state
+  const isArmed = useSelector(selectIsArmed)
+  const isFlying = useSelector(selectIsFlying)
 
   // Parameter states
   const hasFetchedOnce = useSelector(selectHasFetchedOnce)
@@ -107,10 +115,28 @@ export default function Params() {
     dispatch(setShownParams(filteredParams))
   }, [debouncedSearchValue, showModifiedParams, params, modifiedParams])
 
-  function fetchParams() {
+  function checkArmedOrFlying(callback) {
+    if (isArmed || isFlying) {
+      // Store the callback to execute after confirmation
+      dispatch(setPendingFetchAction(callback))
+      dispatch(setFetchParamsWarningModalOpen(true))
+      return true
+    }
+    return false
+  }
+
+  function fetchParamsForFirstTime() {
     dispatch(setFetchingVars(true))
     dispatch(emitRefreshParams())
     dispatch(setHasFetchedOnce(true))
+    dispatch(setPendingFetchAction(null))
+  }
+
+  function fetchParams() {
+    if (checkArmedOrFlying(fetchParamsForFirstTime)) {
+      return
+    }
+    fetchParamsForFirstTime()
   }
 
   function refreshCallback() {
@@ -119,6 +145,14 @@ export default function Params() {
     dispatch(setShownParams([]))
     dispatch(emitRefreshParams())
     dispatch(setFetchingVars(true))
+    dispatch(setPendingFetchAction(null))
+  }
+
+  function refreshParams() {
+    if (checkArmedOrFlying(refreshCallback)) {
+      return
+    }
+    rebootCallback()
   }
 
   async function saveParamsToFile() {
@@ -198,6 +232,7 @@ export default function Params() {
 
   return (
     <Layout currentPage="params">
+      <FetchParamsWarningModal />
       <LoadParamsFileModal />
       <ParamsWriteModal />
       <ParamsFailedToWriteModal />
@@ -220,7 +255,7 @@ export default function Params() {
               >
                 <div className="flex flex-col gap-4 p-4">
                   <div className="flex flex-col gap-4">
-                    <Button onClick={refreshCallback} className="grow">
+                    <Button onClick={refreshParams} className="grow">
                       Refresh params
                     </Button>
                     <Button

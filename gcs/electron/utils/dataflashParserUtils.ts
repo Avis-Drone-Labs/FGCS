@@ -2,6 +2,7 @@ import type {
   AircraftType,
   FormatMessage,
   MessageObject,
+  ParamObject,
 } from "../types/flaTypes"
 
 interface RawMessageData {
@@ -195,9 +196,38 @@ function normalizeMessageNames(
   return normalizedMessages
 }
 
+function getParamObjects(paramMessages: MessageObject[]): ParamObject[] {
+  // Use a map to avoid duplicate params
+  const params: { [paramName: string]: ParamObject } = {}
+  for (const msg of paramMessages) {
+    const name = (msg as { Name?: unknown }).Name
+    const value = (msg as { Value?: unknown }).Value
+    if (typeof name !== "string") {
+      continue
+    }
+    if (typeof value !== "string" && typeof value !== "number") {
+      continue
+    }
+
+    const paramObj: ParamObject = {
+      name: name,
+      value: value,
+    }
+    params[paramObj.name] = paramObj
+  }
+
+  // Sort alphabetically by param name
+  const sortedParams = Object.values(params).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )
+
+  return sortedParams
+}
+
 export {
   getAircraftTypeFromMavType,
   getFormatMessages,
+  getParamObjects,
   normalizeFormatMessageNames,
   normalizeMessageNames,
   transformMessages,

@@ -40,6 +40,7 @@ import {
   setLogType,
   setMessageFilters,
   setMessageMeans,
+  setParams,
   setUtcAvailable,
 } from "./redux/slices/logAnalyserSlice.js"
 
@@ -75,6 +76,7 @@ export default function FLA() {
         })),
       ),
     )
+    dispatch(setParams(summary.params))
     dispatch(setBaseChartData([]))
     // Fire off preload in the background without blocking
     const labelsToPreload = PRELOAD_LABELS[summary.logType]

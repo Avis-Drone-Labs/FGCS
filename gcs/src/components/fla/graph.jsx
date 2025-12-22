@@ -40,9 +40,11 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   selectAircraftType,
   selectCanSavePreset,
+  selectFile,
   selectFlightModeMessages,
   selectLogEvents,
   selectMessageFilters,
+  selectParams,
   selectUtcAvailable,
   setCanSavePreset,
   setColorIndex,
@@ -104,6 +106,9 @@ export default function Graph({ data, openPresetModal }) {
   const flightModes = useSelector(selectFlightModeMessages)
   const canSavePreset = useSelector(selectCanSavePreset)
   const aircraftType = useSelector(selectAircraftType)
+  const params = useSelector(selectParams)
+  const file = useSelector(selectFile)
+  const fileName = file?.name
 
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
@@ -204,6 +209,24 @@ export default function Graph({ data, openPresetModal }) {
       }
 
       img.src = chartRef?.current?.toBase64Image()
+    } catch (error) {
+      showErrorNotification(error)
+    }
+  }
+
+  function openParamsWindow() {
+    try {
+      if (!window || !window.ipcRenderer || !window.ipcRenderer.invoke) {
+        showErrorNotification(
+          "IPC renderer is not available to open the FLA Params Window.",
+        )
+        return
+      }
+
+      window.ipcRenderer.invoke("app:open-fla-params-window", {
+        params,
+        fileName,
+      })
     } catch (error) {
       showErrorNotification(error)
     }
@@ -460,6 +483,13 @@ export default function Graph({ data, openPresetModal }) {
               }}
             >
               Save Preset
+            </Button>
+          </MantineTooltip>
+        )}
+        {params !== null && (
+          <MantineTooltip label="View Params">
+            <Button className="min-h-8 max-h-8" onClick={openParamsWindow}>
+              View Params
             </Button>
           </MantineTooltip>
         )}

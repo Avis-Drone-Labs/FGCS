@@ -33,6 +33,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:update-vibe-status",
   "app:open-vibe-status-window",
   "params:load-params-from-file",
+  "app:open-fla-params-window",
+  "app:close-fla-params-window",
 ]
 
 const ALLOWED_SEND_CHANNELS = [
@@ -62,6 +64,7 @@ const ALLOWED_ON_CHANNELS = [
   "app:send-vibe-status",
   "settings:open",
   "mavlink-forwarding:open",
+  "app:send-fla-params",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

@@ -13,6 +13,7 @@ import DataflashParser from "./utils/dataflashParser"
 import {
   getAircraftTypeFromMavType,
   getFormatMessages,
+  getParamObjects,
   normalizeFormatMessageNames,
   transformMessages,
 } from "./utils/dataflashParserUtils"
@@ -459,6 +460,7 @@ function processAndSaveLogData(
   let finalMessages = { ...expandedMessages }
   let gpsOffset: number | null = null
   let utcAvailable = false
+  let params = null
 
   if (
     (finalMessages.GPS || finalMessages["GPS[0]"]) &&
@@ -471,6 +473,11 @@ function processAndSaveLogData(
     }
   }
   if (logType === "fgcs_telemetry") utcAvailable = true
+
+  if (logType === "dataflash_bin" && "PARM" in loadedLogMessages) {
+    // extract params
+    params = getParamObjects(loadedLogMessages["PARM"] as MessageObject[])
+  }
 
   // 5. Calculate means on the final, fully-expanded data
   const means = calculateMeanValues(finalMessages)
@@ -507,6 +514,7 @@ function processAndSaveLogData(
     messageMeans: means,
     aircraftType,
     firmwareVersion,
+    params,
   }
 }
 

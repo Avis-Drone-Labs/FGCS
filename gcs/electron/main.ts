@@ -25,6 +25,9 @@ import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
 import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
+import registerFlaParamsIPC, {
+  destroyFlaParamsWindow,
+} from "./modules/flaParamsWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -247,6 +250,7 @@ function createWindow() {
   registerVibeStatusIPC()
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
+  registerFlaParamsIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -433,6 +437,7 @@ function closeWindows() {
   destroyEkfStatusWindow()
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
+  destroyFlaParamsWindow()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

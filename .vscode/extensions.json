@@ -5,6 +5,7 @@
     "esbenp.prettier-vscode",
     "rvest.vs-code-prettier-eslint",
     "bradlc.vscode-tailwindcss",
-    "christian-kohler.npm-intellisense"
+    "christian-kohler.npm-intellisense",
+    "charliermarsh.ruff"
   ]
 }

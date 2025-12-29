@@ -1,24 +1,25 @@
 {
-    "cSpell.words": [
-        "ardupilot",
-        "ARSP",
-        "centered",
-        "chancount",
-        "Crosshair",
-        "falcongrey",
-        "falconred",
-        "frametype",
-        "frametypename",
-        "maplibre",
-        "maptilers",
-        "mavutil",
-        "Motortestpanel",
-        "pymavlink",
-        "PYQT",
-        "RSSI",
-        "serialutil",
-        "SITL",
-        "statustext",
-        "SUAS"
-    ]
+  "cSpell.words": [
+    "ardupilot",
+    "ARSP",
+    "centered",
+    "chancount",
+    "Crosshair",
+    "falcongrey",
+    "falconred",
+    "frametype",
+    "frametypename",
+    "maplibre",
+    "maptilers",
+    "mavutil",
+    "Motortestpanel",
+    "pymavlink",
+    "PYQT",
+    "RSSI",
+    "serialutil",
+    "SITL",
+    "statustext",
+    "SUAS"
+  ],
+  "mypy-type-checker.args": ["--ignore-missing-imports"]
 }

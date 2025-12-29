@@ -18,7 +18,7 @@ export default function FlaParamsWindow() {
     window.ipcRenderer.on("app:send-fla-params", handler)
 
     return () => {
-      window.ipcRenderer.removeListener("app:send-fla-params", handler)
+      window.ipcRenderer.removeAllListeners("app:send-fla-params")
     }
   }, [])
 

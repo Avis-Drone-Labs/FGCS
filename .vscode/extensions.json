@@ -6,6 +6,8 @@
     "rvest.vs-code-prettier-eslint",
     "bradlc.vscode-tailwindcss",
     "christian-kohler.npm-intellisense",
-    "charliermarsh.ruff"
+    "charliermarsh.ruff",
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens"
   ]
 }

@@ -22,12 +22,12 @@ import {
   emitTakeoff,
 } from "../../../redux/slices/droneConnectionSlice"
 import {
-  selectArmed,
+  selectIsArmed,
   setLoiterRadius,
 } from "../../../redux/slices/droneInfoSlice"
 
-import { NoConnectionMsg } from "../tabsSection"
 import { useRebootCallback } from "../../../helpers/droneConnectionCallbacks"
+import { NoConnectionMsg } from "../tabsSection"
 
 export default function ActionTabsSection({
   connected,
@@ -113,7 +113,7 @@ const ArmTakeoffLandAction = () => {
     key: "takeoffAltitude",
     defaultValue: 10,
   })
-  const isArmed = useSelector(selectArmed)
+  const isArmed = useSelector(selectIsArmed)
   const rebootCallback = useRebootCallback()
 
   function armDisarm(arm, force = false) {

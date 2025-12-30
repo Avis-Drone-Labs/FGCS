@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Any, List, Optional, Union
 
@@ -7,6 +8,11 @@ from pymavlink.mavutil import mavlink
 
 from . import falcon_test
 from .helpers import ParamRefreshTimeout, WaitForMessageReturnsNone, set_params
+
+PARAM_FILES_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "param_test_files",
+)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -20,6 +26,63 @@ def setup_function():
     ]
 
     set_params(params)
+
+
+@pytest.fixture()
+def delete_export_files():
+    """
+    Deletes the exported param files after running a test.
+    """
+    yield  # this is where the testing happens
+
+    # Teardown
+    export_files = [
+        "exported_params.parm",
+    ]
+
+    for file_name in export_files:
+        file_path = os.path.join(PARAM_FILES_PATH, file_name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+@pytest.fixture()
+def inject_params():
+    """
+    Injects parameters from a file before running a test, reset afterwards.
+    """
+    import app.droneStatus as droneStatus
+
+    drone = droneStatus.drone
+
+    if not drone:
+        yield  # this is where the testing happens
+        return
+
+    inject_param_file = os.path.join(PARAM_FILES_PATH, "inject_params.parm")
+    inject_params_list = []
+    with open(inject_param_file, "r") as f:
+        for line in f:
+            if line.startswith("#") or line.strip() == "":
+                continue
+            parts = line.strip().split(",")
+            if len(parts) >= 2:
+                param_id = parts[0]
+                param_value = float(parts[1])
+                # We don't care/need param_type for setting params here
+                # Plus we can't get it from the .parm file anyways
+                inject_params_list.append(
+                    {"param_id": param_id, "param_value": param_value}
+                )
+
+    old_params = drone.paramsController.params.copy()
+
+    drone.paramsController.params = inject_params_list
+
+    yield  # this is where the testing happens
+
+    # Teardown - reset params
+    drone.paramsController.params = old_params
 
 
 def send_and_receive_params(
@@ -459,3 +522,92 @@ def test_refreshParams_successfullyRefreshed(
 
     if socketio_result["name"] == "params":
         assert socketio_result["args"][0] == droneStatus.drone.paramsController.params
+
+
+@falcon_test(pass_drone_status=True)
+def test_exportParamsToFile_wrongState(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "dashboard"
+
+    socketio_client.emit(
+        "export_params_to_file", {"file_path": "test_params_output.txt"}
+    )
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the params screen to export parameters.",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_exportParamsToFile_noFilePath(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "params"
+    socketio_client.emit("export_params_to_file", {})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "export_params_result"
+    assert socketio_result["args"][0] == {
+        "success": False,
+        "message": "No file path provided.",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_exportParamsToFile_incorrectFilePath(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    export_file_path = os.path.join(
+        PARAM_FILES_PATH, "random_folder_that_should_not_exist", "exported_params.parm"
+    )
+
+    droneStatus.state = "params"
+    socketio_client.emit("export_params_to_file", {"file_path": export_file_path})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "export_params_result"
+    assert socketio_result["args"][0]["success"] is False
+
+    # Check that the message contains the expected error indicators
+    message = socketio_result["args"][0]["message"]
+    assert "Failed to export params to file:" in message
+    assert "No such file or directory:" in message
+    assert "random_folder_that_should_not_exist" in message
+    assert "exported_params.parm" in message
+
+
+@pytest.mark.usefixtures("delete_export_files")
+@pytest.mark.usefixtures("inject_params")
+@falcon_test(pass_drone_status=True)
+def test_exportParamsToFile_success(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    export_file_path = os.path.join(PARAM_FILES_PATH, "exported_params.parm")
+
+    droneStatus.state = "params"
+    socketio_client.emit("export_params_to_file", {"file_path": export_file_path})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "export_params_result"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": f"Parameters exported successfully to {export_file_path}",
+    }
+
+    # Verify file contents
+    with open(export_file_path, "r") as f:
+        lines = [
+            line
+            for line in f.readlines()
+            if line.strip() != "" and not line.startswith("#")
+        ]
+    with open(os.path.join(PARAM_FILES_PATH, "inject_params.parm"), "r") as f:
+        expected_lines = [
+            line
+            for line in f.readlines()
+            if line.strip() != "" and not line.startswith("#")
+        ]
+    assert lines == expected_lines

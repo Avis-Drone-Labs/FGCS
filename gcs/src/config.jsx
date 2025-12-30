@@ -20,11 +20,12 @@ import NoDroneConnected from "./components/noDroneConnected"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import Ftp from "./components/config/ftp"
 import {
   emitGetGripperEnabled,
   selectGetGripperEnabled,
 } from "./redux/slices/configSlice"
+import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 export default function Config() {
   const dispatch = useDispatch()
@@ -63,6 +64,7 @@ export default function Config() {
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>
               <Tabs.Tab value="rc_calibration">RC Calibration</Tabs.Tab>
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
+              <Tabs.Tab value="ftp">FTP</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
               <div className={paddingTop}>
@@ -82,6 +84,11 @@ export default function Config() {
             <Tabs.Panel value="flightmodes">
               <div className={paddingTop}>
                 <FlightModes />
+              </div>
+            </Tabs.Panel>
+            <Tabs.Panel value="ftp">
+              <div className={paddingTop}>
+                <Ftp />
               </div>
             </Tabs.Panel>
           </Tabs>

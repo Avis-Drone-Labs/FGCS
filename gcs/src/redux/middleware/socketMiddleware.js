@@ -17,6 +17,7 @@ import {
   setConnectionModal,
   setConnectionStatus,
   setFetchingComPorts,
+  setForceDisarmModalOpened,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
 
@@ -60,9 +61,9 @@ import {
   setEkfStatusReportData,
   setExtraData,
   setFlightSwVersion,
+  setGps2RawIntData,
   setGpsData,
   setGpsRawIntData,
-  setGps2RawIntData,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -74,6 +75,11 @@ import {
   setTelemetryData,
   setVibrationData,
 } from "../slices/droneInfoSlice"
+import {
+  addFiles,
+  resetFiles,
+  setLoadingListFiles,
+} from "../slices/ftpSlice.js"
 import {
   addIdToItem,
   closeDashboardMissionFetchingNotificationNoSuccessThunk,
@@ -168,6 +174,10 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
+})
+
+const FtpSpecificSocketEvents = Object.freeze({
+  onListFilesResult: "list_files_result",
 })
 
 const socketMiddleware = (store) => {
@@ -398,6 +408,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setShowMotorTestWarningModal(true))
           store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
+          store.dispatch(resetFiles())
         })
 
         // Link stats
@@ -519,7 +530,14 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
-          if (!msg.success) showErrorNotification(msg.message)
+          if (!msg.success) {
+            // Check if this was a disarm attempt and was not a force disarm
+            if (msg.data?.was_disarming && !msg.data?.was_force) {
+              store.dispatch(setForceDisarmModalOpened(true))
+            } else {
+              showErrorNotification(msg.message)
+            }
+          }
         })
 
         socket.socket.on(
@@ -1064,6 +1082,15 @@ const socketMiddleware = (store) => {
             }
           },
         )
+
+        socket.socket.on(FtpSpecificSocketEvents.onListFilesResult, (msg) => {
+          store.dispatch(setLoadingListFiles(false))
+          if (msg.success) {
+            store.dispatch(addFiles(msg.data))
+          } else {
+            showErrorNotification(msg.message)
+          }
+        })
       } else {
         // Turn off socket events
         Object.values(DroneSpecificSocketEvents).map((event) =>

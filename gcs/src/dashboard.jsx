@@ -34,20 +34,23 @@ import {
   selectBatteryData,
   selectDroneCoords,
   selectFlightMode,
-  selectGPSRawInt,
   selectGPS2RawInt,
+  selectGPSRawInt,
+  selectHasSecondaryGps,
   selectNotificationSound,
   selectRSSI,
   soundPlayed,
-  selectHasSecondaryGps,
 } from "./redux/slices/droneInfoSlice"
-import { selectMessages } from "./redux/slices/statusTextSlice"
 import { selectCurrentMission } from "./redux/slices/missionSlice"
+import { selectMessages } from "./redux/slices/statusTextSlice"
 
 import { useSettings } from "./helpers/settings"
 
 // Helper javascript files
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
+
+// Import components
+import ForceDisarmModal from "./components/dashboard/ForceDisarmModal"
 
 // Custom component
 import useSound from "use-sound"
@@ -69,9 +72,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
+import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 import lowBatterySound from "./assets/sounds/lowbattery.mp3"
 import waypointReachedSound from "./assets/sounds/waypointreached.mp3"
-import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -353,6 +356,7 @@ export default function Dashboard() {
           </ResizableBox>
         </div>
       </div>
+      <ForceDisarmModal />
     </Layout>
   )
 }

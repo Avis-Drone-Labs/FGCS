@@ -33,6 +33,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:update-vibe-status",
   "app:open-vibe-status-window",
   "params:load-params-from-file",
+  "checklist:open",
 ]
 
 const ALLOWED_SEND_CHANNELS = [

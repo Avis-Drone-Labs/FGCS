@@ -607,6 +607,42 @@ app.whenReady().then(() => {
   )
   ipcMain.handle("app:get-version", () => app.getVersion())
 
+  ipcMain.handle("checklist:open", async () => {
+    const window = BrowserWindow.getFocusedWindow()
+    if (!window) {
+      throw new Error("No active window found")
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+      properties: ["openFile"],
+      filters: [{ name: "Checklist files", extensions: ["checklist", "txt"] }],
+    })
+
+    if (!canceled && filePaths.length > 0) {
+      const filePath = filePaths[0]
+      try {
+        const fileContents = fs.readFileSync(filePath, "utf-8")
+        return {
+          success: true,
+          file: {
+            path: filePath,
+            contents: fileContents,
+          },
+        }
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    }
+
+    return {
+      success: false,
+      error: "No file selected",
+    }
+  })
+
   if (app.isPackaged && pythonBackend === null) {
     startBackend()
   }

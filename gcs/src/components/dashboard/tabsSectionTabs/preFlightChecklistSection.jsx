@@ -4,17 +4,10 @@
  */
 
 // Native imports
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import {
-  Accordion,
-  Button,
-  FileInput,
-  Modal,
-  Tabs,
-  TextInput,
-} from "@mantine/core"
+import { Accordion, Button, Modal, Tabs, TextInput } from "@mantine/core"
 
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
@@ -40,7 +33,6 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   const [uploadedFile, setUploadedFile] = useState(null) // Needed so we can reset the uploaded file each click to avoid missed clicks as we use onChange for FileInput
   const [showNewChecklistModal, setNewChecklistModal] = useState(false)
   const [newChecklistName, setNewChecklistName] = useState("")
-  const fileUploadRef = useRef()
 
   function doesChecklistExist(name) {
     return (
@@ -88,27 +80,21 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   }, [])
 
   // Import checklist
-  function uploadChecklist(file) {
-    if (file === null) return
+  async function openChecklistFile() {
+    const result = await window.ipcRenderer.invoke("checklist:open")
 
-    const reader = new FileReader()
-    reader.onerror = () => {
-      showErrorNotification("Failed to read checklist file")
-    }
-
-    // Read text
-    reader.onload = () => {
-      var text = reader.result
+    if (result?.success) {
       let checklistObject
       try {
-        checklistObject = JSON.parse(text)
+        checklistObject = JSON.parse(result.file.contents)
       } catch {
         showErrorNotification("Invalid JSON in checklist file")
         return
       }
       createNewChecklist(checklistObject.name, checklistObject.value)
+    } else if (result) {
+      showErrorNotification(result.message)
     }
-    reader.readAsText(file)
   }
 
   // Reset checklist upload when changed (needed so we don't miss clicks)
@@ -138,24 +124,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
         >
           Add a new Checklist
         </Button>
-        <Button
-          className="!w-full !mt-2"
-          onClick={() => fileUploadRef.current?.click()}
-        >
+        <Button className="!w-full !mt-2" onClick={() => openChecklistFile()}>
           Import from Checklist file
         </Button>
-
-        {/* File input for import (hidden and controlled via a click from a function) */}
-        <div hidden>
-          <FileInput
-            ref={fileUploadRef}
-            value={uploadedFile}
-            onChange={(file) => {
-              setUploadedFile(file)
-              uploadChecklist(file)
-            }}
-          />
-        </div>
 
         {/* New checklist modal */}
         <Modal

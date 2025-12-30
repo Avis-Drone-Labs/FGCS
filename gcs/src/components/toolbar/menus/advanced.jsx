@@ -3,13 +3,14 @@
 */
 
 // Local Imports
-import { useDispatch } from "react-redux"
-import { emitStartSimulation, setForwardingAddressModalOpened } from "../../../redux/slices/droneConnectionSlice"
+import { useDispatch, useSelector } from "react-redux"
+import { emitStartSimulation, emitStopSimulation, selectIsSimulationRunning, setForwardingAddressModalOpened } from "../../../redux/slices/droneConnectionSlice"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
 
 export default function AdvancedMenu(props) {
   const dispatch = useDispatch()
+  const isSimulationRunning = useSelector(selectIsSimulationRunning)
   return (
     <MenuTemplate
       title="Advanced"
@@ -29,9 +30,17 @@ export default function AdvancedMenu(props) {
         }}
       />
       <MenuItem
-        name="Start Simulation with Docker"
+        name={
+          isSimulationRunning
+            ? "Stop Simulation"
+            : "Start Simulation with Docker"
+        }
         onClick={() => {
-          dispatch(emitStartSimulation())
+          dispatch(
+            isSimulationRunning
+              ? emitStopSimulation()
+              : emitStartSimulation()
+          );
         }}
       />
     </MenuTemplate>

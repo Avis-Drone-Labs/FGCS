@@ -140,7 +140,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavRepositionResult: "nav_reposition_result",
   onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
   onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
-  onSimulationError: "simulation_error",
+  onSimulationResult: "simulation_result",
 })
 
 const ParamSpecificSocketEvents = Object.freeze({
@@ -701,9 +701,11 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
-          DroneSpecificSocketEvents.onSimulationError,
+          DroneSpecificSocketEvents.onSimulationResult,
           (msg) => {
-            showErrorNotification(msg.message)
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
           },
         )
 

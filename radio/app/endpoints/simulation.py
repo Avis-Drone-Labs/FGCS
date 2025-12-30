@@ -5,11 +5,21 @@ from docker.errors import DockerException
 CONTAINER_NAME = "drone_sitl"
 
 
-@socketio.on("start_docker_simulation")
-def start_docker_simulation() -> None:
+def get_docker_client():
     try:
-        client = docker.from_env()
+        return docker.from_env()
+    except DockerException:
+        return None
 
+
+@socketio.on("start_docker_simulation")
+def start_docker_simulation():
+    client = get_docker_client()
+    if client is None:
+        socketio.emit("simulation_result", {"message": "Docker is not running"})
+        return
+
+    try:
         client.containers.run(
             "kushmakkapati/ardupilot_sitl",
             name=CONTAINER_NAME,
@@ -17,8 +27,22 @@ def start_docker_simulation() -> None:
             detach=True,
             remove=True,
         )
+        socketio.emit(
+            "simulation_result", {"success": True, "message": "Simulation started"}
+        )
     except DockerException:
         socketio.emit(
-            "simulation_error",
+            "simulation_result",
             {"message": "Docker exception"},  # TODO: better error messages
         )
+
+
+@socketio.on("stop_docker_simulation")
+def stop_docker_simulation():
+    client = get_docker_client()
+    if client is None:
+        socketio.emit("simulation_result", {"message": "Docker is not running"})
+        return
+
+    container = client.containers.get(CONTAINER_NAME)
+    container.stop()

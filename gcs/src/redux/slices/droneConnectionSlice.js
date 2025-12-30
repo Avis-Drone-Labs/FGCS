@@ -5,6 +5,12 @@ export const ConnectionType = {
   Network: "network",
 }
 
+export const SimulationStatus = {
+  Idle: "idle",
+  Starting: "starting",
+  Running: "running",
+}
+
 const initialState = {
   // drone connection status
   connecting: false,
@@ -32,6 +38,8 @@ const initialState = {
   network_type: "tcp", // local
   ip: "127.0.0.1", // local
   port: "5760", // local
+
+  simulation_status: SimulationStatus.Idle,
 
   forwardingAddress: "", // local
   isForwarding: false, // local
@@ -148,6 +156,9 @@ const droneConnectionSlice = createSlice({
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
     },
+    setSimulationStatus: (state, action) => {
+      state.simulationStatus = action.payload
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -169,6 +180,7 @@ const droneConnectionSlice = createSlice({
     emitLand: () => {},
     emitSetCurrentFlightMode: () => {},
     emitStartSimulation: () => {},
+    emitStopSimulation: () => {},
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -194,6 +206,10 @@ const droneConnectionSlice = createSlice({
     selectVideoMaximized: (state) => state.videoMaximized,
     selectVideoScale: (state) => state.videoScale,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
+    selectSimulationStatus: (state) => state.simulationStatus,
+    selectIsSimulationRunning: (state) =>
+      state.simulationStatus === SimulationStatus.Running ||
+      state.simulationStatus === SimulationStatus.Starting,
   },
 })
 
@@ -221,6 +237,7 @@ export const {
   setVideoMaximized,
   setVideoScale,
   setForceDisarmModalOpened,
+  setSimulationStatus,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -240,6 +257,7 @@ export const {
   emitLand,
   emitSetCurrentFlightMode,
   emitStartSimulation,
+  emitStopSimulation,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,
@@ -264,6 +282,8 @@ export const {
   selectVideoMaximized,
   selectVideoScale,
   selectForceDisarmModalOpened,
+  selectSimulationStatus,
+  selectIsSimulationRunning,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

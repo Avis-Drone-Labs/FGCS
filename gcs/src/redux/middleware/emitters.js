@@ -33,8 +33,11 @@ import {
   emitStopForwarding,
   emitTakeoff,
   emitStartSimulation,
+  emitStopSimulation,
   setCurrentPage,
   setIsForwarding,
+  setSimulationStatus,
+  SimulationStatus,
 } from "../slices/droneConnectionSlice"
 import { emitListFiles, setLoadingListFiles } from "../slices/ftpSlice"
 import {
@@ -197,8 +200,18 @@ export function handleEmitters(socket, store, action) {
 
     {
       emitter: emitStartSimulation,
-      callback: () =>
-        socket.socket.emit("start_docker_simulation"),
+      callback: () => {
+        socket.socket.emit("start_docker_simulation")
+        store.dispatch(setSimulationStatus(SimulationStatus.Starting))
+      }
+    },
+
+    {
+      emitter: emitStopSimulation,
+      callback: () => {
+        socket.socket.emit("stop_docker_simulation"),
+        store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+      }
     },
 
     /*

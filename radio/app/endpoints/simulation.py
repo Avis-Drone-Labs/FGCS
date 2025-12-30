@@ -13,7 +13,7 @@ def start_docker_simulation() -> None:
         client.containers.run(
             "kushmakkapati/ardupilot_sitl",
             name=CONTAINER_NAME,
-            ports={"5760/udp": 5760},
+            ports={"5760": 5760},
             detach=True,
             remove=True,
         )

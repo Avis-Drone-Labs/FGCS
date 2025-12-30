@@ -4,12 +4,12 @@ export function generateCheckListObjectFromHTMLString(
   HTMLString,
   defaultCheck = false,
 ) {
-  var final = []
+  let final = []
   try {
     HTMLString.split("<li><p>")
       .splice(1)
-      .map((element) => {
-        var text = element.split("</p>")[0].trim()
+      .forEach((element) => {
+        let text = element.split("</p>")[0].trim()
         if (text !== "") {
           final.push({
             checked: defaultCheck,

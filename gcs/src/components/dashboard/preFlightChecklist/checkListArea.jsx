@@ -16,7 +16,7 @@ import {
 
 // Local Imports
 import EditCheckList from "./checkListEdit.jsx"
-import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList..js"
+import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -40,7 +40,7 @@ export default function CheckListArea({ id }) {
 
   function generateCheckboxListString(set = false) {
     // Go from list to string, returns0
-    var final = "<ul>"
+    let final = "<ul>"
     checklist.value.map((element) => {
       final += "<li><p>" + element.name + "</p></li>"
     })
@@ -54,7 +54,7 @@ export default function CheckListArea({ id }) {
   }
 
   function generateCheckboxList(defaultCheck = false) {
-    var final = generateCheckListObjectFromHTMLString(
+    let final = generateCheckListObjectFromHTMLString(
       checkBoxListString,
       defaultCheck,
     )
@@ -67,12 +67,12 @@ export default function CheckListArea({ id }) {
   }
 
   function setChecked(name, value) {
-    var final = []
+    let final = []
     checkBoxListString
       .split("<li><p>")
       .splice(1)
-      .map((element) => {
-        var elementName = element.split("</p>")[0].trim()
+      .forEach((element) => {
+        let elementName = element.split("</p>")[0].trim()
         final.push({
           checked:
             elementName === name
@@ -98,11 +98,12 @@ export default function CheckListArea({ id }) {
     })
 
     // Simulating clicking a link to download
-    downloadElement.href = URL.createObjectURL(file)
+    const objectUrl = URL.createObjectURL(file)
+    downloadElement.href = objectUrl
     downloadElement.download = `${checklist.name}.checklist`
     document.body.appendChild(downloadElement)
     downloadElement.click()
-    document.body.removeChild(downloadElement)
+    URL.revokeObjectURL(objectUrl)
   }
 
   function generateMappedItems() {
@@ -132,18 +133,13 @@ export default function CheckListArea({ id }) {
         <div className="flex w-full justify-between pb-2">
           <div className="flex gap-1">
             <Tooltip label="Toggle Checked">
-              <ActionIcon
-                variant="light"
-                radius="md"
-                onClick={() => toggleCheck()}
-              >
+              <ActionIcon variant="light" onClick={() => toggleCheck()}>
                 <IconCheckbox size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Edit List">
               <ActionIcon
                 variant="light"
-                radius="md"
                 onClick={() => setEditCheckListModal(true)}
               >
                 <IconEdit size={20} stroke={1.5} />
@@ -161,7 +157,6 @@ export default function CheckListArea({ id }) {
               <ActionIcon
                 variant="light"
                 color="red"
-                radius="md"
                 onClick={() => setDeleteModal(true)}
               >
                 <IconTrashX size={20} stroke={1.5} />

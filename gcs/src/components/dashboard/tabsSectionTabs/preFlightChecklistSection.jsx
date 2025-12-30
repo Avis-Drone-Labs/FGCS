@@ -30,7 +30,6 @@ export default function PreFlightChecklistTab({ tabPadding }) {
   const preFlightChecklistItems = useSelector(selectChecklists)
 
   // New checklist
-  const [uploadedFile, setUploadedFile] = useState(null) // Needed so we can reset the uploaded file each click to avoid missed clicks as we use onChange for FileInput
   const [showNewChecklistModal, setNewChecklistModal] = useState(false)
   const [newChecklistName, setNewChecklistName] = useState("")
 
@@ -93,15 +92,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
       }
       createNewChecklist(checklistObject.name, checklistObject.value)
     } else if (result) {
-      showErrorNotification(result.message)
+      showErrorNotification(result.error)
     }
   }
-
-  // Reset checklist upload when changed (needed so we don't miss clicks)
-  useEffect(() => {
-    if (uploadedFile === null) return
-    setUploadedFile(null)
-  }, [uploadedFile])
 
   return (
     <Tabs.Panel value="preFlightChecklist">

@@ -32,6 +32,7 @@ import {
   emitStartForwarding,
   emitStopForwarding,
   emitTakeoff,
+  emitStartSimulation,
   setCurrentPage,
   setIsForwarding,
 } from "../slices/droneConnectionSlice"
@@ -192,6 +193,12 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("set_current_flight_mode", {
           newFlightMode: action.payload.newFlightMode,
         }),
+    },
+
+    {
+      emitter: emitStartSimulation,
+      callback: () =>
+        socket.socket.emit("start_docker_simulation"),
     },
 
     /*

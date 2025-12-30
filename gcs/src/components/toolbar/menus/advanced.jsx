@@ -4,7 +4,7 @@
 
 // Local Imports
 import { useDispatch } from "react-redux"
-import { setForwardingAddressModalOpened } from "../../../redux/slices/droneConnectionSlice"
+import { emitStartSimulation, setForwardingAddressModalOpened } from "../../../redux/slices/droneConnectionSlice"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
 
@@ -26,6 +26,12 @@ export default function AdvancedMenu(props) {
         name="MAVLink Forwarding"
         onClick={() => {
           dispatch(setForwardingAddressModalOpened(true))
+        }}
+      />
+      <MenuItem
+        name="Start Simulation with Docker"
+        onClick={() => {
+          dispatch(emitStartSimulation())
         }}
       />
     </MenuTemplate>

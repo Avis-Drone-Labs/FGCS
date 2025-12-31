@@ -9,6 +9,10 @@ class ListFilesType(TypedDict):
     path: str
 
 
+class ReadFileType(TypedDict):
+    path: str
+
+
 @socketio.on("list_files")
 def listFiles(data: ListFilesType) -> None:
     """
@@ -17,7 +21,7 @@ def listFiles(data: ListFilesType) -> None:
     Args:
         data: The data from the client, this contains "path" which is the directory path to list files from
     """
-    if droneStatus.state != "config":
+    if droneStatus.state is None or "config" not in droneStatus.state:
         socketio.emit(
             "params_error",
             {"message": "You must be on the config screen to access FTP operations"},
@@ -33,3 +37,40 @@ def listFiles(data: ListFilesType) -> None:
     result = droneStatus.drone.ftpController.listFiles(path)
 
     socketio.emit("list_files_result", result)
+
+
+@socketio.on("read_file")
+def readFile(data: ReadFileType) -> None:
+    """
+    Read/download a file from the drone's FTP server
+
+    Args:
+        data: The data from the client, this contains "path" which is the file path to read/download
+    """
+    if droneStatus.state is None or "config" not in droneStatus.state:
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access FTP operations"},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="read file")
+
+    path = data.get("path", None)
+    if path is None:
+        socketio.emit(
+            "read_file_result", {"success": False, "message": "Missing file path"}
+        )
+        return
+
+    result = droneStatus.drone.ftpController.readFile(path)
+
+    # Convert bytes to list for SocketIO serialization
+    if result.get("success") and "data" in result:
+        data_dict = result["data"]
+        if isinstance(data_dict, dict) and "file_data" in data_dict:
+            data_dict["file_data"] = list(data_dict["file_data"])
+
+    socketio.emit("read_file_result", result)

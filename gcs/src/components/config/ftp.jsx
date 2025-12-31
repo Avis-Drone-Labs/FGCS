@@ -13,16 +13,25 @@ import { IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react"
 import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../helpers/notification"
+import {
   emitListFiles,
+  emitReadFile,
   resetFiles,
   selectFiles,
+  selectIsReadingFile,
   selectLoadingListFiles,
+  selectReadFileData,
 } from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
   const dispatch = useDispatch()
   const files = useSelector(selectFiles)
   const loadingListFiles = useSelector(selectLoadingListFiles)
+  const isReadingFile = useSelector(selectIsReadingFile)
+  const readFileData = useSelector(selectReadFileData)
 
   const convertedFiles = useMemo(() => {
     if (!files || files.length === 0) return []
@@ -52,6 +61,24 @@ export default function Ftp() {
     })
   }, [files])
 
+  const fileContentString = useMemo(() => {
+    if (readFileData) {
+      try {
+        const decoder = new TextDecoder("utf-8")
+        return {
+          success: true,
+          content: decoder.decode(new Uint8Array(readFileData.file_data)),
+        }
+      } catch (e) {
+        return {
+          success: false,
+          content: `Error decoding file content: ${e.message}`,
+        }
+      }
+    }
+    return null
+  }, [readFileData])
+
   useEffect(() => {
     if (files.length === 0) {
       dispatch(emitListFiles({ path: "/" }))
@@ -63,53 +90,114 @@ export default function Ftp() {
       if (node.children === undefined) {
         dispatch(emitListFiles({ path: node.path }))
       }
+    } else {
+      dispatch(emitReadFile({ path: node.path }))
+    }
+  }
+
+  async function downloadReadFile() {
+    if (fileContentString && fileContentString.success) {
+      const options = {
+        title: "Save file",
+        defaultPath: readFileData.file_name,
+        filters: [{ name: "All Files", extensions: ["*"] }],
+      }
+
+      const result = await window.ipcRenderer.invoke(
+        "app:get-save-file-path",
+        options,
+      )
+
+      if (!result.canceled && result.filePath) {
+        const saveResult = await window.ipcRenderer.invoke("app:save-file", {
+          filePath: result.filePath,
+          content: readFileData.file_data,
+        })
+
+        if (saveResult.success) {
+          showSuccessNotification(
+            `File saved successfully to: ${result.filePath}`,
+          )
+        } else {
+          showErrorNotification("Error saving file:", saveResult.error)
+        }
+      }
     }
   }
 
   return (
-    <div className="flex flex-col gap-4 mx-4 relative w-fit">
-      <LoadingOverlay
-        visible={loadingListFiles}
-        zIndex={1000}
-        overlayProps={{ blur: 2 }}
-      />
-
-      {loadingListFiles && <p>Loading files...</p>}
-
-      <Button
-        onClick={() => {
-          dispatch(resetFiles())
-        }}
-        w={"fit-content"}
-      >
-        Refresh files
-      </Button>
-      <Tree
-        data={convertedFiles}
-        renderNode={({ node, expanded, elementProps }) => (
-          <Group gap={5} {...elementProps} key={node.path}>
-            {node.is_dir ? (
-              <>
-                {expanded ? (
-                  <IconFolderOpen size={20} />
-                ) : (
-                  <IconFolder size={20} />
-                )}
-              </>
-            ) : (
-              <IconFile size={20} />
-            )}
-
-            <span
-              onClick={() => {
-                handleFileClick(node)
+    <div className="flex flex-row gap-4 p-4 w-full">
+      <div className="flex flex-col gap-4 relative flex-1">
+        <LoadingOverlay
+          visible={loadingListFiles}
+          zIndex={1000}
+          overlayProps={{ blur: 2 }}
+        />
+        {loadingListFiles && <p>Loading files...</p>}
+        <Button
+          onClick={() => {
+            dispatch(resetFiles())
+          }}
+          w={"fit-content"}
+        >
+          Refresh files
+        </Button>
+        <Tree
+          data={convertedFiles}
+          renderNode={({ node, expanded, elementProps }) => (
+            <Group gap={5} {...elementProps} key={node.path}>
+              {node.is_dir ? (
+                <>
+                  {expanded ? (
+                    <IconFolderOpen size={20} />
+                  ) : (
+                    <IconFolder size={20} />
+                  )}
+                </>
+              ) : (
+                <IconFile size={20} />
+              )}
+              <span
+                onClick={() => {
+                  handleFileClick(node)
+                }}
+              >
+                {node.label}
+              </span>
+            </Group>
+          )}
+        />
+      </div>
+      <div className="flex flex-col gap-4 flex-1">
+        {fileContentString !== null && (
+          <div className="flex flex-col relative gap-2">
+            <LoadingOverlay
+              visible={isReadingFile}
+              zIndex={1000}
+              overlayProps={{ blur: 2 }}
+            />
+            <Button
+              disabled={!fileContentString || !fileContentString.success}
+              onClick={async () => {
+                await downloadReadFile()
               }}
+              w={"fit-content"}
             >
-              {node.label}
-            </span>
-          </Group>
+              Download
+            </Button>
+
+            <div className="p-4 border border-falcongrey-600 rounded bg-falcongrey-800">
+              {fileContentString.success ? (
+                <pre className="whitespace-pre-wrap break-all">
+                  {fileContentString.content}
+                </pre>
+              ) : (
+                <p className="text-red-500">{fileContentString.content}</p>
+              )}
+            </div>
+          </div>
         )}
-      />
+      </div>
     </div>
   )
 }

@@ -19,6 +19,8 @@ import {
   setFetchingComPorts,
   setForceDisarmModalOpened,
   setSelectedComPorts,
+  setSimulationStatus,
+  SimulationStatus,
 } from "../slices/droneConnectionSlice"
 
 // socket factory
@@ -416,6 +418,12 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           SocketEvents.onSimulationResult,
           (msg) => {
+            if (msg.running === true) {
+              store.dispatch(setSimulationStatus(SimulationStatus.Running))
+            } else if (msg.running === false) {
+              store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+            }
+
             msg.success
               ? showSuccessNotification(msg.message)
               : showErrorNotification(msg.message)

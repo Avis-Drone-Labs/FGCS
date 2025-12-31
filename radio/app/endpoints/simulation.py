@@ -1,4 +1,4 @@
-from app import logger, socketio
+from app import socketio
 import docker
 from docker.errors import DockerException
 
@@ -17,7 +17,8 @@ def start_docker_simulation():
     client = get_docker_client()
     if client is None:
         socketio.emit(
-            "simulation_result", {"success": False, "message": "Docker is not running"}
+            "simulation_result",
+            {"success": False, "running": False, "message": "Docker is not running"},
         )
         return
 
@@ -29,10 +30,10 @@ def start_docker_simulation():
             detach=True,
             remove=True,
         )
-        logger.debug("DOCKER STARTED SUCCESSFULLYB")
 
         socketio.emit(
-            "simulation_result", {"success": True, "message": "Simulation started"}
+            "simulation_result",
+            {"success": True, "running": True, "message": "Simulation started"},
         )
     except DockerException:
         socketio.emit(
@@ -55,3 +56,7 @@ def stop_docker_simulation():
 
     container = client.containers.get(CONTAINER_NAME)
     container.stop()
+    socketio.emit(
+        "simulation_result",
+        {"success": True, "running": False, "message": "Simulation stopped"},
+    )

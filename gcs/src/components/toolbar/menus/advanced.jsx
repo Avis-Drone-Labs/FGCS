@@ -4,7 +4,12 @@
 
 // Local Imports
 import { useDispatch, useSelector } from "react-redux"
-import { emitStartSimulation, emitStopSimulation, selectIsSimulationRunning, setForwardingAddressModalOpened } from "../../../redux/slices/droneConnectionSlice"
+import {
+  emitStartSimulation,
+  emitStopSimulation,
+  selectIsSimulationRunning,
+  setForwardingAddressModalOpened
+} from "../../../redux/slices/droneConnectionSlice"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
 

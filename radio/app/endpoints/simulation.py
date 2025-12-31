@@ -41,7 +41,11 @@ def start_docker_simulation():
     if client is None:
         socketio.emit(
             "simulation_result",
-            {"success": False, "running": False, "message": "Docker is not running"},
+            {
+                "success": False,
+                "running": False,
+                "message": "Unable to connect to Docker",
+            },
         )
         return
 
@@ -51,7 +55,7 @@ def start_docker_simulation():
         client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
-            ports={"5760": 5760},
+            ports={5760: 5760},
             stdin_open=True,
             tty=True,
             detach=True,
@@ -77,7 +81,8 @@ def stop_docker_simulation():
     client = get_docker_client()
     if client is None:
         socketio.emit(
-            "simulation_result", {"success": False, "message": "Docker is not running"}
+            "simulation_result",
+            {"success": False, "message": "Unable to connect to Docker"},
         )
         return
 

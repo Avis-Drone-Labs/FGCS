@@ -39,7 +39,7 @@ const initialState = {
   ip: "127.0.0.1", // local
   port: "5760", // local
 
-  simulation_status: SimulationStatus.Idle,
+  simulationStatus: SimulationStatus.Idle,
 
   forwardingAddress: "", // local
   isForwarding: false, // local

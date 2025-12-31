@@ -209,8 +209,7 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitStopSimulation,
       callback: () => {
-        socket.socket.emit("stop_docker_simulation"),
-        store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+        socket.socket.emit("stop_docker_simulation")
       }
     },
 

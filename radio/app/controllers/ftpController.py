@@ -26,6 +26,7 @@ class FtpController:
         self.seq: int = 0
         self.session: int = 0
         self.last_op: Optional[mavftp_op.FTP_OP] = None
+        self.current_op: Optional[str] = None
 
         # Directory listing state
         self.dir_offset: int = 0
@@ -413,46 +414,58 @@ class FtpController:
         Returns:
             Response: A response object containing the status and data or error message.
         """
+        # Check if another operation is in progress
+        if self.current_op is not None:
+            return {
+                "success": False,
+                "message": f"FTP operation already in progress: {self.current_op}",
+            }
+
         if path == "":
             return {
                 "success": False,
                 "message": "Path cannot be empty",
             }
 
-        encoded_path = bytearray(path, "ascii")
-        directory_offset = 0
-        op = mavftp_op.FTP_OP(
-            self.seq,
-            self.session,
-            mavftp_op.OP_ListDirectory,
-            len(encoded_path),
-            0,
-            0,
-            directory_offset,
-            encoded_path,
-        )
+        try:
+            self.current_op = "list_files"
 
-        self.dir_offset = 0
-        self.list_result = []
-        self.list_temp_result = []
+            encoded_path = bytearray(path, "ascii")
+            directory_offset = 0
+            op = mavftp_op.FTP_OP(
+                self.seq,
+                self.session,
+                mavftp_op.OP_ListDirectory,
+                len(encoded_path),
+                0,
+                0,
+                directory_offset,
+                encoded_path,
+            )
 
-        self.drone.logger.info(f"Listing files in directory: {path}")
+            self.dir_offset = 0
+            self.list_result = []
+            self.list_temp_result = []
 
-        self._sendFtpCommand(op)
-        response = self._processFtpResponse("list_files")
+            self.drone.logger.info(f"Listing files in directory: {path}")
 
-        if response.get("success", False) is False:
-            return response
+            self._sendFtpCommand(op)
+            response = self._processFtpResponse("list_files")
 
-        self.drone.logger.info(
-            f"Successfully listed {len(self.list_result)} files in directory: {path}"
-        )
+            if response.get("success", False) is False:
+                return response
 
-        return {
-            "success": True,
-            "message": "Directory listing retrieved successfully",
-            "data": self._convertDirectoryEntriesToDicts(self.list_result, path),
-        }
+            self.drone.logger.info(
+                f"Successfully listed {len(self.list_result)} files in directory: {path}"
+            )
+
+            return {
+                "success": True,
+                "message": "Directory listing retrieved successfully",
+                "data": self._convertDirectoryEntriesToDicts(self.list_result, path),
+            }
+        finally:
+            self.current_op = None
 
     def readFile(
         self, path: str, size: Optional[int] = None, offset: int = 0
@@ -468,69 +481,81 @@ class FtpController:
         Returns:
             Response: A response object containing the file data or error message.
         """
+        # Check if another operation is in progress
+        if self.current_op is not None:
+            return {
+                "success": False,
+                "message": f"FTP operation already in progress: {self.current_op}",
+            }
+
         if not path:
             return {
                 "success": False,
                 "message": "File path cannot be empty",
             }
 
-        # Reset read state
-        self.read_buffer = BytesIO()
-        self.read_total = 0
-        self.read_gaps = []
-        self.reached_eof = False
-        self.requested_offset = offset
-        self.requested_size = (
-            size if size is not None else 0
-        )  # 0 means read entire file
-        self.remote_file_size = None
-        self.last_burst_read = None
+        try:
+            self.current_op = "read_file"
 
-        # Send OpenFileRO command
-        encoded_path = bytearray(path, "ascii")
-        op = mavftp_op.FTP_OP(
-            self.seq,
-            self.session,
-            mavftp_op.OP_OpenFileRO,
-            len(encoded_path),
-            0,
-            0,
-            0,
-            encoded_path,
-        )
+            # Reset read state
+            self.read_buffer = BytesIO()
+            self.read_total = 0
+            self.read_gaps = []
+            self.reached_eof = False
+            self.requested_offset = offset
+            self.requested_size = (
+                size if size is not None else 0
+            )  # 0 means read entire file
+            self.remote_file_size = None
+            self.last_burst_read = None
 
-        self.drone.logger.info(
-            f"Reading file: {path} (offset={offset}, size={size if size else 'entire file'})"
-        )
+            # Send OpenFileRO command
+            encoded_path = bytearray(path, "ascii")
+            op = mavftp_op.FTP_OP(
+                self.seq,
+                self.session,
+                mavftp_op.OP_OpenFileRO,
+                len(encoded_path),
+                0,
+                0,
+                0,
+                encoded_path,
+            )
 
-        self._sendFtpCommand(op)
-        response = self._processFtpResponse("read_file", timeout=30)
+            self.drone.logger.info(
+                f"Reading file: {path} (offset={offset}, size={size if size else 'entire file'})"
+            )
 
-        if response.get("success", False) is False:
-            return response
+            self._sendFtpCommand(op)
+            response = self._processFtpResponse("read_file", timeout=30)
 
-        # Extract the requested portion of the data
-        self.read_buffer.seek(0)
-        all_data = self.read_buffer.read()
+            if response.get("success", False) is False:
+                return response
 
-        if self.requested_size > 0:
-            # Return only the requested size from the requested offset
-            result_data = all_data[
-                self.requested_offset : self.requested_offset + self.requested_size
-            ]
-        else:
-            # Return entire file
-            result_data = all_data
+            # Extract the requested portion of the data
+            self.read_buffer.seek(0)
+            all_data = self.read_buffer.read()
 
-        self.drone.logger.info(
-            f"Successfully read {len(result_data)} bytes from file: {path}"
-        )
+            if self.requested_size > 0:
+                # Return only the requested size from the requested offset
+                result_data = all_data[
+                    self.requested_offset : self.requested_offset + self.requested_size
+                ]
+            else:
+                # Return entire file
+                result_data = all_data
 
-        return {
-            "success": True,
-            "message": "File read successfully",
-            "data": {"file_data": result_data, "file_name": path.split("/")[-1]},
-        }
+            self.drone.logger.info(
+                f"Successfully read {len(result_data)} bytes from file: {path}"
+            )
+
+            return {
+                "success": True,
+                "message": "File read successfully",
+                "data": {"file_data": result_data, "file_name": path.split("/")[-1]},
+            }
+        finally:
+            self.current_op = None
 
     def _handleOpenFileReadOnlyResponse(self, response_op: mavftp_op.FTP_OP) -> bool:
         """

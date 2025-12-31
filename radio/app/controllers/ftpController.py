@@ -421,14 +421,14 @@ class FtpController:
                 "message": f"FTP operation already in progress: {self.current_op}",
             }
 
-        if path == "":
-            return {
-                "success": False,
-                "message": "Path cannot be empty",
-            }
-
         try:
             self.current_op = "list_files"
+
+            if path == "":
+                return {
+                    "success": False,
+                    "message": "Path cannot be empty",
+                }
 
             encoded_path = bytearray(path, "ascii")
             directory_offset = 0
@@ -488,14 +488,14 @@ class FtpController:
                 "message": f"FTP operation already in progress: {self.current_op}",
             }
 
-        if not path:
-            return {
-                "success": False,
-                "message": "File path cannot be empty",
-            }
-
         try:
             self.current_op = "read_file"
+
+            if not path:
+                return {
+                    "success": False,
+                    "message": "File path cannot be empty",
+                }
 
             # Reset read state
             self.read_buffer = BytesIO()

@@ -21,6 +21,7 @@ import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
 import socketSlice from "./slices/socketSlice"
 import statusTextSlice from "./slices/statusTextSlice"
+import checklistSlice, { setChecklistItems } from "./slices/checklistSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -31,6 +32,7 @@ const rootReducer = combineSlices(
   statusTextSlice,
   paramsSlice,
   configSlice,
+  checklistSlice,
   applicationSlice,
   ftpSlice,
 )
@@ -94,6 +96,17 @@ if (isForwarding !== null) {
 const outsideVisibility = localStorage.getItem("outsideVisibility")
 if (outsideVisibility !== null) {
   store.dispatch(setOutsideVisibility(outsideVisibility === "true"))
+}
+
+const preFlightChecklist = localStorage.getItem("preFlightChecklist")
+if (preFlightChecklist !== null) {
+  try {
+    store.dispatch(setChecklistItems(JSON.parse(preFlightChecklist)))
+  } catch {
+    console.log(
+      "Failed to parse JSON from pre flight checklist items, resetting to blank array.",
+    )
+  }
 }
 
 const selectedRealtimeGraphs = localStorage.getItem("selectedRealtimeGraphs")
@@ -241,6 +254,13 @@ store.subscribe(() => {
     updateSessionStorageIfChanged(
       "connectedToDrone",
       store_mut.droneConnection.connected,
+    )
+  }
+
+  if (typeof store_mut.checklist.items === "object") {
+    updateJSONLocalStorageIfChanged(
+      "preFlightChecklist",
+      store_mut.checklist.items,
     )
   }
 

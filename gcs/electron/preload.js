@@ -36,6 +36,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "params:load-params-from-file",
   "app:open-fla-params-window",
   "app:close-fla-params-window",
+  "checklist:open",
 ]
 
 const ALLOWED_SEND_CHANNELS = [

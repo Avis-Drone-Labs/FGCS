@@ -2,7 +2,8 @@ from app import socketio
 import docker
 from docker.errors import DockerException
 
-CONTAINER_NAME = "drone_sitl"
+CONTAINER_NAME = "ardupilot_sitl"
+IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
 
 
 def get_docker_client():
@@ -10,6 +11,28 @@ def get_docker_client():
         return docker.from_env()
     except DockerException:
         return None
+
+
+def ensure_image(client):
+    try:
+        client.images.get(IMAGE_NAME)
+        return True
+    except docker.errors.ImageNotFound:
+        socketio.emit(
+            "simulation_result",
+            {
+                "message": "Image not found. Attempting to download.",
+            },
+        )
+        client.images.pull(IMAGE_NAME)
+        socketio.emit(
+            "simulation_result",
+            {
+                "success": True,
+                "message": "Simulation image downloaded",
+            },
+        )
+        return False
 
 
 @socketio.on("start_docker_simulation")
@@ -23,10 +46,14 @@ def start_docker_simulation():
         return
 
     try:
+        ensure_image(client)
+
         client.containers.run(
-            "kushmakkapati/ardupilot_sitl",
+            IMAGE_NAME,
             name=CONTAINER_NAME,
             ports={"5760": 5760},
+            stdin_open=True,
+            tty=True,
             detach=True,
             remove=True,
         )
@@ -35,13 +62,13 @@ def start_docker_simulation():
             "simulation_result",
             {"success": True, "running": True, "message": "Simulation started"},
         )
-    except DockerException:
+    except DockerException as e:
         socketio.emit(
             "simulation_result",
             {
                 "success": False,
-                "message": "Docker exception",
-            },  # TODO: better error messages
+                "message": str(e),
+            },
         )
 
 

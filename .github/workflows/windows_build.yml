@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'The version label to build'
+        description: "The version label to build"
         required: true
-        default: '0.1.8-alpha'
+        default: "0.1.8-alpha"
 
 jobs:
   build:
@@ -27,7 +27,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         working-directory: radio

@@ -140,7 +140,7 @@ const DroneSpecificSocketEvents = Object.freeze({
   onNavRepositionResult: "nav_reposition_result",
   onGetLoiterRadiusResult: "nav_get_loiter_radius_result",
   onSetLoiterRadiusResult: "nav_set_loiter_radius_result",
-  onSimulationResult: "simulation_result",
+  // onSimResult: "sim_result",
 })
 
 const ParamSpecificSocketEvents = Object.freeze({
@@ -411,6 +411,16 @@ const socketMiddleware = (store) => {
           store.dispatch(resetGpsTrack())
           store.dispatch(resetFiles())
         })
+
+        // Simulation messages
+        socket.socket.on(
+          "sim_result",
+          (msg) => {
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
+          },
+        )
 
         // Link stats
         socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
@@ -693,15 +703,6 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(
           DroneSpecificSocketEvents.onSetLoiterRadiusResult,
-          (msg) => {
-            msg.success
-              ? showSuccessNotification(msg.message)
-              : showErrorNotification(msg.message)
-          },
-        )
-
-        socket.socket.on(
-          DroneSpecificSocketEvents.onSimulationResult,
           (msg) => {
             msg.success
               ? showSuccessNotification(msg.message)

@@ -6,8 +6,6 @@ CONTAINER_NAME = "drone_sitl"
 
 
 def get_docker_client():
-    socketio.emit("bonjour")
-
     try:
         return docker.from_env()
     except DockerException:
@@ -19,7 +17,7 @@ def start_docker_simulation():
     client = get_docker_client()
     if client is None:
         socketio.emit(
-            "sim_result", {"success": False, "message": "Docker is not running"}
+            "simulation_result", {"success": False, "message": "Docker is not running"}
         )
         return
 
@@ -33,10 +31,12 @@ def start_docker_simulation():
         )
         logger.debug("DOCKER STARTED SUCCESSFULLYB")
 
-        socketio.emit("sim_result", {"success": True, "message": "Simulation started"})
+        socketio.emit(
+            "simulation_result", {"success": True, "message": "Simulation started"}
+        )
     except DockerException:
         socketio.emit(
-            "sim_result",
+            "simulation_result",
             {
                 "success": False,
                 "message": "Docker exception",
@@ -49,7 +49,7 @@ def stop_docker_simulation():
     client = get_docker_client()
     if client is None:
         socketio.emit(
-            "sim_result", {"success": False, "message": "Docker is not running"}
+            "simulation_result", {"success": False, "message": "Docker is not running"}
         )
         return
 

@@ -16,7 +16,10 @@ import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
 import { AddCommand } from "../../spotlight/commandHandler.js"
 
 // Styling imports
-import { showErrorNotification } from "../../../helpers/notification.js"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../../helpers/notification.js"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -90,7 +93,12 @@ export default function PreFlightChecklistTab({ tabPadding }) {
         showErrorNotification("Invalid JSON in checklist file")
         return
       }
+
+      // Create checklist and show notification
       createNewChecklist(checklistObject.name, checklistObject.value)
+      showSuccessNotification(
+        `Checklist '${checklistObject.name}' imported successfully`,
+      )
     } else if (result) {
       showErrorNotification(result.error)
     }

@@ -93,6 +93,8 @@ def test_listFiles_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
         "message": "FTP operation already in progress: read_file",
     }
 
+    droneStatus.drone.ftpController.current_op = None
+
 
 @falcon_test(pass_drone_status=True)
 def test_readFile_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
@@ -105,6 +107,8 @@ def test_readFile_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
         "success": False,
         "message": "FTP operation already in progress: list_files",
     }
+
+    droneStatus.drone.ftpController.current_op = None
 
 
 @falcon_test(pass_drone_status=True)

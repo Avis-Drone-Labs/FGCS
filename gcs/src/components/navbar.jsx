@@ -78,6 +78,9 @@ import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import { showErrorNotification } from "../helpers/notification.js"
 
+// Modals
+import SimulationModal from "./toolbar/simulationModal.jsx"
+
 export default function Navbar() {
   // Redux
   const dispatch = useDispatch()
@@ -401,6 +404,8 @@ export default function Navbar() {
           </Button>
         )}
       </Modal>
+
+      <SimulationModal/>
 
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">
         <div className="flex items-center wrap">

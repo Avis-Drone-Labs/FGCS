@@ -53,6 +53,7 @@ const initialState = {
   videoScale: 1,
 
   forceDisarmModalOpened: false,
+  simulationModalOpened: false,
 }
 
 const droneConnectionSlice = createSlice({
@@ -156,6 +157,9 @@ const droneConnectionSlice = createSlice({
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
     },
+    setSimulationModalOpened: (state, action) => {
+      state.simulationModalOpened = action.payload
+    },
     setSimulationStatus: (state, action) => {
       state.simulationStatus = action.payload
     },
@@ -210,6 +214,7 @@ const droneConnectionSlice = createSlice({
     selectIsSimulationRunning: (state) =>
       state.simulationStatus === SimulationStatus.Running ||
       state.simulationStatus === SimulationStatus.Starting,
+    selectSimulationModalOpened: (state) => state.simulationModalOpened,
   },
 })
 
@@ -238,6 +243,7 @@ export const {
   setVideoScale,
   setForceDisarmModalOpened,
   setSimulationStatus,
+  setSimulationModalOpened,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -284,6 +290,7 @@ export const {
   selectForceDisarmModalOpened,
   selectSimulationStatus,
   selectIsSimulationRunning,
+  selectSimulationModalOpened,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

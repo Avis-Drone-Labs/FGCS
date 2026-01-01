@@ -1,17 +1,22 @@
 import { useDispatch, useSelector } from "react-redux"
-import { Modal, Text, Button } from "@mantine/core"
+import { Modal, Text, Button, Select } from "@mantine/core"
 import {
   setSimulationModalOpened,
+  setSimulationParams,
+  setSimulationParam,
   selectSimulationModalOpened,
+  selectSimulationParams,
   selectIsSimulationRunning,
   emitStartSimulation,
   emitStopSimulation,
+
 } from "../../redux/slices/droneConnectionSlice"
 
 export default function SimulationModal() {
   const dispatch = useDispatch()
   const modalOpen = useSelector(selectSimulationModalOpened)
   const isSimulationRunning = useSelector(selectIsSimulationRunning)
+  const simulationParams = useSelector(selectSimulationParams)
 
   return (
     <Modal
@@ -34,6 +39,17 @@ export default function SimulationModal() {
       <Text mb={16} c="dimmed" size="sm">
         Note: This is a note
       </Text>
+
+      <Select
+        label="Vehicle type"
+        placeholder="Pick value"
+        data={['ArduCopter', 'ArduPlane', 'ArduRover']}
+        value={simulationParams.vehicleType}
+        allowDeselect={false}
+        onChange={(value) => {
+          if (value) dispatch(setSimulationParam({key: "vehicleType", value: value}));
+        }}
+      />
 
       {/* <TextInput
         label="Forwarding Address"

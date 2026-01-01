@@ -54,6 +54,14 @@ const initialState = {
 
   forceDisarmModalOpened: false,
   simulationModalOpened: false,
+
+  simParams: {
+    vehicleType: "ArduCopter",
+    lat: null,
+    lon: null,
+    alt: null,
+    dir: null,
+  },
 }
 
 const droneConnectionSlice = createSlice({
@@ -163,6 +171,13 @@ const droneConnectionSlice = createSlice({
     setSimulationStatus: (state, action) => {
       state.simulationStatus = action.payload
     },
+    setSimulationParams: (state, action) => {
+      state.simParams = action.payload
+    },
+    setSimulationParam: (state, action) => {
+      const { key, value } = action.payload;
+      state.simParams[key] = value;
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -215,6 +230,7 @@ const droneConnectionSlice = createSlice({
       state.simulationStatus === SimulationStatus.Running ||
       state.simulationStatus === SimulationStatus.Starting,
     selectSimulationModalOpened: (state) => state.simulationModalOpened,
+    selectSimulationParams: (state) => state.simParams,
   },
 })
 
@@ -244,6 +260,8 @@ export const {
   setForceDisarmModalOpened,
   setSimulationStatus,
   setSimulationModalOpened,
+  setSimulationParams,
+  setSimulationParam,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -291,6 +309,7 @@ export const {
   selectSimulationStatus,
   selectIsSimulationRunning,
   selectSimulationModalOpened,
+  selectSimulationParams,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

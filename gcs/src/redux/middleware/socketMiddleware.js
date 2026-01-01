@@ -415,20 +415,18 @@ const socketMiddleware = (store) => {
         })
 
         // Simulation messages
-        socket.socket.on(
-          SocketEvents.onSimulationResult,
-          (msg) => {
-            if (msg.running === true) {
-              store.dispatch(setSimulationStatus(SimulationStatus.Running))
-            } else if (msg.running === false) {
-              store.dispatch(setSimulationStatus(SimulationStatus.Idle))
-            }
+        socket.socket.on(SocketEvents.onSimulationResult, (msg) => {
+          if (msg.running === true) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Running))
+          } else if (msg.running === false) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+          }
+          // Else assume status unchanged
 
-            msg.success
-              ? showSuccessNotification(msg.message)
-              : showErrorNotification(msg.message)
-          },
-        )
+          msg.success
+            ? showSuccessNotification(msg.message)
+            : showErrorNotification(msg.message)
+        })
 
         // Link stats
         socket.socket.on(SocketEvents.linkDebugStats, (msg) => {

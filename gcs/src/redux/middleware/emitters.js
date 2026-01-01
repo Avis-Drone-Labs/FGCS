@@ -203,14 +203,14 @@ export function handleEmitters(socket, store, action) {
       callback: () => {
         socket.socket.emit("start_docker_simulation")
         store.dispatch(setSimulationStatus(SimulationStatus.Starting))
-      }
+      },
     },
 
     {
       emitter: emitStopSimulation,
       callback: () => {
         socket.socket.emit("stop_docker_simulation")
-      }
+      },
     },
 
     /*

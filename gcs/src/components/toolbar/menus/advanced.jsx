@@ -8,7 +8,7 @@ import {
   emitStartSimulation,
   emitStopSimulation,
   selectIsSimulationRunning,
-  setForwardingAddressModalOpened
+  setForwardingAddressModalOpened,
 } from "../../../redux/slices/droneConnectionSlice"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
@@ -42,10 +42,8 @@ export default function AdvancedMenu(props) {
         }
         onClick={() => {
           dispatch(
-            isSimulationRunning
-              ? emitStopSimulation()
-              : emitStartSimulation()
-          );
+            isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
+          )
         }}
       />
     </MenuTemplate>

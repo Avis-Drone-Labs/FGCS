@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux"
-import { Modal, Text, Button, Select } from "@mantine/core"
+import { SimpleGrid, Modal, Text, Button, Select, NumberInput } from "@mantine/core"
 import {
   setSimulationModalOpened,
   setSimulationParams,
@@ -40,7 +40,7 @@ export default function SimulationModal() {
         Note: This is a note
       </Text>
 
-      <Select
+      <Select mb="md"
         label="Vehicle type"
         placeholder="Pick value"
         data={['ArduCopter', 'ArduPlane', 'ArduRover']}
@@ -51,21 +51,35 @@ export default function SimulationModal() {
         }}
       />
 
-      {/* <TextInput
-        label="Forwarding Address"
-        description={
-          isForwarding
-            ? "MAVLink packets are being forwarded to this address"
-            : "Enter the address to forward MAVLink packets to"
-        }
-        placeholder="e.g. udpout:192.168.1.10:14550"
-        value={forwardingAddress}
-        onChange={(event) =>
-          dispatch(setForwardingAddress(event.currentTarget.value))
-        }
-        data-autofocus
-        disabled={isForwarding}
-      /> */}
+      <SimpleGrid cols={2} spacing="md">
+        <NumberInput
+          label="Latitude"
+          placeholder="Latitude"
+          value={simulationParams.lat}
+          onChange={(val) => dispatch(setSimulationParam({ key: "lat", value: val }))}
+        />
+
+        <NumberInput
+          label="Longitude"
+          placeholder="Longitude"
+          value={simulationParams.lon}
+          onChange={(val) => dispatch(setSimulationParam({ key: "lon", value: val }))}
+        />
+
+        <NumberInput
+          label="Altitude"
+          placeholder="Altitude"
+          value={simulationParams.alt}
+          onChange={(val) => dispatch(setSimulationParam({ key: "alt", value: val }))}
+        />
+
+        <NumberInput
+          label="Direction"
+          placeholder="Direction"
+          value={simulationParams.dir}
+          onChange={(val) => dispatch(setSimulationParam({ key: "dir", value: val }))}
+        />
+      </SimpleGrid>
 
       <Button
         className="mt-8"

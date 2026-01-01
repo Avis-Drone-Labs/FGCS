@@ -24,15 +24,27 @@ def ensure_image(client):
                 "message": "Image not found. Attempting to download.",
             },
         )
-        client.images.pull(IMAGE_NAME)
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": True,
-                "message": "Simulation image downloaded",
-            },
-        )
-        return False
+
+        try:
+            client.images.pull(IMAGE_NAME)
+
+            socketio.emit(
+                "simulation_result",
+                {
+                    "success": True,
+                    "message": "Simulation image downloaded",
+                },
+            )
+            return True
+        except DockerException:
+            socketio.emit(
+                "simulation_result",
+                {
+                    "success": False,
+                    "message": "Error downloading simulation image",
+                },
+            )
+            return False
 
 
 @socketio.on("start_docker_simulation")
@@ -49,9 +61,11 @@ def start_docker_simulation():
         )
         return
 
-    try:
-        ensure_image(client)
+    image_result = ensure_image(client)
+    if image_result is False:
+        return  # Error already given in function
 
+    try:
         client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,

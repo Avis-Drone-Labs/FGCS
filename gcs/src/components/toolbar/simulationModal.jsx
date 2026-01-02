@@ -57,7 +57,6 @@ export default function SimulationModal() {
           placeholder="Latitude"
           value={simulationParams.lat}
           onChange={(val) => dispatch(setSimulationParam({ key: "lat", value: val }))}
-          allowEmpty
         />
 
         <NumberInput
@@ -65,7 +64,6 @@ export default function SimulationModal() {
           placeholder="Longitude"
           value={simulationParams.lon}
           onChange={(val) => dispatch(setSimulationParam({ key: "lon", value: val }))}
-          allowEmpty
         />
 
         <NumberInput
@@ -73,7 +71,6 @@ export default function SimulationModal() {
           placeholder="Altitude"
           value={simulationParams.alt}
           onChange={(val) => dispatch(setSimulationParam({ key: "alt", value: val }))}
-          allowEmpty
         />
 
         <NumberInput
@@ -81,7 +78,6 @@ export default function SimulationModal() {
           placeholder="Direction"
           value={simulationParams.dir}
           onChange={(val) => dispatch(setSimulationParam({ key: "dir", value: val }))}
-          allowEmpty
         />
       </SimpleGrid>
 

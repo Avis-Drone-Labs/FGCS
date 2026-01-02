@@ -201,7 +201,16 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitStartSimulation,
       callback: () => {
-        socket.socket.emit("start_docker_simulation")
+        const storeState = store.getState()
+        const simParams = storeState.droneConnection.simParams
+        console.log(simParams)
+        socket.socket.emit("start_docker_simulation", {
+          vehicleType: simParams.vehicleType,
+          lat: simParams.lat,
+          lon: simParams.lon,
+          alt: simParams.alt,
+          dir: simParams.dir,
+        })
         store.dispatch(setSimulationStatus(SimulationStatus.Starting))
       },
     },

@@ -1,4 +1,4 @@
-from app import socketio
+from app import logger, socketio
 import docker
 from docker.errors import DockerException
 
@@ -48,7 +48,31 @@ def ensure_image(client):
 
 
 @socketio.on("start_docker_simulation")
-def start_docker_simulation():
+def start_docker_simulation(data):
+    env = {
+        "VEHICLE": data.get("vehicleType"),
+        "LAT": data.get("lat"),
+        "LON": data.get("lon"),
+        "ALT": data.get("alt"),
+        "DIR": data.get("dir"),
+    }
+
+    # Get rid of any that are none
+    env = {k: str(v) for k, v in env.items() if v is not None}
+
+    cmd = []
+
+    if "VEHICLE" in env:
+        cmd.append(f"VEHICLE={env['VEHICLE']}")
+    if "LAT" in env:
+        cmd.append(f"LAT={env['LAT']}")
+    if "LON" in env:
+        cmd.append(f"LON={env['LON']}")
+    if "ALT" in env:
+        cmd.append(f"ALT={env['ALT']}")
+    if "DIR" in env:
+        cmd.append(f"DIR={env['DIR']}")
+
     client = get_docker_client()
     if client is None:
         socketio.emit(
@@ -66,6 +90,9 @@ def start_docker_simulation():
         return  # Error already given in function
 
     try:
+        logger.debug(f"Current state: {env}")
+        logger.debug(f"Command: {cmd}")
+
         client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
@@ -74,6 +101,7 @@ def start_docker_simulation():
             tty=True,
             detach=True,
             remove=True,
+            command=cmd,
         )
 
         socketio.emit(
@@ -100,7 +128,18 @@ def stop_docker_simulation():
         )
         return
 
-    container = client.containers.get(CONTAINER_NAME)
+    try:
+        container = client.containers.get(CONTAINER_NAME)
+    except DockerException:
+        socketio.emit(
+            "simulation_result",
+            {
+                "success": False,
+                "running": False,
+                "message": "Simulation could not be found",
+            },
+        )
+        return
     container.stop()
     socketio.emit(
         "simulation_result",

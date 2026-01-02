@@ -36,14 +36,10 @@ export default function AdvancedMenu(props) {
         }}
       />
       <MenuItem
-        name={
-          isSimulationRunning
-            ? "Stop Simulation"
-            : "Start Simulation with Docker"
-        }
+        name="SITL Simulator"
         onClick={() => {
           dispatch(
-            setSimulationModalOpened(true) //isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
+            setSimulationModalOpened(true)
           )
         }}
       />

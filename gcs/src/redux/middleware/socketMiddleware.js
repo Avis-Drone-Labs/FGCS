@@ -9,8 +9,11 @@ import {
 
 // drone actions
 import {
+  ConnectionType,
+  emitConnectToDrone,
   emitGetComPorts,
   emitIsConnectedToDrone,
+  selectForwardingAddress,
   setComPorts,
   setConnected,
   setConnecting,
@@ -118,6 +121,7 @@ import {
 } from "../slices/paramsSlice.js"
 import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
+import { useSelector } from "react-redux"
 
 const SocketEvents = Object.freeze({
   // socket.on events
@@ -426,6 +430,21 @@ const socketMiddleware = (store) => {
           msg.success
             ? showSuccessNotification(msg.message)
             : showErrorNotification(msg.message)
+
+          if (msg.success && msg.running) {
+            const storeState = store.getState()
+            if (storeState.droneConnection.simParams.connectAfterStart) {
+              store.dispatch(
+                emitConnectToDrone({
+                  port: 'tcp:127.0.0.1:5760',
+                  baud: 115200,
+                  wireless: true,
+                  connectionType: ConnectionType.Network,
+                  forwardingAddress: storeState.droneConnection.forwardingAddress,
+                }),
+              )
+            }
+          }
         })
 
         // Link stats

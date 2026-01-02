@@ -112,9 +112,9 @@ export default function SimulationModal() {
         <div className="flex flex-row gap-2">
           <Checkbox
             label="Connect after started"
-            checked={checked}
+            checked={simulationParams.connectAfterStart}
             onChange={(event) =>
-              setChecked(event.currentTarget.checked)
+              dispatch(setSimulationParam({ key: "connectAfterStart", value: event.currentTarget.checked }))
             }
             disabled={!connectedToSocket}
           />

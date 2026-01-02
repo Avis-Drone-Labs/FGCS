@@ -53,14 +53,15 @@ const initialState = {
   videoScale: 1,
 
   forceDisarmModalOpened: false,
-  simulationModalOpened: false,
 
+  simulationModalOpened: false,
   simParams: {
     vehicleType: "ArduCopter",
     lat: null,
     lon: null,
     alt: null,
     dir: null,
+    connectAfterStart: false,
   },
 }
 

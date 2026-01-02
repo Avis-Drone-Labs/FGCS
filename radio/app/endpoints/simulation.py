@@ -1,20 +1,33 @@
 import time
-from app import logger, socketio
+from app import socketio
 import docker
 from docker.errors import DockerException
 
-CONTAINER_NAME = "ardupilot_sitl"
+CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
 
 
 def get_docker_client():
+    """
+    Returns a Docker client if available, otherwise None.
+    """
     try:
         return docker.from_env()
     except DockerException:
         return None
 
 
-def ensure_image(client):
+def ensure_image(client) -> bool:
+    """
+    Checks if the client contains the given image.
+    If not it attempts to download it.
+
+    Args:
+        client: The docker client.
+
+    Returns:
+        True if the image exists or is successfully downloaded. Else False.
+    """
     try:
         client.images.get(IMAGE_NAME)
         return True
@@ -48,13 +61,16 @@ def ensure_image(client):
             return False
 
 
-@socketio.on("start_docker_simulation")
-def start_docker_simulation(data):
-    logger.debug(f"Current data: {data}")
+def build_command(data):
+    """
+    Parses tbe socketio data into the form required for the docker command.
 
-    # Get rid of any that are none
-    data = {k: str(v) for k, v in data.items() if v is not None}
+    Args:
+        data: The parameters that the simulator should start with.
 
+    Returns:
+        The command containing the parameters in the correct format.
+    """
     cmd = []
 
     if "vehicleType" in data:
@@ -67,6 +83,83 @@ def start_docker_simulation(data):
         cmd.append(f"ALT={data['alt']}")
     if "dir" in data:
         cmd.append(f"DIR={data['dir']}")
+
+    return cmd
+
+
+def container_already_running(client, container_name) -> bool:
+    """
+    Checks if the client already has the given container running.
+    If it exists but is not running it will be removed.
+    """
+    try:
+        existing = client.containers.get(container_name)
+        if existing.status == "running":
+            socketio.emit(
+                "simulation_result",
+                {
+                    "success": False,
+                    "running": True,
+                    "message": "Simulation already running",
+                },
+            )
+            return True
+        else:
+            existing.remove(force=True)
+            return False
+
+    except docker.errors.NotFound:
+        return False
+
+
+def wait_for_container_running_result(container, timeout=30):
+    """
+    Waits for if the container runs successfully and thus prints:
+        "YOU CAN NOW CONNECT"
+
+    Args:
+        container: The container to wait for.
+        timeout: The amount of time to wait before timing out.
+    """
+    start_time = time.time()
+    line_found = False
+    buffer = ""
+
+    for line in container.logs(stream=True):
+        decoded = line.decode().strip()
+        buffer += decoded
+
+        if "YOUCANNOWCONNECT" in buffer:
+            line_found = True
+            break
+
+        if time.time() - start_time > timeout:
+            break
+
+    socketio.emit(
+        "simulation_result",
+        {
+            "success": line_found,
+            "running": line_found,
+            "message": "Simulation started"
+            if line_found
+            else "Simulation failed to start in time",
+        },
+    )
+
+
+@socketio.on("start_docker_simulation")
+def start_docker_simulation(data) -> None:
+    """
+    Starts the container identified by CONTAINER_NAME.
+
+    Args:
+        data: The parameters that the simulator should start with.
+    """
+    # Get rid of any that are none
+    data = {k: str(v) for k, v in data.items() if v is not None}
+
+    cmd = build_command(data)
 
     client = get_docker_client()
     if client is None:
@@ -84,28 +177,10 @@ def start_docker_simulation(data):
     if image_result is False:
         return  # Error already given in function
 
-    try:
-        existing = client.containers.get(CONTAINER_NAME)
-        if existing.status == "running":
-            socketio.emit(
-                "simulation_result",
-                {
-                    "success": False,
-                    "running": True,
-                    "message": "Simulation already running",
-                },
-            )
-            return
-        else:
-            existing.remove(force=True)
-
-    except docker.errors.NotFound:
-        pass  # No container exists, so free to start one
+    if container_already_running(client, CONTAINER_NAME):
+        return  # Error already given in function
 
     try:
-        logger.debug(f"Current state: {data}")
-        logger.debug(f"Command: {cmd}")
-
         container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
@@ -117,36 +192,8 @@ def start_docker_simulation(data):
             command=cmd,
         )
 
-        timeout = 30
-        start_time = time.time()
-        line_found = False
-        buffer = ""
+        wait_for_container_running_result(container, timeout=30)
 
-        for line in container.logs(stream=True):
-            decoded = line.decode().strip()
-            buffer += decoded
-
-            if "YOUCANNOWCONNECT" in buffer:
-                line_found = True
-                break
-
-            if time.time() - start_time > timeout:
-                break
-
-        if line_found:
-            socketio.emit(
-                "simulation_result",
-                {"success": True, "running": True, "message": "Simulation started"},
-            )
-        else:
-            socketio.emit(
-                "simulation_result",
-                {
-                    "success": False,
-                    "running": False,
-                    "message": "Simulation failed to start in time",
-                },
-            )
     except DockerException:
         socketio.emit(
             "simulation_result",
@@ -159,7 +206,10 @@ def start_docker_simulation(data):
 
 
 @socketio.on("stop_docker_simulation")
-def stop_docker_simulation():
+def stop_docker_simulation() -> None:
+    """
+    Stops the running Docker container identified by CONTAINER_NAME.
+    """
     client = get_docker_client()
     if client is None:
         socketio.emit(

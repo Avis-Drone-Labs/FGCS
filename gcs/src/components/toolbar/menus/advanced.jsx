@@ -38,9 +38,7 @@ export default function AdvancedMenu(props) {
       <MenuItem
         name="SITL Simulator"
         onClick={() => {
-          dispatch(
-            setSimulationModalOpened(true)
-          )
+          dispatch(setSimulationModalOpened(true))
         }}
       />
     </MenuTemplate>

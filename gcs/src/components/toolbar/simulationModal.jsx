@@ -1,5 +1,12 @@
 import { useDispatch, useSelector } from "react-redux"
-import { SimpleGrid, Modal, Text, Button, Select, NumberInput } from "@mantine/core"
+import {
+  SimpleGrid,
+  Modal,
+  Text,
+  Button,
+  Select,
+  NumberInput,
+} from "@mantine/core"
 import {
   setSimulationModalOpened,
   setSimulationParams,
@@ -9,7 +16,6 @@ import {
   selectIsSimulationRunning,
   emitStartSimulation,
   emitStopSimulation,
-
 } from "../../redux/slices/droneConnectionSlice"
 
 export default function SimulationModal() {
@@ -40,14 +46,16 @@ export default function SimulationModal() {
         Note: Docker must be running to start the simulator.
       </Text>
 
-      <Select mb="md"
+      <Select
+        mb="md"
         label="Vehicle type"
         placeholder="Pick value"
-        data={['ArduCopter', 'ArduPlane', 'ArduRover']}
+        data={["ArduCopter", "ArduPlane", "ArduRover"]}
         value={simulationParams.vehicleType}
         allowDeselect={false}
         onChange={(value) => {
-          if (value) dispatch(setSimulationParam({key: "vehicleType", value: value}));
+          if (value)
+            dispatch(setSimulationParam({ key: "vehicleType", value: value }))
         }}
       />
 
@@ -56,28 +64,36 @@ export default function SimulationModal() {
           label="Latitude"
           placeholder="Latitude"
           value={simulationParams.lat}
-          onChange={(val) => dispatch(setSimulationParam({ key: "lat", value: val }))}
+          onChange={(val) =>
+            dispatch(setSimulationParam({ key: "lat", value: val }))
+          }
         />
 
         <NumberInput
           label="Longitude"
           placeholder="Longitude"
           value={simulationParams.lon}
-          onChange={(val) => dispatch(setSimulationParam({ key: "lon", value: val }))}
+          onChange={(val) =>
+            dispatch(setSimulationParam({ key: "lon", value: val }))
+          }
         />
 
         <NumberInput
           label="Altitude"
           placeholder="Altitude"
           value={simulationParams.alt}
-          onChange={(val) => dispatch(setSimulationParam({ key: "alt", value: val }))}
+          onChange={(val) =>
+            dispatch(setSimulationParam({ key: "alt", value: val }))
+          }
         />
 
         <NumberInput
           label="Direction"
           placeholder="Direction"
           value={simulationParams.dir}
-          onChange={(val) => dispatch(setSimulationParam({ key: "dir", value: val }))}
+          onChange={(val) =>
+            dispatch(setSimulationParam({ key: "dir", value: val }))
+          }
         />
       </SimpleGrid>
 
@@ -87,7 +103,7 @@ export default function SimulationModal() {
         color={isSimulationRunning ? "red" : "green"}
         onClick={() => {
           dispatch(
-            isSimulationRunning ? emitStopSimulation() : emitStartSimulation()
+            isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
           )
         }}
       >

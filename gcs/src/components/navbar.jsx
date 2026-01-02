@@ -405,7 +405,7 @@ export default function Navbar() {
         )}
       </Modal>
 
-      <SimulationModal/>
+      <SimulationModal />
 
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">
         <div className="flex items-center wrap">

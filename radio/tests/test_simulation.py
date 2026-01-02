@@ -13,3 +13,9 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is True
     assert "Simulation started" in result["args"][0]["message"]
+
+    # Cleanup
+    socketio_client.emit("stop_docker_simulation")
+    stop_result = socketio_client.get_received()[-1]
+
+    assert stop_result["args"][0]["success"] is True

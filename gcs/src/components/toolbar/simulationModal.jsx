@@ -50,7 +50,7 @@ export default function SimulationModal() {
         mb="md"
         label="Vehicle type"
         placeholder="Pick value"
-        data={["ArduCopter", "ArduPlane", "ArduRover"]}
+        data={["ArduCopter", "ArduPlane", "Rover"]}
         value={simulationParams.vehicleType}
         allowDeselect={false}
         onChange={(value) => {

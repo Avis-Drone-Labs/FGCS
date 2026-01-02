@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   SimpleGrid,
@@ -11,10 +10,9 @@ import {
   Tooltip,
   Group,
 } from "@mantine/core"
-import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
+import { IconInfoCircle } from "@tabler/icons-react"
 import {
   setSimulationModalOpened,
-  setSimulationParams,
   setSimulationParam,
   selectSimulationModalOpened,
   selectSimulationParams,
@@ -33,7 +31,6 @@ export default function SimulationModal() {
   const simulationStatus = useSelector(selectSimulationStatus)
   const simulationParams = useSelector(selectSimulationParams)
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
-  const [checked, setChecked] = useState(false);
 
   return (
     <Modal
@@ -114,15 +111,22 @@ export default function SimulationModal() {
             label="Connect after started"
             checked={simulationParams.connectAfterStart}
             onChange={(event) =>
-              dispatch(setSimulationParam({ key: "connectAfterStart", value: event.currentTarget.checked }))
+              dispatch(
+                setSimulationParam({
+                  key: "connectAfterStart",
+                  value: event.currentTarget.checked,
+                }),
+              )
             }
             disabled={!connectedToSocket}
           />
-          <Tooltip label={
-            connectedToSocket
-              ? "If the simulation starts successfully, FGCS will attempt to connect to it"
-              : "Not connected to socket"
-            }>
+          <Tooltip
+            label={
+              connectedToSocket
+                ? "If the simulation starts successfully, FGCS will attempt to connect to it"
+                : "Not connected to socket"
+            }
+          >
             <IconInfoCircle size={20} />
           </Tooltip>
         </div>
@@ -132,7 +136,9 @@ export default function SimulationModal() {
           color={isSimulationRunning ? "red" : "green"}
           onClick={() => {
             dispatch(
-              isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
+              isSimulationRunning
+                ? emitStopSimulation()
+                : emitStartSimulation(),
             )
           }}
           loading={simulationStatus == SimulationStatus.Starting}

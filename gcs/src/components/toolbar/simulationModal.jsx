@@ -24,6 +24,7 @@ import {
   emitStopSimulation,
   selectSimulationStatus,
 } from "../../redux/slices/droneConnectionSlice"
+import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
 export default function SimulationModal() {
   const dispatch = useDispatch()
@@ -31,6 +32,7 @@ export default function SimulationModal() {
   const isSimulationRunning = useSelector(selectIsSimulationRunning)
   const simulationStatus = useSelector(selectSimulationStatus)
   const simulationParams = useSelector(selectSimulationParams)
+  const connectedToSocket = useSelector(selectIsConnectedToSocket)
   const [checked, setChecked] = useState(false);
 
   return (
@@ -114,8 +116,13 @@ export default function SimulationModal() {
             onChange={(event) =>
               setChecked(event.currentTarget.checked)
             }
+            disabled={!connectedToSocket}
           />
-          <Tooltip label="If the simulation starts successfully, FGCS will attempt to connect to it">
+          <Tooltip label={
+            connectedToSocket
+              ? "If the simulation starts successfully, FGCS will attempt to connect to it"
+              : "Not connected to socket"
+            }>
             <IconInfoCircle size={20} />
           </Tooltip>
         </div>

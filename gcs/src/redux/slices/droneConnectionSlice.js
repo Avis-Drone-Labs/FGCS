@@ -56,12 +56,13 @@ const initialState = {
 
   simulationModalOpened: false,
   simParams: {
+    port: 5760,
     vehicleType: "ArduCopter",
     lat: null,
     lon: null,
     alt: null,
     dir: null,
-    connectAfterStart: false,
+    connectAfterStart: true,
   },
 }
 

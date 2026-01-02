@@ -50,9 +50,14 @@ export default function SimulationModal() {
         },
       }}
     >
-      <Text mb={16} c="dimmed" size="sm">
-        Note: Docker must be running to start the simulator.
-      </Text>
+      <NumberInput
+        mb="md"
+        label="Port"
+        value={simulationParams.port}
+        onChange={(val) =>
+          dispatch(setSimulationParam({ key: "port", value: val }))
+        }
+      />
 
       <Select
         mb="md"
@@ -105,7 +110,11 @@ export default function SimulationModal() {
         />
       </SimpleGrid>
 
-      <Group justify="space-between" className="pt-8">
+      <Text mt="md" c="dimmed" size="sm">
+        Note: Docker must be running to start the simulator.
+      </Text>
+
+      <Group justify="space-between" className="pt-4">
         <div className="flex flex-row gap-2">
           <Checkbox
             label="Connect after started"

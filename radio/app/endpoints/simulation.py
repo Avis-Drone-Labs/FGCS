@@ -181,10 +181,12 @@ def start_docker_simulation(data) -> None:
         return  # Error already given in function
 
     try:
+        port = data["port"]
+
         container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
-            ports={5760: 5760},
+            ports={port: port},
             stdin_open=True,
             tty=True,
             detach=True,

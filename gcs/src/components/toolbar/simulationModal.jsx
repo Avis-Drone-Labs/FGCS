@@ -24,7 +24,7 @@ export default function SimulationModal() {
       onClose={() => {
         dispatch(setSimulationModalOpened(false))
       }}
-      title="Simulation Modal"
+      title="SITL Simulator"
       centered
       overlayProps={{
         backgroundOpacity: 0.55,
@@ -37,7 +37,7 @@ export default function SimulationModal() {
       }}
     >
       <Text mb={16} c="dimmed" size="sm">
-        Note: This is a note
+        Note: Docker must be running to start the simulator.
       </Text>
 
       <Select mb="md"
@@ -57,6 +57,7 @@ export default function SimulationModal() {
           placeholder="Latitude"
           value={simulationParams.lat}
           onChange={(val) => dispatch(setSimulationParam({ key: "lat", value: val }))}
+          allowEmpty
         />
 
         <NumberInput
@@ -64,6 +65,7 @@ export default function SimulationModal() {
           placeholder="Longitude"
           value={simulationParams.lon}
           onChange={(val) => dispatch(setSimulationParam({ key: "lon", value: val }))}
+          allowEmpty
         />
 
         <NumberInput
@@ -71,6 +73,7 @@ export default function SimulationModal() {
           placeholder="Altitude"
           value={simulationParams.alt}
           onChange={(val) => dispatch(setSimulationParam({ key: "alt", value: val }))}
+          allowEmpty
         />
 
         <NumberInput
@@ -78,13 +81,14 @@ export default function SimulationModal() {
           placeholder="Direction"
           value={simulationParams.dir}
           onChange={(val) => dispatch(setSimulationParam({ key: "dir", value: val }))}
+          allowEmpty
         />
       </SimpleGrid>
 
       <Button
         className="mt-8"
         variant="filled"
-        color={"green"}
+        color={isSimulationRunning ? "red" : "green"}
         onClick={() => {
           dispatch(
             isSimulationRunning ? emitStopSimulation() : emitStartSimulation()

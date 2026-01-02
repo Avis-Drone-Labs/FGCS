@@ -1,3 +1,4 @@
+import time
 from app import logger, socketio
 import docker
 from docker.errors import DockerException
@@ -84,10 +85,28 @@ def start_docker_simulation(data):
         return  # Error already given in function
 
     try:
+        existing = client.containers.get(CONTAINER_NAME)
+        if existing.status == "running":
+            socketio.emit(
+                "simulation_result",
+                {
+                    "success": False,
+                    "running": True,
+                    "message": "Simulation already running",
+                },
+            )
+            return
+        else:
+            existing.remove(force=True)
+
+    except docker.errors.NotFound:
+        pass  # No container exists, so free to start one
+
+    try:
         logger.debug(f"Current state: {data}")
         logger.debug(f"Command: {cmd}")
 
-        client.containers.run(
+        container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
             ports={5760: 5760},
@@ -98,16 +117,43 @@ def start_docker_simulation(data):
             command=cmd,
         )
 
-        socketio.emit(
-            "simulation_result",
-            {"success": True, "running": True, "message": "Simulation started"},
-        )
-    except DockerException as e:
+        timeout = 30
+        start_time = time.time()
+        line_found = False
+        buffer = ""
+
+        for line in container.logs(stream=True):
+            decoded = line.decode().strip()
+            buffer += decoded
+
+            if "YOUCANNOWCONNECT" in buffer:
+                line_found = True
+                break
+
+            if time.time() - start_time > timeout:
+                break
+
+        if line_found:
+            socketio.emit(
+                "simulation_result",
+                {"success": True, "running": True, "message": "Simulation started"},
+            )
+        else:
+            socketio.emit(
+                "simulation_result",
+                {
+                    "success": False,
+                    "running": False,
+                    "message": "Simulation failed to start in time",
+                },
+            )
+    except DockerException:
         socketio.emit(
             "simulation_result",
             {
                 "success": False,
-                "message": str(e),
+                "running": False,
+                "message": "Simulation failed to start",
             },
         )
 

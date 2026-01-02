@@ -19,14 +19,17 @@ import {
   selectSimulationModalOpened,
   selectSimulationParams,
   selectIsSimulationRunning,
+  SimulationStatus,
   emitStartSimulation,
   emitStopSimulation,
+  selectSimulationStatus,
 } from "../../redux/slices/droneConnectionSlice"
 
 export default function SimulationModal() {
   const dispatch = useDispatch()
   const modalOpen = useSelector(selectSimulationModalOpened)
   const isSimulationRunning = useSelector(selectIsSimulationRunning)
+  const simulationStatus = useSelector(selectSimulationStatus)
   const simulationParams = useSelector(selectSimulationParams)
   const [checked, setChecked] = useState(false);
 
@@ -125,6 +128,7 @@ export default function SimulationModal() {
               isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
             )
           }}
+          loading={simulationStatus == SimulationStatus.Starting}
         >
           {isSimulationRunning ? "Stop Simulation" : "Start Simulation"}
         </Button>

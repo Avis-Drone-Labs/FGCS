@@ -227,8 +227,7 @@ const droneConnectionSlice = createSlice({
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
     selectSimulationStatus: (state) => state.simulationStatus,
     selectIsSimulationRunning: (state) =>
-      state.simulationStatus === SimulationStatus.Running ||
-      state.simulationStatus === SimulationStatus.Starting,
+      state.simulationStatus === SimulationStatus.Running,
     selectSimulationModalOpened: (state) => state.simulationModalOpened,
     selectSimulationParams: (state) => state.simParams,
   },

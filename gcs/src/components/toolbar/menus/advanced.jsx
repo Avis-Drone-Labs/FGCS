@@ -5,9 +5,6 @@
 // Local Imports
 import { useDispatch, useSelector } from "react-redux"
 import {
-  emitStartSimulation,
-  emitStopSimulation,
-  selectIsSimulationRunning,
   setForwardingAddressModalOpened,
   setSimulationModalOpened,
 } from "../../../redux/slices/droneConnectionSlice"
@@ -16,7 +13,6 @@ import MenuTemplate from "./menuTemplate"
 
 export default function AdvancedMenu(props) {
   const dispatch = useDispatch()
-  const isSimulationRunning = useSelector(selectIsSimulationRunning)
   return (
     <MenuTemplate
       title="Advanced"

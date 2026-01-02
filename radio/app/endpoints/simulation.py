@@ -49,29 +49,23 @@ def ensure_image(client):
 
 @socketio.on("start_docker_simulation")
 def start_docker_simulation(data):
-    env = {
-        "VEHICLE": data.get("vehicleType"),
-        "LAT": data.get("lat"),
-        "LON": data.get("lon"),
-        "ALT": data.get("alt"),
-        "DIR": data.get("dir"),
-    }
+    logger.debug(f"Current data: {data}")
 
     # Get rid of any that are none
-    env = {k: str(v) for k, v in env.items() if v is not None}
+    data = {k: str(v) for k, v in data.items() if v is not None}
 
     cmd = []
 
-    if "VEHICLE" in env:
-        cmd.append(f"VEHICLE={env['VEHICLE']}")
-    if "LAT" in env:
-        cmd.append(f"LAT={env['LAT']}")
-    if "LON" in env:
-        cmd.append(f"LON={env['LON']}")
-    if "ALT" in env:
-        cmd.append(f"ALT={env['ALT']}")
-    if "DIR" in env:
-        cmd.append(f"DIR={env['DIR']}")
+    if "vehicleType" in data:
+        cmd.append(f"VEHICLE={data['vehicleType']}")
+    if "lat" in data:
+        cmd.append(f"LAT={data['lat']}")
+    if "lon" in data:
+        cmd.append(f"LON={data['lon']}")
+    if "alt" in data:
+        cmd.append(f"ALT={data['alt']}")
+    if "dir" in data:
+        cmd.append(f"DIR={data['dir']}")
 
     client = get_docker_client()
     if client is None:
@@ -90,7 +84,7 @@ def start_docker_simulation(data):
         return  # Error already given in function
 
     try:
-        logger.debug(f"Current state: {env}")
+        logger.debug(f"Current state: {data}")
         logger.debug(f"Command: {cmd}")
 
         client.containers.run(

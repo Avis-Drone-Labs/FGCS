@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   SimpleGrid,
@@ -6,7 +7,11 @@ import {
   Button,
   Select,
   NumberInput,
+  Checkbox,
+  Tooltip,
+  Group,
 } from "@mantine/core"
+import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
 import {
   setSimulationModalOpened,
   setSimulationParams,
@@ -23,6 +28,7 @@ export default function SimulationModal() {
   const modalOpen = useSelector(selectSimulationModalOpened)
   const isSimulationRunning = useSelector(selectIsSimulationRunning)
   const simulationParams = useSelector(selectSimulationParams)
+  const [checked, setChecked] = useState(false);
 
   return (
     <Modal
@@ -97,18 +103,32 @@ export default function SimulationModal() {
         />
       </SimpleGrid>
 
-      <Button
-        className="mt-8"
-        variant="filled"
-        color={isSimulationRunning ? "red" : "green"}
-        onClick={() => {
-          dispatch(
-            isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
-          )
-        }}
-      >
-        {isSimulationRunning ? "Stop Simulation" : "Start Simulation"}
-      </Button>
+      <Group justify="space-between" className="pt-8">
+        <div className="flex flex-row gap-2">
+          <Checkbox
+            label="Connect after started"
+            checked={checked}
+            onChange={(event) =>
+              setChecked(event.currentTarget.checked)
+            }
+          />
+          <Tooltip label="If the simulation starts successfully, FGCS will attempt to connect to it">
+            <IconInfoCircle size={20} />
+          </Tooltip>
+        </div>
+
+        <Button
+          variant="filled"
+          color={isSimulationRunning ? "red" : "green"}
+          onClick={() => {
+            dispatch(
+              isSimulationRunning ? emitStopSimulation() : emitStartSimulation(),
+            )
+          }}
+        >
+          {isSimulationRunning ? "Stop Simulation" : "Start Simulation"}
+        </Button>
+      </Group>
     </Modal>
   )
 }

@@ -429,7 +429,7 @@ const socketMiddleware = (store) => {
             ? showSuccessNotification(msg.message)
             : showErrorNotification(msg.message)
 
-          if (msg.success && msg.running) {
+          if (msg.connect) {
             const storeState = store.getState()
             if (storeState.droneConnection.simParams.connectAfterStart) {
               const port = storeState.droneConnection.simParams.port

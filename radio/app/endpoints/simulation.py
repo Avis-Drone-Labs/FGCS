@@ -112,7 +112,7 @@ def container_already_running(client, container_name) -> bool:
         return False
 
 
-def wait_for_container_running_result(container, timeout=30):
+def wait_for_container_running_result(container, connect, timeout=30):
     """
     Waits for if the container runs successfully and thus prints:
         "YOU CAN NOW CONNECT" (With the spaces missing)
@@ -141,6 +141,7 @@ def wait_for_container_running_result(container, timeout=30):
         {
             "success": line_found,
             "running": line_found,
+            "connect": connect and line_found,
             "message": "Simulation started"
             if line_found
             else "Simulation failed to start in time",
@@ -193,6 +194,11 @@ def start_docker_simulation(data) -> None:
         )
         return
 
+    if "connect" in data:
+        connect = data["connect"]
+    else:
+        connect = False
+
     try:
         container = client.containers.run(
             IMAGE_NAME,
@@ -205,7 +211,7 @@ def start_docker_simulation(data) -> None:
             command=cmd,
         )
 
-        wait_for_container_running_result(container, timeout=30)
+        wait_for_container_running_result(container, connect, timeout=30)
 
     except DockerException:
         socketio.emit(

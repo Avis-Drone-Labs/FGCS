@@ -210,6 +210,7 @@ export function handleEmitters(socket, store, action) {
           lon: simParams.lon,
           alt: simParams.alt,
           dir: simParams.dir,
+          connect: simParams.connectAfterStart,
         })
         store.dispatch(setSimulationStatus(SimulationStatus.Starting))
       },

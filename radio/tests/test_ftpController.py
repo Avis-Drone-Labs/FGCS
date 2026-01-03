@@ -79,3 +79,80 @@ def test_convertDirectoryEntriesToDicts_emptyEntries_success(
     )
 
     assert result == []
+
+
+@falcon_test(pass_drone_status=True)
+def test_listFiles_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
+    """Test that listFiles is blocked when another operation is in progress"""
+    droneStatus.drone.ftpController.current_op = "read_file"
+
+    result = droneStatus.drone.ftpController.listFiles("/")
+
+    assert result == {
+        "success": False,
+        "message": "FTP operation already in progress: read_file",
+    }
+
+    droneStatus.drone.ftpController.current_op = None
+
+
+@falcon_test(pass_drone_status=True)
+def test_readFile_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
+    """Test that readFile is blocked when another operation is in progress"""
+    droneStatus.drone.ftpController.current_op = "list_files"
+
+    result = droneStatus.drone.ftpController.readFile("/test.txt")
+
+    assert result == {
+        "success": False,
+        "message": "FTP operation already in progress: list_files",
+    }
+
+    droneStatus.drone.ftpController.current_op = None
+
+
+@falcon_test(pass_drone_status=True)
+def test_currentOp_clearedOnListFilesError(client: SocketIOTestClient, droneStatus):
+    """Test that current_op is cleared even when listFiles fails"""
+    assert droneStatus.drone.ftpController.current_op is None
+
+    result = droneStatus.drone.ftpController.listFiles("")
+
+    assert result == {"success": False, "message": "Path cannot be empty"}
+    # Verify current_op is still None after error
+    assert droneStatus.drone.ftpController.current_op is None
+
+
+@falcon_test(pass_drone_status=True)
+def test_currentOp_clearedOnReadFileError(client: SocketIOTestClient, droneStatus):
+    """Test that current_op is cleared even when readFile fails"""
+    assert droneStatus.drone.ftpController.current_op is None
+
+    result = droneStatus.drone.ftpController.readFile("")
+
+    assert result == {"success": False, "message": "File path cannot be empty"}
+
+    # Verify current_op is still None after error
+    assert droneStatus.drone.ftpController.current_op is None
+
+
+@falcon_test(pass_drone_status=True)
+def test_multipleOperations_sequential(client: SocketIOTestClient, droneStatus):
+    """Test that operations can run sequentially after previous one completes"""
+    # Verify current_op is None initially
+    assert droneStatus.drone.ftpController.current_op is None
+
+    # First operation with empty path (will fail but clear current_op)
+    result1 = droneStatus.drone.ftpController.listFiles("")
+    assert result1 == {"success": False, "message": "Path cannot be empty"}
+    assert droneStatus.drone.ftpController.current_op is None
+
+    # Second operation should be allowed since first is complete
+    result2 = droneStatus.drone.ftpController.readFile("")
+    assert result2 == {"success": False, "message": "File path cannot be empty"}
+    assert droneStatus.drone.ftpController.current_op is None
+
+    # Third operation should also be allowed
+    result3 = droneStatus.drone.ftpController.listFiles("")
+    assert result3 == {"success": False, "message": "Path cannot be empty"}
+    assert droneStatus.drone.ftpController.current_op is None

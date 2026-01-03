@@ -80,6 +80,10 @@ export interface ParseResult {
   summary?: LogSummary
 }
 
+export interface ParamObject {
+  name: string
+  value: string | number
+}
 export interface LogSummary {
   formatMessages: { [key: string]: FormatMessage }
   utcAvailable: boolean
@@ -93,6 +97,7 @@ export interface LogSummary {
   > | null
   aircraftType: AircraftType
   firmwareVersion: string | null
+  params: ParamObject[] | null
 }
 
 export interface Dataset {

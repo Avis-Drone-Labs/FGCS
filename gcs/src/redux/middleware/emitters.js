@@ -39,7 +39,12 @@ import {
   setSimulationStatus,
   SimulationStatus,
 } from "../slices/droneConnectionSlice"
-import { emitListFiles, setLoadingListFiles } from "../slices/ftpSlice"
+import {
+  emitListFiles,
+  emitReadFile,
+  setIsReadingFile,
+  setLoadingListFiles,
+} from "../slices/ftpSlice"
 import {
   emitControlMission,
   emitExportMissionToFile,
@@ -410,6 +415,15 @@ export function handleEmitters(socket, store, action) {
           path: action.payload.path,
         })
         store.dispatch(setLoadingListFiles(true))
+      },
+    },
+    {
+      emitter: emitReadFile,
+      callback: () => {
+        socket.socket.emit("read_file", {
+          path: action.payload.path,
+        })
+        store.dispatch(setIsReadingFile(true))
       },
     },
   ]

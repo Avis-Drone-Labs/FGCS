@@ -17,7 +17,7 @@ def get_docker_client():
         return None
 
 
-def ensure_image(client) -> bool:
+def pull_image_if_needed(client) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
@@ -63,7 +63,7 @@ def ensure_image(client) -> bool:
 
 def build_command(data):
     """
-    Parses tbe socketio data into the form required for the docker command.
+    Parses the socketio data into the form required for the docker command.
 
     Args:
         data: The parameters that the simulator should start with.
@@ -115,7 +115,7 @@ def container_already_running(client, container_name) -> bool:
 def wait_for_container_running_result(container, timeout=30):
     """
     Waits for if the container runs successfully and thus prints:
-        "YOU CAN NOW CONNECT"
+        "YOU CAN NOW CONNECT" (With the spaces missing)
 
     Args:
         container: The container to wait for.
@@ -173,16 +173,27 @@ def start_docker_simulation(data) -> None:
         )
         return
 
-    image_result = ensure_image(client)
+    image_result = pull_image_if_needed(client)
     if image_result is False:
         return  # Error already given in function
 
     if container_already_running(client, CONTAINER_NAME):
         return  # Error already given in function
 
-    try:
+    if "port" in data:
         port = data["port"]
+    else:
+        socketio.emit(
+            "simulation_result",
+            {
+                "success": False,
+                "running": False,
+                "message": "Invalid port",
+            },
+        )
+        return
 
+    try:
         container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,

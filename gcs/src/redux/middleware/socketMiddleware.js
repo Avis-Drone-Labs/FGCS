@@ -432,9 +432,10 @@ const socketMiddleware = (store) => {
           if (msg.success && msg.running) {
             const storeState = store.getState()
             if (storeState.droneConnection.simParams.connectAfterStart) {
+              const port = storeState.droneConnection.simParams.port
               store.dispatch(
                 emitConnectToDrone({
-                  port: "tcp:127.0.0.1:5760",
+                  port: `tcp:127.0.0.1:${port}`,
                   baud: 115200,
                   wireless: true,
                   connectionType: ConnectionType.Network,

@@ -150,7 +150,7 @@ export default function SimulationModal() {
                 : emitStartSimulation(),
             )
           }}
-          loading={simulationStatus == SimulationStatus.Starting}
+          loading={simulationStatus === SimulationStatus.Starting}
         >
           {isSimulationRunning ? "Stop Simulation" : "Start Simulation"}
         </Button>

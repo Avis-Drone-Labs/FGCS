@@ -1,5 +1,6 @@
 from flask_socketio.test_client import SocketIOTestClient
 import docker
+from docker.errors import DockerException
 from . import falcon_test
 
 client = docker.from_env()
@@ -13,8 +14,8 @@ def cleanup_container():
         container = client.containers.get("fgcs_ardupilot_sitl")
         container.stop()
         container.remove()
-    except docker.errors.NotFound:
-        pass
+    except DockerException:
+        pass  # Container does not exist and therefore no cleanup required
 
 
 @falcon_test()
@@ -22,6 +23,8 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     """
     Test successfully starting the simulation using Docker.
     """
+    cleanup_container()
+
     socketio_client.emit("start_docker_simulation", {"port": 5763})
     result = socketio_client.get_received()[-1]
 
@@ -29,11 +32,7 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     assert result["args"][0]["success"] is True
     assert "Simulation started" in result["args"][0]["message"]
 
-    # Cleanup
-    socketio_client.emit("stop_docker_simulation")
-    stop_result = socketio_client.get_received()[-1]
-
-    assert stop_result["args"][0]["success"] is True
+    cleanup_container()
 
 
 @falcon_test()
@@ -73,6 +72,7 @@ def test_stop_docker_simulation(socketio_client: SocketIOTestClient):
     client.containers.run(
         "kushmakkapati/ardupilot_sitl",
         name="fgcs_ardupilot_sitl",
+        ports={5765: 5765},
         detach=True,
         tty=True,
     )
@@ -83,8 +83,6 @@ def test_stop_docker_simulation(socketio_client: SocketIOTestClient):
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is True
     assert "Simulation stopped" in result["args"][0]["message"]
-
-    cleanup_container()
 
 
 @falcon_test()

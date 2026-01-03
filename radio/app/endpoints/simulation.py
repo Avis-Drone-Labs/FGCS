@@ -136,6 +136,9 @@ def wait_for_container_running_result(container, connect, timeout=30):
         if time.time() - start_time > timeout:
             break
 
+        if container.status == "exited":
+            break
+
     socketio.emit(
         "simulation_result",
         {
@@ -211,7 +214,12 @@ def start_docker_simulation(data) -> None:
             command=cmd,
         )
 
-        wait_for_container_running_result(container, connect, timeout=30)
+        socketio.start_background_task(
+            wait_for_container_running_result,
+            container,
+            connect,
+            30,
+        )
 
     except DockerException:
         socketio.emit(

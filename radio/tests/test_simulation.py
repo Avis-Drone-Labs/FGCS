@@ -5,6 +5,7 @@ from docker.errors import DockerException
 from . import falcon_test
 
 client = docker.from_env()
+CONTAINER_NAME = "fgcs_ardupilot_sitl"
 
 
 def cleanup_container():
@@ -12,7 +13,7 @@ def cleanup_container():
     Helper function to remove the test container if it exists.
     """
     try:
-        container = client.containers.get("fgcs_ardupilot_sitl")
+        container = client.containers.get(CONTAINER_NAME)
         container.stop()
         container.remove()
     except DockerException:
@@ -27,11 +28,10 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     cleanup_container()
 
     socketio_client.emit("start_docker_simulation", {"port": 5763})
-    result = socketio_client.get_received()[-1]
 
-    assert result["name"] == "simulation_result"
-    assert result["args"][0]["success"] is True
-    assert "Simulation started" in result["args"][0]["message"]
+    client = docker.from_env()
+    container = client.containers.get(CONTAINER_NAME)
+    assert container.status in ("created", "running")
 
     cleanup_container()
 
@@ -46,7 +46,7 @@ def test_container_already_running(socketio_client: SocketIOTestClient):
     # Start the container manually
     container = client.containers.run(
         "kushmakkapati/ardupilot_sitl",
-        name="fgcs_ardupilot_sitl",
+        name=CONTAINER_NAME,
         ports={5763: 5763},
         detach=True,
         tty=True,
@@ -78,8 +78,8 @@ def test_stop_docker_simulation(socketio_client: SocketIOTestClient):
     # Start the container manually
     client.containers.run(
         "kushmakkapati/ardupilot_sitl",
-        name="fgcs_ardupilot_sitl",
-        ports={5765: 5765},
+        name=CONTAINER_NAME,
+        ports={5763: 5763},
         detach=True,
         tty=True,
     )
@@ -90,6 +90,8 @@ def test_stop_docker_simulation(socketio_client: SocketIOTestClient):
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is True
     assert "Simulation stopped" in result["args"][0]["message"]
+
+    cleanup_container()
 
 
 @falcon_test()

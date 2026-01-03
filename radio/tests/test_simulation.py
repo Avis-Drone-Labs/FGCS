@@ -46,12 +46,12 @@ def test_container_already_running(socketio_client: SocketIOTestClient):
     client.containers.run(
         "kushmakkapati/ardupilot_sitl",
         name="fgcs_ardupilot_sitl",
-        ports={5764: 5764},
+        ports={5763: 5763},
         detach=True,
         tty=True,
     )
 
-    socketio_client.emit("start_docker_simulation", {"port": 5764})
+    socketio_client.emit("start_docker_simulation", {"port": 5763})
     result = socketio_client.get_received()[-1]
 
     assert result["name"] == "simulation_result"

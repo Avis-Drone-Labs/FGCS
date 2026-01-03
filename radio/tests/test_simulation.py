@@ -1,4 +1,5 @@
 from flask_socketio.test_client import SocketIOTestClient
+import time
 import docker
 from docker.errors import DockerException
 from . import falcon_test
@@ -43,13 +44,19 @@ def test_container_already_running(socketio_client: SocketIOTestClient):
     cleanup_container()
 
     # Start the container manually
-    client.containers.run(
+    container = client.containers.run(
         "kushmakkapati/ardupilot_sitl",
         name="fgcs_ardupilot_sitl",
         ports={5763: 5763},
         detach=True,
         tty=True,
     )
+
+    # Wait for it to be running
+    container.reload()
+    while container.status != "running":
+        time.sleep(0.5)
+        container.reload()
 
     socketio_client.emit("start_docker_simulation", {"port": 5763})
     result = socketio_client.get_received()[-1]

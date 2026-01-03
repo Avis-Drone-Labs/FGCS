@@ -1,7 +1,7 @@
 import time
 from app import socketio
 import docker
-from docker.errors import DockerException
+from docker.errors import DockerException, NotFound
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
@@ -90,7 +90,7 @@ def build_command(data):
 def container_already_running(client, container_name) -> bool:
     """
     Checks if the client already has the given container running.
-    If it exists but is not running it will be removed.
+    If it exists but is not running it will be forcibly removed.
     """
     try:
         existing = client.containers.get(container_name)
@@ -247,7 +247,8 @@ def stop_docker_simulation() -> None:
 
     try:
         container = client.containers.get(CONTAINER_NAME)
-    except DockerException:
+
+    except NotFound:
         socketio.emit(
             "simulation_result",
             {
@@ -257,6 +258,18 @@ def stop_docker_simulation() -> None:
             },
         )
         return
+
+    except DockerException:
+        socketio.emit(
+            "simulation_result",
+            {
+                "success": False,
+                "running": False,
+                "message": "Docker error while stopping simulation",
+            },
+        )
+        return
+
     container.stop()
     socketio.emit(
         "simulation_result",

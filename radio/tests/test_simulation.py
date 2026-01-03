@@ -1,7 +1,7 @@
 from flask_socketio.test_client import SocketIOTestClient
 import time
 import docker
-from docker.errors import DockerException
+from docker.errors import NotFound
 from . import falcon_test
 
 client = docker.from_env()
@@ -14,10 +14,19 @@ def cleanup_container():
     """
     try:
         container = client.containers.get(CONTAINER_NAME)
-        container.stop()
-        container.remove()
-    except DockerException:
-        pass  # Container does not exist and therefore no cleanup required
+        container.remove(force=True)
+    except NotFound:
+        return
+
+    # wait until Docker confirms it is gone
+    for _ in range(20):
+        try:
+            client.containers.get(CONTAINER_NAME)
+            time.sleep(0.1)
+        except NotFound:
+            return
+
+    raise RuntimeError("Container did not clean up in time")
 
 
 @falcon_test()

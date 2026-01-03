@@ -9,6 +9,8 @@ import {
 
 // drone actions
 import {
+  ConnectionType,
+  emitConnectToDrone,
   emitGetComPorts,
   emitIsConnectedToDrone,
   setComPorts,
@@ -19,6 +21,8 @@ import {
   setFetchingComPorts,
   setForceDisarmModalOpened,
   setSelectedComPorts,
+  setSimulationStatus,
+  SimulationStatus,
 } from "../slices/droneConnectionSlice"
 
 // socket factory
@@ -129,6 +133,7 @@ const SocketEvents = Object.freeze({
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
   linkDebugStats: "link_debug_stats",
+  onSimulationResult: "simulation_result",
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
@@ -414,6 +419,37 @@ const socketMiddleware = (store) => {
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
+        })
+
+        // Simulation messages
+        socket.socket.on(SocketEvents.onSimulationResult, (msg) => {
+          if (msg.running === true) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Running))
+          } else if (msg.running === false) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+          }
+          // Else assume status unchanged
+
+          msg.success
+            ? showSuccessNotification(msg.message)
+            : showErrorNotification(msg.message)
+
+          if (msg.connect) {
+            const storeState = store.getState()
+            if (storeState.droneConnection.simParams.connectAfterStart) {
+              const port = storeState.droneConnection.simParams.port
+              store.dispatch(
+                emitConnectToDrone({
+                  port: `tcp:127.0.0.1:${port}`,
+                  baud: 115200,
+                  wireless: true,
+                  connectionType: ConnectionType.Network,
+                  forwardingAddress:
+                    storeState.droneConnection.forwardingAddress,
+                }),
+              )
+            }
+          }
         })
 
         // Link stats

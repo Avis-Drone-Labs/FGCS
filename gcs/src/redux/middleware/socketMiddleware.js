@@ -82,7 +82,9 @@ import {
 import {
   addFiles,
   resetFiles,
+  setIsReadingFile,
   setLoadingListFiles,
+  setReadFileData,
 } from "../slices/ftpSlice.js"
 import {
   addIdToItem,
@@ -183,6 +185,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
 
 const FtpSpecificSocketEvents = Object.freeze({
   onListFilesResult: "list_files_result",
+  onReadFileResult: "read_file_result",
 })
 
 const socketMiddleware = (store) => {
@@ -414,6 +417,8 @@ const socketMiddleware = (store) => {
           store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
           store.dispatch(resetFiles())
+          store.dispatch(setIsReadingFile(false))
+          store.dispatch(setReadFileData(null))
         })
 
         // Simulation messages
@@ -1121,6 +1126,16 @@ const socketMiddleware = (store) => {
           store.dispatch(setLoadingListFiles(false))
           if (msg.success) {
             store.dispatch(addFiles(msg.data))
+          } else {
+            showErrorNotification(msg.message)
+          }
+        })
+
+        socket.socket.on(FtpSpecificSocketEvents.onReadFileResult, (msg) => {
+          store.dispatch(setIsReadingFile(false))
+          if (msg.success) {
+            showSuccessNotification(msg.message)
+            store.dispatch(setReadFileData(msg.data))
           } else {
             showErrorNotification(msg.message)
           }

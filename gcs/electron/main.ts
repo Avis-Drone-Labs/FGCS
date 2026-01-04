@@ -25,6 +25,9 @@ import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
 import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
+import registerFlaParamsIPC, {
+  destroyFlaParamsWindow,
+} from "./modules/flaParamsWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -247,6 +250,7 @@ function createWindow() {
   registerVibeStatusIPC()
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
+  registerFlaParamsIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -433,6 +437,7 @@ function closeWindows() {
   destroyEkfStatusWindow()
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
+  destroyFlaParamsWindow()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -566,6 +571,27 @@ app.whenReady().then(() => {
     return result
   })
 
+  ipcMain.handle(
+    "app:save-file",
+    async (
+      _event,
+      { filePath, content }: { filePath: string; content: number[] },
+    ) => {
+      try {
+        // Convert number array to Buffer for fs.writeFileSync
+        const buffer = Buffer.from(content)
+        fs.writeFileSync(filePath, buffer as unknown as string)
+        return { success: true }
+      } catch (err) {
+        console.error("Error saving file:", err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    },
+  )
+
   ipcMain.handle("params:load-params-from-file", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender)
     if (!window) {
@@ -606,6 +632,42 @@ app.whenReady().then(() => {
     app.isPackaged ? "production" : "development",
   )
   ipcMain.handle("app:get-version", () => app.getVersion())
+
+  ipcMain.handle("checklist:open", async () => {
+    const window = BrowserWindow.getFocusedWindow()
+    if (!window) {
+      throw new Error("No active window found")
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+      properties: ["openFile"],
+      filters: [{ name: "Checklist files", extensions: ["checklist", "txt"] }],
+    })
+
+    if (!canceled && filePaths.length > 0) {
+      const filePath = filePaths[0]
+      try {
+        const fileContents = fs.readFileSync(filePath, "utf-8")
+        return {
+          success: true,
+          file: {
+            path: filePath,
+            contents: fileContents,
+          },
+        }
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    }
+
+    return {
+      success: false,
+      error: "No file selected",
+    }
+  })
 
   if (app.isPackaged && pythonBackend === null) {
     startBackend()

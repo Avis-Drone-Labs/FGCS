@@ -5,7 +5,7 @@ from docker.errors import DockerException, NotFound
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
-CONTAINER_START_TIMEOUT = 30
+CONTAINER_START_TIMEOUT = 60
 
 
 def get_docker_client():
@@ -114,7 +114,9 @@ def container_already_running(client, container_name) -> bool:
         return False
 
 
-def wait_for_container_running_result(container, connect, timeout=30):
+def wait_for_container_running_result(
+    container, connect, timeout=CONTAINER_START_TIMEOUT
+):
     """
     Waits to determine whether the container starts successfully by monitoring its logs
     for the message "YOU CAN NOW CONNECT". During processing the log output is
@@ -141,7 +143,6 @@ def wait_for_container_running_result(container, connect, timeout=30):
         if time.time() - start_time > timeout:
             break
 
-        container.reload()
         if container.status == "exited":
             break
 
@@ -170,6 +171,10 @@ def start_docker_simulation(data) -> None:
         port = data["port"]
     else:
         emit_error_message("Port is required")
+        return
+
+    if not (1 <= port <= 65535):
+        emit_error_message("Port must be between 1 and 65535")
         return
 
     # Get rid of any other parameters that are none

@@ -6,6 +6,7 @@ from . import falcon_test
 
 client = docker.from_env()
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
+CLEANUP_CONTAINER_TRIES = 30
 
 
 def cleanup_container():
@@ -19,7 +20,7 @@ def cleanup_container():
         return
 
     # wait until Docker confirms it is gone
-    for _ in range(20):
+    for _ in range(CLEANUP_CONTAINER_TRIES):
         try:
             client.containers.get(CONTAINER_NAME)
             time.sleep(0.1)
@@ -38,7 +39,6 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
 
     socketio_client.emit("start_docker_simulation", {"port": 5763})
 
-    client = docker.from_env()
     container = client.containers.get(CONTAINER_NAME)
     assert container.status in ("created", "running")
 

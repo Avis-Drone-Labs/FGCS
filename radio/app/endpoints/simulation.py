@@ -5,6 +5,7 @@ from docker.errors import DockerException, NotFound
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
+CONTAINER_START_TIMEOUT = 30
 
 
 def get_docker_client():
@@ -17,19 +18,20 @@ def get_docker_client():
         return None
 
 
-def pull_image_if_needed(client) -> bool:
+def pull_image_if_needed(client, image_name) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
 
     Args:
         client: The docker client.
+        image_name: String for the name of the docker image.
 
     Returns:
         True if the image exists or is successfully downloaded. Else False.
     """
     try:
-        client.images.get(IMAGE_NAME)
+        client.images.get(image_name)
         return True
     except docker.errors.ImageNotFound:
         socketio.emit(
@@ -40,7 +42,7 @@ def pull_image_if_needed(client) -> bool:
         )
 
         try:
-            client.images.pull(IMAGE_NAME)
+            client.images.pull(image_name)
 
             socketio.emit(
                 "simulation_result",
@@ -114,11 +116,14 @@ def container_already_running(client, container_name) -> bool:
 
 def wait_for_container_running_result(container, connect, timeout=30):
     """
-    Waits for if the container runs successfully and thus prints:
-        "YOU CAN NOW CONNECT" (With the spaces missing)
+    Waits to determine whether the container starts successfully by monitoring its logs
+    for the message "YOU CAN NOW CONNECT". During processing the log output is
+    concatenated without spaces, so the function actually searches for the string
+    "YOUCANNOWCONNECT" in the accumulated buffer.
 
     Args:
         container: The container to wait for.
+        connect: If the drone should attempt to connect on successful container start.
         timeout: The amount of time to wait before timing out.
     """
     start_time = time.time()
@@ -160,42 +165,28 @@ def start_docker_simulation(data) -> None:
     Args:
         data: The parameters that the simulator should start with.
     """
-    # Get rid of any that are none
+    if "port" in data:
+        port = data["port"]
+    else:
+        emit_error_message("Port is required")
+        return
+
+    # Get rid of any other parameters that are none
     data = {k: str(v) for k, v in data.items() if v is not None}
 
     cmd = build_command(data)
 
     client = get_docker_client()
     if client is None:
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": False,
-                "running": False,
-                "message": "Unable to connect to Docker",
-            },
-        )
+        emit_error_message("Unable to connect to Docker")
         return
 
-    image_result = pull_image_if_needed(client)
+    image_result = pull_image_if_needed(client, IMAGE_NAME)
     if image_result is False:
         return  # Error already given in function
 
     if container_already_running(client, CONTAINER_NAME):
         return  # Error already given in function
-
-    if "port" in data:
-        port = data["port"]
-    else:
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": False,
-                "running": False,
-                "message": "Invalid port",
-            },
-        )
-        return
 
     if "connect" in data:
         connect = data["connect"]
@@ -218,18 +209,11 @@ def start_docker_simulation(data) -> None:
             wait_for_container_running_result,
             container,
             connect,
-            30,
+            CONTAINER_START_TIMEOUT,
         )
 
     except DockerException:
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": False,
-                "running": False,
-                "message": "Simulation failed to start",
-            },
-        )
+        emit_error_message("Simulation failed to start")
 
 
 @socketio.on("stop_docker_simulation")
@@ -249,29 +233,32 @@ def stop_docker_simulation() -> None:
         container = client.containers.get(CONTAINER_NAME)
 
     except NotFound:
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": False,
-                "running": False,
-                "message": "Simulation could not be found",
-            },
-        )
+        emit_error_message("Simulation could not be found")
         return
 
     except DockerException:
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": False,
-                "running": False,
-                "message": "Docker error while stopping simulation",
-            },
-        )
+        emit_error_message("Docker error while stopping simulation")
         return
 
     container.stop()
     socketio.emit(
         "simulation_result",
         {"success": True, "running": False, "message": "Simulation stopped"},
+    )
+
+
+def emit_error_message(message):
+    """
+    Emits the given message on "simulation_result" alongside false for success and running.
+
+    Args:
+        message: The message to be included in the emit
+    """
+    socketio.emit(
+        "simulation_result",
+        {
+            "success": False,
+            "running": False,
+            "message": message,
+        },
     )

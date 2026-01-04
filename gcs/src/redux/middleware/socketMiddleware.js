@@ -431,19 +431,17 @@ const socketMiddleware = (store) => {
 
           if (msg.connect) {
             const storeState = store.getState()
-            if (storeState.droneConnection.simParams.connectAfterStart) {
-              const port = storeState.droneConnection.simParams.port
-              store.dispatch(
-                emitConnectToDrone({
-                  port: `tcp:127.0.0.1:${port}`,
-                  baud: 115200,
-                  wireless: true,
-                  connectionType: ConnectionType.Network,
-                  forwardingAddress:
-                    storeState.droneConnection.forwardingAddress,
-                }),
-              )
-            }
+            const port = storeState.droneConnection.simParams.port
+            store.dispatch(
+              emitConnectToDrone({
+                port: `tcp:127.0.0.1:${port}`,
+                baud: 115200,
+                wireless: true,
+                connectionType: ConnectionType.Network,
+                forwardingAddress:
+                  storeState.droneConnection.forwardingAddress,
+              }),
+            )
           }
         })
 

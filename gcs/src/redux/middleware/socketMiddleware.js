@@ -443,8 +443,7 @@ const socketMiddleware = (store) => {
                 baud: 115200,
                 wireless: true,
                 connectionType: ConnectionType.Network,
-                forwardingAddress:
-                  storeState.droneConnection.forwardingAddress,
+                forwardingAddress: storeState.droneConnection.forwardingAddress,
               }),
             )
           }

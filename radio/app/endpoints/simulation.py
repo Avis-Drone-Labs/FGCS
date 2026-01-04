@@ -141,6 +141,7 @@ def wait_for_container_running_result(container, connect, timeout=30):
         if time.time() - start_time > timeout:
             break
 
+        container.reload()
         if container.status == "exited":
             break
 

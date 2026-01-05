@@ -54,6 +54,9 @@ export default function SimulationModal() {
         mb="md"
         label="Port"
         value={simulationParams.port}
+        min={1}
+        max={65535}
+        allowDecimal={false}
         onChange={(val) =>
           dispatch(setSimulationParam({ key: "port", value: val }))
         }
@@ -77,6 +80,8 @@ export default function SimulationModal() {
           label="Latitude"
           placeholder="Latitude"
           value={simulationParams.lat}
+          min={-90}
+          max={90}
           onChange={(val) =>
             dispatch(setSimulationParam({ key: "lat", value: val }))
           }
@@ -86,6 +91,8 @@ export default function SimulationModal() {
           label="Longitude"
           placeholder="Longitude"
           value={simulationParams.lon}
+          min={-180}
+          max={180}
           onChange={(val) =>
             dispatch(setSimulationParam({ key: "lon", value: val }))
           }
@@ -104,6 +111,8 @@ export default function SimulationModal() {
           label="Direction"
           placeholder="Direction"
           value={simulationParams.dir}
+          min={0}
+          max={360}
           onChange={(val) =>
             dispatch(setSimulationParam({ key: "dir", value: val }))
           }

@@ -239,6 +239,10 @@ def test_wait_for_container_running_result(socketio_client: SocketIOTestClient):
     # Call the function to wait for the container to start
     wait_for_container_running_result(container, connect=False, timeout=5)
 
+    # Verify the emitted message
+    result = socketio_client.get_received()[-1]
+    assert result["name"] == "simulation_result"
+
     # Verify the container logs were processed
     result = client.containers.get(CONTAINER_NAME)
     assert result.status in (

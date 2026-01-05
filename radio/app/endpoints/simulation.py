@@ -132,31 +132,38 @@ def wait_for_container_running_result(
     line_found = False
     buffer = ""
 
-    for line in container.logs(stream=True):
-        decoded = line.decode().strip()
-        buffer += decoded
+    try:
+        for line in container.logs(stream=True):
+            decoded = line.decode().strip()
+            buffer += decoded
 
-        if "YOUCANNOWCONNECT" in buffer:
-            line_found = True
-            break
+            if "YOUCANNOWCONNECT" in buffer:
+                line_found = True
+                break
 
-        if time.time() - start_time > timeout:
-            break
+            if time.time() - start_time > timeout:
+                break
 
-        if container.status == "exited":
-            break
+            if container.status == "exited":
+                break
 
-    socketio.emit(
-        "simulation_result",
-        {
-            "success": line_found,
-            "running": line_found,
-            "connect": connect and line_found,
-            "message": "Simulation started"
-            if line_found
-            else "Simulation failed to start in time",
-        },
-    )
+        socketio.emit(
+            "simulation_result",
+            {
+                "success": line_found,
+                "running": line_found,
+                "connect": connect and line_found,
+                "message": "Simulation started"
+                if line_found
+                else "Simulation failed to start in time",
+            },
+        )
+
+    except DockerException:
+        socketio.emit(
+            "simulation_result",
+            {"message": "Docker error while awaiting connection message"},
+        )
 
 
 @socketio.on("start_docker_simulation")

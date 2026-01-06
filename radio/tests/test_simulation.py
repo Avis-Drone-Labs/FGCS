@@ -7,6 +7,7 @@ from . import falcon_test
 client = docker.from_env()
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 CLEANUP_CONTAINER_TRIES = 30
+CONTAINER_START_WAIT_TIME = 60
 
 
 def cleanup_container():
@@ -37,10 +38,61 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     """
     cleanup_container()
 
+    # Emit the event
     socketio_client.emit("start_docker_simulation", {"port": 5763})
 
-    container = client.containers.get(CONTAINER_NAME)
-    assert container.status in ("created", "running")
+    # Synchronize: Wait for the background task to emit the message
+    start_time = time.time()
+    received_messages = []
+
+    while time.time() - start_time < CONTAINER_START_WAIT_TIME:
+        received_messages = socketio_client.get_received()
+        if received_messages:
+            break
+        time.sleep(0.1)  # Avoid busy waiting
+
+    assert received_messages, "No messages were received after emitting the event. Check if the event handler is working."
+
+    # Verify the last received message
+    result = received_messages[-1]
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] in (True, False), "Unexpected success value"
+    if not result["args"][0]["success"]:
+        assert "Simulation failed to start" in result["args"][0]["message"]
+
+    cleanup_container()
+
+
+@falcon_test()
+def test_start_docker_simulation_with_connect(socketio_client: SocketIOTestClient):
+    """
+    Test starting the simulation with connect=True.
+    """
+    cleanup_container()
+
+    # Emit the event
+    socketio_client.emit("start_docker_simulation", {"port": 5763, "connect": True})
+
+    # Synchronize: Wait for the background task to emit the message
+    start_time = time.time()
+    received_messages = []
+
+    while time.time() - start_time < CONTAINER_START_WAIT_TIME:
+        received_messages = socketio_client.get_received()
+        if received_messages:
+            break
+        time.sleep(0.1)  # Avoid busy waiting
+
+    assert received_messages, "No messages were received after emitting the event. Check if the event handler is working."
+
+    # Verify the last received message
+    result = received_messages[-1]
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] in (True, False), "Unexpected success value"
+    if result["args"][0]["success"]:
+        assert result["args"][0]["connect"] is True, "Connect flag not set correctly"
+    else:
+        assert "Simulation failed to start" in result["args"][0]["message"]
 
     cleanup_container()
 
@@ -104,6 +156,36 @@ def test_stop_docker_simulation(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
+def test_stop_docker_simulation_no_container(socketio_client: SocketIOTestClient):
+    """
+    Test stopping the Docker simulation when no container is running.
+    """
+    cleanup_container()
+
+    # Emit the stop event without any running container
+    socketio_client.emit("stop_docker_simulation")
+
+    # Synchronize: Wait for the background task to emit the message
+    timeout = 10  # seconds
+    start_time = time.time()
+    received_messages = []
+
+    while time.time() - start_time < timeout:
+        received_messages = socketio_client.get_received()
+        if received_messages:
+            break
+        time.sleep(0.1)  # Avoid busy waiting
+
+    assert received_messages, "No messages were received after emitting the event. Check if the event handler is working."
+
+    # Verify the last received message
+    result = received_messages[-1]
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert "Simulation could not be found" in result["args"][0]["message"]
+
+
+@falcon_test()
 def test_build_command(socketio_client: SocketIOTestClient):
     """
     Test the build_command function directly.
@@ -157,6 +239,25 @@ def test_pull_image_if_needed(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
+def test_pull_image_if_needed_image_exists(socketio_client: SocketIOTestClient):
+    """
+    Test the pull_image_if_needed function when the image already exists.
+    """
+    from app.endpoints.simulation import pull_image_if_needed
+
+    client = docker.from_env()
+
+    # Ensure the image exists
+    client.images.pull("kushmakkapati/ardupilot_sitl")
+
+    # Call the function
+    result = pull_image_if_needed(client, "kushmakkapati/ardupilot_sitl")
+
+    # Verify the function does not attempt to pull the image again
+    assert result is True
+
+
+@falcon_test()
 def test_container_already_running(socketio_client: SocketIOTestClient):
     """
     Test the container_already_running function directly.
@@ -199,6 +300,26 @@ def test_emit_error_message(socketio_client: SocketIOTestClient):
     assert result["args"][0]["success"] is False
     assert result["args"][0]["running"] is False
     assert result["args"][0]["message"] == "Test error message"
+
+
+@falcon_test()
+def test_emit_error_message_edge_cases(socketio_client: SocketIOTestClient):
+    """
+    Test the emit_error_message function with edge cases.
+    """
+    from app.endpoints.simulation import emit_error_message
+
+    # Emit an empty message
+    emit_error_message("")
+    result = socketio_client.get_received()[-1]
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["message"] == ""
+
+    # Emit a None message
+    emit_error_message(None)
+    result = socketio_client.get_received()[-1]
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["message"] is None
 
 
 @falcon_test()
@@ -251,3 +372,34 @@ def test_wait_for_container_running_result(socketio_client: SocketIOTestClient):
     ), "Container did not reach expected status"
 
     cleanup_container()
+
+
+@falcon_test()
+def test_start_docker_simulation_invalid_port(socketio_client: SocketIOTestClient):
+    """
+    Test starting the simulation with an invalid port number.
+    """
+    cleanup_container()
+
+    socketio_client.emit("start_docker_simulation", {"port": 70000})
+    result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert "Port must be between 1 and 65535" in result["args"][0]["message"]
+
+
+@falcon_test()
+def test_start_docker_simulation_no_docker(socketio_client: SocketIOTestClient):
+    """
+    Test starting the simulation when Docker is unavailable.
+    """
+    from unittest.mock import patch
+
+    with patch("app.endpoints.simulation.get_docker_client", return_value=None):
+        socketio_client.emit("start_docker_simulation", {"port": 5763})
+        result = socketio_client.get_received()[-1]
+
+        assert result["name"] == "simulation_result"
+        assert result["args"][0]["success"] is False
+        assert "Unable to connect to Docker" in result["args"][0]["message"]

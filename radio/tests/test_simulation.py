@@ -143,7 +143,7 @@ def test_pull_image_if_needed(socketio_client: SocketIOTestClient):
     try:
         client.images.remove("kushmakkapati/ardupilot_sitl", force=True)
     except docker.errors.ImageNotFound:
-        pass
+        pass  # Does not exist so safe to continue
 
     # Call the function to ensure the image
     result = pull_image_if_needed(client, "kushmakkapati/ardupilot_sitl")

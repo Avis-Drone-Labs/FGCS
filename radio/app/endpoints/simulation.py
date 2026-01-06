@@ -167,10 +167,7 @@ def wait_for_container_running_result(
         )
 
     except DockerException:
-        socketio.emit(
-            "simulation_result",
-            {"message": "Docker error while awaiting connection message"},
-        )
+        emit_error_message("Docker error while awaiting connection message")
 
 
 @socketio.on("start_docker_simulation")
@@ -250,21 +247,21 @@ def stop_docker_simulation() -> None:
         return
 
     try:
-        container = client.containers.get(CONTAINER_NAME)
+        try:
+            container = client.containers.get(CONTAINER_NAME)
 
-    except NotFound:
-        emit_error_message("Simulation could not be found")
-        return
+        except NotFound:
+            emit_error_message("Simulation could not be found")
+            return
+
+        container.stop()
+        socketio.emit(
+            "simulation_result",
+            {"success": True, "running": False, "message": "Simulation stopped"},
+        )
 
     except DockerException:
         emit_error_message("Docker error while stopping simulation")
-        return
-
-    container.stop()
-    socketio.emit(
-        "simulation_result",
-        {"success": True, "running": False, "message": "Simulation stopped"},
-    )
 
 
 def emit_error_message(message):

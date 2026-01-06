@@ -23,6 +23,7 @@ import {
   selectSimulationStatus,
 } from "../../redux/slices/droneConnectionSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
+import { showNotification } from "../../helpers/notification"
 
 export default function SimulationModal() {
   const dispatch = useDispatch()
@@ -37,6 +38,12 @@ export default function SimulationModal() {
       opened={modalOpen}
       onClose={() => {
         dispatch(setSimulationModalOpened(false))
+        if (simulationStatus === SimulationStatus.Starting) {
+          dispatch(showNotification(
+            "Simulation still starting",
+            "The simulator is still starting and will continue in the background",
+          ))
+        }
       }}
       title="SITL Simulator"
       centered

@@ -30,7 +30,10 @@ import { dataFormatters } from "../../helpers/dataFormatters.js"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
+  closeLoadingNotification,
   showErrorNotification,
+  showInfoNotification,
+  showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,
 } from "../../helpers/notification.js"
@@ -134,6 +137,7 @@ const SocketEvents = Object.freeze({
   listComPorts: "list_com_ports",
   linkDebugStats: "link_debug_stats",
   onSimulationResult: "simulation_result",
+  onSimulationLoading: "simulation_loading",
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
@@ -298,6 +302,8 @@ const socketMiddleware = (store) => {
     }
   }
 
+  let simulationLoadingId = null
+
   return (next) => (action) => {
     if (initSocket.match(action)) {
       // client side execution
@@ -421,7 +427,16 @@ const socketMiddleware = (store) => {
           store.dispatch(setReadFileData(null))
         })
 
-        // Simulation messages
+        // Simulation status messages
+        socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
+          if (msg.loading) {
+            simulationLoadingId = showLoadingNotification(msg.title, msg.message)
+          } else {
+            closeLoadingNotification(simulationLoadingId, msg.title, msg.message)
+          }
+        })
+
+        // Simulation final messages
         socket.socket.on(SocketEvents.onSimulationResult, (msg) => {
           if (msg.running === true) {
             store.dispatch(setSimulationStatus(SimulationStatus.Running))

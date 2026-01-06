@@ -35,9 +35,11 @@ def pull_image_if_needed(client, image_name) -> bool:
         return True
     except docker.errors.ImageNotFound:
         socketio.emit(
-            "simulation_result",
+            "simulation_loading",
             {
-                "message": "Image not found. Attempting to download.",
+                "loading": True,
+                "title": "Downloading Docker Image",
+                "message": "Image not found. Attempting to download. This may take a while.",
             },
         )
 
@@ -45,15 +47,20 @@ def pull_image_if_needed(client, image_name) -> bool:
             client.images.pull(image_name)
 
             socketio.emit(
-                "simulation_result",
+                "simulation_loading",
                 {
-                    "success": True,
-                    "message": "Simulation image downloaded",
+                    "loading": False,
+                    "title": "Downloaded Docker Image",
+                    "message": "Simulation image successfully downloaded",
                 },
             )
             return True
         except DockerException:
             socketio.emit(
+                "simulation_loading",
+                {
+                    "loading": False,
+                },
                 "simulation_result",
                 {
                     "success": False,
@@ -184,6 +191,11 @@ def start_docker_simulation(data) -> None:
         emit_error_message("Port must be between 1 and 65535")
         return
 
+    if "connect" in data:
+        connect = data["connect"]
+    else:
+        connect = False
+
     # Get rid of any other parameters that are none
     data = {k: str(v) for k, v in data.items() if v is not None}
 
@@ -200,11 +212,6 @@ def start_docker_simulation(data) -> None:
 
     if container_already_running(client, CONTAINER_NAME):
         return  # Error already given in function
-
-    if "connect" in data:
-        connect = data["connect"]
-    else:
-        connect = False
 
     try:
         container = client.containers.run(

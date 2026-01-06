@@ -430,9 +430,16 @@ const socketMiddleware = (store) => {
         // Simulation status messages
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
           if (msg.loading) {
-            simulationLoadingId = showLoadingNotification(msg.title, msg.message)
+            simulationLoadingId = showLoadingNotification(
+              msg.title,
+              msg.message,
+            )
           } else {
-            closeLoadingNotification(simulationLoadingId, msg.title, msg.message)
+            closeLoadingNotification(
+              simulationLoadingId,
+              msg.title,
+              msg.message,
+            )
           }
         })
 

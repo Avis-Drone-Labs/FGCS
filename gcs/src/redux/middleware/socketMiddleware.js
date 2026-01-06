@@ -32,7 +32,6 @@ import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
   closeLoadingNotification,
   showErrorNotification,
-  showInfoNotification,
   showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,

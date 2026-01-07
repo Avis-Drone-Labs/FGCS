@@ -39,11 +39,9 @@ export default function SimulationModal() {
       onClose={() => {
         dispatch(setSimulationModalOpened(false))
         if (simulationStatus === SimulationStatus.Starting) {
-          dispatch(
-            showNotification(
-              "Simulation still starting",
-              "The simulator is still starting and will continue in the background",
-            ),
+          showNotification(
+            "Simulation still starting",
+            "The simulator is still starting and will continue in the background",
           )
         }
       }}

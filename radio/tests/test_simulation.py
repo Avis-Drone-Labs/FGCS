@@ -186,7 +186,7 @@ def test_stop_docker_simulation_no_container(socketio_client: SocketIOTestClient
 
 
 @falcon_test()
-def test_build_command(socketio_client: SocketIOTestClient):
+def test_build_command(_socketio_client: SocketIOTestClient):
     """
     Test the build_command function directly.
     """
@@ -213,7 +213,7 @@ def test_build_command(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_ensure_image_exists(socketio_client: SocketIOTestClient):
+def test_ensure_image_exists(_socketio_client: SocketIOTestClient):
     """
     Test the ensure_image_exists function directly.
     """
@@ -239,7 +239,7 @@ def test_ensure_image_exists(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_ensure_image_exists_image_exists(socketio_client: SocketIOTestClient):
+def test_ensure_image_exists_image_exists(_socketio_client: SocketIOTestClient):
     """
     Test the ensure_image_exists function when the image already exists.
     """
@@ -258,7 +258,7 @@ def test_ensure_image_exists_image_exists(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_container_already_running(socketio_client: SocketIOTestClient):
+def test_container_already_running(_socketio_client: SocketIOTestClient):
     """
     Test the container_already_running function directly.
     """
@@ -323,7 +323,7 @@ def test_emit_error_message_edge_cases(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_get_docker_client(socketio_client: SocketIOTestClient):
+def test_get_docker_client(_socketio_client: SocketIOTestClient):
     """
     Test the get_docker_client function directly.
     """

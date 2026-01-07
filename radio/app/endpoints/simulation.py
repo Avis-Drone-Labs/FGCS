@@ -61,6 +61,8 @@ def ensure_image_exists(client, image_name) -> bool:
                 {
                     "loading": False,
                 },
+            )
+            socketio.emit(
                 "simulation_result",
                 {
                     "success": False,
@@ -232,7 +234,7 @@ def start_docker_simulation(data) -> None:
         connect = False
 
     # Get rid of any other parameters that are none
-    data = {k: str(v) for k, v in data.items() if v is not None}
+    data = {k: v for k, v in data.items() if v is not None}
 
     cmd = build_command(data)
 

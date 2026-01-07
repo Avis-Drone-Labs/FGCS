@@ -213,11 +213,11 @@ def test_build_command(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_pull_image_if_needed(socketio_client: SocketIOTestClient):
+def test_ensure_image_exists(socketio_client: SocketIOTestClient):
     """
-    Test the pull_image_if_needed function directly.
+    Test the ensure_image_exists function directly.
     """
-    from app.endpoints.simulation import pull_image_if_needed
+    from app.endpoints.simulation import ensure_image_exists
 
     client = docker.from_env()
 
@@ -228,7 +228,7 @@ def test_pull_image_if_needed(socketio_client: SocketIOTestClient):
         pass  # Does not exist so safe to continue
 
     # Call the function to ensure the image
-    result = pull_image_if_needed(client, "kushmakkapati/ardupilot_sitl")
+    result = ensure_image_exists(client, "kushmakkapati/ardupilot_sitl")
 
     # Verify the image is now present
     assert result is True
@@ -239,11 +239,11 @@ def test_pull_image_if_needed(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_pull_image_if_needed_image_exists(socketio_client: SocketIOTestClient):
+def test_ensure_image_exists_image_exists(socketio_client: SocketIOTestClient):
     """
-    Test the pull_image_if_needed function when the image already exists.
+    Test the ensure_image_exists function when the image already exists.
     """
-    from app.endpoints.simulation import pull_image_if_needed
+    from app.endpoints.simulation import ensure_image_exists
 
     client = docker.from_env()
 
@@ -251,7 +251,7 @@ def test_pull_image_if_needed_image_exists(socketio_client: SocketIOTestClient):
     client.images.pull("kushmakkapati/ardupilot_sitl")
 
     # Call the function
-    result = pull_image_if_needed(client, "kushmakkapati/ardupilot_sitl")
+    result = ensure_image_exists(client, "kushmakkapati/ardupilot_sitl")
 
     # Verify the function does not attempt to pull the image again
     assert result is True

@@ -1,7 +1,7 @@
 import time
 from app import socketio
 import docker
-from docker.errors import DockerException, NotFound
+from docker.errors import DockerException, NotFound, ImageNotFound
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
@@ -18,7 +18,7 @@ def get_docker_client():
         return None
 
 
-def pull_image_if_needed(client, image_name) -> bool:
+def ensure_image_exists(client, image_name) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
@@ -33,7 +33,7 @@ def pull_image_if_needed(client, image_name) -> bool:
     try:
         client.images.get(image_name)
         return True
-    except docker.errors.ImageNotFound:
+    except ImageNotFound:
         socketio.emit(
             "simulation_loading",
             {
@@ -114,10 +114,14 @@ def container_already_running(client, container_name) -> bool:
             )
             return True
         else:
-            existing.remove(force=True)
+            try:
+                existing.remove(force=True)
+            except NotFound:
+                # container already removed (race condition with remove=True)
+                pass
             return False
 
-    except docker.errors.NotFound:
+    except NotFound:
         return False
 
 
@@ -217,12 +221,11 @@ def start_docker_simulation(data) -> None:
         return
     if not _validate_numeric_param("lon", -180.0, 180.0, "Longitude"):
         return
-    # Altitude: non-negative, allow up to a reasonable upper bound
     if not _validate_numeric_param("alt", 0.0, 100000.0, "Altitude"):
         return
-    # Direction: 0 to 360 degrees
     if not _validate_numeric_param("dir", 0.0, 360.0, "Direction"):
         return
+
     if "connect" in data:
         connect = data["connect"]
     else:
@@ -238,9 +241,8 @@ def start_docker_simulation(data) -> None:
         emit_error_message("Unable to connect to Docker")
         return
 
-    image_result = pull_image_if_needed(client, IMAGE_NAME)
-    if image_result is False:
-        return  # Error already given in function
+    if not ensure_image_exists(client, IMAGE_NAME):
+        return  # Error already handled in the function
 
     if container_already_running(client, CONTAINER_NAME):
         return  # Error already given in function

@@ -56,9 +56,7 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     # Verify the last received message
     result = received_messages[-1]
     assert result["name"] == "simulation_result"
-    assert result["args"][0]["success"] in (True, False), "Unexpected success value"
-    if not result["args"][0]["success"]:
-        assert "Simulation failed to start" in result["args"][0]["message"]
+    assert result["args"][0]["success"] is True
 
     cleanup_container()
 
@@ -88,11 +86,8 @@ def test_start_docker_simulation_with_connect(socketio_client: SocketIOTestClien
     # Verify the last received message
     result = received_messages[-1]
     assert result["name"] == "simulation_result"
-    assert result["args"][0]["success"] in (True, False), "Unexpected success value"
-    if result["args"][0]["success"]:
-        assert result["args"][0]["connect"] is True, "Connect flag not set correctly"
-    else:
-        assert "Simulation failed to start" in result["args"][0]["message"]
+    assert result["args"][0]["success"] is True
+    assert result["args"][0]["connect"] is True, "Connect flag not set correctly"
 
     cleanup_container()
 

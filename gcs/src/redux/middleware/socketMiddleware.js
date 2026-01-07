@@ -182,6 +182,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
 const FtpSpecificSocketEvents = Object.freeze({
   onListFilesResult: "list_files_result",
   onReadFileResult: "read_file_result",
+  onReadFileProgress: "read_file_progress",
 })
 
 const socketMiddleware = (store) => {
@@ -1106,6 +1107,8 @@ const socketMiddleware = (store) => {
             store.dispatch(setReadFileProgress(null)) // Reset progress
           } else {
             showErrorNotification(msg.message)
+
+            // If currently not reading a file, then reset states
             const storeState = store.getState()
             if (storeState !== undefined) {
               const isReadingFile = storeState.ftp.isReadingFile
@@ -1117,7 +1120,7 @@ const socketMiddleware = (store) => {
           }
         })
 
-        socket.socket.on("read_file_progress", (msg) => {
+        socket.socket.on(FtpSpecificSocketEvents.onReadFileProgress, (msg) => {
           store.dispatch(setReadFileProgress(msg))
         })
       } else {

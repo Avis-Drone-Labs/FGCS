@@ -184,7 +184,18 @@ def test_readFile_emptyPath_failure(socketio_client: SocketIOTestClient, droneSt
 def test_readFile_validFile_success(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config"
     socketio_client.emit("read_file", {"path": "/@ROMFS/locations.txt"})
-    socketio_result = socketio_client.get_received()[0]
+
+    # Get all received messages and filter out progress updates
+    received_messages = socketio_client.get_received()
+    socketio_result = None
+
+    for msg in received_messages:
+        if msg["name"] == "read_file_result":
+            socketio_result = msg
+            break
+
+    # Ensure we found the result message
+    assert socketio_result is not None, "Did not receive read_file_result message"
 
     expected_file_path = os.path.join(FTP_FILES_PATH, "expected_locations.txt")
     with open(expected_file_path, "rb") as f:

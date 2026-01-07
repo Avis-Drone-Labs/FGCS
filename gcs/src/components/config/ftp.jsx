@@ -8,7 +8,14 @@
 // 3rd party imports
 
 // Redux
-import { Button, Group, LoadingOverlay, Tree } from "@mantine/core"
+import {
+  Button,
+  Group,
+  LoadingOverlay,
+  Progress,
+  Text,
+  Tree,
+} from "@mantine/core"
 import { IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react"
 import { useEffect, useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -24,6 +31,7 @@ import {
   selectIsReadingFile,
   selectLoadingListFiles,
   selectReadFileData,
+  selectReadFileProgress,
 } from "../../redux/slices/ftpSlice"
 
 export default function Ftp() {
@@ -32,6 +40,7 @@ export default function Ftp() {
   const loadingListFiles = useSelector(selectLoadingListFiles)
   const isReadingFile = useSelector(selectIsReadingFile)
   const readFileData = useSelector(selectReadFileData)
+  const readFileProgress = useSelector(selectReadFileProgress)
 
   const convertedFiles = useMemo(() => {
     if (!files || files.length === 0) return []
@@ -137,6 +146,7 @@ export default function Ftp() {
         <Button
           onClick={() => {
             dispatch(resetFiles())
+            dispatch(emitListFiles({ path: "/" }))
           }}
           w={"fit-content"}
         >
@@ -169,6 +179,24 @@ export default function Ftp() {
         />
       </div>
       <div className="flex flex-col gap-4 flex-1">
+        {isReadingFile && readFileProgress && (
+          <div className="flex flex-col gap-2">
+            <Text size="sm">
+              Downloading: {readFileProgress.bytes_downloaded.toLocaleString()}{" "}
+              / {readFileProgress.total_bytes.toLocaleString()} bytes
+            </Text>
+            <Progress
+              value={readFileProgress.percentage}
+              size="lg"
+              animated
+              color="blue"
+            />
+            <Text size="xs" c="dimmed">
+              {readFileProgress.percentage}% complete
+            </Text>
+          </div>
+        )}
+
         {fileContentString !== null && (
           <div className="flex flex-col relative gap-2">
             <LoadingOverlay

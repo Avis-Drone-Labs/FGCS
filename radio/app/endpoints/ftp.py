@@ -65,7 +65,19 @@ def readFile(data: ReadFileType) -> None:
         )
         return
 
-    result = droneStatus.drone.ftpController.readFile(path)
+    def progress_callback(bytes_downloaded, total_bytes, percentage):
+        socketio.emit(
+            "read_file_progress",
+            {
+                "bytes_downloaded": bytes_downloaded,
+                "total_bytes": total_bytes,
+                "percentage": round(percentage, 1),
+            },
+        )
+
+    result = droneStatus.drone.ftpController.readFile(
+        path, progress_callback=progress_callback
+    )
 
     # Convert bytes to list for SocketIO serialization
     if result.get("success") and "data" in result:

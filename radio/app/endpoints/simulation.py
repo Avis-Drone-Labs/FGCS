@@ -188,6 +188,41 @@ def start_docker_simulation(data) -> None:
         emit_error_message("Port must be between 1 and 65535")
         return
 
+    def _validate_numeric_param(key, min_value, max_value, friendly_name):
+        """
+        Validates that data[key], if present and not None, is numeric and within [min_value, max_value].
+        On success, normalizes the value to a float in data[key].
+        """
+        if key not in data or data[key] is None:
+            return True
+
+        value = data[key]
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError):
+            emit_error_message(f"{friendly_name} must be a number")
+            return False
+
+        if numeric_value < min_value or numeric_value > max_value:
+            emit_error_message(
+                f"{friendly_name} must be between {min_value} and {max_value}"
+            )
+            return False
+
+        data[key] = numeric_value
+        return True
+
+    # Validate optional numeric parameters if provided
+    if not _validate_numeric_param("lat", -90.0, 90.0, "Latitude"):
+        return
+    if not _validate_numeric_param("lon", -180.0, 180.0, "Longitude"):
+        return
+    # Altitude: non-negative, allow up to a reasonable upper bound
+    if not _validate_numeric_param("alt", 0.0, 100000.0, "Altitude"):
+        return
+    # Direction: 0 to 360 degrees
+    if not _validate_numeric_param("dir", 0.0, 360.0, "Direction"):
+        return
     if "connect" in data:
         connect = data["connect"]
     else:

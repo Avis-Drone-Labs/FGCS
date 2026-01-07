@@ -9,6 +9,8 @@ import {
 
 // drone actions
 import {
+  ConnectionType,
+  emitConnectToDrone,
   emitGetComPorts,
   emitIsConnectedToDrone,
   setComPorts,
@@ -19,6 +21,8 @@ import {
   setFetchingComPorts,
   setForceDisarmModalOpened,
   setSelectedComPorts,
+  setSimulationStatus,
+  SimulationStatus,
 } from "../slices/droneConnectionSlice"
 
 // socket factory
@@ -26,7 +30,9 @@ import { dataFormatters } from "../../helpers/dataFormatters.js"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
+  closeLoadingNotification,
   showErrorNotification,
+  showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,
 } from "../../helpers/notification.js"
@@ -129,6 +135,8 @@ const SocketEvents = Object.freeze({
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
   linkDebugStats: "link_debug_stats",
+  onSimulationResult: "simulation_result",
+  onSimulationLoading: "simulation_loading",
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
@@ -293,6 +301,8 @@ const socketMiddleware = (store) => {
     }
   }
 
+  let simulationLoadingId = null
+
   return (next) => (action) => {
     if (initSocket.match(action)) {
       // client side execution
@@ -414,6 +424,50 @@ const socketMiddleware = (store) => {
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
+        })
+
+        // Simulation status messages
+        socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
+          if (msg.loading) {
+            simulationLoadingId = showLoadingNotification(
+              msg.title,
+              msg.message,
+            )
+          } else {
+            closeLoadingNotification(
+              simulationLoadingId,
+              msg.title,
+              msg.message,
+            )
+          }
+        })
+
+        // Simulation final messages
+        socket.socket.on(SocketEvents.onSimulationResult, (msg) => {
+          if (msg.running === true) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Running))
+          } else if (msg.running === false) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+          }
+          // Else assume status unchanged
+
+          msg.success
+            ? showSuccessNotification(msg.message)
+            : showErrorNotification(msg.message)
+
+          if (msg.connect) {
+            const storeState = store.getState()
+            const port = storeState.droneConnection.simParams.port
+            store.dispatch(
+              emitConnectToDrone({
+                port: `tcp:127.0.0.1:${port}`,
+                baud: 115200,
+                wireless: true,
+                connectionType: ConnectionType.Network,
+                forwardingAddress: storeState.droneConnection.forwardingAddress,
+              }),
+            )
+          }
         })
 
         // Link stats

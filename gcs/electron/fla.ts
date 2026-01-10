@@ -11,8 +11,10 @@ import createRecentLogsManager from "./utils/recentLogManager"
 import DataflashParser from "./utils/dataflashParser"
 
 import {
+  canDisplayMapPositionData,
   getAircraftTypeFromMavType,
   getFormatMessages,
+  getMapPositionData,
   getParamObjects,
   normalizeFormatMessageNames,
   transformMessages,
@@ -461,6 +463,7 @@ function processAndSaveLogData(
   let gpsOffset: number | null = null
   let utcAvailable = false
   let params = null
+  let mapPositionData = null
 
   if (
     (finalMessages.GPS || finalMessages["GPS[0]"]) &&
@@ -477,6 +480,10 @@ function processAndSaveLogData(
   if (logType === "dataflash_bin" && "PARM" in loadedLogMessages) {
     // extract params
     params = getParamObjects(loadedLogMessages["PARM"] as MessageObject[])
+  }
+
+  if (logType === "dataflash_bin" && canDisplayMapPositionData(loadedLogMessages)) {
+    mapPositionData = getMapPositionData(loadedLogMessages)
   }
 
   // 5. Calculate means on the final, fully-expanded data
@@ -515,6 +522,7 @@ function processAndSaveLogData(
     aircraftType,
     firmwareVersion,
     params,
+    mapPositionData,
   }
 }
 

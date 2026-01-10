@@ -25,6 +25,9 @@ const defaultOptions = {
   responsive: true,
   parsing: false,
   animation: false,
+  maintainAspectRatio: false,
+  height: "100%",
+  width: "100%",
   plugins: {
     zoom: {
       pan: {

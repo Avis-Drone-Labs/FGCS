@@ -19,6 +19,7 @@ const logAnalyserSlice = createSlice({
     canSavePreset: false,
     firmwareVersion: null,
     params: null,
+    mapPositionData: null,
   },
   reducers: {
     setFile: (state, action) => {
@@ -72,6 +73,9 @@ const logAnalyserSlice = createSlice({
     setParams: (state, action) => {
       state.params = action.payload
     },
+    setMapPositionData: (state, action) => {
+      state.mapPositionData = action.payload
+    },
   },
   selectors: {
     selectFile: (state) => state.file,
@@ -91,6 +95,8 @@ const logAnalyserSlice = createSlice({
     selectCanSavePreset: (state) => state.canSavePreset,
     selectFirmwareVersion: (state) => state.firmwareVersion,
     selectParams: (state) => state.params,
+    selectMapPositionData: (state) => state.mapPositionData,
+    selectCanShowMapPositionData: (state) => state.mapPositionData !== null,
   },
 })
 
@@ -112,6 +118,7 @@ export const {
   setCanSavePreset,
   setFirmwareVersion,
   setParams,
+  setMapPositionData,
 } = logAnalyserSlice.actions
 
 export const {
@@ -132,6 +139,8 @@ export const {
   selectCanSavePreset,
   selectFirmwareVersion,
   selectParams,
+  selectMapPositionData,
+  selectCanShowMapPositionData,
 } = logAnalyserSlice.selectors
 
 export default logAnalyserSlice

@@ -25,6 +25,7 @@ const defaultOptions = {
   responsive: true,
   parsing: false,
   animation: false,
+  maintainAspectRatio: false,
   plugins: {
     zoom: {
       pan: {

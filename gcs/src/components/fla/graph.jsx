@@ -40,6 +40,7 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   selectAircraftType,
   selectCanSavePreset,
+  selectCanShowMapPositionData,
   selectFile,
   selectFlightModeMessages,
   selectLogEvents,
@@ -57,6 +58,7 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config.js"
 
 // Custom components and helpers
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
@@ -65,6 +67,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../helpers/notification.js"
+import FlaMapSection from "./flaMap.jsx"
 import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
@@ -109,12 +112,14 @@ export default function Graph({ data, openPresetModal }) {
   const params = useSelector(selectParams)
   const file = useSelector(selectFile)
   const fileName = file?.name
+  const canShowMapPositionData = useSelector(selectCanShowMapPositionData)
 
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
   })
   const [showEvents, toggleShowEvents] = useToggle()
   const chartRef = useRef(null)
+  const [showMap, setShowMap] = useState(false)
 
   // Turn on/off all filters
   function clearFilters() {
@@ -416,7 +421,24 @@ export default function Graph({ data, openPresetModal }) {
 
   return (
     <div>
-      <Line ref={chartRef} options={config} data={data} />
+      <PanelGroup direction="horizontal" style={{ height: "auto" }}>
+        <Panel minSize={20}>
+          <div
+            className="chart-container relative"
+            style={{ minHeight: "60vh" }}
+          >
+            <Line ref={chartRef} options={config} data={data} />
+          </div>
+        </Panel>
+        {showMap && (
+          <>
+            <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+            <Panel minSize={10}>
+              <FlaMapSection />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
       <div className="flex flex-row gap-2 py-2">
         <MantineTooltip label="Zoom in">
           <ActionIcon
@@ -490,6 +512,17 @@ export default function Graph({ data, openPresetModal }) {
           <MantineTooltip label="View Params">
             <Button className="min-h-8 max-h-8" onClick={openParamsWindow}>
               View Params
+            </Button>
+          </MantineTooltip>
+        )}
+
+        {canShowMapPositionData && (
+          <MantineTooltip label={showMap ? "Hide Map" : "Show Map"}>
+            <Button
+              className="min-h-8 max-h-8"
+              onClick={() => setShowMap(!showMap)}
+            >
+              {showMap ? "Hide Map" : "Show Map"}
             </Button>
           </MantineTooltip>
         )}

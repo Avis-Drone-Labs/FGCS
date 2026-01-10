@@ -38,6 +38,7 @@ import {
   setLogEvents,
   setLogMessages,
   setLogType,
+  setMapPositionData,
   setMessageFilters,
   setMessageMeans,
   setParams,
@@ -77,6 +78,7 @@ export default function FLA() {
       ),
     )
     dispatch(setParams(summary.params))
+    dispatch(setMapPositionData(summary.mapPositionData))
     dispatch(setBaseChartData([]))
     // Fire off preload in the background without blocking
     const labelsToPreload = PRELOAD_LABELS[summary.logType]
@@ -97,6 +99,8 @@ export default function FLA() {
     dispatch(setLogType("dataflash"))
     dispatch(setCanSavePreset(false))
     dispatch(setBaseChartData([]))
+    dispatch(setParams(null))
+    dispatch(setMapPositionData(null))
   }
 
   async function fetchData(labelsToFetch) {

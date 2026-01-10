@@ -482,7 +482,10 @@ function processAndSaveLogData(
     params = getParamObjects(loadedLogMessages["PARM"] as MessageObject[])
   }
 
-  if (logType === "dataflash_bin" && canDisplayMapPositionData(loadedLogMessages)) {
+  if (
+    logType === "dataflash_bin" &&
+    canDisplayMapPositionData(loadedLogMessages)
+  ) {
     mapPositionData = getMapPositionData(loadedLogMessages)
   }
 

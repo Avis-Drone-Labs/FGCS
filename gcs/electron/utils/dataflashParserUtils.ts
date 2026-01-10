@@ -241,7 +241,7 @@ function canDisplayMapPositionData(logMessages: Messages) {
 }
 
 function getMapPositionData(logMessages: Messages): MapPositionData {
-  // Get position data from GPS and POS messages. GPS is the same GPS[1]
+  // Get position data from GPS and POS messages. GPS is the same GPS[0]
 
   const mapPositionData: MapPositionData = {}
 
@@ -276,10 +276,10 @@ function extractLatLonFromGpsMessages(
     return undefined
   }
 
-  return gpsMessages
+  const extractedData = gpsMessages
     .map((msg: MessageObject) => {
       // Only process messages with a status more than 2 (3D fix and above)
-      if ((msg as { Status?: number }).Status! > 2) {
+      if (((msg as { Status?: number }).Status ?? 0) > 2) {
         const lat = (msg as { Lat?: unknown }).Lat
         const lon = (msg as { Lng?: unknown }).Lng
         if (
@@ -291,9 +291,16 @@ function extractLatLonFromGpsMessages(
           return undefined
         }
         return { lat, lon }
+      } else {
+        return undefined
       }
     })
     .filter((item): item is MapPositionDataObject => item !== undefined)
+
+  if (extractedData.length > 0) {
+    return extractedData
+  }
+  return undefined
 }
 
 function extractLatLonFromPosMessages(
@@ -303,7 +310,7 @@ function extractLatLonFromPosMessages(
     return undefined
   }
 
-  return posMessages
+  const extractedData = posMessages
     .map((msg: MessageObject) => {
       const lat = (msg as { Lat?: unknown }).Lat
       const lon = (msg as { Lng?: unknown }).Lng
@@ -318,6 +325,11 @@ function extractLatLonFromPosMessages(
       return { lat, lon }
     })
     .filter((item): item is MapPositionDataObject => item !== undefined)
+
+  if (extractedData.length > 0) {
+    return extractedData
+  }
+  return undefined
 }
 
 export {

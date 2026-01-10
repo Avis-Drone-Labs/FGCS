@@ -20,11 +20,11 @@ function FlaMapSectionNonMemo() {
   const mapPositionData = useSelector(selectMapPositionData)
   const mapPositionDataBounds = useMemo(() => {
     let dataSource = null
-    if (mapPositionData.gps.length) {
+    if (mapPositionData.gps?.length) {
       dataSource = mapPositionData.gps
-    } else if (mapPositionData.gps2.length) {
+    } else if (mapPositionData.gps2?.length) {
       dataSource = mapPositionData.gps2
-    } else if (mapPositionData.pos.length) {
+    } else if (mapPositionData.pos?.length) {
       dataSource = mapPositionData.pos
     }
 
@@ -56,12 +56,16 @@ function FlaMapSectionNonMemo() {
         dragRotate={false}
         touchRotate={false}
         cursor="default"
-        initialViewState={{
-          bounds: mapPositionDataBounds,
-          fitBoundsOptions: {
-            padding: 100,
-          },
-        }}
+        initialViewState={
+          mapPositionDataBounds !== null
+            ? {
+                bounds: mapPositionDataBounds,
+                fitBoundsOptions: {
+                  padding: 100,
+                },
+              }
+            : undefined
+        }
       >
         {mapPositionData.gps?.length > 1 && (
           <DrawLineCoordinates
@@ -101,9 +105,6 @@ function FlaMapSectionNonMemo() {
   )
 }
 
-function propsAreEqual(prev, next) {
-  return JSON.stringify(prev) === JSON.stringify(next)
-}
-const FlaMapSection = React.memo(FlaMapSectionNonMemo, propsAreEqual)
+const FlaMapSection = React.memo(FlaMapSectionNonMemo)
 
 export default FlaMapSection

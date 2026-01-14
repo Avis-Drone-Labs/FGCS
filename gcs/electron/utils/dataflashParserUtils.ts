@@ -1,7 +1,10 @@
 import type {
   AircraftType,
   FormatMessage,
+  MapPositionData,
+  MapPositionDataObject,
   MessageObject,
+  Messages,
   ParamObject,
 } from "../types/flaTypes"
 
@@ -224,9 +227,116 @@ function getParamObjects(paramMessages: MessageObject[]): ParamObject[] {
   return sortedParams
 }
 
+function canDisplayMapPositionData(logMessages: Messages) {
+  // Check if there is GPS or GPS[0] or GPS[1] or POS messages
+  if (
+    "GPS" in logMessages ||
+    "GPS[0]" in logMessages ||
+    "GPS[1]" in logMessages ||
+    "POS" in logMessages
+  ) {
+    return true
+  }
+  return false
+}
+
+function getMapPositionData(logMessages: Messages): MapPositionData {
+  // Get position data from GPS and POS messages. GPS is the same GPS[0]
+
+  const mapPositionData: MapPositionData = {}
+
+  if ("GPS" in logMessages) {
+    mapPositionData.gps = extractLatLonFromGpsMessages(
+      logMessages["GPS"] as MessageObject[],
+    )
+  }
+  if ("GPS[0]" in logMessages) {
+    mapPositionData.gps = extractLatLonFromGpsMessages(
+      logMessages["GPS[0]"] as MessageObject[],
+    )
+  }
+  if ("GPS[1]" in logMessages) {
+    mapPositionData.gps2 = extractLatLonFromGpsMessages(
+      logMessages["GPS[1]"] as MessageObject[],
+    )
+  }
+  if ("POS" in logMessages) {
+    mapPositionData.pos = extractLatLonFromPosMessages(
+      logMessages["POS"] as MessageObject[],
+    )
+  }
+
+  return mapPositionData
+}
+
+function extractLatLonFromGpsMessages(
+  gpsMessages: MessageObject[],
+): MapPositionDataObject[] | undefined {
+  if (!gpsMessages || gpsMessages.length === 0) {
+    return undefined
+  }
+
+  const extractedData = gpsMessages
+    .map((msg: MessageObject) => {
+      // Only process messages with a status more than 2 (3D fix and above)
+      if (((msg as { Status?: number }).Status ?? 0) > 2) {
+        const lat = (msg as { Lat?: unknown }).Lat
+        const lon = (msg as { Lng?: unknown }).Lng
+        if (
+          typeof lat !== "number" ||
+          typeof lon !== "number" ||
+          lat === 0 ||
+          lon === 0
+        ) {
+          return undefined
+        }
+        return { lat, lon }
+      } else {
+        return undefined
+      }
+    })
+    .filter((item): item is MapPositionDataObject => item !== undefined)
+
+  if (extractedData.length > 0) {
+    return extractedData
+  }
+  return undefined
+}
+
+function extractLatLonFromPosMessages(
+  posMessages: MessageObject[],
+): MapPositionDataObject[] | undefined {
+  if (!posMessages || posMessages.length === 0) {
+    return undefined
+  }
+
+  const extractedData = posMessages
+    .map((msg: MessageObject) => {
+      const lat = (msg as { Lat?: unknown }).Lat
+      const lon = (msg as { Lng?: unknown }).Lng
+      if (
+        typeof lat !== "number" ||
+        typeof lon !== "number" ||
+        lat === 0 ||
+        lon === 0
+      ) {
+        return undefined
+      }
+      return { lat, lon }
+    })
+    .filter((item): item is MapPositionDataObject => item !== undefined)
+
+  if (extractedData.length > 0) {
+    return extractedData
+  }
+  return undefined
+}
+
 export {
+  canDisplayMapPositionData,
   getAircraftTypeFromMavType,
   getFormatMessages,
+  getMapPositionData,
   getParamObjects,
   normalizeFormatMessageNames,
   normalizeMessageNames,

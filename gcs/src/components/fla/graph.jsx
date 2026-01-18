@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from "react"
 
 // 3rd party imports
 import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
-import { useToggle } from "@mantine/hooks"
 import {
   IconCapture,
   IconCopy,
@@ -117,9 +116,36 @@ export default function Graph({ data, openPresetModal }) {
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
   })
-  const [showEvents, toggleShowEvents] = useToggle()
+  const [showEvents, setShowEvents] = useState(false)
   const chartRef = useRef(null)
   const [showMap, setShowMap] = useState(false)
+
+  // Toggle show events without resetting zoom
+  function toggleShowEvents() {
+    setShowEvents((prev) => !prev)
+
+    // Update annotations visibility directly on the chart instance
+    if (chartRef.current) {
+      const chart = chartRef.current
+      const annotations = chart.options?.plugins?.annotation?.annotations
+
+      if (annotations) {
+        // Update display property for event annotations only
+        Object.keys(annotations).forEach((key) => {
+          const annotation = annotations[key]
+          // Only update line annotations (events), not box annotations (flight modes)
+          if (annotation.type === "line") {
+            annotation.display = !showEvents
+            if (annotation.label) {
+              annotation.label.display = !showEvents
+            }
+          }
+        })
+
+        chart.update("none") // 'none' mode prevents animation and maintains zoom
+      }
+    }
+  }
 
   // Turn on/off all filters
   function clearFilters() {
@@ -405,19 +431,19 @@ export default function Graph({ data, openPresetModal }) {
 
     scales.x = { ...config.scales.x }
 
-    setConfig({
-      ...config,
+    setConfig((prevConfig) => ({
+      ...prevConfig,
       scales: {
         ...scales,
       },
       plugins: {
-        ...config.plugins,
+        ...prevConfig.plugins,
         annotation: {
           annotations: annotations,
         },
       },
-    })
-  }, [events, showEvents, flightModes, data])
+    }))
+  }, [events, flightModes, data])
 
   return (
     <div>

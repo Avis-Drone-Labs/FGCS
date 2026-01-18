@@ -122,7 +122,8 @@ export default function Graph({ data, openPresetModal }) {
 
   // Toggle show events without resetting zoom
   function toggleShowEvents() {
-    setShowEvents((prev) => !prev)
+    const newShowEventsVal = !showEvents
+    setShowEvents(newShowEventsVal)
 
     // Update annotations visibility directly on the chart instance
     if (chartRef.current) {
@@ -135,9 +136,9 @@ export default function Graph({ data, openPresetModal }) {
           const annotation = annotations[key]
           // Only update line annotations (events), not box annotations (flight modes)
           if (annotation.type === "line") {
-            annotation.display = !showEvents
+            annotation.display = newShowEventsVal
             if (annotation.label) {
-              annotation.label.display = !showEvents
+              annotation.label.display = newShowEventsVal
             }
           }
         })

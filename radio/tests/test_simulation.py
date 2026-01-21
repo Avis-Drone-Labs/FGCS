@@ -337,11 +337,11 @@ def test_get_docker_client(_socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_wait_for_container_running_result(socketio_client: SocketIOTestClient):
+def test_wait_for_container_connection_msg(socketio_client: SocketIOTestClient):
     """
-    Test the wait_for_container_running_result function directly.
+    Test the wait_for_container_connection_msg function directly.
     """
-    from app.endpoints.simulation import wait_for_container_running_result
+    from app.endpoints.simulation import wait_for_container_connection_msg
 
     # Start a container manually
     cleanup_container()
@@ -353,7 +353,7 @@ def test_wait_for_container_running_result(socketio_client: SocketIOTestClient):
     )
 
     # Call the function to wait for the container to start
-    wait_for_container_running_result(container, connect=False, timeout=5)
+    wait_for_container_connection_msg(container, connect=False, timeout=5)
 
     # Verify the emitted message
     result = socketio_client.get_received()[-1]

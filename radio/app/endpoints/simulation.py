@@ -92,8 +92,8 @@ def build_command(data):
         cmd.append(f"LON={data['lon']}")
     if "alt" in data:
         cmd.append(f"ALT={data['alt']}")
-    if "dir" in data:
-        cmd.append(f"DIR={data['dir']}")
+    if "direction" in data:
+        cmd.append(f"DIR={data['direction']}")
 
     return cmd
 
@@ -119,7 +119,8 @@ def container_already_running(client, container_name) -> bool:
             try:
                 existing.remove(force=True)
             except NotFound:
-                # container already removed (race condition with remove=True)
+                # container already removed
+                # (race condition with remove=True on container run)
                 pass
             return False
 
@@ -127,7 +128,7 @@ def container_already_running(client, container_name) -> bool:
         return False
 
 
-def wait_for_container_running_result(
+def wait_for_container_connection_msg(
     container, connect, timeout=CONTAINER_START_TIMEOUT
 ):
     """
@@ -155,9 +156,6 @@ def wait_for_container_running_result(
                 break
 
             if time.time() - start_time > timeout:
-                break
-
-            if container.status == "exited":
                 break
 
         socketio.emit(
@@ -223,9 +221,9 @@ def start_docker_simulation(data) -> None:
         return
     if not _validate_numeric_param("lon", -180.0, 180.0, "Longitude"):
         return
-    if not _validate_numeric_param("alt", 0.0, 100000.0, "Altitude"):
+    if not _validate_numeric_param("alt", 0.0, 10000.0, "Altitude"):
         return
-    if not _validate_numeric_param("dir", 0.0, 360.0, "Direction"):
+    if not _validate_numeric_param("direction", 0.0, 360.0, "Direction"):
         return
 
     if "connect" in data:
@@ -262,7 +260,7 @@ def start_docker_simulation(data) -> None:
         )
 
         socketio.start_background_task(
-            wait_for_container_running_result,
+            wait_for_container_connection_msg,
             container,
             connect,
             CONTAINER_START_TIMEOUT,

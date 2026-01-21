@@ -73,7 +73,7 @@ export default function SimulationModal() {
         mb="md"
         label="Vehicle type"
         placeholder="Pick value"
-        data={["ArduCopter", "ArduPlane", "Rover"]}
+        data={["ArduCopter", "ArduPlane"]}
         value={simulationParams.vehicleType}
         allowDeselect={false}
         onChange={(value) => {
@@ -109,6 +109,8 @@ export default function SimulationModal() {
           label="Altitude"
           placeholder="Altitude"
           value={simulationParams.alt}
+          min={0}
+          max={10000}
           onChange={(val) =>
             dispatch(setSimulationParam({ key: "alt", value: val }))
           }
@@ -121,7 +123,7 @@ export default function SimulationModal() {
           min={0}
           max={360}
           onChange={(val) =>
-            dispatch(setSimulationParam({ key: "dir", value: val }))
+            dispatch(setSimulationParam({ key: "direction", value: val }))
           }
         />
       </SimpleGrid>

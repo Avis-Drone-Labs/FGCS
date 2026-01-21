@@ -429,6 +429,9 @@ const socketMiddleware = (store) => {
         // Simulation status messages
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
           if (msg.loading) {
+            if (simulationLoadingId != null) {
+              closeLoadingNotification(simulationLoadingId)
+            }
             simulationLoadingId = showLoadingNotification(
               msg.title,
               msg.message,
@@ -439,6 +442,7 @@ const socketMiddleware = (store) => {
               msg.title,
               msg.message,
             )
+            simulationLoadingId = null
           }
         })
 

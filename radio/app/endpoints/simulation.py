@@ -133,9 +133,8 @@ def wait_for_container_connection_msg(
 ):
     """
     Waits to determine whether the container starts successfully by monitoring its logs
-    for the message "YOU CAN NOW CONNECT". During processing the log output is
-    concatenated without spaces, so the function actually searches for the string
-    "YOUCANNOWCONNECT" in the accumulated buffer.
+    for the message "YOU CAN NOW CONNECT". During streaming the logs spaces are stripped
+    so actually searches for the string "YOUCANNOWCONNECT".
 
     Args:
         container: The container to wait for.
@@ -171,7 +170,7 @@ def wait_for_container_connection_msg(
                 processed_len = len(logs_text)
                 buffer += new_text.strip()
 
-            if "YOU CAN NOW CONNECT" in buffer:
+            if "YOUCANNOWCONNECT" in buffer.replace(" ", ""):
                 line_found = True
                 break
 
@@ -245,7 +244,7 @@ def start_docker_simulation(data) -> None:
         return
     if not _validate_numeric_param("alt", 0.0, 10000.0, "Altitude"):
         return
-    if not _validate_numeric_param("direction", 0.0, 360.0, "Direction"):
+    if not _validate_numeric_param("direction", 0.0, 359.999, "Direction"):
         return
 
     if "connect" in data:

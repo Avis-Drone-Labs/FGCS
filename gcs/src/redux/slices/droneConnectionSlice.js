@@ -55,13 +55,13 @@ const initialState = {
   forceDisarmModalOpened: false,
 
   simulationModalOpened: false,
-  simParams: {
+  simulationParams: {
     port: 5760,
     vehicleType: "ArduCopter",
     lat: null,
     lon: null,
     alt: null,
-    dir: null,
+    direction: null,
     connectAfterStart: true,
   },
 }
@@ -174,11 +174,11 @@ const droneConnectionSlice = createSlice({
       state.simulationStatus = action.payload
     },
     setSimulationParams: (state, action) => {
-      state.simParams = action.payload
+      state.simulationParams = action.payload
     },
     setSimulationParam: (state, action) => {
       const { key, value } = action.payload
-      state.simParams[key] = value === "" || value === undefined ? null : value
+      state.simulationParams[key] = value === "" || value === undefined ? null : value
     },
 
     // Emits
@@ -231,7 +231,7 @@ const droneConnectionSlice = createSlice({
     selectIsSimulationRunning: (state) =>
       state.simulationStatus === SimulationStatus.Running,
     selectSimulationModalOpened: (state) => state.simulationModalOpened,
-    selectSimulationParams: (state) => state.simParams,
+    selectSimulationParams: (state) => state.simulationParams,
   },
 })
 

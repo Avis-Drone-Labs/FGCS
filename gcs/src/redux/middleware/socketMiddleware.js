@@ -455,7 +455,7 @@ const socketMiddleware = (store) => {
           } else if (msg.running === false) {
             store.dispatch(setSimulationStatus(SimulationStatus.Idle))
           }
-          // Else assume status unchanged
+          // Else result does not change the status
 
           msg.success
             ? showSuccessNotification(msg.message)
@@ -463,7 +463,7 @@ const socketMiddleware = (store) => {
 
           if (msg.connect) {
             const storeState = store.getState()
-            const port = storeState.droneConnection.simParams.port
+            const port = storeState.droneConnection.simulationParams.port
             store.dispatch(
               emitConnectToDrone({
                 port: `tcp:127.0.0.1:${port}`,

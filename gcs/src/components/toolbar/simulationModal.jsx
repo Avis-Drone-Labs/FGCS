@@ -119,9 +119,9 @@ export default function SimulationModal() {
         <NumberInput
           label="Direction"
           placeholder="Direction"
-          value={simulationParams.dir}
+          value={simulationParams.direction}
           min={0}
-          max={360}
+          max={359.999}
           onChange={(val) =>
             dispatch(setSimulationParam({ key: "direction", value: val }))
           }

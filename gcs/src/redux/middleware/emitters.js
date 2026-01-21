@@ -44,6 +44,7 @@ import {
   emitReadFile,
   setIsReadingFile,
   setLoadingListFiles,
+  setReadFileProgress,
 } from "../slices/ftpSlice"
 import {
   emitControlMission,
@@ -424,6 +425,7 @@ export function handleEmitters(socket, store, action) {
           path: action.payload.path,
         })
         store.dispatch(setIsReadingFile(true))
+        store.dispatch(setReadFileProgress(null)) // Reset progress when starting new download
       },
     },
   ]

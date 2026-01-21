@@ -87,6 +87,7 @@ import {
   setIsReadingFile,
   setLoadingListFiles,
   setReadFileData,
+  setReadFileProgress,
 } from "../slices/ftpSlice.js"
 import {
   addIdToItem,
@@ -189,6 +190,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
 const FtpSpecificSocketEvents = Object.freeze({
   onListFilesResult: "list_files_result",
   onReadFileResult: "read_file_result",
+  onReadFileProgress: "read_file_progress",
 })
 
 const socketMiddleware = (store) => {
@@ -1156,13 +1158,28 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(FtpSpecificSocketEvents.onReadFileResult, (msg) => {
-          store.dispatch(setIsReadingFile(false))
           if (msg.success) {
             showSuccessNotification(msg.message)
             store.dispatch(setReadFileData(msg.data))
+            store.dispatch(setIsReadingFile(false))
+            store.dispatch(setReadFileProgress(null)) // Reset progress
           } else {
             showErrorNotification(msg.message)
+
+            // If currently not reading a file, then reset states
+            const storeState = store.getState()
+            if (storeState !== undefined) {
+              const isReadingFile = storeState.ftp.isReadingFile
+              if (!isReadingFile) {
+                store.dispatch(setIsReadingFile(false))
+                store.dispatch(setReadFileProgress(null)) // Reset progress
+              }
+            }
           }
+        })
+
+        socket.socket.on(FtpSpecificSocketEvents.onReadFileProgress, (msg) => {
+          store.dispatch(setReadFileProgress(msg))
         })
       } else {
         // Turn off socket events
@@ -1176,6 +1193,9 @@ const socketMiddleware = (store) => {
           socket.socket.off(event),
         )
         Object.values(ConfigSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
+        Object.values(FtpSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
 

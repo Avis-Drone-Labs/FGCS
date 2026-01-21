@@ -115,10 +115,11 @@ class FtpController:
 
         try:
             start_time = time.time()
+            last_response_time = start_time  # Track time of last response
 
             # Continue listening until timeout expires
-            while time.time() - start_time < timeout:
-                remaining_time = timeout - (time.time() - start_time)
+            while time.time() - last_response_time < timeout:
+                remaining_time = timeout - (time.time() - last_response_time)
 
                 # Wait for message with remaining timeout
                 response = self.drone.wait_for_message(
@@ -129,6 +130,9 @@ class FtpController:
 
                 if response is None:
                     continue
+
+                # Reset timeout counters on every response
+                last_response_time = time.time()
 
                 response_op = self._parseFtpResponse(response)
 
@@ -189,7 +193,7 @@ class FtpController:
                     )
 
             # Log timeout if we didn't receive expected completion
-            if time.time() - start_time >= timeout:
+            if time.time() - last_response_time >= timeout:
                 self.drone.logger.warning(
                     f"Timeout ({timeout}s) reached while waiting for FTP responses for operation {op_name}"
                 )
@@ -450,7 +454,13 @@ class FtpController:
             self.drone.logger.info(f"Listing files in directory: {path}")
 
             self._sendFtpCommand(op)
-            response = self._processFtpResponse("list_files")
+
+            if "logs" in path:
+                timeout = 30
+            else:
+                timeout = 5
+
+            response = self._processFtpResponse("list_files", timeout=timeout)
 
             if response.get("success", False) is False:
                 return response
@@ -468,7 +478,11 @@ class FtpController:
             self.current_op = None
 
     def readFile(
-        self, path: str, size: Optional[int] = None, offset: int = 0
+        self,
+        path: str,
+        size: Optional[int] = None,
+        offset: int = 0,
+        progress_callback=None,
     ) -> Response:
         """
         Read/download a file from the drone using MAVFTP.
@@ -477,6 +491,7 @@ class FtpController:
             path (str): The file path to read.
             size (Optional[int]): Number of bytes to read. If None, reads entire file.
             offset (int): Offset in bytes to start reading from.
+            progress_callback: Optional callback function called with (bytes_downloaded, total_bytes, percentage)
 
         Returns:
             Response: A response object containing the file data or error message.
@@ -487,6 +502,8 @@ class FtpController:
                 "success": False,
                 "message": f"FTP operation already in progress: {self.current_op}",
             }
+
+        self.progress_callback = progress_callback
 
         try:
             self.current_op = "read_file"
@@ -555,6 +572,7 @@ class FtpController:
                 "data": {"file_data": result_data, "file_name": path.split("/")[-1]},
             }
         finally:
+            self.progress_callback = None
             self.current_op = None
 
     def _handleOpenFileReadOnlyResponse(self, response_op: mavftp_op.FTP_OP) -> bool:
@@ -684,6 +702,17 @@ class FtpController:
                 # Sequential write
                 self.read_buffer.write(response_op.payload)
                 self.read_total += len(response_op.payload)
+
+            # Emit progress update
+            if (
+                hasattr(self, "progress_callback")
+                and self.progress_callback
+                and self.remote_file_size
+            ):
+                percentage = (self.read_total / self.remote_file_size) * 100
+                self.progress_callback(
+                    self.read_total, self.remote_file_size, percentage
+                )
 
             # Check if burst is complete
             if response_op.burst_complete:

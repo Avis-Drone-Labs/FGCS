@@ -193,7 +193,7 @@ def test_build_command(_socketio_client: SocketIOTestClient):
         "lat": 34.05,
         "lon": -118.25,
         "alt": 100,
-        "dir": 90,
+        "direction": 90,
     }
 
     # Call the function

@@ -145,18 +145,40 @@ def wait_for_container_connection_msg(
     start_time = time.time()
     line_found = False
     buffer = ""
+    poll_interval_s = 0.2
 
     try:
-        for line in container.logs(stream=True):
-            decoded = line.decode().strip()
-            buffer += decoded
+        processed_len = 0
 
-            if "YOUCANNOWCONNECT" in buffer:
+        while True:
+            if time.time() - start_time > timeout:
+                break
+
+            try:
+                container.reload()
+            except DockerException:
+                break
+
+            try:
+                logs_bytes = container.logs(stream=False)
+            except DockerException:
+                break
+
+            # Process the container logs
+            logs_text = logs_bytes.decode(errors="ignore")
+            if processed_len < len(logs_text):
+                new_text = logs_text[processed_len:]
+                processed_len = len(logs_text)
+                buffer += new_text.strip()
+
+            if "YOU CAN NOW CONNECT" in buffer:
                 line_found = True
                 break
 
-            if time.time() - start_time > timeout:
+            if getattr(container, "status", None) == "exited":
                 break
+
+            time.sleep(poll_interval_s)
 
         socketio.emit(
             "simulation_result",

@@ -41,6 +41,32 @@ import registerVibeStatusIPC, {
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 import { readParamsFile } from "./utils/paramsFile"
 
+// Check if required data files exist
+function checkRequiredDataFiles(): {
+  success: boolean
+  missingFiles: string[]
+} {
+  const requiredFiles = [
+    path.join(__dirname, "../data/gen_apm_params_def_copter.json"),
+    path.join(__dirname, "../data/gen_apm_params_def_plane.json"),
+    path.join(__dirname, "../data/gen_log_messages_desc_copter.json"),
+    path.join(__dirname, "../data/gen_log_messages_desc_plane.json"),
+  ]
+
+  const missingFiles: string[] = []
+
+  for (const filePath of requiredFiles) {
+    if (!fs.existsSync(filePath)) {
+      missingFiles.push(path.basename(filePath))
+    }
+  }
+
+  return {
+    success: missingFiles.length === 0,
+    missingFiles,
+  }
+}
+
 process.env.DIST = path.join(__dirname, "../dist")
 process.env.VITE_PUBLIC = app.isPackaged
   ? process.env.DIST
@@ -524,6 +550,21 @@ app.on("activate", () => {
 })
 
 app.whenReady().then(() => {
+  // Check if required data files exist before starting the app
+  const fileCheck = checkRequiredDataFiles()
+  if (!fileCheck.success) {
+    dialog.showErrorBox(
+      "Missing Required Files",
+      `The following required data files are missing:\n\n${fileCheck.missingFiles.join("\n")}\n\n` +
+        `Please run the following commands in the 'gcs/data' directory:\n` +
+        `  python generate_param_definitions.py\n` +
+        `  python generate_log_message_descriptions.py\n\n` +
+        `Then restart the application.`,
+    )
+    app.quit()
+    return
+  }
+
   createLoadingWindow()
   // Open file and Get Recent Logs
   ipcMain.handle("fla:open-file", openFile)

@@ -68,10 +68,12 @@ cp -R "$BACKEND_APP_PATH" "$EXTRAS_DIR/"
 
 echo "Copied backend to ${EXTRAS_DIR}/fgcs_backend.app"
 
-# Generate param definitions, then build frontend + Electron package (DMG)
+# Generate param definitions and log message descriptions, then build frontend + Electron package (DMG)
 cd ../gcs/data
 python3 generate_param_definitions.py
 echo "Generated param definitions"
+python3 generate_log_message_descriptions.py
+echo "Generated log message descriptions"
 
 cd ../
 yarn

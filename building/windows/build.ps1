@@ -65,6 +65,8 @@ Write-Output "Building frontend"
 Set-Location ../gcs/data
 python generate_param_definitions.py
 Write-Output "Generated param definitions"
+python generate_log_message_descriptions.py
+Write-Output "Generated log message descriptions"
 
 Set-Location ../
 yarn

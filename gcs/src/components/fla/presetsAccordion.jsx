@@ -4,16 +4,17 @@
   filtering out presets whose message keys/fields aren't available in the loaded log.
 */
 
-import { Fragment, useMemo } from "react"
 import { Accordion } from "@mantine/core"
+import { Fragment, useMemo } from "react"
 import { useSelector } from "react-redux"
 
-import PresetAccordionItem from "./presetAccordionItem.jsx"
 import {
+  selectFormatMessages,
   selectLogType,
   selectMessageFilters,
-  selectFormatMessages,
 } from "../../redux/slices/logAnalyserSlice.js"
+import PresetAccordionItem from "./presetAccordionItem.jsx"
+import { getPresetKeys } from "./presetCategories.js"
 
 export default function PresetsAccordion({
   presetCategories,
@@ -45,8 +46,10 @@ export default function PresetsAccordion({
         }))
         .filter((category) => (category.presets || []).length > 0)
 
+    const presetCategoryKey = getPresetKeys(logType).categoryKey
+
     const defaults = filterCategories(presetCategories[logType])
-    const custom = filterCategories(presetCategories["custom_" + logType])
+    const custom = filterCategories(presetCategories[presetCategoryKey])
 
     return { defaults, custom }
   }, [presetCategories, logType, messageFilters])

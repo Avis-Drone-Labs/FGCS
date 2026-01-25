@@ -185,18 +185,48 @@ const initialPresetCategories = {
   dataflash_log: dataflashPresetCategories,
   dataflash_bin: dataflashPresetCategories,
   fgcs_telemetry: fgcsTelemetryPresetCategories,
+  mp_telemetry: fgcsTelemetryPresetCategories, // MP telemetry uses same structure as FGCS
   custom_dataflash: [
     {
       name: "Custom Presets",
       presets: [],
     },
-  ], // New category for custom dataflash presets
+  ],
   custom_fgcs_telemetry: [
     {
       name: "Custom Presets",
       presets: [],
     },
-  ], // New category for custom FGCS telemetry presets
+  ],
+  custom_mp_telemetry: [
+    {
+      name: "Custom Presets",
+      presets: [],
+    },
+  ],
+}
+
+// Helper function to get the custom category key and storage key for a given log type
+export function getPresetKeys(logType) {
+  const keyMap = {
+    dataflash_log: {
+      categoryKey: "custom_dataflash",
+      storageKey: "customDataflashPresets",
+    },
+    dataflash_bin: {
+      categoryKey: "custom_dataflash",
+      storageKey: "customDataflashPresets",
+    },
+    fgcs_telemetry: {
+      categoryKey: "custom_fgcs_telemetry",
+      storageKey: "customFgcsTelemetryPresets",
+    },
+    mp_telemetry: {
+      categoryKey: "custom_mp_telemetry",
+      storageKey: "customMpTelemetryPresets",
+    },
+  }
+  return keyMap[logType] || keyMap.dataflash_bin // Default fallback
 }
 
 export function usePresetCategories() {
@@ -205,46 +235,40 @@ export function usePresetCategories() {
   )
 
   useEffect(() => {
-    // Load custom presets from localStorage on component mount... if they exist
-    const savedCustomDataflashPresets = localStorage.getItem(
-      "customDataflashPresets",
-    )
-    const savedCustomFgcsTelemetryPresets = localStorage.getItem(
-      "customFgcsTelemetryPresets",
-    )
+    // Load custom presets from localStorage on component mount
+    const customPresetKeys = [
+      {
+        storageKey: "customDataflashPresets",
+        categoryKey: "custom_dataflash",
+      },
+      {
+        storageKey: "customFgcsTelemetryPresets",
+        categoryKey: "custom_fgcs_telemetry",
+      },
+      {
+        storageKey: "customMpTelemetryPresets",
+        categoryKey: "custom_mp_telemetry",
+      },
+    ]
 
-    if (savedCustomDataflashPresets) {
-      setPresetCategories((prevCategories) => ({
-        ...prevCategories,
-        custom_dataflash: [
-          {
-            name: "Custom Presets",
-            presets: JSON.parse(savedCustomDataflashPresets),
-          },
-        ],
-      }))
-    }
-
-    if (savedCustomFgcsTelemetryPresets) {
-      setPresetCategories((prevCategories) => ({
-        ...prevCategories,
-        custom_fgcs_telemetry: [
-          {
-            name: "Custom Presets",
-            presets: JSON.parse(savedCustomFgcsTelemetryPresets),
-          },
-        ],
-      }))
-    }
+    customPresetKeys.forEach(({ storageKey, categoryKey }) => {
+      const savedPresets = localStorage.getItem(storageKey)
+      if (savedPresets) {
+        setPresetCategories((prevCategories) => ({
+          ...prevCategories,
+          [categoryKey]: [
+            {
+              name: "Custom Presets",
+              presets: JSON.parse(savedPresets),
+            },
+          ],
+        }))
+      }
+    })
   }, [])
 
   function saveCustomPreset(preset, logType) {
-    const categoryKey =
-      logType === "dataflash" ? "custom_dataflash" : "custom_fgcs_telemetry"
-    const storageKey =
-      logType === "dataflash"
-        ? "customDataflashPresets"
-        : "customFgcsTelemetryPresets"
+    const { categoryKey, storageKey } = getPresetKeys(logType)
 
     setPresetCategories((prevCategories) => {
       const updatedCustomPresets = [
@@ -265,12 +289,7 @@ export function usePresetCategories() {
   }
 
   function deleteCustomPreset(presetName, logType) {
-    const categoryKey =
-      logType === "dataflash" ? "custom_dataflash" : "custom_fgcs_telemetry"
-    const storageKey =
-      logType === "dataflash"
-        ? "customDataflashPresets"
-        : "customFgcsTelemetryPresets"
+    const { categoryKey, storageKey } = getPresetKeys(logType)
 
     setPresetCategories((prevCategories) => {
       const updatedCustomPresets = prevCategories[
@@ -290,11 +309,10 @@ export function usePresetCategories() {
   }
 
   function findExistingPreset(preset, logType) {
-    const customCategoryKey =
-      logType === "dataflash" ? "custom_dataflash" : "custom_fgcs_telemetry"
+    const { categoryKey } = getPresetKeys(logType)
 
     // Check in custom presets
-    const customPreset = presetCategories[customCategoryKey][0].presets.find(
+    const customPreset = presetCategories[categoryKey][0].presets.find(
       (existingPreset) =>
         existingPreset.name === preset.name ||
         _.isEqual(existingPreset.filters, preset.filters),

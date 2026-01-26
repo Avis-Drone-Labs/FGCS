@@ -2,6 +2,7 @@ import json
 import lzma
 import os
 import xml.etree.ElementTree as ET
+from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
 # https://autotest.ardupilot.org/LogMessages/
@@ -22,53 +23,86 @@ if os.path.exists(temp_file_name):
     os.remove(temp_file_name)
 
 for url, output_filename in log_message_defs:
-    print(f"Downloading {url}...")
-    urlretrieve(url, temp_file_name)
+    try:
+        print(f"Downloading {url}...")
+        urlretrieve(url, temp_file_name)
 
-    with lzma.open(temp_file_name) as f:
-        data = f.read()
+        # Validate file was downloaded
+        if not os.path.exists(temp_file_name):
+            raise FileNotFoundError(f"Failed to download {url}")
 
-    # Parse XML
-    root = ET.fromstring(data)
+        # Try to decompress and read the data
+        try:
+            with lzma.open(temp_file_name) as f:
+                data = f.read()
+        except lzma.LZMAError as e:
+            raise ValueError(f"Failed to decompress XZ file: {e}")
 
-    # Convert XML to JSON structure
-    log_messages = {}
+        # Parse XML
+        root = ET.fromstring(data)
 
-    for log_msg in root.findall("logformat"):
-        name = log_msg.get("name")
-        if name:
-            fields = {}
+        # Convert XML to JSON structure
+        log_messages = {}
 
-            # Get all field elements
-            for field in log_msg.findall("fields/field"):
-                field_name = field.get("name")
-                field_description_elem = field.find("description")
-                field_description = ""
-                if field_description_elem is not None and field_description_elem.text:
-                    field_description = field_description_elem.text.strip()
+        for log_msg in root.findall("logformat"):
+            name = log_msg.get("name")
+            if name:
+                fields = {}
 
-                field_info = {
-                    "type": field.get("type"),
-                    "units": field.get("units", ""),
-                    "description": field_description,
-                }
-                fields[field_name] = field_info
+                # Get all field elements
+                for field in log_msg.findall("fields/field"):
+                    field_name = field.get("name")
+                    # Skip fields without a name attribute
+                    if not field_name:
+                        continue
 
-            # Get description
-            description_elem = log_msg.find("description")
-            description = ""
-            if description_elem is not None and description_elem.text:
-                description = description_elem.text.strip()
+                    field_description_elem = field.find("description")
+                    field_description = ""
+                    if (
+                        field_description_elem is not None
+                        and field_description_elem.text
+                    ):
+                        field_description = field_description_elem.text.strip()
 
-            log_messages[name] = {"description": description, "fields": fields}
+                    field_info = {
+                        "type": field.get("type"),
+                        "units": field.get("units", ""),
+                        "description": field_description,
+                    }
+                    fields[field_name] = field_info
 
-    # Sort by message name and write to JSON file
-    sorted_log_messages = dict(sorted(log_messages.items()))
+                # Get description
+                description_elem = log_msg.find("description")
+                description = ""
+                if description_elem is not None and description_elem.text:
+                    description = description_elem.text.strip()
 
-    with open(output_filename, "w") as f:
-        json.dump(sorted_log_messages, f)
+                log_messages[name] = {"description": description, "fields": fields}
 
-    print(f"Generated {output_filename}")
+        # Sort by message name and write to JSON file
+        sorted_log_messages = dict(sorted(log_messages.items()))
+
+        with open(output_filename, "w") as f:
+            json.dump(sorted_log_messages, f)
+
+        print(f"Generated {output_filename}")
+
+    except (HTTPError, URLError) as e:
+        print(f"Error downloading {url}: {e}")
+        print(f"Skipping {output_filename}")
+        continue
+    except (ValueError, lzma.LZMAError) as e:
+        print(f"Error processing downloaded file: {e}")
+        print(f"Skipping {output_filename}")
+        continue
+    except ET.ParseError as e:
+        print(f"Error parsing XML: {e}")
+        print(f"Skipping {output_filename}")
+        continue
+    except Exception as e:
+        print(f"Unexpected error processing {url}: {e}")
+        print(f"Skipping {output_filename}")
+        continue
 
 if os.path.exists(temp_file_name):
     os.remove(temp_file_name)

@@ -52,7 +52,7 @@ export default function PresetsAccordion({
     const custom = filterCategories(presetCategories[presetCategoryKey])
 
     return { defaults, custom }
-  }, [presetCategories, logType, messageFilters])
+  }, [presetCategories, logType, messageFilters, formatMessages])
 
   return (
     <Accordion multiple={true}>

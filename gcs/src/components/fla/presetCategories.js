@@ -251,20 +251,37 @@ export function usePresetCategories() {
       },
     ]
 
+    const updates = {}
     customPresetKeys.forEach(({ storageKey, categoryKey }) => {
       const savedPresets = localStorage.getItem(storageKey)
-      if (savedPresets) {
-        setPresetCategories((prevCategories) => ({
-          ...prevCategories,
-          [categoryKey]: [
+
+      let parsedPresets
+      try {
+        parsedPresets = JSON.parse(savedPresets)
+
+        if (parsedPresets) {
+          updates[categoryKey] = [
             {
               name: "Custom Presets",
               presets: JSON.parse(savedPresets),
             },
-          ],
-        }))
+          ]
+        }
+      } catch (error) {
+        console.warn(
+          `Failed to parse custom presets from localStorage key "${storageKey}". Clearing corrupted data.`,
+          error,
+        )
+        localStorage.removeItem(storageKey)
       }
     })
+
+    if (Object.keys(updates).length > 0) {
+      setPresetCategories((prevCategories) => ({
+        ...prevCategories,
+        ...updates,
+      }))
+    }
   }, [])
 
   function saveCustomPreset(preset, logType) {

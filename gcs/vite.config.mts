@@ -31,6 +31,7 @@ export default defineConfig({
         videoWindow: resolve(__dirname, "videoWindow.html"),
         ekfStatus: resolve(__dirname, "ekfStatus.html"),
         vibeStatus: resolve(__dirname, "vibeStatus.html"),
+        flaParams: resolve(__dirname, "flaParams.html"),
       },
     },
   },

@@ -40,6 +40,10 @@ yarn.lock
 gen_apm_params_def_copter.json
 gen_apm_params_def_plane.json
 
+# Generated log message description files
+gen_log_messages_desc_copter.json
+gen_log_messages_desc_plane.json
+
 # Yarn-related files to ignore
 .yarn/
 .yarnrc.yml

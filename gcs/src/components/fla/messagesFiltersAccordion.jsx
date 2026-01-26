@@ -7,15 +7,11 @@
 
 // 3rd Party Imports
 import { Accordion, Checkbox, Tooltip } from "@mantine/core"
-import { memo, useCallback, useMemo } from "react"
+import { memo, useCallback, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 
 // Helper imports
 import { logMessageDescriptions } from "../../helpers/logMessageDescriptions.js"
-
-// Import JSON files for dataflash log descriptions
-import logMessagesCopter from "../../../data/gen_log_messages_desc_copter.json"
-import logMessagesPlane from "../../../data/gen_log_messages_desc_plane.json"
 
 // Local imports
 import {
@@ -72,17 +68,35 @@ export default function MessagesFiltersAccordion() {
   const logType = useSelector(selectLogType)
   const aircraftType = useSelector(selectAircraftType)
 
-  // Memoize log message definitions to avoid recalculating on every render
-  const logMessageDefinitions = useMemo(() => {
-    // Only use detailed definitions for dataflash logs
+  // State to hold dynamically loaded log message definitions
+  const [logMessageDefinitions, setLogMessageDefinitions] = useState(null)
+
+  // Dynamically load log message definitions based on log type and aircraft type
+  useEffect(() => {
+    // Only load for dataflash logs
     if (logType === "dataflash_log" || logType === "dataflash_bin") {
-      if (aircraftType === "plane" || aircraftType === "quadplane") {
-        return logMessagesPlane
-      } else {
-        return logMessagesCopter
+      const loadDefinitions = async () => {
+        try {
+          let module
+          if (aircraftType === "plane" || aircraftType === "quadplane") {
+            module = await import(
+              "../../../data/gen_log_messages_desc_plane.json"
+            )
+          } else {
+            module = await import(
+              "../../../data/gen_log_messages_desc_copter.json"
+            )
+          }
+          setLogMessageDefinitions(module.default)
+        } catch (error) {
+          console.error("Failed to load log message definitions:", error)
+          setLogMessageDefinitions(null)
+        }
       }
+      loadDefinitions()
+    } else {
+      setLogMessageDefinitions(null)
     }
-    return null
   }, [logType, aircraftType])
 
   // handles color assignment and checks if a new preset can be saved

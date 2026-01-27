@@ -28,6 +28,8 @@ import {
   showLoadingNotification,
 } from "../helpers/notification"
 
+const octokit = new Octokit({})
+
 const isValidNumber = (num, range) => {
   return (
     num &&
@@ -88,8 +90,6 @@ function BoolSetting({ settingName }) {
 function PrereleaseCheckRow() {
   const [checking, setChecking] = useState(false)
   const [result, setResult] = useState(null)
-
-  const octokit = new Octokit({})
 
   const checkNow = async () => {
     setChecking(true)

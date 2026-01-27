@@ -10,15 +10,17 @@ import {
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
+import { ActionIcon, Tooltip } from "@mantine/core"
+import { useDisclosure } from "@mantine/hooks"
 import {
   IconAlertCircle,
   IconCheck,
   IconRestore,
   IconTrash,
 } from "@tabler/icons-react"
+import { Octokit } from "octokit"
 import { memo, useEffect, useState } from "react"
-import { ActionIcon, Tooltip } from "@mantine/core"
-import { useDisclosure } from "@mantine/hooks"
+import semverGt from "semver/functions/gt"
 import DefaultSettings from "../../data/default_settings.json"
 import {
   closeLoadingNotification,
@@ -80,6 +82,98 @@ function BoolSetting({ settingName }) {
       checked={getSetting(settingName)}
       onChange={(e) => setSetting(settingName, e.currentTarget.checked)}
     />
+  )
+}
+
+function PrereleaseCheckRow() {
+  const [checking, setChecking] = useState(false)
+  const [result, setResult] = useState(null)
+
+  const octokit = new Octokit({})
+
+  const checkNow = async () => {
+    setChecking(true)
+    setResult(null)
+    try {
+      // Allow manual check in dev and production
+      const currentVersion = await window.ipcRenderer.invoke("app:get-version")
+
+      const releases = await octokit.request(
+        "GET /repos/{owner}/{repo}/releases",
+        {
+          owner: "Avis-Drone-Labs",
+          repo: "fgcs",
+          headers: { "X-GitHub-Api-Version": "2022-11-28" },
+        },
+      )
+
+      if (releases.status !== 200) {
+        setResult({ error: "Failed to fetch releases" })
+        return
+      }
+
+      const prereleases = releases.data.filter((r) => r.prerelease)
+      if (prereleases.length === 0) {
+        setResult({ found: false })
+        return
+      }
+
+      // Choose the most recent prerelease by published_at
+      prereleases.sort(
+        (a, b) => new Date(b.published_at) - new Date(a.published_at),
+      )
+      const latest = prereleases[0]
+      const latestTag = latest.tag_name
+
+      const isNewer = semverGt(latestTag, currentVersion)
+      setResult({ found: true, latestTag, url: latest.html_url, isNewer })
+    } catch (err) {
+      setResult({ error: err.message })
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  return (
+    <div className="px-10 flex items-center gap-4">
+      <div className="flex-1">
+        <div className="text-sm">Pre-release check</div>
+        <div className="text-xs text-gray-400">
+          Manually check for pre-release versions on GitHub
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button size="xs" color="blue" onClick={checkNow} loading={checking}>
+          Check now
+        </Button>
+        {result && result.error && (
+          <div className="text-xs text-red-400">Error: {result.error}</div>
+        )}
+        {result && !result.error && !result.found && (
+          <div className="text-xs text-gray-400">No pre-releases found</div>
+        )}
+        {result && result.found && (
+          <div className="text-xs">
+            Latest:{" "}
+            <a
+              className="text-blue-400 underline"
+              href={result.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {result.latestTag}
+            </a>
+            {result.isNewer ? (
+              <span className="text-green-400 pl-2">
+                (Newer than installed)
+              </span>
+            ) : (
+              <span className="text-gray-400 pl-2">(Not newer)</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -639,6 +733,11 @@ function SettingsModal() {
                 ))}
                 {Object.keys(tabSettings).length === 0 && (
                   <p className="pl-4 pt-2">No settings available right now.</p>
+                )}
+                {tab === "General" && (
+                  <div className="pt-4">
+                    <PrereleaseCheckRow />
+                  </div>
                 )}
               </Tabs.Panel>
             )

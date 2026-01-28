@@ -52,6 +52,7 @@ const defaultOptions = {
   elements: {
     point: {
       radius: 0,
+      hitRadius: 5,
     },
     line: {
       borderWidth: 1,

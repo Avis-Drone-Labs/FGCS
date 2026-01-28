@@ -24,6 +24,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 
   @apply bg-falcongrey-800 text-neutral-50 h-full max-h-full min-h-screen;
 
@@ -41,6 +43,8 @@ html,
 body {
   height: 100%;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {

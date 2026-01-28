@@ -259,7 +259,6 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
-      zoomFactor: 1.0,
     },
     title: "FGCS",
     show: false,
@@ -550,11 +549,6 @@ app.on("activate", () => {
     createWindow()
   }
 })
-
-if (process.platform === "win32") {
-  app.commandLine.appendSwitch("high-dpi-support", "1")
-  app.commandLine.appendSwitch("force-device-scale-factor", "1")
-}
 
 app.whenReady().then(() => {
   // In development, ensure required data files exist before starting the app.

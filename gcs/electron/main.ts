@@ -289,6 +289,7 @@ function createWindow() {
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString())
+    win?.webContents.setZoomFactor(1.0)
   })
 
   if (VITE_DEV_SERVER_URL) {

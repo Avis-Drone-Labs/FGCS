@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import logger, socketio
+from app import socketio
 from app.utils import notConnectedError
 
 
@@ -11,6 +11,7 @@ class ListFilesType(TypedDict):
 
 class ReadFileType(TypedDict):
     path: str
+    save_path: str  # Local path where to save the file
 
 
 @socketio.on("list_files")
@@ -21,14 +22,6 @@ def listFiles(data: ListFilesType) -> None:
     Args:
         data: The data from the client, this contains "path" which is the directory path to list files from
     """
-    if droneStatus.state is None or "config" not in droneStatus.state:
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the config screen to access FTP operations"},
-        )
-        logger.debug(f"Current state: {droneStatus.state}")
-        return
-
     if not droneStatus.drone:
         return notConnectedError(action="list files")
 
@@ -39,26 +32,36 @@ def listFiles(data: ListFilesType) -> None:
     socketio.emit("list_files_result", result)
 
 
+@socketio.on("list_log_files")
+def listLogFiles() -> None:
+    """
+    Intelligently search for and list log files on the drone.
+    Automatically finds the correct log directory (/logs, /APM/LOGS, etc.)
+    """
+    if not droneStatus.drone:
+        return notConnectedError(action="list log files")
+
+    result = droneStatus.drone.ftpController.listLogFiles()
+
+    socketio.emit("list_log_files_result", result)
+
+
 @socketio.on("read_file")
 def readFile(data: ReadFileType) -> None:
     """
-    Read/download a file from the drone's FTP server
+    Read/download a file from the drone's FTP server and save it locally
 
     Args:
-        data: The data from the client, this contains "path" which is the file path to read/download
+        data: The data from the client, contains:
+            - "path": The remote file path to read/download
+            - "save_path": The local file path where to save the file
     """
-    if droneStatus.state is None or "config" not in droneStatus.state:
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the config screen to access FTP operations"},
-        )
-        logger.debug(f"Current state: {droneStatus.state}")
-        return
-
     if not droneStatus.drone:
         return notConnectedError(action="read file")
 
     path = data.get("path", None)
+    save_path = data.get("save_path", None)
+
     if path is None:
         socketio.emit(
             "read_file_result", {"success": False, "message": "Missing file path"}
@@ -76,13 +79,7 @@ def readFile(data: ReadFileType) -> None:
         )
 
     result = droneStatus.drone.ftpController.readFile(
-        path, progress_callback=progress_callback
+        path, save_path=save_path, progress_callback=progress_callback
     )
-
-    # Convert bytes to list for SocketIO serialization
-    if result.get("success") and "data" in result:
-        data_dict = result["data"]
-        if isinstance(data_dict, dict) and "file_data" in data_dict:
-            data_dict["file_data"] = list(data_dict["file_data"])
 
     socketio.emit("read_file_result", result)

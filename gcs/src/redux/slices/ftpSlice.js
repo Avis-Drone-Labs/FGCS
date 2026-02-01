@@ -8,10 +8,12 @@ const ftpSlice = createSlice({
     isReadingFile: false,
     readFileData: null,
     readFileProgress: null, // { bytes_downloaded, total_bytes, percentage }
+    logPath: null, // The discovered log directory path
   },
   reducers: {
     resetFiles: (state) => {
       state.files = []
+      state.logPath = null
     },
     addFiles: (state, action) => {
       // Filter out any files that are "." or ".." or already exist in top level files
@@ -32,11 +34,14 @@ const ftpSlice = createSlice({
           parentPath = "/"
         }
 
-        if (parentPath === "/") {
+        // If this is a top-level file or if there are no existing files in state,
+        // treat it as a top-level file
+        if (parentPath === "/" || state.files.length === 0) {
           // Add top level files since they don't exist already
           state.files.push(file)
           continue
         }
+
         // Try find parentDir recursively
         const parentDir = (function findParentDir(directories, targetPath) {
           for (const dir of directories) {
@@ -59,9 +64,9 @@ const ftpSlice = createSlice({
           }
           parentDir.children.push(file)
         } else {
-          console.warn(
-            `File "${file.name}" with path "${file.path}" could not be added because its parent directory "${parentPath}" is missing in state`,
-          )
+          // If parent directory doesn't exist, treat as top-level file
+          // This happens when we list a specific directory like /logs
+          state.files.push(file)
         }
       }
     },
@@ -77,8 +82,12 @@ const ftpSlice = createSlice({
     setReadFileProgress: (state, action) => {
       state.readFileProgress = action.payload
     },
+    setLogPath: (state, action) => {
+      state.logPath = action.payload
+    },
 
     emitListFiles: () => {},
+    emitListLogFiles: () => {},
     emitReadFile: () => {},
   },
   selectors: {
@@ -87,6 +96,7 @@ const ftpSlice = createSlice({
     selectIsReadingFile: (state) => state.isReadingFile,
     selectReadFileData: (state) => state.readFileData,
     selectReadFileProgress: (state) => state.readFileProgress,
+    selectLogPath: (state) => state.logPath,
   },
 })
 
@@ -97,8 +107,11 @@ export const {
   setIsReadingFile,
   setReadFileData,
   setReadFileProgress,
+  setLogPath,
+  cancelReadFile,
 
   emitListFiles,
+  emitListLogFiles,
   emitReadFile,
 } = ftpSlice.actions
 
@@ -108,6 +121,7 @@ export const {
   selectIsReadingFile,
   selectReadFileData,
   selectReadFileProgress,
+  selectLogPath,
 } = ftpSlice.selectors
 
 export default ftpSlice

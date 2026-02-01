@@ -511,7 +511,7 @@ class FtpController:
                     "message": f"Failed to list root directory: {root_result.get('message', 'Unknown error')}",
                 }
 
-            root_files = root_result.get("data", [])
+            root_files: list[dict] = root_result.get("data", [])
             root_dirs = {
                 f["name"].lower(): f["name"]
                 for f in root_files
@@ -531,7 +531,7 @@ class FtpController:
                 apm_dir = root_dirs["apm"]
                 apm_result = self.listFiles(f"/{apm_dir}")
                 if apm_result.get("success", False):
-                    apm_files = apm_result.get("data", [])
+                    apm_files: list[dict] = apm_result.get("data", [])
                     apm_subdirs = {
                         f["name"].lower(): f["name"]
                         for f in apm_files
@@ -557,7 +557,7 @@ class FtpController:
                     "message": f"Failed to list log directory {log_path}: {logs_result.get('message', 'Unknown error')}",
                 }
 
-            log_files = logs_result.get("data", [])
+            log_files: list[dict] = logs_result.get("data", [])
 
             filtered_logs = [f for f in log_files if not f.get("is_dir", False)]
 

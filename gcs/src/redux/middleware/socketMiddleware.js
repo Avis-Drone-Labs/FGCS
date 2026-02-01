@@ -1127,7 +1127,6 @@ const socketMiddleware = (store) => {
         socket.socket.on(FtpSpecificSocketEvents.onReadFileResult, (msg) => {
           if (msg.success) {
             showSuccessNotification(msg.message)
-            // file_data
             store.dispatch(setReadFileData(msg.data))
             store.dispatch(setIsReadingFile(false))
             store.dispatch(setReadFileProgress(null)) // Reset progress

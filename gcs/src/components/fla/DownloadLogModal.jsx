@@ -7,7 +7,7 @@ import {
   ScrollArea,
   Text,
 } from "@mantine/core"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { showErrorNotification } from "../../helpers/notification"
 import {
@@ -32,10 +32,6 @@ export default function DownloadLogModal({ opened, onClose }) {
 
   const [selectedLog, setSelectedLog] = useState(null)
   const [hasFetched, setHasFetched] = useState(false)
-
-  const logFiles = useMemo(() => {
-    return files
-  }, [files])
 
   useEffect(() => {
     // Fetch log files when modal opens (only once per opening)
@@ -103,13 +99,13 @@ export default function DownloadLogModal({ opened, onClose }) {
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
             <Text size="sm" c="dimmed">
-              {logFiles.length > 0
-                ? `Found ${logFiles.length} log file${logFiles.length !== 1 ? "s" : ""}`
+              {files.length > 0
+                ? `Found ${files.length} log file${files.length !== 1 ? "s" : ""}`
                 : loadingListFiles
                   ? "Searching for logs..."
                   : "No log files found"}
             </Text>
-            {logPath && logFiles.length > 0 && (
+            {logPath && files.length > 0 && (
               <Text size="xs" c="dimmed">
                 Location: {logPath}
               </Text>
@@ -154,9 +150,9 @@ export default function DownloadLogModal({ opened, onClose }) {
           />
 
           <ScrollArea.Autosize mah={400} offsetScrollbars>
-            {logFiles.length > 0 ? (
+            {files.length > 0 ? (
               <div className="flex flex-col gap-1">
-                {logFiles.map((log, idx) => (
+                {files.map((log, idx) => (
                   <div
                     key={idx}
                     className={`flex items-center gap-3 p-1 rounded cursor-pointer transition-colors ${

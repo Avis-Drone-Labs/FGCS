@@ -108,7 +108,6 @@ export const {
   setReadFileData,
   setReadFileProgress,
   setLogPath,
-  cancelReadFile,
 
   emitListFiles,
   emitListLogFiles,

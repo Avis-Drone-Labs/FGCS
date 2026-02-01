@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 import app.droneStatus as droneStatus
 from app import socketio
@@ -11,7 +11,7 @@ class ListFilesType(TypedDict):
 
 class ReadFileType(TypedDict):
     path: str
-    save_path: str  # Local path where to save the file
+    save_path: NotRequired[str]
 
 
 @socketio.on("list_files")
@@ -81,5 +81,12 @@ def readFile(data: ReadFileType) -> None:
     result = droneStatus.drone.ftpController.readFile(
         path, save_path=save_path, progress_callback=progress_callback
     )
+
+    # Convert bytes to list for SocketIO serialization if file_data is present
+    if result.get("success") and "data" in result:
+        data_dict = result["data"]
+        if isinstance(data_dict, dict) and "file_data" in data_dict:
+            if data_dict["file_data"] is not None:
+                data_dict["file_data"] = list(data_dict["file_data"])
 
     socketio.emit("read_file_result", result)

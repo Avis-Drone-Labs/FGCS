@@ -479,7 +479,6 @@ class FtpController:
             }
         finally:
             self.current_op = None
-            self.operation_cancelled = False  # Reset cancellation flag
 
     def listLogFiles(self) -> Response:
         """

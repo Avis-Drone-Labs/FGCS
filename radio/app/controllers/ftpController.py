@@ -420,6 +420,9 @@ class FtpController:
         """
         # Check if another operation is in progress
         if self.current_op is not None:
+            self.drone.logger.error(
+                f"FTP operation already in progress: {self.current_op}"
+            )
             return {
                 "success": False,
                 "message": f"FTP operation already in progress: {self.current_op}",
@@ -477,27 +480,132 @@ class FtpController:
         finally:
             self.current_op = None
 
+    def listLogFiles(self) -> Response:
+        """
+        Intelligently search for and list log files on the drone.
+
+        Checks common log directories in order:
+        1. /logs (standard Linux location)
+        2. /APM/LOGS (ArduPilot uppercase)
+        3. /apm/logs (ArduPilot lowercase)
+
+        Returns:
+            Response: A response object containing log files or error message.
+        """
+        # Check if another operation is in progress
+        if self.current_op is not None:
+            self.drone.logger.error(
+                f"FTP operation already in progress: {self.current_op}"
+            )
+            return {
+                "success": False,
+                "message": f"FTP operation already in progress: {self.current_op}",
+            }
+
+        try:
+            # First, list root directory to see what's available
+            root_result = self.listFiles("/")
+            if not root_result.get("success", False):
+                return {
+                    "success": False,
+                    "message": f"Failed to list root directory: {root_result.get('message', 'Unknown error')}",
+                }
+
+            root_files: list[dict] = root_result.get("data", [])
+            root_dirs = {
+                f["name"].lower(): f["name"]
+                for f in root_files
+                if f.get("is_dir", False)
+            }
+
+            self.drone.logger.info(
+                f"Found directories in root: {list(root_dirs.keys())}"
+            )
+
+            # Determine which log directory exists and use it
+            log_path = None
+            if "logs" in root_dirs:
+                log_path = f"/{root_dirs['logs']}"
+            elif "apm" in root_dirs:
+                # Check if APM directory exists, then check for LOGS subdirectory
+                apm_dir = root_dirs["apm"]
+                apm_result = self.listFiles(f"/{apm_dir}")
+                if apm_result.get("success", False):
+                    apm_files: list[dict] = apm_result.get("data", [])
+                    apm_subdirs = {
+                        f["name"].lower(): f["name"]
+                        for f in apm_files
+                        if f.get("is_dir", False)
+                    }
+                    if "logs" in apm_subdirs:
+                        log_path = f"/{apm_dir}/{apm_subdirs['logs']}"
+
+            if log_path is None:
+                return {
+                    "success": True,
+                    "message": "No log directory found on drone",
+                    "data": {"files": [], "log_path": None},
+                }
+
+            self.drone.logger.info(f"Using log directory: {log_path}")
+
+            # List files in the log directory
+            logs_result = self.listFiles(log_path)
+            if not logs_result.get("success", False):
+                return {
+                    "success": False,
+                    "message": f"Failed to list log directory {log_path}: {logs_result.get('message', 'Unknown error')}",
+                }
+
+            log_files: list[dict] = logs_result.get("data", [])
+
+            filtered_logs = [f for f in log_files if not f.get("is_dir", False)]
+
+            self.drone.logger.info(
+                f"Found {len(filtered_logs)} log files in {log_path}"
+            )
+
+            return {
+                "success": True,
+                "message": f"Found {len(filtered_logs)} log files",
+                "data": {"files": filtered_logs, "log_path": log_path},
+            }
+
+        except Exception as e:
+            self.drone.logger.error("Error listing log files", exc_info=True)
+            return {
+                "success": False,
+                "message": f"Error listing log files: {e}",
+            }
+        finally:
+            self.current_op = None
+
     def readFile(
         self,
         path: str,
+        save_path: Optional[str] = None,
         size: Optional[int] = None,
         offset: int = 0,
         progress_callback=None,
     ) -> Response:
         """
-        Read/download a file from the drone using MAVFTP.
+        Read/download a file from the drone using MAVFTP and optionally save it to disk.
 
         Args:
-            path (str): The file path to read.
+            path (str): The remote file path to read.
+            save_path (Optional[str]): Local file path where to save the file. If None, returns data in response.
             size (Optional[int]): Number of bytes to read. If None, reads entire file.
             offset (int): Offset in bytes to start reading from.
             progress_callback: Optional callback function called with (bytes_downloaded, total_bytes, percentage)
 
         Returns:
-            Response: A response object containing the file data or error message.
+            Response: A response object containing success status and file info (not the data if saved to disk).
         """
         # Check if another operation is in progress
         if self.current_op is not None:
+            self.drone.logger.error(
+                f"FTP operation already in progress: {self.current_op}"
+            )
             return {
                 "success": False,
                 "message": f"FTP operation already in progress: {self.current_op}",
@@ -562,15 +670,44 @@ class FtpController:
                 # Return entire file
                 result_data = all_data
 
-            self.drone.logger.info(
-                f"Successfully read {len(result_data)} bytes from file: {path}"
-            )
+            file_name = path.split("/")[-1]
 
-            return {
-                "success": True,
-                "message": "File read successfully",
-                "data": {"file_data": result_data, "file_name": path.split("/")[-1]},
-            }
+            # Save to disk if save_path is provided
+            if save_path:
+                try:
+                    with open(save_path, "wb") as f:
+                        f.write(result_data)
+
+                    self.drone.logger.info(
+                        f"Successfully saved {len(result_data)} bytes to: {save_path}"
+                    )
+
+                    return {
+                        "success": True,
+                        "message": f"File saved successfully to {save_path}",
+                        "data": {
+                            "file_name": file_name,
+                            "file_data": None,
+                            "save_path": save_path,
+                        },
+                    }
+                except Exception as e:
+                    self.drone.logger.error(f"Error saving file to {save_path}: {e}")
+                    return {
+                        "success": False,
+                        "message": f"Failed to save file: {str(e)}",
+                    }
+            else:
+                # Return data in response (for backward compatibility)
+                self.drone.logger.info(
+                    f"Successfully read {len(result_data)} bytes from file: {path}"
+                )
+
+                return {
+                    "success": True,
+                    "message": "File read successfully",
+                    "data": {"file_data": result_data, "file_name": file_name},
+                }
         finally:
             self.progress_callback = None
             self.current_op = None

@@ -41,6 +41,7 @@ import {
 } from "../slices/droneConnectionSlice"
 import {
   emitListFiles,
+  emitListLogFiles,
   emitReadFile,
   setIsReadingFile,
   setLoadingListFiles,
@@ -416,10 +417,18 @@ export function handleEmitters(socket, store, action) {
       },
     },
     {
+      emitter: emitListLogFiles,
+      callback: () => {
+        socket.socket.emit("list_log_files")
+        store.dispatch(setLoadingListFiles(true))
+      },
+    },
+    {
       emitter: emitReadFile,
       callback: () => {
         socket.socket.emit("read_file", {
           path: action.payload.path,
+          save_path: action.payload.savePath,
         })
         store.dispatch(setIsReadingFile(true))
         store.dispatch(setReadFileProgress(null)) // Reset progress when starting new download

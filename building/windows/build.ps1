@@ -1,3 +1,5 @@
+# -*- mode: python ; coding: utf-8 -*-
+
 <#
   .DESCRIPTION
   A simple script to automatically build FGCS on windows with powershell
@@ -48,28 +50,72 @@ if (Test-Path $packageJsonPath) {
 
 Write-Output "Building backend"
 Set-Location radio
+
+# Clean reinstall of PyInstaller to fix bootloader issues
+Write-Output "Ensuring clean PyInstaller installation..."
+pip uninstall -y pyinstaller
+pip uninstall -y pyinstaller-hooks-contrib
+pip cache purge
 pip install pyinstaller
 
+# Clean previous build artifacts
 if (Test-Path .\dist) {
-  Remove-Item -Path .\dist -Recurse
+  Write-Output "Cleaning previous dist folder..."
+  Remove-Item -Path .\dist -Recurse -Force
 }
-pyinstaller --paths .\venv\Lib\site-packages\ --add-data=".\venv\Lib\site-packages\pymavlink\message_definitions\:message_definitions" --add-data=".\venv\Lib\site-packages\pymavlink\:pymavlink" --hidden-import pymavlink --hidden-import engineio.async_drivers.threading .\app.py -n fgcs_backend
+if (Test-Path .\build) {
+  Write-Output "Cleaning previous build folder..."
+  Remove-Item -Path .\build -Recurse -Force
+}
+
+# Build with PyInstaller
+Write-Output "Running PyInstaller..."
+pyinstaller --clean --noconfirm `
+  --paths .\venv\Lib\site-packages\ `
+  --add-data=".\venv\Lib\site-packages\pymavlink\message_definitions\:message_definitions" `
+  --add-data=".\venv\Lib\site-packages\pymavlink\:pymavlink" `
+  --hidden-import pymavlink `
+  --hidden-import engineio.async_drivers.threading `
+  --hidden-import platformdirs `
+  --hidden-import pkg_resources.extern `
+  .\app.py -n fgcs_backend
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Error "PyInstaller build failed with exit code $LASTEXITCODE"
+  exit $LASTEXITCODE
+}
 
 Write-Output "Moving contents of /radio/dist/fgcs_backend to gcs/extras"
 if (Test-Path ..\gcs\extras) {
-  Remove-Item -Path ..\gcs\extras -Recurse
+  Remove-Item -Path ..\gcs\extras -Recurse -Force
 }
 Move-Item .\dist\fgcs_backend\ ..\gcs\extras
 
 Write-Output "Building frontend"
 Set-Location ../gcs/data
 python generate_param_definitions.py
+if ($LASTEXITCODE -ne 0) {
+  Write-Error "Failed to generate param definitions"
+  exit $LASTEXITCODE
+}
 Write-Output "Generated param definitions"
+
+python generate_log_message_descriptions.py
+if ($LASTEXITCODE -ne 0) {
+  Write-Error "Failed to generate log message descriptions"
+  exit $LASTEXITCODE
+}
+Write-Output "Generated log message descriptions"
 
 Set-Location ../
 yarn
 yarn version --new-version $Version --no-git-tag-version --no-commit-hooks
 yarn build
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Error "Yarn build failed with exit code $LASTEXITCODE"
+  exit $LASTEXITCODE
+}
 
 Write-Output "Going back to building\windows from gcs"
 Set-Location ..\building\windows

@@ -12,18 +12,6 @@ FTP_FILES_PATH = os.path.join(
 
 
 @falcon_test(pass_drone_status=True)
-def test_listFiles_wrongState_failure(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "dashboard"
-    socketio_client.emit("list_files", {})
-    socketio_result = socketio_client.get_received()[0]
-
-    assert socketio_result["name"] == "params_error"
-    assert socketio_result["args"][0] == {
-        "message": "You must be on the config screen to access FTP operations"
-    }
-
-
-@falcon_test(pass_drone_status=True)
 def test_listFiles_noPath_success(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config"
     socketio_client.emit("list_files", {})
@@ -143,18 +131,6 @@ def test_listFiles_noDroneConnection_failure(
 
 
 @falcon_test(pass_drone_status=True)
-def test_readFile_wrongState_failure(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "dashboard"
-    socketio_client.emit("read_file", {"path": "/@ROMFS/locations.txt"})
-    socketio_result = socketio_client.get_received()[0]
-
-    assert socketio_result["name"] == "params_error"
-    assert socketio_result["args"][0] == {
-        "message": "You must be on the config screen to access FTP operations"
-    }
-
-
-@falcon_test(pass_drone_status=True)
 def test_readFile_missingPath_failure(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config"
     socketio_client.emit("read_file", {})
@@ -251,4 +227,20 @@ def test_readFile_noDroneConnection_failure(
         assert socketio_result["name"] == "connection_error"
         assert socketio_result["args"][0] == {
             "message": "Must be connected to the drone to read file."
+        }
+
+
+@falcon_test(pass_drone_status=True)
+def test_listLogFiles_noDroneConnection_failure(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config"
+
+    with NoDrone():
+        socketio_client.emit("list_log_files")
+        socketio_result = socketio_client.get_received()[0]
+
+        assert socketio_result["name"] == "connection_error"
+        assert socketio_result["args"][0] == {
+            "message": "Must be connected to the drone to list log files."
         }

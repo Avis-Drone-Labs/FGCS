@@ -86,6 +86,7 @@ import {
   resetFiles,
   setIsReadingFile,
   setLoadingListFiles,
+  setLogPath,
   setReadFileData,
   setReadFileProgress,
 } from "../slices/ftpSlice.js"
@@ -189,6 +190,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
 
 const FtpSpecificSocketEvents = Object.freeze({
   onListFilesResult: "list_files_result",
+  onListLogFilesResult: "list_log_files_result",
   onReadFileResult: "read_file_result",
   onReadFileProgress: "read_file_progress",
 })
@@ -1155,6 +1157,29 @@ const socketMiddleware = (store) => {
             showErrorNotification(msg.message)
           }
         })
+
+        socket.socket.on(
+          FtpSpecificSocketEvents.onListLogFilesResult,
+          (msg) => {
+            store.dispatch(setLoadingListFiles(false))
+            if (msg.success) {
+              const data = msg.data || {}
+              const files = data.files || []
+              const logPath = data.log_path || null
+
+              store.dispatch(addFiles(files))
+              store.dispatch(setLogPath(logPath))
+
+              if (files.length === 0) {
+                showErrorNotification(
+                  msg.message || "No log files found on drone",
+                )
+              }
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
 
         socket.socket.on(FtpSpecificSocketEvents.onReadFileResult, (msg) => {
           if (msg.success) {

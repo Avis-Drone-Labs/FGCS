@@ -3,18 +3,32 @@ from unittest.mock import Mock, MagicMock, patch
 import time
 import docker
 from docker.errors import NotFound, DockerException, ImageNotFound
+import pytest
 from . import falcon_test
 
-client = docker.from_env()
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 CLEANUP_CONTAINER_TRIES = 30
 CONTAINER_START_WAIT_TIME = 60
+
+
+def get_docker_client_or_skip():
+    """
+    Return a docker client or skip the current test if Docker is unavailable.
+    """
+    try:
+        c = docker.from_env()
+        # ping ensures daemon is reachable
+        c.ping()
+        return c
+    except Exception as e:
+        pytest.skip(f"Docker not available: {e}")
 
 
 def cleanup_container():
     """
     Helper function to remove the test container if it exists.
     """
+    client = get_docker_client_or_skip()
     try:
         container = client.containers.get(CONTAINER_NAME)
         container.remove(force=True)
@@ -37,6 +51,7 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     """
     Test successfully starting the simulation using Docker.
     """
+    get_docker_client_or_skip()
     cleanup_container()
 
     # Emit the event
@@ -67,6 +82,7 @@ def test_start_docker_simulation_with_connect(socketio_client: SocketIOTestClien
     """
     Test starting the simulation with connect=True.
     """
+    get_docker_client_or_skip()
     cleanup_container()
 
     # Emit the event
@@ -98,6 +114,7 @@ def test_container_already_running_error_handling(socketio_client: SocketIOTestC
     """
     Test behavior when the container is already running.
     """
+    client = get_docker_client_or_skip()
     cleanup_container()
 
     # Start the container manually
@@ -130,6 +147,7 @@ def test_stop_docker_simulation(socketio_client: SocketIOTestClient):
     """
     Test stopping the Docker simulation.
     """
+    client = get_docker_client_or_skip()
     cleanup_container()
 
     # Start the container manually
@@ -200,46 +218,39 @@ def test_build_command():
 
 
 def test_ensure_image_exists():
-    """
-    Test the ensure_image_exists function directly.
-    """
+    """Test ensure_image_exists without touching real Docker images (safe for CI)."""
     from app.endpoints.simulation import ensure_image_exists
 
-    client = docker.from_env()
+    fake_client = Mock()
+    # Image already present
+    fake_client.images.get.return_value = object()
 
-    # Remove the image if it exists
-    try:
-        client.images.remove("kushmakkapati/ardupilot_sitl", force=True)
-    except docker.errors.ImageNotFound:
-        pass  # Does not exist so safe to continue
+    with patch("app.endpoints.simulation.socketio.emit") as emit_mock:
+        result = ensure_image_exists(fake_client, "kushmakkapati/ardupilot_sitl")
 
-    # Call the function to ensure the image
-    result = ensure_image_exists(client, "kushmakkapati/ardupilot_sitl")
-
-    # Verify the image is now present
     assert result is True
-    try:
-        client.images.get("kushmakkapati/ardupilot_sitl")
-    except docker.errors.ImageNotFound:
-        assert False, "Image was not pulled successfully"
+    fake_client.images.pull.assert_not_called()
+
+    # No loading/error emits expected when image exists
+    emitted_events = [call.args[0] for call in emit_mock.call_args_list if call.args]
+    assert "simulation_result" not in emitted_events
 
 
-def test_ensure_image_exists_image_exists():
-    """
-    Test the ensure_image_exists function when the image already exists.
-    """
+def test_ensure_image_exists_image_missing_pulls():
+    """Test ensure_image_exists pulls when image is missing (mocked)."""
     from app.endpoints.simulation import ensure_image_exists
 
-    client = docker.from_env()
+    fake_client = Mock()
+    fake_client.images.get.side_effect = ImageNotFound("missing")
 
-    # Ensure the image exists
-    client.images.pull("kushmakkapati/ardupilot_sitl")
+    with patch("app.endpoints.simulation.socketio.emit") as emit_mock:
+        result = ensure_image_exists(fake_client, "kushmakkapati/ardupilot_sitl")
 
-    # Call the function
-    result = ensure_image_exists(client, "kushmakkapati/ardupilot_sitl")
-
-    # Verify the function does not attempt to pull the image again
     assert result is True
+    fake_client.images.pull.assert_called_once_with("kushmakkapati/ardupilot_sitl")
+
+    emitted_events = [call.args[0] for call in emit_mock.call_args_list if call.args]
+    assert "simulation_loading" in emitted_events
 
 
 def test_ensure_image_exists_pull_fails_emits_error():
@@ -280,7 +291,7 @@ def test_container_already_running():
     """
     from app.endpoints.simulation import container_already_running
 
-    client = docker.from_env()
+    client = get_docker_client_or_skip()
 
     # Ensure no container is running
     cleanup_container()
@@ -358,13 +369,12 @@ def test_get_docker_client():
 
 @falcon_test()
 def test_wait_for_container_connection_msg(socketio_client: SocketIOTestClient):
-    """
-    Test the wait_for_container_connection_msg function directly.
-    """
+    """Test the wait_for_container_connection_msg function directly."""
     from app.endpoints.simulation import wait_for_container_connection_msg
 
-    # Start a container manually
+    client = get_docker_client_or_skip()
     cleanup_container()
+    # Start a container manually
     container = client.containers.run(
         "kushmakkapati/ardupilot_sitl",
         name=CONTAINER_NAME,

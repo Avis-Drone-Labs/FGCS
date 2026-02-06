@@ -60,6 +60,8 @@ def ensure_image_exists(client, image_name) -> bool:
                 "simulation_loading",
                 {
                     "loading": False,
+                    "title": "Docker Exception",
+                    "message": "Error downloading simulation image",
                 },
             )
             socketio.emit(
@@ -270,6 +272,9 @@ def stop_docker_simulation() -> None:
 
         except NotFound:
             emit_error_message("Simulation could not be found")
+            return
+        except DockerException:
+            emit_error_message("Docker exception while getting container")
             return
 
         container.stop()

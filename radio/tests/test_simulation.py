@@ -425,6 +425,8 @@ def test_start_docker_simulation_validation_failures(
 @falcon_test()
 def test_start_docker_simulation_run_failures(socketio_client: SocketIOTestClient):
     """Covers run() exception routes: APIError and generic DockerException."""
+    from unittest.mock import MagicMock
+
     from docker.errors import APIError as DockerAPIError
 
     fake_client = MagicMock()
@@ -433,7 +435,7 @@ def test_start_docker_simulation_run_failures(socketio_client: SocketIOTestClien
         "missing"
     )  # no existing container
 
-    # 1) APIError includes explanation
+    # 1) APIError is intentionally sanitized for UI display
     fake_client.containers.run.side_effect = DockerAPIError(
         "boom", explanation="bad params"
     )
@@ -444,8 +446,9 @@ def test_start_docker_simulation_run_failures(socketio_client: SocketIOTestClien
 
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is False
-    assert "Simulation failed to start" in result["args"][0]["message"]
-    assert "bad params" in result["args"][0]["message"]
+    assert (
+        result["args"][0]["message"] == "Simulation failed to start: Docker API error"
+    )
 
     # 2) generic DockerException
     fake_client.containers.run.side_effect = DockerException("nope")
@@ -456,7 +459,9 @@ def test_start_docker_simulation_run_failures(socketio_client: SocketIOTestClien
 
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is False
-    assert result["args"][0]["message"] == "Simulation failed to start"
+    assert (
+        result["args"][0]["message"] == "Simulation failed to start: Docker exception"
+    )
 
 
 @falcon_test()

@@ -212,10 +212,6 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("start_docker_simulation", {
           port: simulationParams.port,
           vehicleType: simulationParams.vehicleType,
-          lat: simulationParams.lat,
-          lon: simulationParams.lon,
-          alt: simulationParams.alt,
-          direction: simulationParams.direction,
           connect: simulationParams.connectAfterStart,
         })
         store.dispatch(setSimulationStatus(SimulationStatus.Starting))

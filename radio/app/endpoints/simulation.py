@@ -1,5 +1,5 @@
 import time
-from app import socketio
+from app import logger, socketio
 import docker
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
@@ -64,22 +64,10 @@ def ensure_image_exists(client, image_name) -> bool:
                     "message": "Error downloading simulation image",
                 },
             )
-            socketio.emit(
-                "simulation_result",
-                {
-                    "success": False,
-                    "message": "Error downloading simulation image",
-                },
-            )
+            emit_error_message("Error downloading simulation image")
             return False
     except DockerException:
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": False,
-                "message": "Unknown error getting simulation image",
-            },
-        )
+        emit_error_message("Unknown error getting simulation image")
         return False
 
 
@@ -95,10 +83,16 @@ def build_command(data):
     """
     cmd = []
 
-    if "vehicleType" in data:
-        cmd.append(f"VEHICLE={data['vehicleType']}")
+    ALLOWED_VEHICLE_TYPES = {"ArduCopter", "ArduPlane"}
 
-    return cmd
+    vehicle = data.get("vehicleType")
+    if vehicle:
+        if vehicle in ALLOWED_VEHICLE_TYPES:
+            cmd.append(f"VEHICLE={vehicle}")
+        else:
+            logger.debug("Ignoring unsupported vehicleType: %s", vehicle)
+
+    return cmd if cmd else None  # Docker start handles None better than empty lists
 
 
 def container_already_running(client, container_name) -> bool:
@@ -108,6 +102,7 @@ def container_already_running(client, container_name) -> bool:
     """
     try:
         existing = client.containers.get(container_name)
+        existing.reload()
         if existing.status == "running":
             socketio.emit(
                 "simulation_result",

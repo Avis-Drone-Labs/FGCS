@@ -440,7 +440,7 @@ const socketMiddleware = (store) => {
               msg.title,
               msg.message,
             )
-          } else {
+          } else if (simulationLoadingId != null) {
             closeLoadingNotification(
               simulationLoadingId,
               msg.title,

@@ -345,7 +345,7 @@ def test_wait_for_container_connection_msg(socketio_client: SocketIOTestClient):
     )
 
     # Call the function to wait for the container to start
-    wait_for_container_connection_msg(container, connect=False, timeout=5)
+    wait_for_container_connection_msg(container, connect=False, port=5760, timeout=5)
 
     # Verify the emitted message
     result = socketio_client.get_received()[-1]

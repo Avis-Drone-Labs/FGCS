@@ -1,7 +1,7 @@
 import time
 from app import socketio
 import docker
-from docker.errors import DockerException, NotFound, ImageNotFound
+from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
@@ -121,7 +121,7 @@ def container_already_running(client, container_name) -> bool:
 
 
 def wait_for_container_connection_msg(
-    container, connect, timeout=CONTAINER_START_TIMEOUT
+    container, connect, port, timeout=CONTAINER_START_TIMEOUT
 ):
     """
     Waits to determine whether the container starts successfully by monitoring its logs
@@ -177,6 +177,7 @@ def wait_for_container_connection_msg(
                 "success": line_found,
                 "running": line_found,
                 "connect": connect and line_found,
+                "port": port,
                 "message": "Simulation started"
                 if line_found
                 else "Simulation failed to start in time",
@@ -205,10 +206,7 @@ def start_docker_simulation(data) -> None:
         emit_error_message("Port must be between 1 and 65535")
         return
 
-    if "connect" in data:
-        connect = data["connect"]
-    else:
-        connect = False
+    connect = data["connect"] if "connect" in data else False
 
     # Get rid of any other parameters that are none
     data = {k: v for k, v in data.items() if v is not None}
@@ -221,18 +219,16 @@ def start_docker_simulation(data) -> None:
         return
 
     if not ensure_image_exists(client, IMAGE_NAME):
-        return  # Error already handled in the function
+        return  # Error message already given in the function
 
     if container_already_running(client, CONTAINER_NAME):
-        return  # Error already given in function
+        return  # Error message already given in the function
 
     try:
         container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
             ports={port: port},
-            stdin_open=True,
-            tty=True,
             detach=True,
             remove=True,
             command=cmd,
@@ -242,9 +238,12 @@ def start_docker_simulation(data) -> None:
             wait_for_container_connection_msg,
             container,
             connect,
+            port,
             CONTAINER_START_TIMEOUT,
         )
 
+    except APIError as e:
+        emit_error_message(f"Simulation failed to start: {e.explanation}")
     except DockerException:
         emit_error_message("Simulation failed to start")
 

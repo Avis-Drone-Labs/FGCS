@@ -178,7 +178,8 @@ const droneConnectionSlice = createSlice({
     },
     setSimulationParam: (state, action) => {
       const { key, value } = action.payload
-      state.simulationParams[key] = value === "" || value === undefined ? null : value
+      state.simulationParams[key] =
+        value === "" || value === undefined ? null : value
     },
 
     // Emits

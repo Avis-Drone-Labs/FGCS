@@ -190,10 +190,6 @@ def test_build_command(_socketio_client: SocketIOTestClient):
     # Input data for the command
     data = {
         "vehicleType": "ArduCopter",
-        "lat": 34.05,
-        "lon": -118.25,
-        "alt": 100,
-        "direction": 90,
     }
 
     # Call the function
@@ -201,10 +197,6 @@ def test_build_command(_socketio_client: SocketIOTestClient):
 
     # Verify the command output
     assert "VEHICLE=ArduCopter" in cmd
-    assert "LAT=34.05" in cmd
-    assert "LON=-118.25" in cmd
-    assert "ALT=100" in cmd
-    assert "DIR=90" in cmd
 
 
 @falcon_test()

@@ -82,52 +82,6 @@ export default function SimulationModal() {
         }}
       />
 
-      <SimpleGrid cols={2} spacing="md">
-        <NumberInput
-          label="Latitude"
-          placeholder="Latitude"
-          value={simulationParams.lat}
-          min={-90}
-          max={90}
-          onChange={(val) =>
-            dispatch(setSimulationParam({ key: "lat", value: val }))
-          }
-        />
-
-        <NumberInput
-          label="Longitude"
-          placeholder="Longitude"
-          value={simulationParams.lon}
-          min={-180}
-          max={180}
-          onChange={(val) =>
-            dispatch(setSimulationParam({ key: "lon", value: val }))
-          }
-        />
-
-        <NumberInput
-          label="Altitude"
-          placeholder="Altitude"
-          value={simulationParams.alt}
-          min={0}
-          max={10000}
-          onChange={(val) =>
-            dispatch(setSimulationParam({ key: "alt", value: val }))
-          }
-        />
-
-        <NumberInput
-          label="Direction"
-          placeholder="Direction"
-          value={simulationParams.direction}
-          min={0}
-          max={359.999}
-          onChange={(val) =>
-            dispatch(setSimulationParam({ key: "direction", value: val }))
-          }
-        />
-      </SimpleGrid>
-
       <Text mt="md" c="dimmed" size="sm">
         Note: Docker must be running to start the simulator.
       </Text>

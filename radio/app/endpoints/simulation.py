@@ -72,6 +72,15 @@ def ensure_image_exists(client, image_name) -> bool:
                 },
             )
             return False
+    except DockerException:
+        socketio.emit(
+            "simulation_result",
+            {
+                "success": False,
+                "message": "Unknown error getting simulation image",
+            },
+        )
+        return False
 
 
 def build_command(data):
@@ -202,11 +211,21 @@ def start_docker_simulation(data) -> None:
     if host_port is None:
         emit_error_message("Host port is required")
         return
+    try:
+        host_port = int(host_port)
+    except (TypeError, ValueError):
+        emit_error_message("Host port must be an integer")
+        return
     if not (1025 <= host_port <= 65535):
         emit_error_message("Host port must be between 1025 and 65535")
         return
 
     container_port = data.get("containerPort", 5760)  # default internal port
+    try:
+        container_port = int(container_port)
+    except (TypeError, ValueError):
+        emit_error_message("Container port must be an integer")
+        return
     if not (1 <= container_port <= 65535):
         emit_error_message("Container port must be between 1 and 65535")
         return
@@ -260,10 +279,7 @@ def stop_docker_simulation() -> None:
     """
     client = get_docker_client()
     if client is None:
-        socketio.emit(
-            "simulation_result",
-            {"success": False, "message": "Unable to connect to Docker"},
-        )
+        emit_error_message("Unable to connect to Docker")
         return
 
     try:

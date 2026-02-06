@@ -61,16 +61,24 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     start_time = time.time()
     received_messages = []
 
+    simulation_result = None
     while time.time() - start_time < CONTAINER_START_WAIT_TIME:
-        received_messages = socketio_client.get_received()
-        if received_messages:
-            break
+        new_messages = socketio_client.get_received()
+        if new_messages:
+            received_messages.extend(new_messages)
+            for message in new_messages:
+                if message.get("name") == "simulation_result":
+                    simulation_result = message
+                    break
+            if simulation_result is not None:
+                break
         time.sleep(0.1)  # Avoid busy waiting
-
     assert received_messages, "No messages were received after emitting the event. Check if the event handler is working."
-
-    # Verify the last received message
-    result = received_messages[-1]
+    assert (
+        simulation_result is not None
+    ), "Timed out waiting for 'simulation_result' event from simulation."
+    # Verify the simulation result message
+    result = simulation_result
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is True
 
@@ -92,16 +100,24 @@ def test_start_docker_simulation_with_connect(socketio_client: SocketIOTestClien
     start_time = time.time()
     received_messages = []
 
+    simulation_result = None
     while time.time() - start_time < CONTAINER_START_WAIT_TIME:
-        received_messages = socketio_client.get_received()
-        if received_messages:
-            break
+        new_messages = socketio_client.get_received()
+        if new_messages:
+            received_messages.extend(new_messages)
+            for message in new_messages:
+                if message.get("name") == "simulation_result":
+                    simulation_result = message
+                    break
+            if simulation_result is not None:
+                break
         time.sleep(0.1)  # Avoid busy waiting
-
     assert received_messages, "No messages were received after emitting the event. Check if the event handler is working."
-
-    # Verify the last received message
-    result = received_messages[-1]
+    assert (
+        simulation_result is not None
+    ), "Timed out waiting for 'simulation_result' event from simulation."
+    # Verify the simulation result message
+    result = simulation_result
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is True
     assert result["args"][0]["connect"] is True, "Connect flag not set correctly"
@@ -128,7 +144,13 @@ def test_container_already_running_error_handling(socketio_client: SocketIOTestC
 
     # Wait for it to be running
     container.reload()
+    start_time = time.time()
     while container.status != "running":
+        if time.time() - start_time > CONTAINER_START_WAIT_TIME:
+            pytest.skip(
+                f"Container '{CONTAINER_NAME}' did not reach 'running' state "
+                f"within {CONTAINER_START_WAIT_TIME} seconds."
+            )
         time.sleep(0.5)
         container.reload()
 

@@ -56,7 +56,8 @@ const initialState = {
 
   simulationModalOpened: false,
   simulationParams: {
-    port: 5760,
+    hostPort: 5760,
+    containerPort: 5760,
     vehicleType: "ArduCopter",
     connectAfterStart: true,
   },

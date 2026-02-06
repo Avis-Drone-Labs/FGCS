@@ -39,7 +39,7 @@ def test_start_docker_simulation_success(socketio_client: SocketIOTestClient):
     cleanup_container()
 
     # Emit the event
-    socketio_client.emit("start_docker_simulation", {"port": 5763})
+    socketio_client.emit("start_docker_simulation", {"hostPort": 5763})
 
     # Synchronize: Wait for the background task to emit the message
     start_time = time.time()
@@ -69,7 +69,7 @@ def test_start_docker_simulation_with_connect(socketio_client: SocketIOTestClien
     cleanup_container()
 
     # Emit the event
-    socketio_client.emit("start_docker_simulation", {"port": 5763, "connect": True})
+    socketio_client.emit("start_docker_simulation", {"hostPort": 5763, "connect": True})
 
     # Synchronize: Wait for the background task to emit the message
     start_time = time.time()
@@ -114,7 +114,7 @@ def test_container_already_running_error_handling(socketio_client: SocketIOTestC
         time.sleep(0.5)
         container.reload()
 
-    socketio_client.emit("start_docker_simulation", {"port": 5763})
+    socketio_client.emit("start_docker_simulation", {"hostPort": 5763})
     result = socketio_client.get_received()[-1]
 
     assert result["name"] == "simulation_result"
@@ -368,12 +368,12 @@ def test_start_docker_simulation_invalid_port(socketio_client: SocketIOTestClien
     """
     cleanup_container()
 
-    socketio_client.emit("start_docker_simulation", {"port": 70000})
+    socketio_client.emit("start_docker_simulation", {"hostPort": 70000})
     result = socketio_client.get_received()[-1]
 
     assert result["name"] == "simulation_result"
     assert result["args"][0]["success"] is False
-    assert "Port must be between 1 and 65535" in result["args"][0]["message"]
+    assert "Host port must be between 1025 and 65535" in result["args"][0]["message"]
 
 
 @falcon_test()
@@ -384,7 +384,7 @@ def test_start_docker_simulation_no_docker(socketio_client: SocketIOTestClient):
     from unittest.mock import patch
 
     with patch("app.endpoints.simulation.get_docker_client", return_value=None):
-        socketio_client.emit("start_docker_simulation", {"port": 5763})
+        socketio_client.emit("start_docker_simulation", {"hostPort": 5763})
         result = socketio_client.get_received()[-1]
 
         assert result["name"] == "simulation_result"

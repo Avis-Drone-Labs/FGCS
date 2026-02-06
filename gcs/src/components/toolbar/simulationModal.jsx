@@ -56,17 +56,28 @@ export default function SimulationModal() {
         },
       }}
     >
-      <NumberInput
-        mb="md"
-        label="Port"
-        value={simulationParams.port}
-        min={1}
-        max={65535}
-        allowDecimal={false}
-        onChange={(val) =>
-          dispatch(setSimulationParam({ key: "port", value: val }))
-        }
-      />
+      <Group grow spacing="md" mb="md">
+        <NumberInput
+          label="Host Port"
+          value={simulationParams.hostPort}
+          min={1025}
+          max={65535}
+          allowDecimal={false}
+          onChange={(val) =>
+            dispatch(setSimulationParam({ key: "hostPort", value: val }))
+          }
+        />
+        <NumberInput
+          label="Container Port"
+          value={simulationParams.containerPort}
+          min={1}
+          max={65535}
+          allowDecimal={false}
+          onChange={(val) =>
+            dispatch(setSimulationParam({ key: "containerPort", value: val }))
+          }
+        />
+      </Group>
 
       <Select
         mb="md"

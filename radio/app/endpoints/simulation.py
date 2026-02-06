@@ -245,10 +245,10 @@ def start_docker_simulation(data) -> None:
             CONTAINER_START_TIMEOUT,
         )
 
-    except APIError as e:
-        emit_error_message(f"Simulation failed to start: {e.explanation}")
+    except APIError:
+        emit_error_message("Simulation failed to start: Docker API error")
     except DockerException:
-        emit_error_message("Simulation failed to start")
+        emit_error_message("Simulation failed to start: Docker exception")
 
 
 @socketio.on("stop_docker_simulation")

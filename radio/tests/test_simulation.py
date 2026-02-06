@@ -1,7 +1,8 @@
 from flask_socketio.test_client import SocketIOTestClient
+from unittest.mock import Mock, MagicMock, patch
 import time
 import docker
-from docker.errors import NotFound
+from docker.errors import NotFound, DockerException, ImageNotFound
 from . import falcon_test
 
 client = docker.from_env()
@@ -180,8 +181,7 @@ def test_stop_docker_simulation_no_container(socketio_client: SocketIOTestClient
     assert "Simulation could not be found" in result["args"][0]["message"]
 
 
-@falcon_test()
-def test_build_command(_socketio_client: SocketIOTestClient):
+def test_build_command():
     """
     Test the build_command function directly.
     """
@@ -199,8 +199,7 @@ def test_build_command(_socketio_client: SocketIOTestClient):
     assert "VEHICLE=ArduCopter" in cmd
 
 
-@falcon_test()
-def test_ensure_image_exists(_socketio_client: SocketIOTestClient):
+def test_ensure_image_exists():
     """
     Test the ensure_image_exists function directly.
     """
@@ -225,8 +224,7 @@ def test_ensure_image_exists(_socketio_client: SocketIOTestClient):
         assert False, "Image was not pulled successfully"
 
 
-@falcon_test()
-def test_ensure_image_exists_image_exists(_socketio_client: SocketIOTestClient):
+def test_ensure_image_exists_image_exists():
     """
     Test the ensure_image_exists function when the image already exists.
     """
@@ -244,8 +242,39 @@ def test_ensure_image_exists_image_exists(_socketio_client: SocketIOTestClient):
     assert result is True
 
 
-@falcon_test()
-def test_container_already_running(_socketio_client: SocketIOTestClient):
+def test_ensure_image_exists_pull_fails_emits_error():
+    """Ensure ensure_image_exists handles DockerException during pull and emits error feedback."""
+    from app.endpoints.simulation import ensure_image_exists
+
+    # Build a fake docker client where the image is "missing" and pull fails
+    fake_client = Mock()
+    fake_client.images.get.side_effect = ImageNotFound("missing")
+    fake_client.images.pull.side_effect = DockerException("pull failed")
+
+    with patch("app.endpoints.simulation.socketio.emit") as emit_mock:
+        result = ensure_image_exists(fake_client, "kushmakkapati/ardupilot_sitl")
+
+    assert result is False
+
+    # Should emit loading True (download start), then loading False, then simulation_result error
+    emitted_events = [call.args[0] for call in emit_mock.call_args_list if call.args]
+    assert "simulation_loading" in emitted_events
+    assert "simulation_result" in emitted_events
+
+    simulation_result_calls = [
+        call
+        for call in emit_mock.call_args_list
+        if call.args and call.args[0] == "simulation_result"
+    ]
+    assert simulation_result_calls, "Expected a simulation_result emit on pull failure"
+    assert simulation_result_calls[-1].args[1]["success"] is False
+    assert (
+        "Error downloading simulation image"
+        in simulation_result_calls[-1].args[1]["message"]
+    )
+
+
+def test_container_already_running():
     """
     Test the container_already_running function directly.
     """
@@ -309,8 +338,7 @@ def test_emit_error_message_edge_cases(socketio_client: SocketIOTestClient):
     assert result["args"][0]["message"] is None
 
 
-@falcon_test()
-def test_get_docker_client(_socketio_client: SocketIOTestClient):
+def test_get_docker_client():
     """
     Test the get_docker_client function directly.
     """
@@ -362,31 +390,126 @@ def test_wait_for_container_connection_msg(socketio_client: SocketIOTestClient):
 
 
 @falcon_test()
-def test_start_docker_simulation_invalid_port(socketio_client: SocketIOTestClient):
-    """
-    Test starting the simulation with an invalid port number.
-    """
-    cleanup_container()
-
-    socketio_client.emit("start_docker_simulation", {"hostPort": 70000})
+def test_start_docker_simulation_validation_failures(
+    socketio_client: SocketIOTestClient
+):
+    """Covers the main input validation failure routes for start_docker_simulation."""
+    # Missing hostPort
+    socketio_client.emit("start_docker_simulation", {})
     result = socketio_client.get_received()[-1]
-
     assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert "Host port is required" in result["args"][0]["message"]
+
+    # hostPort too low
+    socketio_client.emit("start_docker_simulation", {"hostPort": 1024})
+    result = socketio_client.get_received()[-1]
     assert result["args"][0]["success"] is False
     assert "Host port must be between 1025 and 65535" in result["args"][0]["message"]
 
+    # hostPort too high
+    socketio_client.emit("start_docker_simulation", {"hostPort": 70000})
+    result = socketio_client.get_received()[-1]
+    assert result["args"][0]["success"] is False
+    assert "Host port must be between 1025 and 65535" in result["args"][0]["message"]
+
+    # containerPort invalid
+    socketio_client.emit(
+        "start_docker_simulation", {"hostPort": 6000, "containerPort": 70000}
+    )
+    result = socketio_client.get_received()[-1]
+    assert result["args"][0]["success"] is False
+    assert "Container port must be between 1 and 65535" in result["args"][0]["message"]
+
 
 @falcon_test()
-def test_start_docker_simulation_no_docker(socketio_client: SocketIOTestClient):
-    """
-    Test starting the simulation when Docker is unavailable.
-    """
-    from unittest.mock import patch
+def test_start_docker_simulation_run_failures(socketio_client: SocketIOTestClient):
+    """Covers run() exception routes: APIError and generic DockerException."""
+    from docker.errors import APIError as DockerAPIError
 
-    with patch("app.endpoints.simulation.get_docker_client", return_value=None):
-        socketio_client.emit("start_docker_simulation", {"hostPort": 5763})
+    fake_client = MagicMock()
+    fake_client.images.get.return_value = object()  # image exists
+    fake_client.containers.get.side_effect = NotFound(
+        "missing"
+    )  # no existing container
+
+    # 1) APIError includes explanation
+    fake_client.containers.run.side_effect = DockerAPIError(
+        "boom", explanation="bad params"
+    )
+
+    with patch("app.endpoints.simulation.get_docker_client", return_value=fake_client):
+        socketio_client.emit("start_docker_simulation", {"hostPort": 6000})
         result = socketio_client.get_received()[-1]
 
-        assert result["name"] == "simulation_result"
-        assert result["args"][0]["success"] is False
-        assert "Unable to connect to Docker" in result["args"][0]["message"]
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert "Simulation failed to start" in result["args"][0]["message"]
+    assert "bad params" in result["args"][0]["message"]
+
+    # 2) generic DockerException
+    fake_client.containers.run.side_effect = DockerException("nope")
+
+    with patch("app.endpoints.simulation.get_docker_client", return_value=fake_client):
+        socketio_client.emit("start_docker_simulation", {"hostPort": 6000})
+        result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert result["args"][0]["message"] == "Simulation failed to start"
+
+
+@falcon_test()
+def test_stop_docker_simulation_failure_routes(socketio_client: SocketIOTestClient):
+    """Covers stop_docker_simulation Docker-unavailable and stop() exception routes."""
+    # Docker unavailable
+    with patch("app.endpoints.simulation.get_docker_client", return_value=None):
+        socketio_client.emit("stop_docker_simulation")
+        result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert "Unable to connect to Docker" in result["args"][0]["message"]
+
+    # container.stop raises DockerException
+    fake_container = MagicMock()
+    fake_container.stop.side_effect = DockerException("stop failed")
+    fake_client = MagicMock()
+    fake_client.containers.get.return_value = fake_container
+
+    with patch("app.endpoints.simulation.get_docker_client", return_value=fake_client):
+        socketio_client.emit("stop_docker_simulation")
+        result = socketio_client.get_received()[-1]
+
+    assert result["name"] == "simulation_result"
+    assert result["args"][0]["success"] is False
+    assert "Docker error while stopping simulation" in result["args"][0]["message"]
+
+
+def test_container_already_running_not_running_container_removed():
+    """Covers container_already_running branch where container exists but is not running."""
+    from app.endpoints.simulation import container_already_running
+
+    fake_existing = MagicMock()
+    fake_existing.status = "exited"
+
+    fake_client = MagicMock()
+    fake_client.containers.get.return_value = fake_existing
+
+    # Should remove and return False
+    assert container_already_running(fake_client, CONTAINER_NAME) is False
+    fake_existing.remove.assert_called_once()
+
+
+def test_container_already_running_remove_race_notfound():
+    """Covers NotFound race when removing a non-running container."""
+    from app.endpoints.simulation import container_already_running
+
+    fake_existing = MagicMock()
+    fake_existing.status = "exited"
+    fake_existing.remove.side_effect = NotFound("already removed")
+
+    fake_client = MagicMock()
+    fake_client.containers.get.return_value = fake_existing
+
+    assert container_already_running(fake_client, CONTAINER_NAME) is False

@@ -1,3 +1,4 @@
+import os
 import time
 from app import logger, socketio
 import docker
@@ -5,7 +6,7 @@ from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
-CONTAINER_START_TIMEOUT = 60
+CONTAINER_START_TIMEOUT = int(os.getenv("CONTAINER_START_TIMEOUT", 60))
 
 
 def get_docker_client():
@@ -13,7 +14,9 @@ def get_docker_client():
     Returns a Docker client if available, otherwise None.
     """
     try:
-        return docker.from_env()
+        client = docker.from_env()
+        client.ping()  # verify reachable
+        return client
     except DockerException:
         return None
 
@@ -50,6 +53,7 @@ def ensure_image_exists(client, image_name) -> bool:
                 "simulation_loading",
                 {
                     "loading": False,
+                    "success": True,
                     "title": "Downloaded Docker Image",
                     "message": "Simulation image successfully downloaded",
                 },
@@ -60,6 +64,7 @@ def ensure_image_exists(client, image_name) -> bool:
                 "simulation_loading",
                 {
                     "loading": False,
+                    "success": False,
                     "title": "Docker Exception",
                     "message": "Error downloading simulation image",
                 },
@@ -137,12 +142,13 @@ def wait_for_container_connection_msg(
     Args:
         container: The container to wait for.
         connect: If the drone should attempt to connect on successful container start.
+        port: The host port to connect to.
         timeout: The amount of time to wait before timing out.
     """
     start_time = time.time()
     line_found = False
     buffer = ""
-    poll_interval_s = 0.2
+    poll_interval_s = 0.5
 
     try:
         processed_len = 0
@@ -303,7 +309,7 @@ def emit_error_message(message):
     Emits the given message on "simulation_result" alongside false for success and running.
 
     Args:
-        message: The message to be included in the emit
+        message: The message to be included in the emit.
     """
     socketio.emit(
         "simulation_result",

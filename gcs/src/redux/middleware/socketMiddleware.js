@@ -35,6 +35,7 @@ import {
   showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,
+  redColor,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
@@ -434,7 +435,11 @@ const socketMiddleware = (store) => {
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
           if (msg.loading) {
             if (simulationLoadingId != null) {
-              closeLoadingNotification(simulationLoadingId)
+              closeLoadingNotification(
+                simulationLoadingId,
+                "Cancelled",
+                "Overwritten by new loading notification",
+              )
             }
             simulationLoadingId = showLoadingNotification(
               msg.title,
@@ -445,6 +450,7 @@ const socketMiddleware = (store) => {
               simulationLoadingId,
               msg.title,
               msg.message,
+              msg.success === false ? { color: redColor } : {},
             )
             simulationLoadingId = null
           }

@@ -18,7 +18,7 @@ import SavePresetModal from "./savePresetModal.jsx"
 /**
  * Main display component for the Falcon Log Analyser (FLA).
  */
-export default function MainDisplay({ closeLogFile, chartData }) {
+export default function MainDisplay({ closeLogFile, chartData, customColors }) {
   // Redux selectors
   const file = useSelector(selectFile)
   const aircraftType = useSelector(selectAircraftType)
@@ -115,7 +115,11 @@ export default function MainDisplay({ closeLogFile, chartData }) {
       </div>
       {/* Graph column */}
       <div className="w-full h-full pr-4 min-w-0 flex flex-col">
-        <Graph data={chartData} openPresetModal={openSavePresetModal} />
+        <Graph
+          data={chartData}
+          customColors={customColors}
+          openPresetModal={openSavePresetModal}
+        />
         {/* Plots Setup */}
         <ScrollArea.Autosize>
           <div className="grid grid-cols-5 gap-4 pt-4">

@@ -5,7 +5,7 @@ as graph annotations to show events or different flight modes.
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 // 3rd party imports
 import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
@@ -68,6 +68,7 @@ import {
 } from "../../helpers/notification.js"
 import FlaMapSection from "./flaMap.jsx"
 import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
+import { hexToRgba } from "./utils.js"
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
 // Note: changes to the plugin code is not reflected to the chart, because the plugin is loaded at chart construction time and editor changes only trigger an chart.update().
@@ -99,7 +100,7 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, openPresetModal }) {
+export default function Graph({ data, customColors, openPresetModal }) {
   // Redux state
   const dispatch = useDispatch()
   const messageFilters = useSelector(selectMessageFilters)
@@ -119,6 +120,12 @@ export default function Graph({ data, openPresetModal }) {
   const [showEvents, setShowEvents] = useState(false)
   const chartRef = useRef(null)
   const [showMap, setShowMap] = useState(false)
+
+  // Create a stable key from dataset labels to detect actual data changes
+  const datasetKey = useMemo(
+    () => data.datasets.map((d) => d.label).join(","),
+    [data.datasets],
+  )
 
   // Toggle show events without resetting zoom
   function toggleShowEvents() {
@@ -147,6 +154,29 @@ export default function Graph({ data, openPresetModal }) {
       }
     }
   }
+
+  // Apply custom colors to datasets without resetting zoom
+  // Runs when customColors change or when the datasets change
+  useEffect(() => {
+    if (chartRef.current && customColors) {
+      const chart = chartRef.current
+      const datasets = chart.data.datasets
+
+      // Update colors directly on the chart instance
+      datasets.forEach((dataset) => {
+        const color = customColors[dataset.label]
+        if (color) {
+          dataset.borderColor = color
+          dataset.backgroundColor = hexToRgba(color, 0.5)
+        }
+      })
+
+      // Only update if we actually have colors to apply
+      if (Object.keys(customColors).length > 0) {
+        chart.update("none") // 'none' mode prevents animation and maintains zoom
+      }
+    }
+  }, [customColors, datasetKey])
 
   // Turn on/off all filters
   function clearFilters() {
@@ -444,7 +474,7 @@ export default function Graph({ data, openPresetModal }) {
         },
       },
     }))
-  }, [events, flightModes, data])
+  }, [events, flightModes, datasetKey])
 
   return (
     <div>

@@ -75,9 +75,9 @@ export default function SelectFlightLog({ getLogSummary }) {
         )
 
         if (!result.success) {
-          showErrorNotification(
-            `Error loading file: ${result.error || "File not found. Please reload."}`,
-          )
+          const errorMsg = result.error || "Unknown error occurred"
+          showErrorNotification(`Failed to load ${file.name}: ${errorMsg}`)
+          dispatch(setFile(null))
           return
         }
 
@@ -86,7 +86,9 @@ export default function SelectFlightLog({ getLogSummary }) {
         console.timeEnd(`Loading file: ${file.name}`)
       } catch (error) {
         console.error("Error loading file:", error)
-        showErrorNotification("Error loading file: " + error.message)
+        const errorMsg = error?.message || "Unknown error occurred"
+        showErrorNotification(`Failed to load ${file.name}: ${errorMsg}`)
+        dispatch(setFile(null))
       } finally {
         setLoadingFile(false)
         setLoadingFileProgress(0)

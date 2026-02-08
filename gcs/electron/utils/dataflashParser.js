@@ -1032,12 +1032,9 @@ class DataflashParser {
     this.data = new DataView(this.buffer)
     this.DfReader()
     const messageTypes = {}
-    try {
-      this.populateUnits()
-    } catch (e) {
-      console.log("error populating units")
-      console.log(e)
-    }
+
+    this.populateUnits()
+
     for (const msg of this.FMT) {
       if (msg && msg.Total_Length != 0) {
         const fields = msg.Columns

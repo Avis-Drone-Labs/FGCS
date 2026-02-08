@@ -83,13 +83,13 @@ export default function SelectFlightLog({ getLogSummary }) {
 
         await getLogSummary(result)
         showSuccessNotification(`${file.name} loaded successfully`)
-        console.timeEnd(`Loading file: ${file.name}`)
       } catch (error) {
         console.error("Error loading file:", error)
         const errorMsg = error?.message || "Unknown error occurred"
         showErrorNotification(`Failed to load ${file.name}: ${errorMsg}`)
         dispatch(setFile(null))
       } finally {
+        console.timeEnd(`Loading file: ${file.name}`)
         setLoadingFile(false)
         setLoadingFileProgress(0)
       }

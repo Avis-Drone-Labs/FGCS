@@ -10,9 +10,6 @@ import { useEffect, useMemo } from "react"
 // 3rd Party Imports
 import { useDispatch, useSelector } from "react-redux"
 
-// Styling imports
-import { hexToRgba } from "./components/fla/utils"
-
 // Custom components and helpers
 import { PRELOAD_LABELS } from "./components/fla/constants.js"
 import { logEventIds } from "./components/fla/logEventIds.js"
@@ -160,22 +157,23 @@ export default function FLA() {
   }, [requestedLabels, baseChartData])
 
   // Step 3: Memoize the final chart data.
-  // This filters the master cache and applies colors. It only re-runs if
-  // the data we need (baseChartData) or how it looks (customColors) changes.
-  const visibleDataWithColors = useMemo(() => {
+  // This filters the master cache. Colors are set to white by default.
+  // The actual display colors come from customColors and are applied
+  // by the Graph component to avoid resetting zoom on color changes.
+  const visibleData = useMemo(() => {
     if (!baseChartData) return []
 
     return baseChartData
       .filter((dataset) => requestedLabels.has(dataset.label))
-      .map((dataset) => {
-        const color = customColors[dataset.label] || "#000000"
-        return {
-          ...dataset,
-          borderColor: color,
-          backgroundColor: hexToRgba(color, 0.5),
-        }
-      })
-  }, [baseChartData, customColors, requestedLabels])
+      .map((dataset) => ({
+        ...dataset,
+        borderColor: "#ffffff",
+        backgroundColor: "rgba(255, 255, 255, 0.5)",
+      }))
+  }, [baseChartData, requestedLabels])
+
+  // Memoize the chartData object to prevent unnecessary re-renders
+  const chartData = useMemo(() => ({ datasets: visibleData }), [visibleData])
 
   return (
     <Layout currentPage="fla">
@@ -184,7 +182,8 @@ export default function FLA() {
       ) : (
         <MainDisplay
           closeLogFile={closeLogFile}
-          chartData={{ datasets: visibleDataWithColors }}
+          chartData={chartData}
+          customColors={customColors}
         />
       )}
     </Layout>

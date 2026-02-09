@@ -471,6 +471,7 @@ const socketMiddleware = (store) => {
 
           if (msg.connect) {
             const storeState = store.getState()
+            store.dispatch(setConnecting(true))
             store.dispatch(
               emitConnectToDrone({
                 port: `tcp:127.0.0.1:${msg.port}`,

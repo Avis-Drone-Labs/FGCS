@@ -133,6 +133,7 @@ export default function SimulationModal() {
             )
           }}
           loading={simulationStatus === SimulationStatus.Starting}
+          disabled={!connectedToSocket && !isSimulationRunning}
         >
           {isSimulationRunning ? "Stop Simulation" : "Start Simulation"}
         </Button>

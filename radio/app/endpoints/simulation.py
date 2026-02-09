@@ -19,6 +19,9 @@ def get_docker_client():
         return client
     except DockerException:
         return None
+    except Exception:
+        logger.error("Unexpected error when creating and pinging Docker client")
+        return None
 
 
 def ensure_image_exists(client, image_name) -> bool:
@@ -135,9 +138,9 @@ def wait_for_container_connection_msg(
     container, connect, port, timeout=CONTAINER_START_TIMEOUT
 ):
     """
-    Waits to determine whether the container starts successfully by monitoring its logs
-    for the message "YOU CAN NOW CONNECT". During streaming the logs spaces are stripped
-    so actually searches for the string "YOUCANNOWCONNECT".
+    Waits for the container to emit "YOU CAN NOW CONNECT" in its logs.
+    Uses Docker's 'since' and 'tail' options for efficient polling.
+    Emits a simulation_result event on success or failure.
 
     Args:
         container: The container to wait for.
@@ -145,59 +148,62 @@ def wait_for_container_connection_msg(
         port: The host port to connect to.
         timeout: The amount of time to wait before timing out.
     """
+    POLL_INTERVAL_S = 0.5
+    MAX_BUFFER_CHARS = 8192
+
     start_time = time.time()
-    line_found = False
+    deadline = start_time + timeout
+    since = int(start_time) - 1  # Small overlap to avoid missing boundary logs
+
     buffer = ""
-    poll_interval_s = 0.5
+    line_found = False
+    failure_reason = "Simulation failed to start in time"
 
-    try:
-        processed_len = 0
+    while time.time() < deadline:
+        try:
+            container.reload()
+        except DockerException:
+            logger.exception("Docker error reloading container while awaiting start")
+            failure_reason = "Docker error while awaiting connection message"
+            break
 
-        while True:
-            if time.time() - start_time > timeout:
-                break
+        if getattr(container, "status", None) == "exited":
+            failure_reason = "Simulation container exited before it became ready"
+            break
 
-            try:
-                container.reload()
-            except DockerException:
-                break
+        try:
+            # Only fetch recent lines
+            logs_bytes = container.logs(stream=False, since=since, tail=200)
+        except DockerException:
+            logger.exception("Docker error reading container logs while awaiting start")
+            failure_reason = "Docker error while awaiting connection message"
+            break
 
-            try:
-                logs_bytes = container.logs(stream=False)
-            except DockerException:
-                break
+        # Change since to now with a little overlap to avoid missing logs
+        since = max(since, int(time.time()) - 1)
 
-            # Process the container logs
-            logs_text = logs_bytes.decode(errors="ignore")
-            if processed_len < len(logs_text):
-                new_text = logs_text[processed_len:]
-                processed_len = len(logs_text)
-                buffer += new_text.strip()
+        new_text = logs_bytes.decode(errors="ignore")
+        if new_text:
+            buffer += new_text
+            if len(buffer) > MAX_BUFFER_CHARS:
+                buffer = buffer[-MAX_BUFFER_CHARS:]
 
             if "YOUCANNOWCONNECT" in buffer.replace(" ", ""):
                 line_found = True
                 break
 
-            if getattr(container, "status", None) == "exited":
-                break
+        time.sleep(POLL_INTERVAL_S)
 
-            time.sleep(poll_interval_s)
-
-        socketio.emit(
-            "simulation_result",
-            {
-                "success": line_found,
-                "running": line_found,
-                "connect": connect and line_found,
-                "port": port,
-                "message": "Simulation started"
-                if line_found
-                else "Simulation failed to start in time",
-            },
-        )
-
-    except DockerException:
-        emit_error_message("Docker error while awaiting connection message")
+    socketio.emit(
+        "simulation_result",
+        {
+            "success": line_found,
+            "running": line_found,
+            "connect": bool(connect) and line_found,
+            "port": port,
+            "message": "Simulation started" if line_found else failure_reason,
+        },
+    )
 
 
 @socketio.on("start_docker_simulation")

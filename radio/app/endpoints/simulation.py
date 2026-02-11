@@ -5,7 +5,7 @@ import docker
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
-IMAGE_NAME = "kushmakkapati/ardupilot_sitl"
+IMAGE_NAME = "kushmakkapati/ardupilot_sitl:latest"
 CONTAINER_START_TIMEOUT = int(os.getenv("CONTAINER_START_TIMEOUT", 60))
 
 
@@ -131,6 +131,9 @@ def container_already_running(client, container_name) -> bool:
             return False
 
     except NotFound:
+        return False
+    except DockerException:
+        logger.exception("Unexpected Docker exception in container_already_running")
         return False
 
 

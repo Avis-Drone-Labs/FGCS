@@ -99,7 +99,7 @@ export default function SimulationModal() {
       <Group justify="space-between" className="pt-4">
         <div className="flex flex-row gap-2">
           <Checkbox
-            label="Connect after started"
+            label="Connect after starting"
             checked={simulationParams.connectAfterStart}
             onChange={(event) =>
               dispatch(
@@ -135,7 +135,7 @@ export default function SimulationModal() {
           loading={simulationStatus === SimulationStatus.Starting}
           disabled={!connectedToSocket && !isSimulationRunning}
         >
-          {isSimulationRunning ? "Stop Simulation" : "Start Simulation"}
+          {isSimulationRunning ? "Stop Simulator" : "Start Simulator"}
         </Button>
       </Group>
     </Modal>

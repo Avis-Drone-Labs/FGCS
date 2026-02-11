@@ -20,7 +20,7 @@ def get_docker_client():
     except DockerException:
         return None
     except Exception:
-        logger.error("Unexpected error when creating and pinging Docker client")
+        logger.exception("Unexpected error when creating and pinging Docker client")
         return None
 
 
@@ -156,7 +156,6 @@ def wait_for_container_connection_msg(
 
     start_time = time.time()
     deadline = start_time + timeout
-    since = int(start_time) - 1  # Small overlap to avoid missing boundary logs
 
     buffer = ""
     line_found = False
@@ -176,14 +175,11 @@ def wait_for_container_connection_msg(
 
         try:
             # Only fetch recent lines
-            logs_bytes = container.logs(stream=False, since=since, tail=200)
+            logs_bytes = container.logs(stream=False, tail=200)
         except DockerException:
             logger.exception("Docker error reading container logs while awaiting start")
             failure_reason = "Docker error while awaiting connection message"
             break
-
-        # Change since to now with a little overlap to avoid missing logs
-        since = max(since, int(time.time()) - 1)
 
         new_text = logs_bytes.decode(errors="ignore")
         if new_text:

@@ -202,7 +202,12 @@ function ExtendableTextSetting({ settingName, df }) {
       })
       return cleanItem
     })
-    setSetting(settingName, cleanItems)
+
+	// Check for change and if so, set.
+    const currentSetting = getSetting(settingName)
+    if (JSON.stringify(currentSetting) !== JSON.stringify(cleanItems)) {
+      setSetting(settingName, cleanItems)
+    }
   }, [items, settingName, setSetting, df.fields])
 
   const updateItemField = (id, fieldKey, value) => {

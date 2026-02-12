@@ -213,28 +213,54 @@ def start_docker_simulation(data) -> None:
     Args:
         data: The parameters that the simulator should start with.
     """
-    host_port = data.get("hostPort")
-    if host_port is None:
-        emit_error_message("Host port is required")
-        return
-    try:
-        host_port = int(host_port)
-    except (TypeError, ValueError):
-        emit_error_message("Host port must be an integer")
-        return
-    if not (1025 <= host_port <= 65535):
-        emit_error_message("Host port must be between 1025 and 65535")
+    ports = data.get("ports")
+
+    if not ports or not isinstance(ports, list):
+        emit_error_message("At least one port mapping is required")
         return
 
-    container_port = data.get("containerPort", 5760)  # default internal port
-    try:
-        container_port = int(container_port)
-    except (TypeError, ValueError):
-        emit_error_message("Container port must be an integer")
-        return
-    if not (1 <= container_port <= 65535):
-        emit_error_message("Container port must be between 1 and 65535")
-        return
+    validated_ports = {}
+    primary_host_port = None
+
+    for i, port in enumerate(ports):
+        if not isinstance(port, dict):
+            emit_error_message(f"Port entry {i + 1} is invalid")
+            return
+
+        host_port = port.get("hostPort")
+        if host_port is None:
+            emit_error_message(f"Host port is required for entry {i + 1}")
+            return
+
+        try:
+            host_port = int(host_port)
+        except (TypeError, ValueError):
+            emit_error_message(f"Host port in entry {i + 1} must be an integer")
+            return
+
+        if not (1025 <= host_port <= 65535):
+            emit_error_message(
+                f"Host port in entry {i + 1} must be between 1025 and 65535"
+            )
+            return
+
+        container_port = port.get("containerPort", 5760)
+
+        try:
+            container_port = int(container_port)
+        except (TypeError, ValueError):
+            emit_error_message(f"Container port in entry {i + 1} must be an integer")
+            return
+
+        if not (1 <= container_port <= 65535):
+            emit_error_message(
+                f"Container port in entry {i + 1} must be between 1 and 65535"
+            )
+            return
+
+        if primary_host_port is None:
+            primary_host_port = host_port
+        validated_ports[container_port] = host_port
 
     connect = data["connect"] if "connect" in data else False
 
@@ -258,7 +284,7 @@ def start_docker_simulation(data) -> None:
         container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
-            ports={container_port: host_port},
+            ports=validated_ports,
             detach=True,
             remove=True,
             command=cmd,
@@ -268,7 +294,7 @@ def start_docker_simulation(data) -> None:
             wait_for_container_connection_msg,
             container,
             connect,
-            host_port,
+            primary_host_port,
             CONTAINER_START_TIMEOUT,
         )
 

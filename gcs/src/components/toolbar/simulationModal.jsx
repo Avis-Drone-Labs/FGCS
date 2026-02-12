@@ -8,8 +8,9 @@ import {
   Checkbox,
   Tooltip,
   Group,
+  ActionIcon,
 } from "@mantine/core"
-import { IconInfoCircle } from "@tabler/icons-react"
+import { IconInfoCircle, IconX } from "@tabler/icons-react"
 import {
   setSimulationModalOpened,
   setSimulationParam,
@@ -20,6 +21,9 @@ import {
   emitStartSimulation,
   emitStopSimulation,
   selectSimulationStatus,
+  addSimulationParamPort,
+  removeSimulationParamPort,
+  updateSimulationParamPort,
 } from "../../redux/slices/droneConnectionSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { showNotification } from "../../helpers/notification"
@@ -56,28 +60,65 @@ export default function SimulationModal() {
         },
       }}
     >
-      <Group grow spacing="md" mb="md">
-        <NumberInput
-          label="Host Port"
-          value={simulationParams.hostPort}
-          min={1025}
-          max={65535}
-          allowDecimal={false}
-          onChange={(val) =>
-            dispatch(setSimulationParam({ key: "hostPort", value: val }))
-          }
-        />
-        <NumberInput
-          label="Container Port"
-          value={simulationParams.containerPort}
-          min={1}
-          max={65535}
-          allowDecimal={false}
-          onChange={(val) =>
-            dispatch(setSimulationParam({ key: "containerPort", value: val }))
-          }
-        />
-      </Group>
+      {simulationParams.ports.map((port, index) => (
+        <Group spacing="md" mb="md" key={index} wrap="nowrap" align="end">
+          <NumberInput
+            label="Host Port"
+            min={1025}
+            max={65535}
+            allowDecimal={false}
+            value={port.hostPort}
+            style={{ flex: 1 }}
+            onChange={(val) =>
+              dispatch(
+                updateSimulationParamPort({
+                  index,
+                  key: "hostPort",
+                  value: val,
+                }),
+              )
+            }
+          />
+
+          <NumberInput
+            label="Container Port"
+            min={1}
+            max={65535}
+            allowDecimal={false}
+            value={port.containerPort}
+            style={{ flex: 1 }}
+            onChange={(val) =>
+              dispatch(
+                updateSimulationParamPort({
+                  index,
+                  key: "containerPort",
+                  value: val,
+                }),
+              )
+            }
+          />
+
+          {simulationParams.ports.length > 1 && (
+            <ActionIcon
+              color="red"
+              aria-label="Remove port"
+              size={36}
+              onClick={() => dispatch(removeSimulationParamPort(index))}
+            >
+              <IconX size={18} />
+            </ActionIcon>
+          )}
+        </Group>
+      ))}
+
+      <Button
+        fullWidth
+        variant="default"
+        mb="md"
+        onClick={() => dispatch(addSimulationParamPort())}
+      >
+        Add Port
+      </Button>
 
       <Select
         mb="md"

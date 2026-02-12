@@ -56,8 +56,7 @@ const initialState = {
 
   simulationModalOpened: false,
   simulationParams: {
-    hostPort: 5760,
-    containerPort: 5760,
+    ports: [{ hostPort: 5760, containerPort: 5760 }],
     vehicleType: "ArduCopter",
     connectAfterStart: true,
   },
@@ -178,6 +177,16 @@ const droneConnectionSlice = createSlice({
       state.simulationParams[key] =
         value === "" || value === undefined ? null : value
     },
+    addSimulationParamPort: (state) => {
+      state.simulationParams.ports.push({ hostPort: 5760, containerPort: 5760 })
+    },
+    removeSimulationParamPort: (state, action) => {
+      state.simulationParams.ports.splice(action.payload, 1)
+    },
+    updateSimulationParamPort: (state, action) => {
+      const { index, key, value } = action.payload
+      state.simulationParams.ports[index][key] = value
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -261,6 +270,9 @@ export const {
   setSimulationModalOpened,
   setSimulationParams,
   setSimulationParam,
+  addSimulationParamPort,
+  removeSimulationParamPort,
+  updateSimulationParamPort,
 
   // Emitters
   emitIsConnectedToDrone,

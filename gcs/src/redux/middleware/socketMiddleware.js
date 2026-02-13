@@ -21,9 +21,12 @@ import {
   setFetchingComPorts,
   setForceDisarmModalOpened,
   setSelectedComPorts,
+} from "../slices/droneConnectionSlice"
+
+import {
   setSimulationStatus,
   SimulationStatus,
-} from "../slices/droneConnectionSlice"
+} from "../slices/simulationParamsSlice"
 
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"

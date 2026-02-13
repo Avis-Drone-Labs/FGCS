@@ -5,12 +5,6 @@ export const ConnectionType = {
   Network: "network",
 }
 
-export const SimulationStatus = {
-  Idle: "idle",
-  Starting: "starting",
-  Running: "running",
-}
-
 const initialState = {
   // drone connection status
   connecting: false,
@@ -39,8 +33,6 @@ const initialState = {
   ip: "127.0.0.1", // local
   port: "5760", // local
 
-  simulationStatus: SimulationStatus.Idle,
-
   forwardingAddress: "", // local
   isForwarding: false, // local
   forwardingAddressModalOpened: false,
@@ -53,13 +45,6 @@ const initialState = {
   videoScale: 1,
 
   forceDisarmModalOpened: false,
-
-  simulationModalOpened: false,
-  simulationParams: {
-    ports: [{ hostPort: 5760, containerPort: 5760 }],
-    vehicleType: "ArduCopter",
-    connectAfterStart: true,
-  },
 }
 
 const droneConnectionSlice = createSlice({
@@ -163,30 +148,6 @@ const droneConnectionSlice = createSlice({
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
     },
-    setSimulationModalOpened: (state, action) => {
-      state.simulationModalOpened = action.payload
-    },
-    setSimulationStatus: (state, action) => {
-      state.simulationStatus = action.payload
-    },
-    setSimulationParams: (state, action) => {
-      state.simulationParams = action.payload
-    },
-    setSimulationParam: (state, action) => {
-      const { key, value } = action.payload
-      state.simulationParams[key] =
-        value === "" || value === undefined ? null : value
-    },
-    addSimulationParamPort: (state) => {
-      state.simulationParams.ports.push({ hostPort: 5760, containerPort: 5760 })
-    },
-    removeSimulationParamPort: (state, action) => {
-      state.simulationParams.ports.splice(action.payload, 1)
-    },
-    updateSimulationParamPort: (state, action) => {
-      const { index, key, value } = action.payload
-      state.simulationParams.ports[index][key] = value
-    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -207,8 +168,6 @@ const droneConnectionSlice = createSlice({
     emitTakeoff: () => {},
     emitLand: () => {},
     emitSetCurrentFlightMode: () => {},
-    emitStartSimulation: () => {},
-    emitStopSimulation: () => {},
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -234,11 +193,6 @@ const droneConnectionSlice = createSlice({
     selectVideoMaximized: (state) => state.videoMaximized,
     selectVideoScale: (state) => state.videoScale,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
-    selectSimulationStatus: (state) => state.simulationStatus,
-    selectIsSimulationRunning: (state) =>
-      state.simulationStatus === SimulationStatus.Running,
-    selectSimulationModalOpened: (state) => state.simulationModalOpened,
-    selectSimulationParams: (state) => state.simulationParams,
   },
 })
 
@@ -266,13 +220,6 @@ export const {
   setVideoMaximized,
   setVideoScale,
   setForceDisarmModalOpened,
-  setSimulationStatus,
-  setSimulationModalOpened,
-  setSimulationParams,
-  setSimulationParam,
-  addSimulationParamPort,
-  removeSimulationParamPort,
-  updateSimulationParamPort,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -291,8 +238,6 @@ export const {
   emitTakeoff,
   emitLand,
   emitSetCurrentFlightMode,
-  emitStartSimulation,
-  emitStopSimulation,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,
@@ -317,10 +262,6 @@ export const {
   selectVideoMaximized,
   selectVideoScale,
   selectForceDisarmModalOpened,
-  selectSimulationStatus,
-  selectIsSimulationRunning,
-  selectSimulationModalOpened,
-  selectSimulationParams,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

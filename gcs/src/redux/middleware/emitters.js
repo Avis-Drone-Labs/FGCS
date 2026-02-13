@@ -32,13 +32,15 @@ import {
   emitStartForwarding,
   emitStopForwarding,
   emitTakeoff,
-  emitStartSimulation,
-  emitStopSimulation,
   setCurrentPage,
   setIsForwarding,
+} from "../slices/droneConnectionSlice"
+import {
   setSimulationStatus,
   SimulationStatus,
-} from "../slices/droneConnectionSlice"
+  emitStartSimulation,
+  emitStopSimulation,
+} from "../slices/simulationParamsSlice"
 import {
   emitListFiles,
   emitListLogFiles,
@@ -209,10 +211,9 @@ export function handleEmitters(socket, store, action) {
       emitter: emitStartSimulation,
       callback: () => {
         const storeState = store.getState()
-        const simulationParams = storeState.droneConnection.simulationParams
+        const simulationParams = storeState.simulationParams
         socket.socket.emit("start_docker_simulation", {
           ports: simulationParams.ports,
-          containerPort: simulationParams.containerPort,
           vehicleType: simulationParams.vehicleType,
           connect: simulationParams.connectAfterStart,
         })

@@ -12,19 +12,22 @@ import {
 } from "@mantine/core"
 import { IconInfoCircle, IconX } from "@tabler/icons-react"
 import {
-  setSimulationModalOpened,
-  setSimulationParam,
-  selectSimulationModalOpened,
-  selectSimulationParams,
-  selectIsSimulationRunning,
   SimulationStatus,
+  addSimulationPort,
   emitStartSimulation,
   emitStopSimulation,
+  removeSimulationPort,
+  selectIsSimulationRunning,
+  selectSimulationConnectAfterStart,
+  selectSimulationModalOpened,
+  selectSimulationPorts,
   selectSimulationStatus,
-  addSimulationParamPort,
-  removeSimulationParamPort,
-  updateSimulationParamPort,
-} from "../../redux/slices/droneConnectionSlice"
+  selectSimulationVehicleType,
+  setSimulationConnectAfterStart,
+  setSimulationModalOpened,
+  setSimulationVehicleType,
+  updateSimulationPort,
+} from "../../redux/slices/simulationParamsSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { showNotification } from "../../helpers/notification"
 
@@ -33,7 +36,9 @@ export default function SimulationModal() {
   const modalOpen = useSelector(selectSimulationModalOpened)
   const isSimulationRunning = useSelector(selectIsSimulationRunning)
   const simulationStatus = useSelector(selectSimulationStatus)
-  const simulationParams = useSelector(selectSimulationParams)
+  const ports = useSelector(selectSimulationPorts)
+  const vehicleType = useSelector(selectSimulationVehicleType)
+  const connectAfterStart = useSelector(selectSimulationConnectAfterStart)
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
 
   return (
@@ -60,7 +65,7 @@ export default function SimulationModal() {
         },
       }}
     >
-      {simulationParams.ports.map((port, index) => (
+      {ports.map((port, index) => (
         <Group spacing="md" mb="md" key={index} wrap="nowrap" align="end">
           <NumberInput
             label="Host Port"
@@ -71,7 +76,7 @@ export default function SimulationModal() {
             style={{ flex: 1 }}
             onChange={(val) =>
               dispatch(
-                updateSimulationParamPort({
+                updateSimulationPort({
                   index,
                   key: "hostPort",
                   value: val,
@@ -89,7 +94,7 @@ export default function SimulationModal() {
             style={{ flex: 1 }}
             onChange={(val) =>
               dispatch(
-                updateSimulationParamPort({
+                updateSimulationPort({
                   index,
                   key: "containerPort",
                   value: val,
@@ -98,12 +103,12 @@ export default function SimulationModal() {
             }
           />
 
-          {simulationParams.ports.length > 1 && (
+          {ports.length > 1 && (
             <ActionIcon
               color="red"
               aria-label="Remove port"
               size={36}
-              onClick={() => dispatch(removeSimulationParamPort(index))}
+              onClick={() => dispatch(removeSimulationPort(index))}
             >
               <IconX size={18} />
             </ActionIcon>
@@ -115,7 +120,7 @@ export default function SimulationModal() {
         fullWidth
         variant="default"
         mb="md"
-        onClick={() => dispatch(addSimulationParamPort())}
+        onClick={() => dispatch(addSimulationPort())}
       >
         Add Port
       </Button>
@@ -125,11 +130,10 @@ export default function SimulationModal() {
         label="Vehicle type"
         placeholder="Pick value"
         data={["ArduCopter", "ArduPlane"]}
-        value={simulationParams.vehicleType}
+        value={vehicleType}
         allowDeselect={false}
         onChange={(value) => {
-          if (value)
-            dispatch(setSimulationParam({ key: "vehicleType", value: value }))
+          if (value) dispatch(setSimulationVehicleType(value))
         }}
       />
 
@@ -141,13 +145,10 @@ export default function SimulationModal() {
         <div className="flex flex-row gap-2">
           <Checkbox
             label="Connect after starting"
-            checked={simulationParams.connectAfterStart}
+            checked={connectAfterStart}
             onChange={(event) =>
               dispatch(
-                setSimulationParam({
-                  key: "connectAfterStart",
-                  value: event.currentTarget.checked,
-                }),
+                setSimulationConnectAfterStart(event.currentTarget.checked),
               )
             }
             disabled={!connectedToSocket}

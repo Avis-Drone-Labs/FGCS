@@ -4,10 +4,8 @@
 
 // Local Imports
 import { useDispatch } from "react-redux"
-import {
-  setForwardingAddressModalOpened,
-  setSimulationModalOpened,
-} from "../../../redux/slices/droneConnectionSlice"
+import { setForwardingAddressModalOpened } from "../../../redux/slices/droneConnectionSlice"
+import { setSimulationModalOpened } from "../../../redux/slices/simulationParamsSlice"
 import MenuItem from "./menuItem"
 import MenuTemplate from "./menuTemplate"
 

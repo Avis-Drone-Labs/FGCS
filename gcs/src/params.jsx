@@ -153,7 +153,7 @@ export default function Params() {
     if (checkArmedOrFlying(refreshCallback)) {
       return
     }
-    rebootCallback()
+    refreshCallback()
   }
 
   async function saveParamsToFile() {

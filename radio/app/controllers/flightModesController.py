@@ -129,6 +129,41 @@ class FlightModesController:
                 "message": f"Failed to set flight mode {mode_number} to {mode_name}",
             }
 
+    def setFlightModeChannel(self, channel: int) -> Response:
+        """
+        Set the flight mode channel of the drone.
+
+        Args:
+            channel (int): The flight mode channel to set
+        """
+        if channel < 1 or channel > 16:
+            self.drone.logger.error(
+                f"Invalid flight mode channel, must be between 1 and 16 inclusive, got {channel}."
+            )
+            return {
+                "success": False,
+                "message": f"Invalid flight mode channel, must be between 1 and 16 inclusive, got {channel}.",
+            }
+
+        param_type = 2
+        param_set_success = self.drone.paramsController.setParam(
+            "FLTMODE_CH", channel, param_type
+        )
+
+        if param_set_success:
+            self.drone.logger.info(f"Flight mode channel set to {channel}")
+            self.flight_mode_channel = channel
+
+            return {
+                "success": True,
+                "message": f"Flight mode channel set to {channel}",
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Failed to set flight mode channel to {channel}",
+            }
+
     @sendingCommandLock
     def setCurrentFlightMode(self, flightMode: int) -> Response:
         """

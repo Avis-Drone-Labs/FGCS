@@ -10,6 +10,10 @@ class SetCurrentFlightModeType(TypedDict):
     newFlightMode: int
 
 
+class SetFlightModeChannelType(TypedDict):
+    channel: int
+
+
 @socketio.on("get_flight_mode_config")
 def getFlightModeConfig() -> None:
     """
@@ -64,6 +68,42 @@ def setFlightMode(data: SetFlightModeValueAndNumber) -> None:
         mode_number, flight_mode
     )
     socketio.emit("set_flight_mode_result", result)
+
+
+@socketio.on("set_flight_mode_channel")
+def setFlightModeChannel(data: SetFlightModeChannelType) -> None:
+    """
+    Sets the flight mode channel based off data passed in, only works when the config page is loaded.
+
+    Args:
+        data (SetFlightModeChannelType): Contains the flight mode channel to set
+    """
+    if droneStatus.state != "config.flight_modes":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the config screen to access the flight modes."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="set the flight mode channel")
+
+    channel = data.get("channel", None)
+
+    if channel is None:
+        droneErrorCb("Flight mode channel must be specified.")
+        return
+
+    channel_int = None
+    try:
+        channel_int = int(channel)
+    except ValueError:
+        droneErrorCb("Flight mode channel must be an integer.")
+        return
+
+    result = droneStatus.drone.flightModesController.setFlightModeChannel(channel_int)
+    socketio.emit("set_flight_mode_channel_result", result)
 
 
 @socketio.on("refresh_flight_mode_data")

@@ -18,7 +18,7 @@ import {
 } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import { ActionIcon, Tooltip } from "@mantine/core"
-import { useDisclosure } from "@mantine/hooks"
+import { useDisclosure, useDebouncedValue } from "@mantine/hooks"
 import DefaultSettings from "../../data/default_settings.json"
 import {
   closeLoadingNotification,
@@ -39,6 +39,9 @@ function TextSetting({ settingName, hidden, matches }) {
   const settingValue = getSetting(settingName)
 
   const [newValue, setNewValue] = useState(settingValue)
+
+  // Debounce the value to prevent excessive updates
+  const [debounced] = useDebouncedValue(newValue, 500)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -48,11 +51,11 @@ function TextSetting({ settingName, hidden, matches }) {
   }, [settingValue])
 
   useEffect(() => {
-    if (newValue === settingValue) return
+    if (debounced === settingValue) return
 
     if (matches) {
       const regex = new RegExp(matches)
-      if (!regex.test(newValue)) {
+      if (!regex.test(debounced)) {
         setError("Invalid input format")
         return
       } else {
@@ -60,8 +63,8 @@ function TextSetting({ settingName, hidden, matches }) {
       }
     }
 
-    setSetting(settingName, newValue)
-  }, [newValue])
+    setSetting(settingName, debounced)
+  }, [debounced])
 
   return (
     <TextInput

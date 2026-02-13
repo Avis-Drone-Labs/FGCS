@@ -133,8 +133,10 @@ def container_already_running(client, container_name) -> bool:
     except NotFound:
         return False
     except DockerException:
-        logger.exception("Unexpected Docker exception in container_already_running")
-        return False
+        emit_error_message(
+            "Unexpected Docker exception while checking if container is running"
+        )
+        return True
 
 
 def wait_for_container_connection_msg(
@@ -165,7 +167,6 @@ def wait_for_container_connection_msg(
         try:
             container.reload()
         except DockerException:
-            logger.exception("Docker error reloading container while awaiting start")
             failure_reason = "Docker error while awaiting connection message"
             break
 
@@ -177,7 +178,6 @@ def wait_for_container_connection_msg(
             # Only fetch recent lines
             logs_bytes = container.logs(stream=False, tail=200)
         except DockerException:
-            logger.exception("Docker error reading container logs while awaiting start")
             failure_reason = "Docker error while awaiting connection message"
             break
 
@@ -220,6 +220,7 @@ def start_docker_simulation(data) -> None:
         return
 
     validated_ports = {}
+    seen_host_ports = set()
     primary_host_port = None
 
     for i, port in enumerate(ports):
@@ -243,6 +244,12 @@ def start_docker_simulation(data) -> None:
                 f"Host port in entry {i + 1} must be between 1025 and 65535"
             )
             return
+
+        if host_port in seen_host_ports:
+            emit_error_message(f"Duplicate host port detected: {host_port}")
+            return
+
+        seen_host_ports.add(host_port)
 
         container_port = port.get("containerPort", 5760)
 
@@ -342,6 +349,7 @@ def emit_error_message(message):
     Args:
         message: The message to be included in the emit.
     """
+    logger.exception(message)
     socketio.emit(
         "simulation_result",
         {

@@ -24,13 +24,6 @@ const simulationParamsSlice = createSlice({
     setSimulationStatus: (state, action) => {
       state.simulationStatus = action.payload
     },
-    setSimulationParams: (state, action) => {
-      state.simulationParams = action.payload
-    },
-    setSimulationParam: (state, action) => {
-      const { key, value } = action.payload
-      state[key] = value === "" || value === undefined ? null : value
-    },
     addSimulationPort: (state) => {
       state.ports.push({ hostPort: 5760, containerPort: 5760 })
     },

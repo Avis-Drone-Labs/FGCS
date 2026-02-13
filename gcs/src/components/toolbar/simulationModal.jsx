@@ -10,7 +10,7 @@ import {
   Group,
   ActionIcon,
 } from "@mantine/core"
-import { IconInfoCircle, IconX } from "@tabler/icons-react"
+import { IconAlertCircle, IconInfoCircle, IconX } from "@tabler/icons-react"
 import {
   SimulationStatus,
   addSimulationPort,
@@ -40,6 +40,11 @@ export default function SimulationModal() {
   const vehicleType = useSelector(selectSimulationVehicleType)
   const connectAfterStart = useSelector(selectSimulationConnectAfterStart)
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
+
+  const duplicateHostPorts = getDuplicates(ports.map((p) => p.hostPort))
+  const duplicateContainerPorts = getDuplicates(
+    ports.map((p) => p.containerPort),
+  )
 
   return (
     <Modal
@@ -74,6 +79,7 @@ export default function SimulationModal() {
             allowDecimal={false}
             value={port.hostPort}
             style={{ flex: 1 }}
+            error={duplicateHostPorts.has(port.hostPort)}
             onChange={(val) =>
               dispatch(
                 updateSimulationPort({
@@ -92,6 +98,7 @@ export default function SimulationModal() {
             allowDecimal={false}
             value={port.containerPort}
             style={{ flex: 1 }}
+            error={duplicateContainerPorts.has(port.containerPort)}
             onChange={(val) =>
               dispatch(
                 updateSimulationPort({
@@ -115,6 +122,15 @@ export default function SimulationModal() {
           )}
         </Group>
       ))}
+
+      {(duplicateHostPorts.size > 0 || duplicateContainerPorts.size > 0) && (
+        <Group mb="md" gap={6} align="center">
+          <IconAlertCircle size={18} color="red" />
+          <Text size="s" c="red.7">
+            Duplicated ports
+          </Text>
+        </Group>
+      )}
 
       <Button
         fullWidth
@@ -181,5 +197,19 @@ export default function SimulationModal() {
         </Button>
       </Group>
     </Modal>
+  )
+}
+
+const getDuplicates = (values) => {
+  const counts = {}
+  values.forEach((v) => {
+    if (v == null) return
+    counts[v] = (counts[v] || 0) + 1
+  })
+
+  return new Set(
+    Object.keys(counts)
+      .filter((k) => counts[k] > 1)
+      .map(Number),
   )
 }

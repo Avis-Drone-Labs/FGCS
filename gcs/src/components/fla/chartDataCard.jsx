@@ -95,7 +95,7 @@ function ChartDataCard({ item, unit, messageMeans }) {
         swatches={colorInputSwatch}
         closeOnColorSwatchClick
         withEyeDropper={false}
-        value={item.borderColor}
+        value={customColors[item.label] || item.borderColor}
         rightSection={<IconPaint size={16} />}
         onChangeEnd={(color) => changeColor(item.label, color)}
       />

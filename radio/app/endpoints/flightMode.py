@@ -95,7 +95,6 @@ def setFlightModeChannel(data: SetFlightModeChannelType) -> None:
         droneErrorCb("Flight mode channel must be specified.")
         return
 
-    channel_int = None
     try:
         channel_int = int(channel)
     except ValueError:

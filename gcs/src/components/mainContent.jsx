@@ -3,7 +3,7 @@
 */
 
 import { useEffect } from "react"
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes, Navigate } from "react-router-dom"
 
 import SettingsModal from "./settingsModal"
 import { Commands } from "./spotlight/commandHandler"
@@ -65,8 +65,9 @@ export default function AppContent() {
           <SettingsModal />
           <Navbar className="no-drag" />
           <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <AlertProvider>
                   <Dashboard />

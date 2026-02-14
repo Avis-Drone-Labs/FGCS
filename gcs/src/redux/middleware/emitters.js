@@ -210,6 +210,8 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitStartSimulation,
       callback: () => {
+        store.dispatch(setSimulationStatus(SimulationStatus.Starting))
+
         const storeState = store.getState()
         const simulationParams = storeState.simulationParams
         socket.socket.emit("start_docker_simulation", {
@@ -217,13 +219,14 @@ export function handleEmitters(socket, store, action) {
           vehicleType: simulationParams.vehicleType,
           connect: simulationParams.connectAfterStart,
         })
-        store.dispatch(setSimulationStatus(SimulationStatus.Starting))
       },
     },
 
     {
       emitter: emitStopSimulation,
       callback: () => {
+        store.dispatch(setSimulationStatus(SimulationStatus.Stopping))
+
         socket.socket.emit("stop_docker_simulation")
       },
     },

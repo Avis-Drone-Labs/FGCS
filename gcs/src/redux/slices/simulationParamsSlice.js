@@ -4,6 +4,7 @@ export const SimulationStatus = {
   Idle: "idle",
   Starting: "starting",
   Running: "running",
+  Stopping: "stopping",
 }
 
 const initialState = {
@@ -49,9 +50,6 @@ const simulationParamsSlice = createSlice({
       const { operationId } = action.payload
       delete state.loadingNotificationIdsByOperation[operationId]
     },
-    clearAllSimulationLoadingNotificationIds: (state) => {
-      state.loadingNotificationIdsByOperation = {}
-    },
 
     // Emits
     emitStartSimulation: () => {},
@@ -60,7 +58,8 @@ const simulationParamsSlice = createSlice({
   selectors: {
     selectSimulationStatus: (state) => state.simulationStatus,
     selectIsSimulationRunning: (state) =>
-      state.simulationStatus === SimulationStatus.Running,
+      state.simulationStatus === SimulationStatus.Running ||
+      state.simulationStatus === SimulationStatus.Stopping,
     selectSimulationModalOpened: (state) => state.simulationModalOpened,
     selectSimulationPorts: (state) => state.ports,
     selectSimulationVehicleType: (state) => state.vehicleType,
@@ -80,7 +79,6 @@ export const {
   setSimulationConnectAfterStart,
   setSimulationLoadingNotificationId,
   clearSimulationLoadingNotificationId,
-  clearAllSimulationLoadingNotificationIds,
 
   // Emitters
   emitStartSimulation,

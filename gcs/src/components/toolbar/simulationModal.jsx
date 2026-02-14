@@ -190,7 +190,10 @@ export default function SimulationModal() {
                 : emitStartSimulation(),
             )
           }}
-          loading={simulationStatus === SimulationStatus.Starting}
+          loading={
+            simulationStatus === SimulationStatus.Starting ||
+            simulationStatus === SimulationStatus.Stopping
+          }
           disabled={
             (!connectedToSocket && !isSimulationRunning) ||
             duplicateHostPorts.size > 0 ||
@@ -205,15 +208,15 @@ export default function SimulationModal() {
 }
 
 const getDuplicates = (values) => {
-  const counts = {}
+  const counts = new Map()
   values.forEach((v) => {
     if (v === null || v === undefined) return
-    counts[v] = (counts[v] || 0) + 1
+    const current = counts.get(v) || 0
+    counts.set(v, current + 1)
   })
-
   return new Set(
-    Object.keys(counts)
-      .filter((k) => counts[k] > 1)
-      .map(Number),
+    Array.from(counts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([value]) => value),
   )
 }

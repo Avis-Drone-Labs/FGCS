@@ -338,12 +338,10 @@ def stop_docker_simulation() -> None:
         try:
             container = client.containers.get(CONTAINER_NAME)
 
-        except NotFound:
-            emit_error_message("Simulation could not be found")
-            return
-        except DockerException:
-            emit_error_message("Docker exception while getting container")
-            return
+        except NotFound as e:
+            raise SimulationError("Simulation could not be found", e) from e
+        except DockerException as e:
+            raise SimulationError("Docker exception while getting container", e) from e
 
         container.stop()
         socketio.emit(
@@ -351,8 +349,13 @@ def stop_docker_simulation() -> None:
             {"success": True, "running": False, "message": "Simulation stopped"},
         )
 
-    except DockerException:
+    except SimulationError as e:
+        emit_error_message(e.user_message)
+        if e.original_exception:
+            logger.exception(e)
+    except DockerException as e:
         emit_error_message("Docker error while stopping simulation")
+        logger.exception(e)
 
 
 def emit_error_message(message):

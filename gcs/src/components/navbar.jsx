@@ -407,6 +407,7 @@ export default function Navbar() {
           {/* Navigation */}
           <Link
             to="/"
+            draggable={false}
             className={twMerge(
               linkClassName,
               currentPage === "dashboard" && "text-falconred font-bold",
@@ -416,6 +417,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/missions"
+            draggable={false}
             className={twMerge(
               linkClassName,
               currentPage === "missions" && "text-falconred font-bold",
@@ -425,6 +427,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/graphs"
+            draggable={false}
             className={twMerge(
               linkClassName,
               currentPage === "graphs" && "text-falconred font-bold",
@@ -434,6 +437,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/params"
+            draggable={false}
             className={twMerge(
               linkClassName,
               currentPage === "params" && "text-falconred font-bold",
@@ -443,6 +447,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/config"
+            draggable={false}
             className={twMerge(
               linkClassName,
               currentPage?.startsWith("config") && "text-falconred font-bold",
@@ -452,6 +457,7 @@ export default function Navbar() {
           </Link>
           <Link
             to="/fla"
+            draggable={false}
             className={twMerge(
               linkClassName,
               currentPage === "fla" && "text-falconred font-bold",

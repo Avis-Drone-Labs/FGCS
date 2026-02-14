@@ -1,7 +1,7 @@
 /**
- * Armed Monitor Middleware
+ * Armed Middleware
  *
- * This middleware monitors the armed status of the aircraft and runs
+ * This middleware tracks the armed status of the aircraft and runs
  * a callback function every 1 second while the aircraft is armed.
  *
  * The interval starts when the aircraft becomes armed and stops when
@@ -10,7 +10,7 @@
 
 import { setTotalTimeFlying } from "../slices/droneInfoSlice"
 
-const armedMonitorMiddleware = (store) => {
+const armedMiddleware = (store) => {
   let intervalId = null
   let wasArmed = false
 
@@ -55,4 +55,4 @@ const armedMonitorMiddleware = (store) => {
   }
 }
 
-export default armedMonitorMiddleware
+export default armedMiddleware

@@ -267,7 +267,7 @@ def validate_port(i, port, lower, upper):
     NOTE: does not check that the port is actually available.
     """
     if port is None:
-        raise ValueError(f"Port entry {i + 1} is none")
+        raise ValueError(f"Port entry {i + 1} is missing")
 
     try:
         port = int(port)

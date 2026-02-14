@@ -438,7 +438,8 @@ const socketMiddleware = (store) => {
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
           const operationId = msg.operationId || "simulation-loading"
           const state = store.getState()
-          const idsByOp = state.simulationParams.loadingNotificationIdsByOperation
+          const idsByOp =
+            state.simulationParams.loadingNotificationIdsByOperation
           const existingId = idsByOp?.[operationId]
 
           if (msg.loading) {
@@ -465,7 +466,9 @@ const socketMiddleware = (store) => {
                 msg.message,
                 msg.success === false ? { color: redColor } : {},
               )
-              store.dispatch(clearSimulationLoadingNotificationId({ operationId }))
+              store.dispatch(
+                clearSimulationLoadingNotificationId({ operationId }),
+              )
             }
           }
         })

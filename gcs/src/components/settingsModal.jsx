@@ -4,6 +4,7 @@ import {
   Input,
   Modal,
   NumberInput,
+  ScrollArea,
   Select,
   Tabs,
   TextInput,
@@ -188,12 +189,12 @@ function ExtendableTextSetting({ settingName, df }) {
   const [items, setItems] = useState(
     getSetting(settingName).length > 0
       ? getSetting(settingName).map((item) => {
-          const newItem = { id: generateId() }
-          df.fields.forEach((field) => {
-            newItem[field.key] = item[field.key] || ""
-          })
-          return newItem
+        const newItem = { id: generateId() }
+        df.fields.forEach((field) => {
+          newItem[field.key] = item[field.key] || ""
         })
+        return newItem
+      })
       : [],
   )
 
@@ -206,7 +207,7 @@ function ExtendableTextSetting({ settingName, df }) {
       return cleanItem
     })
 
-	// Check for change and if so, set.
+    // Check for change and if so, set.
     const currentSetting = getSetting(settingName)
     if (JSON.stringify(currentSetting) !== JSON.stringify(cleanItems)) {
       setSetting(settingName, cleanItems)
@@ -458,7 +459,7 @@ function Setting({ settingName, df, initialValue }) {
 
     setChangedFromDefault(
       !["[]", '""'].includes(JSON.stringify(df.default)) &&
-        JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
+      JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
     )
   }, [getSetting(settingName)])
 
@@ -582,14 +583,16 @@ function SettingsModal() {
   return (
     <>
       <Modal
+
         centered
         onClose={closeCheckRestart}
         title="User Settings"
         opened={opened}
-        size={"50%"}
+        size="xl"
         styles={{
-          content: { backgroundColor: "dark" },
-          header: { backgroundColor: "dark" },
+          content: { height: "60vh", display: "flex", flexDirection: "column", backgroundColor: "dark" },
+          header: { backgroundColor: "dark", flexShrink: 0 },
+          body: { flex: 1, overflow: "hidden" }
         }}
         bg="dark"
         radius="15px"
@@ -600,10 +603,14 @@ function SettingsModal() {
           orientation="vertical"
           className="dark"
           color="red"
-          h="50vh"
-          styles={{ list: { width: "15%" } }}
+          h="100%"
+          styles={{
+            root: { height: "100%", display: "flex" },
+            list: { width: "15%", minWidth: "140px" },
+            panel: { height: "100%", overflow: "hidden" }
+          }}
         >
-          <Tabs.List className="shrink-0">
+          <Tabs.List >
             {settingTabs.map((t) => {
               return (
                 <Tabs.Tab key={t} value={t}>
@@ -612,45 +619,47 @@ function SettingsModal() {
               )
             })}
           </Tabs.List>
-          {settingTabs.map((tab) => {
-            const tabSettings = DefaultSettings[tab]
-            const groupedSettings = {}
+          <ScrollArea w="100%" h="100%" type="auto">
+            {settingTabs.map((tab) => {
+              const tabSettings = DefaultSettings[tab]
+              const groupedSettings = {}
 
-            Object.entries(tabSettings).forEach(([key, def]) => {
-              const group = def.group || "Ungrouped"
-              if (!groupedSettings[group]) {
-                groupedSettings[group] = []
-              }
-              groupedSettings[group].push({ key, def })
-            })
+              Object.entries(tabSettings).forEach(([key, def]) => {
+                const group = def.group || "Ungrouped"
+                if (!groupedSettings[group]) {
+                  groupedSettings[group] = []
+                }
+                groupedSettings[group].push({ key, def })
+              })
 
-            return (
-              <Tabs.Panel className="space-y-6" value={tab} key={tab}>
-                {Object.keys(groupedSettings).map((group) => (
-                  <div className="pb-2" key={group}>
-                    {group !== "Ungrouped" && (
-                      <h2 className="text-lg font-semibold px-10 pb-2">
-                        {group}
-                      </h2>
-                    )}
-                    <div className="space-y-4">
-                      {groupedSettings[group].map(({ key, def }) => (
-                        <Setting
-                          key={`${tab}.${key}`}
-                          settingName={`${tab}.${key}`}
-                          df={def}
-                          initialValue={initialSettings[`${tab}.${key}`]}
-                        />
-                      ))}
+              return (
+                <Tabs.Panel className="space-y-6 pl-4" value={tab} key={tab}>
+                  {Object.keys(groupedSettings).map((group) => (
+                    <div className="pb-2" key={group}>
+                      {group !== "Ungrouped" && (
+                        <h2 className="text-lg font-semibold px-10 pb-2">
+                          {group}
+                        </h2>
+                      )}
+                      <div className="space-y-4">
+                        {groupedSettings[group].map(({ key, def }) => (
+                          <Setting
+                            key={`${tab}.${key}`}
+                            settingName={`${tab}.${key}`}
+                            df={def}
+                            initialValue={initialSettings[`${tab}.${key}`]}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {Object.keys(tabSettings).length === 0 && (
-                  <p className="pl-4 pt-2">No settings available right now.</p>
-                )}
-              </Tabs.Panel>
-            )
-          })}
+                  ))}
+                  {Object.keys(tabSettings).length === 0 && (
+                    <p className="pl-4 pt-2">No settings available right now.</p>
+                  )}
+                </Tabs.Panel>
+              )
+            })}
+          </ScrollArea>
         </Tabs>
       </Modal>
       <Modal
@@ -670,7 +679,7 @@ function SettingsModal() {
                 setting
                   .split(".")
                   .reduce((title, value) => title[value], DefaultSettings)[
-                  "display"
+                "display"
                 ]
               }
             </p>

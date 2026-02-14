@@ -201,7 +201,7 @@ export default function SimulationModal() {
             simulationStatus === SimulationStatus.Stopping
           }
           disabled={
-            (!connectedToSocket && !isSimulationRunning) ||
+            !connectedToSocket ||
             duplicateHostPorts.size > 0 ||
             duplicateContainerPorts.size > 0
           }

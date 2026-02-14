@@ -1,5 +1,8 @@
 import os
 import time
+from typing import Any, Tuple
+from typing_extensions import TypedDict
+
 from app import logger, socketio
 import docker
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
@@ -13,15 +16,21 @@ CONTAINER_READY_MESSAGE = "YOU CAN NOW CONNECT"
 class SimulationError(Exception):
     """Custom exception for simulation-related failures."""
 
-    def __init__(self, message, original_exception=None):
+    def __init__(self, message: str, original_exception: Exception | None = None):
         super().__init__(message)
         self.user_message = message
         self.original_exception = original_exception
 
 
-def get_docker_client():
+class SimulationStartType(TypedDict, total=False):
+    ports: list[dict[str, Any]]
+    connect: bool
+    vehicleType: str
+
+
+def get_docker_client() -> Any:
     """
-    Returns a Docker client if available, otherwise None.
+    Returns a Docker client if available.
     """
     try:
         client = docker.from_env()
@@ -35,7 +44,7 @@ def get_docker_client():
         ) from e
 
 
-def ensure_image_exists(client, image_name) -> bool:
+def ensure_image_exists(client: Any, image_name: str) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
@@ -94,7 +103,7 @@ def ensure_image_exists(client, image_name) -> bool:
         raise SimulationError("Unknown error getting simulation image", e) from e
 
 
-def build_command(data):
+def build_command(data: dict[str, Any]) -> list[str] | None:
     """
     Parses the socketio data into the form required for the docker command.
 
@@ -118,7 +127,7 @@ def build_command(data):
     return cmd if cmd else None  # Docker start handles None better than empty lists
 
 
-def container_already_running(client, container_name):
+def container_already_running(client: Any, container_name: str) -> bool:
     """
     Checks if the client already has the given container running.
     If it exists but is not running it will be forcibly removed.
@@ -153,7 +162,7 @@ def container_already_running(client, container_name):
         ) from e
 
 
-def cleanup_container(container):
+def cleanup_container(container: Any) -> None:
     """
     Stop the container if it exists and is created, running, or restarting
     """
@@ -168,8 +177,8 @@ def cleanup_container(container):
 
 
 def wait_for_container_connection_msg(
-    container, connect, port, timeout=CONTAINER_START_TIMEOUT
-):
+    container: Any, connect: bool, port: int, timeout: int = CONTAINER_START_TIMEOUT
+) -> None:
     """
     Waits for the container to emit "YOU CAN NOW CONNECT" in its logs.
     Emits a simulation_result event on success or failure.
@@ -225,7 +234,7 @@ def wait_for_container_connection_msg(
     )
 
 
-def validate_ports(ports):
+def validate_ports(ports: list[dict[str, Any]]) -> Tuple[dict[int, int], int]:
     """
     Construct the validated port mappings and primary host port
     """
@@ -261,7 +270,7 @@ def validate_ports(ports):
     return validated_ports, primary_host_port
 
 
-def validate_port(i, port, lower, upper):
+def validate_port(i: int, port: Any, lower: int, upper: int) -> int:
     """
     Ensure that the given port is not none, an int and in the correct range.
     NOTE: does not check that the port is actually available.
@@ -281,7 +290,7 @@ def validate_port(i, port, lower, upper):
 
 
 @socketio.on("start_docker_simulation")
-def start_docker_simulation(data) -> None:
+def start_docker_simulation(data: SimulationStartType) -> None:
     """
     Starts the container identified by CONTAINER_NAME.
 
@@ -294,8 +303,8 @@ def start_docker_simulation(data) -> None:
         validated_ports, primary_host_port = validate_ports(data.get("ports"))
 
         connect = data["connect"] if "connect" in data else False
-        data = {k: v for k, v in data.items() if v is not None}
-        cmd = build_command(data)
+        data_clean = {k: v for k, v in data.items() if v is not None}
+        cmd = build_command(data_clean)
 
         client = get_docker_client()
         ensure_image_exists(client, IMAGE_NAME)
@@ -379,7 +388,7 @@ def stop_docker_simulation() -> None:
             client.close()
 
 
-def emit_error_message(message):
+def emit_error_message(message: str) -> None:
     """
     Emits the given message on "simulation_result" alongside false for success and running.
 

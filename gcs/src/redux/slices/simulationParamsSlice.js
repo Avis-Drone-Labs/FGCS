@@ -27,7 +27,16 @@ const simulationParamsSlice = createSlice({
       state.simulationStatus = action.payload
     },
     addSimulationPort: (state) => {
-      state.ports.push({ hostPort: 5763, containerPort: 5763 })
+      const startPort = 5760
+      let hostPort = startPort
+      while (state.ports.some((port) => port.hostPort === hostPort)) {
+        hostPort += 1
+      }
+      let containerPort = startPort
+      while (state.ports.some((port) => port.containerPort === containerPort)) {
+        containerPort += 1
+      }
+      state.ports.push({ hostPort, containerPort })
     },
     removeSimulationPort: (state, action) => {
       state.ports.splice(action.payload, 1)

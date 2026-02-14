@@ -621,8 +621,7 @@ function SettingsModal() {
           styles={{
             root: { height: "100%", display: "flex" },
             list: {
-              width: "15%",
-              minWidth: "140px",
+              minWidth: "100px",
               transform: "translateZ(0)",
             },
             panel: {

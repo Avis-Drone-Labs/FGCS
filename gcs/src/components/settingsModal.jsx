@@ -8,6 +8,8 @@ import {
   Select,
   Tabs,
   TextInput,
+  Group,
+  Text,
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
@@ -16,6 +18,7 @@ import {
   IconCheck,
   IconRestore,
   IconTrash,
+  IconSettings,
 } from "@tabler/icons-react"
 import { memo, useEffect, useState } from "react"
 import { ActionIcon, Tooltip } from "@mantine/core"
@@ -586,7 +589,12 @@ function SettingsModal() {
 
         centered
         onClose={closeCheckRestart}
-        title="User Settings"
+        title={
+          <Group gap="xs">
+            <IconSettings size={20} />
+            <Text fw={500}>User Settings</Text>
+          </Group>
+        }
         opened={opened}
         size="xl"
         styles={{
@@ -607,7 +615,8 @@ function SettingsModal() {
           styles={{
             root: { height: "100%", display: "flex" },
             list: { width: "15%", minWidth: "140px" },
-            panel: { height: "100%", overflow: "hidden" }
+            panel: { height: "100%", overflow: "hidden" },
+            tab: { paddingLeft: 8, marginLeft: 0 },
           }}
         >
           <Tabs.List >

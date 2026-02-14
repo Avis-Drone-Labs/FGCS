@@ -29,27 +29,50 @@ export default function PresetsAccordion({
       return { defaults: [], custom: [] }
     }
 
-    const filterCategories = (categories = []) =>
+    const processCategories = (categories = []) =>
       (categories || [])
         .map((category) => ({
           ...category,
-          presets: (category.presets || []).filter((preset) =>
-            Object.keys(preset.filters || {}).every((key) => {
-              if (!messageFilters[key]) return false
-              const requiredFields = preset.filters[key] || []
-              const availableFields = formatMessages?.[key]?.fields || []
-              return requiredFields.every((field) =>
-                availableFields.includes(field),
-              )
-            }),
-          ),
+          presets: (category.presets || []).map((preset) => {
+            // Check which messages/fields are missing
+            const missingMessages = []
+            const missingFields = {}
+
+            Object.keys(preset.filters || {}).forEach((key) => {
+              if (!messageFilters[key]) {
+                missingMessages.push(key)
+              } else {
+                const requiredFields = preset.filters[key] || []
+                const availableFields = formatMessages?.[key]?.fields || []
+
+                // Check for missing fields
+                const missing = requiredFields.filter(
+                  (field) => !availableFields.includes(field),
+                )
+                if (missing.length > 0) {
+                  missingFields[key] = missing
+                }
+              }
+            })
+
+            const isAvailable =
+              missingMessages.length === 0 &&
+              Object.keys(missingFields).length === 0
+
+            return {
+              ...preset,
+              isAvailable,
+              missingMessages,
+              missingFields,
+            }
+          }),
         }))
         .filter((category) => (category.presets || []).length > 0)
 
     const presetCategoryKey = getPresetKeys(logType).categoryKey
 
-    const defaults = filterCategories(presetCategories[logType])
-    const custom = filterCategories(presetCategories[presetCategoryKey])
+    const defaults = processCategories(presetCategories[logType])
+    const custom = processCategories(presetCategories[presetCategoryKey])
 
     return { defaults, custom }
   }, [presetCategories, logType, messageFilters, formatMessages])

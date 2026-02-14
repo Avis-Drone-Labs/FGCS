@@ -660,7 +660,7 @@ function SettingsModal() {
               })
 
               return (
-                <Tabs.Panel className="space-y-6 pl-4" value={tab} key={tab}>
+                <Tabs.Panel className="space-y-6" value={tab} key={tab}>
                   {Object.keys(groupedSettings).map((group) => (
                     <div className="pb-2" key={group}>
                       {group !== "Ungrouped" && (

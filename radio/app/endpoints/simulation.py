@@ -186,7 +186,9 @@ def wait_for_container_connection_msg(
     deadline = start_time + timeout
 
     try:
-        for line in container.logs(stream=True, follow=True):
+        log_stream = container.logs(stream=True, follow=True)
+
+        for line in log_stream:
             log_line = line.decode("utf-8").strip()
 
             if CONTAINER_READY_MESSAGE in log_line:
@@ -202,6 +204,10 @@ def wait_for_container_connection_msg(
     except Exception as e:
         failure_reason = "Unexpected error while awaiting connection message"
         logger.exception(e)
+
+    finally:
+        if hasattr(log_stream, "close"):
+            log_stream.close()
 
     if not line_found:
         cleanup_container(container)
@@ -320,6 +326,10 @@ def start_docker_simulation(data) -> None:
         emit_error_message("Simulation failed to start: Docker exception")
         logger.exception(e)
 
+    finally:
+        if client is not None:
+            client.close()
+
 
 @socketio.on("stop_docker_simulation")
 def stop_docker_simulation() -> None:
@@ -356,6 +366,10 @@ def stop_docker_simulation() -> None:
     except DockerException as e:
         emit_error_message("Docker error while stopping simulation")
         logger.exception(e)
+
+    finally:
+        if client is not None:
+            client.close()
 
 
 def emit_error_message(message):

@@ -599,8 +599,8 @@ function SettingsModal() {
         size="xl"
         styles={{
           content: { height: "60vh", display: "flex", flexDirection: "column", backgroundColor: "dark" },
-          header: { backgroundColor: "dark", flexShrink: 0 },
-          body: { flex: 1, overflow: "hidden" }
+          header: { backgroundColor: "dark", flexShrink: 0, transform: "translateZ(0)" },
+          body: { flex: 1, overflow: "hidden", transform: "translateZ(0)" }
         }}
         bg="dark"
         radius="15px"

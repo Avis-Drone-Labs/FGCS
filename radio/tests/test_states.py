@@ -56,7 +56,7 @@ def test_setState_config_flight_modes_state(
 
     socketio_client.emit("set_state", {"state": "config.flight_modes"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 4
+    assert len(droneStatus.drone.message_listeners) == 5
 
 
 @falcon_test(pass_drone_status=True)
@@ -68,7 +68,7 @@ def test_setState_config_rc_state(
 
     socketio_client.emit("set_state", {"state": "config.rc"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 4
+    assert len(droneStatus.drone.message_listeners) == 5
 
 
 # TODO: Sort this out

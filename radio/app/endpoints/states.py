@@ -14,11 +14,10 @@ class SetStateType(TypedDict):
     state: str
 
 
-GLOBAL_MESSAGE_LISTENERS = ["HEARTBEAT", "STATUSTEXT", "GLOBAL_POSITION_INT"]
+GLOBAL_MESSAGE_LISTENERS = ["HEARTBEAT", "STATUSTEXT", "GLOBAL_POSITION_INT", "VFR_HUD"]
 
 STATES_MESSAGE_LISTENERS = {
     "dashboard": [
-        "VFR_HUD",
         "BATTERY_STATUS",
         "ATTITUDE",
         "ALTITUDE",
@@ -35,7 +34,7 @@ STATES_MESSAGE_LISTENERS = {
     "missions": [
         "NAV_CONTROLLER_OUTPUT",
     ],
-    "graphs": ["VFR_HUD", "ATTITUDE", "SYS_STATUS"],
+    "graphs": ["ATTITUDE", "SYS_STATUS"],
     "config.flight_modes": [
         "RC_CHANNELS",
     ],

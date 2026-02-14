@@ -73,6 +73,7 @@ import {
   setOnboardControlSensorsEnabled,
   setRSSIData,
   setTelemetryData,
+  setTotalTimeFlying,
   setVibrationData,
 } from "../slices/droneInfoSlice"
 import {
@@ -418,6 +419,7 @@ const socketMiddleware = (store) => {
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
+          store.dispatch(setTotalTimeFlying(0))
         })
 
         // Link stats

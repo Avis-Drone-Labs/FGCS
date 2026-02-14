@@ -28,6 +28,7 @@ def ensure_image_exists(client, image_name) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
+    Emits simulation_loading messages to expose the downloading status.
 
     Args:
         client: The docker client.
@@ -139,12 +140,25 @@ def container_already_running(client, container_name) -> bool:
         return True
 
 
+def cleanup_container(container):
+    """
+    Stop the container if it exists and is created, running, or restarting
+    """
+    try:
+        container.reload()
+        if container.status in ("running", "created", "restarting"):
+            container.stop(timeout=5)
+    except NotFound:
+        pass  # already gone (remove=True or race)
+    except DockerException:
+        logger.exception("Failed to cleanup container")
+
+
 def wait_for_container_connection_msg(
     container, connect, port, timeout=CONTAINER_START_TIMEOUT
 ):
     """
     Waits for the container to emit "YOU CAN NOW CONNECT" in its logs.
-    Uses Docker's 'since' and 'tail' options for efficient polling.
     Emits a simulation_result event on success or failure.
 
     Args:
@@ -153,45 +167,30 @@ def wait_for_container_connection_msg(
         port: The host port to connect to.
         timeout: The amount of time to wait before timing out.
     """
-    POLL_INTERVAL_S = 0.5
-    MAX_BUFFER_CHARS = 8192
-
+    YOU_CAN_NOW_CONNECT = "YOU CAN NOW CONNECT"
+    line_found = False
+    failure_reason = "Unknown failure reason waiting for container message"
     start_time = time.time()
     deadline = start_time + timeout
 
-    buffer = ""
-    line_found = False
-    failure_reason = "Simulation failed to start in time"
+    try:
+        for line in container.logs(stream=True, follow=True):
+            log_line = line.decode("utf-8").strip()
 
-    while time.time() < deadline:
-        try:
-            container.reload()
-        except DockerException:
-            failure_reason = "Docker error while awaiting connection message"
-            break
-
-        if getattr(container, "status", None) == "exited":
-            failure_reason = "Simulation container exited before it became ready"
-            break
-
-        try:
-            # Only fetch recent lines
-            logs_bytes = container.logs(stream=False, tail=200)
-        except DockerException:
-            failure_reason = "Docker error while awaiting connection message"
-            break
-
-        new_text = logs_bytes.decode(errors="ignore")
-        if new_text:
-            buffer += new_text
-            if len(buffer) > MAX_BUFFER_CHARS:
-                buffer = buffer[-MAX_BUFFER_CHARS:]
-
-            if "YOUCANNOWCONNECT" in buffer.replace(" ", ""):
+            if YOU_CAN_NOW_CONNECT in log_line:
                 line_found = True
                 break
 
-        time.sleep(POLL_INTERVAL_S)
+            if time.time() > deadline:
+                failure_reason = f"Container did not become ready within {timeout}s"
+
+    except DockerException:
+        failure_reason = "Docker error while awaiting connection message"
+    except Exception:
+        failure_reason = "Unexpected error while awaiting connection message"
+
+    if not line_found:
+        cleanup_container(container)
 
     socketio.emit(
         "simulation_result",
@@ -205,16 +204,10 @@ def wait_for_container_connection_msg(
     )
 
 
-@socketio.on("start_docker_simulation")
-def start_docker_simulation(data) -> None:
+def validate_ports(ports):
     """
-    Starts the container identified by CONTAINER_NAME.
-
-    Args:
-        data: The parameters that the simulator should start with.
+    Construct the validated port mappings and primary host port
     """
-    ports = data.get("ports")
-
     if not ports or not isinstance(ports, list):
         emit_error_message("At least one port mapping is required")
         return
@@ -226,54 +219,65 @@ def start_docker_simulation(data) -> None:
     for i, port in enumerate(ports):
         if not isinstance(port, dict):
             emit_error_message(f"Port entry {i + 1} is invalid")
-            return
+            return None
 
-        host_port = port.get("hostPort")
+        host_port = validate_port(port.get("hostPort"), 1025, 65535)
         if host_port is None:
-            emit_error_message(f"Host port is required for entry {i + 1}")
-            return
-
-        try:
-            host_port = int(host_port)
-        except (TypeError, ValueError):
-            emit_error_message(f"Host port in entry {i + 1} must be an integer")
-            return
-
-        if not (1025 <= host_port <= 65535):
-            emit_error_message(
-                f"Host port in entry {i + 1} must be between 1025 and 65535"
-            )
-            return
+            return None
 
         if host_port in seen_host_ports:
             emit_error_message(f"Duplicate host port detected: {host_port}")
-            return
-
+            return None
         seen_host_ports.add(host_port)
 
-        container_port = port.get("containerPort", 5760)
-
-        try:
-            container_port = int(container_port)
-        except (TypeError, ValueError):
-            emit_error_message(f"Container port in entry {i + 1} must be an integer")
-            return
-
-        if not (1 <= container_port <= 65535):
-            emit_error_message(
-                f"Container port in entry {i + 1} must be between 1 and 65535"
-            )
-            return
+        container_port = validate_port(port.get("containerPort", 5760), 1, 65535)
+        if container_port is None:
+            return None
 
         if primary_host_port is None:
             primary_host_port = host_port
         validated_ports[container_port] = host_port
 
+    return validated_ports, primary_host_port
+
+
+def validate_port(port, lower, upper):
+    """
+    Ensure that the given port is not none, an int and in the correct range
+    """
+    if port is None:
+        emit_error_message("Port is none")
+        return None
+
+    try:
+        port = int(port)
+    except (TypeError, ValueError):
+        emit_error_message("Port must be an integer")
+        return None
+
+    if not (lower <= port <= upper):
+        emit_error_message(f"Port must be between {lower} and {upper}")
+        return None
+
+    return port
+
+
+@socketio.on("start_docker_simulation")
+def start_docker_simulation(data) -> None:
+    """
+    Starts the container identified by CONTAINER_NAME.
+
+    Args:
+        data: The parameters that the simulator should start with.
+    """
+    validated_ports, primary_host_port = validate_ports(data.get("ports"))
+    if validated_ports is None:
+        return  # Error message already given in the function
+
     connect = data["connect"] if "connect" in data else False
 
     # Get rid of any other parameters that are none
     data = {k: v for k, v in data.items() if v is not None}
-
     cmd = build_command(data)
 
     client = get_docker_client()

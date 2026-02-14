@@ -184,6 +184,7 @@ def wait_for_container_connection_msg(
     failure_reason = "Unknown failure reason waiting for container message"
     start_time = time.time()
     deadline = start_time + timeout
+    log_stream = None
 
     try:
         log_stream = container.logs(stream=True, follow=True)
@@ -233,6 +234,7 @@ def validate_ports(ports):
 
     validated_ports = {}
     seen_host_ports = set()
+    seen_container_ports = set()
     primary_host_port = None
 
     for i, port in enumerate(ports):
@@ -243,10 +245,13 @@ def validate_ports(ports):
 
         if host_port in seen_host_ports:
             raise ValueError(f"Duplicate host port detected: {host_port}")
-
         seen_host_ports.add(host_port)
 
-        container_port = validate_port(i, port.get("containerPort", 5760), 1, 65535)
+        container_port = validate_port(i, port.get("containerPort"), 1, 65535)
+
+        if container_port in seen_container_ports:
+            raise ValueError(f"Duplicate container port detected: {container_port}")
+        seen_container_ports.add(container_port)
 
         if primary_host_port is None:
             primary_host_port = host_port
@@ -283,6 +288,8 @@ def start_docker_simulation(data) -> None:
     Args:
         data: The parameters that the simulator should start with.
     """
+    client = None
+
     try:
         validated_ports, primary_host_port = validate_ports(data.get("ports"))
 

@@ -183,6 +183,7 @@ def wait_for_container_connection_msg(
 
             if time.time() > deadline:
                 failure_reason = f"Container did not become ready within {timeout}s"
+                break
 
     except DockerException:
         failure_reason = "Docker error while awaiting connection message"
@@ -219,20 +220,20 @@ def validate_ports(ports):
     for i, port in enumerate(ports):
         if not isinstance(port, dict):
             emit_error_message(f"Port entry {i + 1} is invalid")
-            return None
+            return None, None
 
         host_port = validate_port(port.get("hostPort"), 1025, 65535)
         if host_port is None:
-            return None
+            return None, None
 
         if host_port in seen_host_ports:
             emit_error_message(f"Duplicate host port detected: {host_port}")
-            return None
+            return None, None
         seen_host_ports.add(host_port)
 
         container_port = validate_port(port.get("containerPort", 5760), 1, 65535)
         if container_port is None:
-            return None
+            return None, None
 
         if primary_host_port is None:
             primary_host_port = host_port

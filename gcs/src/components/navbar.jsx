@@ -410,7 +410,7 @@ export default function Navbar() {
             draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "dashboard" && "text-falconred font-bold",
+              currentPage === "dashboard" && "text-falconred",
             )}
           >
             Dashboard
@@ -420,7 +420,7 @@ export default function Navbar() {
             draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "missions" && "text-falconred font-bold",
+              currentPage === "missions" && "text-falconred",
             )}
           >
             Missions
@@ -430,7 +430,7 @@ export default function Navbar() {
             draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "graphs" && "text-falconred font-bold",
+              currentPage === "graphs" && "text-falconred",
             )}
           >
             Graphs
@@ -440,7 +440,7 @@ export default function Navbar() {
             draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "params" && "text-falconred font-bold",
+              currentPage === "params" && "text-falconred",
             )}
           >
             Params
@@ -450,7 +450,7 @@ export default function Navbar() {
             draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage?.startsWith("config") && "text-falconred font-bold",
+              currentPage?.startsWith("config") && "text-falconred",
             )}
           >
             Config
@@ -460,7 +460,7 @@ export default function Navbar() {
             draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "fla" && "text-falconred font-bold",
+              currentPage === "fla" && "text-falconred",
             )}
           >
             FLA

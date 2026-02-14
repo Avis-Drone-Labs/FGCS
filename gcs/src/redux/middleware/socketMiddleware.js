@@ -26,6 +26,8 @@ import {
 import {
   setSimulationStatus,
   SimulationStatus,
+  setSimulationLoadingNotificationId,
+  clearSimulationLoadingNotificationId,
 } from "../slices/simulationParamsSlice"
 
 // socket factory
@@ -309,8 +311,6 @@ const socketMiddleware = (store) => {
     }
   }
 
-  let simulationLoadingId = null
-
   return (next) => (action) => {
     if (initSocket.match(action)) {
       // client side execution
@@ -436,26 +436,37 @@ const socketMiddleware = (store) => {
 
         // Simulation status messages
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
+          const operationId = msg.operationId || "simulation-loading"
+          const state = store.getState()
+          const idsByOp = state.simulationParams.loadingNotificationIdsByOperation
+          const existingId = idsByOp?.[operationId]
+
           if (msg.loading) {
-            if (simulationLoadingId != null) {
+            if (existingId != null) {
               closeLoadingNotification(
-                simulationLoadingId,
+                existingId,
                 "Cancelled",
                 "Overwritten by new loading notification",
               )
             }
-            simulationLoadingId = showLoadingNotification(
-              msg.title,
-              msg.message,
+
+            const id = showLoadingNotification(msg.title, msg.message)
+            store.dispatch(
+              setSimulationLoadingNotificationId({
+                operationId,
+                notificationId: id,
+              }),
             )
-          } else if (simulationLoadingId != null) {
-            closeLoadingNotification(
-              simulationLoadingId,
-              msg.title,
-              msg.message,
-              msg.success === false ? { color: redColor } : {},
-            )
-            simulationLoadingId = null
+          } else {
+            if (existingId != null) {
+              closeLoadingNotification(
+                existingId,
+                msg.title,
+                msg.message,
+                msg.success === false ? { color: redColor } : {},
+              )
+              store.dispatch(clearSimulationLoadingNotificationId({ operationId }))
+            }
           }
         })
 

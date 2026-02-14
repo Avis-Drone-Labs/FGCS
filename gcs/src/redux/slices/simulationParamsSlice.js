@@ -12,6 +12,7 @@ const initialState = {
   ports: [{ hostPort: 5760, containerPort: 5760 }],
   vehicleType: "ArduCopter",
   connectAfterStart: true,
+  loadingNotificationIdsByOperation: {},
 }
 
 const simulationParamsSlice = createSlice({
@@ -40,6 +41,17 @@ const simulationParamsSlice = createSlice({
     setSimulationConnectAfterStart: (state, action) => {
       state.connectAfterStart = action.payload
     },
+    setSimulationLoadingNotificationId: (state, action) => {
+      const { operationId, notificationId } = action.payload
+      state.loadingNotificationIdsByOperation[operationId] = notificationId
+    },
+    clearSimulationLoadingNotificationId: (state, action) => {
+      const { operationId } = action.payload
+      delete state.loadingNotificationIdsByOperation[operationId]
+    },
+    clearAllSimulationLoadingNotificationIds: (state) => {
+      state.loadingNotificationIdsByOperation = {}
+    },
 
     // Emits
     emitStartSimulation: () => {},
@@ -53,6 +65,8 @@ const simulationParamsSlice = createSlice({
     selectSimulationPorts: (state) => state.ports,
     selectSimulationVehicleType: (state) => state.vehicleType,
     selectSimulationConnectAfterStart: (state) => state.connectAfterStart,
+    selectSimulationLoadingNotificationIdsByOperation: (state) =>
+      state.loadingNotificationIdsByOperation,
   },
 })
 
@@ -64,6 +78,9 @@ export const {
   updateSimulationPort,
   setSimulationVehicleType,
   setSimulationConnectAfterStart,
+  setSimulationLoadingNotificationId,
+  clearSimulationLoadingNotificationId,
+  clearAllSimulationLoadingNotificationIds,
 
   // Emitters
   emitStartSimulation,
@@ -76,6 +93,7 @@ export const {
   selectSimulationPorts,
   selectSimulationVehicleType,
   selectSimulationConnectAfterStart,
+  selectSimulationLoadingNotificationIdsByOperation,
 } = simulationParamsSlice.selectors
 
 export default simulationParamsSlice

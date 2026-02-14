@@ -39,15 +39,17 @@ def ensure_image_exists(client, image_name) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
-    Emits simulation_loading messages to expose the downloading status.
 
     Args:
         client: The docker client.
         image_name: String for the name of the docker image.
 
     Returns:
-        True if the image exists or is successfully downloaded.
+        True if the image exists or is successfully downloaded. Else False.
     """
+    # Operation id to correlate loading start/finish in the UI
+    operation_id = f"docker-image:{image_name}"
+
     try:
         client.images.get(image_name)
         return True
@@ -55,6 +57,7 @@ def ensure_image_exists(client, image_name) -> bool:
         socketio.emit(
             "simulation_loading",
             {
+                "operationId": operation_id,
                 "loading": True,
                 "title": "Downloading Docker Image",
                 "message": "Image not found. Attempting to download. This may take a while.",
@@ -67,6 +70,7 @@ def ensure_image_exists(client, image_name) -> bool:
             socketio.emit(
                 "simulation_loading",
                 {
+                    "operationId": operation_id,
                     "loading": False,
                     "success": True,
                     "title": "Downloaded Docker Image",
@@ -78,6 +82,7 @@ def ensure_image_exists(client, image_name) -> bool:
             socketio.emit(
                 "simulation_loading",
                 {
+                    "operationId": operation_id,
                     "loading": False,
                     "success": False,
                     "title": "Docker Exception",

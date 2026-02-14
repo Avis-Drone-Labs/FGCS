@@ -50,7 +50,7 @@ export default function PresetsAccordion({
     return null
   }
 
-  const filteredPresetCategories = useMemo(() => {
+  const processedPresetCategories = useMemo(() => {
     if (!presetCategories || !logType || !messageFilters) {
       return { defaults: [], custom: [] }
     }
@@ -115,7 +115,7 @@ export default function PresetsAccordion({
   return (
     <Accordion multiple={true}>
       {/* Custom Presets */}
-      {filteredPresetCategories.custom.map((category) => (
+      {processedPresetCategories.custom.map((category) => (
         <Fragment key={category.name}>
           <PresetAccordionItem
             key={category.name}
@@ -125,7 +125,7 @@ export default function PresetsAccordion({
         </Fragment>
       ))}
       {/* Default Presets */}
-      {filteredPresetCategories.defaults.map((category) => (
+      {processedPresetCategories.defaults.map((category) => (
         <Fragment key={category.name}>
           <PresetAccordionItem key={category.name} category={category} />
         </Fragment>

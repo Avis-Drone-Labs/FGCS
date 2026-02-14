@@ -190,6 +190,16 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
       )
     }
 
+    // If somehow there are no missing messages or fields but preset is still
+    // not available
+    if (missingParts.length === 0) {
+      missingParts.push(
+        <div key="fields">
+          <p className="text-sm">This preset is unavailable</p>
+        </div>,
+      )
+    }
+
     return (
       <div className="text-left whitespace-pre-wrap max-w-96">
         <p className="font-semibold mb-1">{preset.name}</p>
@@ -239,7 +249,7 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
             </div>
           ) : (
             filteredPresets.map((preset, idx) => {
-              const isAvailable = preset.isAvailable !== false
+              const isAvailable = preset.isAvailable
 
               return (
                 <div key={idx} className="flex items-center gap-2">

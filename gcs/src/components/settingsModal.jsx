@@ -482,13 +482,14 @@ function Setting({ settingName, df, initialValue }) {
     <div
       className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && df.type != "extendableText" && "items-center"} px-10 `}
     >
-      <div className="space-y-px relative">
+      <div className="relative">
         {changedFromDefault && (
-          <div className="absolute right-full pr-1.5">
+          <div className="absolute right-full pr-2">
             <Tooltip label="Reset to default">
               <ActionIcon
                 variant="transparent"
                 color="gray"
+                size="sm"
                 onClick={resetToDefault}
               >
                 <IconRestore size={16} />
@@ -599,8 +600,9 @@ function SettingsModal() {
         size="xl"
         styles={{
           content: { height: "60vh", display: "flex", flexDirection: "column", backgroundColor: "dark" },
-          header: { backgroundColor: "dark", flexShrink: 0, transform: "translateZ(0)" },
-          body: { flex: 1, overflow: "hidden", transform: "translateZ(0)" }
+          header: { backgroundColor: "dark", flexShrink: 0 },
+          body: { flex: 1, overflow: "hidden" },
+          transform: "translateZ(0)"
         }}
         bg="dark"
         radius="15px"
@@ -614,8 +616,8 @@ function SettingsModal() {
           h="100%"
           styles={{
             root: { height: "100%", display: "flex" },
-            list: { width: "15%", minWidth: "140px" },
-            panel: { height: "100%", overflow: "hidden" },
+            list: { width: "15%", minWidth: "140px", transform: "translateZ(0)" },
+            panel: { height: "100%", overflow: "hidden", transform: "translateZ(0)" },
             tab: { paddingLeft: 8, marginLeft: 0 },
           }}
         >
@@ -628,7 +630,7 @@ function SettingsModal() {
               )
             })}
           </Tabs.List>
-          <ScrollArea w="100%" h="100%" type="auto">
+          <ScrollArea w="100%" h="100%" type="auto" viewportProps={{ style: { transform: "translateZ(0)" } }}>
             {settingTabs.map((tab) => {
               const tabSettings = DefaultSettings[tab]
               const groupedSettings = {}

@@ -24,6 +24,32 @@ export default function PresetsAccordion({
   const messageFilters = useSelector(selectMessageFilters)
   const formatMessages = useSelector(selectFormatMessages)
 
+  // Helper function to find alternative message name
+  // Treats MESSAGE[0] and MESSAGE as interchangeable
+  const findMessageName = (requestedName) => {
+    // If the exact name exists, return it
+    if (messageFilters[requestedName]) {
+      return requestedName
+    }
+
+    // Check if it's asking for MESSAGE[0] but log has MESSAGE
+    if (requestedName.endsWith("[0]")) {
+      const baseName = requestedName.slice(0, -3)
+      if (messageFilters[baseName]) {
+        return baseName
+      }
+    }
+
+    // Check if it's asking for MESSAGE but log has MESSAGE[0]
+    const indexedName = `${requestedName}[0]`
+    if (messageFilters[indexedName]) {
+      return indexedName
+    }
+
+    // No match found
+    return null
+  }
+
   const filteredPresetCategories = useMemo(() => {
     if (!presetCategories || !logType || !messageFilters) {
       return { defaults: [], custom: [] }
@@ -37,13 +63,21 @@ export default function PresetsAccordion({
             // Check which messages/fields are missing
             const missingMessages = []
             const missingFields = {}
+            const messageNameMap = {} // Maps requested name to actual name in log
 
             Object.keys(preset.filters || {}).forEach((key) => {
-              if (!messageFilters[key]) {
+              const actualMessageName = findMessageName(key)
+
+              if (!actualMessageName) {
+                // Message not found even with fallbacks
                 missingMessages.push(key)
               } else {
+                // Store the mapping for later use
+                messageNameMap[key] = actualMessageName
+
                 const requiredFields = preset.filters[key] || []
-                const availableFields = formatMessages?.[key]?.fields || []
+                const availableFields =
+                  formatMessages?.[actualMessageName]?.fields || []
 
                 // Check for missing fields
                 const missing = requiredFields.filter(
@@ -64,6 +98,7 @@ export default function PresetsAccordion({
               isAvailable,
               missingMessages,
               missingFields,
+              messageNameMap, // Include the mapping for use in preset selection
             }
           }),
         }))

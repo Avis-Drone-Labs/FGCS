@@ -61,26 +61,33 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
       })
     })
     let newColors = {}
+
     // Turn on filters for the given preset
-    Object.keys(preset.filters).forEach((categoryName) => {
-      if (Object.keys(messageFilters).includes(categoryName)) {
-        preset.filters[categoryName].forEach((field) => {
-          if (!(field in messageFilters[categoryName])) {
+    Object.keys(preset.filters).forEach((requestedName) => {
+      // Use the mapped name if available (handles MESSAGE[0] <-> MESSAGE fallback)
+      const actualMessageName =
+        preset.messageNameMap?.[requestedName] || requestedName
+
+      if (Object.keys(messageFilters).includes(actualMessageName)) {
+        preset.filters[requestedName].forEach((field) => {
+          if (!(field in messageFilters[actualMessageName])) {
             showErrorNotification(
-              `Your log file does not include ${categoryName}/${field} data`,
+              `Your log file does not include ${actualMessageName}/${field} data`,
             )
             return
           }
-          newFilters[categoryName][field] = true
+          newFilters[actualMessageName][field] = true
 
-          // Assign a color
-          if (!newColors[`${categoryName}/${field}`]) {
-            newColors[`${categoryName}/${field}`] =
+          // Assign a color using the actual message name
+          if (!newColors[`${actualMessageName}/${field}`]) {
+            newColors[`${actualMessageName}/${field}`] =
               colorPalette[Object.keys(newColors).length % colorPalette.length]
           }
         })
       } else {
-        showErrorNotification(`Your log file does not include ${categoryName}`)
+        showErrorNotification(
+          `Your log file does not include ${actualMessageName}`,
+        )
       }
     })
 
@@ -232,16 +239,15 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
             </div>
           ) : (
             filteredPresets.map((preset, idx) => {
-              const unavailableTooltip = getUnavailableTooltip(preset)
               const isAvailable = preset.isAvailable !== false
 
               return (
                 <div key={idx} className="flex items-center gap-2">
                   <MantineTooltip
                     label={
-                      unavailableTooltip
-                        ? unavailableTooltip
-                        : getAvailableTooltip(preset)
+                      isAvailable
+                        ? getAvailableTooltip(preset)
+                        : getUnavailableTooltip(preset)
                     }
                     withArrow
                     position="right"

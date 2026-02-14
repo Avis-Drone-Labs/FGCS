@@ -191,9 +191,10 @@ export default function SimulationModal() {
             )
           }}
           loading={simulationStatus === SimulationStatus.Starting}
-          disabled={!connectedToSocket && !isSimulationRunning
-            || duplicateHostPorts.size > 0
-            || duplicateContainerPorts.size > 0
+          disabled={
+            (!connectedToSocket && !isSimulationRunning) ||
+            duplicateHostPorts.size > 0 ||
+            duplicateContainerPorts.size > 0
           }
         >
           {isSimulationRunning ? "Stop Simulator" : "Start Simulator"}

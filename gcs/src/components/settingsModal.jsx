@@ -192,12 +192,12 @@ function ExtendableTextSetting({ settingName, df }) {
   const [items, setItems] = useState(
     getSetting(settingName).length > 0
       ? getSetting(settingName).map((item) => {
-        const newItem = { id: generateId() }
-        df.fields.forEach((field) => {
-          newItem[field.key] = item[field.key] || ""
+          const newItem = { id: generateId() }
+          df.fields.forEach((field) => {
+            newItem[field.key] = item[field.key] || ""
+          })
+          return newItem
         })
-        return newItem
-      })
       : [],
   )
 
@@ -462,7 +462,7 @@ function Setting({ settingName, df, initialValue }) {
 
     setChangedFromDefault(
       !["[]", '""'].includes(JSON.stringify(df.default)) &&
-      JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
+        JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
     )
   }, [getSetting(settingName)])
 
@@ -587,7 +587,6 @@ function SettingsModal() {
   return (
     <>
       <Modal
-
         centered
         onClose={closeCheckRestart}
         title={
@@ -599,10 +598,15 @@ function SettingsModal() {
         opened={opened}
         size="xl"
         styles={{
-          content: { height: "60vh", display: "flex", flexDirection: "column", backgroundColor: "dark" },
+          content: {
+            height: "60vh",
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "dark",
+          },
           header: { backgroundColor: "dark", flexShrink: 0 },
           body: { flex: 1, overflow: "hidden" },
-          transform: "translateZ(0)"
+          transform: "translateZ(0)",
         }}
         bg="dark"
         radius="15px"
@@ -616,12 +620,20 @@ function SettingsModal() {
           h="100%"
           styles={{
             root: { height: "100%", display: "flex" },
-            list: { width: "15%", minWidth: "140px", transform: "translateZ(0)" },
-            panel: { height: "100%", overflow: "hidden", transform: "translateZ(0)" },
+            list: {
+              width: "15%",
+              minWidth: "140px",
+              transform: "translateZ(0)",
+            },
+            panel: {
+              height: "100%",
+              overflow: "hidden",
+              transform: "translateZ(0)",
+            },
             tab: { paddingLeft: 8, marginLeft: 0 },
           }}
         >
-          <Tabs.List >
+          <Tabs.List>
             {settingTabs.map((t) => {
               return (
                 <Tabs.Tab key={t} value={t}>
@@ -630,7 +642,12 @@ function SettingsModal() {
               )
             })}
           </Tabs.List>
-          <ScrollArea w="100%" h="100%" type="auto" viewportProps={{ style: { transform: "translateZ(0)" } }}>
+          <ScrollArea
+            w="100%"
+            h="100%"
+            type="auto"
+            viewportProps={{ style: { transform: "translateZ(0)" } }}
+          >
             {settingTabs.map((tab) => {
               const tabSettings = DefaultSettings[tab]
               const groupedSettings = {}
@@ -665,7 +682,9 @@ function SettingsModal() {
                     </div>
                   ))}
                   {Object.keys(tabSettings).length === 0 && (
-                    <p className="pl-4 pt-2">No settings available right now.</p>
+                    <p className="pl-4 pt-2">
+                      No settings available right now.
+                    </p>
                   )}
                 </Tabs.Panel>
               )
@@ -690,7 +709,7 @@ function SettingsModal() {
                 setting
                   .split(".")
                   .reduce((title, value) => title[value], DefaultSettings)[
-                "display"
+                  "display"
                 ]
               }
             </p>

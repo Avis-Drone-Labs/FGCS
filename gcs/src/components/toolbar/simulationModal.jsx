@@ -126,7 +126,7 @@ export default function SimulationModal() {
       {(duplicateHostPorts.size > 0 || duplicateContainerPorts.size > 0) && (
         <Group mb="md" gap={6} align="center">
           <IconAlertCircle size={18} color="red" />
-          <Text size="s" c="red.7">
+          <Text size="sm" c="red.7">
             Duplicated ports
           </Text>
         </Group>

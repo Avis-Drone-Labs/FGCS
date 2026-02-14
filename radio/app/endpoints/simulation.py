@@ -7,6 +7,16 @@ from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = "kushmakkapati/ardupilot_sitl:latest"
 CONTAINER_START_TIMEOUT = int(os.getenv("CONTAINER_START_TIMEOUT", 60))
+CONTAINER_READY_MESSAGE = "YOU CAN NOW CONNECT"
+
+
+class SimulationError(Exception):
+    """Custom exception for simulation-related failures."""
+
+    def __init__(self, message, original_exception=None):
+        super().__init__(message)
+        self.user_message = message
+        self.original_exception = original_exception
 
 
 def get_docker_client():
@@ -17,11 +27,12 @@ def get_docker_client():
         client = docker.from_env()
         client.ping()  # verify reachable
         return client
-    except DockerException:
-        return None
-    except Exception:
-        logger.exception("Unexpected error when creating and pinging Docker client")
-        return None
+    except DockerException as e:
+        raise SimulationError("Unable to connect to Docker", e) from e
+    except Exception as e:
+        raise SimulationError(
+            "Unexpected error when creating and pinging Docker client", e
+        ) from e
 
 
 def ensure_image_exists(client, image_name) -> bool:
@@ -35,7 +46,7 @@ def ensure_image_exists(client, image_name) -> bool:
         image_name: String for the name of the docker image.
 
     Returns:
-        True if the image exists or is successfully downloaded. Else False.
+        True if the image exists or is successfully downloaded.
     """
     try:
         client.images.get(image_name)
@@ -63,7 +74,7 @@ def ensure_image_exists(client, image_name) -> bool:
                 },
             )
             return True
-        except DockerException:
+        except DockerException as e:
             socketio.emit(
                 "simulation_loading",
                 {
@@ -73,11 +84,9 @@ def ensure_image_exists(client, image_name) -> bool:
                     "message": "Error downloading simulation image",
                 },
             )
-            emit_error_message("Error downloading simulation image")
-            return False
-    except DockerException:
-        emit_error_message("Unknown error getting simulation image")
-        return False
+            raise SimulationError("Error downloading simulation image", e) from e
+    except DockerException as e:
+        raise SimulationError("Unknown error getting simulation image", e) from e
 
 
 def build_command(data):
@@ -104,7 +113,7 @@ def build_command(data):
     return cmd if cmd else None  # Docker start handles None better than empty lists
 
 
-def container_already_running(client, container_name) -> bool:
+def container_already_running(client, container_name):
     """
     Checks if the client already has the given container running.
     If it exists but is not running it will be forcibly removed.
@@ -133,11 +142,10 @@ def container_already_running(client, container_name) -> bool:
 
     except NotFound:
         return False
-    except DockerException:
-        emit_error_message(
-            "Unexpected Docker exception while checking if container is running"
-        )
-        return True
+    except DockerException as e:
+        raise SimulationError(
+            "Unexpected Docker exception while checking if container is running", e
+        ) from e
 
 
 def cleanup_container(container):
@@ -167,7 +175,6 @@ def wait_for_container_connection_msg(
         port: The host port to connect to.
         timeout: The amount of time to wait before timing out.
     """
-    YOU_CAN_NOW_CONNECT = "YOU CAN NOW CONNECT"
     line_found = False
     failure_reason = "Unknown failure reason waiting for container message"
     start_time = time.time()
@@ -177,7 +184,7 @@ def wait_for_container_connection_msg(
         for line in container.logs(stream=True, follow=True):
             log_line = line.decode("utf-8").strip()
 
-            if YOU_CAN_NOW_CONNECT in log_line:
+            if CONTAINER_READY_MESSAGE in log_line:
                 line_found = True
                 break
 
@@ -187,8 +194,9 @@ def wait_for_container_connection_msg(
 
     except DockerException:
         failure_reason = "Docker error while awaiting connection message"
-    except Exception:
+    except Exception as e:
         failure_reason = "Unexpected error while awaiting connection message"
+        logger.exception(e)
 
     if not line_found:
         cleanup_container(container)
@@ -210,8 +218,7 @@ def validate_ports(ports):
     Construct the validated port mappings and primary host port
     """
     if not ports or not isinstance(ports, list):
-        emit_error_message("At least one port mapping is required")
-        return
+        raise ValueError("At least one port mapping is required")
 
     validated_ports = {}
     seen_host_ports = set()
@@ -219,46 +226,40 @@ def validate_ports(ports):
 
     for i, port in enumerate(ports):
         if not isinstance(port, dict):
-            emit_error_message(f"Port entry {i + 1} is invalid")
-            return None, None
+            raise ValueError(f"Port entry {i + 1} is invalid")
 
-        host_port = validate_port(port.get("hostPort"), 1025, 65535)
-        if host_port is None:
-            return None, None
+        host_port = validate_port(i, port.get("hostPort"), 1025, 65535)
 
         if host_port in seen_host_ports:
-            emit_error_message(f"Duplicate host port detected: {host_port}")
-            return None, None
+            raise ValueError(f"Duplicate host port detected: {host_port}")
+
         seen_host_ports.add(host_port)
 
-        container_port = validate_port(port.get("containerPort", 5760), 1, 65535)
-        if container_port is None:
-            return None, None
+        container_port = validate_port(i, port.get("containerPort", 5760), 1, 65535)
 
         if primary_host_port is None:
             primary_host_port = host_port
+
         validated_ports[container_port] = host_port
 
     return validated_ports, primary_host_port
 
 
-def validate_port(port, lower, upper):
+def validate_port(i, port, lower, upper):
     """
-    Ensure that the given port is not none, an int and in the correct range
+    Ensure that the given port is not none, an int and in the correct range.
+    NOTE: does not check that the port is actually available.
     """
     if port is None:
-        emit_error_message("Port is none")
-        return None
+        raise ValueError(f"Port entry {i + 1} is none")
 
     try:
         port = int(port)
-    except (TypeError, ValueError):
-        emit_error_message("Port must be an integer")
-        return None
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"Port entry {i + 1} must be an integer") from e
 
     if not (lower <= port <= upper):
-        emit_error_message(f"Port must be between {lower} and {upper}")
-        return None
+        raise ValueError(f"Port entry {i + 1} must be between {lower} and {upper}")
 
     return port
 
@@ -271,28 +272,19 @@ def start_docker_simulation(data) -> None:
     Args:
         data: The parameters that the simulator should start with.
     """
-    validated_ports, primary_host_port = validate_ports(data.get("ports"))
-    if validated_ports is None:
-        return  # Error message already given in the function
-
-    connect = data["connect"] if "connect" in data else False
-
-    # Get rid of any other parameters that are none
-    data = {k: v for k, v in data.items() if v is not None}
-    cmd = build_command(data)
-
-    client = get_docker_client()
-    if client is None:
-        emit_error_message("Unable to connect to Docker")
-        return
-
-    if not ensure_image_exists(client, IMAGE_NAME):
-        return  # Error message already given in the function
-
-    if container_already_running(client, CONTAINER_NAME):
-        return  # Error message already given in the function
-
     try:
+        validated_ports, primary_host_port = validate_ports(data.get("ports"))
+
+        connect = data["connect"] if "connect" in data else False
+        data = {k: v for k, v in data.items() if v is not None}
+        cmd = build_command(data)
+
+        client = get_docker_client()
+        ensure_image_exists(client, IMAGE_NAME)
+
+        if container_already_running(client, CONTAINER_NAME):
+            return
+
         container = client.containers.run(
             IMAGE_NAME,
             name=CONTAINER_NAME,
@@ -310,10 +302,18 @@ def start_docker_simulation(data) -> None:
             CONTAINER_START_TIMEOUT,
         )
 
-    except APIError:
+    except ValueError as e:
+        emit_error_message(str(e))
+    except SimulationError as e:
+        emit_error_message(e.user_message)
+        if e.original_exception:
+            logger.exception(e)
+    except APIError as e:
         emit_error_message("Simulation failed to start: Docker API error")
-    except DockerException:
+        logger.exception(e)
+    except DockerException as e:
         emit_error_message("Simulation failed to start: Docker exception")
+        logger.exception(e)
 
 
 @socketio.on("stop_docker_simulation")
@@ -321,9 +321,12 @@ def stop_docker_simulation() -> None:
     """
     Stops the running Docker container identified by CONTAINER_NAME.
     """
-    client = get_docker_client()
-    if client is None:
-        emit_error_message("Unable to connect to Docker")
+    try:
+        client = get_docker_client()
+    except SimulationError as e:
+        emit_error_message(e.user_message)
+        if e.original_exception:
+            logger.exception(e)
         return
 
     try:
@@ -354,7 +357,6 @@ def emit_error_message(message):
     Args:
         message: The message to be included in the emit.
     """
-    logger.exception(message)
     socketio.emit(
         "simulation_result",
         {

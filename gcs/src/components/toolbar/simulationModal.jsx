@@ -172,7 +172,7 @@ export default function SimulationModal() {
           <Tooltip
             label={
               connectedToSocket
-                ? "If the simulation starts successfully, FGCS will attempt to connect to it"
+                ? "If the simulation starts successfully, FGCS will attempt to connect to the first port listed"
                 : "Not connected to socket"
             }
           >
@@ -207,7 +207,7 @@ export default function SimulationModal() {
 const getDuplicates = (values) => {
   const counts = {}
   values.forEach((v) => {
-    if (v == null) return
+    if (v === null || v === undefined) return
     counts[v] = (counts[v] || 0) + 1
   })
 

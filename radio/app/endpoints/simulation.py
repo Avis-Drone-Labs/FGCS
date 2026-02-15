@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
 from typing_extensions import TypedDict
 
 from app import logger, socketio
@@ -16,7 +16,7 @@ CONTAINER_READY_MESSAGE = "YOU CAN NOW CONNECT"
 class SimulationError(Exception):
     """Custom exception for simulation-related failures."""
 
-    def __init__(self, message: str, original_exception: Exception | None = None):
+    def __init__(self, message: str, original_exception: Optional[Exception] = None):
         super().__init__(message)
         self.user_message = message
         self.original_exception = original_exception
@@ -103,7 +103,7 @@ def ensure_image_exists(client: Any, image_name: str) -> bool:
         raise SimulationError("Unknown error getting simulation image", e) from e
 
 
-def build_command(data: dict[str, Any]) -> list[str] | None:
+def build_command(data: dict[str, Any]) -> Optional[list[str]]:
     """
     Parses the socketio data into the form required for the docker command.
 
@@ -177,7 +177,11 @@ def cleanup_container(container: Any) -> None:
 
 
 def wait_for_container_connection_msg(
-    container: Any, connect: bool, port: int, timeout: int = CONTAINER_START_TIMEOUT
+    client: Any,
+    container: Any,
+    connect: bool,
+    port: int,
+    timeout: int = CONTAINER_START_TIMEOUT,
 ) -> None:
     """
     Waits for the container to emit "YOU CAN NOW CONNECT" in its logs.
@@ -217,7 +221,8 @@ def wait_for_container_connection_msg(
 
     finally:
         if hasattr(log_stream, "close"):
-            log_stream.close()
+            log_stream.close()  # type: ignore[union-attr]
+        client.close()
 
     if not line_found:
         cleanup_container(container)
@@ -234,7 +239,9 @@ def wait_for_container_connection_msg(
     )
 
 
-def validate_ports(ports: list[dict[str, Any]]) -> Tuple[dict[int, int], int]:
+def validate_ports(
+    ports: Optional[list[dict[str, Any]]]
+) -> Tuple[dict[int, int], Optional[int]]:
     """
     Construct the validated port mappings and primary host port
     """
@@ -323,11 +330,14 @@ def start_docker_simulation(data: SimulationStartType) -> None:
 
         socketio.start_background_task(
             wait_for_container_connection_msg,
+            client,
             container,
             connect,
             primary_host_port,
             CONTAINER_START_TIMEOUT,
         )
+
+        client = None  # ownership transferred
 
     except ValueError as e:
         emit_error_message(str(e))
@@ -361,15 +371,9 @@ def stop_docker_simulation() -> None:
         return
 
     try:
-        try:
-            container = client.containers.get(CONTAINER_NAME)
-
-        except NotFound as e:
-            raise SimulationError("Simulation could not be found", e) from e
-        except DockerException as e:
-            raise SimulationError("Docker exception while getting container", e) from e
-
+        container = client.containers.get(CONTAINER_NAME)
         container.stop()
+
         socketio.emit(
             "simulation_result",
             {"success": True, "running": False, "message": "Simulation stopped"},
@@ -380,6 +384,9 @@ def stop_docker_simulation() -> None:
         if e.original_exception:
             logger.exception(e)
     except DockerException as e:
+        emit_error_message("Simulation container could not be found")
+        logger.exception(e)
+    except NotFound as e:
         emit_error_message("Docker error while stopping simulation")
         logger.exception(e)
 

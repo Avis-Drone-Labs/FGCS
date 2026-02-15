@@ -39,7 +39,7 @@ import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
 
 // Tailwind styling
-import { envelope, featureCollection, point } from "@turf/turf"
+import { distance, envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { showInfoNotification } from "../../helpers/notification"
@@ -96,6 +96,9 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
+  const [measureDistanceStart, setMeasureDistanceStart] = useState(null)
+  const [measureDistanceEnd, setMeasureDistanceEnd] = useState(null)
+  const [measureDistanceResult, setMeasureDistanceResult] = useState(null)
 
   useEffect(() => {
     // Check latest gpsData point is valid
@@ -197,6 +200,28 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
     }
   }
 
+  function measureDistance() {
+    if (measureDistanceStart === null) {
+      setMeasureDistanceStart(clickedGpsCoords)
+      showInfoNotification('Click "Measure distance" again to finish measuring')
+    } else {
+      setMeasureDistanceEnd(clickedGpsCoords)
+      setMeasureDistanceResult(
+        distance(
+          [measureDistanceStart.lng, measureDistanceStart.lat],
+          [clickedGpsCoords.lng, clickedGpsCoords.lat],
+          { units: "metres" },
+        ),
+      )
+    }
+  }
+
+  function stopMeasureDistance() {
+    setMeasureDistanceStart(null)
+    setMeasureDistanceEnd(null)
+    setMeasureDistanceResult(null)
+  }
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -289,6 +314,24 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           />
         )}
 
+        {measureDistanceStart !== null && (
+          <MarkerPin
+            lat={measureDistanceStart.lat}
+            lon={measureDistanceStart.lng}
+            colour={tailwindColors.green[500]}
+            tooltipText="Distance measurement start"
+          />
+        )}
+
+        {measureDistanceEnd !== null && (
+          <MarkerPin
+            lat={measureDistanceEnd.lat}
+            lon={measureDistanceEnd.lng}
+            colour={tailwindColors.red[500]}
+            tooltipText="Distance measurement end"
+          />
+        )}
+
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
           <form
             className="flex flex-col space-y-2"
@@ -319,6 +362,19 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           </form>
         </Modal>
 
+        <Modal
+          opened={!!measureDistanceResult}
+          onClose={stopMeasureDistance}
+          title="Distance Measurement"
+          centered
+        >
+          <p>
+            {measureDistanceResult !== null
+              ? `${measureDistanceResult.toFixed(2)} metres`
+              : "N/A"}
+          </p>
+        </Modal>
+
         {clicked && (
           <div
             ref={contextMenuRef}
@@ -336,6 +392,10 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             </ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
+            <Divider className="my-1" />
+            <ContextMenuItem onClick={measureDistance}>
+              <p>Measure distance</p>
+            </ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {

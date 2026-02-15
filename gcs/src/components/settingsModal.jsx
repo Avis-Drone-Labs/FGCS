@@ -4,23 +4,27 @@ import {
   Input,
   Modal,
   NumberInput,
+  ScrollArea,
   Select,
   Tabs,
   TextInput,
+  Group,
+  Text,
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
 import { ActionIcon, Tooltip } from "@mantine/core"
-import { useDisclosure } from "@mantine/hooks"
 import {
   IconAlertCircle,
   IconCheck,
   IconRestore,
   IconTrash,
+  IconSettings,
 } from "@tabler/icons-react"
 import { Octokit } from "octokit"
 import { memo, useEffect, useState } from "react"
 import semverGt from "semver/functions/gt"
+import { useDisclosure, useDebouncedValue } from "@mantine/hooks"
 import DefaultSettings from "../../data/default_settings.json"
 import {
   closeLoadingNotification,
@@ -43,6 +47,9 @@ function TextSetting({ settingName, hidden, matches }) {
   const settingValue = getSetting(settingName)
 
   const [newValue, setNewValue] = useState(settingValue)
+
+  // Debounce the value to prevent excessive updates
+  const [debounced] = useDebouncedValue(newValue, 500)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -52,11 +59,11 @@ function TextSetting({ settingName, hidden, matches }) {
   }, [settingValue])
 
   useEffect(() => {
-    if (newValue === settingValue) return
+    if (debounced === settingValue) return
 
     if (matches) {
       const regex = new RegExp(matches)
-      if (!regex.test(newValue)) {
+      if (!regex.test(debounced)) {
         setError("Invalid input format")
         return
       } else {
@@ -64,8 +71,8 @@ function TextSetting({ settingName, hidden, matches }) {
       }
     }
 
-    setSetting(settingName, newValue)
-  }, [newValue])
+    setSetting(settingName, debounced)
+  }, [debounced])
 
   return (
     <TextInput
@@ -296,7 +303,12 @@ function ExtendableTextSetting({ settingName, df }) {
       })
       return cleanItem
     })
-    setSetting(settingName, cleanItems)
+
+    // Check for change and if so, set.
+    const currentSetting = getSetting(settingName)
+    if (JSON.stringify(currentSetting) !== JSON.stringify(cleanItems)) {
+      setSetting(settingName, cleanItems)
+    }
   }, [items, settingName, setSetting, df.fields])
 
   const updateItemField = (id, fieldKey, value) => {
@@ -564,13 +576,14 @@ function Setting({ settingName, df, initialValue }) {
     <div
       className={`flex flex-row gap-8 justify-between ${df.type != "extendableNumber" && df.type != "extendableText" && "items-center"} px-10 `}
     >
-      <div className="space-y-px relative">
+      <div className="relative">
         {changedFromDefault && (
-          <div className="absolute right-full pr-1.5">
+          <div className="absolute right-full pr-2">
             <Tooltip label="Reset to default">
               <ActionIcon
                 variant="transparent"
                 color="gray"
+                size="sm"
                 onClick={resetToDefault}
               >
                 <IconRestore size={16} />
@@ -670,26 +683,50 @@ function SettingsModal() {
       <Modal
         centered
         onClose={closeCheckRestart}
-        title="User Settings"
+        title={
+          <Group gap="xs">
+            <IconSettings size={20} />
+            <Text fw={500}>User Settings</Text>
+          </Group>
+        }
         opened={opened}
-        size={"50%"}
+        size="xl"
         styles={{
-          content: { backgroundColor: "rgb(23 26 27)" },
-          header: { backgroundColor: "rgb(23 26 27)" },
+          content: {
+            height: "60vh",
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "dark",
+          },
+          header: { backgroundColor: "dark", flexShrink: 0 },
+          body: { flex: 1, overflow: "hidden" },
+          transform: "translateZ(0)",
         }}
-        bg="bg-falcongrey-900"
+        bg="dark"
         radius="15px"
         shadow="xs"
       >
         <Tabs
           defaultValue="General"
           orientation="vertical"
-          className="bg-falcongrey-900"
+          className="dark"
           color="red"
-          h="50vh"
-          styles={{ list: { width: "15%" } }}
+          h="100%"
+          styles={{
+            root: { height: "100%", display: "flex" },
+            list: {
+              minWidth: "100px",
+              transform: "translateZ(0)",
+            },
+            panel: {
+              height: "100%",
+              overflow: "hidden",
+              transform: "translateZ(0)",
+            },
+            tab: { paddingLeft: 8, marginLeft: 0 },
+          }}
         >
-          <Tabs.List className="shrink-0">
+          <Tabs.List>
             {settingTabs.map((t) => {
               return (
                 <Tabs.Tab key={t} value={t}>
@@ -698,50 +735,59 @@ function SettingsModal() {
               )
             })}
           </Tabs.List>
-          {settingTabs.map((tab) => {
-            const tabSettings = DefaultSettings[tab]
-            const groupedSettings = {}
+          <ScrollArea
+            w="100%"
+            h="100%"
+            type="auto"
+            viewportProps={{ style: { transform: "translateZ(0)" } }}
+          >
+            {settingTabs.map((tab) => {
+              const tabSettings = DefaultSettings[tab]
+              const groupedSettings = {}
 
-            Object.entries(tabSettings).forEach(([key, def]) => {
-              const group = def.group || "Ungrouped"
-              if (!groupedSettings[group]) {
-                groupedSettings[group] = []
-              }
-              groupedSettings[group].push({ key, def })
-            })
+              Object.entries(tabSettings).forEach(([key, def]) => {
+                const group = def.group || "Ungrouped"
+                if (!groupedSettings[group]) {
+                  groupedSettings[group] = []
+                }
+                groupedSettings[group].push({ key, def })
+              })
 
-            return (
-              <Tabs.Panel className="space-y-6" value={tab} key={tab}>
-                {Object.keys(groupedSettings).map((group) => (
-                  <div className="pb-2" key={group}>
-                    {group !== "Ungrouped" && (
-                      <h2 className="text-lg font-semibold px-10 pb-2">
-                        {group}
-                      </h2>
-                    )}
-                    <div className="space-y-4">
-                      {groupedSettings[group].map(({ key, def }) => (
-                        <Setting
-                          key={`${tab}.${key}`}
-                          settingName={`${tab}.${key}`}
-                          df={def}
-                          initialValue={initialSettings[`${tab}.${key}`]}
-                        />
-                      ))}
+              return (
+                <Tabs.Panel className="space-y-6" value={tab} key={tab}>
+                  {Object.keys(groupedSettings).map((group) => (
+                    <div className="pb-2" key={group}>
+                      {group !== "Ungrouped" && (
+                        <h2 className="text-lg font-semibold px-10 pb-2">
+                          {group}
+                        </h2>
+                      )}
+                      <div className="space-y-4">
+                        {groupedSettings[group].map(({ key, def }) => (
+                          <Setting
+                            key={`${tab}.${key}`}
+                            settingName={`${tab}.${key}`}
+                            df={def}
+                            initialValue={initialSettings[`${tab}.${key}`]}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {Object.keys(tabSettings).length === 0 && (
-                  <p className="pl-4 pt-2">No settings available right now.</p>
-                )}
-                {tab === "General" && (
-                  <div className="pt-4">
-                    <PrereleaseCheckRow />
-                  </div>
-                )}
-              </Tabs.Panel>
-            )
-          })}
+                  ))}
+                  {Object.keys(tabSettings).length === 0 && (
+                    <p className="pl-4 pt-2">
+                      No settings available right now.
+                    </p>
+                  )}
+                  {tab === "General" && (
+                    <div className="pt-4">
+                      <PrereleaseCheckRow />
+                    </div>
+                  )}
+                </Tabs.Panel>
+              )
+            })}
+          </ScrollArea>
         </Tabs>
       </Modal>
       <Modal

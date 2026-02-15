@@ -1,5 +1,5 @@
 import os
-import time
+import threading
 from typing import Any, Tuple, Optional
 from typing_extensions import TypedDict
 
@@ -189,49 +189,52 @@ def wait_for_container_connection_msg(
     timeout: int = CONTAINER_START_TIMEOUT,
 ) -> None:
     """
-    Waits for the container to emit "YOU CAN NOW CONNECT" in its logs.
+    Waits for the container to emit CONTAINER_READY_MESSAGE in its logs.
     Emits a simulation_result event on success or failure.
 
+    Uses a background thread to stream logs, enforcing a strict timeout.
+
     Args:
+        client: Docker client to close after done.
         container: The container to wait for.
-        connect: If the drone should attempt to connect on successful container start.
+        connect: If FGCS should attempt connection after ready.
         port: The host port to connect to.
-        timeout: The amount of time to wait before timing out.
+        timeout: Maximum time to wait for readiness.
     """
     line_found = False
-    failure_reason = "Unknown failure reason waiting for container message"
-    start_time = time.time()
-    deadline = start_time + timeout
-    log_stream = None
+    failure_reason = f"Container did not become ready within {timeout}s"
+
+    def log_worker(result: dict):
+        try:
+            for line in container.logs(stream=True, follow=True):
+                log_line = line.decode("utf-8").strip()
+                if CONTAINER_READY_MESSAGE in log_line:
+                    result["found"] = True
+                    break
+        except DockerException:
+            result["error"] = "Docker error while streaming logs"
+        except Exception as e:
+            result["error"] = "Unexpected error while streaming logs"
+            logger.exception(e)
+
+    result: dict[str, bool | str] = {"found": False}
+    thread = threading.Thread(target=log_worker, args=(result,), daemon=True)
+    thread.start()
+    thread.join(timeout)  # Wait up to timeout seconds
+
+    if result.get("error"):
+        failure_reason = result["error"]  # type: ignore
+    elif result.get("found"):
+        line_found = True
+    else:
+        # Thread timed out without finding the message
+        cleanup_container(container)
 
     try:
-        log_stream = container.logs(stream=True, follow=True)
-
-        for line in log_stream:
-            log_line = line.decode("utf-8").strip()
-
-            if CONTAINER_READY_MESSAGE in log_line:
-                line_found = True
-                break
-
-            if time.time() > deadline:
-                failure_reason = f"Container did not become ready within {timeout}s"
-                break
-    except NotFound:
-        failure_reason = "Container exited before startup completed"
-    except DockerException:
-        failure_reason = "Docker error while awaiting connection message"
-    except Exception as e:
-        failure_reason = "Unexpected error while awaiting connection message"
-        logger.exception(e)
-
-    finally:
-        if hasattr(log_stream, "close"):
-            log_stream.close()  # type: ignore[union-attr]
-        client.close()
-
-    if not line_found:
-        cleanup_container(container)
+        if hasattr(client, "close"):
+            client.close()
+    except Exception:
+        logger.exception("Error closing Docker client after waiting for container")
 
     socketio.emit(
         "simulation_result",

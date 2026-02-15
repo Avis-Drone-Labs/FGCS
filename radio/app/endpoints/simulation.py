@@ -54,7 +54,11 @@ def ensure_image_exists(client: Any, image_name: str) -> bool:
         image_name: String for the name of the docker image.
 
     Returns:
-        True if the image exists or is successfully downloaded. Else False.
+        True if the image exists or is successfully downloaded.
+
+    Raises:
+        SimulationError: If the image cannot be found, downloaded, or another
+            Docker-related error occurs while ensuring the image exists.
     """
     # Operation id to correlate loading start/finish in the UI
     operation_id = f"docker-image:{image_name}"
@@ -274,7 +278,7 @@ def validate_ports(
         if primary_host_port is None:
             primary_host_port = host_port
 
-        # Convert back to string because thats what docker expects
+        # Convert back to string because that's what Docker expects
         validated_ports[str(container_port)] = str(host_port)
 
     return validated_ports, primary_host_port
@@ -387,10 +391,10 @@ def stop_docker_simulation() -> None:
         if e.original_exception:
             logger.exception(e)
     except DockerException as e:
-        emit_error_message("Simulation container could not be found")
+        emit_error_message("Docker error while stopping simulation")
         logger.exception(e)
     except NotFound as e:
-        emit_error_message("Docker error while stopping simulation")
+        emit_error_message("Simulation container could not be found")
         logger.exception(e)
 
     finally:

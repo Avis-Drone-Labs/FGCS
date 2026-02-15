@@ -18,7 +18,10 @@ import Map from "react-map-gl/maplibre"
 import { v4 as uuidv4 } from "uuid"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
-import { showNotification } from "../../helpers/notification"
+import {
+  showInfoNotification,
+  showNotification,
+} from "../../helpers/notification"
 import { useSettings } from "../../helpers/settings"
 
 // Other dashboard imports
@@ -276,7 +279,7 @@ function MapSectionNonMemo({
   function measureDistance() {
     if (measureDistanceStart === null) {
       setMeasureDistanceStart(contextMenuState.gpsCoords)
-      showNotification('Click "Measure distance" again to finish measuring')
+      showInfoNotification('Click "Measure distance" again to finish measuring')
     } else {
       setMeasureDistanceEnd(contextMenuState.gpsCoords)
       setMeasureDistanceResult(

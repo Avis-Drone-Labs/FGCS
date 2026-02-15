@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
+import { v4 as uuidv4 } from "uuid"
 
 export const SimulationStatus = {
   Idle: "idle",
@@ -10,7 +11,7 @@ export const SimulationStatus = {
 const initialState = {
   simulationModalOpened: false,
   simulationStatus: SimulationStatus.Idle,
-  ports: [{ hostPort: 5760, containerPort: 5760 }],
+  ports: [{ id: uuidv4(), hostPort: 5760, containerPort: 5760 }],
   vehicleType: "ArduCopter",
   connectAfterStart: true,
   loadingNotificationIdsByOperation: {},
@@ -36,14 +37,15 @@ const simulationParamsSlice = createSlice({
       while (state.ports.some((port) => port.containerPort === containerPort)) {
         containerPort += 1
       }
-      state.ports.push({ hostPort, containerPort })
+      state.ports.push({ id: uuidv4(), hostPort, containerPort })
     },
-    removeSimulationPort: (state, action) => {
-      state.ports.splice(action.payload, 1)
+    removeSimulationPortById: (state, action) => {
+      state.ports = state.ports.filter((p) => p.id !== action.payload)
     },
-    updateSimulationPort: (state, action) => {
-      const { index, key, value } = action.payload
-      state.ports[index][key] = value
+    updateSimulationPortById: (state, action) => {
+      const { id, key, value } = action.payload
+      const port = state.ports.find((p) => p.id === id)
+      if (port) port[key] = value
     },
     setSimulationVehicleType: (state, action) => {
       state.vehicleType = action.payload
@@ -82,8 +84,8 @@ export const {
   setSimulationStatus,
   setSimulationModalOpened,
   addSimulationPort,
-  removeSimulationPort,
-  updateSimulationPort,
+  removeSimulationPortById,
+  updateSimulationPortById,
   setSimulationVehicleType,
   setSimulationConnectAfterStart,
   setSimulationLoadingNotificationId,

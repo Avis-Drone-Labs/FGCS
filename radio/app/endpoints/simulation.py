@@ -390,11 +390,11 @@ def stop_docker_simulation() -> None:
         emit_error_message(e.user_message)
         if e.original_exception:
             logger.exception(e)
-    except DockerException as e:
-        emit_error_message("Docker error while stopping simulation")
-        logger.exception(e)
     except NotFound as e:
         emit_error_message("Simulation container could not be found")
+        logger.exception(e)
+    except DockerException as e:
+        emit_error_message("Docker error while stopping simulation")
         logger.exception(e)
 
     finally:

@@ -16,7 +16,7 @@ import {
   addSimulationPort,
   emitStartSimulation,
   emitStopSimulation,
-  removeSimulationPort,
+  removeSimulationPortById,
   selectIsSimulationRunning,
   selectSimulationConnectAfterStart,
   selectSimulationModalOpened,
@@ -26,7 +26,7 @@ import {
   setSimulationConnectAfterStart,
   setSimulationModalOpened,
   setSimulationVehicleType,
-  updateSimulationPort,
+  updateSimulationPortById,
 } from "../../redux/slices/simulationParamsSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { showNotification } from "../../helpers/notification"
@@ -44,6 +44,11 @@ export default function SimulationModal() {
   const duplicateHostPorts = getDuplicates(ports.map((p) => p.hostPort))
   const duplicateContainerPorts = getDuplicates(
     ports.map((p) => p.containerPort),
+  )
+  const hasEmptyPort = ports.some(
+    (p) =>
+      normalizePort(p.hostPort) === undefined ||
+      normalizePort(p.containerPort) === undefined,
   )
 
   return (
@@ -71,7 +76,7 @@ export default function SimulationModal() {
       }}
     >
       {ports.map((port, index) => (
-        <Group spacing="md" mb="md" key={index} wrap="nowrap" align="end">
+        <Group spacing="md" mb="md" key={port.id} wrap="nowrap" align="end">
           <NumberInput
             label="Host Port"
             min={1025}
@@ -79,13 +84,16 @@ export default function SimulationModal() {
             allowDecimal={false}
             value={port.hostPort}
             style={{ flex: 1 }}
-            error={duplicateHostPorts.has(port.hostPort)}
+            error={
+              duplicateHostPorts.has(port.hostPort) ||
+              normalizePort(port.hostPort) === undefined
+            }
             onChange={(val) =>
               dispatch(
-                updateSimulationPort({
-                  index,
+                updateSimulationPortById({
+                  id: port.id,
                   key: "hostPort",
-                  value: val,
+                  value: normalizePort(val),
                 }),
               )
             }
@@ -98,13 +106,16 @@ export default function SimulationModal() {
             allowDecimal={false}
             value={port.containerPort}
             style={{ flex: 1 }}
-            error={duplicateContainerPorts.has(port.containerPort)}
+            error={
+              duplicateContainerPorts.has(port.containerPort) ||
+              normalizePort(port.containerPort) === undefined
+            }
             onChange={(val) =>
               dispatch(
-                updateSimulationPort({
-                  index,
+                updateSimulationPortById({
+                  id: port.id,
                   key: "containerPort",
-                  value: val,
+                  value: normalizePort(val),
                 }),
               )
             }
@@ -115,7 +126,7 @@ export default function SimulationModal() {
               color="red"
               aria-label="Remove port"
               size={36}
-              onClick={() => dispatch(removeSimulationPort(index))}
+              onClick={() => dispatch(removeSimulationPortById(port.id))}
             >
               <IconX size={18} />
             </ActionIcon>
@@ -197,7 +208,8 @@ export default function SimulationModal() {
           disabled={
             !connectedToSocket ||
             duplicateHostPorts.size > 0 ||
-            duplicateContainerPorts.size > 0
+            duplicateContainerPorts.size > 0 ||
+            hasEmptyPort
           }
         >
           {isSimulationRunning ? "Stop Simulator" : "Start Simulator"}
@@ -205,6 +217,13 @@ export default function SimulationModal() {
       </Group>
     </Modal>
   )
+}
+
+const normalizePort = (val) => {
+  if (val === null || val === "" || val === undefined || isNaN(val)) {
+    return undefined
+  }
+  return Number(val)
 }
 
 const getDuplicates = (values) => {

@@ -71,13 +71,7 @@ export default function SimulationModal() {
       }}
     >
       {ports.map((port, index) => (
-        <Group
-          spacing="md"
-          mb="md"
-          key={index}
-          wrap="nowrap"
-          align="end"
-        >
+        <Group spacing="md" mb="md" key={index} wrap="nowrap" align="end">
           <NumberInput
             label="Host Port"
             min={1025}

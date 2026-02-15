@@ -17,6 +17,9 @@ const logAnalyserSlice = createSlice({
     colorIndex: 0,
     aircraftType: null,
     canSavePreset: false,
+    firmwareVersion: null,
+    params: null,
+    mapPositionData: null,
   },
   reducers: {
     setFile: (state, action) => {
@@ -64,6 +67,15 @@ const logAnalyserSlice = createSlice({
     setCanSavePreset: (state, action) => {
       state.canSavePreset = action.payload
     },
+    setFirmwareVersion: (state, action) => {
+      state.firmwareVersion = action.payload
+    },
+    setParams: (state, action) => {
+      state.params = action.payload
+    },
+    setMapPositionData: (state, action) => {
+      state.mapPositionData = action.payload
+    },
   },
   selectors: {
     selectFile: (state) => state.file,
@@ -81,6 +93,10 @@ const logAnalyserSlice = createSlice({
     selectColorIndex: (state) => state.colorIndex,
     selectAircraftType: (state) => state.aircraftType,
     selectCanSavePreset: (state) => state.canSavePreset,
+    selectFirmwareVersion: (state) => state.firmwareVersion,
+    selectParams: (state) => state.params,
+    selectMapPositionData: (state) => state.mapPositionData,
+    selectCanShowMapPositionData: (state) => state.mapPositionData !== null,
   },
 })
 
@@ -100,6 +116,9 @@ export const {
   setColorIndex,
   setAircraftType,
   setCanSavePreset,
+  setFirmwareVersion,
+  setParams,
+  setMapPositionData,
 } = logAnalyserSlice.actions
 
 export const {
@@ -118,6 +137,10 @@ export const {
   selectColorIndex,
   selectAircraftType,
   selectCanSavePreset,
+  selectFirmwareVersion,
+  selectParams,
+  selectMapPositionData,
+  selectCanShowMapPositionData,
 } = logAnalyserSlice.selectors
 
 export default logAnalyserSlice

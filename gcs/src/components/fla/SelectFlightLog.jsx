@@ -5,14 +5,17 @@ import {
   Progress,
   ScrollArea,
 } from "@mantine/core"
+import { useDisclosure } from "@mantine/hooks"
 import moment from "moment"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../helpers/notification.js"
+import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
 import { setFile } from "../../redux/slices/logAnalyserSlice.js"
+import DownloadLogModal from "./DownloadLogModal.jsx"
 import { readableBytes } from "./utils"
 
 /**
@@ -20,9 +23,14 @@ import { readableBytes } from "./utils"
  */
 export default function SelectFlightLog({ getLogSummary }) {
   const dispatch = useDispatch()
+  const connected = useSelector(selectConnectedToDrone)
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [
+    downloadModalOpened,
+    { open: openDownloadModal, close: closeDownloadModal },
+  ] = useDisclosure(false)
 
   async function getFgcsLogs() {
     setRecentFgcsLogs(await window.ipcRenderer.invoke("fla:get-recent-logs"))
@@ -67,19 +75,21 @@ export default function SelectFlightLog({ getLogSummary }) {
         )
 
         if (!result.success) {
-          showErrorNotification(
-            `Error loading file: ${result.error || "File not found. Please reload."}`,
-          )
+          const errorMsg = result.error || "Unknown error occurred"
+          showErrorNotification(`Failed to load ${file.name}: ${errorMsg}`)
+          dispatch(setFile(null))
           return
         }
 
         await getLogSummary(result)
         showSuccessNotification(`${file.name} loaded successfully`)
-        console.timeEnd(`Loading file: ${file.name}`)
       } catch (error) {
         console.error("Error loading file:", error)
-        showErrorNotification("Error loading file: " + error.message)
+        const errorMsg = error?.message || "Unknown error occurred"
+        showErrorNotification(`Failed to load ${file.name}: ${errorMsg}`)
+        dispatch(setFile(null))
       } finally {
+        console.timeEnd(`Loading file: ${file.name}`)
         setLoadingFile(false)
         setLoadingFileProgress(0)
       }
@@ -133,6 +143,11 @@ export default function SelectFlightLog({ getLogSummary }) {
           <Button onClick={selectFile} loading={loadingFile}>
             Analyse a log
           </Button>
+          {connected && (
+            <Button onClick={openDownloadModal} color="blue" variant="filled">
+              Download from Drone
+            </Button>
+          )}
           <Button
             disabled={logsExist}
             color="red"
@@ -172,6 +187,10 @@ export default function SelectFlightLog({ getLogSummary }) {
           color="green"
         />
       )}
+      <DownloadLogModal
+        opened={downloadModalOpened}
+        onClose={closeDownloadModal}
+      />
     </div>
   )
 }

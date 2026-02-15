@@ -80,6 +80,22 @@ export interface ParseResult {
   summary?: LogSummary
 }
 
+export interface ParamObject {
+  name: string
+  value: string | number
+}
+
+export interface MapPositionDataObject {
+  lat: number
+  lon: number
+}
+
+export interface MapPositionData {
+  gps?: MapPositionDataObject[] | undefined
+  gps2?: MapPositionDataObject[] | undefined
+  pos?: MapPositionDataObject[] | undefined
+}
+
 export interface LogSummary {
   formatMessages: { [key: string]: FormatMessage }
   utcAvailable: boolean
@@ -92,6 +108,9 @@ export interface LogSummary {
     { mean: string; max: string; min: string }
   > | null
   aircraftType: AircraftType
+  firmwareVersion: string | null
+  params: ParamObject[] | null
+  mapPositionData: MapPositionData | null
 }
 
 export interface Dataset {

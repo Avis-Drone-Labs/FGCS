@@ -25,6 +25,7 @@ const defaultOptions = {
   responsive: true,
   parsing: false,
   animation: false,
+  maintainAspectRatio: false,
   plugins: {
     zoom: {
       pan: {
@@ -51,6 +52,7 @@ const defaultOptions = {
   elements: {
     point: {
       radius: 0,
+      hitRadius: 5,
     },
     line: {
       borderWidth: 1,

@@ -34,20 +34,23 @@ import {
   selectBatteryData,
   selectDroneCoords,
   selectFlightMode,
-  selectGPSRawInt,
   selectGPS2RawInt,
+  selectGPSRawInt,
+  selectHasSecondaryGps,
   selectNotificationSound,
   selectRSSI,
   soundPlayed,
-  selectHasSecondaryGps,
 } from "./redux/slices/droneInfoSlice"
-import { selectMessages } from "./redux/slices/statusTextSlice"
 import { selectCurrentMission } from "./redux/slices/missionSlice"
+import { selectMessages } from "./redux/slices/statusTextSlice"
 
 import { useSettings } from "./helpers/settings"
 
 // Helper javascript files
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
+
+// Import components
+import ForceDisarmModal from "./components/dashboard/ForceDisarmModal"
 
 // Custom component
 import useSound from "use-sound"
@@ -69,9 +72,9 @@ const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 // Sounds
 import armSound from "./assets/sounds/armed.mp3"
 import disarmSound from "./assets/sounds/disarmed.mp3"
+import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 import lowBatterySound from "./assets/sounds/lowbattery.mp3"
 import waypointReachedSound from "./assets/sounds/waypointreached.mp3"
-import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -200,19 +203,25 @@ export default function Dashboard() {
   }
 
   function calcBigTextFontSize() {
-    let w = telemetryPanelSize.width
     const BREAKPOINT_SM = 350.0
-    if (w < BREAKPOINT_SM) return 1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM
+    const w = telemetryPanelSize.width
+
+    if (w < BREAKPOINT_SM) {
+      return 1.0 - (BREAKPOINT_SM - w) / BREAKPOINT_SM
+    }
+
     return 1.0
   }
 
   function calcIndicatorSize() {
-    let sideBarWidth = sideBarRef.current ? sideBarRef.current.clientWidth : 56
+    const sideBarWidth = sideBarRef.current
+      ? sideBarRef.current.clientWidth
+      : 56
     return Math.min(telemetryPanelSize.width - (sideBarWidth + 24) * 2, 190)
   }
 
   function calcIndicatorPadding() {
-    let sideBarHeight = sideBarRef.current
+    const sideBarHeight = sideBarRef.current
       ? sideBarRef.current.clientHeight
       : 164
     return (190 - Math.max(calcIndicatorSize(), sideBarHeight)) / 2
@@ -269,23 +278,27 @@ export default function Dashboard() {
               tooltip="GPS2 fix type"
             />
           )}
-          <StatusSection
-            icon={<IconTarget />}
-            value={hdopDisplay}
-            tooltip="GPS HDoP"
-          />
-          <StatusSection
-            icon={<IconGps />}
-            value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${
-              lon !== undefined ? lon.toFixed(7) : 0
-            })`}
-            tooltip="GPS (lat, lon)"
-          />
-          <StatusSection
-            icon={<IconSatellite />}
-            value={satellitesVisible}
-            tooltip="Satellites visible"
-          />
+          {fixType !== 0 && (
+            <>
+              <StatusSection
+                icon={<IconTarget />}
+                value={hdopDisplay}
+                tooltip="GPS HDoP"
+              />
+              <StatusSection
+                icon={<IconGps />}
+                value={`(${lat !== undefined ? lat.toFixed(7) : 0}, ${
+                  lon !== undefined ? lon.toFixed(7) : 0
+                })`}
+                tooltip="GPS (lat, lon)"
+              />
+              <StatusSection
+                icon={<IconSatellite />}
+                value={satellitesVisible}
+                tooltip="Satellites visible"
+              />
+            </>
+          )}
           <StatusSection
             icon={<IconAntenna />}
             value={rssi}
@@ -353,6 +366,7 @@ export default function Dashboard() {
           </ResizableBox>
         </div>
       </div>
+      <ForceDisarmModal />
     </Layout>
   )
 }

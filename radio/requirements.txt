@@ -49,7 +49,7 @@ pre-commit==3.5.0
 Pygments==2.17.2
 pyinstaller==6.12.0
 pyinstaller-hooks-contrib==2025.1
-pymavlink==2.4.40
+pymavlink==2.4.49
 pyserial==3.5
 pytest==8.3.4
 pytest-cov==7.0.0

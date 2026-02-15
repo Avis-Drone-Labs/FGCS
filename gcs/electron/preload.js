@@ -8,6 +8,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   "fla:clear-recent-logs",
   "fla:get-messages",
   "app:get-save-file-path",
+  "app:save-file",
   "app:get-node-env",
   "app:get-version",
   "app:is-mac",
@@ -33,6 +34,9 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:update-vibe-status",
   "app:open-vibe-status-window",
   "params:load-params-from-file",
+  "app:open-fla-params-window",
+  "app:close-fla-params-window",
+  "checklist:open",
 ]
 
 const ALLOWED_SEND_CHANNELS = [
@@ -48,8 +52,8 @@ const ALLOWED_SEND_CHANNELS = [
   "window:zoom-out",
   "window:open-file-in-explorer",
   "window:update-title",
-  // app state updates
-  "app:connected-state",
+  // drone state updates (connectedToDrone, isArmed, isFlying)
+  "app:drone-state",
 ]
 
 const ALLOWED_ON_CHANNELS = [
@@ -62,6 +66,7 @@ const ALLOWED_ON_CHANNELS = [
   "app:send-vibe-status",
   "settings:open",
   "mavlink-forwarding:open",
+  "app:send-fla-params",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

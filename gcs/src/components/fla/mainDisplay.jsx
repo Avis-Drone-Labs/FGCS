@@ -5,6 +5,7 @@ import { useSelector } from "react-redux"
 import {
   selectAircraftType,
   selectFile,
+  selectFirmwareVersion,
   selectMessageMeans,
 } from "../../redux/slices/logAnalyserSlice.js"
 import ChartDataCard from "./chartDataCard.jsx"
@@ -17,11 +18,12 @@ import SavePresetModal from "./savePresetModal.jsx"
 /**
  * Main display component for the Falcon Log Analyser (FLA).
  */
-export default function MainDisplay({ closeLogFile, chartData }) {
+export default function MainDisplay({ closeLogFile, chartData, customColors }) {
   // Redux selectors
   const file = useSelector(selectFile)
   const aircraftType = useSelector(selectAircraftType)
   const messageMeans = useSelector(selectMessageMeans)
+  const firmwareVersion = useSelector(selectFirmwareVersion)
 
   // Shared presets state for all children (presets + modal)
   const {
@@ -69,10 +71,16 @@ export default function MainDisplay({ closeLogFile, chartData }) {
           </div>
           <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
             <div className="whitespace-nowrap">Aircraft Type:</div>
-            <div className="text-white ml-auto truncate max-w-[200px]">
+            <div className="text-white ml-auto">
               {aircraftType ?? "No Aircraft Type"}
             </div>
           </div>
+          {firmwareVersion !== null && (
+            <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
+              <div className="whitespace-nowrap">Firmware Version:</div>
+              <div className="text-white ml-auto">{firmwareVersion}</div>
+            </div>
+          )}
         </div>
         <ScrollArea className="h-full max-h-[90%]">
           <Accordion multiple={true}>
@@ -107,19 +115,25 @@ export default function MainDisplay({ closeLogFile, chartData }) {
       </div>
       {/* Graph column */}
       <div className="w-full h-full pr-4 min-w-0 flex flex-col">
-        <Graph data={chartData} openPresetModal={openSavePresetModal} />
+        <Graph
+          data={chartData}
+          customColors={customColors}
+          openPresetModal={openSavePresetModal}
+        />
         {/* Plots Setup */}
-        <div className="grid grid-cols-5 gap-4 pt-4">
-          {chartData.datasets.map((item) => (
-            <Fragment key={item.label}>
-              <ChartDataCard
-                item={item}
-                unit={item.yAxisID} // item.yAxisID is the unit
-                messageMeans={messageMeans}
-              />
-            </Fragment>
-          ))}
-        </div>
+        <ScrollArea.Autosize>
+          <div className="grid grid-cols-5 gap-4 pt-4">
+            {chartData.datasets.map((item) => (
+              <Fragment key={item.label}>
+                <ChartDataCard
+                  item={item}
+                  unit={item.yAxisID} // item.yAxisID is the unit
+                  messageMeans={messageMeans}
+                />
+              </Fragment>
+            ))}
+          </div>
+        </ScrollArea.Autosize>
         <SavePresetModal
           isSavePresetModalOpen={isSavePresetModalOpen}
           closeSavePresetModal={closeSavePresetModal}

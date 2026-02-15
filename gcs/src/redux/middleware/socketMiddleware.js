@@ -17,6 +17,7 @@ import {
   setConnectionModal,
   setConnectionStatus,
   setFetchingComPorts,
+  setForceDisarmModalOpened,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
 
@@ -60,9 +61,9 @@ import {
   setEkfStatusReportData,
   setExtraData,
   setFlightSwVersion,
+  setGps2RawIntData,
   setGpsData,
   setGpsRawIntData,
-  setGps2RawIntData,
   setGuidedModePinData,
   setHeartbeatData,
   setHomePosition,
@@ -74,6 +75,15 @@ import {
   setTelemetryData,
   setVibrationData,
 } from "../slices/droneInfoSlice"
+import {
+  addFiles,
+  resetFiles,
+  setIsReadingFile,
+  setLoadingListFiles,
+  setLogPath,
+  setReadFileData,
+  setReadFileProgress,
+} from "../slices/ftpSlice.js"
 import {
   addIdToItem,
   closeDashboardMissionFetchingNotificationNoSuccessThunk,
@@ -168,6 +178,13 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
+})
+
+const FtpSpecificSocketEvents = Object.freeze({
+  onListFilesResult: "list_files_result",
+  onListLogFilesResult: "list_log_files_result",
+  onReadFileResult: "read_file_result",
+  onReadFileProgress: "read_file_progress",
 })
 
 const socketMiddleware = (store) => {
@@ -398,6 +415,9 @@ const socketMiddleware = (store) => {
           store.dispatch(setShowMotorTestWarningModal(true))
           store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
+          store.dispatch(resetFiles())
+          store.dispatch(setIsReadingFile(false))
+          store.dispatch(setReadFileData(null))
         })
 
         // Link stats
@@ -519,7 +539,14 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
-          if (!msg.success) showErrorNotification(msg.message)
+          if (!msg.success) {
+            // Check if this was a disarm attempt and was not a force disarm
+            if (msg.data?.was_disarming && !msg.data?.was_force) {
+              store.dispatch(setForceDisarmModalOpened(true))
+            } else {
+              showErrorNotification(msg.message)
+            }
+          }
         })
 
         socket.socket.on(
@@ -1064,6 +1091,63 @@ const socketMiddleware = (store) => {
             }
           },
         )
+
+        socket.socket.on(FtpSpecificSocketEvents.onListFilesResult, (msg) => {
+          store.dispatch(setLoadingListFiles(false))
+          if (msg.success) {
+            store.dispatch(addFiles(msg.data))
+          } else {
+            showErrorNotification(msg.message)
+          }
+        })
+
+        socket.socket.on(
+          FtpSpecificSocketEvents.onListLogFilesResult,
+          (msg) => {
+            store.dispatch(setLoadingListFiles(false))
+            if (msg.success) {
+              const data = msg.data || {}
+              const files = data.files || []
+              const logPath = data.log_path || null
+
+              store.dispatch(addFiles(files))
+              store.dispatch(setLogPath(logPath))
+
+              if (files.length === 0) {
+                showErrorNotification(
+                  msg.message || "No log files found on drone",
+                )
+              }
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(FtpSpecificSocketEvents.onReadFileResult, (msg) => {
+          if (msg.success) {
+            showSuccessNotification(msg.message)
+            store.dispatch(setReadFileData(msg.data))
+            store.dispatch(setIsReadingFile(false))
+            store.dispatch(setReadFileProgress(null)) // Reset progress
+          } else {
+            showErrorNotification(msg.message)
+
+            // If currently not reading a file, then reset states
+            const storeState = store.getState()
+            if (storeState !== undefined) {
+              const isReadingFile = storeState.ftp.isReadingFile
+              if (!isReadingFile) {
+                store.dispatch(setIsReadingFile(false))
+                store.dispatch(setReadFileProgress(null)) // Reset progress
+              }
+            }
+          }
+        })
+
+        socket.socket.on(FtpSpecificSocketEvents.onReadFileProgress, (msg) => {
+          store.dispatch(setReadFileProgress(msg))
+        })
       } else {
         // Turn off socket events
         Object.values(DroneSpecificSocketEvents).map((event) =>
@@ -1076,6 +1160,9 @@ const socketMiddleware = (store) => {
           socket.socket.off(event),
         )
         Object.values(ConfigSpecificSocketEvents).map((event) =>
+          socket.socket.off(event),
+        )
+        Object.values(FtpSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
 

@@ -2,7 +2,7 @@ from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
 from app import socketio
-from app.utils import notConnectedError, missingParameterError
+from app.utils import missingParameterError, notConnectedError
 
 
 class ArmDisarmType(TypedDict):

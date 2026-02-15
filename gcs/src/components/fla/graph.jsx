@@ -5,11 +5,10 @@ as graph annotations to show events or different flight modes.
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 // 3rd party imports
 import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
-import { useToggle } from "@mantine/hooks"
 import {
   IconCapture,
   IconCopy,
@@ -40,9 +39,12 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   selectAircraftType,
   selectCanSavePreset,
+  selectCanShowMapPositionData,
+  selectFile,
   selectFlightModeMessages,
   selectLogEvents,
   selectMessageFilters,
+  selectParams,
   selectUtcAvailable,
   setCanSavePreset,
   setColorIndex,
@@ -55,6 +57,7 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config.js"
 
 // Custom components and helpers
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 import {
   COPTER_MODES_FLIGHT_MODE_MAP,
   PLANE_MODES_FLIGHT_MODE_MAP,
@@ -63,7 +66,9 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../helpers/notification.js"
+import FlaMapSection from "./flaMap.jsx"
 import { dataflashOptions, fgcsOptions } from "./graphConfigs.js"
+import { hexToRgba } from "./utils.js"
 
 // https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
 // Note: changes to the plugin code is not reflected to the chart, because the plugin is loaded at chart construction time and editor changes only trigger an chart.update().
@@ -95,7 +100,7 @@ ChartJS.register(
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-export default function Graph({ data, openPresetModal }) {
+export default function Graph({ data, customColors, openPresetModal }) {
   // Redux state
   const dispatch = useDispatch()
   const messageFilters = useSelector(selectMessageFilters)
@@ -104,12 +109,74 @@ export default function Graph({ data, openPresetModal }) {
   const flightModes = useSelector(selectFlightModeMessages)
   const canSavePreset = useSelector(selectCanSavePreset)
   const aircraftType = useSelector(selectAircraftType)
+  const params = useSelector(selectParams)
+  const file = useSelector(selectFile)
+  const fileName = file?.name
+  const canShowMapPositionData = useSelector(selectCanShowMapPositionData)
 
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
   })
-  const [showEvents, toggleShowEvents] = useToggle()
+  const [showEvents, setShowEvents] = useState(false)
   const chartRef = useRef(null)
+  const [showMap, setShowMap] = useState(false)
+
+  // Create a stable key from dataset labels to detect actual data changes
+  const datasetKey = useMemo(
+    () => data.datasets.map((d) => d.label).join(","),
+    [data.datasets],
+  )
+
+  // Toggle show events without resetting zoom
+  function toggleShowEvents() {
+    const newShowEventsVal = !showEvents
+    setShowEvents(newShowEventsVal)
+
+    // Update annotations visibility directly on the chart instance
+    if (chartRef.current) {
+      const chart = chartRef.current
+      const annotations = chart.options?.plugins?.annotation?.annotations
+
+      if (annotations) {
+        // Update display property for event annotations only
+        Object.keys(annotations).forEach((key) => {
+          const annotation = annotations[key]
+          // Only update line annotations (events), not box annotations (flight modes)
+          if (annotation.type === "line") {
+            annotation.display = newShowEventsVal
+            if (annotation.label) {
+              annotation.label.display = newShowEventsVal
+            }
+          }
+        })
+
+        chart.update("none") // 'none' mode prevents animation and maintains zoom
+      }
+    }
+  }
+
+  // Apply custom colors to datasets without resetting zoom
+  // Runs when customColors change or when the datasets change
+  useEffect(() => {
+    if (chartRef.current && customColors) {
+      const chart = chartRef.current
+      const datasets = chart.data.datasets
+
+      // Update colors directly on the chart instance
+      datasets.forEach((dataset) => {
+        const color = customColors[dataset.label]
+        if (color) {
+          dataset.borderColor = color
+          dataset.backgroundColor = hexToRgba(color, 0.5)
+        }
+      })
+
+      // Only update if we actually have colors to apply
+      if (Object.keys(customColors).length > 0) {
+        chart.update("none") // 'none' mode prevents animation and maintains zoom
+      }
+    }
+  }, [customColors, datasetKey])
 
   // Turn on/off all filters
   function clearFilters() {
@@ -204,6 +271,24 @@ export default function Graph({ data, openPresetModal }) {
       }
 
       img.src = chartRef?.current?.toBase64Image()
+    } catch (error) {
+      showErrorNotification(error)
+    }
+  }
+
+  function openParamsWindow() {
+    try {
+      if (!window || !window.ipcRenderer || !window.ipcRenderer.invoke) {
+        showErrorNotification(
+          "IPC renderer is not available to open the FLA Params Window.",
+        )
+        return
+      }
+
+      window.ipcRenderer.invoke("app:open-fla-params-window", {
+        params,
+        fileName,
+      })
     } catch (error) {
       showErrorNotification(error)
     }
@@ -377,24 +462,41 @@ export default function Graph({ data, openPresetModal }) {
 
     scales.x = { ...config.scales.x }
 
-    setConfig({
-      ...config,
+    setConfig((prevConfig) => ({
+      ...prevConfig,
       scales: {
         ...scales,
       },
       plugins: {
-        ...config.plugins,
+        ...prevConfig.plugins,
         annotation: {
           annotations: annotations,
         },
       },
-    })
-  }, [events, showEvents, flightModes, data])
+    }))
+  }, [events, flightModes, datasetKey])
 
   return (
     <div>
-      <Line ref={chartRef} options={config} data={data} />
-      <div className="flex flex-row gap-2 pt-2">
+      <PanelGroup direction="horizontal" style={{ height: "auto" }}>
+        <Panel minSize={20}>
+          <div
+            className="chart-container relative"
+            style={{ minHeight: "60vh" }}
+          >
+            <Line ref={chartRef} options={config} data={data} />
+          </div>
+        </Panel>
+        {showMap && (
+          <>
+            <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+            <Panel minSize={10}>
+              <FlaMapSection />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
+      <div className="flex flex-row gap-2 py-2">
         <MantineTooltip label="Zoom in">
           <ActionIcon
             variant="filled"
@@ -460,6 +562,24 @@ export default function Graph({ data, openPresetModal }) {
               }}
             >
               Save Preset
+            </Button>
+          </MantineTooltip>
+        )}
+        {params !== null && (
+          <MantineTooltip label="View Params">
+            <Button className="min-h-8 max-h-8" onClick={openParamsWindow}>
+              View Params
+            </Button>
+          </MantineTooltip>
+        )}
+
+        {canShowMapPositionData && (
+          <MantineTooltip label={showMap ? "Hide Map" : "Show Map"}>
+            <Button
+              className="min-h-8 max-h-8"
+              onClick={() => setShowMap(!showMap)}
+            >
+              {showMap ? "Hide Map" : "Show Map"}
             </Button>
           </MantineTooltip>
         )}

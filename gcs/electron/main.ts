@@ -25,6 +25,9 @@ import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
 import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
+import registerFlaParamsIPC, {
+  destroyFlaParamsWindow,
+} from "./modules/flaParamsWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -37,6 +40,32 @@ import registerVibeStatusIPC, {
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 import { readParamsFile } from "./utils/paramsFile"
+
+// Check if required data files exist
+function checkRequiredDataFiles(): {
+  success: boolean
+  missingFiles: string[]
+} {
+  const requiredFiles = [
+    path.join(__dirname, "../data/gen_apm_params_def_copter.json"),
+    path.join(__dirname, "../data/gen_apm_params_def_plane.json"),
+    path.join(__dirname, "../data/gen_log_messages_desc_copter.json"),
+    path.join(__dirname, "../data/gen_log_messages_desc_plane.json"),
+  ]
+
+  const missingFiles: string[] = []
+
+  for (const filePath of requiredFiles) {
+    if (!fs.existsSync(filePath)) {
+      missingFiles.push(path.basename(filePath))
+    }
+  }
+
+  return {
+    success: missingFiles.length === 0,
+    missingFiles,
+  }
+}
 
 process.env.DIST = path.join(__dirname, "../dist")
 process.env.VITE_PUBLIC = app.isPackaged
@@ -58,6 +87,8 @@ if (process.platform === "linux") {
 let win: BrowserWindow | null
 let loadingWin: BrowserWindow | null
 let isConnectedToDrone = false
+let isArmed = false
+let isFlying = false
 let quittingApproved = false
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -141,8 +172,10 @@ ipcMain.handle("settings:save-settings", (_, settings) => {
 })
 
 // Cache connection state from renderer
-ipcMain.on("app:connected-state", (_event, connected: boolean) => {
-  isConnectedToDrone = Boolean(connected)
+ipcMain.on("app:drone-state", (_event, obj) => {
+  isConnectedToDrone = Boolean(obj.connectedToDrone)
+  isArmed = Boolean(obj.isArmed)
+  isFlying = Boolean(obj.isFlying)
 })
 
 ipcMain.handle("app:is-mac", () => {
@@ -243,6 +276,7 @@ function createWindow() {
   registerVibeStatusIPC()
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
+  registerFlaParamsIPC()
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -255,6 +289,7 @@ function createWindow() {
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString())
+    win?.webContents.setZoomFactor(1.0)
   })
 
   if (VITE_DEV_SERVER_URL) {
@@ -429,6 +464,7 @@ function closeWindows() {
   destroyEkfStatusWindow()
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
+  destroyFlaParamsWindow()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -451,6 +487,16 @@ app.on("window-all-closed", () => {
   closeWithBackend()
 })
 
+function getExitMessage() {
+  if (isFlying) {
+    return "The aircraft is currently flying."
+  } else if (isArmed) {
+    return "The aircraft is currently armed."
+  } else {
+    return "You are connected to an aircraft."
+  }
+}
+
 // To ensure that the backend process is killed with Cmd + Q on macOS,
 // listen to the before-quit event.
 app.on("before-quit", (e) => {
@@ -467,7 +513,7 @@ app.on("before-quit", (e) => {
       defaultId: 0,
       title: "Confirm Quit",
       message: "Are you sure you want to quit FGCS?",
-      detail: "You are connected to an aircraft.",
+      detail: getExitMessage(),
     })
     if (choice === 1) {
       quittingApproved = true
@@ -505,6 +551,25 @@ app.on("activate", () => {
 })
 
 app.whenReady().then(() => {
+  // In development, ensure required data files exist before starting the app.
+  // In production (packaged app), JSON data is bundled, so raw file checks
+  // can be invalid and are therefore skipped.
+  if (!app.isPackaged) {
+    const fileCheck = checkRequiredDataFiles()
+    if (!fileCheck.success) {
+      dialog.showErrorBox(
+        "Missing Required Files",
+        `The following required data files are missing:\n\n${fileCheck.missingFiles.join("\n")}\n\n` +
+          `Please run the following commands from the data directory within the 'gcs' folder:\n` +
+          `  python generate_param_definitions.py\n` +
+          `  python generate_log_message_descriptions.py\n\n` +
+          `Then restart the application.`,
+      )
+      app.quit()
+      return
+    }
+  }
+
   createLoadingWindow()
   // Open file and Get Recent Logs
   ipcMain.handle("fla:open-file", openFile)
@@ -552,6 +617,27 @@ app.whenReady().then(() => {
     return result
   })
 
+  ipcMain.handle(
+    "app:save-file",
+    async (
+      _event,
+      { filePath, content }: { filePath: string; content: number[] },
+    ) => {
+      try {
+        // Convert number array to Buffer for fs.writeFileSync
+        const buffer = Buffer.from(content)
+        fs.writeFileSync(filePath, buffer as unknown as string)
+        return { success: true }
+      } catch (err) {
+        console.error("Error saving file:", err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    },
+  )
+
   ipcMain.handle("params:load-params-from-file", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender)
     if (!window) {
@@ -592,6 +678,42 @@ app.whenReady().then(() => {
     app.isPackaged ? "production" : "development",
   )
   ipcMain.handle("app:get-version", () => app.getVersion())
+
+  ipcMain.handle("checklist:open", async () => {
+    const window = BrowserWindow.getFocusedWindow()
+    if (!window) {
+      throw new Error("No active window found")
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+      properties: ["openFile"],
+      filters: [{ name: "Checklist files", extensions: ["checklist", "txt"] }],
+    })
+
+    if (!canceled && filePaths.length > 0) {
+      const filePath = filePaths[0]
+      try {
+        const fileContents = fs.readFileSync(filePath, "utf-8")
+        return {
+          success: true,
+          file: {
+            path: filePath,
+            contents: fileContents,
+          },
+        }
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "Unknown error",
+        }
+      }
+    }
+
+    return {
+      success: false,
+      error: "No file selected",
+    }
+  })
 
   if (app.isPackaged && pythonBackend === null) {
     startBackend()

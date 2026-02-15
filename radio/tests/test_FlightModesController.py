@@ -6,7 +6,6 @@ from flask_socketio.test_client import SocketIOTestClient
 from . import falcon_test
 from .helpers import (
     FakeTCP,
-    SetAircraftType,
     WaitForMessageReturnsNone,
 )
 
@@ -96,7 +95,7 @@ def test_setCurrentFlightMode(client: SocketIOTestClient, droneStatus):
 
 
 @falcon_test(pass_drone_status=True)
-def test_setFlightMode(client: SocketIOTestClient, droneStatus):
+def test_setFlightMode_invalidData(client: SocketIOTestClient, droneStatus):
     response = droneStatus.drone.flightModesController.setFlightMode(0, 1)
     assert response == {
         "success": False,
@@ -121,57 +120,70 @@ def test_setFlightMode(client: SocketIOTestClient, droneStatus):
         "message": "Invalid flight mode number, must be between 1 and 6 inclusive, got 100.",
     }
 
-    # TODO: Fix imitation of PLANE type while being on COPTER sim, should use a different simulator ideally.
-    with SetAircraftType(1):
-        response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
+
+@pytest.mark.copter_only
+@falcon_test(pass_drone_status=True)
+def test_setFlightMode_invalidData_copter(client: SocketIOTestClient, droneStatus):
+    response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
+    assert response == {
+        "success": False,
+        "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got -2",
+    }
+
+    response = droneStatus.drone.flightModesController.setFlightMode(1, 28)
+    assert response == {
+        "success": False,
+        "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got 28",
+    }
+
+    with WaitForMessageReturnsNone():
+        response = droneStatus.drone.flightModesController.setFlightMode(1, 1)
         assert response == {
             "success": False,
-            "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got -2",
+            "message": "Failed to set flight mode 1 to COPTER_MODE_ACRO",
         }
 
-        response = droneStatus.drone.flightModesController.setFlightMode(1, 25)
+
+@pytest.mark.copter_only
+@falcon_test(pass_drone_status=True)
+def test_setFlightMode_success_copter(client: SocketIOTestClient, droneStatus):
+    response = droneStatus.drone.flightModesController.setFlightMode(1, 5)
+    assert response == {
+        "success": True,
+        "message": "Flight mode 1 set to COPTER_MODE_LOITER",
+    }
+    assert droneStatus.drone.flightModesController.flight_modes[0] == 5
+
+
+@pytest.mark.plane_only
+@falcon_test(pass_drone_status=True)
+def test_setFlightMode_invalidData_plane(client: SocketIOTestClient, droneStatus):
+    response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
+    assert response == {
+        "success": False,
+        "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got -2",
+    }
+
+    response = droneStatus.drone.flightModesController.setFlightMode(1, 25)
+    assert response == {
+        "success": False,
+        "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got 25",
+    }
+
+    with WaitForMessageReturnsNone():
+        response = droneStatus.drone.flightModesController.setFlightMode(1, 1)
         assert response == {
             "success": False,
-            "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got 25",
+            "message": "Failed to set flight mode 1 to PLANE_MODE_CIRCLE",
         }
 
-        with WaitForMessageReturnsNone():
-            response = droneStatus.drone.flightModesController.setFlightMode(1, 1)
-            assert response == {
-                "success": False,
-                "message": "Failed to set flight mode 1 to PLANE_MODE_CIRCLE",
-            }
 
-        response = droneStatus.drone.flightModesController.setFlightMode(1, 24)
-        assert response == {
-            "success": True,
-            "message": "Flight mode 1 set to PLANE_MODE_THERMAL",
-        }
-        assert droneStatus.drone.flightModesController.flight_modes[0] == 24
-
-    with SetAircraftType(2):
-        response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
-        assert response == {
-            "success": False,
-            "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got -2",
-        }
-
-        response = droneStatus.drone.flightModesController.setFlightMode(1, 28)
-        assert response == {
-            "success": False,
-            "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got 28",
-        }
-
-        with WaitForMessageReturnsNone():
-            response = droneStatus.drone.flightModesController.setFlightMode(1, 1)
-            assert response == {
-                "success": False,
-                "message": "Failed to set flight mode 1 to COPTER_MODE_ACRO",
-            }
-
-        response = droneStatus.drone.flightModesController.setFlightMode(1, 27)
-        assert response == {
-            "success": True,
-            "message": "Flight mode 1 set to COPTER_MODE_AUTO_RTL",
-        }
-        assert droneStatus.drone.flightModesController.flight_modes[0] == 27
+@pytest.mark.plane_only
+@falcon_test(pass_drone_status=True)
+def test_setFlightMode_success_plane(client: SocketIOTestClient, droneStatus):
+    response = droneStatus.drone.flightModesController.setFlightMode(1, 5)
+    assert response == {
+        "success": True,
+        "message": "Flight mode 1 set to PLANE_MODE_FLY_BY_WIRE_A",
+    }
+    assert droneStatus.drone.flightModesController.flight_modes[0] == 5

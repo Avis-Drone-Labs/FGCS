@@ -7,24 +7,31 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { ActionIcon, Button, Checkbox, Modal, Tooltip } from "@mantine/core"
+import {
+  IconCheckbox,
+  IconDownload,
+  IconEdit,
+  IconTrashX,
+} from "@tabler/icons-react"
 
 // Local Imports
 import EditCheckList from "./checkListEdit.jsx"
+import { generateCheckListObjectFromHTMLString } from "../../../helpers/checkList.js"
 
-// Styling imports
-import { IconCheckbox, IconEdit, IconTrashX } from "@tabler/icons-react"
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  deleteChecklistById,
+  selectChecklistById,
+  setChecklistValueById,
+} from "../../../redux/slices/checklistSlice.js"
 
-export default function CheckListArea({
-  name,
-  items,
-  saveItems,
-  deleteChecklist,
-  setName,
-}) {
+export default function CheckListArea({ id }) {
+  const dispatch = useDispatch()
+  const checklist = useSelector(selectChecklistById(id))
+
   const [showDeleteModal, setDeleteModal] = useState(false)
   const [editCheckListModal, setEditCheckListModal] = useState(false)
-  const [checkListName, setChecklistName] = useState(name)
-  const [checkBoxList, setCheckboxList] = useState(items)
   const [checkBoxListString, setCheckboxListString] = useState(
     generateCheckboxListString(),
   )
@@ -33,8 +40,8 @@ export default function CheckListArea({
 
   function generateCheckboxListString(set = false) {
     // Go from list to string, returns0
-    var final = "<ul>"
-    checkBoxList.map((element) => {
+    let final = "<ul>"
+    checklist.value.map((element) => {
       final += "<li><p>" + element.name + "</p></li>"
     })
 
@@ -47,21 +54,11 @@ export default function CheckListArea({
   }
 
   function generateCheckboxList(defaultCheck = false) {
-    // Go from string to list, does not return
-    var final = []
-    checkBoxListString
-      .split("<li><p>")
-      .splice(1)
-      .map((element) => {
-        var text = element.split("</p>")[0].trim()
-        if (text !== "") {
-          final.push({
-            checked: defaultCheck,
-            name: element.split("</p>")[0].trim(),
-          })
-        }
-      })
-    setCheckboxList(final)
+    let final = generateCheckListObjectFromHTMLString(
+      checkBoxListString,
+      defaultCheck,
+    )
+    dispatch(setChecklistValueById({ id: checklist.id, value: final }))
   }
 
   function toggleCheck() {
@@ -70,25 +67,47 @@ export default function CheckListArea({
   }
 
   function setChecked(name, value) {
-    var final = []
+    let final = []
     checkBoxListString
       .split("<li><p>")
       .splice(1)
-      .map((element) => {
-        var elementName = element.split("</p>")[0].trim()
+      .forEach((element) => {
+        let elementName = element.split("</p>")[0].trim()
         final.push({
           checked:
-            elementName == name
+            elementName === name
               ? value
-              : checkBoxList.find((e) => e.name == elementName).checked,
+              : checklist.value.find((e) => e.name === elementName).checked,
           name: elementName,
         })
       })
-    setCheckboxList(final)
+
+    // Check our checklist value is not the same as the updated one to stop unnecessary redux calls
+    if (JSON.stringify(checklist.value) !== JSON.stringify(final)) {
+      dispatch(setChecklistValueById({ id: checklist.id, value: final }))
+    }
+  }
+
+  function exportList() {
+    // Remove id from checklist before exporting as it gets regenerated on importing
+    let { ...sanitizedChecklist } = checklist
+    delete sanitizedChecklist.id
+    const downloadElement = document.createElement("a")
+    const file = new Blob([JSON.stringify(sanitizedChecklist)], {
+      type: "text/plain",
+    })
+
+    // Simulating clicking a link to download
+    const objectUrl = URL.createObjectURL(file)
+    downloadElement.href = objectUrl
+    downloadElement.download = `${checklist.name}.checklist`
+    document.body.appendChild(downloadElement)
+    downloadElement.click()
+    URL.revokeObjectURL(objectUrl)
   }
 
   function generateMappedItems() {
-    return checkBoxList.map((element) => {
+    return checklist.value.map((element) => {
       return (
         <Checkbox
           checked={element.checked}
@@ -102,8 +121,10 @@ export default function CheckListArea({
 
   useEffect(() => {
     setMappedItems(generateMappedItems())
-    saveItems(checkBoxList)
-  }, [checkBoxList])
+    dispatch(
+      setChecklistValueById({ id: checklist.id, value: checklist.value }),
+    )
+  }, [checklist.value])
 
   return (
     <>
@@ -111,45 +132,37 @@ export default function CheckListArea({
       <div className="flex flex-col gap-2">
         <div className="flex w-full justify-between pb-2">
           <div className="flex gap-1">
-            <Tooltip label="Toggle all checked/unchecked">
-              <ActionIcon
-                variant="light"
-                radius="md"
-                onClick={() => toggleCheck()}
-              >
-                <IconCheckbox
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={1.5}
-                />
+            <Tooltip label="Toggle Checked">
+              <ActionIcon variant="light" onClick={() => toggleCheck()}>
+                <IconCheckbox size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Edit list">
+            <Tooltip label="Edit List">
               <ActionIcon
                 variant="light"
-                radius="md"
                 onClick={() => setEditCheckListModal(true)}
               >
-                <IconEdit
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={1.5}
-                />
+                <IconEdit size={20} stroke={1.5} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Export List">
+              <ActionIcon variant="light" onClick={() => exportList()}>
+                <IconDownload size={20} stroke={1.5} />
               </ActionIcon>
             </Tooltip>
           </div>
 
-          <Tooltip label="Delete list">
-            <ActionIcon
-              variant="light"
-              color="red"
-              radius="md"
-              onClick={() => setDeleteModal(true)}
-            >
-              <IconTrashX
-                style={{ width: "70%", height: "70%" }}
-                stroke={1.5}
-              />
-            </ActionIcon>
-          </Tooltip>
+          <div className="flex gap-1">
+            <Tooltip label="Delete List">
+              <ActionIcon
+                variant="light"
+                color="red"
+                onClick={() => setDeleteModal(true)}
+              >
+                <IconTrashX size={20} stroke={1.5} />
+              </ActionIcon>
+            </Tooltip>
+          </div>
         </div>
 
         {mappedItems}
@@ -157,9 +170,10 @@ export default function CheckListArea({
 
       {/* Edit mode */}
       <EditCheckList
+        passedName={checklist.name}
         opened={editCheckListModal}
         close={() => setEditCheckListModal(false)}
-        nameSet={[checkListName, setChecklistName, (e) => setName(e)]}
+        checklistId={checklist.id}
         checkListSet={[checkBoxListString, setCheckboxListString]}
         generateCheckboxListString={generateCheckboxListString}
         generateCheckboxList={generateCheckboxList}
@@ -183,11 +197,11 @@ export default function CheckListArea({
             No, cancel
           </Button>
           <Button
-            color={"green"}
-            onClick={() => deleteChecklist()}
+            color="green"
+            onClick={() => dispatch(deleteChecklistById(checklist.id))}
             data-autofocus
           >
-            Yes, Continue
+            Yes, Delete
           </Button>
         </div>
       </Modal>

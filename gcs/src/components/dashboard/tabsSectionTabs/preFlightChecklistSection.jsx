@@ -8,7 +8,6 @@ import { useEffect, useState } from "react"
 
 // 3rd Party Imports
 import { Accordion, Button, Modal, Tabs, TextInput } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
 
 // Local imports
 import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
@@ -17,88 +16,107 @@ import CheckListArea from "../preFlightChecklist/checkListArea.jsx"
 import { AddCommand } from "../../spotlight/commandHandler.js"
 
 // Styling imports
-import { showErrorNotification } from "../../../helpers/notification.js"
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../../helpers/notification.js"
+
+// Redux
+import { useDispatch, useSelector } from "react-redux"
+import {
+  pushChecklist,
+  selectChecklists,
+} from "../../../redux/slices/checklistSlice.js"
 
 export default function PreFlightChecklistTab({ tabPadding }) {
-  const [preFlightChecklistItems, setPreFlightChecklistItems] = useLocalStorage(
-    { key: "preFlightCheckList", defaultValue: [] },
-  )
-  const [openChecklist, setOpenChecklist] = useLocalStorage({
-    key: "lastOpenedPreFlightCheckList",
-    defaultValue: "",
-  })
+  const dispatch = useDispatch()
+  const preFlightChecklistItems = useSelector(selectChecklists)
 
   // New checklist
   const [showNewChecklistModal, setNewChecklistModal] = useState(false)
   const [newChecklistName, setNewChecklistName] = useState("")
 
-  function deleteChecklist(toDelete) {
-    var final = []
-    preFlightChecklistItems.map((element) => {
-      if (element != toDelete) {
-        final.push(element)
-      }
-    })
-    setPreFlightChecklistItems(final)
+  function doesChecklistExist(name) {
+    return (
+      preFlightChecklistItems.find(
+        (element) => element.name.toLowerCase() === name.toLowerCase(),
+      ) !== undefined
+    )
   }
 
-  function createNewChecklist() {
-    if (newChecklistName !== "") {
-      preFlightChecklistItems.push({
-        name: newChecklistName,
-        value: [
-          {
-            checked: false,
-            name: "Your first item, press edit to add more!",
-          },
-        ],
-      })
-      setPreFlightChecklistItems(preFlightChecklistItems)
-      setOpenChecklist(newChecklistName)
-      setNewChecklistModal(false)
-      setNewChecklistName("")
+  function createNewChecklist(name, value) {
+    if (!name) {
+      name = newChecklistName
+    }
+    if (doesChecklistExist(name)) {
+      // In the future we can make this show a popup and allow them to change the name
+      showErrorNotification(`A checklist called '${name}' already exists`)
+      return
+    }
+    if (!value) {
+      value = [
+        {
+          checked: false,
+          name: "Your first item, press edit to add more!",
+        },
+      ]
+    }
+
+    if (name === "") {
+      showErrorNotification("Name cannot be empty")
       return
     }
 
-    // Show error message
-    showErrorNotification("Name cannot be empty")
+    dispatch(
+      pushChecklist({
+        name: name,
+        value: value,
+      }),
+    )
+    setNewChecklistModal(false)
+    setNewChecklistName("")
   }
+
   useEffect(() => {
     AddCommand("new_preflight_checklist", () => setNewChecklistModal(true))
   }, [])
-  // Add create new checklist as a spotlight command
 
-  const items = preFlightChecklistItems.map((item) => (
-    <Accordion.Item
-      key={item.name}
-      value={item.name}
-      onClick={() => setOpenChecklist(item.name)}
-    >
-      <Accordion.Control>{item.name}</Accordion.Control>
-      <Accordion.Panel>
-        <CheckListArea
-          items={item.value}
-          saveItems={(e) => {
-            item.value = e
-            setPreFlightChecklistItems(preFlightChecklistItems)
-          }}
-          deleteChecklist={() => deleteChecklist(item)}
-          name={item.name}
-          setName={(e) => {
-            item.name = e
-            setOpenChecklist(e)
-          }}
-        />
-      </Accordion.Panel>
-    </Accordion.Item>
-  ))
+  // Import checklist
+  async function openChecklistFile() {
+    const result = await window.ipcRenderer.invoke("checklist:open")
+
+    if (result?.success) {
+      let checklistObject
+      try {
+        checklistObject = JSON.parse(result.file.contents)
+      } catch {
+        showErrorNotification("Invalid JSON in checklist file")
+        return
+      }
+
+      // Create checklist and show notification
+      createNewChecklist(checklistObject.name, checklistObject.value)
+      showSuccessNotification(
+        `Checklist '${checklistObject.name}' imported successfully`,
+      )
+    } else if (result) {
+      showErrorNotification(result.error)
+    }
+  }
 
   return (
     <Tabs.Panel value="preFlightChecklist">
       <div className={tabPadding}>
-        {/* List, known issue of not opening the same list if name was changed but it's not worth it */}
-        <Accordion variant="separated" defaultValue={openChecklist}>
-          {items}
+        {/* The list of checklist */}
+        <Accordion variant="separated">
+          {preFlightChecklistItems.map((item) => (
+            <Accordion.Item key={item.id} value={item.name}>
+              <Accordion.Control>{item.name}</Accordion.Control>
+              <Accordion.Panel>
+                <CheckListArea id={item.id} />
+              </Accordion.Panel>
+            </Accordion.Item>
+          ))}
         </Accordion>
         {/* Controls */}
         <Button
@@ -106,6 +124,9 @@ export default function PreFlightChecklistTab({ tabPadding }) {
           onClick={() => setNewChecklistModal(true)}
         >
           Add a new Checklist
+        </Button>
+        <Button className="!w-full !mt-2" onClick={() => openChecklistFile()}>
+          Import from Checklist file
         </Button>
 
         {/* New checklist modal */}

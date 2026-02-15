@@ -11,8 +11,11 @@ import createRecentLogsManager from "./utils/recentLogManager"
 import DataflashParser from "./utils/dataflashParser"
 
 import {
+  canDisplayMapPositionData,
   getAircraftTypeFromMavType,
   getFormatMessages,
+  getMapPositionData,
+  getParamObjects,
   normalizeFormatMessageNames,
   transformMessages,
 } from "./utils/dataflashParserUtils"
@@ -339,42 +342,50 @@ function parseDataflashBinFile(
   filePath: string,
   webContents: WebContents,
 ): Messages {
-  // Read file as ArrayBuffer
-  const fileBuffer = fs.readFileSync(filePath)
-  const fileArrayBuffer = fileBuffer.buffer.slice(
-    fileBuffer.byteOffset,
-    fileBuffer.byteOffset + fileBuffer.byteLength,
-  )
+  try {
+    // Read file as ArrayBuffer
+    const fileBuffer = fs.readFileSync(filePath)
+    const fileArrayBuffer = fileBuffer.buffer.slice(
+      fileBuffer.byteOffset,
+      fileBuffer.byteOffset + fileBuffer.byteLength,
+    )
 
-  // Throttle progress updates to at most once every UPDATE_THROTTLE_MS
-  let lastUpdateTime = 0
-  const progressCallback = (percent: number) => {
-    const now = Date.now()
-    if (now - lastUpdateTime > UPDATE_THROTTLE_MS || percent === 100) {
-      lastUpdateTime = now
-      webContents.send("fla:log-parse-progress", { percent })
+    // Throttle progress updates to at most once every UPDATE_THROTTLE_MS
+    let lastUpdateTime = 0
+    const progressCallback = (percent: number) => {
+      const now = Date.now()
+      if (now - lastUpdateTime > UPDATE_THROTTLE_MS || percent === 100) {
+        lastUpdateTime = now
+        webContents.send("fla:log-parse-progress", { percent })
+      }
     }
+
+    const parser = new DataflashParser(null, progressCallback)
+    const processedData = parser.processData(fileArrayBuffer)
+
+    const transformedMessages = transformMessages(processedData.messages)
+    const formatMessages = getFormatMessages(processedData.types)
+    const normalizedFormatMessages = normalizeFormatMessageNames(
+      formatMessages,
+      Object.keys(transformedMessages),
+    )
+
+    const parsedData: Messages = {
+      format: normalizedFormatMessages,
+      aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
+      ...transformedMessages,
+    }
+    webContents.send("fla:log-parse-progress", {
+      percent: 100,
+    })
+    return parsedData
+  } catch (error) {
+    console.error("Error in parseDataflashBinFile:", error)
+    webContents.send("fla:log-parse-progress", { percent: 100 })
+    throw new Error(
+      `Failed to parse dataflash binary file: ${error instanceof Error ? error.message : "Unknown error"}`,
+    )
   }
-
-  const parser = new DataflashParser(null, progressCallback)
-  const processedData = parser.processData(fileArrayBuffer)
-
-  const transformedMessages = transformMessages(processedData.messages)
-  const formatMessages = getFormatMessages(processedData.types)
-  const normalizedFormatMessages = normalizeFormatMessageNames(
-    formatMessages,
-    Object.keys(transformedMessages),
-  )
-
-  const parsedData: Messages = {
-    format: normalizedFormatMessages,
-    aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
-    ...transformedMessages,
-  }
-  webContents.send("fla:log-parse-progress", {
-    percent: 100,
-  })
-  return parsedData
 }
 
 async function determineLogFileType(filePath: string): Promise<LogType> {
@@ -459,6 +470,8 @@ function processAndSaveLogData(
   let finalMessages = { ...expandedMessages }
   let gpsOffset: number | null = null
   let utcAvailable = false
+  let params = null
+  let mapPositionData = null
 
   if (
     (finalMessages.GPS || finalMessages["GPS[0]"]) &&
@@ -471,6 +484,18 @@ function processAndSaveLogData(
     }
   }
   if (logType === "fgcs_telemetry") utcAvailable = true
+
+  if (logType === "dataflash_bin" && "PARM" in loadedLogMessages) {
+    // extract params
+    params = getParamObjects(loadedLogMessages["PARM"] as MessageObject[])
+  }
+
+  if (
+    logType === "dataflash_bin" &&
+    canDisplayMapPositionData(loadedLogMessages)
+  ) {
+    mapPositionData = getMapPositionData(loadedLogMessages)
+  }
 
   // 5. Calculate means on the final, fully-expanded data
   const means = calculateMeanValues(finalMessages)
@@ -485,6 +510,17 @@ function processAndSaveLogData(
   } // Save the complete data with required properties
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
+  // 7. Get firmware version from VER message if available
+  let firmwareVersion: string | null = null
+  if (
+    loadedLogMessages.VER !== null &&
+    loadedLogMessages.VER !== undefined &&
+    Array.isArray(loadedLogMessages.VER) &&
+    loadedLogMessages.VER.length > 0
+  ) {
+    firmwareVersion = (loadedLogMessages.VER[0].FWS as string) || null
+  }
+
   // 8. Return the summary object
   return {
     formatMessages: finalFormats,
@@ -495,6 +531,9 @@ function processAndSaveLogData(
     messageFilters: defaultMessageFilters,
     messageMeans: means,
     aircraftType,
+    firmwareVersion,
+    params,
+    mapPositionData,
   }
 }
 

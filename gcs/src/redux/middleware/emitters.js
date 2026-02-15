@@ -36,6 +36,14 @@ import {
   setIsForwarding,
 } from "../slices/droneConnectionSlice"
 import {
+  emitListFiles,
+  emitListLogFiles,
+  emitReadFile,
+  setIsReadingFile,
+  setLoadingListFiles,
+  setReadFileProgress,
+} from "../slices/ftpSlice"
+import {
   emitControlMission,
   emitExportMissionToFile,
   emitGetCurrentMission,
@@ -371,6 +379,33 @@ export function handleEmitters(socket, store, action) {
           param_id: action.payload.param_id,
           value: action.payload.value,
         })
+      },
+    },
+    {
+      emitter: emitListFiles,
+      callback: () => {
+        socket.socket.emit("list_files", {
+          path: action.payload.path,
+        })
+        store.dispatch(setLoadingListFiles(true))
+      },
+    },
+    {
+      emitter: emitListLogFiles,
+      callback: () => {
+        socket.socket.emit("list_log_files")
+        store.dispatch(setLoadingListFiles(true))
+      },
+    },
+    {
+      emitter: emitReadFile,
+      callback: () => {
+        socket.socket.emit("read_file", {
+          path: action.payload.path,
+          save_path: action.payload.savePath,
+        })
+        store.dispatch(setIsReadingFile(true))
+        store.dispatch(setReadFileProgress(null)) // Reset progress when starting new download
       },
     },
   ]

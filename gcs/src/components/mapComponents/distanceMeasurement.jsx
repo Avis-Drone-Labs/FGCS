@@ -59,7 +59,7 @@ export function DistanceMeasurementModal({ measureDistanceResult, onClose }) {
     >
       <p>
         {measureDistanceResult !== null
-          ? `${measureDistanceResult.toFixed(2)} metres`
+          ? `${measureDistanceResult.toFixed(2)} meters`
           : "N/A"}
       </p>
     </Modal>

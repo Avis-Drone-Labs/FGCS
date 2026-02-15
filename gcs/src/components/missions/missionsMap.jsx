@@ -283,7 +283,7 @@ function MapSectionNonMemo({
         distance(
           [measureDistanceStart.lng, measureDistanceStart.lat],
           [contextMenuState.gpsCoords.lng, contextMenuState.gpsCoords.lat],
-          { units: "metres" },
+          { units: "meters" },
         ),
       )
     }

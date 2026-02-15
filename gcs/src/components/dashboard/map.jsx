@@ -216,7 +216,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
         distance(
           [measureDistanceStart.lng, measureDistanceStart.lat],
           [clickedGpsCoords.lng, clickedGpsCoords.lat],
-          { units: "metres" },
+          { units: "meters" },
         ),
       )
     }

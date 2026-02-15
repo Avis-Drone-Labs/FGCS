@@ -780,11 +780,11 @@ function SettingsModal() {
                     </p>
                   )}
                   {tab === "General" && (
-                  <div className="pt-4">
-                    <PrereleaseCheckRow />
-                  </div>
-                )}
-              </Tabs.Panel>
+                    <div className="pt-4">
+                      <PrereleaseCheckRow />
+                    </div>
+                  )}
+                </Tabs.Panel>
               )
             })}
           </ScrollArea>

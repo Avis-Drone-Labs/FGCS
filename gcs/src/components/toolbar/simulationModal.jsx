@@ -74,7 +74,7 @@ export default function SimulationModal() {
         <Group
           spacing="md"
           mb="md"
-          key={`${port.hostPort}-${port.containerPort}-${index}`}
+          key={index}
           wrap="nowrap"
           align="end"
         >

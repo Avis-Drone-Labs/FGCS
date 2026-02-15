@@ -106,6 +106,7 @@ def ensure_image_exists(client: Any, image_name: str) -> bool:
 def build_command(data: dict[str, Any]) -> Optional[list[str]]:
     """
     Parses the socketio data into the form required for the docker command.
+    Because they are not treated as environment variables by the container.
 
     Args:
         data: The parameters that the simulator should start with.
@@ -212,7 +213,8 @@ def wait_for_container_connection_msg(
             if time.time() > deadline:
                 failure_reason = f"Container did not become ready within {timeout}s"
                 break
-
+    except NotFound:
+        failure_reason = "Container exited before startup completed"
     except DockerException:
         failure_reason = "Docker error while awaiting connection message"
     except Exception as e:
@@ -241,7 +243,7 @@ def wait_for_container_connection_msg(
 
 def validate_ports(
     ports: Optional[list[dict[str, Any]]]
-) -> Tuple[dict[int, int], Optional[int]]:
+) -> Tuple[dict[str, str], Optional[int]]:
     """
     Construct the validated port mappings and primary host port
     """
@@ -272,7 +274,8 @@ def validate_ports(
         if primary_host_port is None:
             primary_host_port = host_port
 
-        validated_ports[container_port] = host_port
+        # Convert back to string because thats what docker expects
+        validated_ports[str(container_port)] = str(host_port)
 
     return validated_ports, primary_host_port
 

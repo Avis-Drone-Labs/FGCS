@@ -8,9 +8,11 @@ import docker
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
-IMAGE_NAME = "kushmakkapati/ardupilot_sitl:latest"
+IMAGE_NAME = os.getenv("ARDUPILOT_SITL_IMAGE", "kushmakkapati/ardupilot_sitl:latest")
 CONTAINER_START_TIMEOUT = int(os.getenv("CONTAINER_START_TIMEOUT", 60))
+CONTAINER_STOP_TIMEOUT = int(os.getenv("CONTAINER_STOP_TIMEOUT", 10))
 CONTAINER_READY_MESSAGE = "YOU CAN NOW CONNECT"
+ALLOWED_VEHICLE_TYPES = {"ArduCopter", "ArduPlane"}
 
 
 class SimulationError(Exception):
@@ -120,8 +122,6 @@ def build_command(data: dict[str, Any]) -> Optional[list[str]]:
     """
     cmd = []
 
-    ALLOWED_VEHICLE_TYPES = {"ArduCopter", "ArduPlane"}
-
     vehicle = data.get("vehicleType")
     if vehicle:
         if vehicle in ALLOWED_VEHICLE_TYPES:
@@ -174,7 +174,7 @@ def cleanup_container(container: Any) -> None:
     try:
         container.reload()
         if container.status in ("running", "created", "restarting"):
-            container.stop(timeout=5)
+            container.stop(timeout=CONTAINER_STOP_TIMEOUT)
     except NotFound:
         pass  # already gone (remove=True or race)
     except DockerException:
@@ -224,6 +224,7 @@ def wait_for_container_connection_msg(
 
     if result.get("error"):
         failure_reason = result["error"]  # type: ignore
+        cleanup_container(container)
     elif result.get("found"):
         line_found = True
     else:
@@ -382,17 +383,13 @@ def stop_docker_simulation() -> None:
 
     try:
         container = client.containers.get(CONTAINER_NAME)
-        container.stop()
+        container.stop(timeout=CONTAINER_STOP_TIMEOUT)
 
         socketio.emit(
             "simulation_result",
             {"success": True, "running": False, "message": "Simulation stopped"},
         )
 
-    except SimulationError as e:
-        emit_error_message(e.user_message)
-        if e.original_exception:
-            logger.exception(e)
     except NotFound as e:
         emit_error_message("Simulation container could not be found")
         logger.exception(e)

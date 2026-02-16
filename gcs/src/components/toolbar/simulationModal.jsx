@@ -61,6 +61,11 @@ export default function SimulationModal() {
             "Simulation still starting",
             "The simulator is still starting and will continue in the background",
           )
+        } else if (simulationStatus === SimulationStatus.Stopping) {
+          showNotification(
+            "Simulation still stopping",
+            "The simulator is still stopping and will continue in the background",
+          )
         }
       }}
       title="SITL Simulator"

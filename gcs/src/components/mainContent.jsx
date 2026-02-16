@@ -3,7 +3,7 @@
 */
 
 import { useEffect, useMemo } from "react"
-import { Route, Routes, Navigate } from "react-router-dom"
+import { Route, Routes } from "react-router-dom"
 
 import SettingsModal from "./settingsModal"
 import { Commands } from "./spotlight/commandHandler"
@@ -64,7 +64,7 @@ export default function AppContent() {
         <Dashboard />
       </AlertProvider>
     ),
-    [dispatch]
+    [dispatch],
   )
 
   return (

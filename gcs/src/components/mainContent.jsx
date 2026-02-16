@@ -2,7 +2,7 @@
   The main wrapper for the app
 */
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { Route, Routes, Navigate } from "react-router-dom"
 
 import SettingsModal from "./settingsModal"
@@ -57,6 +57,16 @@ export default function AppContent() {
     }
   }, [connectedToDrone, isArmed, isFlying])
 
+  // Avoid duplicating the same AlertProvider/Dashboard tree in multiple routes
+  const dashboardElement = useMemo(
+    () => (
+      <AlertProvider>
+        <Dashboard />
+      </AlertProvider>
+    ),
+    [dispatch]
+  )
+
   return (
     <SettingsProvider>
       <SingleRunWrapper>
@@ -65,15 +75,8 @@ export default function AppContent() {
           <SettingsModal />
           <Navbar className="no-drag" />
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/dashboard"
-              element={
-                <AlertProvider>
-                  <Dashboard />
-                </AlertProvider>
-              }
-            />
+            <Route path="/" element={dashboardElement} />
+            <Route path="/dashboard" element={dashboardElement} />
             <Route path="/missions" element={<Missions />} />
             <Route path="/graphs" element={<Graphs />} />
             <Route path="/params" element={<Params />} />

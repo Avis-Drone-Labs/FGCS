@@ -31,6 +31,27 @@ import {
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { showNotification } from "../../helpers/notification"
 
+const normalizePort = (val) => {
+  if (val === null || val === "" || val === undefined || isNaN(val)) {
+    return undefined
+  }
+  return Number(val)
+}
+
+const getDuplicates = (values) => {
+  const counts = new Map()
+  values.forEach((v) => {
+    if (v === null || v === undefined) return
+    const current = counts.get(v) || 0
+    counts.set(v, current + 1)
+  })
+  return new Set(
+    Array.from(counts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([value]) => value),
+  )
+}
+
 export default function SimulationModal() {
   const dispatch = useDispatch()
   const modalOpen = useSelector(selectSimulationModalOpened)
@@ -86,6 +107,7 @@ export default function SimulationModal() {
             label="Host Port"
             min={1025}
             max={65535}
+            hideControls
             allowDecimal={false}
             value={port.hostPort}
             style={{ flex: 1 }}
@@ -108,6 +130,7 @@ export default function SimulationModal() {
             label="Container Port"
             min={1}
             max={65535}
+            hideControls
             allowDecimal={false}
             value={port.containerPort}
             style={{ flex: 1 }}
@@ -127,14 +150,16 @@ export default function SimulationModal() {
           />
 
           {ports.length > 1 && (
-            <ActionIcon
-              color="red"
-              aria-label="Remove port"
-              size={36}
-              onClick={() => dispatch(removeSimulationPortById(port.id))}
-            >
-              <IconX size={18} />
-            </ActionIcon>
+            <Tooltip label="Remove port" withArrow>
+              <ActionIcon
+                color="red"
+                aria-label="Remove port"
+                size={36}
+                onClick={() => dispatch(removeSimulationPortById(port.id))}
+              >
+                <IconX size={18} />
+              </ActionIcon>
+            </Tooltip>
           )}
         </Group>
       ))}
@@ -221,26 +246,5 @@ export default function SimulationModal() {
         </Button>
       </Group>
     </Modal>
-  )
-}
-
-const normalizePort = (val) => {
-  if (val === null || val === "" || val === undefined || isNaN(val)) {
-    return undefined
-  }
-  return Number(val)
-}
-
-const getDuplicates = (values) => {
-  const counts = new Map()
-  values.forEach((v) => {
-    if (v === null || v === undefined) return
-    const current = counts.get(v) || 0
-    counts.set(v, current + 1)
-  })
-  return new Set(
-    Array.from(counts.entries())
-      .filter(([, count]) => count > 1)
-      .map(([value]) => value),
   )
 }

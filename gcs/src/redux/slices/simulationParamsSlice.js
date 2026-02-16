@@ -91,7 +91,6 @@ export const {
   setSimulationLoadingNotificationId,
   clearSimulationLoadingNotificationId,
 
-  // Emitters
   emitStartSimulation,
   emitStopSimulation,
 } = simulationParamsSlice.actions

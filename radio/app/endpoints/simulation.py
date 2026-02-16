@@ -7,10 +7,22 @@ from app import logger, socketio
 import docker
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
+
+def get_int_env(name: str, default: int) -> int:
+    """
+    Safely convert an environment variable to an int and if this fails log the error.
+    """
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        logger.exception(f"Invalid environment variable: {name} should be an int")
+        return default
+
+
 CONTAINER_NAME = "fgcs_ardupilot_sitl"
 IMAGE_NAME = os.getenv("ARDUPILOT_SITL_IMAGE", "kushmakkapati/ardupilot_sitl:latest")
-CONTAINER_START_TIMEOUT = int(os.getenv("CONTAINER_START_TIMEOUT", 60))
-CONTAINER_STOP_TIMEOUT = int(os.getenv("CONTAINER_STOP_TIMEOUT", 10))
+CONTAINER_START_TIMEOUT = get_int_env("CONTAINER_START_TIMEOUT", 60)
+CONTAINER_STOP_TIMEOUT = get_int_env("CONTAINER_STOP_TIMEOUT", 10)
 CONTAINER_READY_MESSAGE = "YOU CAN NOW CONNECT"
 ALLOWED_VEHICLE_TYPES = {"ArduCopter", "ArduPlane"}
 
@@ -57,10 +69,6 @@ def ensure_image_exists(client: Any, image_name: str) -> bool:
 
     Returns:
         True if the image exists or is successfully downloaded.
-
-    Raises:
-        SimulationError: If the image cannot be found, downloaded, or another
-            Docker-related error occurs while ensuring the image exists.
     """
     # Operation id to correlate loading start/finish in the UI
     operation_id = f"docker-image:{image_name}"
@@ -320,7 +328,7 @@ def start_docker_simulation(data: SimulationStartType) -> None:
     try:
         validated_ports, primary_host_port = validate_ports(data.get("ports"))
 
-        connect = data["connect"] if "connect" in data else False
+        connect = data.get("connect", False)
         data_clean = {k: v for k, v in data.items() if v is not None}
         cmd = build_command(data_clean)
 

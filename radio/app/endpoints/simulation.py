@@ -45,6 +45,10 @@ class SimulationStartType(TypedDict, total=False):
     vehicleType: str
 
 
+class CommandParametersType(TypedDict, total=False):
+    vehicleType: str
+
+
 def get_docker_client() -> DockerClient:
     """
     Returns a Docker client if available.
@@ -120,7 +124,7 @@ def ensure_image_exists(client: DockerClient, image_name: str) -> bool:
         raise SimulationError("Unknown error getting simulation image", e) from e
 
 
-def build_command(data: dict[str, Any]) -> Optional[list[str]]:
+def build_command(data: CommandParametersType) -> Optional[list[str]]:
     """
     Parses the socketio data into the form required for the docker command.
     Because they are not treated as environment variables by the container.

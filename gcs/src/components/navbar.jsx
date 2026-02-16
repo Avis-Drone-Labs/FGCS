@@ -159,7 +159,7 @@ export default function Navbar() {
   }, [dispatch])
 
   const linkClassName =
-    "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
+    "text-md px-2 rounded-sm hover:text-falconred-400 transition-colors delay-50"
 
   return (
     <div className="flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900">
@@ -412,54 +412,60 @@ export default function Navbar() {
           {/* Navigation */}
           <Link
             to="/"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "dashboard" && "text-falconred font-bold",
+              currentPage === "dashboard" && "text-falconred",
             )}
           >
             Dashboard
           </Link>
           <Link
             to="/missions"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "missions" && "text-falconred font-bold",
+              currentPage === "missions" && "text-falconred",
             )}
           >
             Missions
           </Link>
           <Link
             to="/graphs"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "graphs" && "text-falconred font-bold",
+              currentPage === "graphs" && "text-falconred",
             )}
           >
             Graphs
           </Link>
           <Link
             to="/params"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "params" && "text-falconred font-bold",
+              currentPage === "params" && "text-falconred",
             )}
           >
             Params
           </Link>
           <Link
             to="/config"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage?.startsWith("config") && "text-falconred font-bold",
+              currentPage?.startsWith("config") && "text-falconred",
             )}
           >
             Config
           </Link>
           <Link
             to="/fla"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "fla" && "text-falconred font-bold",
+              currentPage === "fla" && "text-falconred",
             )}
           >
             FLA

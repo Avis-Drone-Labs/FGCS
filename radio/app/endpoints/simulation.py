@@ -7,6 +7,9 @@ from app import logger, socketio
 import docker
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
 
+from docker import DockerClient
+from docker.models.containers import Container
+
 
 def get_int_env(name: str, default: int) -> int:
     """
@@ -42,7 +45,7 @@ class SimulationStartType(TypedDict, total=False):
     vehicleType: str
 
 
-def get_docker_client() -> Any:
+def get_docker_client() -> DockerClient:
     """
     Returns a Docker client if available.
     """
@@ -58,7 +61,7 @@ def get_docker_client() -> Any:
         ) from e
 
 
-def ensure_image_exists(client: Any, image_name: str) -> bool:
+def ensure_image_exists(client: DockerClient, image_name: str) -> bool:
     """
     Checks if the client contains the given image.
     If not it attempts to download it.
@@ -140,7 +143,7 @@ def build_command(data: dict[str, Any]) -> Optional[list[str]]:
     return cmd if cmd else None  # Docker start handles None better than empty lists
 
 
-def container_already_running(client: Any, container_name: str) -> bool:
+def container_already_running(client: DockerClient, container_name: str) -> bool:
     """
     Checks if the client already has the given container running.
     If it exists but is not running it will be forcibly removed.
@@ -175,7 +178,7 @@ def container_already_running(client: Any, container_name: str) -> bool:
         ) from e
 
 
-def cleanup_container(container: Any) -> None:
+def cleanup_container(container: Container) -> None:
     """
     Stop the container if it exists and is created, running, or restarting
     """
@@ -190,8 +193,8 @@ def cleanup_container(container: Any) -> None:
 
 
 def wait_for_container_connection_msg(
-    client: Any,
-    container: Any,
+    client: DockerClient,
+    container: Container,
     connect: bool,
     port: int,
     timeout: int = CONTAINER_START_TIMEOUT,

@@ -46,7 +46,7 @@ class SimulationStartType(TypedDict, total=False):
 
 
 class CommandParametersType(TypedDict, total=False):
-    vehicleType: str
+    vehicleType: str | None
 
 
 def get_docker_client() -> DockerClient:
@@ -336,8 +336,8 @@ def start_docker_simulation(data: SimulationStartType) -> None:
         validated_ports, primary_host_port = validate_ports(data.get("ports"))
 
         connect = data.get("connect", False)
-        data_clean = {k: v for k, v in data.items() if v is not None}
-        cmd = build_command(data_clean)
+        params: CommandParametersType = {"vehicleType": data.get("vehicleType")}
+        cmd = build_command(params)
 
         client = get_docker_client()
         ensure_image_exists(client, IMAGE_NAME)

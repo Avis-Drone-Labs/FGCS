@@ -10,7 +10,7 @@ import {
   Group,
   ActionIcon,
 } from "@mantine/core"
-import { IconAlertCircle, IconInfoCircle, IconX } from "@tabler/icons-react"
+import { IconAlertCircle, IconInfoCircle, IconTrash } from "@tabler/icons-react"
 import {
   SimulationStatus,
   addSimulationPort,
@@ -157,7 +157,7 @@ export default function SimulationModal() {
                 size={36}
                 onClick={() => dispatch(removeSimulationPortById(port.id))}
               >
-                <IconX size={18} />
+                <IconTrash size={20} />
               </ActionIcon>
             </Tooltip>
           )}

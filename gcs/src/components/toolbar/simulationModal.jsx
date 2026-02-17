@@ -9,6 +9,7 @@ import {
   Tooltip,
   Group,
   ActionIcon,
+  Progress,
 } from "@mantine/core"
 import { IconAlertCircle, IconInfoCircle, IconTrash } from "@tabler/icons-react"
 import {
@@ -30,6 +31,11 @@ import {
 } from "../../redux/slices/simulationParamsSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { showNotification } from "../../helpers/notification"
+import {
+  selectConnecting,
+  selectConnectionStatus,
+} from "../../redux/slices/droneConnectionSlice"
+import ConnectionProgress from "../connectionProgress"
 
 const normalizePort = (val) => {
   if (val === null || val === "" || val === undefined || isNaN(val)) {
@@ -61,6 +67,8 @@ export default function SimulationModal() {
   const vehicleType = useSelector(selectSimulationVehicleType)
   const connectAfterStart = useSelector(selectSimulationConnectAfterStart)
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
+  const droneConnectionStatus = useSelector(selectConnectionStatus)
+  const connecting = useSelector(selectConnecting)
 
   const duplicateHostPorts = getDuplicates(ports.map((p) => p.hostPort))
   const duplicateContainerPorts = getDuplicates(
@@ -245,6 +253,11 @@ export default function SimulationModal() {
           {isSimulationRunning ? "Stop Simulator" : "Start Simulator"}
         </Button>
       </Group>
+
+      <ConnectionProgress
+        connecting={connecting}
+        status={droneConnectionStatus}
+      />
     </Modal>
   )
 }

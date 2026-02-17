@@ -80,6 +80,7 @@ import { showErrorNotification } from "../helpers/notification.js"
 
 // Modals
 import SimulationModal from "./toolbar/simulationModal.jsx"
+import ConnectionProgress from "./connectionProgress.jsx"
 
 export default function Navbar() {
   // Redux
@@ -323,22 +324,10 @@ export default function Navbar() {
           </Group>
         </form>
 
-        {connecting &&
-          droneConnectionStatus.message !== null &&
-          typeof droneConnectionStatus.progress === "number" && (
-            <>
-              <p className="text-center my-4">
-                {droneConnectionStatus.message}
-              </p>
-              <Progress
-                animated
-                size="lg"
-                transitionDuration={300}
-                value={droneConnectionStatus.progress}
-                className="w-full mx-auto my-auto"
-              />
-            </>
-          )}
+        <ConnectionProgress
+          connecting={connecting}
+          status={droneConnectionStatus}
+        />
       </Modal>
 
       <Modal

@@ -182,7 +182,7 @@ def container_already_running(client: DockerClient, container_name: str) -> bool
         ) from e
 
 
-def cleanup_container(container: Container) -> None:
+def stop_container(container: Container) -> None:
     """
     Stop the container if it exists and is created, running, or restarting
     """
@@ -239,12 +239,12 @@ def wait_for_container_connection_msg(
 
     if result.get("error"):
         failure_reason = result["error"]  # type: ignore
-        cleanup_container(container)
+        stop_container(container)
     elif result.get("found"):
         line_found = True
     else:
         # Thread timed out without finding the message
-        cleanup_container(container)
+        stop_container(container)
 
     try:
         if hasattr(client, "close"):

@@ -16,7 +16,6 @@ import {
   Group,
   LoadingOverlay,
   Modal,
-  Progress,
   SegmentedControl,
   Select,
   Tabs,

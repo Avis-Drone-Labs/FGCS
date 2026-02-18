@@ -22,6 +22,7 @@ import paramsSlice from "./slices/paramsSlice"
 import socketSlice from "./slices/socketSlice"
 import statusTextSlice from "./slices/statusTextSlice"
 import checklistSlice, { setChecklistItems } from "./slices/checklistSlice"
+import simulationParamsSlice from "./slices/simulationParamsSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -35,6 +36,7 @@ const rootReducer = combineSlices(
   checklistSlice,
   applicationSlice,
   ftpSlice,
+  simulationParamsSlice,
 )
 
 export const store = configureStore({

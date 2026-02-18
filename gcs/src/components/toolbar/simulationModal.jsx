@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   Modal,
@@ -31,6 +32,8 @@ import {
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 import { showNotification } from "../../helpers/notification"
 import {
+  emitDisconnectFromDrone,
+  selectConnectedToDrone,
   selectConnecting,
   selectConnectionStatus,
 } from "../../redux/slices/droneConnectionSlice"
@@ -68,6 +71,27 @@ export default function SimulationModal() {
   const connectedToSocket = useSelector(selectIsConnectedToSocket)
   const droneConnectionStatus = useSelector(selectConnectionStatus)
   const connecting = useSelector(selectConnecting)
+  const connectedToDrone = useSelector(selectConnectedToDrone)
+
+  const [pendingStopAfterDisconnect, setPendingStopAfterDisconnect] =
+    useState(false)
+
+  useEffect(() => {
+    if (!pendingStopAfterDisconnect) return
+    if (connectedToDrone) return
+    if (!isSimulationRunning) {
+      setPendingStopAfterDisconnect(false)
+      return
+    }
+
+    dispatch(emitStopSimulation())
+    setPendingStopAfterDisconnect(false)
+  }, [
+    pendingStopAfterDisconnect,
+    connectedToDrone,
+    isSimulationRunning,
+    dispatch,
+  ])
 
   const duplicateHostPorts = getDuplicates(ports.map((p) => p.hostPort))
   const duplicateContainerPorts = getDuplicates(
@@ -232,11 +256,19 @@ export default function SimulationModal() {
           variant="filled"
           color={isSimulationRunning ? "red" : "green"}
           onClick={() => {
-            dispatch(
-              isSimulationRunning
-                ? emitStopSimulation()
-                : emitStartSimulation(),
-            )
+            if (isSimulationRunning) {
+              if (connectedToDrone) {
+                // TODO: and that connection is to the simulator
+                setPendingStopAfterDisconnect(true)
+                dispatch(emitDisconnectFromDrone())
+                return
+              }
+
+              dispatch(emitStopSimulation())
+              return
+            }
+
+            dispatch(emitStartSimulation())
           }}
           loading={
             simulationStatus === SimulationStatus.Starting ||

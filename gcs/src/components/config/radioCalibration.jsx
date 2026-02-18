@@ -5,10 +5,18 @@
 */
 
 // Base imports
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 // Helper javascript files
-import { Checkbox, Progress, Select, Table } from "@mantine/core"
+import {
+  Button,
+  Checkbox,
+  Modal,
+  Progress,
+  Select,
+  Table,
+  Text,
+} from "@mantine/core"
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
 import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 
@@ -57,6 +65,10 @@ export default function RadioCalibration() {
   const pwmChannels = useSelector(selectRadioPwmChannels)
   const channelsConfig = useSelector(selectRadioChannelsConfig)
 
+  const [calibrationModalOpened, setCalibrationModalOpened] = useState(false)
+  const [initialCalibrationPwms, setInitialCalibrationPwms] = useState(null)
+  const [calibrationData, setCalibrationData] = useState({})
+
   const paramDefs = useMemo(() => {
     return aircraftTypeString === "Copter"
       ? apmParamDefsCopter
@@ -99,6 +111,12 @@ export default function RadioCalibration() {
     )
   }
 
+  function closeCalibrationModal() {
+    setCalibrationModalOpened(false)
+    setCalibrationData({})
+    setInitialCalibrationPwms(null)
+  }
+
   useEffect(() => {
     if (connected) {
       dispatch(emitSetState("config.rc"))
@@ -106,8 +124,124 @@ export default function RadioCalibration() {
     }
   }, [connected])
 
+  useEffect(() => {
+    if (calibrationModalOpened) {
+      // Set initial calibration PWM values once first opening the modal
+      if (initialCalibrationPwms === null) {
+        setInitialCalibrationPwms(pwmChannels)
+      } else {
+        const newCalibrationData = { ...calibrationData }
+
+        for (const channel in pwmChannels) {
+          const pwmValue = pwmChannels[channel]
+
+          // console.log(
+          //   channel,
+          //   pwmValue,
+          //   initialCalibrationPwms[channel],
+          //   newCalibrationData[channel],
+          // )
+
+          // If the PWM value is different to the initial value and the
+          // calibration data hasn't been created yet, then create it
+          if (
+            pwmValue !== initialCalibrationPwms[channel] &&
+            newCalibrationData[channel] === undefined
+          ) {
+            newCalibrationData[channel] = { min: pwmValue, max: pwmValue }
+          }
+
+          // If calibration data exists then set the min/max values accordingly
+          if (
+            newCalibrationData[channel] !== undefined &&
+            pwmValue < newCalibrationData[channel]?.min
+          ) {
+            newCalibrationData[channel].min = pwmValue
+          } else if (
+            newCalibrationData[channel] !== undefined &&
+            pwmValue > newCalibrationData[channel]?.max
+          ) {
+            newCalibrationData[channel].max = pwmValue
+          }
+        }
+        setCalibrationData(newCalibrationData)
+      }
+    }
+  }, [
+    calibrationModalOpened,
+    pwmChannels,
+    initialCalibrationPwms,
+    calibrationData,
+  ])
+
   return (
     <div className="m-4">
+      <Modal
+        opened={calibrationModalOpened}
+        onClose={closeCalibrationModal}
+        title="RC Calibration"
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        withCloseButton={false}
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <div className="flex flex-col gap-4 items-center justify-center">
+          <Text>
+            Move all RC sticks, dials and switches to their extreme positions.
+          </Text>
+          <Text fw="bold" c="red">
+            Ensure no propellers are attached during calibration!
+          </Text>
+          <div className=" flex flex-col gap-1 w-full">
+            {Object.keys(pwmChannels).map((channel) => (
+              <div key={channel}>
+                <Text className="font-bold">Channel {channel}</Text>
+                {calibrationData[channel] === undefined ? (
+                  <Progress.Root className="!h-6">
+                    <Progress.Section
+                      value={100}
+                      color="grey"
+                    ></Progress.Section>
+                  </Progress.Root>
+                ) : (
+                  <Progress.Root className="!h-6">
+                    <Progress.Section
+                      value={
+                        100 -
+                        getPercentageValueFromPWM(calibrationData[channel]?.max)
+                      }
+                      color="grey"
+                    ></Progress.Section>
+                    <Progress.Section
+                      color={COLOURS[(channel - 1) % COLOURS.length]}
+                    ></Progress.Section>
+                    <Progress.Section
+                      value={getPercentageValueFromPWM(
+                        calibrationData[channel]?.max,
+                      )}
+                      color="grey"
+                    ></Progress.Section>
+                  </Progress.Root>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-row justify-between w-full">
+            <Button color="red" onClick={closeCalibrationModal}>
+              Cancel
+            </Button>
+            <Button color="green">Save Calibration</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Button onClick={() => setCalibrationModalOpened(true)} className="mb-4">
+        RC Calibration
+      </Button>
       <Table withRowBorders={false} className="!w-fit">
         <Table.Thead>
           <Table.Tr>

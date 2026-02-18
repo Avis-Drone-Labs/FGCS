@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit"
 const configSlice = createSlice({
   name: "config",
   initialState: {
+    activeTab: null,
     getGripperEnabled: false,
     gripperConfig: {},
     refreshingGripperConfigData: false,
@@ -44,6 +45,9 @@ const configSlice = createSlice({
     radioChannelsConfig: {},
   },
   reducers: {
+    setActiveTab: (state, action) => {
+      state.activeTab = action.payload
+    },
     setGetGripperEnabled: (state, action) => {
       if (action.payload === state.getGripperEnabled) return
       state.getGripperEnabled = action.payload
@@ -151,6 +155,7 @@ const configSlice = createSlice({
     emitSetRcConfigParam: () => {},
   },
   selectors: {
+    selectActiveTab: (state) => state.activeTab,
     selectGetGripperEnabled: (state) => state.getGripperEnabled,
     selectGripperConfig: (state) => state.gripperConfig,
     selectRefreshingGripperConfigData: (state) =>
@@ -171,6 +176,7 @@ const configSlice = createSlice({
 })
 
 export const {
+  setActiveTab,
   setGetGripperEnabled,
   setGripperConfig,
   updateGripperConfigParam,
@@ -189,7 +195,6 @@ export const {
   setChannelsConfig,
   updateChannelsConfigParam,
 
-  // Emitters
   emitGetGripperEnabled,
   emitGetGripperConfig,
   emitSetGripperConfigParam,
@@ -207,6 +212,7 @@ export const {
 } = configSlice.actions
 
 export const {
+  selectActiveTab,
   selectGetGripperEnabled,
   selectGripperConfig,
   selectRefreshingGripperConfigData,

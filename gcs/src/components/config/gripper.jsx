@@ -28,6 +28,7 @@ import {
   emitGetGripperConfig,
   emitSetGripper,
   emitSetGripperConfigParam,
+  selectGetGripperEnabled,
   selectGripperConfig,
   selectRefreshingGripperConfigData,
 } from "../../redux/slices/configSlice"
@@ -96,6 +97,7 @@ export default function Gripper() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const aircraftTypeString = useSelector(selectAircraftTypeString)
+  const getGripperEnabled = useSelector(selectGetGripperEnabled)
   const gripperConfig = useSelector(selectGripperConfig)
   const refreshingGripperConfigData = useSelector(
     selectRefreshingGripperConfigData,
@@ -134,6 +136,14 @@ export default function Gripper() {
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
     dispatch(emitSetGripperConfigParam({ param_id, value }))
   }, 500)
+
+  if (!getGripperEnabled) {
+    return (
+      <div className="flex flex-col gap-4 mx-4">
+        <p>Gripper is not enabled.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4 mx-4">

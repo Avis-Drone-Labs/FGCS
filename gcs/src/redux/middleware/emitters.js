@@ -7,6 +7,7 @@ import {
   emitGetRcConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
+  emitSetFlightModeChannel,
   emitSetGripper,
   emitSetGripperConfigParam,
   emitSetRcConfigParam,
@@ -327,6 +328,13 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("set_flight_mode", {
           mode_number: action.payload.mode_number,
           flight_mode: action.payload.flight_mode,
+        }),
+    },
+    {
+      emitter: emitSetFlightModeChannel,
+      callback: () =>
+        socket.socket.emit("set_flight_mode_channel", {
+          channel: action.payload.channel,
         }),
     },
     {

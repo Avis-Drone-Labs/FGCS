@@ -175,6 +175,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
   onSetFlightModeResult: "set_flight_mode_result",
+  onSetFlightModeChannelResult: "set_flight_mode_channel_result",
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
@@ -1014,6 +1015,19 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(
           ConfigSpecificSocketEvents.onSetFlightModeResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            store.dispatch(emitGetFlightModeConfig())
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetFlightModeChannelResult,
           (msg) => {
             if (msg.success) {
               showSuccessNotification(msg.message)

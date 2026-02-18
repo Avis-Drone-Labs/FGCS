@@ -22,6 +22,7 @@ import {
   IconGps,
   IconRadar,
   IconSatellite,
+  IconStopwatch,
   IconTarget,
 } from "@tabler/icons-react"
 import { ResizableBox } from "react-resizable"
@@ -39,6 +40,7 @@ import {
   selectHasSecondaryGps,
   selectNotificationSound,
   selectRSSI,
+  selectTotalTimeFlying,
   soundPlayed,
 } from "./redux/slices/droneInfoSlice"
 import { selectCurrentMission } from "./redux/slices/missionSlice"
@@ -75,6 +77,7 @@ import disarmSound from "./assets/sounds/disarmed.mp3"
 import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 import lowBatterySound from "./assets/sounds/lowbattery.mp3"
 import waypointReachedSound from "./assets/sounds/waypointreached.mp3"
+import { formatDurationSecondsToMMSS } from "./helpers/dataFormatters"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -88,6 +91,7 @@ export default function Dashboard() {
   const statustextMessages = useSelector(selectMessages)
   const armedNotification = useSelector(selectNotificationSound)
   const { fixType, satellitesVisible, hdop } = useSelector(selectGPSRawInt)
+  const totalTimeFlying = useSelector(selectTotalTimeFlying)
 
   const hdopDisplay = hdop != null ? hdop.toFixed(2) : "0.00"
 
@@ -266,6 +270,11 @@ export default function Dashboard() {
 
         {/* Status Bar */}
         <StatusBar className="absolute top-0 right-0">
+          <StatusSection
+            icon={<IconStopwatch />}
+            value={formatDurationSecondsToMMSS(totalTimeFlying)}
+            tooltip="Total time flying"
+          />
           <StatusSection
             icon={<IconRadar />}
             value={GPS_FIX_TYPES[fixType]}

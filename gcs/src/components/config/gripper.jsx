@@ -31,6 +31,7 @@ import {
   selectGetGripperEnabled,
   selectGripperConfig,
   selectRefreshingGripperConfigData,
+  setGetGripperEnabled,
 } from "../../redux/slices/configSlice"
 import {
   emitSetState,
@@ -133,6 +134,10 @@ export default function Gripper() {
     dispatch(emitSetGripper(action))
   }
 
+  const toggleGripperEnabled = () => {
+	dispatch(setGetGripperEnabled(!getGripperEnabled))
+  }
+
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
     dispatch(emitSetGripperConfigParam({ param_id, value }))
   }, 500)
@@ -141,6 +146,10 @@ export default function Gripper() {
     return (
       <div className="flex flex-col gap-4 mx-4">
         <p>Gripper is not enabled.</p>
+
+		<Button w={"30%"} onClick={() => toggleGripperEnabled()} color={"green"}>
+			Enable Gripper
+		</Button>
       </div>
     )
   }
@@ -153,15 +162,15 @@ export default function Gripper() {
         overlayProps={{ blur: 2 }}
       />
 	  	<div className="flex flex-col gap-2 w-1/3">
-				<Button onClick={() => setGripper("release")} color={"red"}>
-					Enable Gripper
-				</Button>
+			<Button onClick={() => toggleGripperEnabled()} color={"red"}>
+				Disable Gripper
+			</Button>
 			<div className="flex flex-row gap-2">
 				<Button w="100%" onClick={() => setGripper("release")} color={"red"}>
-				Release Gripper
+					Release Gripper
 				</Button>
 				<Button w="100%" onClick={() => setGripper("grab")} color={"red"}>
-				Grab Gripper
+					Grab Gripper
 				</Button>
 			</div>
 		</div>

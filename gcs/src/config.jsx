@@ -57,7 +57,7 @@ export default function Config() {
             onChange={(newTab) => dispatch(setActiveTab(newTab))}
           >
             <Tabs.List>
-              <Tabs.Tab value="gripper" disabled={!getGripperEnabled}>
+              <Tabs.Tab value="gripper">
                 Gripper
               </Tabs.Tab>
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>

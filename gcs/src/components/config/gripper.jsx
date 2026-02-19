@@ -38,6 +38,7 @@ import {
   selectConnectedToDrone,
 } from "../../redux/slices/droneConnectionSlice"
 import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
+import { emitRefreshParams } from "../../redux/slices/paramsSlice"
 
 const GRIPPER_PARAMS = [
   "GRIP_CAN_ID",
@@ -136,6 +137,7 @@ export default function Gripper() {
 
   const toggleGripperEnabled = () => {
 	dispatch(setGetGripperEnabled(!getGripperEnabled))
+	dispatch(emitRefreshParams())
   }
 
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {

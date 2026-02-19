@@ -152,14 +152,20 @@ export default function Gripper() {
         zIndex={1000}
         overlayProps={{ blur: 2 }}
       />
-      <div className="flex flex-row gap-2">
-        <Button onClick={() => setGripper("release")} color={"red"}>
-          Release Gripper
-        </Button>
-        <Button onClick={() => setGripper("grab")} color={"red"}>
-          Grab Gripper
-        </Button>
-      </div>
+	  	<div className="flex flex-col gap-2 w-1/3">
+				<Button onClick={() => setGripper("release")} color={"red"}>
+					Enable Gripper
+				</Button>
+			<div className="flex flex-row gap-2">
+				<Button w="100%" onClick={() => setGripper("release")} color={"red"}>
+				Release Gripper
+				</Button>
+				<Button w="100%" onClick={() => setGripper("grab")} color={"red"}>
+				Grab Gripper
+				</Button>
+			</div>
+		</div>
+
       <div className="flex flex-col gap-2">
         {params.map((param) => (
           <div key={param.param_id} className="flex flex-row justify-between">

@@ -150,12 +150,11 @@ export default function RadioCalibration() {
   }
 
   useEffect(() => {
-    console.log(connected)
     if (connected) {
       dispatch(emitSetState("config.rc"))
       dispatch(emitGetRcConfig())
     }
-  }, [connected])
+  }, [connected, dispatch])
 
   useEffect(() => {
     if (calibrationModalOpened) {
@@ -163,42 +162,40 @@ export default function RadioCalibration() {
       if (initialCalibrationPwms === null) {
         setInitialCalibrationPwms(pwmChannels)
       } else {
-        const newCalibrationData = { ...calibrationData }
+        setCalibrationData((prevCalibrationData) => {
+          const newCalibrationData = { ...prevCalibrationData }
 
-        for (const channel in pwmChannels) {
-          const pwmValue = pwmChannels[channel]
+          for (const channel in pwmChannels) {
+            const pwmValue = pwmChannels[channel]
 
-          // If the PWM value is different to the initial value and the
-          // calibration data hasn't been created yet, then create it
-          if (
-            pwmValue !== initialCalibrationPwms[channel] &&
-            newCalibrationData[channel] === undefined
-          ) {
-            newCalibrationData[channel] = { min: pwmValue, max: pwmValue }
+            // If the PWM value is different to the initial value and the
+            // calibration data hasn't been created yet, then create it
+            if (
+              pwmValue !== initialCalibrationPwms[channel] &&
+              newCalibrationData[channel] === undefined
+            ) {
+              newCalibrationData[channel] = { min: pwmValue, max: pwmValue }
+            }
+
+            // If calibration data exists then set the min/max values accordingly
+            if (
+              newCalibrationData[channel] !== undefined &&
+              pwmValue < newCalibrationData[channel]?.min
+            ) {
+              newCalibrationData[channel].min = pwmValue
+            } else if (
+              newCalibrationData[channel] !== undefined &&
+              pwmValue > newCalibrationData[channel]?.max
+            ) {
+              newCalibrationData[channel].max = pwmValue
+            }
           }
 
-          // If calibration data exists then set the min/max values accordingly
-          if (
-            newCalibrationData[channel] !== undefined &&
-            pwmValue < newCalibrationData[channel]?.min
-          ) {
-            newCalibrationData[channel].min = pwmValue
-          } else if (
-            newCalibrationData[channel] !== undefined &&
-            pwmValue > newCalibrationData[channel]?.max
-          ) {
-            newCalibrationData[channel].max = pwmValue
-          }
-        }
-        setCalibrationData(newCalibrationData)
+          return newCalibrationData
+        })
       }
     }
-  }, [
-    calibrationModalOpened,
-    pwmChannels,
-    initialCalibrationPwms,
-    calibrationData,
-  ])
+  }, [calibrationModalOpened, pwmChannels, initialCalibrationPwms])
 
   return (
     <div className="m-4">
@@ -265,9 +262,14 @@ export default function RadioCalibration() {
                       ></Progress.Section>
                       <Progress.Section
                         color={COLOURS[(channel - 1) % COLOURS.length]}
-                        value={getPercentageValueFromPWM(
-                          calibrationData[channel]?.max,
-                        )}
+                        value={
+                          getPercentageValueFromPWM(
+                            calibrationData[channel]?.max,
+                          ) -
+                          getPercentageValueFromPWM(
+                            calibrationData[channel]?.min,
+                          )
+                        }
                       >
                         <Progress.Label className="!text-lg !font-normal">
                           {pwmChannels[channel]}

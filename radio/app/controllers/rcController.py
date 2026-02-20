@@ -139,7 +139,7 @@ class RcController:
         if len(param_set_failures) == 0:
             return {
                 "success": True,
-                "message": f"Set {len(params)} parameters successfully.",
+                "message": f"Set {len(param_set_successes)} parameters successfully.",
                 "data": param_set_successes,
             }
 

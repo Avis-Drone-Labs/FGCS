@@ -107,10 +107,11 @@ def batchSetRcConfigParams(data: BatchSetConfigParams) -> None:
 
         if param_id is None or value is None:
             socketio.emit(
+                "batch_set_rc_config_result",
                 {
                     "success": False,
                     "message": "Param ID and value must be specified.",
-                }
+                },
             )
             return
 

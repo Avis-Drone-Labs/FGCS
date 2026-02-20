@@ -23,10 +23,13 @@ import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  emitBatchSetRcConfigParams,
   emitGetRcConfig,
   emitSetRcConfigParam,
+  selectRadioCalibrationModalOpen,
   selectRadioChannelsConfig,
   selectRadioPwmChannels,
+  setRadioCalibrationModalOpen,
 } from "../../redux/slices/configSlice"
 import {
   emitSetState,
@@ -65,7 +68,7 @@ export default function RadioCalibration() {
   const pwmChannels = useSelector(selectRadioPwmChannels)
   const channelsConfig = useSelector(selectRadioChannelsConfig)
 
-  const [calibrationModalOpened, setCalibrationModalOpened] = useState(false)
+  const calibrationModalOpened = useSelector(selectRadioCalibrationModalOpen)
   const [initialCalibrationPwms, setInitialCalibrationPwms] = useState(null)
   const [calibrationData, setCalibrationData] = useState({})
 
@@ -111,13 +114,43 @@ export default function RadioCalibration() {
     )
   }
 
-  function closeCalibrationModal() {
-    setCalibrationModalOpened(false)
+  function getChannelUsageString(channel) {
+    if (channelsConfig[channel]?.map) {
+      return channelsConfig[channel]?.map
+    } else if (channelsConfig[channel]?.option !== 0) {
+      return channelsConfig[channel]?.option?.toString() || null
+    }
+    return null
+  }
+
+  function resetCalibrationData() {
     setCalibrationData({})
     setInitialCalibrationPwms(null)
   }
 
+  function writeCalibrationParams() {
+    const params = []
+    for (const channel in calibrationData) {
+      if (calibrationData[channel] !== undefined) {
+        const { min, max } = calibrationData[channel]
+        params.push({
+          param_id: `RC${channel}_MIN`,
+          value: min,
+        })
+        params.push({
+          param_id: `RC${channel}_MAX`,
+          value: max,
+        })
+      }
+    }
+
+    if (params.length > 0) {
+      dispatch(emitBatchSetRcConfigParams({ params }))
+    }
+  }
+
   useEffect(() => {
+    console.log(connected)
     if (connected) {
       dispatch(emitSetState("config.rc"))
       dispatch(emitGetRcConfig())
@@ -134,13 +167,6 @@ export default function RadioCalibration() {
 
         for (const channel in pwmChannels) {
           const pwmValue = pwmChannels[channel]
-
-          // console.log(
-          //   channel,
-          //   pwmValue,
-          //   initialCalibrationPwms[channel],
-          //   newCalibrationData[channel],
-          // )
 
           // If the PWM value is different to the initial value and the
           // calibration data hasn't been created yet, then create it
@@ -178,7 +204,10 @@ export default function RadioCalibration() {
     <div className="m-4">
       <Modal
         opened={calibrationModalOpened}
-        onClose={closeCalibrationModal}
+        onClose={() => {
+          dispatch(setRadioCalibrationModalOpen(false))
+          resetCalibrationData()
+        }}
         title="RC Calibration"
         closeOnClickOutside={false}
         closeOnEscape={false}
@@ -188,6 +217,7 @@ export default function RadioCalibration() {
           backgroundOpacity: 0.55,
           blur: 3,
         }}
+        size="100%"
       >
         <div className="flex flex-col gap-4 items-center justify-center">
           <Text>
@@ -196,10 +226,27 @@ export default function RadioCalibration() {
           <Text fw="bold" c="red">
             Ensure no propellers are attached during calibration!
           </Text>
-          <div className=" flex flex-col gap-1 w-full">
+          <div
+            className={`grid gap-1 w-full ${
+              Object.keys(pwmChannels).length > 8
+                ? "grid-cols-2"
+                : "grid-cols-1"
+            }`}
+          >
             {Object.keys(pwmChannels).map((channel) => (
               <div key={channel}>
-                <Text className="font-bold">Channel {channel}</Text>
+                <Text className="font-bold">
+                  Channel {channel}{" "}
+                  {getChannelUsageString(channel) !== null && (
+                    <span>({getChannelUsageString(channel)})</span>
+                  )}{" "}
+                  {calibrationData[channel] !== undefined && (
+                    <span>
+                      : {calibrationData[channel]?.min}-
+                      {calibrationData[channel]?.max}
+                    </span>
+                  )}
+                </Text>
                 {calibrationData[channel] === undefined ? (
                   <Progress.Root className="!h-6">
                     <Progress.Section
@@ -208,38 +255,63 @@ export default function RadioCalibration() {
                     ></Progress.Section>
                   </Progress.Root>
                 ) : (
-                  <Progress.Root className="!h-6">
-                    <Progress.Section
-                      value={
-                        100 -
-                        getPercentageValueFromPWM(calibrationData[channel]?.max)
-                      }
-                      color="grey"
-                    ></Progress.Section>
-                    <Progress.Section
-                      color={COLOURS[(channel - 1) % COLOURS.length]}
-                    ></Progress.Section>
-                    <Progress.Section
-                      value={getPercentageValueFromPWM(
-                        calibrationData[channel]?.max,
-                      )}
-                      color="grey"
-                    ></Progress.Section>
-                  </Progress.Root>
+                  <>
+                    <Progress.Root className="!h-6">
+                      <Progress.Section
+                        value={getPercentageValueFromPWM(
+                          calibrationData[channel]?.min,
+                        )}
+                        color="grey"
+                      ></Progress.Section>
+                      <Progress.Section
+                        color={COLOURS[(channel - 1) % COLOURS.length]}
+                        value={getPercentageValueFromPWM(
+                          calibrationData[channel]?.max,
+                        )}
+                      >
+                        <Progress.Label className="!text-lg !font-normal">
+                          {pwmChannels[channel]}
+                        </Progress.Label>
+                      </Progress.Section>
+                      <Progress.Section
+                        value={
+                          100 -
+                          getPercentageValueFromPWM(
+                            calibrationData[channel]?.max,
+                          )
+                        }
+                        color="grey"
+                      ></Progress.Section>
+                    </Progress.Root>
+                  </>
                 )}
               </div>
             ))}
           </div>
           <div className="flex flex-row justify-between w-full">
-            <Button color="red" onClick={closeCalibrationModal}>
+            <Button
+              color="red"
+              onClick={() => {
+                dispatch(setRadioCalibrationModalOpen(false))
+                resetCalibrationData()
+              }}
+            >
               Cancel
             </Button>
-            <Button color="green">Save Calibration</Button>
+            <Button color="green" onClick={writeCalibrationParams}>
+              Save Calibration
+            </Button>
           </div>
         </div>
       </Modal>
 
-      <Button onClick={() => setCalibrationModalOpened(true)} className="mb-4">
+      <Button
+        onClick={() => {
+          resetCalibrationData()
+          dispatch(setRadioCalibrationModalOpen(true))
+        }}
+        className="mb-4"
+      >
         RC Calibration
       </Button>
       <Table withRowBorders={false} className="!w-fit">

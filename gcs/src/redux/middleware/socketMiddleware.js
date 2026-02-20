@@ -44,6 +44,7 @@ import {
   setGetGripperEnabled,
   setGripperConfig,
   setNumberOfMotors,
+  setRadioCalibrationModalOpen,
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
@@ -180,6 +181,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
+  onBatchSetRcConfigResult: "batch_set_rc_config_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -1105,6 +1107,31 @@ const socketMiddleware = (store) => {
             } else {
               showErrorNotification(msg.message)
             }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetRcConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            // Even though the batch operation may fail, some params may get set
+            // successfully
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateChannelsConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
+            }
+            store.dispatch(setRadioCalibrationModalOpen(false))
           },
         )
 

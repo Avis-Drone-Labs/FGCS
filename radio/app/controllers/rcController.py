@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.customTypes import Number
+from app.customTypes import Number, Response, SetConfigParam
 
 if TYPE_CHECKING:
     from app.drone import Drone
@@ -120,3 +120,33 @@ class RcController:
         param_type = self.param_types.get(param_id)
 
         return self.drone.paramsController.setParam(param_id, value, param_type)
+
+    def batchSetConfigParams(self, params: list[SetConfigParam]) -> Response:
+        """
+        Sets multiple RC configuration related parameters on the drone.
+        """
+        param_set_failures = []
+        param_set_successes = []
+        for item in params:
+            param_id = item.get("param_id")
+            value = item.get("value")
+            if param_id and value is not None:
+                if not self.setConfigParam(param_id, value):
+                    param_set_failures.append(param_id)
+                else:
+                    param_set_successes.append({"param_id": param_id, "value": value})
+
+        if len(param_set_failures) == 0:
+            return {
+                "success": True,
+                "message": f"Set {len(params)} parameters successfully.",
+                "data": param_set_successes,
+            }
+
+        # Even though the batch operation may fail, some params may get set
+        # successfully
+        return {
+            "success": False,
+            "message": f"Failed to set {len(param_set_failures)} parameters: {param_set_failures}",
+            "data": param_set_successes,
+        }

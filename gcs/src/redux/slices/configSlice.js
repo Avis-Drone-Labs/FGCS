@@ -43,6 +43,7 @@ const configSlice = createSlice({
       16: 0,
     },
     radioChannelsConfig: {},
+    radioCalibrationModalOpen: false,
   },
   reducers: {
     setActiveTab: (state, action) => {
@@ -107,7 +108,14 @@ const configSlice = createSlice({
     },
     setRadioPwmChannels: (state, action) => {
       if (action.payload === state.radioPwmChannels) return
-      state.radioPwmChannels = action.payload
+      // Ensure that if the channel pwm is not different, then don't change
+      for (const channel in action.payload) {
+        if (action.payload[channel] === state.radioPwmChannels[channel]) {
+          delete action.payload[channel]
+        }
+      }
+      if (Object.keys(action.payload).length === 0) return
+      state.radioPwmChannels = { ...state.radioPwmChannels, ...action.payload }
     },
     setChannelsConfig: (state, action) => {
       if (action.payload === state.radioChannelsConfig) return
@@ -137,6 +145,9 @@ const configSlice = createSlice({
         state.radioChannelsConfig[channelNum].reversed = value
       }
     },
+    setRadioCalibrationModalOpen: (state, action) => {
+      state.radioCalibrationModalOpen = action.payload
+    },
 
     // Emits
     emitGetGripperEnabled: () => {},
@@ -153,6 +164,7 @@ const configSlice = createSlice({
     emitTestAllMotors: () => {},
     emitGetRcConfig: () => {},
     emitSetRcConfigParam: () => {},
+    emitBatchSetRcConfigParams: () => {},
   },
   selectors: {
     selectActiveTab: (state) => state.activeTab,
@@ -172,6 +184,7 @@ const configSlice = createSlice({
     selectShowMotorTestWarningModal: (state) => state.showMotorTestWarningModal,
     selectRadioPwmChannels: (state) => state.radioPwmChannels,
     selectRadioChannelsConfig: (state) => state.radioChannelsConfig,
+    selectRadioCalibrationModalOpen: (state) => state.radioCalibrationModalOpen,
   },
 })
 
@@ -194,6 +207,7 @@ export const {
   setRadioPwmChannels,
   setChannelsConfig,
   updateChannelsConfigParam,
+  setRadioCalibrationModalOpen,
 
   emitGetGripperEnabled,
   emitGetGripperConfig,
@@ -209,6 +223,7 @@ export const {
   emitTestAllMotors,
   emitGetRcConfig,
   emitSetRcConfigParam,
+  emitBatchSetRcConfigParams,
 } = configSlice.actions
 
 export const {
@@ -228,6 +243,7 @@ export const {
   selectShowMotorTestWarningModal,
   selectRadioPwmChannels,
   selectRadioChannelsConfig,
+  selectRadioCalibrationModalOpen,
 } = configSlice.selectors
 
 export default configSlice

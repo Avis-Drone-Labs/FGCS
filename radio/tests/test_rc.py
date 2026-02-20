@@ -157,7 +157,7 @@ def test_setRcConfigParam_missingData(socketio_client: SocketIOTestClient, drone
 
     # Missing param_id
     socketio_client.emit("set_rc_config_param", {"value": 10})
-    socketio_result = socketio_client.get_received()[1]
+    socketio_result = socketio_client.get_received()[0]
 
     assert socketio_result["name"] == "params_error"
     assert socketio_result["args"][0] == {

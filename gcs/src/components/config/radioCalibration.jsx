@@ -214,7 +214,7 @@ export default function RadioCalibration() {
           backgroundOpacity: 0.55,
           blur: 3,
         }}
-        size="100%"
+        size="90%"
       >
         <div className="flex flex-col gap-4 items-center justify-center">
           <Text>

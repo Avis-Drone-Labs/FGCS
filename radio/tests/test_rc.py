@@ -110,3 +110,209 @@ def test_getRcConfig_noDroneConnection(
         assert socketio_result["args"][0] == {
             "message": "Must be connected to the drone to get the RC config."
         }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setRcConfigParam_wrongState(socketio_client: SocketIOTestClient, droneStatus):
+    droneStatus.state = "params"
+    socketio_client.emit("set_rc_config_param", {"param_id": "RC1_OPTION", "value": 10})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the config screen to set RC config parameters."
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setRcConfigParam_noDroneConnection(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.rc"
+
+    with NoDrone():
+        socketio_client.emit(
+            "set_rc_config_param", {"param_id": "RC1_OPTION", "value": 10}
+        )
+        socketio_result = socketio_client.get_received()[0]
+
+        assert socketio_result["name"] == "connection_error"
+        assert socketio_result["args"][0] == {
+            "message": "Must be connected to the drone to set a RC config parameter."
+        }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setRcConfigParam_missingData(socketio_client: SocketIOTestClient, droneStatus):
+    droneStatus.state = "config.rc"
+
+    # Missing value
+    socketio_client.emit("set_rc_config_param", {"param_id": "RC1_OPTION"})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "Param ID and value must be specified."
+    }
+
+    # Missing param_id
+    socketio_client.emit("set_rc_config_param", {"value": 10})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "Param ID and value must be specified."
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setRcConfigParam_success(socketio_client: SocketIOTestClient, droneStatus):
+    droneStatus.state = "config.rc"
+
+    socketio_client.emit("set_rc_config_param", {"param_id": "RC1_OPTION", "value": 25})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "set_rc_config_result"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "Parameter RC1_OPTION successfully set to 25.",
+        "param_id": "RC1_OPTION",
+        "value": 25,
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_batchSetRcConfigParams_wrongState(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "params"
+    socketio_client.emit(
+        "batch_set_rc_config_params",
+        {
+            "params": [
+                {"param_id": "RC1_MIN", "value": 1000},
+                {"param_id": "RC1_MAX", "value": 2000},
+            ]
+        },
+    )
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the config screen to set RC config parameters."
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_batchSetRcConfigParams_noDroneConnection(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.rc"
+
+    with NoDrone():
+        socketio_client.emit(
+            "batch_set_rc_config_params",
+            {
+                "params": [
+                    {"param_id": "RC1_MIN", "value": 1000},
+                    {"param_id": "RC1_MAX", "value": 2000},
+                ]
+            },
+        )
+        socketio_result = socketio_client.get_received()[0]
+
+        assert socketio_result["name"] == "connection_error"
+        assert socketio_result["args"][0] == {
+            "message": "Must be connected to the drone to set multiple RC config parameters."
+        }
+
+
+@falcon_test(pass_drone_status=True)
+def test_batchSetRcConfigParams_emptyParams(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.rc"
+
+    socketio_client.emit("batch_set_rc_config_params", {"params": []})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "batch_set_rc_config_result"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "No parameters specified.",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_batchSetRcConfigParams_missingData(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.rc"
+
+    # Missing value in one param
+    socketio_client.emit(
+        "batch_set_rc_config_params",
+        {"params": [{"param_id": "RC1_MIN"}, {"param_id": "RC1_MAX", "value": 2000}]},
+    )
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "batch_set_rc_config_result"
+    assert socketio_result["args"][0]["success"] is False
+    assert (
+        socketio_result["args"][0]["message"] == "Param ID and value must be specified."
+    )
+
+
+@falcon_test(pass_drone_status=True)
+def test_batchSetRcConfigParams_success(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.rc"
+
+    socketio_client.emit(
+        "batch_set_rc_config_params",
+        {
+            "params": [
+                {"param_id": "RC1_MIN", "value": 1050},
+                {"param_id": "RC1_MAX", "value": 1950},
+                {"param_id": "RC1_REVERSED", "value": 1},
+            ]
+        },
+    )
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "batch_set_rc_config_result"
+    assert socketio_result["args"][0]["success"] is True
+    assert "Set 3 parameters successfully" in socketio_result["args"][0]["message"]
+    assert socketio_result["args"][0]["data"] == [
+        {"param_id": "RC1_MIN", "value": 1050},
+        {"param_id": "RC1_MAX", "value": 1950},
+        {"param_id": "RC1_REVERSED", "value": 1},
+    ]
+
+
+@falcon_test(pass_drone_status=True)
+def test_batchSetRcConfigParams_partialFailure(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.rc"
+
+    # Include an invalid parameter that will fail
+    socketio_client.emit(
+        "batch_set_rc_config_params",
+        {
+            "params": [
+                {"param_id": "RC1_MIN", "value": 1050},
+                {"param_id": "INVALID_PARAM", "value": 999},
+                {"param_id": "RC1_MAX", "value": 1950},
+            ]
+        },
+    )
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "batch_set_rc_config_result"
+    assert socketio_result["args"][0]["success"] is False
+    assert "Failed to set 1 parameters" in socketio_result["args"][0]["message"]
+    assert "INVALID_PARAM" in socketio_result["args"][0]["message"]
+    # Should still have 2 successful params
+    assert len(socketio_result["args"][0]["data"]) == 2

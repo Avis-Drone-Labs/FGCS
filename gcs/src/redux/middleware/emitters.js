@@ -1,5 +1,6 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
+  emitBatchSetRcConfigParams,
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
@@ -386,6 +387,14 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("set_rc_config_param", {
           param_id: action.payload.param_id,
           value: action.payload.value,
+        })
+      },
+    },
+    {
+      emitter: emitBatchSetRcConfigParams,
+      callback: () => {
+        socket.socket.emit("batch_set_rc_config_params", {
+          params: action.payload.params,
         })
       },
     },

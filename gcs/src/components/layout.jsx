@@ -32,7 +32,10 @@ export default function Layout({ children, currentPage }) {
 
   // Handle switching to states
   useEffect(() => {
-    dispatch(emitSetState(currentPage))
+    // Individual config pages handle setting state
+    if (currentPage !== "config") {
+      dispatch(emitSetState(currentPage))
+    }
 
     if (!connectedToDrone) return
 

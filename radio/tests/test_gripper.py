@@ -51,7 +51,7 @@ def test_gripperEnabled(socketio_client: SocketIOTestClient, droneStatus):
     }
 
     # Failure with no drone connected
-    droneStatus.state = "config"
+    droneStatus.state = "config.gripper"
     with NoDrone():
         assert send_and_receive("get_gripper_enabled") == {
             "message": "You must be connected to the drone to access the gripper."
@@ -70,7 +70,7 @@ def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
     }
 
     # Failure with no drone connected
-    droneStatus.state = "config"
+    droneStatus.state = "config.gripper"
     with NoDrone():
         assert send_and_receive("set_gripper", "release") == {
             "message": "You must be connected to the drone to access the gripper."

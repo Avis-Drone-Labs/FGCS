@@ -32,11 +32,15 @@ export default function Layout({ children, currentPage }) {
 
   // Handle switching to states
   useEffect(() => {
-    dispatch(emitSetState(currentPage))
+    const currentPageLowerCase = currentPage.toLowerCase()
+    // Individual config pages handle setting state
+    if (currentPageLowerCase !== "config") {
+      dispatch(emitSetState(currentPageLowerCase))
+    }
 
     if (!connectedToDrone) return
 
-    if (currentPage.toLowerCase() == "dashboard") {
+    if (currentPageLowerCase == "dashboard") {
       dispatch(emitGetHomePosition()) // use actual home position
 
       if (shouldFetchAllMissionsOnDashboard) {

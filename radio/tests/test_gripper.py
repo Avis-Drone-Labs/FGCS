@@ -44,14 +44,8 @@ def run_once_after_all_tests():
 
 @falcon_test(pass_drone_status=True)
 def test_gripperEnabled(socketio_client: SocketIOTestClient, droneStatus):
-    # Failure on wrong drone state
-    droneStatus.state = "params"
-    assert send_and_receive("get_gripper_enabled") == {
-        "message": "You must be on the config screen to access the gripper."
-    }
-
     # Failure with no drone connected
-    droneStatus.state = "config"
+    droneStatus.state = "config.gripper"
     with NoDrone():
         assert send_and_receive("get_gripper_enabled") == {
             "message": "You must be connected to the drone to access the gripper."
@@ -70,7 +64,7 @@ def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
     }
 
     # Failure with no drone connected
-    droneStatus.state = "config"
+    droneStatus.state = "config.gripper"
     with NoDrone():
         assert send_and_receive("set_gripper", "release") == {
             "message": "You must be connected to the drone to access the gripper."

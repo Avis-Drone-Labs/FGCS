@@ -24,6 +24,10 @@ import {
   showSuccessNotification,
 } from "../../helpers/notification"
 import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
+import {
   emitListFiles,
   emitReadFile,
   resetFiles,
@@ -36,6 +40,7 @@ import {
 
 export default function Ftp() {
   const dispatch = useDispatch()
+  const connected = useSelector(selectConnectedToDrone)
   const files = useSelector(selectFiles)
   const loadingListFiles = useSelector(selectLoadingListFiles)
   const isReadingFile = useSelector(selectIsReadingFile)
@@ -87,6 +92,14 @@ export default function Ftp() {
     }
     return null
   }, [readFileData])
+
+  useEffect(() => {
+    if (!connected) {
+      return
+    }
+
+    dispatch(emitSetState("config.ftp"))
+  }, [connected, dispatch])
 
   useEffect(() => {
     if (files.length === 0) {

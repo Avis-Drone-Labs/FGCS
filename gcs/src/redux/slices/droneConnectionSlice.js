@@ -14,6 +14,7 @@ const initialState = {
     message: "",
     progress: 0,
   },
+  connected_to_simulator: false,
 
   // aircraft type
   aircraft_type: 0,
@@ -60,6 +61,11 @@ const droneConnectionSlice = createSlice({
     setConnected: (state, action) => {
       if (action.payload !== state.connected) {
         state.connected = action.payload
+      }
+    },
+    setConnectedToSimulator: (state, action) => {
+      if (action.payload !== state.connected_to_simulator) {
+        state.connected_to_simulator = action.payload
       }
     },
     setBaudrate: (state, action) => {
@@ -172,6 +178,7 @@ const droneConnectionSlice = createSlice({
   selectors: {
     selectConnecting: (state) => state.connecting,
     selectConnectedToDrone: (state) => state.connected,
+    selectConnectedToSimulator: (state) => state.connected_to_simulator,
     selectBaudrate: (state) => state.baudrate,
     selectConnectionType: (state) => state.connection_type,
     selectFetchingComPorts: (state) => state.fetching_com_ports,
@@ -200,6 +207,7 @@ export const {
   // Setters
   setConnecting,
   setConnected,
+  setConnectedToSimulator,
   setBaudrate,
   setConnectionType,
   setFetchingComPorts,
@@ -242,6 +250,7 @@ export const {
 export const {
   selectConnecting,
   selectConnectedToDrone,
+  selectConnectedToSimulator,
   selectBaudrate,
   selectConnectionType,
   selectFetchingComPorts,

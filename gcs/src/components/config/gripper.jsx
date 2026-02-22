@@ -155,7 +155,7 @@ export default function Gripper() {
 
         <Button
           w={"30%"}
-          onClick={() => toggleGripperEnabled()}
+          onClick={toggleGripperEnabled}
           color={"green"}
         >
           Enable Gripper
@@ -176,10 +176,10 @@ export default function Gripper() {
           Disable Gripper
         </Button>
         <div className="flex flex-row gap-2">
-          <Button w="100%" onClick={() => setGripper("release")} color={"red"}>
+          <Button w="100%" onClick={() => setGripper("release")} color={"blue"}>
             Release Gripper
           </Button>
-          <Button w="100%" onClick={() => setGripper("grab")} color={"red"}>
+          <Button w="100%" onClick={() => setGripper("grab")} color={"blue"}>
             Grab Gripper
           </Button>
         </div>

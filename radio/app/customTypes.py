@@ -46,6 +46,10 @@ class SetConfigParam(TypedDict):
     value: Number
 
 
+class BatchSetConfigParams(TypedDict):
+    params: list[SetConfigParam]
+
+
 class VehicleType(Enum):
     UNKNOWN = 0
     FIXED_WING = 1

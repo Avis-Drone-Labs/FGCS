@@ -43,6 +43,7 @@ const configSlice = createSlice({
       16: 0,
     },
     radioChannelsConfig: {},
+    radioCalibrationModalOpen: false,
   },
   reducers: {
     setActiveTab: (state, action) => {
@@ -107,7 +108,15 @@ const configSlice = createSlice({
     },
     setRadioPwmChannels: (state, action) => {
       if (action.payload === state.radioPwmChannels) return
-      state.radioPwmChannels = action.payload
+      // Ensure that if the channel pwm is not different, then don't change
+      const updatedChannels = {}
+      for (const channel in action.payload) {
+        if (action.payload[channel] !== state.radioPwmChannels[channel]) {
+          updatedChannels[channel] = action.payload[channel]
+        }
+      }
+      if (Object.keys(updatedChannels).length === 0) return
+      state.radioPwmChannels = { ...state.radioPwmChannels, ...updatedChannels }
     },
     setChannelsConfig: (state, action) => {
       if (action.payload === state.radioChannelsConfig) return
@@ -116,26 +125,25 @@ const configSlice = createSlice({
     updateChannelsConfigParam: (state, action) => {
       const { param_id, value } = action.payload
       // param_id is like "RC1_OPTION", "RC2_REVERSED", etc. so we need to separate out the channel number
-      const match = param_id.match(/^RC(\d+)_/)[1]
+      const match = param_id.match(/^RC(\d+)_(.+)$/)
       if (!match) return
 
       const channelNum = match[1]
+      const paramType = match[2].toLowerCase() // "option", "reversed", "min", "max"
 
       if (!state.radioChannelsConfig[channelNum]) return
 
-      // Get if its an option or reversed parameter
-      const isOption = param_id.endsWith("_OPTION")
-      const isReversed = param_id.endsWith("_REVERSED")
-      if (!isOption && !isReversed) return
+      // Check if this is a parameter type we track
+      const validParamTypes = ["option", "reversed", "min", "max"]
+      if (!validParamTypes.includes(paramType)) return
 
-      if (isOption) {
-        // For option, value should be an integer
-        if (state.radioChannelsConfig[channelNum].option === value) return
-        state.radioChannelsConfig[channelNum].option = value
-      } else if (isReversed) {
-        if (state.radioChannelsConfig[channelNum].reversed === value) return
-        state.radioChannelsConfig[channelNum].reversed = value
-      }
+      // Check if value is different before updating
+      if (state.radioChannelsConfig[channelNum][paramType] === value) return
+
+      state.radioChannelsConfig[channelNum][paramType] = value
+    },
+    setRadioCalibrationModalOpen: (state, action) => {
+      state.radioCalibrationModalOpen = action.payload
     },
 
     // Emits
@@ -155,6 +163,7 @@ const configSlice = createSlice({
     emitTestAllMotors: () => {},
     emitGetRcConfig: () => {},
     emitSetRcConfigParam: () => {},
+    emitBatchSetRcConfigParams: () => {},
   },
   selectors: {
     selectActiveTab: (state) => state.activeTab,
@@ -174,6 +183,7 @@ const configSlice = createSlice({
     selectShowMotorTestWarningModal: (state) => state.showMotorTestWarningModal,
     selectRadioPwmChannels: (state) => state.radioPwmChannels,
     selectRadioChannelsConfig: (state) => state.radioChannelsConfig,
+    selectRadioCalibrationModalOpen: (state) => state.radioCalibrationModalOpen,
   },
 })
 
@@ -196,6 +206,7 @@ export const {
   setRadioPwmChannels,
   setChannelsConfig,
   updateChannelsConfigParam,
+  setRadioCalibrationModalOpen,
 
   emitGetGripperEnabled,
   emitSetGripperEnabled,
@@ -213,6 +224,7 @@ export const {
   emitTestAllMotors,
   emitGetRcConfig,
   emitSetRcConfigParam,
+  emitBatchSetRcConfigParams,
 } = configSlice.actions
 
 export const {
@@ -232,6 +244,7 @@ export const {
   selectShowMotorTestWarningModal,
   selectRadioPwmChannels,
   selectRadioChannelsConfig,
+  selectRadioCalibrationModalOpen,
 } = configSlice.selectors
 
 export default configSlice

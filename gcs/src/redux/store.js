@@ -1,6 +1,8 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
+import armedMiddleware from "./middleware/armedMiddleware"
 import socketMiddleware from "./middleware/socketMiddleware"
 import applicationSlice from "./slices/applicationSlice"
+import checklistSlice, { setChecklistItems } from "./slices/checklistSlice"
 import configSlice from "./slices/configSlice"
 import droneConnectionSlice, {
   setBaudrate,
@@ -45,7 +47,7 @@ export const store = configureStore({
     return getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat([socketMiddleware])
+    }).concat([socketMiddleware, armedMiddleware])
   },
 })
 

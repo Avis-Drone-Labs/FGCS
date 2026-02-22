@@ -187,3 +187,30 @@ def test_setFlightMode_success_plane(client: SocketIOTestClient, droneStatus):
         "message": "Flight mode 1 set to PLANE_MODE_FLY_BY_WIRE_A",
     }
     assert droneStatus.drone.flightModesController.flight_modes[0] == 5
+
+
+@falcon_test(pass_drone_status=True)
+def test_setFlightModeChannel_invalidData(client: SocketIOTestClient, droneStatus):
+    response = droneStatus.drone.flightModesController.setFlightModeChannel(0)
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode channel, must be between 1 and 16 inclusive, got 0.",
+    }
+
+    response = droneStatus.drone.flightModesController.setFlightModeChannel(-1)
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode channel, must be between 1 and 16 inclusive, got -1.",
+    }
+
+    response = droneStatus.drone.flightModesController.setFlightModeChannel(17)
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode channel, must be between 1 and 16 inclusive, got 17.",
+    }
+
+    response = droneStatus.drone.flightModesController.setFlightModeChannel(100)
+    assert response == {
+        "success": False,
+        "message": "Invalid flight mode channel, must be between 1 and 16 inclusive, got 100.",
+    }

@@ -47,6 +47,11 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
 
   // Preset selection
   function selectPreset(preset) {
+    // Don't allow selecting unavailable presets
+    if (!preset.isAvailable) {
+      return
+    }
+
     // Reset all filters
     let newFilters = structuredClone(messageFilters)
     Object.keys(newFilters).forEach((categoryName) => {
@@ -56,26 +61,33 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
       })
     })
     let newColors = {}
+
     // Turn on filters for the given preset
-    Object.keys(preset.filters).forEach((categoryName) => {
-      if (Object.keys(messageFilters).includes(categoryName)) {
-        preset.filters[categoryName].forEach((field) => {
-          if (!(field in messageFilters[categoryName])) {
+    Object.keys(preset.filters).forEach((requestedName) => {
+      // Use the mapped name if available (handles MESSAGE[0] <-> MESSAGE fallback)
+      const actualMessageName =
+        preset.messageNameMap?.[requestedName] || requestedName
+
+      if (Object.keys(messageFilters).includes(actualMessageName)) {
+        preset.filters[requestedName].forEach((field) => {
+          if (!(field in messageFilters[actualMessageName])) {
             showErrorNotification(
-              `Your log file does not include ${categoryName}/${field} data`,
+              `Your log file does not include ${actualMessageName}/${field} data`,
             )
             return
           }
-          newFilters[categoryName][field] = true
+          newFilters[actualMessageName][field] = true
 
-          // Assign a color
-          if (!newColors[`${categoryName}/${field}`]) {
-            newColors[`${categoryName}/${field}`] =
+          // Assign a color using the actual message name
+          if (!newColors[`${actualMessageName}/${field}`]) {
+            newColors[`${actualMessageName}/${field}`] =
               colorPalette[Object.keys(newColors).length % colorPalette.length]
           }
         })
       } else {
-        showErrorNotification(`Your log file does not include ${categoryName}`)
+        showErrorNotification(
+          `Your log file does not include ${actualMessageName}`,
+        )
       }
     })
 
@@ -149,6 +161,77 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
     [category.name],
   )
 
+  // Generate tooltip content for unavailable presets showing missing messages/fields
+  function getUnavailableTooltip(preset) {
+    if (preset.isAvailable) return null
+
+    const missingParts = []
+
+    if (preset.missingMessages && preset.missingMessages.length > 0) {
+      missingParts.push(
+        <div key="messages">
+          <p className="text-sm">Missing messages:</p>
+          <p className="text-sm font-mono">
+            {preset.missingMessages.join(", ")}
+          </p>
+        </div>,
+      )
+    }
+
+    if (preset.missingFields && Object.keys(preset.missingFields).length > 0) {
+      const fieldDetails = Object.entries(preset.missingFields)
+        .map(([msg, fields]) => `${msg}: ${fields.join(", ")}`)
+        .join("\n")
+      missingParts.push(
+        <div key="fields">
+          <p className="text-sm">Missing fields:</p>
+          <p className="text-sm font-mono">{fieldDetails}</p>
+        </div>,
+      )
+    }
+
+    // If somehow there are no missing messages or fields but preset is still
+    // not available
+    if (missingParts.length === 0) {
+      missingParts.push(
+        <div key="fields">
+          <p className="text-sm">This preset is unavailable</p>
+        </div>,
+      )
+    }
+
+    return (
+      <div className="text-left whitespace-pre-wrap max-w-96">
+        <p className="font-semibold mb-1">{preset.name}</p>
+        <div className="flex flex-col gap-1">{missingParts}</div>
+      </div>
+    )
+  }
+
+  // Generate tooltip content for available presets showing included messages/fields
+  function getAvailableTooltip(preset) {
+    if (!preset.filters || Object.keys(preset.filters).length === 0) {
+      return preset.name
+    }
+
+    const messageList = Object.entries(preset.filters)
+      .map(([message, fields]) => {
+        if (Array.isArray(fields) && fields.length > 0) {
+          return `${message}: ${fields.join(", ")}`
+        }
+        return message
+      })
+      .join("\n")
+
+    return (
+      <div className="text-left whitespace-pre-wrap max-w-96">
+        <p className="font-semibold mb-1">{preset.name}</p>
+        <p className="text-sm">Includes:</p>
+        <p className="text-sm font-mono">{messageList}</p>
+      </div>
+    )
+  }
+
   return (
     <Accordion.Item value={category.name}>
       <Accordion.Control className="rounded-md">
@@ -165,41 +248,46 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
               </p>
             </div>
           ) : (
-            filteredPresets.map((preset, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <MantineTooltip
-                  label={
-                    <p className="text-center text-wrap line-clamp-3 max-w-96">
-                      {preset.name}
-                    </p>
-                  }
-                  withArrow
-                  position="right"
-                  arrowSize={10}
-                  arrowOffset={15}
-                >
-                  <Button
-                    onClick={() => selectPreset(preset)}
-                    className="flex-1"
-                  >
-                    <p className="text-wrap line-clamp-1">{preset.name}</p>
-                  </Button>
-                </MantineTooltip>
+            filteredPresets.map((preset, idx) => {
+              const isAvailable = preset.isAvailable
 
-                {/* Add delete button if isCustomPreset */}
-                {isCustomPreset && (
-                  <MantineTooltip label="Delete Preset">
-                    <ActionIcon
-                      variant="light"
-                      color={"red"}
-                      onClick={() => handleDeleteCustomPreset(preset.name)}
+              return (
+                <div key={idx} className="flex items-center gap-2">
+                  <MantineTooltip
+                    label={
+                      isAvailable
+                        ? getAvailableTooltip(preset)
+                        : getUnavailableTooltip(preset)
+                    }
+                    withArrow
+                    position="right"
+                    arrowSize={10}
+                    arrowOffset={15}
+                  >
+                    <Button
+                      onClick={() => selectPreset(preset)}
+                      className="flex-1"
+                      disabled={!isAvailable}
                     >
-                      <IconTrash size={18} />
-                    </ActionIcon>
+                      <p className="text-wrap line-clamp-1">{preset.name}</p>
+                    </Button>
                   </MantineTooltip>
-                )}
-              </div>
-            ))
+
+                  {/* Add delete button if isCustomPreset */}
+                  {isCustomPreset && (
+                    <MantineTooltip label="Delete Preset">
+                      <ActionIcon
+                        variant="light"
+                        color={"red"}
+                        onClick={() => handleDeleteCustomPreset(preset.name)}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </MantineTooltip>
+                  )}
+                </div>
+              )
+            })
           )}
         </div>
       </Accordion.Panel>

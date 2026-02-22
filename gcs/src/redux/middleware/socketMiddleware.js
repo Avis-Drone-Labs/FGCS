@@ -57,6 +57,7 @@ import {
   setGetGripperEnabled,
   setGripperConfig,
   setNumberOfMotors,
+  setRadioCalibrationModalOpen,
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
@@ -86,6 +87,7 @@ import {
   setOnboardControlSensorsEnabled,
   setRSSIData,
   setTelemetryData,
+  setTotalTimeFlying,
   setVibrationData,
 } from "../slices/droneInfoSlice"
 import {
@@ -190,9 +192,11 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
   onSetFlightModeResult: "set_flight_mode_result",
+  onSetFlightModeChannelResult: "set_flight_mode_channel_result",
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
+  onBatchSetRcConfigResult: "batch_set_rc_config_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -434,6 +438,7 @@ const socketMiddleware = (store) => {
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
+          store.dispatch(setTotalTimeFlying(0))
         })
 
         // Simulation status messages
@@ -1110,6 +1115,19 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
+          ConfigSpecificSocketEvents.onSetFlightModeChannelResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            store.dispatch(emitGetFlightModeConfig())
+          },
+        )
+
+        socket.socket.on(
           ConfigSpecificSocketEvents.onFrameTypeConfig,
           (msg) => {
             const currentFrameType = msg.frame_type
@@ -1173,6 +1191,31 @@ const socketMiddleware = (store) => {
             } else {
               showErrorNotification(msg.message)
             }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetRcConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            // Even though the batch operation may fail, some params may get set
+            // successfully
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateChannelsConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
+            }
+            store.dispatch(setRadioCalibrationModalOpen(false))
           },
         )
 

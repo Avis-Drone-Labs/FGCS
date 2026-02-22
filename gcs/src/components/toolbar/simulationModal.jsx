@@ -78,6 +78,7 @@ export default function SimulationModal() {
   const [pendingStopAfterDisconnect, setPendingStopAfterDisconnect] =
     useState(false)
 
+  // Wait for disconnect before stopping simulation
   useEffect(() => {
     if (!pendingStopAfterDisconnect) return
     if (connectedToDrone) return
@@ -94,6 +95,13 @@ export default function SimulationModal() {
     isSimulationRunning,
     dispatch,
   ])
+
+  // Make connect after start false if already connected to a drone
+  useEffect(() => {
+    if (connectedToDrone && !connectedToSimulator && connectAfterStart) {
+      dispatch(setSimulationConnectAfterStart(false))
+    }
+  }, [connectedToDrone, connectedToSimulator, connectAfterStart, dispatch])
 
   const duplicateHostPorts = getDuplicates(ports.map((p) => p.hostPort))
   const duplicateContainerPorts = getDuplicates(
@@ -241,12 +249,14 @@ export default function SimulationModal() {
                 setSimulationConnectAfterStart(event.currentTarget.checked),
               )
             }
-            disabled={!connectedToSocket}
+            disabled={
+              !connectedToSocket || (connectedToDrone && !connectedToSimulator)
+            }
           />
           <Tooltip
             label={
               connectedToSocket
-                ? "If the simulation starts successfully, FGCS will attempt to connect to the first port listed"
+                ? "Connect to the first listed port if the simulator starts correctly"
                 : "Not connected to socket"
             }
           >

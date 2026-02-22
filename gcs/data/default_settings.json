@@ -31,6 +31,12 @@
       "default": false,
       "type": "boolean",
       "display": "Speech Announcements"
+    },
+    "experimentalDeveloperFeatures": {
+      "default": false,
+      "type": "boolean",
+      "display": "Experimental Developer Features",
+      "description": "These may be unstable and can cause unexpected bugs or crashes."
     }
   },
   "Dashboard": {

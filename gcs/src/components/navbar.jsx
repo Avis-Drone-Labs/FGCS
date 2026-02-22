@@ -16,7 +16,6 @@ import {
   Group,
   LoadingOverlay,
   Modal,
-  Progress,
   SegmentedControl,
   Select,
   Tabs,
@@ -77,6 +76,10 @@ import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import { showErrorNotification } from "../helpers/notification.js"
+
+// Modals
+import SimulationModal from "./toolbar/simulationModal.jsx"
+import ConnectionProgress from "./connectionProgress.jsx"
 
 export default function Navbar() {
   // Redux
@@ -320,22 +323,10 @@ export default function Navbar() {
           </Group>
         </form>
 
-        {connecting &&
-          droneConnectionStatus.message !== null &&
-          typeof droneConnectionStatus.progress === "number" && (
-            <>
-              <p className="text-center my-4">
-                {droneConnectionStatus.message}
-              </p>
-              <Progress
-                animated
-                size="lg"
-                transitionDuration={300}
-                value={droneConnectionStatus.progress}
-                className="w-full mx-auto my-auto"
-              />
-            </>
-          )}
+        <ConnectionProgress
+          connecting={connecting}
+          status={droneConnectionStatus}
+        />
       </Modal>
 
       <Modal
@@ -401,6 +392,8 @@ export default function Navbar() {
           </Button>
         )}
       </Modal>
+
+      <SimulationModal />
 
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">
         <div className="flex items-center wrap">

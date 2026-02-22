@@ -74,7 +74,7 @@ def setGripperDisabled() -> None:
             "success": False,
             "message": f"Failed to disable gripper",
         }
-    
+
     socketio.emit("set_gripper_disabled_result", result)
 
 

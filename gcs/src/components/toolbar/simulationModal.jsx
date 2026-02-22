@@ -34,6 +34,7 @@ import { showNotification } from "../../helpers/notification"
 import {
   emitDisconnectFromDrone,
   selectConnectedToDrone,
+  selectConnectedToSimulator,
   selectConnecting,
   selectConnectionStatus,
 } from "../../redux/slices/droneConnectionSlice"
@@ -72,6 +73,7 @@ export default function SimulationModal() {
   const droneConnectionStatus = useSelector(selectConnectionStatus)
   const connecting = useSelector(selectConnecting)
   const connectedToDrone = useSelector(selectConnectedToDrone)
+  const connectedToSimulator = useSelector(selectConnectedToSimulator)
 
   const [pendingStopAfterDisconnect, setPendingStopAfterDisconnect] =
     useState(false)
@@ -257,8 +259,7 @@ export default function SimulationModal() {
           color={isSimulationRunning ? "red" : "green"}
           onClick={() => {
             if (isSimulationRunning) {
-              if (connectedToDrone) {
-                // TODO: and that connection is to the simulator
+              if (connectedToDrone && connectedToSimulator) {
                 setPendingStopAfterDisconnect(true)
                 dispatch(emitDisconnectFromDrone())
                 return

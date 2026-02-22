@@ -15,6 +15,7 @@ import {
   emitIsConnectedToDrone,
   setComPorts,
   setConnected,
+  setConnectedToSimulator,
   setConnecting,
   setConnectionModal,
   setConnectionStatus,
@@ -388,6 +389,7 @@ const socketMiddleware = (store) => {
         // Flags that the drone is disconnected
         socket.socket.on("disconnected_from_drone", () => {
           store.dispatch(setConnected(false))
+          store.dispatch(setConnectedToSimulator(false))
           window.ipcRenderer.send("window:update-title", "FGCS")
         })
 
@@ -498,6 +500,7 @@ const socketMiddleware = (store) => {
                 forwardingAddress: storeState.droneConnection.forwardingAddress,
               }),
             )
+            store.dispatch(setConnectedToSimulator(true))
           }
         })
 

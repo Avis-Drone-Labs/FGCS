@@ -28,7 +28,7 @@ const simulationParamsSlice = createSlice({
       state.simulationStatus = action.payload
     },
     addSimulationPort: (state) => {
-      const startPort = 5760
+      const startPort = 5762
       let hostPort = startPort
       while (state.ports.some((port) => port.hostPort === hostPort)) {
         hostPort += 1

@@ -155,7 +155,7 @@ export default function Gripper() {
 
         <Button
           w={"30%"}
-          onClick={() => toggleGripperEnabled()}
+          onClick={toggleGripperEnabled}
           color={"green"}
         >
           Enable Gripper

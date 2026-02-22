@@ -10,6 +10,8 @@ import {
   emitSetFlightModeChannel,
   emitSetGripper,
   emitSetGripperConfigParam,
+  emitSetGripperDisabled,
+  emitSetGripperEnabled,
   emitSetRcConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
@@ -301,6 +303,14 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitGetGripperEnabled,
       callback: () => socket.socket.emit("get_gripper_enabled"),
+    },
+    {
+      emitter: emitSetGripperEnabled,
+      callback: () => socket.socket.emit("set_gripper_enabled"),
+    },
+    {
+      emitter: emitSetGripperDisabled,
+      callback: () => socket.socket.emit("set_gripper_disabled"),
     },
     {
       emitter: emitGetGripperConfig,

@@ -24,7 +24,6 @@ import Ftp from "./components/config/ftp"
 import {
   emitGetGripperEnabled,
   selectActiveTab,
-  selectGetGripperEnabled,
   setActiveTab,
 } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
@@ -32,7 +31,6 @@ import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 export default function Config() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const getGripperEnabled = useSelector(selectGetGripperEnabled)
   const activeTab = useSelector(selectActiveTab)
   const paddingTop = "mt-4"
 
@@ -57,9 +55,7 @@ export default function Config() {
             onChange={(newTab) => dispatch(setActiveTab(newTab))}
           >
             <Tabs.List>
-              <Tabs.Tab value="gripper">
-                Gripper
-              </Tabs.Tab>
+              <Tabs.Tab value="gripper">Gripper</Tabs.Tab>
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>
               <Tabs.Tab value="rc_calibration">RC Calibration</Tabs.Tab>
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>

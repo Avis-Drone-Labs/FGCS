@@ -37,8 +37,19 @@ def setGripperEnabled() -> None:
         logger.warning("Attempted to set gripper enabled when drone is None.")
         return
 
-    droneStatus.drone.gripperController.enableGripper()
-    socketio.emit("set_gripper_enabled", {"message": "Enabled gripper"})
+    success = droneStatus.drone.gripperController.enableGripper()
+
+    if success:
+        result = {
+            "success": True,
+        }
+    else:
+        result = {
+            "success": False,
+            "message": f"Failed to enable gripper",
+        }
+
+    socketio.emit("set_gripper_enabled_result", result)
 
 
 @socketio.on("set_gripper_disabled")
@@ -52,8 +63,19 @@ def setGripperDisabled() -> None:
         logger.warning("Attempted to set gripper disabled when drone is None.")
         return
 
-    droneStatus.drone.gripperController.disableGripper()
-    socketio.emit("set_gripper_disabled", {"message": "Disabled gripper"})
+    success = droneStatus.drone.gripperController.disableGripper()
+
+    if success:
+        result = {
+            "success": True,
+        }
+    else:
+        result = {
+            "success": False,
+            "message": f"Failed to disable gripper",
+        }
+    
+    socketio.emit("set_gripper_disabled_result", result)
 
 
 @socketio.on("set_gripper")

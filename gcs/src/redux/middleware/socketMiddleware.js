@@ -170,8 +170,8 @@ const MissionSpecificSocketEvents = Object.freeze({
 
 const ConfigSpecificSocketEvents = Object.freeze({
   onGripperEnabled: "is_gripper_enabled",
-  onSetGripperEnabled: "set_gripper_enabled",
-  onSetGripperDisabled: "set_gripper_disabled",
+  onSetGripperEnabledResult: "set_gripper_enabled_result",
+  onSetGripperDisabledResult: "set_gripper_disabled_result",
   onSetGripperResult: "set_gripper_result",
   onGripperConfig: "gripper_config",
   setGripperParamResult: "set_gripper_param_result",
@@ -964,14 +964,22 @@ const socketMiddleware = (store) => {
           },
         )
 
-        socket.socket.on(ConfigSpecificSocketEvents.onSetGripperEnabled, () => {
-          store.dispatch(setGetGripperEnabled(true))
+        socket.socket.on(ConfigSpecificSocketEvents.onSetGripperEnabledResult, (result) => {
+          if (result.success) {
+            store.dispatch(setGetGripperEnabled(true))
+          } else {
+            showErrorNotification(result.message)
+          }
         })
 
         socket.socket.on(
-          ConfigSpecificSocketEvents.onSetGripperDisabled,
-          () => {
-            store.dispatch(setGetGripperEnabled(false))
+          ConfigSpecificSocketEvents.onSetGripperDisabledResult,
+          (result) => {
+            if (result.success) {
+              store.dispatch(setGetGripperEnabled(false))
+            } else {
+              showErrorNotification(result.message)
+            }
           },
         )
 

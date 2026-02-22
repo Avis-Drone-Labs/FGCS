@@ -179,7 +179,7 @@ export default function Gripper() {
           <Button w="100%" onClick={() => setGripper("release")} color={"blue"}>
             Release Gripper
           </Button>
-          <Button w="100%" onClick={() => setGripper("grab")} color={"red"}>
+          <Button w="100%" onClick={() => setGripper("grab")} color={"blue"}>
             Grab Gripper
           </Button>
         </div>

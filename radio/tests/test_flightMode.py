@@ -156,6 +156,70 @@ def test_setFlightMode_successfullySet(
 
 
 @falcon_test(pass_drone_status=True)
+def test_setFlightModeChannel_wrongState(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "params"
+    socketio_client.emit("set_flight_mode_channel", {"channel": 5})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the config screen to access the flight modes."
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setFlightModeChannel_missingData(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.flight_modes"
+    socketio_client.emit("set_flight_mode_channel", {})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "drone_error"
+    assert socketio_result["args"][0] == {
+        "message": "Flight mode channel must be specified.",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setFlightModeChannel_invalidType(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.flight_modes"
+    socketio_client.emit("set_flight_mode_channel", {"channel": "invalid"})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "drone_error"
+    assert socketio_result["args"][0] == {
+        "message": "Flight mode channel must be an integer.",
+    }
+
+
+@falcon_test(pass_drone_status=True)
+def test_setFlightModeChannel_successfullySet(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    droneStatus.state = "config.flight_modes"
+    original_channel = droneStatus.drone.flightModesController.flight_mode_channel
+
+    socketio_client.emit("set_flight_mode_channel", {"channel": 5})
+    socketio_result = socketio_client.get_received()[0]
+
+    assert socketio_result["name"] == "set_flight_mode_channel_result"
+    assert socketio_result["args"][0] == {
+        "success": True,
+        "message": "Flight mode channel set to 5",
+    }
+    assert droneStatus.drone.flightModesController.flight_mode_channel == 5
+
+    # Reset back to original
+    socketio_client.emit("set_flight_mode_channel", {"channel": original_channel})
+    socketio_client.get_received()[0]
+
+
+@falcon_test(pass_drone_status=True)
 def test_refreshFlightModeData_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -243,6 +307,15 @@ def test_flightModeEndpoints_noDrone(socketio_client: SocketIOTestClient, droneS
             == "Must be connected to the drone to set the flight mode."
         )
 
+        # Test set flight mode channel
+        socketio_client.emit("set_flight_mode_channel", {"channel": 8})
+        result = socketio_client.get_received()[0]
+        assert result["name"] == "connection_error"
+        assert (
+            result["args"][0]["message"]
+            == "Must be connected to the drone to set the flight mode channel."
+        )
+
         # Test refresh flight mode
         socketio_client.emit("refresh_flight_mode_data")
         result = socketio_client.get_received()[0]
@@ -252,7 +325,7 @@ def test_flightModeEndpoints_noDrone(socketio_client: SocketIOTestClient, droneS
             == "Must be connected to the drone to refresh the flight mode data."
         )
 
-        # Test refresh flight mode
+        # Test set current flight mode
         droneStatus.state = "dashboard"
         socketio_client.emit("set_current_flight_mode", {"newFlightMode": 1})
         result = socketio_client.get_received()[0]

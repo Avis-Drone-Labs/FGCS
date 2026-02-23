@@ -18,23 +18,25 @@ import { LoadingOverlay, Select } from "@mantine/core"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
-  emitSetState,
-  selectConnectedToDrone,
-} from "../../redux/slices/droneConnectionSlice"
-import {
   emitGetFlightModeConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
+  emitSetFlightModeChannel,
   selectFlightModeChannel,
   selectFlightModesList,
   selectPwmValue,
   selectRefreshingFlightModeData,
   setRefreshingFlightModeData,
 } from "../../redux/slices/configSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
 
 // Helper javascript files
 import { getFlightModeMap } from "../../helpers/mavlinkConstants"
 
+// TODO: figure out if these are hardcoded or dynamically generated
 const FLIGHT_MODE_PWM_VALUES = [
   [0, 1230],
   [1231, 1360],
@@ -43,6 +45,8 @@ const FLIGHT_MODE_PWM_VALUES = [
   [1621, 1749],
   [1750],
 ]
+
+const FLIGHT_MODE_CHANNELS = Array.from({ length: 16 }, (_, i) => `${i + 1}`)
 
 export default function FlightModes() {
   const dispatch = useDispatch()
@@ -98,6 +102,17 @@ export default function FlightModes() {
     )
   }
 
+  function changeFlightModeChannel(newChannel) {
+    if (newChannel === flightModeChannel.toString()) {
+      return
+    }
+    dispatch(
+      emitSetFlightModeChannel({
+        channel: newChannel,
+      }),
+    )
+  }
+
   function refreshFlightModeData() {
     dispatch(emitRefreshFlightModeData())
     dispatch(setRefreshingFlightModeData(true))
@@ -114,6 +129,14 @@ export default function FlightModes() {
 
         <div className="mx-4 flex flex-row gap-4 relative">
           <div className="flex flex-col gap-2">
+            <Select
+              label={"Flight mode channel"}
+              value={flightModeChannel.toString()}
+              onChange={(value) => changeFlightModeChannel(value)}
+              data={FLIGHT_MODE_CHANNELS}
+              allowDeselect={false}
+              className="mb-4"
+            />
             {flightModes.map((flightModeNumber, idx) => (
               <Select
                 key={idx}
@@ -130,7 +153,6 @@ export default function FlightModes() {
           </div>
           <div className="mx-4">
             <p>Current mode: {currentFlightMode}</p>
-            <p>Flight mode channel: {flightModeChannel}</p>
             <p>Current PWM: {currentPwmValue}</p>
           </div>
         </div>

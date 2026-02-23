@@ -16,7 +16,6 @@ import {
   Group,
   LoadingOverlay,
   Modal,
-  Progress,
   SegmentedControl,
   Select,
   Tabs,
@@ -77,6 +76,10 @@ import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 import { useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import { showErrorNotification } from "../helpers/notification.js"
+
+// Modals
+import SimulationModal from "./toolbar/simulationModal.jsx"
+import ConnectionProgress from "./connectionProgress.jsx"
 
 export default function Navbar() {
   // Redux
@@ -156,7 +159,7 @@ export default function Navbar() {
   }, [dispatch])
 
   const linkClassName =
-    "text-md px-2 rounded-sm outline-none focus:text-falconred-400 hover:text-falconred-400 transition-colors delay-50"
+    "text-md px-2 rounded-sm hover:text-falconred-400 transition-colors delay-50"
 
   return (
     <div className="flex flex-row items-center justify-center py-2 px-2 bg-falcongrey-900">
@@ -320,22 +323,10 @@ export default function Navbar() {
           </Group>
         </form>
 
-        {connecting &&
-          droneConnectionStatus.message !== null &&
-          typeof droneConnectionStatus.progress === "number" && (
-            <>
-              <p className="text-center my-4">
-                {droneConnectionStatus.message}
-              </p>
-              <Progress
-                animated
-                size="lg"
-                transitionDuration={300}
-                value={droneConnectionStatus.progress}
-                className="w-full mx-auto my-auto"
-              />
-            </>
-          )}
+        <ConnectionProgress
+          connecting={connecting}
+          status={droneConnectionStatus}
+        />
       </Modal>
 
       <Modal
@@ -402,50 +393,57 @@ export default function Navbar() {
         )}
       </Modal>
 
+      <SimulationModal />
+
       <div className="w-full flex justify-between gap-x-4 xl:grid xl:grid-cols-2 xl:gap-0">
         <div className="flex items-center wrap">
           {/* Navigation */}
           <Link
             to="/"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "dashboard" && "text-falconred font-bold",
+              currentPage === "dashboard" && "text-falconred",
             )}
           >
             Dashboard
           </Link>
           <Link
             to="/missions"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "missions" && "text-falconred font-bold",
+              currentPage === "missions" && "text-falconred",
             )}
           >
             Missions
           </Link>
           <Link
             to="/params"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "params" && "text-falconred font-bold",
+              currentPage === "params" && "text-falconred",
             )}
           >
             Params
           </Link>
           <Link
             to="/config"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage?.startsWith("config") && "text-falconred font-bold",
+              currentPage?.startsWith("config") && "text-falconred",
             )}
           >
             Config
           </Link>
           <Link
             to="/fla"
+            draggable={false}
             className={twMerge(
               linkClassName,
-              currentPage === "fla" && "text-falconred font-bold",
+              currentPage === "fla" && "text-falconred",
             )}
           >
             FLA

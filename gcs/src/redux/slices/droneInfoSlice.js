@@ -112,6 +112,7 @@ const droneInfoSlice = createSlice({
     lowBatteryAlerted: false,
     isArmed: false,
     isFlying: false,
+    totalTimeFlying: 0,
   },
   reducers: {
     setFlightSwVersion: (state, action) => {
@@ -190,10 +191,11 @@ const droneInfoSlice = createSlice({
       if (
         state.isArmed &&
         !state.isFlying &&
-        action.payload.groundspeed >= 0.5 &&
-        action.payload.alt >= 1
+        (action.payload.throttle > 10 ||
+          (action.payload.groundspeed >= 0.5 && action.payload.alt >= 1))
       ) {
-        // Aircraft is armed, is not already flying, groundspeed is above 0.5 m/s and altitude is above 1 m
+        // Aircraft is armed AND is not already flying AND (throttle is > 10% OR
+        // (groundspeed is above 0.5 m/s AND altitude is above 1 m))
         state.isFlying = true
       }
     },
@@ -314,6 +316,9 @@ const droneInfoSlice = createSlice({
     setGpsTrackHeading: (state, action) => {
       state.gpsTrackHeading = action.payload
     },
+    setTotalTimeFlying: (state, action) => {
+      state.totalTimeFlying = action.payload
+    },
   },
   selectors: {
     selectFlightSwVersion: (state) => state.flightSwVersion,
@@ -349,6 +354,7 @@ const droneInfoSlice = createSlice({
     selectVibrationData: (state) => state.vibrationData,
     selectGpsTrack: (state) => state.gpsTrack,
     selectGpsTrackHeading: (state) => state.gpsTrackHeading,
+    selectTotalTimeFlying: (state) => state.totalTimeFlying,
   },
 })
 
@@ -378,6 +384,7 @@ export const {
   appendToGpsTrack,
   resetGpsTrack,
   setGpsTrackHeading,
+  setTotalTimeFlying,
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
@@ -499,6 +506,7 @@ export const {
   selectVibrationData,
   selectGpsTrack,
   selectGpsTrackHeading,
+  selectTotalTimeFlying,
 } = droneInfoSlice.selectors
 
 export default droneInfoSlice

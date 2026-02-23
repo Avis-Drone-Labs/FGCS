@@ -1,6 +1,6 @@
 import app.droneStatus as droneStatus
 from app import logger, socketio
-from app.customTypes import SetConfigParam
+from app.customTypes import BatchSetConfigParams, SetConfigParam
 from app.utils import notConnectedError
 
 
@@ -73,3 +73,48 @@ def setRcConfigParam(data: SetConfigParam) -> None:
             "message": f"Failed to set parameter {param_id} to {value}.",
         }
     socketio.emit("set_rc_config_result", result)
+
+
+@socketio.on("batch_set_rc_config_params")
+def batchSetRcConfigParams(data: BatchSetConfigParams) -> None:
+    """
+    Sets multiple RC config parameters on the drone.
+    """
+    if droneStatus.state != "config.rc":
+        socketio.emit(
+            "params_error",
+            {
+                "message": "You must be on the config screen to set RC config parameters."
+            },
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    if not droneStatus.drone:
+        return notConnectedError(action="set multiple RC config parameters")
+
+    params = data.get("params", [])
+    if not params:
+        socketio.emit(
+            "batch_set_rc_config_result",
+            {"success": True, "message": "No parameters specified."},
+        )
+        return
+
+    for item in params:
+        param_id = item.get("param_id", None)
+        value = item.get("value", None)
+
+        if param_id is None or value is None:
+            socketio.emit(
+                "batch_set_rc_config_result",
+                {
+                    "success": False,
+                    "message": "Param ID and value must be specified.",
+                },
+            )
+            return
+
+    response = droneStatus.drone.rcController.batchSetConfigParams(params)
+
+    socketio.emit("batch_set_rc_config_result", response)

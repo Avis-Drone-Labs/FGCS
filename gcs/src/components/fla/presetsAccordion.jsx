@@ -24,32 +24,90 @@ export default function PresetsAccordion({
   const messageFilters = useSelector(selectMessageFilters)
   const formatMessages = useSelector(selectFormatMessages)
 
-  const filteredPresetCategories = useMemo(() => {
+  // Helper function to find alternative message name
+  // Treats MESSAGE[0] and MESSAGE as interchangeable
+  const findMessageName = (requestedName) => {
+    // If the exact name exists, return it
+    if (messageFilters[requestedName]) {
+      return requestedName
+    }
+
+    // Check if it's asking for MESSAGE[0] but log has MESSAGE
+    if (requestedName.endsWith("[0]")) {
+      const baseName = requestedName.slice(0, -3)
+      if (messageFilters[baseName]) {
+        return baseName
+      }
+    }
+
+    // Check if it's asking for MESSAGE but log has MESSAGE[0]
+    const indexedName = `${requestedName}[0]`
+    if (messageFilters[indexedName]) {
+      return indexedName
+    }
+
+    // No match found
+    return null
+  }
+
+  const processedPresetCategories = useMemo(() => {
     if (!presetCategories || !logType || !messageFilters) {
       return { defaults: [], custom: [] }
     }
 
-    const filterCategories = (categories = []) =>
+    const processCategories = (categories = []) =>
       (categories || [])
         .map((category) => ({
           ...category,
-          presets: (category.presets || []).filter((preset) =>
-            Object.keys(preset.filters || {}).every((key) => {
-              if (!messageFilters[key]) return false
-              const requiredFields = preset.filters[key] || []
-              const availableFields = formatMessages?.[key]?.fields || []
-              return requiredFields.every((field) =>
-                availableFields.includes(field),
-              )
-            }),
-          ),
+          presets: (category.presets || []).map((preset) => {
+            // Check which messages/fields are missing
+            const missingMessages = []
+            const missingFields = {}
+            const messageNameMap = {} // Maps requested name to actual name in log
+
+            Object.keys(preset.filters || {}).forEach((key) => {
+              const actualMessageName = findMessageName(key)
+
+              if (!actualMessageName) {
+                // Message not found even with fallbacks
+                missingMessages.push(key)
+              } else {
+                // Store the mapping for later use
+                messageNameMap[key] = actualMessageName
+
+                const requiredFields = preset.filters[key] || []
+                const availableFields =
+                  formatMessages?.[actualMessageName]?.fields || []
+
+                // Check for missing fields
+                const missing = requiredFields.filter(
+                  (field) => !availableFields.includes(field),
+                )
+                if (missing.length > 0) {
+                  missingFields[key] = missing
+                }
+              }
+            })
+
+            const isAvailable =
+              missingMessages.length === 0 &&
+              Object.keys(missingFields).length === 0
+
+            return {
+              ...preset,
+              isAvailable,
+              missingMessages,
+              missingFields,
+              messageNameMap, // Include the mapping for use in preset selection
+            }
+          }),
         }))
         .filter((category) => (category.presets || []).length > 0)
 
     const presetCategoryKey = getPresetKeys(logType).categoryKey
 
-    const defaults = filterCategories(presetCategories[logType])
-    const custom = filterCategories(presetCategories[presetCategoryKey])
+    const defaults = processCategories(presetCategories[logType])
+    const custom = processCategories(presetCategories[presetCategoryKey])
 
     return { defaults, custom }
   }, [presetCategories, logType, messageFilters, formatMessages])
@@ -57,7 +115,7 @@ export default function PresetsAccordion({
   return (
     <Accordion multiple={true}>
       {/* Custom Presets */}
-      {filteredPresetCategories.custom.map((category) => (
+      {processedPresetCategories.custom.map((category) => (
         <Fragment key={category.name}>
           <PresetAccordionItem
             key={category.name}
@@ -67,7 +125,7 @@ export default function PresetsAccordion({
         </Fragment>
       ))}
       {/* Default Presets */}
-      {filteredPresetCategories.defaults.map((category) => (
+      {processedPresetCategories.defaults.map((category) => (
         <Fragment key={category.name}>
           <PresetAccordionItem key={category.name} category={category} />
         </Fragment>

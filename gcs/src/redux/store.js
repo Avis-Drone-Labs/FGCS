@@ -1,6 +1,8 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
+import armedMiddleware from "./middleware/armedMiddleware"
 import socketMiddleware from "./middleware/socketMiddleware"
 import applicationSlice from "./slices/applicationSlice"
+import checklistSlice, { setChecklistItems } from "./slices/checklistSlice"
 import configSlice from "./slices/configSlice"
 import droneConnectionSlice, {
   setBaudrate,
@@ -21,7 +23,7 @@ import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
 import socketSlice from "./slices/socketSlice"
 import statusTextSlice from "./slices/statusTextSlice"
-import checklistSlice, { setChecklistItems } from "./slices/checklistSlice"
+import simulationParamsSlice from "./slices/simulationParamsSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -35,6 +37,7 @@ const rootReducer = combineSlices(
   checklistSlice,
   applicationSlice,
   ftpSlice,
+  simulationParamsSlice,
 )
 
 export const store = configureStore({
@@ -43,7 +46,7 @@ export const store = configureStore({
     return getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat([socketMiddleware])
+    }).concat([socketMiddleware, armedMiddleware])
   },
 })
 

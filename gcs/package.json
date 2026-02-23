@@ -36,7 +36,7 @@
     "@mantine/tiptap": "^7.17.4",
     "@reduxjs/toolkit": "^2.2.7",
     "@robloche/chartjs-plugin-streaming": "^3.1.0",
-    "@tabler/icons-react": "^2.44.0",
+    "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tiptap/extension-link": "^2.11.6",
     "@tiptap/pm": "^2.11.6",

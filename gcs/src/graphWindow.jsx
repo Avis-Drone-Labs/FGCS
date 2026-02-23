@@ -39,8 +39,6 @@ function GraphWindowApp() {
     const handleInit = (_event, payload) => {
       if (!payload) return
 
-      console.log("INIT PAYLOAD", payload)
-
       setMeta(payload)
       activeGraphKeyRef.current = payload.graphKey
 

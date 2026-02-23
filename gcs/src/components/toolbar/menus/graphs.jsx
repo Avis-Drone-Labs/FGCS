@@ -94,7 +94,7 @@ export default function GraphsMenu(props) {
         graph_d: null,
       }),
     )
-  }, [])
+  }, [dispatch])
 
   //Redux graph slots (graph_a..graph_d -> "MSG.FIELD" | null)
   const selectedGraphs = useSelector(selectGraphValues)
@@ -269,9 +269,7 @@ export default function GraphsMenu(props) {
               dispatch(setGraphValues(cleared))
               // close any open windows too
               for (const key of ["graph_a", "graph_b", "graph_c", "graph_d"]) {
-                window.ipcRenderer
-                  .invoke("app:close-graph-window", { graphKey: key })
-                  .catch(console.error)
+                safeInvoke("app:close-graph-window", { graphKey: key }).catch(console.error)
               }
             }}
           >

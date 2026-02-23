@@ -18,8 +18,6 @@ const ALLOWED_INVOKE_CHANNELS = [
   "app:close-video-window",
   "app:open-graph-window",
   "app:close-graph-window",
-  "app:open-graph-window",
-  "app:close-graph-window",
   "app:update-graph-windows",
   "app:start-rtsp-stream",
   "app:stop-rtsp-stream",

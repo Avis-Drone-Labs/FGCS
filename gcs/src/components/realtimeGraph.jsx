@@ -98,7 +98,7 @@ const RealtimeGraph = forwardRef(function RealtimeGraph(
     ds.backgroundColor = hexToRgba(lineColor, 0.5)
 
     ref.current.update("none")
-  }, [datasetLabel, lineColor])
+  }, [datasetLabel, lineColor, ref])
 
   return (
     <div className="p-8 rounded-lg w-full h-full">

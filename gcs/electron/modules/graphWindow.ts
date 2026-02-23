@@ -49,7 +49,6 @@ function getGraphWin(graphKey: GraphKey): BrowserWindow | null {
 }
 
 export function openGraphWindow({ graphKey, meta }: OpenArgs) {
-  console.log("openGraphWindow called", graphKey)
 
   // Reuse existing window if it's alive
   let win = getGraphWin(graphKey)

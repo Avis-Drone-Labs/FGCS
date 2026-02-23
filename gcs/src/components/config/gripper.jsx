@@ -141,7 +141,6 @@ export default function Gripper() {
     } else {
       dispatch(emitSetGripperEnabled())
     }
-    dispatch(emitGetGripperConfig())
   }
 
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
@@ -153,11 +152,7 @@ export default function Gripper() {
       <div className="flex flex-col gap-4 mx-4">
         <p>Gripper is not enabled.</p>
 
-        <Button
-          w={"30%"}
-          onClick={toggleGripperEnabled}
-          color={"green"}
-        >
+        <Button w={"30%"} onClick={toggleGripperEnabled} color={"green"}>
           Enable Gripper
         </Button>
       </div>

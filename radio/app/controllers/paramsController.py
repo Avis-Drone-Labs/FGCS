@@ -217,14 +217,14 @@ class ParamsController:
                 }
                 if not done:
                     params_could_not_set.append(param)
-                    progress_update_callback_data["message"] = (
-                        f"Failed to write {param_id}"
-                    )
+                    progress_update_callback_data[
+                        "message"
+                    ] = f"Failed to write {param_id}"
                 else:
                     params_set_successfully.append(param)
-                    progress_update_callback_data["message"] = (
-                        f"Wrote {param_id} successfully"
-                    )
+                    progress_update_callback_data[
+                        "message"
+                    ] = f"Wrote {param_id} successfully"
 
                 if progress_update_callback:
                     progress_update_callback(progress_update_callback_data)

@@ -37,18 +37,12 @@ def setGripperEnabled() -> None:
         logger.warning("Attempted to set gripper enabled when drone is None.")
         return
 
-    success = droneStatus.drone.gripperController.enableGripper()
+    if droneStatus.state != "config.gripper":
+        droneErrorCb("You must be on the gripper page to enable the gripper")
+        logger.warning("Attempted to set gripper enabled not on gripper page")
+        return
 
-    if success:
-        result = {
-            "success": True,
-        }
-    else:
-        result = {
-            "success": False,
-            "message": f"Failed to enable gripper",
-        }
-
+    result = droneStatus.drone.gripperController.enableGripper()
     socketio.emit("set_gripper_enabled_result", result)
 
 
@@ -63,18 +57,12 @@ def setGripperDisabled() -> None:
         logger.warning("Attempted to set gripper disabled when drone is None.")
         return
 
-    success = droneStatus.drone.gripperController.disableGripper()
+    if droneStatus.state != "config.gripper":
+        droneErrorCb("You must be on the gripper page to disable the gripper")
+        logger.warning("Attempted to set gripper disabled not on gripper page")
+        return
 
-    if success:
-        result = {
-            "success": True,
-        }
-    else:
-        result = {
-            "success": False,
-            "message": f"Failed to disable gripper",
-        }
-
+    result = droneStatus.drone.gripperController.disableGripper()
     socketio.emit("set_gripper_disabled_result", result)
 
 

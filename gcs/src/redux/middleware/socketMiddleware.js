@@ -46,6 +46,7 @@ import {
 import SocketFactory from "../../helpers/socket"
 import {
   emitGetFlightModeConfig,
+  emitGetGripperConfig,
   setChannelsConfig,
   setCurrentPwmValue,
   setFlightModeChannel,
@@ -1050,13 +1051,17 @@ const socketMiddleware = (store) => {
           },
         )
 
-        socket.socket.on(ConfigSpecificSocketEvents.onSetGripperEnabledResult, (result) => {
-          if (result.success) {
-            store.dispatch(setGetGripperEnabled(true))
-          } else {
-            showErrorNotification(result.message)
-          }
-        })
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperEnabledResult,
+          (result) => {
+            if (result.success) {
+              store.dispatch(setGetGripperEnabled(true))
+              store.dispatch(emitGetGripperConfig())
+            } else {
+              showErrorNotification(result.message)
+            }
+          },
+        )
 
         socket.socket.on(
           ConfigSpecificSocketEvents.onSetGripperDisabledResult,

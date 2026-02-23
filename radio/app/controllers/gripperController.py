@@ -165,28 +165,42 @@ class GripperController:
         Enable the gripper
         """
 
-        self.drone.paramsController.setParam(
+        success = self.drone.paramsController.setParam(
             "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
         )
 
-        return {
-            "success": True,
-            "message": "Enabled gripper",
-        }
+        if success:
+            result = {
+                "success": True,
+            }
+        else:
+            result = {
+                "success": False,
+                "message": f"Failed to enable gripper",
+            }
+
+        return result
 
     def disableGripper(self) -> Response:
         """
         Disable the gripper
         """
 
-        self.drone.paramsController.setParam(
+        success = self.drone.paramsController.setParam(
             "GRIP_ENABLE", 0, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
         )
 
-        return {
-            "success": True,
-            "message": "Disabled gripper",
-        }
+        if success:
+            result = {
+                "success": True,
+            }
+        else:
+            result = {
+                "success": False,
+                "message": f"Failed to disable gripper",
+            }
+
+        return result
 
     def getConfig(self) -> dict:
         """

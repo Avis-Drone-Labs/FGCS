@@ -5,7 +5,7 @@
 */
 
 // Base imports
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 // 3rd Party Imports
 import { Tabs } from "@mantine/core"
@@ -23,7 +23,9 @@ import { useDispatch, useSelector } from "react-redux"
 import Ftp from "./components/config/ftp"
 import {
   emitGetGripperEnabled,
+  selectActiveTab,
   selectGetGripperEnabled,
+  setActiveTab,
 } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
@@ -31,15 +33,12 @@ export default function Config() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const getGripperEnabled = useSelector(selectGetGripperEnabled)
-
-  // States in the frontend
-  const [activeTab, setActiveTab] = useState(null)
+  const activeTab = useSelector(selectActiveTab)
   const paddingTop = "mt-4"
 
-  // Set state variables and display acknowledgement messages from the drone
   useEffect(() => {
     if (!connected) {
-      setActiveTab(null)
+      dispatch(setActiveTab(null))
     } else {
       dispatch(emitGetGripperEnabled())
     }
@@ -55,7 +54,7 @@ export default function Config() {
             className="h-full"
             keepMounted={false}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={(newTab) => dispatch(setActiveTab(newTab))}
           >
             <Tabs.List>
               <Tabs.Tab value="gripper" disabled={!getGripperEnabled}>

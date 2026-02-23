@@ -9,10 +9,13 @@ import {
 
 // drone actions
 import {
+  ConnectionType,
+  emitConnectToDrone,
   emitGetComPorts,
   emitIsConnectedToDrone,
   setComPorts,
   setConnected,
+  setConnectedToSimulator,
   setConnecting,
   setConnectionModal,
   setConnectionStatus,
@@ -21,14 +24,24 @@ import {
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
 
+import {
+  setSimulationStatus,
+  SimulationStatus,
+  setSimulationLoadingNotificationId,
+  clearSimulationLoadingNotificationId,
+} from "../slices/simulationParamsSlice"
+
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
+  closeLoadingNotification,
   showErrorNotification,
+  showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,
+  redColor,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
@@ -44,6 +57,7 @@ import {
   setGetGripperEnabled,
   setGripperConfig,
   setNumberOfMotors,
+  setRadioCalibrationModalOpen,
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
@@ -73,6 +87,7 @@ import {
   setOnboardControlSensorsEnabled,
   setRSSIData,
   setTelemetryData,
+  setTotalTimeFlying,
   setVibrationData,
 } from "../slices/droneInfoSlice"
 import {
@@ -131,6 +146,8 @@ const SocketEvents = Object.freeze({
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
   linkDebugStats: "link_debug_stats",
+  onSimulationResult: "simulation_result",
+  onSimulationLoading: "simulation_loading",
 })
 
 const DroneSpecificSocketEvents = Object.freeze({
@@ -175,9 +192,11 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
   onSetFlightModeResult: "set_flight_mode_result",
+  onSetFlightModeChannelResult: "set_flight_mode_channel_result",
   onFrameTypeConfig: "frame_type_config",
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
+  onBatchSetRcConfigResult: "batch_set_rc_config_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -374,6 +393,7 @@ const socketMiddleware = (store) => {
         // Flags that the drone is disconnected
         socket.socket.on("disconnected_from_drone", () => {
           store.dispatch(setConnected(false))
+          store.dispatch(setConnectedToSimulator(false))
           window.ipcRenderer.send("window:update-title", "FGCS")
         })
 
@@ -418,6 +438,75 @@ const socketMiddleware = (store) => {
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
+          store.dispatch(setTotalTimeFlying(0))
+        })
+
+        // Simulation status messages
+        socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
+          const operationId = msg.operationId || "simulation-loading"
+          const state = store.getState()
+          const idsByOp =
+            state.simulationParams.loadingNotificationIdsByOperation
+          const existingId = idsByOp?.[operationId]
+
+          if (msg.loading) {
+            if (existingId != null) {
+              closeLoadingNotification(
+                existingId,
+                "Cancelled",
+                "Overwritten by new loading notification",
+              )
+            }
+
+            const id = showLoadingNotification(msg.title, msg.message)
+            store.dispatch(
+              setSimulationLoadingNotificationId({
+                operationId,
+                notificationId: id,
+              }),
+            )
+          } else {
+            if (existingId != null) {
+              closeLoadingNotification(
+                existingId,
+                msg.title,
+                msg.message,
+                msg.success === false ? { color: redColor } : {},
+              )
+              store.dispatch(
+                clearSimulationLoadingNotificationId({ operationId }),
+              )
+            }
+          }
+        })
+
+        // Simulation final messages
+        socket.socket.on(SocketEvents.onSimulationResult, (msg) => {
+          if (msg.running === true) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Running))
+          } else if (msg.running === false) {
+            store.dispatch(setSimulationStatus(SimulationStatus.Idle))
+          }
+          // Else result does not change the status
+
+          msg.success
+            ? showSuccessNotification(msg.message)
+            : showErrorNotification(msg.message)
+
+          if (msg.connect) {
+            const storeState = store.getState()
+            store.dispatch(setConnecting(true))
+            store.dispatch(
+              emitConnectToDrone({
+                port: `tcp:127.0.0.1:${msg.port}`,
+                baud: 115200,
+                wireless: true,
+                connectionType: ConnectionType.Network,
+                forwardingAddress: storeState.droneConnection.forwardingAddress,
+              }),
+            )
+            store.dispatch(setConnectedToSimulator(true))
+          }
         })
 
         // Link stats
@@ -1053,6 +1142,19 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
+          ConfigSpecificSocketEvents.onSetFlightModeChannelResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            store.dispatch(emitGetFlightModeConfig())
+          },
+        )
+
+        socket.socket.on(
           ConfigSpecificSocketEvents.onFrameTypeConfig,
           (msg) => {
             const currentFrameType = msg.frame_type
@@ -1116,6 +1218,31 @@ const socketMiddleware = (store) => {
             } else {
               showErrorNotification(msg.message)
             }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetRcConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            // Even though the batch operation may fail, some params may get set
+            // successfully
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateChannelsConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
+            }
+            store.dispatch(setRadioCalibrationModalOpen(false))
           },
         )
 

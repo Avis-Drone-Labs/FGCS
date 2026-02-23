@@ -46,3 +46,10 @@ export function centiDegToDeg(val) {
     return null
   }
 }
+
+// Format duration in seconds to MM:SS format
+export function formatDurationSecondsToMMSS(seconds) {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+}

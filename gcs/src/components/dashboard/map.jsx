@@ -33,20 +33,24 @@ import { useSettings } from "../../helpers/settings"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
+import {
+  DistanceMeasurementMarkers,
+  DistanceMeasurementModal,
+} from "../mapComponents/distanceMeasurement"
 import DroneMarker from "../mapComponents/droneMarker"
+import FenceItems from "../mapComponents/fenceItems"
+import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
 import useContextMenu from "../mapComponents/useContextMenu"
 
 // Tailwind styling
-import { envelope, featureCollection, point } from "@turf/turf"
+import { distance, envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { showInfoNotification } from "../../helpers/notification"
 import { emitReposition } from "../../redux/slices/droneConnectionSlice"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
-import FenceItems from "../mapComponents/fenceItems"
-import HomeMarker from "../mapComponents/homeMarker"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -96,6 +100,11 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
+
+  // Distance measurement state
+  const [measureDistanceStart, setMeasureDistanceStart] = useState(null)
+  const [measureDistanceEnd, setMeasureDistanceEnd] = useState(null)
+  const [measureDistanceResult, setMeasureDistanceResult] = useState(null)
 
   useEffect(() => {
     // Check latest gpsData point is valid
@@ -197,6 +206,28 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
     }
   }
 
+  function measureDistance() {
+    if (measureDistanceStart === null) {
+      setMeasureDistanceStart(clickedGpsCoords)
+      showInfoNotification('Click "Measure distance" again to finish measuring')
+    } else {
+      setMeasureDistanceEnd(clickedGpsCoords)
+      setMeasureDistanceResult(
+        distance(
+          [measureDistanceStart.lng, measureDistanceStart.lat],
+          [clickedGpsCoords.lng, clickedGpsCoords.lat],
+          { units: "meters" },
+        ),
+      )
+    }
+  }
+
+  function stopMeasureDistance() {
+    setMeasureDistanceStart(null)
+    setMeasureDistanceEnd(null)
+    setMeasureDistanceResult(null)
+  }
+
   return (
     <div className="w-initial h-full" id="map">
       <Map
@@ -289,6 +320,11 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           />
         )}
 
+        <DistanceMeasurementMarkers
+          measureDistanceStart={measureDistanceStart}
+          measureDistanceEnd={measureDistanceEnd}
+        />
+
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
           <form
             className="flex flex-col space-y-2"
@@ -319,6 +355,11 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           </form>
         </Modal>
 
+        <DistanceMeasurementModal
+          measureDistanceResult={measureDistanceResult}
+          onClose={stopMeasureDistance}
+        />
+
         {clicked && (
           <div
             ref={contextMenuRef}
@@ -336,6 +377,10 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             </ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem onClick={open}>Fly to here</ContextMenuItem>
+            <Divider className="my-1" />
+            <ContextMenuItem onClick={measureDistance}>
+              <p>Measure distance</p>
+            </ContextMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {

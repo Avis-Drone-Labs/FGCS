@@ -18,7 +18,7 @@ const SLOT_COLORS = {
   graph_d: tailwindColors.green[400],
 }
 
-function GraphWindowApp() {
+export default function GraphWindowApp() {
   useEffect(() => {
     console.log("ipcRenderer exists?", !!window.ipcRenderer)
   }, [])

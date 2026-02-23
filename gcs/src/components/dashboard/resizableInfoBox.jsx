@@ -1,6 +1,6 @@
 /*
   Resizable information box. This is the left hand side if the screen that moves and will contain
-  both the telemetry information and actions, which are both separate components. These 
+  both the telemetry information and actions, which are both separate components. These
   components are passed in via the props.children which in this case is from dashboard.jsx
 */
 

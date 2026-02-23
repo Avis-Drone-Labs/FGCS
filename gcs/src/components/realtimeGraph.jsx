@@ -90,11 +90,15 @@ const RealtimeGraph = forwardRef(function RealtimeGraph(
   })
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current.data.datasets[0].label = datasetLabel
-      ref.current.update("quiet")
-    }
-  }, [datasetLabel])
+    if (!ref.current) return
+
+    const ds = ref.current.data.datasets[0]
+    ds.label = datasetLabel
+    ds.borderColor = lineColor
+    ds.backgroundColor = hexToRgba(lineColor, 0.5)
+
+    ref.current.update("none")
+  }, [datasetLabel, lineColor])
 
   return (
     <div className="p-8 rounded-lg w-full h-full">

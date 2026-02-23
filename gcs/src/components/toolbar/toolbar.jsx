@@ -14,6 +14,7 @@ import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
+import GraphsMenu from "./menus/graphs.jsx"
 import ConfirmExitModal from "./confirmExitModal.jsx"
 
 // Redux
@@ -66,6 +67,12 @@ export default function Toolbar() {
               </div>
               <div>
                 <ViewMenu
+                  areMenusActive={areMenusActive}
+                  setMenusActive={setMenusActive}
+                />
+              </div>
+              <div>
+                <GraphsMenu
                   areMenusActive={areMenusActive}
                   setMenusActive={setMenusActive}
                 />

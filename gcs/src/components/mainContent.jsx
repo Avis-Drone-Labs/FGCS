@@ -18,7 +18,6 @@ import SingleRunWrapper from "./SingleRunWrapper"
 import Config from "../config"
 import Dashboard from "../dashboard"
 import FLA from "../fla"
-import Graphs from "../graphs"
 import Missions from "../missions"
 import Params from "../params"
 import Navbar from "./navbar"
@@ -74,7 +73,6 @@ export default function AppContent() {
               }
             />
             <Route path="/missions" element={<Missions />} />
-            <Route path="/graphs" element={<Graphs />} />
             <Route path="/params" element={<Params />} />
             <Route path="/config" element={<Config />} />
             <Route path="/fla" element={<FLA />} />

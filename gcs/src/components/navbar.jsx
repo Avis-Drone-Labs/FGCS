@@ -424,15 +424,6 @@ export default function Navbar() {
             Missions
           </Link>
           <Link
-            to="/graphs"
-            className={twMerge(
-              linkClassName,
-              currentPage === "graphs" && "text-falconred font-bold",
-            )}
-          >
-            Graphs
-          </Link>
-          <Link
             to="/params"
             className={twMerge(
               linkClassName,

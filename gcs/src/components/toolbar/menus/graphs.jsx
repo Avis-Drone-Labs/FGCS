@@ -269,7 +269,9 @@ export default function GraphsMenu(props) {
               dispatch(setGraphValues(cleared))
               // close any open windows too
               for (const key of ["graph_a", "graph_b", "graph_c", "graph_d"]) {
-                safeInvoke("app:close-graph-window", { graphKey: key }).catch(console.error)
+                safeInvoke("app:close-graph-window", { graphKey: key }).catch(
+                  console.error,
+                )
               }
             }}
           >

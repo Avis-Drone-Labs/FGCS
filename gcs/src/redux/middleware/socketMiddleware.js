@@ -25,10 +25,10 @@ import {
 } from "../slices/droneConnectionSlice"
 
 import {
+  clearSimulationLoadingNotificationId,
+  setSimulationLoadingNotificationId,
   setSimulationStatus,
   SimulationStatus,
-  setSimulationLoadingNotificationId,
-  clearSimulationLoadingNotificationId,
 } from "../slices/simulationParamsSlice"
 
 // socket factory
@@ -37,11 +37,11 @@ import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
   closeLoadingNotification,
+  redColor,
   showErrorNotification,
   showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,
-  redColor,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
@@ -606,6 +606,98 @@ const socketMiddleware = (store) => {
             )
           }
         })
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onImportMissionResult,
+          (msg) => {
+            if (msg.success) {
+              const storeState = store.getState()
+
+              if (msg.mission_type === "mission") {
+                const missionItemsWithIds = []
+                for (let missionItem of msg.items) {
+                  missionItemsWithIds.push(addIdToItem(missionItem))
+                }
+
+                // Check if first item is a home location, then open modal to
+                // select whether to update planned home position
+                if (missionItemsWithIds.length > 0) {
+                  const potentialHomeLocation = missionItemsWithIds[0]
+                  const currentPlannedHomeLocation =
+                    storeState.missionInfo.plannedHomePosition
+
+                  // Check if the potential home location is different from the current planned home location
+                  if (
+                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
+                    (potentialHomeLocation.x !==
+                      currentPlannedHomeLocation.lat ||
+                      potentialHomeLocation.y !==
+                        currentPlannedHomeLocation.lon ||
+                      potentialHomeLocation.z !==
+                        currentPlannedHomeLocation.alt)
+                  ) {
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadData({
+                        lat: potentialHomeLocation.x,
+                        lon: potentialHomeLocation.y,
+                        alt: potentialHomeLocation.z,
+                        from: "file",
+                      }),
+                    )
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadModal(true),
+                    )
+                  }
+                }
+                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    mission: true,
+                  }),
+                )
+              } else if (msg.mission_type === "fence") {
+                const fenceItemsWithIds = []
+                for (let fence of msg.items) {
+                  fenceItemsWithIds.push(addIdToItem(fence))
+                }
+                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    fence: true,
+                  }),
+                )
+              } else if (msg.mission_type === "rally") {
+                const rallyItemsWithIds = []
+                for (let rallyItem of msg.items) {
+                  rallyItemsWithIds.push(addIdToItem(rallyItem))
+                }
+
+                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    rally: true,
+                  }),
+                )
+              }
+
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onExportMissionResult,
+          (msg) => {
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
+          },
+        )
       }
     }
 
@@ -925,89 +1017,6 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
-          MissionSpecificSocketEvents.onImportMissionResult,
-          (msg) => {
-            if (msg.success) {
-              const storeState = store.getState()
-
-              if (msg.mission_type === "mission") {
-                const missionItemsWithIds = []
-                for (let missionItem of msg.items) {
-                  missionItemsWithIds.push(addIdToItem(missionItem))
-                }
-
-                // Check if first item is a home location, then open modal to
-                // select whether to update planned home position
-                if (missionItemsWithIds.length > 0) {
-                  const potentialHomeLocation = missionItemsWithIds[0]
-                  const currentPlannedHomeLocation =
-                    storeState.missionInfo.plannedHomePosition
-
-                  // Check if the potential home location is different from the current planned home location
-                  if (
-                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
-                    (potentialHomeLocation.x !==
-                      currentPlannedHomeLocation.lat ||
-                      potentialHomeLocation.y !==
-                        currentPlannedHomeLocation.lon ||
-                      potentialHomeLocation.z !==
-                        currentPlannedHomeLocation.alt)
-                  ) {
-                    store.dispatch(
-                      setUpdatePlannedHomePositionFromLoadData({
-                        lat: potentialHomeLocation.x,
-                        lon: potentialHomeLocation.y,
-                        alt: potentialHomeLocation.z,
-                        from: "file",
-                      }),
-                    )
-                    store.dispatch(
-                      setUpdatePlannedHomePositionFromLoadModal(true),
-                    )
-                  }
-                }
-                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
-                store.dispatch(
-                  setUnwrittenChanges({
-                    ...storeState.missionInfo.unwrittenChanges,
-                    mission: true,
-                  }),
-                )
-              } else if (msg.mission_type === "fence") {
-                const fenceItemsWithIds = []
-                for (let fence of msg.items) {
-                  fenceItemsWithIds.push(addIdToItem(fence))
-                }
-                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
-                store.dispatch(
-                  setUnwrittenChanges({
-                    ...storeState.missionInfo.unwrittenChanges,
-                    fence: true,
-                  }),
-                )
-              } else if (msg.mission_type === "rally") {
-                const rallyItemsWithIds = []
-                for (let rallyItem of msg.items) {
-                  rallyItemsWithIds.push(addIdToItem(rallyItem))
-                }
-
-                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
-                store.dispatch(
-                  setUnwrittenChanges({
-                    ...storeState.missionInfo.unwrittenChanges,
-                    rally: true,
-                  }),
-                )
-              }
-
-              showSuccessNotification(msg.message)
-            } else {
-              showErrorNotification(msg.message)
-            }
-          },
-        )
-
-        socket.socket.on(
           MissionSpecificSocketEvents.onMissionControlResult,
           (msg) => {
             msg.success
@@ -1019,15 +1028,6 @@ const socketMiddleware = (store) => {
         socket.socket.on(MissionSpecificSocketEvents.onTargetInfo, (msg) => {
           store.dispatch(setTargetInfo(msg))
         })
-
-        socket.socket.on(
-          MissionSpecificSocketEvents.onExportMissionResult,
-          (msg) => {
-            msg.success
-              ? showSuccessNotification(msg.message)
-              : showErrorNotification(msg.message)
-          },
-        )
 
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMissionProgress,
@@ -1283,9 +1283,13 @@ const socketMiddleware = (store) => {
         Object.values(ParamSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-        Object.values(MissionSpecificSocketEvents).map((event) =>
-          socket.socket.off(event),
-        )
+        Object.values(MissionSpecificSocketEvents)
+          .filter(
+            (event) =>
+              event !== MissionSpecificSocketEvents.onImportMissionResult &&
+              event !== MissionSpecificSocketEvents.onExportMissionResult,
+          )
+          .map((event) => socket.socket.off(event))
         Object.values(ConfigSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )

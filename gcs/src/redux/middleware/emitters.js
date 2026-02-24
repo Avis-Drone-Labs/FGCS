@@ -38,12 +38,6 @@ import {
   setIsForwarding,
 } from "../slices/droneConnectionSlice"
 import {
-  setSimulationStatus,
-  SimulationStatus,
-  emitStartSimulation,
-  emitStopSimulation,
-} from "../slices/simulationParamsSlice"
-import {
   emitListFiles,
   emitListLogFiles,
   emitReadFile,
@@ -68,6 +62,12 @@ import {
   emitSetMultipleParams,
   setParamsWriteProgressModalOpen,
 } from "../slices/paramsSlice"
+import {
+  emitStartSimulation,
+  emitStopSimulation,
+  setSimulationStatus,
+  SimulationStatus,
+} from "../slices/simulationParamsSlice"
 import { resetMessages } from "../slices/statusTextSlice"
 
 export function handleEmitters(socket, store, action) {
@@ -146,11 +146,7 @@ export function handleEmitters(socket, store, action) {
       emitter: emitSetState,
       callback: () => {
         store.dispatch(setCurrentPage(action.payload))
-        const storeState = store.getState()
-        const isDroneConnected = storeState.droneConnection.connected
-        if (isDroneConnected) {
-          socket.socket.emit("set_state", { state: action.payload })
-        }
+        socket.socket.emit("set_state", { state: action.payload })
       },
     },
     {

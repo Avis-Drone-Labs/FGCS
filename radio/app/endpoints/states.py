@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from pymavlink import mavutil
 from typing_extensions import TypedDict
 
@@ -5,7 +7,6 @@ import app.droneStatus as droneStatus
 from app import socketio
 from app.utils import (
     missingParameterError,
-    notConnectedError,
     sendMessage,
 )
 
@@ -41,6 +42,8 @@ STATES_MESSAGE_LISTENERS = {
     "config.rc": ["RC_CHANNELS"],
 }
 
+logger = getLogger("fgcs")
+
 
 @socketio.on("set_state")
 def set_state(data: SetStateType) -> None:
@@ -50,16 +53,16 @@ def set_state(data: SetStateType) -> None:
     Args:
         data: The form data passed in from the frontend, this contains the state we wish to change to
     """
-    if not droneStatus.drone:
-        return notConnectedError(action="set the drone state")
-
     # Ensure that a state was actually sent
     if (newState := data.get("state", None)) is None:
         return missingParameterError("set_state", "state")
 
+    logger.info(f"Changing state to {newState}")
+
     droneStatus.state = newState
 
-    droneStatus.drone.logger.info(f"Changing state to {droneStatus.state}")
+    if not droneStatus.drone:
+        return
 
     # Reset all data streams
     droneStatus.drone.stopAllDataStreams()

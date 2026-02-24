@@ -27,7 +27,7 @@ The central class that manages drone communication and state:
 
 ```python
 class Drone:
-    def __init__(self, port, baud=57600, wireless=False, ...):
+    def __init__(self, port, baud=57600, ...):
         # Core MAVLink connection
         self.master = mavutil.mavlink_connection(...)
 
@@ -51,15 +51,15 @@ class Drone:
 The drone class sets up various MAVLink data streams to receive telemetry:
 
 ```python
-DATASTREAM_RATES_WIRED = {
-    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 3,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 10,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 10,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 2,
-}
+DATASTREAM_RATES_ = {
+    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 4,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 3,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 1,
+}}
 ```
 
 **Stream Types and Messages:**

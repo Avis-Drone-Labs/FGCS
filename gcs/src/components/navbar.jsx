@@ -12,7 +12,6 @@ import { Link } from "react-router-dom"
 // Third party imports
 import {
   Button,
-  Checkbox,
   Group,
   LoadingOverlay,
   Modal,
@@ -24,7 +23,7 @@ import {
   Tooltip,
 } from "@mantine/core"
 import { useSessionStorage } from "@mantine/hooks"
-import { IconInfoCircle, IconRefresh } from "@tabler/icons-react"
+import { IconRefresh } from "@tabler/icons-react"
 
 // Helper imports
 import { IconAlertTriangle } from "@tabler/icons-react"
@@ -57,7 +56,6 @@ import {
   selectNetworkType,
   selectPort,
   selectSelectedComPorts,
-  selectWireless,
   setBaudrate,
   setConnecting,
   setConnectionModal,
@@ -68,7 +66,6 @@ import {
   setNetworkType,
   setPort,
   setSelectedComPorts,
-  setWireless,
 } from "../redux/slices/droneConnectionSlice.js"
 import { selectIsConnectedToSocket } from "../redux/slices/socketSlice.js"
 
@@ -78,8 +75,8 @@ import { twMerge } from "tailwind-merge"
 import { showErrorNotification } from "../helpers/notification.js"
 
 // Modals
-import SimulationModal from "./toolbar/simulationModal.jsx"
 import ConnectionProgress from "./connectionProgress.jsx"
+import SimulationModal from "./toolbar/simulationModal.jsx"
 
 export default function Navbar() {
   // Redux
@@ -94,7 +91,6 @@ export default function Navbar() {
   const comPorts = useSelector(selectComPorts)
   const selectedComPort = useSelector(selectSelectedComPorts)
   const fetchingComPorts = useSelector(selectFetchingComPorts)
-  const wireless = useSelector(selectWireless)
   const selectedBaudRate = useSelector(selectBaudrate)
   const connectionType = useSelector(selectConnectionType)
   const networkType = useSelector(selectNetworkType)
@@ -118,7 +114,6 @@ export default function Navbar() {
         emitConnectToDrone({
           port: selectedComPort,
           baud: parseInt(selectedBaudRate),
-          wireless: wireless,
           connectionType: type,
           forwardingAddress: forwardingAddress,
         }),
@@ -133,7 +128,6 @@ export default function Navbar() {
         emitConnectToDrone({
           port: networkString,
           baud: 115200,
-          wireless: true,
           connectionType: type,
           forwardingAddress: forwardingAddress,
         }),
@@ -242,18 +236,6 @@ export default function Navbar() {
                   value={selectedBaudRate}
                   onChange={(value) => dispatch(setBaudrate(value))}
                 />
-                <div className="flex flex-row gap-2">
-                  <Checkbox
-                    label="Wireless Connection"
-                    checked={wireless}
-                    onChange={(event) =>
-                      dispatch(setWireless(event.currentTarget.checked))
-                    }
-                  />
-                  <Tooltip label="Wireless connection mode reduces the telemetry data rates to save bandwidth">
-                    <IconInfoCircle size={20} />
-                  </Tooltip>
-                </div>
               </div>
             </Tabs.Panel>
             <Tabs.Panel value={ConnectionType.Network} className="py-4">

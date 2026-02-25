@@ -112,9 +112,15 @@ def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> No
 
 @falcon_test()
 def test_setGripperEnabled(socketio_client: SocketIOTestClient) -> None:
-    assert send_and_receive("set_gripper_enabled") == {"success": True}
+    assert send_and_receive("set_gripper_enabled") == {
+        "success": True,
+        "message": "Enabled gripper",
+    }
 
 
 @falcon_test()
 def test_setGripperDisabled(socketio_client: SocketIOTestClient) -> None:
-    assert send_and_receive("set_gripper_disabled") == {"success": True}
+    assert send_and_receive("set_gripper_disabled") == {
+        "success": True,
+        "message": "Disabled gripper",
+    }

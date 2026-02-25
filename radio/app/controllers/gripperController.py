@@ -176,7 +176,7 @@ class GripperController:
         else:
             result = {
                 "success": False,
-                "message": f"Failed to enable gripper",
+                "message": "Failed to enable gripper",
             }
 
         return result
@@ -197,7 +197,7 @@ class GripperController:
         else:
             result = {
                 "success": False,
-                "message": f"Failed to disable gripper",
+                "message": "Failed to disable gripper",
             }
 
         return result

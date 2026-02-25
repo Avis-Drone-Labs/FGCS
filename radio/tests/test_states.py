@@ -12,7 +12,7 @@ def test_setState_no_drone_connection(
     with NoDrone():
         socketio_client.emit("set_state", {"state": "dashboard"})
         assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.state) == "dashboard"
+        assert droneStatus.state == "dashboard"
 
 
 @falcon_test(pass_drone_status=True)

@@ -36,8 +36,8 @@ class GripperController:
 
         if not self.getEnabledFromDrone():
             self.drone.logger.info("Gripper is not enabled.")
-        else:
-            self.getGripperParams()
+
+        self.getGripperParams()
 
     def getEnabledFromDrone(self) -> bool:
         """

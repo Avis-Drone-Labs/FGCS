@@ -127,9 +127,9 @@ export default function Gripper() {
       return
     }
 
-    dispatch(emitSetState("config"))
+    dispatch(emitSetState("config.gripper"))
     dispatch(emitGetGripperConfig())
-  }, [connected])
+  }, [connected, dispatch])
 
   function setGripper(action) {
     dispatch(emitSetGripper(action))

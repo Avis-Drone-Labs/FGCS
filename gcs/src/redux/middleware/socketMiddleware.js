@@ -25,10 +25,10 @@ import {
 } from "../slices/droneConnectionSlice"
 
 import {
+  clearSimulationLoadingNotificationId,
+  setSimulationLoadingNotificationId,
   setSimulationStatus,
   SimulationStatus,
-  setSimulationLoadingNotificationId,
-  clearSimulationLoadingNotificationId,
 } from "../slices/simulationParamsSlice"
 
 // socket factory
@@ -37,11 +37,11 @@ import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
 import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
 import {
   closeLoadingNotification,
+  redColor,
   showErrorNotification,
   showLoadingNotification,
   showSuccessNotification,
   showWarningNotification,
-  redColor,
 } from "../../helpers/notification.js"
 import SocketFactory from "../../helpers/socket"
 import {
@@ -503,7 +503,6 @@ const socketMiddleware = (store) => {
               emitConnectToDrone({
                 port: `tcp:127.0.0.1:${msg.port}`,
                 baud: 115200,
-                wireless: true,
                 connectionType: ConnectionType.Network,
                 forwardingAddress: storeState.droneConnection.forwardingAddress,
               }),

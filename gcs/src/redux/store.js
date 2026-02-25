@@ -14,16 +14,15 @@ import droneConnectionSlice, {
   setOutsideVisibility,
   setPort,
   setSelectedComPorts,
-  setWireless,
 } from "./slices/droneConnectionSlice"
 import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 import ftpSlice from "./slices/ftpSlice"
 import logAnalyserSlice from "./slices/logAnalyserSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
+import simulationParamsSlice from "./slices/simulationParamsSlice"
 import socketSlice from "./slices/socketSlice"
 import statusTextSlice from "./slices/statusTextSlice"
-import simulationParamsSlice from "./slices/simulationParamsSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -51,11 +50,6 @@ export const store = configureStore({
 })
 
 // Load individual persisted values from localStorage
-const wireless = localStorage.getItem("wirelessConnection")
-if (wireless !== null) {
-  store.dispatch(setWireless(wireless === "true"))
-}
-
 const selected_com_port = localStorage.getItem("selected_com_port")
 if (selected_com_port !== null) {
   store.dispatch(setSelectedComPorts(selected_com_port))
@@ -184,13 +178,6 @@ const updateJSONLocalStorageIfChanged = (key, newValue) => {
 // Update states when a new message comes in
 store.subscribe(() => {
   const store_mut = store.getState()
-
-  if (typeof store_mut.droneConnection.wireless === "boolean") {
-    updateLocalStorageIfChanged(
-      "wirelessConnection",
-      store_mut.droneConnection.wireless,
-    )
-  }
 
   if (typeof store_mut.droneConnection.selected_com_ports === "string") {
     updateLocalStorageIfChanged(

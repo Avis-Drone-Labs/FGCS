@@ -20,7 +20,6 @@ const initialState = {
   aircraft_type: 0,
 
   // drone connection parameters
-  wireless: true, // local
   baudrate: "9600", // local
   connection_type: ConnectionType.Serial, // local
 
@@ -118,11 +117,6 @@ const droneConnectionSlice = createSlice({
         state.connection_status = action.payload
       }
     },
-    setWireless: (state, action) => {
-      if (action.payload !== state.wireless) {
-        state.wireless = action.payload
-      }
-    },
     setForwardingAddress: (state, action) => {
       state.forwardingAddress = action.payload
     },
@@ -189,7 +183,6 @@ const droneConnectionSlice = createSlice({
     selectPort: (state) => state.port,
     selectConnectionModal: (state) => state.connection_modal,
     selectConnectionStatus: (state) => state.connection_status,
-    selectWireless: (state) => state.wireless,
     selectForwardingAddress: (state) => state.forwardingAddress,
     selectIsForwarding: (state) => state.isForwarding,
     selectForwardingAddressModalOpened: (state) =>
@@ -218,7 +211,6 @@ export const {
   setPort,
   setConnectionModal,
   setConnectionStatus,
-  setWireless,
   setForwardingAddress,
   setIsForwarding,
   setForwardingAddressModalOpened,
@@ -261,7 +253,6 @@ export const {
   selectPort,
   selectConnectionModal,
   selectConnectionStatus,
-  selectWireless,
   selectForwardingAddress,
   selectIsForwarding,
   selectForwardingAddressModalOpened,

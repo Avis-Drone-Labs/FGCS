@@ -7,16 +7,8 @@ from app.utils import droneErrorCb
 @socketio.on("get_gripper_enabled")
 def getGripperEnabled() -> None:
     """
-    Tells the frontend whether or not the gripper is enabled, this only works on the config page.
+    Tells the frontend whether or not the gripper is enabled.
     """
-    if droneStatus.state != "config":
-        socketio.emit(
-            "params_error",
-            {"message": "You must be on the config screen to access the gripper."},
-        )
-        logger.debug(f"Current state: {droneStatus.state}")
-        return
-
     if not droneStatus.drone:
         droneErrorCb("You must be connected to the drone to access the gripper.")
         logger.warning("Attempted to get gripper state when drone is None.")
@@ -74,7 +66,7 @@ def setGripper(action: str) -> None:
     Args:
         action: The action the gripper should be set to, either 'release' or 'grab'.
     """
-    if droneStatus.state != "config":
+    if droneStatus.state != "config.gripper":
         socketio.emit(
             "params_error",
             {"message": "You must be on the config screen to access the gripper."},
@@ -100,7 +92,7 @@ def getGripperConfig() -> None:
     """
     Sends the gripper config to the frontend, only works when the config page is loaded.
     """
-    if droneStatus.state != "config":
+    if droneStatus.state != "config.gripper":
         socketio.emit(
             "params_error",
             {
@@ -128,7 +120,7 @@ def setGripperParam(data: SetConfigParam) -> None:
     """
     Sets a gripper parameter based off data passed in, only works when the config page is loaded.
     """
-    if droneStatus.state != "config":
+    if droneStatus.state != "config.gripper":
         socketio.emit(
             "params_error",
             {

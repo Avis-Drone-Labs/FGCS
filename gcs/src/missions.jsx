@@ -391,8 +391,8 @@ export default function Missions() {
                       dispatch(setDroneAircraftType(Number(val)))
                     }}
                     data={[
-                      { value: "0", label: "Copter" },
                       { value: "1", label: "Plane" },
+                      { value: "2", label: "Copter" },
                     ]}
                     allowDeselect={false}
                   />

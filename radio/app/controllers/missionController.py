@@ -128,6 +128,9 @@ def _parseWaypointsListIntoLoader(
         loader = mavwp.MissionItemProtocol_Rally(
             target_system=target_system, target_component=target_component
         )
+    else:
+        logger.error(f"Invalid mission type {mission_type}")
+        raise ValueError(f"Invalid mission type {mission_type}")
 
     for wp in waypoints:
         if isinstance(wp, mavutil.mavlink.MAVLink_mission_item_int_message):
@@ -999,7 +1002,7 @@ class MissionController:
         )
 
     def exportMissionToFile(
-        self, mission_type: int, file_path: str, waypoints: list
+        self, mission_type: int, file_path: str, waypoints: List[dict]
     ) -> Response:
         """
         Exports a mission to a file.

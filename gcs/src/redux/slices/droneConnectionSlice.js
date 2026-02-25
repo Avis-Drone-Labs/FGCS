@@ -17,7 +17,7 @@ const initialState = {
   connected_to_simulator: false,
 
   // aircraft type
-  aircraft_type: 0,
+  aircraft_type: 2, // default to copter
 
   // drone connection parameters
   wireless: true, // local

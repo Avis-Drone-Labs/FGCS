@@ -1056,6 +1056,7 @@ const socketMiddleware = (store) => {
             if (result.success) {
               store.dispatch(setGetGripperEnabled(true))
               store.dispatch(emitGetGripperConfig())
+              showSuccessNotification(result.message)
             } else {
               showErrorNotification(result.message)
             }
@@ -1067,6 +1068,8 @@ const socketMiddleware = (store) => {
           (result) => {
             if (result.success) {
               store.dispatch(setGetGripperEnabled(false))
+              store.dispatch(emitGetGripperConfig())
+              showSuccessNotification(result.message)
             } else {
               showErrorNotification(result.message)
             }

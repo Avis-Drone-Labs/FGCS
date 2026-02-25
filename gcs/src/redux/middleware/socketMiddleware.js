@@ -500,7 +500,6 @@ const socketMiddleware = (store) => {
               emitConnectToDrone({
                 port: `tcp:127.0.0.1:${msg.port}`,
                 baud: 115200,
-                wireless: true,
                 connectionType: ConnectionType.Network,
                 forwardingAddress: storeState.droneConnection.forwardingAddress,
               }),

@@ -18,7 +18,6 @@ def rebootAutopilot() -> None:
 
     port = droneStatus.drone.port
     baud = droneStatus.drone.baud
-    wireless = droneStatus.drone.wireless
     droneErrorCb = droneStatus.drone.droneErrorCb
     droneDisconnectCb = droneStatus.drone.droneDisconnectCb
     droneConnectStatusCb = droneStatus.drone.droneConnectStatusCb
@@ -49,7 +48,6 @@ def rebootAutopilot() -> None:
         droneStatus.drone = Drone(
             port,
             baud=baud,
-            wireless=wireless,
             forwarding_address=forwarding_address,
             droneErrorCb=droneErrorCb,
             droneDisconnectCb=droneDisconnectCb,

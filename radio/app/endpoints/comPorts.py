@@ -19,7 +19,6 @@ from app.utils import (
 class ConnectionDataType(TypedDict):
     port: str
     baud: int
-    wireless: bool
     connectionType: str
     forwarding_address: Optional[str]
 
@@ -76,7 +75,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
     connecting to it with the data given.
 
     Args:
-        data: The message passed in from the client containing the form sent (select com port, baud rate, wireless)
+        data: The message passed in from the client containing the form sent (select com port, baud rate)
     """
     if droneStatus.drone:
         droneStatus.drone.logger.warning(
@@ -135,7 +134,6 @@ def connectToDrone(data: ConnectionDataType) -> None:
 
     drone = Drone(
         port,
-        wireless=data.get("wireless", True),
         baud=baud,
         forwarding_address=forwarding_address,
         droneErrorCb=droneErrorCb,

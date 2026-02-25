@@ -170,16 +170,12 @@ class GripperController:
         )
 
         if success:
-            result = {
-                "success": True,
-            }
+            return {"success": True, "message": "Enabled gripper"}
         else:
-            result = {
+            return {
                 "success": False,
                 "message": "Failed to enable gripper",
             }
-
-        return result
 
     def disableGripper(self) -> Response:
         """
@@ -191,16 +187,12 @@ class GripperController:
         )
 
         if success:
-            result = {
-                "success": True,
-            }
+            return {"success": True, "message": "Disabled gripper"}
         else:
-            result = {
+            return {
                 "success": False,
                 "message": "Failed to disable gripper",
             }
-
-        return result
 
     def getConfig(self) -> dict:
         """

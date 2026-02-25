@@ -265,7 +265,7 @@ def wait_for_container_connection_msg(
 
 
 def validate_ports(
-    ports: Optional[list[dict[str, Any]]]
+    ports: Optional[list[dict[str, Any]]],
 ) -> Tuple[dict[str, str], Optional[int]]:
     """
     Construct the validated port mappings and primary host port

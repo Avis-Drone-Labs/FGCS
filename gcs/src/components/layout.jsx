@@ -57,7 +57,7 @@ export default function Layout({ children, currentPage }) {
         dispatch(emitGetLoiterRadius())
       }
     }
-  }, [currentPage, connectedToDrone])
+  }, [currentPage, connectedToDrone, hasEverHadGpsFix])
 
   return (
     <>

@@ -1013,8 +1013,7 @@ class Drone:
                 
                 return {
                     "success": False,
-                    "message": error_message,
-                    "error_code": error_code,
+                    "message": error_message
                 }
 
         except serial.serialutil.SerialException:

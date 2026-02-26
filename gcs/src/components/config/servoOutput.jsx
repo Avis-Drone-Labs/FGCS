@@ -26,7 +26,6 @@ import {
   emitTestServoPwm,
   selectServoConfig,
   selectServoPwmOutputs,
-  updateServoConfigParam,
 } from "../../redux/slices/configSlice"
 import { emitSetState } from "../../redux/slices/droneConnectionSlice"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"

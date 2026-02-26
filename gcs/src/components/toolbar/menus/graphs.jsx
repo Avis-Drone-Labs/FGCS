@@ -234,7 +234,7 @@ export default function GraphsMenu(props) {
                   )
                 })}
 
-                {idx < filteredGroups.length - 1 ? <Divider /> : null}
+                {idx < filteredGroups.length - 1 && <Divider />}
               </div>
             ))
           )}

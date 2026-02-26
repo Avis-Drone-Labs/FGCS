@@ -13,42 +13,27 @@ import {
   selectGraphValues,
   setGraphValues,
 } from "../../../redux/slices/droneInfoSlice"
+import { Checkbox } from "@mantine/core"
 
 const MAX_SELECTED = 4
 
 const GRAPH_KEYS = ["graph_a", "graph_b", "graph_c", "graph_d"]
 
-function MenuCheckboxItem({ label, title, checked, disabled, onToggle }) {
+function MenuCheckboxItem({label, title, checked, disabled, onToggle}) {
   return (
     <div
-      className={[
-        "flex flex-row w-full gap-x-3 justify-between rounded-md px-3 text-sm",
-        disabled
-          ? "opacity-50 cursor-not-allowed"
-          : "hover:cursor-pointer hover:bg-falcongrey-800",
-      ].join(" ")}
-      title={title}
-      onClick={(e) => {
-        e.stopPropagation()
-        if (!disabled) onToggle()
-      }}
+    className="flex flex-row w-full gap-x-3 justify-between rounded-md px-3 text-sm"
+    title={title}
     >
-      <div className="flex flex-row items-center gap-x-1 min-w-0">
-        <input
-          type="checkbox"
-          className="h-3 w-3"
-          checked={checked}
-          disabled={disabled}
-          onChange={() => {}}
-          onClick={(e) => {
-            e.stopPropagation()
-            if (!disabled) onToggle()
-          }}
-        />
-        <span className="truncate">{label}</span>
-      </div>
+      <Checkbox
+      className="min-w-0"
+      label={label}
+      checked={checked}
+      disabled={disabled}
+      onChange={() => onToggle()}
+      />
 
-      <div className="text-falcongray-90 opacity-50"></div>
+      <div className="text-falcongray-90 opacity-50" />
     </div>
   )
 }

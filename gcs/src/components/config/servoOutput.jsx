@@ -22,7 +22,6 @@ import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
 import {
   emitGetServoConfig,
   emitSetServoConfigParam,
-  emitBatchSetServoConfigParams,
   emitTestServoPwm,
   selectServoConfig,
   selectServoPwmOutputs,

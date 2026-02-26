@@ -70,7 +70,7 @@ export default function GraphsMenu(props) {
   const dispatch = useDispatch()
 
   useEffect(() => {
-    // Empty on load, fixes bug:
+    // Reset graph selections on mount to prevent old graph selection persisting.
     dispatch(
       setGraphValues({
         graph_a: null,

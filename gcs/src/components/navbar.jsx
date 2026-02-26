@@ -220,7 +220,6 @@ export default function Navbar() {
                   label="Baud Rate"
                   description="Select a baud rate for the specified COM Port"
                   data={[
-                    "300",
                     "1200",
                     "4800",
                     "9600",
@@ -228,10 +227,15 @@ export default function Navbar() {
                     "13400",
                     "38400",
                     "57600",
-                    "74880",
+                    "75880",
                     "115200",
                     "230400",
-                    "250000",
+                    "460800",
+                    "500000",
+                    "625000",
+                    "921600",
+                    "1000000",
+                    "1500000",
                   ]}
                   value={selectedBaudRate}
                   onChange={(value) => dispatch(setBaudrate(value))}

@@ -90,7 +90,7 @@ export default function GraphWindowApp() {
       <div className="text-lg">{title}</div>
 
       {desc ? (
-        <div className="text-sm text-falcongray-90 opacity-70 mt-1">{desc}</div>
+        <div className="text-sm text-falcongrey-300 opacity-70 mt-1">{desc}</div>
       ) : null}
 
       <div className="mt-4 h-[260px]">

@@ -33,14 +33,14 @@ function MenuCheckboxItem({label, title, checked, disabled, onToggle}) {
       onChange={() => onToggle()}
       />
 
-      <div className="text-falcongray-90 opacity-50" />
+      <div className="text-falcongrey-300 opacity-50" />
     </div>
   )
 }
 
 function SectionHeader({ title }) {
   return (
-    <div className="px-3 pt-1 pb-0.5 text-xs text-falcongray-90 opacity-60">
+    <div className="px-3 pt-1 pb-0.5 text-xs text-falcongrey-300 opacity-60">
       {title}
     </div>
   )
@@ -207,7 +207,7 @@ export default function GraphsMenu(props) {
         {/* Scrollable list */}
         <div className="max-h-96 overflow-y-auto">
           {filteredGroups.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-falcongray-90 opacity-60">
+            <div className="px-3 py-2 text-sm text-falcongrey-300 opacity-60">
               No matches
             </div>
           ) : (
@@ -241,7 +241,7 @@ export default function GraphsMenu(props) {
 
         <div className="px-2 pb-1 flex flex-row justify-end">
           <button
-            className="text-xs text-falcongray-90 opacity-70 hover:opacity-100 hover:underline"
+            className="text-xs text-falcongrey-300 opacity-70 hover:opacity-100 hover:underline"
             onClick={(e) => {
               e.stopPropagation()
 
@@ -265,7 +265,7 @@ export default function GraphsMenu(props) {
         </div>
 
         {/* Counter */}
-        <div className="px-3 pt-1 text-xs text-falcongray-90 opacity-50">
+        <div className="px-3 pt-1 text-xs text-falcongrey-300 opacity-50">
           {selectedCount}/{MAX_SELECTED} selected
         </div>
       </div>

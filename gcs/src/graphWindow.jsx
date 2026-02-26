@@ -23,6 +23,7 @@ export default function GraphWindowApp() {
     console.log("ipcRenderer exists?", !!window.ipcRenderer)
   }, [])
 
+  const sentReadyRef = useRef(false)
   const graphRef = useRef(null)
 
   // store current slot safely without causing re-registers
@@ -69,7 +70,10 @@ export default function GraphWindowApp() {
     window.ipcRenderer.on("app:send-graph-point", handlePoint)
 
     // tell main we are ready *after* listeners exist
-    window.ipcRenderer.send("app:graph-window:ready")
+    if (!sentReadyRef.current) {
+      window.ipcRenderer.send("app:graph-window:ready")
+      sentReadyRef.current = true
+    }
 
     return () => {
       window.ipcRenderer.removeListener("app:graph-window:init", handleInit)

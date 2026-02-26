@@ -29,6 +29,7 @@ type GraphPoint = {
 }
 
 const graphWins: Partial<Record<GraphKey, BrowserWindow>> = {}
+const lastMeta: Partial<Record<GraphKey, GraphWindowMeta>> = {}
 
 // Reference to the main FGCS window (the one with Redux + toolbar)
 let mainWin: BrowserWindow | null = null
@@ -62,7 +63,21 @@ function notifyMainGraphClosed(graphKey: GraphKey) {
   }
 }
 
+function sendInit(graphKey: GraphKey) {
+  const win = getGraphWin(graphKey)
+  const meta = lastMeta[graphKey]
+  if (!win || !meta) return
+  try {
+    win.webContents.send("app:graph-window:init", { graphKey, meta })
+  } catch {
+    // ignore (window may be closing)
+  }
+}
+
 export function openGraphWindow({ graphKey, meta }: OpenArgs) {
+  // Always cache latest meta for this slot (used by ready-handshake)
+  lastMeta[graphKey] = meta
+
   // Reuse existing window if it's alive
   let win = getGraphWin(graphKey)
 
@@ -89,6 +104,7 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
     // IMPORTANT: clean up reference when user closes window
     win.on("closed", () => {
       graphWins[graphKey] = undefined
+      delete lastMeta[graphKey]
       // Tell the main window so Redux can untick the checkbox
       notifyMainGraphClosed(graphKey)
     })
@@ -100,18 +116,17 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
       win.loadFile(path.join(process.env.DIST!, "graphWindow.html"))
     }
 
-    // When page finishes loading, send init
+    // Best-effort init on load (ready-handshake below is the real guarantee)
     win.webContents.once("did-finish-load", () => {
-      // Guard again just in case it got closed mid-load
       const alive = getGraphWin(graphKey)
       if (!alive) return
-      alive.webContents.send("app:graph-window:init", { graphKey, meta })
+      sendInit(graphKey)
     })
   } else {
     // Window already exists: just update title + init payload
     try {
       win.setTitle(meta?.title ?? "Graph")
-      win.webContents.send("app:graph-window:init", { graphKey, meta })
+      sendInit(graphKey)
     } catch (e) {
       // If it threw, treat it as dead and try again once
       graphWins[graphKey] = undefined
@@ -129,7 +144,6 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
 export function closeGraphWindow({ graphKey }: CloseArgs) {
   const win = getGraphWin(graphKey)
   if (!win) return
-
   // Do NOT set undefined here — let the 'closed' event clean up.
   win.close()
 }
@@ -148,6 +162,23 @@ export default function registerGraphWindowIPC(appWin?: BrowserWindow) {
   ipcMain.removeHandler("app:open-graph-window")
   ipcMain.removeHandler("app:close-graph-window")
   ipcMain.removeHandler("app:update-graph-windows")
+
+  // READY HANDSHAKE:
+  // popout renderer sends "app:graph-window:ready" after it registers listeners.
+  // When we receive it, we send init using cached meta so init is never missed.
+  ipcMain.removeAllListeners("app:graph-window:ready")
+  ipcMain.on("app:graph-window:ready", (event) => {
+    const senderId = event.sender.id
+
+    const graphKey = (Object.keys(graphWins) as GraphKey[]).find((k) => {
+      const w = getGraphWin(k)
+      return w?.webContents?.id === senderId
+    })
+
+    if (!graphKey) return
+
+    sendInit(graphKey)
+  })
 
   ipcMain.handle("app:open-graph-window", (_event, args: OpenArgs) => {
     openGraphWindow(args)
@@ -171,6 +202,7 @@ export default function registerGraphWindowIPC(appWin?: BrowserWindow) {
         } catch {
           // If it errors during close, drop it
           graphWins[result.graphKey] = undefined
+          delete lastMeta[result.graphKey]
           // Also tell the main window, in case the close event races
           notifyMainGraphClosed(result.graphKey)
         }

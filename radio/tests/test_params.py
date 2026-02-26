@@ -443,30 +443,6 @@ def test_setMultipleParams_successfullySet_paramsState(
 
 
 @falcon_test(pass_drone_status=True)
-def test_setMultipleParams_successfullySet_configState(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    droneStatus.state = "config"
-    socketio_result = send_and_receive_params(
-        socketio_client,
-        "set_multiple_params",
-        [{"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}],
-    )
-
-    assert socketio_result["name"] == "param_set_success"
-    assert socketio_result["args"][0] == {
-        "success": True,
-        "message": "All parameters set successfully",
-        "data": {
-            "params_could_not_set": [],
-            "params_set_successfully": [
-                {"param_id": "ACRO_BAL_ROLL", "param_value": 2, "param_type": 9}
-            ],
-        },
-    }
-
-
-@falcon_test(pass_drone_status=True)
 def test_refreshParams_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:

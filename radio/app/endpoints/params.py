@@ -36,8 +36,7 @@ def set_multiple_params(params_list: List[Any]) -> None:
     Args:
         params_list: The list of parameters to be setting from the client.
     """
-    validStates = ["params", "config"]
-    if droneStatus.state not in validStates:
+    if droneStatus.state != "params":
         socketio.emit(
             "params_error",
             {

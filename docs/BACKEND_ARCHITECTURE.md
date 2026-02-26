@@ -27,7 +27,7 @@ The central class that manages drone communication and state:
 
 ```python
 class Drone:
-    def __init__(self, port, baud=57600, wireless=False, ...):
+    def __init__(self, port, baud=57600, ...):
         # Core MAVLink connection
         self.master = mavutil.mavlink_connection(...)
 
@@ -51,15 +51,15 @@ class Drone:
 The drone class sets up various MAVLink data streams to receive telemetry:
 
 ```python
-DATASTREAM_RATES_WIRED = {
-    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 3,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 10,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 10,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 2,
-}
+DATASTREAM_RATES = {
+    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 4,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 3,
+    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 1,
+}}
 ```
 
 **Stream Types and Messages:**
@@ -84,52 +84,4 @@ If you acquire a lock inside a function which then uses another function which a
 
 ## Controllers Architecture
 
-Controllers encapsulate specific drone functionality and handle related MAVLink commands:
-
-### Parameters Controller (`paramsController.py`)
-
-Manages drone parameter operations and provides methods for:
-
-- Retrieving individual parameters
-- Fetching all parameters from drone
-- Setting single or multiple parameter values
-
-### Arm Controller (`armController.py`)
-
-Handles drone arming and disarming operations.
-
-### Flight Modes Controller (`flightModesController.py`)
-
-Provides functionality for setting flight modes, retrieving current mode, and listing available modes for the connected vehicle type.
-
-### Mission Controller (`missionController.py`)
-
-Handles mission planning and execution with features including:
-
-- Mission upload/download with progress tracking
-- Saving and importing missions to/from files
-- Starting, stopping and restarting missions
-
-### Motor Test Controller (`motorTestController.py`)
-
-Provides motor testing capabilities.
-
-### Navigation Controller (`navController.py`)
-
-Handles guided mode navigation including:
-
-- Waypoint navigation commands
-- Takeoff and landing commands
-- Home position related operations
-
-### RC Controller (`rcController.py`)
-
-Manages radio control inputs and channel mapping including.
-
-### Frame Controller (`frameController.py`)
-
-Handles vehicle frame type detection.
-
-### Gripper Controller (`gripperController.py`)
-
-Controls a gripper/payload release mechanism.
+Controllers encapsulate specific drone functionality and handle related MAVLink commands.

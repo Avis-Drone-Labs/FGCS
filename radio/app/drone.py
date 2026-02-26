@@ -39,17 +39,8 @@ from app.utils import (
 
 LOG_LINE_LIMIT = 50000
 
-DATASTREAM_RATES_WIRED = {
-    mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 2,
-    mavutil.mavlink.MAV_DATA_STREAM_POSITION: 3,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 20,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 10,
-    mavutil.mavlink.MAV_DATA_STREAM_EXTRA3: 3,
-}
 
-DATASTREAM_RATES_WIRELESS = {
+DATASTREAM_RATES = {
     mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 1,
     mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 1,
     mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 1,
@@ -80,7 +71,6 @@ class Drone:
         self,
         port: str,
         baud: int = 57600,
-        wireless: bool = False,
         logger: Logger = getLogger("fgcs"),
         forwarding_address: Optional[str] = None,
         droneErrorCb: Optional[Callable] = None,
@@ -94,14 +84,12 @@ class Drone:
         Args:
             port (str): The port to connect to the drone.
             baud (int, optional): The baud rate for the connection. Defaults to 57600.
-            wireless (bool, optional): Whether the connection is wireless. Defaults to False.
             droneErrorCb (Optional[Callable], optional): Callback function for drone errors. Defaults to None.
             droneDisconnectCb (Optional[Callable], optional): Callback function for drone disconnection. Defaults to None.
             droneConnectStatusCb (Optional[Callable], optional): Callback function for drone connection providing an update as the drone connects. Defaults to None.
         """
         self.port = port
         self.baud = baud
-        self.wireless = wireless
         self.logger = logger
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
@@ -471,10 +459,7 @@ class Drone:
         Args:
             stream (int): The data stream to set up
         """
-        if self.wireless:
-            self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRELESS[stream])
-        else:
-            self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES_WIRED[stream])
+        self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES[stream])
 
     @sendingCommandLock
     def sendDataStreamRequestMessage(self, stream: int, rate: int) -> None:

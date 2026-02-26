@@ -14,12 +14,12 @@ const initialState = {
     message: "",
     progress: 0,
   },
+  connected_to_simulator: false,
 
   // aircraft type
   aircraft_type: 0,
 
   // drone connection parameters
-  wireless: true, // local
   baudrate: "9600", // local
   connection_type: ConnectionType.Serial, // local
 
@@ -60,6 +60,11 @@ const droneConnectionSlice = createSlice({
     setConnected: (state, action) => {
       if (action.payload !== state.connected) {
         state.connected = action.payload
+      }
+    },
+    setConnectedToSimulator: (state, action) => {
+      if (action.payload !== state.connected_to_simulator) {
+        state.connected_to_simulator = action.payload
       }
     },
     setBaudrate: (state, action) => {
@@ -110,11 +115,6 @@ const droneConnectionSlice = createSlice({
     setConnectionStatus: (state, action) => {
       if (action.payload !== state.connection_status) {
         state.connection_status = action.payload
-      }
-    },
-    setWireless: (state, action) => {
-      if (action.payload !== state.wireless) {
-        state.wireless = action.payload
       }
     },
     setForwardingAddress: (state, action) => {
@@ -172,6 +172,7 @@ const droneConnectionSlice = createSlice({
   selectors: {
     selectConnecting: (state) => state.connecting,
     selectConnectedToDrone: (state) => state.connected,
+    selectConnectedToSimulator: (state) => state.connected_to_simulator,
     selectBaudrate: (state) => state.baudrate,
     selectConnectionType: (state) => state.connection_type,
     selectFetchingComPorts: (state) => state.fetching_com_ports,
@@ -182,7 +183,6 @@ const droneConnectionSlice = createSlice({
     selectPort: (state) => state.port,
     selectConnectionModal: (state) => state.connection_modal,
     selectConnectionStatus: (state) => state.connection_status,
-    selectWireless: (state) => state.wireless,
     selectForwardingAddress: (state) => state.forwardingAddress,
     selectIsForwarding: (state) => state.isForwarding,
     selectForwardingAddressModalOpened: (state) =>
@@ -200,6 +200,7 @@ export const {
   // Setters
   setConnecting,
   setConnected,
+  setConnectedToSimulator,
   setBaudrate,
   setConnectionType,
   setFetchingComPorts,
@@ -210,7 +211,6 @@ export const {
   setPort,
   setConnectionModal,
   setConnectionStatus,
-  setWireless,
   setForwardingAddress,
   setIsForwarding,
   setForwardingAddressModalOpened,
@@ -242,6 +242,7 @@ export const {
 export const {
   selectConnecting,
   selectConnectedToDrone,
+  selectConnectedToSimulator,
   selectBaudrate,
   selectConnectionType,
   selectFetchingComPorts,
@@ -252,7 +253,6 @@ export const {
   selectPort,
   selectConnectionModal,
   selectConnectionStatus,
-  selectWireless,
   selectForwardingAddress,
   selectIsForwarding,
   selectForwardingAddressModalOpened,

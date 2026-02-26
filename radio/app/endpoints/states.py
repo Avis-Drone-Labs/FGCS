@@ -107,3 +107,10 @@ def set_state(data: SetStateType) -> None:
 
         for message in STATES_MESSAGE_LISTENERS["config.rc"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
+    elif droneStatus.state == "config.servo":
+        droneStatus.drone.sendDataStreamRequestMessage(
+            mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
+        )
+        
+        for message in STATES_MESSAGE_LISTENERS["config.servo"]:
+            droneStatus.drone.addMessageListener(message, sendMessage)

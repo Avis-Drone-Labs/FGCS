@@ -86,14 +86,15 @@ export default function GraphWindowApp() {
   const lineColor = graphKey ? SLOT_COLORS[graphKey] : tailwindColors.sky[400]
 
   return (
-    <div className="w-full h-full bg-falcongrey-800 p-4">
+    <div className="w-full h-full bg-falcongrey-800 p-4 flex flex-col">
       <div className="text-lg">{title}</div>
 
       {desc ? (
-        <div className="text-sm text-falcongrey-300 opacity-70 mt-1">{desc}</div>
+        <div className="text-sm text-falcongray-90 opacity-70 mt-1">{desc}</div>
       ) : null}
 
-      <div className="mt-4 h-[260px]">
+      {/* Min-h-0 prevents overflow sizing messing up */}
+      <div className="mt-4 flex-1 min-h-0">
         <RealtimeGraph
           ref={graphRef}
           datasetLabel={label}

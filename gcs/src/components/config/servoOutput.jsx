@@ -133,11 +133,15 @@ export default function ServoOutput() {
         <NumberInput
           value={testPwm}
           onChange={setTestPwm}
-          error={testPwm < PWM_MIN || testPwm > PWM_MAX ? `Value must be between ${PWM_MIN} and ${PWM_MAX}` : null}
+          error={
+            testPwm < PWM_MIN || testPwm > PWM_MAX
+              ? `Value must be between ${PWM_MIN} and ${PWM_MAX}`
+              : null
+          }
         />
-        <Button 
-          mt={16} 
-          color="blue" 
+        <Button
+          mt={16}
+          color="blue"
           onClick={handleSendTestPwm}
           disabled={testPwm < PWM_MIN || testPwm > PWM_MAX}
           fullWidth
@@ -221,8 +225,12 @@ export default function ServoOutput() {
                 <Table.Td>
                   <NumberInput
                     value={servo.min || ""}
-                    min={minDef?.Range?.low ? Number(minDef.Range.low) : PWM_MIN}
-                    max={minDef?.Range?.high ? Number(minDef.Range.high) : PWM_MAX}
+                    min={
+                      minDef?.Range?.low ? Number(minDef.Range.low) : PWM_MIN
+                    }
+                    max={
+                      minDef?.Range?.high ? Number(minDef.Range.high) : PWM_MAX
+                    }
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(minParam, val)}
@@ -231,8 +239,14 @@ export default function ServoOutput() {
                 <Table.Td>
                   <NumberInput
                     value={servo.trim || ""}
-                    min={trimDef?.Range?.low ? Number(trimDef.Range.low) : PWM_MIN}
-                    max={trimDef?.Range?.high ? Number(trimDef.Range.high) : PWM_MAX}
+                    min={
+                      trimDef?.Range?.low ? Number(trimDef.Range.low) : PWM_MIN
+                    }
+                    max={
+                      trimDef?.Range?.high
+                        ? Number(trimDef.Range.high)
+                        : PWM_MAX
+                    }
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(trimParam, val)}
@@ -241,8 +255,12 @@ export default function ServoOutput() {
                 <Table.Td>
                   <NumberInput
                     value={servo.max || ""}
-                    min={maxDef?.Range?.low ? Number(maxDef.Range.low) : PWM_MIN}
-                    max={maxDef?.Range?.high ? Number(maxDef.Range.high) : PWM_MAX}
+                    min={
+                      maxDef?.Range?.low ? Number(maxDef.Range.low) : PWM_MIN
+                    }
+                    max={
+                      maxDef?.Range?.high ? Number(maxDef.Range.high) : PWM_MAX
+                    }
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(maxParam, val)}

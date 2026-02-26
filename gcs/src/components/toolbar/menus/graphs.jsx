@@ -13,8 +13,9 @@ import {
   selectGraphValues,
   setGraphValues,
 } from "../../../redux/slices/droneInfoSlice"
-import { Checkbox } from "@mantine/core"
-import { TextInput } from "@mantine/core"
+
+import { Button, TextInput, Checkbox } from "@mantine/core"
+
 
 const MAX_SELECTED = 4
 
@@ -241,8 +242,9 @@ export default function GraphsMenu(props) {
         </div>
 
         <div className="px-2 pb-1 flex flex-row justify-end">
-          <button
-            className="text-xs text-falcongrey-300 opacity-70 hover:opacity-100 hover:underline"
+          <Button
+            variant="subtle"
+            size="xs"
             onClick={(e) => {
               e.stopPropagation()
 
@@ -252,8 +254,9 @@ export default function GraphsMenu(props) {
                 graph_c: null,
                 graph_d: null,
               }
+
               dispatch(setGraphValues(cleared))
-              // close any open windows too
+
               for (const key of ["graph_a", "graph_b", "graph_c", "graph_d"]) {
                 safeInvoke("app:close-graph-window", { graphKey: key }).catch(
                   console.error,
@@ -262,7 +265,7 @@ export default function GraphsMenu(props) {
             }}
           >
             Clear
-          </button>
+          </Button>
         </div>
 
         {/* Counter */}

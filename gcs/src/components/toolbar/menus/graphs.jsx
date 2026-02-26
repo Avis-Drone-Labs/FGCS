@@ -14,6 +14,7 @@ import {
   setGraphValues,
 } from "../../../redux/slices/droneInfoSlice"
 import { Checkbox } from "@mantine/core"
+import { TextInput } from "@mantine/core"
 
 const MAX_SELECTED = 4
 
@@ -193,12 +194,12 @@ export default function GraphsMenu(props) {
       >
         {/* Search */}
         <div className="px-2 py-1">
-          <input
-            className="w-full rounded-md bg-falcongrey-800 px-2 py-1 text-sm outline-none"
+          <TextInput
             placeholder="Search MAVLink fields…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.currentTarget.value)}
             onClick={(e) => e.stopPropagation()}
+            size="xs"
           />
         </div>
 

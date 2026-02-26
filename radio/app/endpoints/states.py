@@ -39,6 +39,7 @@ STATES_MESSAGE_LISTENERS = {
         "RC_CHANNELS",
     ],
     "config.rc": ["RC_CHANNELS"],
+    "config.servo": ["SERVO_OUTPUT_RAW", "RC_CHANNELS"],
 }
 
 

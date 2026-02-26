@@ -213,6 +213,7 @@ class Drone:
         self.controller_queues: Dict[str, Queue] = {}
         self.reservation_lock = Lock()
         self.controller_id = f"Drone_{current_thread().ident}"
+        self.logged_message_types: Set[str] = set()
 
         self.armed = False
         self.capabilities: Optional[list[str]] = None
@@ -650,6 +651,13 @@ class Drone:
                     self.stopForwarding()
 
             msg_name = msg.get_type()
+
+            # Logging first occurrence of each message type
+            if msg_name not in self.logged_message_types:
+                self.logger.info(
+                    f"\033[92mSERVO DEBUG: Received message type: {msg_name}\033[0m"
+                )
+                self.logged_message_types.add(msg_name)
 
             if msg_name == "HEARTBEAT":
                 if (

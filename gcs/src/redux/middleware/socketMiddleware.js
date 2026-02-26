@@ -121,6 +121,7 @@ import {
   updateParamValue,
 } from "../slices/paramsSlice.js"
 import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
+import { setServoOutputs } from "../slices/servoOutputSlice"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -296,6 +297,17 @@ const socketMiddleware = (store) => {
         }
         store.dispatch(setVibrationData(data))
         window.ipcRenderer.invoke("app:update-vibe-status", data)
+        break
+      }
+      case "SERVO_OUTPUT_RAW": {
+        // Map: channel number (1-based) -> PWM value
+        const outputs = {}
+        for (let i = 1; i <= 16; i++) {
+          const pwm = msg[`servo${i}_raw`]
+          if (typeof pwm === "number") outputs[i] = pwm
+        }
+        console.log("SERVO_OUTPUT_RAW received:", msg, "Mapped outputs:", outputs)
+        store.dispatch(setServoOutputs(outputs))
         break
       }
     }

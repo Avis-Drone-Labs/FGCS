@@ -28,6 +28,7 @@ import {
   setActiveTab,
 } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import ServoOutput from "./components/config/servoOutput"
 
 export default function Config() {
   const dispatch = useDispatch()
@@ -63,6 +64,7 @@ export default function Config() {
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>
               <Tabs.Tab value="rc_calibration">RC Calibration</Tabs.Tab>
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
+              <Tabs.Tab value="servo">Servo Output</Tabs.Tab>
               <Tabs.Tab value="ftp">FTP</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
@@ -83,6 +85,11 @@ export default function Config() {
             <Tabs.Panel value="flightmodes">
               <div className={paddingTop}>
                 <FlightModes />
+              </div>
+            </Tabs.Panel>
+            <Tabs.Panel value="servo">
+              <div className={paddingTop}>
+                <ServoOutput />
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="ftp">

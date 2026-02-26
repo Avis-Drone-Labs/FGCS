@@ -23,6 +23,7 @@ import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
 import socketSlice from "./slices/socketSlice"
 import statusTextSlice from "./slices/statusTextSlice"
+import servoOutputSlice from "./slices/servoOutputSlice"
 
 const rootReducer = combineSlices(
   logAnalyserSlice,
@@ -36,6 +37,7 @@ const rootReducer = combineSlices(
   checklistSlice,
   applicationSlice,
   ftpSlice,
+  servoOutputSlice,
 )
 
 export const store = configureStore({

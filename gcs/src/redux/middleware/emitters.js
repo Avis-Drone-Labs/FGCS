@@ -1,17 +1,20 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
+  emitBatchSetServoConfigParams,
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
+  emitGetServoConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
   emitSetFlightModeChannel,
   emitSetGripper,
   emitSetGripperConfigParam,
   emitSetRcConfigParam,
+  emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
@@ -394,6 +397,27 @@ export function handleEmitters(socket, store, action) {
       emitter: emitBatchSetRcConfigParams,
       callback: () => {
         socket.socket.emit("batch_set_rc_config_params", {
+          params: action.payload.params,
+        })
+      },
+    },
+    {
+      emitter: emitGetServoConfig,
+      callback: () => socket.socket.emit("get_servo_config"),
+    },
+    {
+      emitter: emitSetServoConfigParam,
+      callback: () => {
+        socket.socket.emit("set_servo_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
+    },
+    {
+      emitter: emitBatchSetServoConfigParams,
+      callback: () => {
+        socket.socket.emit("batch_set_servo_config_params", {
           params: action.payload.params,
         })
       },

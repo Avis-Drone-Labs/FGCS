@@ -36,12 +36,12 @@ def set_multiple_params(params_list: List[Any]) -> None:
     Args:
         params_list: The list of parameters to be setting from the client.
     """
-    validStates = ["params", "config", "config.servo"]
+    validStates = ["params", "config"]
     if droneStatus.state not in validStates:
         socketio.emit(
             "params_error",
             {
-                "message": "You must be on the params or servo config screen to save parameters."
+                "message": "You must be on the params screen to save parameters."
             },
         )
         logger.debug(f"Current state: {droneStatus.state}")
@@ -64,12 +64,10 @@ def refresh_params() -> None:
     """
     Refresh all parameters
     """
-    if droneStatus.state not in ["params", "config.servo"]:
+    if droneStatus.state != "params":
         socketio.emit(
             "params_error",
-            {
-                "message": "You must be on the params or servo config screen to refresh the parameters."
-            },
+            {"message": "You must be on the params screen to refresh the parameters."},
         )
         logger.debug(f"Current state: {droneStatus.state}")
         return

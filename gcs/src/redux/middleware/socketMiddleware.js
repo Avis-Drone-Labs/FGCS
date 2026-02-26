@@ -49,8 +49,11 @@ import {
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
   setShowMotorTestWarningModal,
+  setServoConfig,
+  setServoPwmOutputs,
   updateChannelsConfigParam,
   updateGripperConfigParam,
+  updateServoConfigParam,
 } from "../slices/configSlice.js"
 import {
   appendToGpsTrack,
@@ -121,7 +124,6 @@ import {
   updateParamValue,
 } from "../slices/paramsSlice.js"
 import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
-import { setServoOutputs } from "../slices/servoOutputSlice"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -183,6 +185,9 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
   onBatchSetRcConfigResult: "batch_set_rc_config_result",
+  onServoConfig: "servo_config",
+  onSetServoConfigResult: "set_servo_config_result",
+  onBatchSetServoConfigResult: "batch_set_servo_config_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -203,6 +208,16 @@ const socketMiddleware = (store) => {
     }
 
     store.dispatch(setRadioPwmChannels(chans))
+  }
+
+  function handleServoOutputRaw(msg) {
+    const outputs = {}
+    for (let i = 1; i <= 16; i++) {
+      const pwm = msg[`servo${i}_raw`]
+      if (typeof pwm === "number") outputs[i] = pwm
+    }
+
+    store.dispatch(setServoPwmOutputs(outputs))
   }
 
   const incomingMessageHandler = (msg) => {
@@ -299,17 +314,9 @@ const socketMiddleware = (store) => {
         window.ipcRenderer.invoke("app:update-vibe-status", data)
         break
       }
-      case "SERVO_OUTPUT_RAW": {
-        // Map: channel number (1-based) -> PWM value
-        const outputs = {}
-        for (let i = 1; i <= 16; i++) {
-          const pwm = msg[`servo${i}_raw`]
-          if (typeof pwm === "number") outputs[i] = pwm
-        }
-        console.log("SERVO_OUTPUT_RAW received:", msg, "Mapped outputs:", outputs)
-        store.dispatch(setServoOutputs(outputs))
+      case "SERVO_OUTPUT_RAW":
+        handleServoOutputRaw(msg)
         break
-      }
     }
   }
 
@@ -1144,6 +1151,55 @@ const socketMiddleware = (store) => {
               }
             }
             store.dispatch(setRadioCalibrationModalOpen(false))
+          },
+        )
+
+        socket.socket.on(ConfigSpecificSocketEvents.onServoConfig, (msg) => {
+          const config = {}
+
+          for (let i = 1; i < 17; i++) {
+            config[i] = msg[`SERVO_${i}`]
+          }
+
+          store.dispatch(setServoConfig(config))
+        })
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetServoConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+              store.dispatch(
+                updateServoConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetServoConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateServoConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
+            }
           },
         )
 

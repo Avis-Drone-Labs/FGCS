@@ -1,20 +1,18 @@
-// Servo Output Configuration Page Scaffold
+// Servo Output Configuration Page
 import { useEffect, useState } from "react"
 import {
   Table,
   Button,
   NumberInput,
-  Progress,
   Checkbox,
   Select,
   Modal,
   Text,
+  Progress,
 } from "@mantine/core"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
-import { io } from "socket.io-client"
-const socket = io()
 
 // Custom components, helpers and data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
@@ -23,34 +21,26 @@ import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import { useSelector, useDispatch } from "react-redux"
 import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
 import {
-  selectParams,
-  selectModifiedParams,
-  appendModifiedParams,
-  updateModifiedParamValue,
-} from "../../redux/slices/paramsSlice"
-import { emitRefreshParams } from "../../redux/slices/paramsSlice"
+  emitGetServoConfig,
+  emitSetServoConfigParam,
+  emitBatchSetServoConfigParams,
+  selectServoConfig,
+  selectServoPwmOutputs,
+  updateServoConfigParam,
+} from "../../redux/slices/configSlice"
 import { emitSetState } from "../../redux/slices/droneConnectionSlice"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
-import { selectServoOutputs } from "../../redux/slices/servoOutputSlice"
 
 export default function ServoOutput() {
   const dispatch = useDispatch()
   const [testModalOpen, setTestModalOpen] = useState(false)
   const [testServoIdx, setTestServoIdx] = useState(null)
   const [testPwm, setTestPwm] = useState(1500)
-  const aircraftType = useSelector(selectAircraftType)
-  const params = useSelector(selectParams)
-  const modifiedParams = useSelector(selectModifiedParams)
-  const connected = useSelector(selectConnectedToDrone)
-  const servoOutputs = useSelector(selectServoOutputs)
 
-  // Helper to get param value (modified or current)
-  function getParamValue(param_id) {
-    const mod = modifiedParams.find((p) => p.param_id === param_id)
-    if (mod) return mod.param_value
-    const orig = params.find((p) => p.param_id === param_id)
-    return orig ? orig.param_value : ""
-  }
+  const aircraftType = useSelector(selectAircraftType)
+  const servoConfig = useSelector(selectServoConfig)
+  const servoPwmOutputs = useSelector(selectServoPwmOutputs)
+  const connected = useSelector(selectConnectedToDrone)
 
   // Helper to get paramDef for a given param_id
   function getParamDef(param_id) {
@@ -59,39 +49,24 @@ export default function ServoOutput() {
     return undefined
   }
 
-  // Helper to update param value in Redux
+  // Helper to handle param change
   function handleParamChange(param_id, value) {
-    const orig = params.find((p) => p.param_id === param_id)
-    if (!orig) return
-    const param = { ...orig }
-    if (modifiedParams.find((p) => p.param_id === param_id)) {
-      dispatch(updateModifiedParamValue({ param_id, param_value: value }))
-    } else {
-      dispatch(
-        appendModifiedParams([
-          {
-            param_id,
-            param_value: value,
-            param_type: param.param_type,
-            initial_value: param.param_value,
-          },
-        ]),
-      )
-    }
+    dispatch(
+      emitSetServoConfigParam({
+        param_id,
+        value: parseInt(value),
+      }),
+    )
   }
 
-  function handleOpenTestModal(idx) {
-    setTestServoIdx(idx)
-    setTestPwm(1500) // Placeholder, as position is not available
+  function handleOpenTestModal(servoNum) {
+    setTestServoIdx(servoNum)
+    setTestPwm(1500)
     setTestModalOpen(true)
   }
 
   function handleSendTestPwm() {
-    // Send test PWM to backend
-    if (testServoIdx !== null && servoRows[testServoIdx]) {
-      const servoNum = servoRows[testServoIdx].number
-      socket.emit("set_servo_pwm", { servo: servoNum, pwm: testPwm })
-    }
+    // TODO: Implement test servo PWM send
     setTestModalOpen(false)
   }
 
@@ -109,29 +84,24 @@ export default function ServoOutput() {
   // Build servo rows (1-16)
   const servoRows = Array.from({ length: 16 }, (_, i) => {
     const num = i + 1
+    const config = servoConfig[num] || {}
     return {
       number: num,
-      function: getParamValue(`SERVO${num}_FUNCTION`),
-      min: getParamValue(`SERVO${num}_MIN`),
-      trim: getParamValue(`SERVO${num}_TRIM`),
-      max: getParamValue(`SERVO${num}_MAX`),
-      reverse:
-        getParamValue(`SERVO${num}_REVERSED`) === 1 ||
-        getParamValue(`SERVO${num}_REVERSED`) === "1",
-      pwm: servoOutputs[num] || null, // Use true output PWM
+      function: config.function,
+      min: config.min,
+      trim: config.trim,
+      max: config.max,
+      reversed: config.reversed === 1 || config.reversed === "1",
+      pwm: servoPwmOutputs[num] || 0,
     }
   })
 
   useEffect(() => {
     if (connected) {
       dispatch(emitSetState("config.servo"))
-      dispatch(emitRefreshParams())
+      dispatch(emitGetServoConfig())
     }
   }, [connected, dispatch])
-
-  useEffect(() => {
-    console.log("Updated servo outputs:", servoOutputs)
-  }, [servoOutputs])
 
   return (
     <div className="p-4 overflow-auto">
@@ -139,14 +109,14 @@ export default function ServoOutput() {
       <Modal
         opened={testModalOpen}
         onClose={() => setTestModalOpen(false)}
-        title={`Test Servo Output #${testServoIdx !== null ? servoRows[testServoIdx]?.number : ""}`}
+        title={`Test Servo Output #${testServoIdx}`}
         centered
       >
         <Text mb={8}>Enter PWM value to send:</Text>
         <NumberInput
           value={testPwm}
-          min={servoRows[testServoIdx]?.min || 800}
-          max={servoRows[testServoIdx]?.max || 2200}
+          min={800}
+          max={2200}
           onChange={setTestPwm}
         />
         <Button mt={16} color="blue" onClick={handleSendTestPwm}>
@@ -159,17 +129,16 @@ export default function ServoOutput() {
           <Table.Tr>
             <Table.Th>#</Table.Th>
             <Table.Th>Position</Table.Th>
-            <Table.Th>Reverse</Table.Th>
+            <Table.Th>Reversed</Table.Th>
             <Table.Th>Function</Table.Th>
             <Table.Th style={{ width: "70px" }}>Min</Table.Th>
             <Table.Th style={{ width: "70px" }}>Trim</Table.Th>
             <Table.Th style={{ width: "70px" }}>Max</Table.Th>
-            <Table.Th>Test PWM</Table.Th>
+            <Table.Th>Test</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
           {servoRows.map((servo, idx) => {
-            // Param IDs
             const num = servo.number
             const fnParam = `SERVO${num}_FUNCTION`
             const minParam = `SERVO${num}_MIN`
@@ -177,14 +146,11 @@ export default function ServoOutput() {
             const maxParam = `SERVO${num}_MAX`
             const revParam = `SERVO${num}_REVERSED`
 
-            // Param defs
             const fnDef = getParamDef(fnParam)
             const minDef = getParamDef(minParam)
             const trimDef = getParamDef(trimParam)
             const maxDef = getParamDef(maxParam)
-            const revDef = getParamDef(revParam)
 
-            // Function dropdown options
             const fnOptions = fnDef?.Values
               ? Object.entries(fnDef.Values).map(([value, label]) => ({
                   value,
@@ -192,30 +158,35 @@ export default function ServoOutput() {
                 }))
               : []
 
+            const pwmPercentage =
+              servo.pwm && servo.min && servo.max
+                ? Math.max(
+                    0,
+                    Math.min(
+                      100,
+                      ((servo.pwm - servo.min) / (servo.max - servo.min)) * 100,
+                    ),
+                  )
+                : 0
+
             return (
               <Table.Tr key={num} className="h-12">
                 <Table.Td>{num}</Table.Td>
                 <Table.Td>
                   <Progress.Root className="!h-6 !w-64">
                     <Progress.Section
-                      value={
-                        servo.pwm && servo.min && servo.max
-                          ? ((servo.pwm - servo.min) /
-                              (servo.max - servo.min)) *
-                            100
-                          : 0
-                      }
+                      value={pwmPercentage}
                       color={COLOURS[idx % COLOURS.length]}
                     >
                       <Progress.Label className="!text-lg !font-normal">
-                        {servo.pwm ? `${servo.pwm}` : "--"}
+                        {servo.pwm || "--"}
                       </Progress.Label>
                     </Progress.Section>
                   </Progress.Root>
                 </Table.Td>
                 <Table.Td>
                   <Checkbox
-                    checked={servo.reverse}
+                    checked={servo.reversed}
                     size="sm"
                     onChange={(event) =>
                       handleParamChange(
@@ -228,7 +199,7 @@ export default function ServoOutput() {
                 <Table.Td>
                   <Select
                     data={fnOptions}
-                    value={servo.function?.toString()}
+                    value={servo.function?.toString() || ""}
                     placeholder="Select function"
                     size="xs"
                     className="min-w-[120px]"
@@ -237,13 +208,9 @@ export default function ServoOutput() {
                 </Table.Td>
                 <Table.Td>
                   <NumberInput
-                    value={servo.min}
+                    value={servo.min || ""}
                     min={minDef?.Range?.low ? Number(minDef.Range.low) : 800}
-                    max={
-                      minDef?.Range?.high
-                        ? Number(minDef.Range.high)
-                        : servo.max
-                    }
+                    max={minDef?.Range?.high ? Number(minDef.Range.high) : 2200}
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(minParam, val)}
@@ -251,16 +218,10 @@ export default function ServoOutput() {
                 </Table.Td>
                 <Table.Td>
                   <NumberInput
-                    value={servo.trim}
-                    min={
-                      trimDef?.Range?.low
-                        ? Number(trimDef.Range.low)
-                        : servo.min
-                    }
+                    value={servo.trim || ""}
+                    min={trimDef?.Range?.low ? Number(trimDef.Range.low) : 800}
                     max={
-                      trimDef?.Range?.high
-                        ? Number(trimDef.Range.high)
-                        : servo.max
+                      trimDef?.Range?.high ? Number(trimDef.Range.high) : 2200
                     }
                     size="xs"
                     style={{ width: "60px" }}
@@ -269,10 +230,8 @@ export default function ServoOutput() {
                 </Table.Td>
                 <Table.Td>
                   <NumberInput
-                    value={servo.max}
-                    min={
-                      maxDef?.Range?.low ? Number(maxDef.Range.low) : servo.min
-                    }
+                    value={servo.max || ""}
+                    min={maxDef?.Range?.low ? Number(maxDef.Range.low) : 800}
                     max={maxDef?.Range?.high ? Number(maxDef.Range.high) : 2200}
                     size="xs"
                     style={{ width: "60px" }}
@@ -283,7 +242,7 @@ export default function ServoOutput() {
                   <Button
                     size="xs"
                     color="blue"
-                    onClick={() => handleOpenTestModal(idx)}
+                    onClick={() => handleOpenTestModal(num)}
                   >
                     Test
                   </Button>

@@ -13,6 +13,7 @@ from . import motors as motors
 from . import nav as nav
 from . import params as params
 from . import rc as rc
+from . import servo as servo
 from . import states as states
 
 endpoints = Blueprint("endpoints", __name__)

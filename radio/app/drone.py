@@ -24,6 +24,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
+from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
 from app.utils import (
     commandAccepted,
@@ -121,6 +122,7 @@ class Drone:
             "Setting up the mission controller",
             "Setting up the frame controller",
             "Setting up the RC controller",
+            "Setting up the Servo Controller",
             "Setting up the nav controller",
             "Setting up the FTP controller",
             "Connection complete",
@@ -213,7 +215,6 @@ class Drone:
         self.controller_queues: Dict[str, Queue] = {}
         self.reservation_lock = Lock()
         self.controller_id = f"Drone_{current_thread().ident}"
-        self.logged_message_types: Set[str] = set()
 
         self.armed = False
         self.capabilities: Optional[list[str]] = None
@@ -297,9 +298,12 @@ class Drone:
         self.rcController = RcController(self)
 
         self.sendConnectionStatusUpdate(11)
-        self.navController = NavController(self)
+        self.servoController = ServoController(self)
 
         self.sendConnectionStatusUpdate(12)
+        self.navController = NavController(self)
+
+        self.sendConnectionStatusUpdate(13)
         self.ftpController = FtpController(self)
 
     def sendConnectionStatusUpdate(self, msg_index):
@@ -651,13 +655,6 @@ class Drone:
                     self.stopForwarding()
 
             msg_name = msg.get_type()
-
-            # Logging first occurrence of each message type
-            if msg_name not in self.logged_message_types:
-                self.logger.info(
-                    f"\033[92mSERVO DEBUG: Received message type: {msg_name}\033[0m"
-                )
-                self.logged_message_types.add(msg_name)
 
             if msg_name == "HEARTBEAT":
                 if (

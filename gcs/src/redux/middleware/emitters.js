@@ -18,6 +18,7 @@ import {
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
+  emitTestServoPwm,
   setRefreshingGripperConfigData,
 } from "../slices/configSlice"
 import {
@@ -419,6 +420,15 @@ export function handleEmitters(socket, store, action) {
       callback: () => {
         socket.socket.emit("batch_set_servo_config_params", {
           params: action.payload.params,
+        })
+      },
+    },
+    {
+      emitter: emitTestServoPwm,
+      callback: () => {
+        socket.socket.emit("test_servo_pwm", {
+          servo_instance: action.payload.servo_instance,
+          pwm_value: action.payload.pwm_value,
         })
       },
     },

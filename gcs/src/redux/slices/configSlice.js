@@ -211,6 +211,7 @@ const configSlice = createSlice({
     emitGetServoConfig: () => {},
     emitSetServoConfigParam: () => {},
     emitBatchSetServoConfigParams: () => {},
+    emitTestServoPwm: () => {},
   },
   selectors: {
     selectActiveTab: (state) => state.activeTab,
@@ -278,6 +279,7 @@ export const {
   emitGetServoConfig,
   emitSetServoConfigParam,
   emitBatchSetServoConfigParams,
+  emitTestServoPwm,
 } = configSlice.actions
 
 export const {

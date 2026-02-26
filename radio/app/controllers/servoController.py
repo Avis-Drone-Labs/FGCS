@@ -98,7 +98,9 @@ class ServoController:
                 servo_params, "function", f"SERVO{servo_number}_FUNCTION"
             )
             self._getAndSetCachedParam(servo_params, "min", f"SERVO{servo_number}_MIN")
-            self._getAndSetCachedParam(servo_params, "trim", f"SERVO{servo_number}_TRIM")
+            self._getAndSetCachedParam(
+                servo_params, "trim", f"SERVO{servo_number}_TRIM"
+            )
             self._getAndSetCachedParam(servo_params, "max", f"SERVO{servo_number}_MAX")
             self._getAndSetCachedParam(
                 servo_params, "reversed", f"SERVO{servo_number}_REVERSED"

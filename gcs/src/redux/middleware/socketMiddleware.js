@@ -188,6 +188,7 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onServoConfig: "servo_config",
   onSetServoConfigResult: "set_servo_config_result",
   onBatchSetServoConfigResult: "batch_set_servo_config_result",
+  onTestServoPwmResult: "test_servo_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -1199,6 +1200,17 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onTestServoPwmResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
             }
           },
         )

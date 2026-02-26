@@ -1015,9 +1015,21 @@ class Drone:
                 self.logger.error(
                     f"Failed to set servo {servo_instance} to {pwm_value}"
                 )
+                error_message = f"Failed to set servo {servo_instance} to {pwm_value}"
+                error_code = response.result if response else None
+                
+                # Map specific error codes to user-friendly messages
+                if error_code == 4:  # MAV_RESULT_FAILED
+                    error_message = f"Channel {servo_instance} is already in use"
+                elif error_code == 3:  # MAV_RESULT_UNSUPPORTED
+                    error_message = f"Servo {servo_instance} is not supported"
+                elif error_code == 2:  # MAV_RESULT_DENIED
+                    error_message = f"Permission denied to set servo {servo_instance}"
+                
                 return {
                     "success": False,
-                    "message": f"Failed to set servo {servo_instance} to {pwm_value}",
+                    "message": error_message,
+                    "error_code": error_code,
                 }
 
         except serial.serialutil.SerialException:

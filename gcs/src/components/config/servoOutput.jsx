@@ -12,7 +12,6 @@ import {
 } from "@mantine/core"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
-const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 // Custom components, helpers and data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
@@ -24,12 +23,35 @@ import {
   emitGetServoConfig,
   emitSetServoConfigParam,
   emitBatchSetServoConfigParams,
+  emitTestServoPwm,
   selectServoConfig,
   selectServoPwmOutputs,
   updateServoConfigParam,
 } from "../../redux/slices/configSlice"
 import { emitSetState } from "../../redux/slices/droneConnectionSlice"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+const PWM_MIN = 1000
+const PWM_MAX = 2000
+
+const COLOURS = [
+  tailwindColors.red[500],
+  tailwindColors.orange[500],
+  tailwindColors.yellow[500],
+  tailwindColors.green[500],
+  tailwindColors.blue[500],
+  tailwindColors.indigo[500],
+  tailwindColors.purple[500],
+  tailwindColors.pink[500],
+]
+
+function getPercentageValueFromPWM(pwmValue) {
+  // Normalise the PWM value into a percentage value
+  if (pwmValue == 0) return 0 // Handle case where PWM value is not available
+
+  return ((pwmValue - PWM_MIN) / (PWM_MAX - PWM_MIN)) * 100
+}
 
 export default function ServoOutput() {
   const dispatch = useDispatch()
@@ -61,25 +83,20 @@ export default function ServoOutput() {
 
   function handleOpenTestModal(servoNum) {
     setTestServoIdx(servoNum)
-    setTestPwm(1500)
+    setTestPwm(servoPwmOutputs[servoNum] || 1500)
     setTestModalOpen(true)
   }
 
   function handleSendTestPwm() {
-    // TODO: Implement test servo PWM send
+    if (testPwm < PWM_MIN || testPwm > PWM_MAX) return
+    dispatch(
+      emitTestServoPwm({
+        servo_instance: testServoIdx,
+        pwm_value: testPwm,
+      }),
+    )
     setTestModalOpen(false)
   }
-
-  const COLOURS = [
-    tailwindColors.red[500],
-    tailwindColors.orange[500],
-    tailwindColors.yellow[500],
-    tailwindColors.green[500],
-    tailwindColors.blue[500],
-    tailwindColors.indigo[500],
-    tailwindColors.purple[500],
-    tailwindColors.pink[500],
-  ]
 
   // Build servo rows (1-16)
   const servoRows = Array.from({ length: 16 }, (_, i) => {
@@ -115,11 +132,16 @@ export default function ServoOutput() {
         <Text mb={8}>Enter PWM value to send:</Text>
         <NumberInput
           value={testPwm}
-          min={800}
-          max={2200}
           onChange={setTestPwm}
+          error={testPwm < PWM_MIN || testPwm > PWM_MAX ? `Value must be between ${PWM_MIN} and ${PWM_MAX}` : null}
         />
-        <Button mt={16} color="blue" onClick={handleSendTestPwm}>
+        <Button 
+          mt={16} 
+          color="blue" 
+          onClick={handleSendTestPwm}
+          disabled={testPwm < PWM_MIN || testPwm > PWM_MAX}
+          fullWidth
+        >
           Send PWM
         </Button>
       </Modal>
@@ -158,28 +180,18 @@ export default function ServoOutput() {
                 }))
               : []
 
-            const pwmPercentage =
-              servo.pwm && servo.min && servo.max
-                ? Math.max(
-                    0,
-                    Math.min(
-                      100,
-                      ((servo.pwm - servo.min) / (servo.max - servo.min)) * 100,
-                    ),
-                  )
-                : 0
-
             return (
               <Table.Tr key={num} className="h-12">
                 <Table.Td>{num}</Table.Td>
                 <Table.Td>
-                  <Progress.Root className="!h-6 !w-64">
+                  <Progress.Root className="!h-6 !w-96">
                     <Progress.Section
-                      value={pwmPercentage}
+                      value={getPercentageValueFromPWM(servo.pwm)}
                       color={COLOURS[idx % COLOURS.length]}
+                      style={servo.pwm ? { minWidth: "50px" } : {}}
                     >
                       <Progress.Label className="!text-lg !font-normal">
-                        {servo.pwm || "--"}
+                        {servo.pwm}
                       </Progress.Label>
                     </Progress.Section>
                   </Progress.Root>
@@ -209,8 +221,8 @@ export default function ServoOutput() {
                 <Table.Td>
                   <NumberInput
                     value={servo.min || ""}
-                    min={minDef?.Range?.low ? Number(minDef.Range.low) : 800}
-                    max={minDef?.Range?.high ? Number(minDef.Range.high) : 2200}
+                    min={minDef?.Range?.low ? Number(minDef.Range.low) : PWM_MIN}
+                    max={minDef?.Range?.high ? Number(minDef.Range.high) : PWM_MAX}
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(minParam, val)}
@@ -219,10 +231,8 @@ export default function ServoOutput() {
                 <Table.Td>
                   <NumberInput
                     value={servo.trim || ""}
-                    min={trimDef?.Range?.low ? Number(trimDef.Range.low) : 800}
-                    max={
-                      trimDef?.Range?.high ? Number(trimDef.Range.high) : 2200
-                    }
+                    min={trimDef?.Range?.low ? Number(trimDef.Range.low) : PWM_MIN}
+                    max={trimDef?.Range?.high ? Number(trimDef.Range.high) : PWM_MAX}
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(trimParam, val)}
@@ -231,8 +241,8 @@ export default function ServoOutput() {
                 <Table.Td>
                   <NumberInput
                     value={servo.max || ""}
-                    min={maxDef?.Range?.low ? Number(maxDef.Range.low) : 800}
-                    max={maxDef?.Range?.high ? Number(maxDef.Range.high) : 2200}
+                    min={maxDef?.Range?.low ? Number(maxDef.Range.low) : PWM_MIN}
+                    max={maxDef?.Range?.high ? Number(maxDef.Range.high) : PWM_MAX}
                     size="xs"
                     style={{ width: "60px" }}
                     onChange={(val) => handleParamChange(maxParam, val)}

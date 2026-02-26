@@ -102,3 +102,29 @@ def batchSetServoConfigParams(data: BatchSetConfigParams) -> None:
     result = droneStatus.drone.servoController.batchSetConfigParams(params)
 
     socketio.emit("batch_set_servo_config_result", result)
+
+
+@socketio.on("test_servo_pwm")
+def testServoPwm(data: dict) -> None:
+    """
+    Sends a test PWM value to a servo.
+    """
+    if not droneStatus.drone:
+        return notConnectedError(action="test servo PWM")
+
+    servo_instance = data.get("servo_instance", None)
+    pwm_value = data.get("pwm_value", None)
+
+    if servo_instance is None or pwm_value is None:
+        socketio.emit(
+            "test_servo_result",
+            {
+                "success": False,
+                "message": "Servo instance and PWM value must be specified.",
+            },
+        )
+        return
+
+    result = droneStatus.drone.setServo(servo_instance, pwm_value)
+
+    socketio.emit("test_servo_result", result)

@@ -30,6 +30,9 @@ type GraphPoint = {
 
 const graphWins: Partial<Record<GraphKey, BrowserWindow>> = {}
 
+// Reference to the main FGCS window (the one with Redux + toolbar)
+let mainWin: BrowserWindow | null = null
+
 /** Get a window if it's still usable; auto-clean if destroyed. */
 function getGraphWin(graphKey: GraphKey): BrowserWindow | null {
   const win = graphWins[graphKey]
@@ -46,6 +49,17 @@ function getGraphWin(graphKey: GraphKey): BrowserWindow | null {
   }
 
   return win
+}
+
+function notifyMainGraphClosed(graphKey: GraphKey) {
+  try {
+    if (!mainWin) return
+    if (mainWin.isDestroyed()) return
+    if (mainWin.webContents.isDestroyed()) return
+    mainWin.webContents.send("app:graph-window:closed", { graphKey })
+  } catch {
+    // ignore during shutdown / race conditions
+  }
 }
 
 export function openGraphWindow({ graphKey, meta }: OpenArgs) {
@@ -75,6 +89,8 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
     // IMPORTANT: clean up reference when user closes window
     win.on("closed", () => {
       graphWins[graphKey] = undefined
+      // Tell the main window so Redux can untick the checkbox
+      notifyMainGraphClosed(graphKey)
     })
 
     // Load content only on first creation
@@ -125,7 +141,10 @@ export function destroyAllGraphWindows() {
   })
 }
 
-export default function registerGraphWindowIPC() {
+// Accept the main window so we can send close events back to Redux UI
+export default function registerGraphWindowIPC(appWin?: BrowserWindow) {
+  if (appWin) mainWin = appWin
+
   ipcMain.removeHandler("app:open-graph-window")
   ipcMain.removeHandler("app:close-graph-window")
   ipcMain.removeHandler("app:update-graph-windows")
@@ -152,6 +171,8 @@ export default function registerGraphWindowIPC() {
         } catch {
           // If it errors during close, drop it
           graphWins[result.graphKey] = undefined
+          // Also tell the main window, in case the close event races
+          notifyMainGraphClosed(result.graphKey)
         }
       }
     },

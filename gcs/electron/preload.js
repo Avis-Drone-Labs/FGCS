@@ -73,6 +73,7 @@ const ALLOWED_ON_CHANNELS = [
   "app:send-fla-params",
   "app:graph-window:init",
   "app:send-graph-point",
+  "app:graph-window:closed"
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

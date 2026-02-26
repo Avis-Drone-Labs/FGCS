@@ -280,7 +280,7 @@ function createWindow() {
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
   registerFlaParamsIPC()
-  registerGraphWindowIPC()
+  registerGraphWindowIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"

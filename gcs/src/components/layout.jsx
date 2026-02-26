@@ -19,7 +19,10 @@ import {
   emitSetState,
   selectConnectedToDrone,
 } from "../redux/slices/droneConnectionSlice"
-import { selectAircraftTypeString } from "../redux/slices/droneInfoSlice"
+import {
+  selectAircraftTypeString,
+  selectHasEverHadGpsFix,
+} from "../redux/slices/droneInfoSlice"
 import { selectShouldFetchAllMissionsOnDashboard } from "../redux/slices/missionSlice"
 
 export default function Layout({ children, currentPage }) {
@@ -29,6 +32,7 @@ export default function Layout({ children, currentPage }) {
   const shouldFetchAllMissionsOnDashboard = useSelector(
     selectShouldFetchAllMissionsOnDashboard,
   )
+  const hasEverHadGpsFix = useSelector(selectHasEverHadGpsFix)
 
   // Handle switching to states
   useEffect(() => {
@@ -41,7 +45,9 @@ export default function Layout({ children, currentPage }) {
     if (!connectedToDrone) return
 
     if (currentPageLowerCase == "dashboard") {
-      dispatch(emitGetHomePosition()) // use actual home position
+      if (hasEverHadGpsFix) {
+        dispatch(emitGetHomePosition()) // use actual home position
+      }
 
       if (shouldFetchAllMissionsOnDashboard) {
         dispatch(emitGetCurrentMissionAll())

@@ -46,7 +46,7 @@ function SectionHeader({ title }) {
   )
 }
 
-function sortKeysAlpha(obj) {
+function sortKeysAlphabetically(obj) {
   return Object.keys(obj).sort((a, b) => a.localeCompare(b))
 }
 
@@ -96,19 +96,19 @@ export default function GraphsMenu(props) {
   // Filter groups/fields by query across msg / field / description
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const msgs = sortKeysAlpha(mavlinkMsgParams)
+    const msgs = sortKeysAlphabetically(mavlinkMsgParams)
 
     if (!q) {
       return msgs.map((msg) => ({
         msg,
-        fields: sortKeysAlpha(mavlinkMsgParams[msg]),
+        fields: sortKeysAlphabetically(mavlinkMsgParams[msg]),
       }))
     }
 
     const out = []
     for (const msg of msgs) {
       const msgMatches = msg.toLowerCase().includes(q)
-      const fields = sortKeysAlpha(mavlinkMsgParams[msg]).filter((field) => {
+      const fields = sortKeysAlphabetically(mavlinkMsgParams[msg]).filter((field) => {
         if (msgMatches) return true
         const desc = mavlinkMsgParams[msg][field] ?? ""
         return (

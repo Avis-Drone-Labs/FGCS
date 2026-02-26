@@ -108,7 +108,9 @@ def getGripperConfig() -> None:
         return
 
     # Refresh gripper params from drone, if there's no cache
-    if not bool(droneStatus.drone.gripperController.params):
+    if droneStatus.drone.gripperController.getEnabled() and (
+        not bool(droneStatus.drone.gripperController.params)
+    ):
         droneStatus.drone.gripperController.getGripperParams()
 
     gripper_config = droneStatus.drone.gripperController.getConfig()

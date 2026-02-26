@@ -21,7 +21,10 @@ import ConfirmExitModal from "./confirmExitModal.jsx"
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
 import { setConfirmExitModalOpen } from "../../redux/slices/applicationSlice.js"
-import { selectGraphValues, setGraphValues } from "../../redux/slices/droneInfoSlice.js"
+import {
+  selectGraphValues,
+  setGraphValues,
+} from "../../redux/slices/droneInfoSlice.js"
 
 export default function Toolbar() {
   const dispatch = useDispatch()

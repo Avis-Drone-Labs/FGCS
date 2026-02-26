@@ -16,23 +16,22 @@ import {
 
 import { Button, TextInput, Checkbox } from "@mantine/core"
 
-
 const MAX_SELECTED = 4
 
 const GRAPH_KEYS = ["graph_a", "graph_b", "graph_c", "graph_d"]
 
-function MenuCheckboxItem({label, title, checked, disabled, onToggle}) {
+function MenuCheckboxItem({ label, title, checked, disabled, onToggle }) {
   return (
     <div
-    className="flex flex-row w-full gap-x-3 justify-between rounded-md px-3 text-sm"
-    title={title}
+      className="flex flex-row w-full gap-x-3 justify-between rounded-md px-3 text-sm"
+      title={title}
     >
       <Checkbox
-      className="min-w-0"
-      label={label}
-      checked={checked}
-      disabled={disabled}
-      onChange={() => onToggle()}
+        className="min-w-0"
+        label={label}
+        checked={checked}
+        disabled={disabled}
+        onChange={() => onToggle()}
       />
 
       <div className="text-falcongrey-300 opacity-50" />
@@ -110,14 +109,16 @@ export default function GraphsMenu(props) {
     const out = []
     for (const msg of msgs) {
       const msgMatches = msg.toLowerCase().includes(q)
-      const fields = sortKeysAlphabetically(mavlinkMsgParams[msg]).filter((field) => {
-        if (msgMatches) return true
-        const desc = mavlinkMsgParams[msg][field] ?? ""
-        return (
-          field.toLowerCase().includes(q) ||
-          String(desc).toLowerCase().includes(q)
-        )
-      })
+      const fields = sortKeysAlphabetically(mavlinkMsgParams[msg]).filter(
+        (field) => {
+          if (msgMatches) return true
+          const desc = mavlinkMsgParams[msg][field] ?? ""
+          return (
+            field.toLowerCase().includes(q) ||
+            String(desc).toLowerCase().includes(q)
+          )
+        },
+      )
       if (fields.length) out.push({ msg, fields })
     }
     return out

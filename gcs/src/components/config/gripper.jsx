@@ -26,8 +26,11 @@ import { IconInfoCircle } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   emitGetGripperConfig,
+  emitGetGripperEnabled,
   emitSetGripper,
   emitSetGripperConfigParam,
+  emitSetGripperDisabled,
+  emitSetGripperEnabled,
   selectGetGripperEnabled,
   selectGripperConfig,
   selectRefreshingGripperConfigData,
@@ -126,11 +129,23 @@ export default function Gripper() {
     }
 
     dispatch(emitSetState("config.gripper"))
-    dispatch(emitGetGripperConfig())
-  }, [connected, dispatch])
+
+    dispatch(emitGetGripperEnabled())
+    if (getGripperEnabled) {
+      dispatch(emitGetGripperConfig())
+    }
+  }, [connected, dispatch, getGripperEnabled])
 
   function setGripper(action) {
     dispatch(emitSetGripper(action))
+  }
+
+  const toggleGripperEnabled = () => {
+    if (getGripperEnabled) {
+      dispatch(emitSetGripperDisabled())
+    } else {
+      dispatch(emitSetGripperEnabled())
+    }
   }
 
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
@@ -141,6 +156,10 @@ export default function Gripper() {
     return (
       <div className="flex flex-col gap-4 mx-4">
         <p>Gripper is not enabled.</p>
+
+        <Button w={"30%"} onClick={toggleGripperEnabled} color={"green"}>
+          Enable Gripper
+        </Button>
       </div>
     )
   }
@@ -152,14 +171,20 @@ export default function Gripper() {
         zIndex={1000}
         overlayProps={{ blur: 2 }}
       />
-      <div className="flex flex-row gap-2">
-        <Button onClick={() => setGripper("release")} color={"red"}>
-          Release Gripper
+      <div className="flex flex-col gap-2 w-1/3">
+        <Button onClick={() => toggleGripperEnabled()} color={"red"}>
+          Disable Gripper
         </Button>
-        <Button onClick={() => setGripper("grab")} color={"red"}>
-          Grab Gripper
-        </Button>
+        <div className="flex flex-row gap-2">
+          <Button w="100%" onClick={() => setGripper("release")} color={"blue"}>
+            Release Gripper
+          </Button>
+          <Button w="100%" onClick={() => setGripper("grab")} color={"blue"}>
+            Grab Gripper
+          </Button>
+        </div>
       </div>
+
       <div className="flex flex-col gap-2">
         {params.map((param) => (
           <div key={param.param_id} className="flex flex-row justify-between">

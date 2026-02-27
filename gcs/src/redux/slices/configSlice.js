@@ -148,6 +148,8 @@ const configSlice = createSlice({
 
     // Emits
     emitGetGripperEnabled: () => {},
+    emitSetGripperEnabled: () => {},
+    emitSetGripperDisabled: () => {},
     emitGetGripperConfig: () => {},
     emitSetGripperConfigParam: () => {},
     emitGetFlightModeConfig: () => {},
@@ -207,6 +209,8 @@ export const {
   setRadioCalibrationModalOpen,
 
   emitGetGripperEnabled,
+  emitSetGripperEnabled,
+  emitSetGripperDisabled,
   emitGetGripperConfig,
   emitSetGripperConfigParam,
   emitGetFlightModeConfig,

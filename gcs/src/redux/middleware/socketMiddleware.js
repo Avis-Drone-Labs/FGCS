@@ -46,6 +46,7 @@ import {
 import SocketFactory from "../../helpers/socket"
 import {
   emitGetFlightModeConfig,
+  emitGetGripperConfig,
   setChannelsConfig,
   setCurrentPwmValue,
   setFlightModeChannel,
@@ -187,6 +188,8 @@ const MissionSpecificSocketEvents = Object.freeze({
 
 const ConfigSpecificSocketEvents = Object.freeze({
   onGripperEnabled: "is_gripper_enabled",
+  onSetGripperEnabledResult: "set_gripper_enabled_result",
+  onSetGripperDisabledResult: "set_gripper_disabled_result",
   onSetGripperResult: "set_gripper_result",
   onGripperConfig: "gripper_config",
   setGripperParamResult: "set_gripper_param_result",
@@ -1078,6 +1081,31 @@ const socketMiddleware = (store) => {
           ConfigSpecificSocketEvents.onGripperEnabled,
           (enabled) => {
             store.dispatch(setGetGripperEnabled(enabled))
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperEnabledResult,
+          (result) => {
+            if (result.success) {
+              store.dispatch(setGetGripperEnabled(true))
+              store.dispatch(emitGetGripperConfig())
+              showSuccessNotification(result.message)
+            } else {
+              showErrorNotification(result.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperDisabledResult,
+          (result) => {
+            if (result.success) {
+              store.dispatch(setGetGripperEnabled(false))
+              showSuccessNotification(result.message)
+            } else {
+              showErrorNotification(result.message)
+            }
           },
         )
 

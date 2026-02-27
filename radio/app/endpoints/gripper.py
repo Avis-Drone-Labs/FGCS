@@ -18,6 +18,46 @@ def getGripperEnabled() -> None:
     socketio.emit("is_gripper_enabled", enabled)
 
 
+@socketio.on("set_gripper_enabled")
+def setGripperEnabled() -> None:
+    """
+    Enables the gripper
+    """
+
+    if not droneStatus.drone:
+        droneErrorCb("You must be connected to the drone to access the gripper.")
+        logger.warning("Attempted to set gripper enabled when drone is None.")
+        return
+
+    if droneStatus.state != "config.gripper":
+        droneErrorCb("You must be on the gripper page to enable the gripper")
+        logger.warning("Attempted to set gripper enabled not on gripper page")
+        return
+
+    result = droneStatus.drone.gripperController.enableGripper()
+    socketio.emit("set_gripper_enabled_result", result)
+
+
+@socketio.on("set_gripper_disabled")
+def setGripperDisabled() -> None:
+    """
+    Disable the gripper
+    """
+
+    if not droneStatus.drone:
+        droneErrorCb("You must be connected to the drone to access the gripper.")
+        logger.warning("Attempted to set gripper disabled when drone is None.")
+        return
+
+    if droneStatus.state != "config.gripper":
+        droneErrorCb("You must be on the gripper page to disable the gripper")
+        logger.warning("Attempted to set gripper disabled not on gripper page")
+        return
+
+    result = droneStatus.drone.gripperController.disableGripper()
+    socketio.emit("set_gripper_disabled_result", result)
+
+
 @socketio.on("set_gripper")
 def setGripper(action: str) -> None:
     """
@@ -66,6 +106,12 @@ def getGripperConfig() -> None:
         logger.warning("Attempted to get the gripper config when drone is None.")
         droneErrorCb("get the gripper config")
         return
+
+    # Refresh gripper params from drone, if there's no cache
+    if droneStatus.drone.gripperController.getEnabled() and (
+        not bool(droneStatus.drone.gripperController.params)
+    ):
+        droneStatus.drone.gripperController.getGripperParams()
 
     gripper_config = droneStatus.drone.gripperController.getConfig()
 

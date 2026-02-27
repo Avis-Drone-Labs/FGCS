@@ -1,10 +1,8 @@
-from logging import getLogger
-
 from pymavlink import mavutil
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import socketio
+from app import logger, socketio
 from app.utils import (
     missingParameterError,
     sendMessage,
@@ -41,8 +39,6 @@ STATES_MESSAGE_LISTENERS = {
     ],
     "config.rc": ["RC_CHANNELS"],
 }
-
-logger = getLogger("fgcs")
 
 
 @socketio.on("set_state")

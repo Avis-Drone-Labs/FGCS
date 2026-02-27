@@ -73,7 +73,7 @@ const droneInfoSlice = createSlice({
     hasSecondaryGps: false,
     rssi: 0.0,
     notificationSound: "",
-    aircraftType: 0, // TODO: This should be in local storage but I have no idea how :D,
+    aircraftType: 2, // Default to copter, will be updated on heartbeat
     batteryData: [],
     extraDroneData: [
       ...defaultDataMessages, // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored

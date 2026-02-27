@@ -37,7 +37,6 @@ class NavController:
         Request the current home position from the drone.
         Retries up to 3 times with 1 second delay between attempts.
         """
-
         max_attempts = 3
         time_delay_between_attempts = 1
 

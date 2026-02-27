@@ -79,6 +79,7 @@ import {
   setGpsData,
   setGpsRawIntData,
   setGuidedModePinData,
+  setHasEverHadGpsFix,
   setHeartbeatData,
   setHomePosition,
   setLastGraphMessage,
@@ -439,6 +440,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
           store.dispatch(setTotalTimeFlying(0))
+          store.dispatch(setHasEverHadGpsFix(false))
         })
 
         // Simulation status messages
@@ -658,6 +660,11 @@ const socketMiddleware = (store) => {
             if (msg.success) {
               store.dispatch(setHomePosition(msg.data)) // use actual home position
             } else {
+              // If home position could not be fetched because GPS fix has never
+              // been acquired, we can ignore this message
+              if (msg.data === "NEVER_HAD_GPS_FIX") {
+                return
+              }
               showErrorNotification(msg.message)
             }
           },

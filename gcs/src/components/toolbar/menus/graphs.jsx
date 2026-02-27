@@ -9,15 +9,11 @@ import Divider from "./divider"
 
 import { mavlinkMsgParams } from "../../../helpers/mavllinkDataStreams"
 
-import {
-  selectGraphValues,
-  setGraphValues,
-} from "../../../redux/slices/droneInfoSlice"
+import { selectGraphValues, setGraphValues } from "../../../redux/slices/droneInfoSlice"
 
 import { Button, TextInput, Checkbox } from "@mantine/core"
 
 const MAX_SELECTED = 4
-
 const GRAPH_KEYS = ["graph_a", "graph_b", "graph_c", "graph_d"]
 
 function MenuCheckboxItem({ label, title, checked, disabled, onToggle }) {
@@ -33,7 +29,6 @@ function MenuCheckboxItem({ label, title, checked, disabled, onToggle }) {
         disabled={disabled}
         onChange={() => onToggle()}
       />
-
       <div className="text-falcongrey-300 opacity-50" />
     </div>
   )
@@ -82,16 +77,13 @@ export default function GraphsMenu(props) {
     )
   }, [dispatch])
 
-  //Redux graph slots (graph_a..graph_d -> "MSG.FIELD" | null)
+  // Redux graph slots (graph_a..graph_d -> "MSG.FIELD" | null)
   const selectedGraphs = useSelector(selectGraphValues)
 
   const [query, setQuery] = useState("")
 
   // ordered list from slots (graph_a then b then c then d)
-  const selectedList = GRAPH_KEYS.map((k) => selectedGraphs?.[k]).filter(
-    Boolean,
-  )
-
+  const selectedList = GRAPH_KEYS.map((k) => selectedGraphs?.[k]).filter(Boolean)
   const selectedCount = selectedList.length
 
   // Filter groups/fields by query across msg / field / description
@@ -169,6 +161,7 @@ export default function GraphsMenu(props) {
 
       dispatch(setGraphValues(afterSlots))
       syncWindowsForSlots(beforeSlots, afterSlots)
+      props.setMenusActive(false)
       return
     }
 
@@ -180,6 +173,7 @@ export default function GraphsMenu(props) {
 
     dispatch(setGraphValues(afterSlots))
     syncWindowsForSlots(beforeSlots, afterSlots)
+    props.setMenusActive(false)
   }
 
   return (
@@ -188,12 +182,7 @@ export default function GraphsMenu(props) {
       areMenusActive={props.areMenusActive}
       setMenusActive={props.setMenusActive}
     >
-      <div
-        className="flex flex-col min-w-72"
-        onClick={(e) => {
-          e.stopPropagation()
-        }}
-      >
+      <div className="flex flex-col min-w-72">
         {/* Search */}
         <div className="px-2 py-1">
           <TextInput
@@ -258,11 +247,13 @@ export default function GraphsMenu(props) {
 
               dispatch(setGraphValues(cleared))
 
-              for (const key of ["graph_a", "graph_b", "graph_c", "graph_d"]) {
+              for (const key of GRAPH_KEYS) {
                 safeInvoke("app:close-graph-window", { graphKey: key }).catch(
                   console.error,
                 )
               }
+
+              props.setMenusActive(false)
             }}
           >
             Clear

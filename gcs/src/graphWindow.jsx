@@ -19,10 +19,6 @@ const SLOT_COLORS = {
 }
 
 export default function GraphWindowApp() {
-  useEffect(() => {
-    console.log("ipcRenderer exists?", !!window.ipcRenderer)
-  }, [])
-
   const sentReadyRef = useRef(false)
   const graphRef = useRef(null)
 
@@ -63,7 +59,7 @@ export default function GraphWindowApp() {
       if (!Number.isFinite(y)) return
 
       graphRef.current.data.datasets[0].data.push({ x: Date.now(), y })
-      graphRef.current.update("none") // use "none" instead of "quiet"
+      graphRef.current.update("none")
     }
 
     window.ipcRenderer.on("app:graph-window:init", handleInit)

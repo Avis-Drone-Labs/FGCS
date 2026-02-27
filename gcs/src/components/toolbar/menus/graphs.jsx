@@ -9,7 +9,10 @@ import Divider from "./divider"
 
 import { mavlinkMsgParams } from "../../../helpers/mavllinkDataStreams"
 
-import { selectGraphValues, setGraphValues } from "../../../redux/slices/droneInfoSlice"
+import {
+  selectGraphValues,
+  setGraphValues,
+} from "../../../redux/slices/droneInfoSlice"
 
 import { Button, TextInput, Checkbox } from "@mantine/core"
 
@@ -83,7 +86,9 @@ export default function GraphsMenu(props) {
   const [query, setQuery] = useState("")
 
   // ordered list from slots (graph_a then b then c then d)
-  const selectedList = GRAPH_KEYS.map((k) => selectedGraphs?.[k]).filter(Boolean)
+  const selectedList = GRAPH_KEYS.map((k) => selectedGraphs?.[k]).filter(
+    Boolean,
+  )
   const selectedCount = selectedList.length
 
   // Filter groups/fields by query across msg / field / description

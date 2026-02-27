@@ -40,6 +40,9 @@ import registerVibeStatusIPC, {
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 import { readParamsFile } from "./utils/paramsFile"
+import registerGraphWindowIPC, {
+  destroyAllGraphWindows,
+} from "./modules/graphWindow"
 
 // Check if required data files exist
 function checkRequiredDataFiles(): {
@@ -277,6 +280,7 @@ function createWindow() {
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
   registerFlaParamsIPC()
+  registerGraphWindowIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -465,6 +469,7 @@ function closeWindows() {
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
   destroyFlaParamsWindow()
+  destroyAllGraphWindows()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

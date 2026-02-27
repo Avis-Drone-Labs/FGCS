@@ -16,6 +16,9 @@ const ALLOWED_INVOKE_CHANNELS = [
   "settings:save-settings",
   "app:open-video-window",
   "app:close-video-window",
+  "app:open-graph-window",
+  "app:close-graph-window",
+  "app:update-graph-windows",
   "app:start-rtsp-stream",
   "app:stop-rtsp-stream",
   "app:get-current-stream-url",
@@ -54,6 +57,7 @@ const ALLOWED_SEND_CHANNELS = [
   "window:update-title",
   // drone state updates (connectedToDrone, isArmed, isFlying)
   "app:drone-state",
+  "app:graph-window:ready",
 ]
 
 const ALLOWED_ON_CHANNELS = [
@@ -67,6 +71,9 @@ const ALLOWED_ON_CHANNELS = [
   "settings:open",
   "mavlink-forwarding:open",
   "app:send-fla-params",
+  "app:graph-window:init",
+  "app:send-graph-point",
+  "app:graph-window:closed",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -92,6 +99,13 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
       return ipcRenderer.on(channel, callback)
     }
     throw new Error(`IPC on channel '${channel}' is not allowed`)
+  },
+
+  removeListener: (channel, callback) => {
+    if (ALLOWED_ON_CHANNELS.includes(channel)) {
+      return ipcRenderer.removeListener(channel, callback)
+    }
+    throw new Error(`IPC removeListener channel '${channel}' is not allowed`)
   },
 
   // Secure removeAllListeners - only for whitelisted channels

@@ -33,6 +33,8 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
+const TIME_WINDOW_MS = 30_000
+
 const options = {
   responsive: true,
   maintainAspectRatio: false,
@@ -43,7 +45,7 @@ const options = {
       position: "top",
     },
     streaming: {
-      duration: 20000,
+      duration: TIME_WINDOW_MS,
       frameRate: 30,
     },
   },
@@ -90,15 +92,21 @@ const RealtimeGraph = forwardRef(function RealtimeGraph(
   })
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current.data.datasets[0].label = datasetLabel
-      ref.current.update("quiet")
-    }
-  }, [datasetLabel])
+    if (!ref.current) return
+
+    const ds = ref.current.data.datasets[0]
+    ds.label = datasetLabel
+    ds.borderColor = lineColor
+    ds.backgroundColor = hexToRgba(lineColor, 0.5)
+
+    ref.current.update("none")
+  }, [datasetLabel, lineColor, ref])
 
   return (
-    <div className="p-8 rounded-lg w-full h-full">
-      <Scatter ref={ref} options={options} data={chartData} />
+    <div className="w-full h-full min-h-0">
+      <div className="w-full h-full relative">
+        <Scatter ref={ref} options={options} data={chartData} />
+      </div>
     </div>
   )
 })

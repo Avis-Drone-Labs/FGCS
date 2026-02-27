@@ -53,14 +53,14 @@ function getPercentageValueFromPWM(pwmValue) {
 
 export default function ServoOutput() {
   const dispatch = useDispatch()
-  const [testModalOpen, setTestModalOpen] = useState(false)
-  const [testServoIdx, setTestServoIdx] = useState(null)
-  const [testPwm, setTestPwm] = useState(1500)
-
   const aircraftType = useSelector(selectAircraftType)
   const servoConfig = useSelector(selectServoConfig)
   const servoPwmOutputs = useSelector(selectServoPwmOutputs)
   const connected = useSelector(selectConnectedToDrone)
+
+  const [testModalOpen, setTestModalOpen] = useState(false)
+  const [testServoIdx, setTestServoIdx] = useState(null)
+  const [testPwm, setTestPwm] = useState(1500)
 
   // Helper to get paramDef for a given param_id
   function getParamDef(param_id) {
@@ -81,7 +81,7 @@ export default function ServoOutput() {
 
   function handleOpenTestModal(servoNum) {
     setTestServoIdx(servoNum)
-    setTestPwm(servoPwmOutputs[servoNum] || 1500)
+    setTestPwm(1500)
     setTestModalOpen(true)
   }
 
@@ -148,16 +148,16 @@ export default function ServoOutput() {
         </Button>
       </Modal>
 
-      <Table highlightOnHover withRowBorders={false} className="!w-fit">
+      <Table withRowBorders={false} className="!w-fit">
         <Table.Thead>
           <Table.Tr>
             <Table.Th>#</Table.Th>
             <Table.Th>Position</Table.Th>
             <Table.Th>Reversed</Table.Th>
             <Table.Th>Function</Table.Th>
-            <Table.Th style={{ width: "70px" }}>Min</Table.Th>
-            <Table.Th style={{ width: "70px" }}>Trim</Table.Th>
-            <Table.Th style={{ width: "70px" }}>Max</Table.Th>
+            <Table.Th className="w-[4.375rem]">Min</Table.Th>
+            <Table.Th className="w-[4.375rem]">Trim</Table.Th>
+            <Table.Th className="w-[4.375rem]">Max</Table.Th>
             <Table.Th>Test</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -230,7 +230,7 @@ export default function ServoOutput() {
                       minDef?.Range?.high ? Number(minDef.Range.high) : PWM_MAX
                     }
                     size="xs"
-                    style={{ width: "60px" }}
+                    className="w-[3.75rem]"
                     onChange={(val) => handleParamChange(minParam, val)}
                   />
                 </Table.Td>
@@ -246,7 +246,7 @@ export default function ServoOutput() {
                         : PWM_MAX
                     }
                     size="xs"
-                    style={{ width: "60px" }}
+                    className="w-[3.75rem]"
                     onChange={(val) => handleParamChange(trimParam, val)}
                   />
                 </Table.Td>
@@ -260,7 +260,7 @@ export default function ServoOutput() {
                       maxDef?.Range?.high ? Number(maxDef.Range.high) : PWM_MAX
                     }
                     size="xs"
-                    style={{ width: "60px" }}
+                    className="w-[3.75rem]"
                     onChange={(val) => handleParamChange(maxParam, val)}
                   />
                 </Table.Td>

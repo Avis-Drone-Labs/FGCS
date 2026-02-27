@@ -1,7 +1,8 @@
 import app.droneStatus as droneStatus
 from app import logger, socketio
-from app.customTypes import BatchSetConfigParams, SetConfigParam
+from app.customTypes import BatchSetConfigParams, SetConfigParam, TestServoPwm
 from app.utils import notConnectedError
+
 
 @socketio.on("get_servo_config")
 def getServoConfig() -> None:
@@ -105,7 +106,7 @@ def batchSetServoConfigParams(data: BatchSetConfigParams) -> None:
 
 
 @socketio.on("test_servo_pwm")
-def testServoPwm(data: dict) -> None:
+def testServoPwm(data: TestServoPwm) -> None:
     """
     Sends a test PWM value to a servo.
     """
@@ -125,6 +126,6 @@ def testServoPwm(data: dict) -> None:
         )
         return
 
-    result = droneStatus.drone.setServo(servo_instance, pwm_value)
+    result = droneStatus.drone.servoController.setServo(servo_instance, pwm_value)
 
     socketio.emit("test_servo_result", result)

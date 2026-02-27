@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import serial
+from pymavlink import mavutil
+
 from app.customTypes import Number, Response, SetConfigParam
+from app.utils import commandAccepted
 
 if TYPE_CHECKING:
     from app.drone import Drone
@@ -147,3 +151,60 @@ class ServoController:
             "message": f"Failed to set {len(param_set_failures)} parameters: {param_set_failures}",
             "data": param_set_successes,
         }
+
+    def setServo(self, servo_instance: int, pwm_value: int) -> Response:
+        """Set a servo to a specific PWM value.
+
+        Args:
+            servo_instance (int): The number of the servo to set
+            pwm_value (int): The PWM value to set the servo to
+
+        Returns:
+            Response: The response from the servo set command
+        """
+        if not self.drone.reserve_message_type("COMMAND_ACK", self.drone.controller_id):
+            return {
+                "success": False,
+                "message": "Could not reserve COMMAND_ACK messages",
+            }
+
+        try:
+            self.drone.sendCommand(
+                mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
+                param1=servo_instance,  # Servo instance number
+                param2=pwm_value,  # PWM value
+            )
+
+            response = self.drone.wait_for_message(
+                "COMMAND_ACK",
+                self.drone.controller_id,
+                condition_func=lambda msg: msg.command
+                == mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
+            )
+
+            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
+                return {"success": True, "message": f"Setting servo to {pwm_value}"}
+            else:
+                self.drone.logger.error(
+                    f"Failed to set servo {servo_instance} to {pwm_value}"
+                )
+                error_message = f"Failed to set servo {servo_instance} to {pwm_value}"
+                error_code = response.result if response else None
+
+                # Map specific error codes to user-friendly messages
+                if error_code == 4:  # MAV_RESULT_FAILED
+                    error_message = f"Channel {servo_instance} is already in use"
+                elif error_code == 3:  # MAV_RESULT_UNSUPPORTED
+                    error_message = f"Servo {servo_instance} is not supported"
+                elif error_code == 2:  # MAV_RESULT_DENIED
+                    error_message = f"Permission denied to set servo {servo_instance}"
+
+                return {"success": False, "message": error_message}
+
+        except serial.serialutil.SerialException:
+            return {
+                "success": False,
+                "message": "Setting servo failed, serial exception",
+            }
+        finally:
+            self.drone.release_message_type("COMMAND_ACK", self.drone.controller_id)

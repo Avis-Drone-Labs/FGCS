@@ -21,11 +21,7 @@ import NoDroneConnected from "./components/noDroneConnected"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import Ftp from "./components/config/ftp"
-import {
-  emitGetGripperEnabled,
-  selectActiveTab,
-  setActiveTab,
-} from "./redux/slices/configSlice"
+import { selectActiveTab, setActiveTab } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
 
 export default function Config() {
@@ -37,8 +33,6 @@ export default function Config() {
   useEffect(() => {
     if (!connected) {
       dispatch(setActiveTab(null))
-    } else {
-      dispatch(emitGetGripperEnabled())
     }
   }, [connected])
 

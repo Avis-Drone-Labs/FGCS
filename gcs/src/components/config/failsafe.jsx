@@ -53,7 +53,6 @@ export default function Failsafes() {
             Battery Failsafe
           </h1>
           <div className="grid grid-cols-2 gap-4">
-
             <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
               <h2 className="font-semibold">Low Battery (Stage 1)</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -64,10 +63,12 @@ export default function Failsafes() {
                   min={0}
                   value={failsafeConfig.BATT_LOW_VOLT}
                   onChange={(value) => {
-                    dispatch(emitSetFailsafeConfigParam({
-                      param_id: "BATT_LOW_VOLT",
-                      value: Number(value),
-                    }))
+                    dispatch(
+                      emitSetFailsafeConfigParam({
+                        param_id: "BATT_LOW_VOLT",
+                        value: Number(value),
+                      }),
+                    )
                   }}
                 />
                 <NumberInput
@@ -77,10 +78,12 @@ export default function Failsafes() {
                   min={0}
                   value={failsafeConfig.BATT_LOW_MAH}
                   onChange={(value) => {
-                    dispatch(emitSetFailsafeConfigParam({
-                      param_id: "BATT_LOW_MAH",
-                      value: Number(value),
-                    }))
+                    dispatch(
+                      emitSetFailsafeConfigParam({
+                        param_id: "BATT_LOW_MAH",
+                        value: Number(value),
+                      }),
+                    )
                   }}
                 />
               </div>
@@ -88,15 +91,19 @@ export default function Failsafes() {
                 label="Failsafe Low Action"
                 allowDeselect={false}
                 value={String(failsafeConfig.BATT_FS_LOW_ACT)}
-                data={Object.keys(paramDefs.BATT_FS_LOW_ACT.Values).map((key) => ({
-                  value: `${key}`,
-                  label: `${key}: ${paramDefs.BATT_FS_LOW_ACT.Values[key]}`,
-                }))}
+                data={Object.keys(paramDefs.BATT_FS_LOW_ACT.Values).map(
+                  (key) => ({
+                    value: `${key}`,
+                    label: `${key}: ${paramDefs.BATT_FS_LOW_ACT.Values[key]}`,
+                  }),
+                )}
                 onChange={(value) => {
-                  dispatch(emitSetFailsafeConfigParam({
-                    param_id: "BATT_FS_LOW_ACT",
-                    value: Number(value),
-                  }))
+                  dispatch(
+                    emitSetFailsafeConfigParam({
+                      param_id: "BATT_FS_LOW_ACT",
+                      value: Number(value),
+                    }),
+                  )
                 }}
               />
             </div>
@@ -111,10 +118,12 @@ export default function Failsafes() {
                   min={0}
                   value={failsafeConfig.BATT_CRT_VOLT}
                   onChange={(value) => {
-                    dispatch(emitSetFailsafeConfigParam({
-                      param_id: "BATT_CRT_VOLT",
-                      value: Number(value),
-                    }))
+                    dispatch(
+                      emitSetFailsafeConfigParam({
+                        param_id: "BATT_CRT_VOLT",
+                        value: Number(value),
+                      }),
+                    )
                   }}
                 />
                 <NumberInput
@@ -124,10 +133,12 @@ export default function Failsafes() {
                   min={0}
                   value={failsafeConfig.BATT_CRT_MAH}
                   onChange={(value) => {
-                    dispatch(emitSetFailsafeConfigParam({
-                      param_id: "BATT_CRT_MAH",
-                      value: Number(value),
-                    }))
+                    dispatch(
+                      emitSetFailsafeConfigParam({
+                        param_id: "BATT_CRT_MAH",
+                        value: Number(value),
+                      }),
+                    )
                   }}
                 />
               </div>
@@ -135,19 +146,22 @@ export default function Failsafes() {
                 label="Failsafe Critical Action"
                 allowDeselect={false}
                 value={String(failsafeConfig.BATT_FS_CRT_ACT)}
-                data={Object.keys(paramDefs.BATT_FS_CRT_ACT.Values).map((key) => ({
-                  value: `${key}`,
-                  label: `${key}: ${paramDefs.BATT_FS_CRT_ACT.Values[key]}`,
-                }))}
+                data={Object.keys(paramDefs.BATT_FS_CRT_ACT.Values).map(
+                  (key) => ({
+                    value: `${key}`,
+                    label: `${key}: ${paramDefs.BATT_FS_CRT_ACT.Values[key]}`,
+                  }),
+                )}
                 onChange={(value) => {
-                  dispatch(emitSetFailsafeConfigParam({
-                    param_id: "BATT_FS_CRT_ACT",
-                    value: Number(value),
-                  }))
+                  dispatch(
+                    emitSetFailsafeConfigParam({
+                      param_id: "BATT_FS_CRT_ACT",
+                      value: Number(value),
+                    }),
+                  )
                 }}
               />
             </div>
-
           </div>
         </div>
 
@@ -165,25 +179,31 @@ export default function Failsafes() {
                     min={0}
                     value={failsafeConfig.RC_FS_TIMEOUT}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "RC_FS_TIMEOUT",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "RC_FS_TIMEOUT",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                   <Select
                     label="Throttle Failsafe Enable"
                     allowDeselect={false}
                     value={String(failsafeConfig.FS_THR_ENABLE)}
-                    data={Object.keys(paramDefs.FS_THR_ENABLE.Values).map((key) => ({
-                      value: `${key}`,
-                      label: `${key}: ${paramDefs.FS_THR_ENABLE.Values[key]}`,
-                    }))}
+                    data={Object.keys(paramDefs.FS_THR_ENABLE.Values).map(
+                      (key) => ({
+                        value: `${key}`,
+                        label: `${key}: ${paramDefs.FS_THR_ENABLE.Values[key]}`,
+                      }),
+                    )}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_THR_ENABLE",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_THR_ENABLE",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                 </div>
@@ -199,25 +219,31 @@ export default function Failsafes() {
                     min={0}
                     value={failsafeConfig.FS_GCS_TIMEOUT}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_GCS_TIMEOUT",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_GCS_TIMEOUT",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                   <Select
                     label="GCS Failsafe Enable"
                     allowDeselect={false}
                     value={String(failsafeConfig.FS_GCS_ENABLE)}
-                    data={Object.keys(paramDefs.FS_GCS_ENABLE.Values).map((key) => ({
-                      value: `${key}`,
-                      label: `${key}: ${paramDefs.FS_GCS_ENABLE.Values[key]}`,
-                    }))}
+                    data={Object.keys(paramDefs.FS_GCS_ENABLE.Values).map(
+                      (key) => ({
+                        value: `${key}`,
+                        label: `${key}: ${paramDefs.FS_GCS_ENABLE.Values[key]}`,
+                      }),
+                    )}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_GCS_ENABLE",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_GCS_ENABLE",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                 </div>
@@ -235,31 +261,36 @@ export default function Failsafes() {
                     min={0}
                     value={failsafeConfig.FS_EKF_THRESH}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_EKF_THRESH",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_EKF_THRESH",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                   <Select
                     label="EKF Failsafe Action"
                     allowDeselect={false}
                     value={String(failsafeConfig.FS_EKF_ACTION)}
-                    data={Object.keys(paramDefs.FS_EKF_ACTION.Values).map((key) => ({
-                      value: `${key}`,
-                      label: `${key}: ${paramDefs.FS_EKF_ACTION.Values[key]}`,
-                    }))}
+                    data={Object.keys(paramDefs.FS_EKF_ACTION.Values).map(
+                      (key) => ({
+                        value: `${key}`,
+                        label: `${key}: ${paramDefs.FS_EKF_ACTION.Values[key]}`,
+                      }),
+                    )}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_EKF_ACTION",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_EKF_ACTION",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                 </div>
               </div>
             </div>
-
           </>
         )}
 
@@ -270,7 +301,6 @@ export default function Failsafes() {
                 RC Failsafe
               </h1>
               <div className="grid grid-cols-2 gap-4">
-
                 <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
                   <h2 className="font-semibold">Short Failsafe</h2>
                   <NumberInput
@@ -279,25 +309,31 @@ export default function Failsafes() {
                     min={0}
                     value={failsafeConfig.FS_SHORT_TIMEOUT}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_SHORT_TIMEOUT",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_SHORT_TIMEOUT",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                   <Select
                     label="Short Action"
                     allowDeselect={false}
                     value={String(failsafeConfig.FS_SHORT_ACTN)}
-                    data={Object.keys(paramDefs.FS_SHORT_ACTN.Values).map((key) => ({
-                      value: `${key}`,
-                      label: `${key}: ${paramDefs.FS_SHORT_ACTN.Values[key]}`,
-                    }))}
+                    data={Object.keys(paramDefs.FS_SHORT_ACTN.Values).map(
+                      (key) => ({
+                        value: `${key}`,
+                        label: `${key}: ${paramDefs.FS_SHORT_ACTN.Values[key]}`,
+                      }),
+                    )}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_SHORT_ACTN",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_SHORT_ACTN",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                 </div>
@@ -309,41 +345,47 @@ export default function Failsafes() {
                     min={0}
                     value={failsafeConfig.FS_LONG_TIMEOUT}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_LONG_TIMEOUT",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_LONG_TIMEOUT",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                   <Select
                     label="Long Action"
                     allowDeselect={false}
                     value={String(failsafeConfig.FS_LONG_ACTN)}
-                    data={Object.keys(paramDefs.FS_LONG_ACTN.Values).map((key) => ({
-                      value: `${key}`,
-                      label: `${key}: ${paramDefs.FS_LONG_ACTN.Values[key]}`,
-                    }))}
+                    data={Object.keys(paramDefs.FS_LONG_ACTN.Values).map(
+                      (key) => ({
+                        value: `${key}`,
+                        label: `${key}: ${paramDefs.FS_LONG_ACTN.Values[key]}`,
+                      }),
+                    )}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "FS_LONG_ACTN",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "FS_LONG_ACTN",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                   />
                 </div>
 
                 <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h1 className="font-semibold">
-                      Throttle Failsafe
-                    </h1>
+                    <h1 className="font-semibold">Throttle Failsafe</h1>
                     <Switch
                       checked={failsafeConfig.THR_FAILSAFE}
                       onChange={(event) => {
-                        dispatch(emitSetFailsafeConfigParam({
-                          param_id: "THR_FAILSAFE",
-                          value: Number(event.currentTarget.checked),
-                        }))
+                        dispatch(
+                          emitSetFailsafeConfigParam({
+                            param_id: "THR_FAILSAFE",
+                            value: Number(event.currentTarget.checked),
+                          }),
+                        )
                       }}
                     />
                   </div>
@@ -354,17 +396,17 @@ export default function Failsafes() {
                     min={925}
                     max={2200}
                     onChange={(value) => {
-                      dispatch(emitSetFailsafeConfigParam({
-                        param_id: "THR_FS_VALUE",
-                        value: Number(value),
-                      }))
+                      dispatch(
+                        emitSetFailsafeConfigParam({
+                          param_id: "THR_FS_VALUE",
+                          value: Number(value),
+                        }),
+                      )
                     }}
                     disabled={!failsafeConfig.THR_FAILSAFE}
                   />
                 </div>
-
               </div>
-
             </div>
 
             <div className="grid gap-4 grid-cols-2">
@@ -376,10 +418,12 @@ export default function Failsafes() {
                   className="mr-4"
                   checked={failsafeConfig.FS_GCS_ENABL}
                   onChange={(event) => {
-                    dispatch(emitSetFailsafeConfigParam({
-                      param_id: "FS_GCS_ENABL",
-                      value: Number(event.currentTarget.checked),
-                    }))
+                    dispatch(
+                      emitSetFailsafeConfigParam({
+                        param_id: "FS_GCS_ENABL",
+                        value: Number(event.currentTarget.checked),
+                      }),
+                    )
                   }}
                 />
               </div>

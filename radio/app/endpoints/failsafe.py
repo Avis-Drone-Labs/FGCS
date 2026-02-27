@@ -40,7 +40,7 @@ def getFailsafeConfig() -> None:
     """
     Sends the failsafe config to the frontend, only works when the config page is loaded.
     """
-    if droneStatus.state != "config":
+    if droneStatus.state != "config.failsafe":
         socketio.emit(
             "params_error",
             {
@@ -52,15 +52,17 @@ def getFailsafeConfig() -> None:
 
     if not droneStatus.drone:
         logger.warning("Attempted to get the failsafe config when drone is None.")
-        droneErrorCb("get the failsafe config")
+        droneErrorCb(
+            "You must be connected to the drone to access the failsafe configuration."
+        )
         return
 
-    requested_params = FAILSAFE_PARAMS
+    requested_params = []
 
     if droneStatus.drone.aircraft_type == VehicleType.FIXED_WING.value:
-        requested_params += PLANE_FS_PARAMS
+        requested_params = FAILSAFE_PARAMS + PLANE_FS_PARAMS
     if droneStatus.drone.aircraft_type == VehicleType.MULTIROTOR.value:
-        requested_params += COPTER_FS_PARAMS
+        requested_params = FAILSAFE_PARAMS + COPTER_FS_PARAMS
 
     failsafe_config = {}
     for param in requested_params:
@@ -83,7 +85,7 @@ def setFailsafeParam(data: SetConfigParam) -> None:
     """
     Sets a failsafe parameter based off data passed in, only works when the config page is loaded.
     """
-    if droneStatus.state != "config":
+    if droneStatus.state != "config.failsafe":
         socketio.emit(
             "params_error",
             {
@@ -95,20 +97,22 @@ def setFailsafeParam(data: SetConfigParam) -> None:
 
     if not droneStatus.drone:
         logger.warning("Attempted to set a failsafe param when drone is None.")
-        droneErrorCb("set a failsafe param")
+        droneErrorCb(
+            "You must be connected to the drone to access the failsafe configuration."
+        )
         return
 
     param_id = data.get("param_id", None)
     value = data.get("value", None)
 
-    logger.info(param_id)
-    logger.info(value)
-
     if param_id is None or value is None:
         droneErrorCb("Param ID and value must be specified.")
         return
 
-    param_type = failsafe_params.get(param_id, {}).get("param_type", None)
+    param_type = None
+    if (response := failsafe_params.get(param_id, {})).get("success", False):
+        param_type = getattr(response.get("data"), "param_type", None)
+
     success = droneStatus.drone.paramsController.setParam(param_id, value, param_type)
     if success:
         result = {

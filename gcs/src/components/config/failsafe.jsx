@@ -36,7 +36,7 @@ export default function Failsafes() {
       return
     }
 
-    dispatch(emitSetState("config"))
+    dispatch(emitSetState("config.failsafe"))
     dispatch(emitGetFailsafeConfig())
   }, [connected])
 
@@ -53,7 +53,7 @@ export default function Failsafes() {
             Battery Failsafe
           </h1>
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+            <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
               <h2 className="font-semibold">Low Battery (Stage 1)</h2>
               <div className="grid grid-cols-2 gap-4">
                 <NumberInput
@@ -108,7 +108,7 @@ export default function Failsafes() {
               />
             </div>
 
-            <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+            <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
               <h2 className="font-semibold">Critical Battery (Stage 2)</h2>
               <div className="grid grid-cols-2 gap-4">
                 <NumberInput
@@ -172,7 +172,7 @@ export default function Failsafes() {
                 <h1 className="text-lg font-bold tracking-wide pb-2">
                   Radio Failsafe
                 </h1>
-                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
                   <NumberInput
                     label="RC Timeout"
                     suffix="s"
@@ -212,7 +212,7 @@ export default function Failsafes() {
                 <h1 className="text-lg font-bold tracking-wide pb-2">
                   GCS Failsafe
                 </h1>
-                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
                   <NumberInput
                     label="GCS Timeout"
                     suffix="s"
@@ -254,7 +254,7 @@ export default function Failsafes() {
                 <h1 className="text-lg font-bold tracking-wide pb-2">
                   EKF Failsafe
                 </h1>
-                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
                   <NumberInput
                     label="EKF Threshold"
                     suffix="s"
@@ -301,7 +301,7 @@ export default function Failsafes() {
                 RC Failsafe
               </h1>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
                   <h2 className="font-semibold">Short Failsafe</h2>
                   <NumberInput
                     label="Short Timeout"
@@ -337,7 +337,7 @@ export default function Failsafes() {
                     }}
                   />
                 </div>
-                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
                   <h2 className="font-semibold">Long Failsafe</h2>
                   <NumberInput
                     label="Long Timeout"
@@ -374,7 +374,7 @@ export default function Failsafes() {
                   />
                 </div>
 
-                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 p-4 space-y-4">
+                <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
                   <div className="flex items-center justify-between">
                     <h1 className="font-semibold">Throttle Failsafe</h1>
                     <Switch

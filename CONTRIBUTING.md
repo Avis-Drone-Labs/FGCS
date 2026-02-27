@@ -1,6 +1,6 @@
 # Contributing
 
-This document outlines the full process for creating, working on, and merging tickets within the FGCS repository.  
+This document outlines the full process for creating, working on, and merging tickets within the FGCS repository.
 All steps can be completed directly through GitHub and VS Code.
 
 ---
@@ -35,7 +35,7 @@ You can either:
 
 2. Drag your ticket into the **“In Progress”** column on the board.
 
-3. Open the ticket again, locate the **Development** section on the right-hand side, and click **“Create a new branch.”**  
+3. Open the ticket again, locate the **Development** section on the right-hand side, and click **“Create a new branch.”**
    Then click **“Create Branch.”**
 
    <p align="center">
@@ -58,10 +58,10 @@ You can commit changes using **VS Code (recommended)** or **Bash**.
 
 ### Method 1: VS Code (Recommended)
 
-1. Open the **Source Control** tab on the left-hand side.  
-2. Right-click the files you want to commit and select **“Stage Changes.”**  
+1. Open the **Source Control** tab on the left-hand side.
+2. Right-click the files you want to commit and select **“Stage Changes.”**
    Confirm the correct files appear under the *Staged Changes* section.
-3. Add a clear commit message describing your changes.  
+3. Add a clear commit message describing your changes.
 4. Press **Commit**, then click the **arrows in the bottom-left corner** to *Synchronize Changes* (push your commit).
 
    <p align="center">
@@ -92,8 +92,8 @@ git push origin <branch name>
 ---
 
 ### Merging
-Navigate to the ticket again and open a pull request. Wait until the automatic tests are ran and fix any changes suggested by those. 
+Navigate to the ticket again and open a pull request. Wait until the automatic tests are ran and fix any changes suggested by those.
 
-Then, in the top right click reviewers then Copilot (GitHub Pro required). Copilot will then offer a code review, it is strongly suggested you make these changes. 
+Then, in the top right click reviewers then Copilot (GitHub Pro required). Copilot will then offer a code review, it is strongly suggested you make these changes.
 
 Finally, request the "Avis Code team" as a reviewer, and one of the official code reviewers will look over your work. If they deem it suitable to merge, you will be cleared to merge; alternatively, changes will be suggested which you will make and then request another review.

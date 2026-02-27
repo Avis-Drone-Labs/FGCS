@@ -79,6 +79,7 @@ import {
   setGpsData,
   setGpsRawIntData,
   setGuidedModePinData,
+  setHasEverHadGpsFix,
   setHeartbeatData,
   setHomePosition,
   setLastGraphMessage,
@@ -439,6 +440,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
           store.dispatch(setTotalTimeFlying(0))
+          store.dispatch(setHasEverHadGpsFix(false))
         })
 
         // Simulation status messages
@@ -559,39 +561,66 @@ const socketMiddleware = (store) => {
           }
 
           // Handle graph messages
-          // Function to get the graph data from a message
           function getGraphDataFromMessage(msg, targetMessageKey) {
             const returnDataArray = []
-            for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
-              const messageKey =
-                storeState.droneInfo.graphs.selectedGraphs[graphKey]
-              if (messageKey && messageKey.includes(targetMessageKey)) {
-                const [, valueName] = messageKey.split(".")
 
-                // Applying Data Formatters
-                let formatted_value = msg[valueName]
-                if (messageKey in dataFormatters) {
-                  formatted_value = dataFormatters[messageKey](
-                    msg[valueName].toFixed(3),
-                  )
-                }
+            // SAFETY: if storeState or selectedGraphs missing, bail cleanly
+            const selectedGraphs = storeState?.droneInfo?.graphs?.selectedGraphs
+            if (!selectedGraphs) return false
 
-                returnDataArray.push({
-                  data: { x: Date.now(), y: formatted_value },
-                  graphKey: graphKey,
-                })
+            for (const graphKey in selectedGraphs) {
+              const messageKey = selectedGraphs[graphKey] // e.g. "ATTITUDE.yaw"
+              if (!messageKey) continue
+
+              // Safer than `includes` (prevents weird accidental matches)
+              if (!messageKey.startsWith(`${targetMessageKey}.`)) continue
+
+              const [, valueName] = messageKey.split(".")
+              const raw = msg?.[valueName]
+
+              // SAFETY: skip if value isn't present
+              if (raw === undefined || raw === null) continue
+
+              // Coerce to number if possible
+              const rawNum = Number(raw)
+              if (!Number.isFinite(rawNum)) continue
+
+              let formatted_value = rawNum
+
+              // Applying Data Formatters (guarded)
+              if (messageKey in dataFormatters) {
+                // formatter expects a string in your original code
+                formatted_value = dataFormatters[messageKey](rawNum.toFixed(3))
               }
+
+              returnDataArray.push({
+                data: { x: Date.now(), y: formatted_value },
+                graphKey,
+              })
             }
-            if (returnDataArray.length) {
-              return returnDataArray
-            }
-            return false
+
+            return returnDataArray.length ? returnDataArray : false
           }
-          store.dispatch(
-            setLastGraphMessage(
-              getGraphDataFromMessage(msg, msg.mavpackettype),
-            ),
-          )
+
+          let graphData = false
+          try {
+            graphData = getGraphDataFromMessage(msg, msg.mavpackettype)
+          } catch (e) {
+            console.error("Graph extraction crashed:", e, {
+              mavpackettype: msg?.mavpackettype,
+            })
+            graphData = false
+          }
+
+          // keep existing tab behaviour
+          store.dispatch(setLastGraphMessage(graphData))
+
+          // forward to any open graph windows
+          if (graphData) {
+            window.ipcRenderer
+              .invoke("app:update-graph-windows", graphData)
+              .catch((e) => console.error("update-graph-windows failed:", e))
+          }
 
           // Handle Flight Mode incoming data
           if (
@@ -750,6 +779,11 @@ const socketMiddleware = (store) => {
             if (msg.success) {
               store.dispatch(setHomePosition(msg.data)) // use actual home position
             } else {
+              // If home position could not be fetched because GPS fix has never
+              // been acquired, we can ignore this message
+              if (msg.data === "NEVER_HAD_GPS_FIX") {
+                return
+              }
               showErrorNotification(msg.message)
             }
           },

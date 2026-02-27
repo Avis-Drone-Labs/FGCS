@@ -71,6 +71,7 @@ const droneInfoSlice = createSlice({
       hdop: 0,
     },
     hasSecondaryGps: false,
+    hasEverHadGpsFix: false,
     rssi: 0.0,
     notificationSound: "",
     aircraftType: 2, // Default to copter, will be updated on heartbeat
@@ -228,6 +229,12 @@ const droneInfoSlice = createSlice({
         state.gpsRawIntData.velocity = action.payload.vel / 100.0 // cm/s to m/s
         state.gpsRawIntData.courseOverGround = centiDegToDeg(action.payload.cog)
         state.gpsRawIntData.hdop = action.payload.hdop ?? 0
+
+        if (!state.hasEverHadGpsFix && action.payload.fix_type >= 2) {
+          state.hasEverHadGpsFix = true
+          // TODO: If we get GPS position later on in the connection,
+          // fetch home position
+        }
       }
     },
     setGps2RawIntData: (state, action) => {
@@ -243,6 +250,9 @@ const droneInfoSlice = createSlice({
 
         state.hasSecondaryGps = true // Reducer called => gps2 exists
       }
+    },
+    setHasEverHadGpsFix: (state, action) => {
+      state.hasEverHadGpsFix = action.payload
     },
     setOnboardControlSensorsEnabled: (state, action) => {
       if (action.payload !== state.onboardControlSensorsEnabled) {
@@ -340,6 +350,7 @@ const droneInfoSlice = createSlice({
     selectGPSRawInt: (state) => state.gpsRawIntData,
     selectGPS2RawInt: (state) => state.gps2RawIntData,
     selectHasSecondaryGps: (state) => state.hasSecondaryGps,
+    selectHasEverHadGpsFix: (state) => state.hasEverHadGpsFix,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
     selectBatteryData: (state) =>
@@ -372,6 +383,7 @@ export const {
   setNavControllerOutput,
   setGpsRawIntData,
   setGps2RawIntData,
+  setHasEverHadGpsFix,
   setBatteryData,
   setOnboardControlSensorsEnabled,
   setRSSIData,
@@ -490,6 +502,7 @@ export const {
   selectGPSRawInt,
   selectGPS2RawInt,
   selectHasSecondaryGps,
+  selectHasEverHadGpsFix,
   selectRSSI,
   selectHeading,
   selectSystemStatus,

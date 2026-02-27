@@ -64,11 +64,9 @@ def test_getMissionName_rally():
     assert name == "rally"
 
 
-def test_getMissionName_invalid_type_raises():
-    with pytest.raises(ValueError) as excinfo:
-        _getMissionName(9999)
-
-    assert str(excinfo.value) == "Invalid mission type 9999"
+def test_getMissionName_invalid_type():
+    name = _getMissionName(9999)
+    assert name == "unknown"
 
 
 def test_getCommandName_known_command():

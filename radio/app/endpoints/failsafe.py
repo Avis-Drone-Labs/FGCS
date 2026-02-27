@@ -70,8 +70,6 @@ def getFailsafeConfig() -> None:
         )
         if failsafe_params[param]["success"]:
             failsafe_config[param] = failsafe_params[param]["data"].param_value
-        else:
-            failsafe_config[param] = "UNKNOWN"
 
     socketio.emit(
         "failsafe_config",

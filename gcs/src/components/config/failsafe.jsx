@@ -70,6 +70,7 @@ export default function Failsafes() {
                       }),
                     )
                   }}
+                  disabled={failsafeConfig.BATT_LOW_VOLT == undefined}
                 />
                 <NumberInput
                   label="Capacity Threshold"
@@ -85,6 +86,7 @@ export default function Failsafes() {
                       }),
                     )
                   }}
+                  disabled={failsafeConfig.BATT_LOW_MAH == undefined}
                 />
               </div>
               <Select
@@ -105,6 +107,7 @@ export default function Failsafes() {
                     }),
                   )
                 }}
+                disabled={failsafeConfig.BATT_FS_LOW_ACT == undefined}
               />
             </div>
 
@@ -125,6 +128,7 @@ export default function Failsafes() {
                       }),
                     )
                   }}
+                  disabled={failsafeConfig.BATT_CRT_VOLT == undefined}
                 />
                 <NumberInput
                   label="Capacity Threshold"
@@ -140,6 +144,7 @@ export default function Failsafes() {
                       }),
                     )
                   }}
+                  disabled={failsafeConfig.BATT_CRT_MAH == undefined}
                 />
               </div>
               <Select
@@ -160,6 +165,7 @@ export default function Failsafes() {
                     }),
                   )
                 }}
+                disabled={failsafeConfig.BATT_FS_CRT_ACT == undefined}
               />
             </div>
           </div>
@@ -186,6 +192,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.RC_FS_TIMEOUT == undefined}
                   />
                   <Select
                     label="Throttle Failsafe Enable"
@@ -205,6 +212,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_THR_ENABLE == undefined}
                   />
                 </div>
               </div>
@@ -226,6 +234,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_GCS_TIMEOUT == undefined}
                   />
                   <Select
                     label="GCS Failsafe Enable"
@@ -245,6 +254,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_GCS_ENABLE == undefined}
                   />
                 </div>
               </div>
@@ -268,6 +278,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_EKF_THRESH == undefined}
                   />
                   <Select
                     label="EKF Failsafe Action"
@@ -287,6 +298,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_EKF_ACTION == undefined}
                   />
                 </div>
               </div>
@@ -316,6 +328,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_SHORT_TIMEOUT == undefined}
                   />
                   <Select
                     label="Short Action"
@@ -335,6 +348,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_SHORT_ACTN == undefined}
                   />
                 </div>
                 <div className="p-4 rounded-xl bg-falcongrey-900 border border-falcongrey-600 space-y-4">
@@ -352,6 +366,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_LONG_TIMEOUT == undefined}
                   />
                   <Select
                     label="Long Action"
@@ -371,6 +386,7 @@ export default function Failsafes() {
                         }),
                       )
                     }}
+                    disabled={failsafeConfig.FS_LONG_ACTN == undefined}
                   />
                 </div>
 
@@ -387,6 +403,7 @@ export default function Failsafes() {
                           }),
                         )
                       }}
+                      disabled={failsafeConfig.THR_FAILSAFE == undefined}
                     />
                   </div>
                   <NumberInput
@@ -425,6 +442,7 @@ export default function Failsafes() {
                       }),
                     )
                   }}
+                  disabled={failsafeConfig.FS_GCS_ENABL == undefined}
                 />
               </div>
             </div>

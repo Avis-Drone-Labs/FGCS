@@ -48,6 +48,7 @@ import {
   emitGetFlightModeConfig,
   setChannelsConfig,
   setCurrentPwmValue,
+  setFailsafeConfig,
   setFlightModeChannel,
   setFlightModesList,
   setFrameClass,
@@ -61,9 +62,11 @@ import {
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
+  setRefreshingFailsafeConfigData,
   setShowMotorTestWarningModal,
   updateChannelsConfigParam,
   updateGripperConfigParam,
+  updateFailsafeConfigParam,
 } from "../slices/configSlice.js"
 import {
   appendToGpsTrack,
@@ -186,10 +189,12 @@ const MissionSpecificSocketEvents = Object.freeze({
 })
 
 const ConfigSpecificSocketEvents = Object.freeze({
+  onFailsafeConfig: "failsafe_config",
   onGripperEnabled: "is_gripper_enabled",
   onSetGripperResult: "set_gripper_result",
   onGripperConfig: "gripper_config",
   setGripperParamResult: "set_gripper_param_result",
+  setFailsafeParamResult: "set_failsafe_param_result",
   onMotorTestResult: "motor_test_result",
   onFlightModeConfig: "flight_mode_config",
   onSetFlightModeResult: "set_flight_mode_result",
@@ -1047,6 +1052,11 @@ const socketMiddleware = (store) => {
           = CONFIG =
           ==========
         */
+        socket.socket.on(ConfigSpecificSocketEvents.onFailsafeConfig, (msg) => {
+          store.dispatch(setFailsafeConfig(msg.params))
+          store.dispatch(setRefreshingFailsafeConfigData(false))
+        })
+
         socket.socket.on(
           ConfigSpecificSocketEvents.onGripperEnabled,
           (enabled) => {
@@ -1077,6 +1087,22 @@ const socketMiddleware = (store) => {
               showSuccessNotification(msg.message)
               store.dispatch(
                 updateGripperConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.setFailsafeParamResult,
+          (msg) => {
+            if (msg.success) {
+              store.dispatch(
+                updateFailsafeConfigParam({
                   param_id: msg.param_id,
                   value: msg.value,
                 }),

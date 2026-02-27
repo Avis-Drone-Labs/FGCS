@@ -26,6 +26,7 @@ import { IconInfoCircle } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   emitGetGripperConfig,
+  emitGetGripperEnabled,
   emitSetGripper,
   emitSetGripperConfigParam,
   emitSetGripperDisabled,
@@ -128,6 +129,8 @@ export default function Gripper() {
     }
 
     dispatch(emitSetState("config.gripper"))
+
+    dispatch(emitGetGripperEnabled())
     if (getGripperEnabled) {
       dispatch(emitGetGripperConfig())
     }

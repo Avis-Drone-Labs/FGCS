@@ -6,7 +6,7 @@
 */
 
 // Native Imports
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 // Custom Imports
 import SpotlightComponent from "../spotlight/spotlight.jsx"
@@ -14,12 +14,17 @@ import { CloseIcon, MaximizeIcon, MinimizeIcon } from "./icons.jsx"
 import AdvancedMenu from "./menus/advanced.jsx"
 import FileMenu from "./menus/file.jsx"
 import ViewMenu from "./menus/view.jsx"
+import GraphsMenu from "./menus/graphs.jsx"
 import ConfirmExitModal from "./confirmExitModal.jsx"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice.js"
 import { setConfirmExitModalOpen } from "../../redux/slices/applicationSlice.js"
+import {
+  selectGraphValues,
+  setGraphValues,
+} from "../../redux/slices/droneInfoSlice.js"
 
 export default function Toolbar() {
   const dispatch = useDispatch()
@@ -28,11 +33,54 @@ export default function Toolbar() {
 
   const connectedToDrone = useSelector(selectConnectedToDrone)
 
+  const selectedGraphs = useSelector(selectGraphValues)
+  const selectedGraphsRef = useRef(selectedGraphs)
+
+  useEffect(() => {
+    selectedGraphsRef.current = selectedGraphs
+  }, [selectedGraphs])
+
   useEffect(() => {
     window.ipcRenderer.invoke("app:is-mac").then((result) => {
       setIsMac(result)
     })
   }, [])
+
+  const GRAPH_KEYS = ["graph_a", "graph_b", "graph_c", "graph_d"]
+
+  const packToSlots = (list) => {
+    const next = { graph_a: null, graph_b: null, graph_c: null, graph_d: null }
+    for (let i = 0; i < Math.min(list.length, GRAPH_KEYS.length); i++) {
+      next[GRAPH_KEYS[i]] = list[i]
+    }
+    return next
+  }
+
+  useEffect(() => {
+    if (!window.ipcRenderer) return
+
+    const handleClosed = (_event, payload) => {
+      const graphKey = payload?.graphKey
+      if (!graphKey) return
+
+      const current = selectedGraphsRef.current
+      if (!current) return
+
+      const closedId = current[graphKey]
+      if (!closedId) return // already unticked / nothing to do
+
+      // Build ordered list from slots, excluding the closed one
+      const remaining = GRAPH_KEYS.map((k) => current[k]).filter(Boolean)
+      const nextList = remaining.filter((id) => id !== closedId)
+
+      dispatch(setGraphValues(packToSlots(nextList)))
+    }
+
+    window.ipcRenderer.on("app:graph-window:closed", handleClosed)
+    return () => {
+      window.ipcRenderer.removeListener("app:graph-window:closed", handleClosed)
+    }
+  }, [dispatch])
 
   const onClose = () => {
     if (connectedToDrone) {
@@ -66,6 +114,12 @@ export default function Toolbar() {
               </div>
               <div>
                 <ViewMenu
+                  areMenusActive={areMenusActive}
+                  setMenusActive={setMenusActive}
+                />
+              </div>
+              <div>
+                <GraphsMenu
                   areMenusActive={areMenusActive}
                   setMenusActive={setMenusActive}
                 />

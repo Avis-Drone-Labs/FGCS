@@ -7,6 +7,7 @@ from .helpers import NoDrone, send_and_receive, set_params
 from app.customTypes import VehicleType
 
 
+# Common parameters for Plane and Copter
 FAILSAFE_TEST_PARAMS = [
     ("BATT_LOW_VOLT", 10.5, mavutil.mavlink.MAV_PARAM_TYPE_REAL32),
     ("BATT_LOW_MAH", 1000, mavutil.mavlink.MAV_PARAM_TYPE_REAL32),
@@ -14,8 +15,6 @@ FAILSAFE_TEST_PARAMS = [
     ("BATT_CRT_VOLT", 9.5, mavutil.mavlink.MAV_PARAM_TYPE_REAL32),
     ("BATT_CRT_MAH", 500, mavutil.mavlink.MAV_PARAM_TYPE_REAL32),
     ("BATT_FS_CRT_ACT", 2, mavutil.mavlink.MAV_PARAM_TYPE_UINT8),
-    ("FS_OPTIONS", 0, mavutil.mavlink.MAV_PARAM_TYPE_UINT8),
-    ("FS_THR_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8),
 ]
 
 

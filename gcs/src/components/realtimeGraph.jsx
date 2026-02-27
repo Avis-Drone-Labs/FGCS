@@ -33,6 +33,8 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
+const TIME_WINDOW_MS = 30_000
+
 const options = {
   responsive: true,
   maintainAspectRatio: false,
@@ -43,7 +45,7 @@ const options = {
       position: "top",
     },
     streaming: {
-      duration: 20000,
+      duration: TIME_WINDOW_MS,
       frameRate: 30,
     },
   },

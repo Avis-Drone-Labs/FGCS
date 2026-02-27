@@ -80,8 +80,6 @@ export default function GraphWindowApp() {
   const graphKey = meta?.graphKey
   const m = meta?.meta
 
-  const title = m?.title ?? "Graph"
-  const desc = m?.description ?? ""
   const label = m?.label ?? m?.id ?? "Graph"
   const lineColor = graphKey ? SLOT_COLORS[graphKey] : tailwindColors.sky[400]
 

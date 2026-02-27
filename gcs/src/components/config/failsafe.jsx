@@ -38,7 +38,7 @@ export default function Failsafes() {
 
     dispatch(emitSetState("config.failsafe"))
     dispatch(emitGetFailsafeConfig())
-  }, [connected])
+  }, [connected, dispatch])
 
   return (
     <>

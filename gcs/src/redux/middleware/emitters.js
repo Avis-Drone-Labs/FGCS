@@ -1,6 +1,7 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
+  emitGetFailsafeConfig,
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
@@ -11,10 +12,12 @@ import {
   emitSetFlightModeChannel,
   emitSetGripper,
   emitSetGripperConfigParam,
+  emitSetFailsafeConfigParam,
   emitSetRcConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
+  setRefreshingFailsafeConfigData,
   setRefreshingGripperConfigData,
 } from "../slices/configSlice"
 import {
@@ -329,6 +332,22 @@ export function handleEmitters(socket, store, action) {
       = CONFIG =
       ==========
     */
+    {
+      emitter: emitGetFailsafeConfig,
+      callback: () => {
+        socket.socket.emit("get_failsafe_config")
+        store.dispatch(setRefreshingFailsafeConfigData(true))
+      },
+    },
+    {
+      emitter: emitSetFailsafeConfigParam,
+      callback: () => {
+        socket.socket.emit("set_failsafe_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
+    },
     {
       emitter: emitGetGripperEnabled,
       callback: () => socket.socket.emit("get_gripper_enabled"),

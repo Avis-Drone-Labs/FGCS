@@ -11,6 +11,7 @@ import { useEffect } from "react"
 import { Tabs } from "@mantine/core"
 
 // Custom component and helpers
+import Failsafes from "./components/config/failsafe"
 import FlightModes from "./components/config/flightModes"
 import Gripper from "./components/config/gripper"
 import Motortestpanel from "./components/config/motorTest"
@@ -63,6 +64,7 @@ export default function Config() {
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>
               <Tabs.Tab value="rc_calibration">RC Calibration</Tabs.Tab>
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
+              <Tabs.Tab value="failsafes">Failsafes</Tabs.Tab>
               <Tabs.Tab value="ftp">FTP</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
@@ -83,6 +85,11 @@ export default function Config() {
             <Tabs.Panel value="flightmodes">
               <div className={paddingTop}>
                 <FlightModes />
+              </div>
+            </Tabs.Panel>
+            <Tabs.Panel value="failsafes">
+              <div className={paddingTop}>
+                <Failsafes />
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="ftp">

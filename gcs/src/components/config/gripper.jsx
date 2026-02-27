@@ -131,7 +131,7 @@ export default function Gripper() {
     if (getGripperEnabled) {
       dispatch(emitGetGripperConfig())
     }
-  }, [connected, dispatch])
+  }, [connected, dispatch, getGripperEnabled])
 
   function setGripper(action) {
     dispatch(emitSetGripper(action))

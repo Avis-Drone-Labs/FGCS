@@ -157,9 +157,15 @@ class Drone:
                 self.connectionError = "Could not connect to the drone."
                 return
         except Exception as e:
-            self.logger.exception(traceback.format_exc())
+            self.logger.error(
+                "Error while waiting for heartbeat: " + str(e), exc_info=True
+            )
+            if self.master is not None:
+                self.master.close()
             self.master = None
-            self.connectionError = str(e)
+            self.connectionError = (
+                "An error occured while waiting for a heartbeat from the drone."
+            )
             return
 
         self.sendConnectionStatusUpdate(1)

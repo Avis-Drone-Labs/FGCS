@@ -1,11 +1,13 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
+  emitBatchSetServoConfigParams,
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
+  emitGetServoConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
   emitSetFlightModeChannel,
@@ -14,9 +16,11 @@ import {
   emitSetGripperDisabled,
   emitSetGripperEnabled,
   emitSetRcConfigParam,
+  emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
+  emitTestServoPwm,
   setRefreshingGripperConfigData,
 } from "../slices/configSlice"
 import {
@@ -431,6 +435,36 @@ export function handleEmitters(socket, store, action) {
       callback: () => {
         socket.socket.emit("batch_set_rc_config_params", {
           params: action.payload.params,
+        })
+      },
+    },
+    {
+      emitter: emitGetServoConfig,
+      callback: () => socket.socket.emit("get_servo_config"),
+    },
+    {
+      emitter: emitSetServoConfigParam,
+      callback: () => {
+        socket.socket.emit("set_servo_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
+    },
+    {
+      emitter: emitBatchSetServoConfigParams,
+      callback: () => {
+        socket.socket.emit("batch_set_servo_config_params", {
+          params: action.payload.params,
+        })
+      },
+    },
+    {
+      emitter: emitTestServoPwm,
+      callback: () => {
+        socket.socket.emit("test_servo_pwm", {
+          servo_instance: action.payload.servo_instance,
+          pwm_value: action.payload.pwm_value,
         })
       },
     },

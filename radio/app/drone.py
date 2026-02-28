@@ -24,6 +24,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
+from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
 from app.utils import (
     commandAccepted,
@@ -113,6 +114,7 @@ class Drone:
             "Setting up the mission controller",
             "Setting up the frame controller",
             "Setting up the RC controller",
+            "Setting up the Servo Controller",
             "Setting up the nav controller",
             "Setting up the FTP controller",
             "Connection complete",
@@ -300,9 +302,12 @@ class Drone:
         self.rcController = RcController(self)
 
         self.sendConnectionStatusUpdate(11)
-        self.navController = NavController(self)
+        self.servoController = ServoController(self)
 
         self.sendConnectionStatusUpdate(12)
+        self.navController = NavController(self)
+
+        self.sendConnectionStatusUpdate(13)
         self.ftpController = FtpController(self)
 
     def sendConnectionStatusUpdate(self, msg_index):
@@ -972,57 +977,6 @@ class Drone:
             self.release_message_type("COMMAND_ACK", self.controller_id)
             self.close()
             return True
-
-    # TODO: Move this out into a controller
-    @sendingCommandLock
-    def setServo(self, servo_instance: int, pwm_value: int) -> Response:
-        """Set a servo to a specific PWM value.
-
-        Args:
-            servo_instance (int): The number of the servo to set
-            pwm_value (int): The PWM value to set the servo to
-
-        Returns:
-            Response: The response from the servo set command
-        """
-        if not self.reserve_message_type("COMMAND_ACK", self.controller_id):
-            return {
-                "success": False,
-                "message": "Could not reserve COMMAND_ACK messages",
-            }
-
-        try:
-            self.sendCommand(
-                mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
-                param1=servo_instance,  # Servo instance number
-                param2=pwm_value,  # PWM value
-            )
-
-            response = self.wait_for_message(
-                "COMMAND_ACK",
-                self.controller_id,
-                condition_func=lambda msg: msg.command
-                == mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
-            )
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
-                return {"success": True, "message": f"Setting servo to {pwm_value}"}
-            else:
-                self.logger.error(
-                    f"Failed to set servo {servo_instance} to {pwm_value}"
-                )
-                return {
-                    "success": False,
-                    "message": f"Failed to set servo {servo_instance} to {pwm_value}",
-                }
-
-        except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": "Setting servo failed, serial exception",
-            }
-        finally:
-            self.release_message_type("COMMAND_ACK", self.controller_id)
 
     def sendCommand(
         self,

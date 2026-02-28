@@ -50,6 +50,11 @@ class BatchSetConfigParams(TypedDict):
     params: list[SetConfigParam]
 
 
+class TestServoPwm(TypedDict):
+    servo_instance: int
+    pwm_value: int
+
+
 class VehicleType(Enum):
     UNKNOWN = 0
     FIXED_WING = 1

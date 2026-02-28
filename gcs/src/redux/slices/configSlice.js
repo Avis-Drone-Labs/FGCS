@@ -44,6 +44,25 @@ const configSlice = createSlice({
     },
     radioChannelsConfig: {},
     radioCalibrationModalOpen: false,
+    servoPwmOutputs: {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+      6: 0,
+      7: 0,
+      8: 0,
+      9: 0,
+      10: 0,
+      11: 0,
+      12: 0,
+      13: 0,
+      14: 0,
+      15: 0,
+      16: 0,
+    },
+    servoConfig: {},
   },
   reducers: {
     setActiveTab: (state, action) => {
@@ -145,6 +164,33 @@ const configSlice = createSlice({
     setRadioCalibrationModalOpen: (state, action) => {
       state.radioCalibrationModalOpen = action.payload
     },
+    setServoPwmOutputs: (state, action) => {
+      if (action.payload === state.servoPwmOutputs) return
+      const updatedOutputs = {}
+      for (const servo in action.payload) {
+        if (action.payload[servo] !== state.servoPwmOutputs[servo]) {
+          updatedOutputs[servo] = action.payload[servo]
+        }
+      }
+      if (Object.keys(updatedOutputs).length === 0) return
+      state.servoPwmOutputs = { ...state.servoPwmOutputs, ...updatedOutputs }
+    },
+    setServoConfig: (state, action) => {
+      if (action.payload === state.servoConfig) return
+      state.servoConfig = action.payload
+    },
+    updateServoConfigParam: (state, action) => {
+      const { param_id, value } = action.payload
+      const match = param_id.match(/^SERVO(\d+)_(.+)$/)
+      if (!match) return
+      const servoNum = match[1]
+      const paramType = match[2].toLowerCase()
+      if (!state.servoConfig[servoNum]) return
+      const validParamTypes = ["function", "reversed", "min", "max", "trim"]
+      if (!validParamTypes.includes(paramType)) return
+      if (state.servoConfig[servoNum][paramType] === value) return
+      state.servoConfig[servoNum][paramType] = value
+    },
 
     // Emits
     emitGetGripperEnabled: () => {},
@@ -164,6 +210,10 @@ const configSlice = createSlice({
     emitGetRcConfig: () => {},
     emitSetRcConfigParam: () => {},
     emitBatchSetRcConfigParams: () => {},
+    emitGetServoConfig: () => {},
+    emitSetServoConfigParam: () => {},
+    emitBatchSetServoConfigParams: () => {},
+    emitTestServoPwm: () => {},
   },
   selectors: {
     selectActiveTab: (state) => state.activeTab,
@@ -184,6 +234,8 @@ const configSlice = createSlice({
     selectRadioPwmChannels: (state) => state.radioPwmChannels,
     selectRadioChannelsConfig: (state) => state.radioChannelsConfig,
     selectRadioCalibrationModalOpen: (state) => state.radioCalibrationModalOpen,
+    selectServoPwmOutputs: (state) => state.servoPwmOutputs,
+    selectServoConfig: (state) => state.servoConfig,
   },
 })
 
@@ -207,6 +259,9 @@ export const {
   setChannelsConfig,
   updateChannelsConfigParam,
   setRadioCalibrationModalOpen,
+  setServoPwmOutputs,
+  setServoConfig,
+  updateServoConfigParam,
 
   emitGetGripperEnabled,
   emitSetGripperEnabled,
@@ -225,6 +280,10 @@ export const {
   emitGetRcConfig,
   emitSetRcConfigParam,
   emitBatchSetRcConfigParams,
+  emitGetServoConfig,
+  emitSetServoConfigParam,
+  emitBatchSetServoConfigParams,
+  emitTestServoPwm,
 } = configSlice.actions
 
 export const {
@@ -245,6 +304,8 @@ export const {
   selectRadioPwmChannels,
   selectRadioChannelsConfig,
   selectRadioCalibrationModalOpen,
+  selectServoPwmOutputs,
+  selectServoConfig,
 } = configSlice.selectors
 
 export default configSlice

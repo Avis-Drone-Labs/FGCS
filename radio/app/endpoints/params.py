@@ -39,7 +39,9 @@ def set_multiple_params(params_list: List[Any]) -> None:
     if droneStatus.state != "params":
         socketio.emit(
             "params_error",
-            {"message": "You must be on the params screen to save parameters."},
+            {
+                "message": "You must be on the params screen to save parameters."
+            },
         )
         logger.debug(f"Current state: {droneStatus.state}")
         return

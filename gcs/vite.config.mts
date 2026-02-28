@@ -32,6 +32,7 @@ export default defineConfig({
         ekfStatus: resolve(__dirname, "ekfStatus.html"),
         vibeStatus: resolve(__dirname, "vibeStatus.html"),
         flaParams: resolve(__dirname, "flaParams.html"),
+        graphWindow: resolve(__dirname, "graphWindow.html"),
       },
     },
   },

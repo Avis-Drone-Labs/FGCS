@@ -148,12 +148,18 @@ class Drone:
                 self.connectionError = str(e)
             return
 
-        initial_heartbeat = self.master.wait_heartbeat(timeout=5)
-        if initial_heartbeat is None:
-            self.logger.error("Heartbeat timed out after 5 seconds")
-            self.master.close()
+        try:
+            initial_heartbeat = self.master.wait_heartbeat(timeout=5)
+            if initial_heartbeat is None:
+                self.logger.error("Heartbeat timed out after 5 seconds")
+                self.master.close()
+                self.master = None
+                self.connectionError = "Could not connect to the drone."
+                return
+        except Exception as e:
+            self.logger.exception(traceback.format_exc())
             self.master = None
-            self.connectionError = "Could not connect to the drone."
+            self.connectionError = str(e)
             return
 
         self.sendConnectionStatusUpdate(1)

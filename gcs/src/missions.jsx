@@ -6,29 +6,27 @@
 import { useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
-import { useSessionStorage } from "@mantine/hooks"
 import { ResizableBox } from "react-resizable"
 import { v4 as uuidv4 } from "uuid"
 
 // Custom component and helpers
 import {
-  ActionIcon,
   Button,
   Divider,
   Modal,
   NumberInput,
   Progress,
+  Select,
   Tabs,
   Tooltip,
 } from "@mantine/core"
-import { IconInfoCircle, IconX } from "@tabler/icons-react"
+import { IconInfoCircle } from "@tabler/icons-react"
 import Layout from "./components/layout"
 import FenceItemsTable from "./components/missions/fenceItemsTable"
 import MissionItemsTable from "./components/missions/missionItemsTable"
 import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
-import NoDroneConnected from "./components/noDroneConnected"
 import { coordToInt, intToCoord } from "./helpers/dataFormatters"
 
 // Redux
@@ -43,6 +41,10 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../tailwind.config"
 import UpdatePlannedHomePositionModal from "./components/missions/updatePlannedHomePositionModal"
 import { showErrorNotification } from "./helpers/notification"
+import {
+  selectAircraftType,
+  setDroneAircraftType,
+} from "./redux/slices/droneInfoSlice"
 import {
   emitExportMissionToFile,
   emitGetCurrentMission,
@@ -96,6 +98,7 @@ export default function Missions() {
   const targetInfo = useSelector(selectTargetInfo)
   const plannedHomePosition = useSelector(selectPlannedHomePosition)
   const activeTab = useSelector(selectActiveTab)
+  const aircraftType = useSelector(selectAircraftType)
 
   // Mission items
   const missionItems = useSelector(selectDrawingMissionItems)
@@ -104,12 +107,6 @@ export default function Missions() {
   const unwrittenChanges = useSelector(selectUnwrittenChanges)
   const missionProgressModalOpened = useSelector(selectMissionProgressModal)
   const missionProgressModalData = useSelector(selectMissionProgressData)
-
-  // Other states
-  const [showWarningBanner, setShowWarningBanner] = useSessionStorage({
-    key: "showWarningBanner",
-    defaultValue: true,
-  })
 
   // Need to keep a reference to the active tab to avoid stale closures
   const activeTabRef = useRef(activeTab)
@@ -345,249 +342,239 @@ export default function Missions() {
 
       <UpdatePlannedHomePositionModal />
 
-      {/* Banner to let people know that things are still under development */}
-      {showWarningBanner && (
-        <div className="bg-falconred-700 flex flex-row items-center justify-between w-full">
-          <p className="text-white text-center flex-1">
-            Missions is still under development so some features are still
-            missing. If you find any bugs please report them to us.
-          </p>
-          <ActionIcon
-            onClick={() => setShowWarningBanner(false)}
-            variant="transparent"
-            className="mr-2"
+      <div className="flex flex-col h-screen overflow-hidden">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Resizable Sidebar */}
+          <ResizableBox
+            width={200}
+            height={Infinity}
+            minConstraints={[200, Infinity]}
+            maxConstraints={[600, Infinity]}
+            resizeHandles={["e"]}
+            axis="x"
+            handle={
+              <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
+            }
+            className="relative bg-falcongrey-800 overflow-y-auto"
           >
-            <IconX color="white" />
-          </ActionIcon>
-        </div>
-      )}
-
-      {connected ? (
-        <div className="flex flex-col h-screen overflow-hidden">
-          <div className="flex flex-1 overflow-hidden">
-            {/* Resizable Sidebar */}
-            <ResizableBox
-              width={200}
-              height={Infinity}
-              minConstraints={[200, Infinity]}
-              maxConstraints={[600, Infinity]}
-              resizeHandles={["e"]}
-              axis="x"
-              handle={
-                <div className="w-2 h-full bg-falcongrey-900 hover:bg-falconred-500 cursor-col-resize absolute right-0 top-0 z-10"></div>
-              }
-              className="relative bg-falcongrey-800 overflow-y-auto"
-            >
-              <div className="flex flex-col gap-4 p-4">
-                <div className="flex flex-col gap-4">
-                  <UnwrittenChangesWarning
-                    unwrittenChanges={unwrittenChanges}
+            <div className="flex flex-col gap-4 p-4">
+              <div className="flex flex-col gap-4">
+                {connected ? (
+                  <>
+                    <UnwrittenChangesWarning
+                      unwrittenChanges={unwrittenChanges}
+                    />
+                    <Button
+                      onClick={() => {
+                        readMissionFromDrone()
+                      }}
+                      disabled={!connected}
+                      className="grow"
+                    >
+                      Read {activeTab}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        writeMissionToDrone()
+                      }}
+                      disabled={!connected}
+                      className="grow"
+                    >
+                      Write {activeTab}
+                    </Button>
+                  </>
+                ) : (
+                  <Select
+                    label="Select Aircraft Type"
+                    value={aircraftType.toString()}
+                    onChange={(val) => {
+                      dispatch(setDroneAircraftType(Number(val)))
+                    }}
+                    data={[
+                      { value: "1", label: "Plane" },
+                      { value: "2", label: "Copter" },
+                    ]}
+                    allowDeselect={false}
                   />
+                )}
+              </div>
 
-                  <Button
-                    onClick={() => {
-                      readMissionFromDrone()
-                    }}
-                    disabled={!connected}
-                    className="grow"
-                  >
-                    Read {activeTab}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      writeMissionToDrone()
-                    }}
-                    disabled={!connected}
-                    className="grow"
-                  >
-                    Write {activeTab}
-                  </Button>
-                </div>
+              <Divider className="my-1" />
 
-                <Divider className="my-1" />
+              <div className="flex flex-col gap-4">
+                <Button className="grow" onClick={importMissionFromFile}>
+                  Import from file
+                </Button>
+                <Button
+                  onClick={() => {
+                    saveMissionToFile()
+                  }}
+                  className="grow"
+                >
+                  Save to file
+                </Button>
+              </div>
 
-                <div className="flex flex-col gap-4">
-                  <Button className="grow" onClick={importMissionFromFile}>
-                    Import from file
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      saveMissionToFile()
-                    }}
-                    className="grow"
-                  >
-                    Save to file
-                  </Button>
-                </div>
+              <Divider className="my-1" />
 
-                <Divider className="my-1" />
-
-                <div className="flex flex-col gap-2">
-                  <p className="font-bold">
-                    Planned home{" "}
-                    <span>
-                      <Tooltip
-                        className="inline"
-                        label={
-                          <>
-                            <p className="text-wrap max-w-80">
-                              The planned home location is used to approximate
-                              the starting location of the mission. The
-                              dashboard displays the <i>actual</i> home location
-                              used by the drone.
-                            </p>
-                          </>
-                        }
-                      >
-                        <IconInfoCircle size={20} />
-                      </Tooltip>
-                    </span>
-                  </p>
-                  <NumberInput
-                    label="Lat"
-                    value={plannedHomeLatInput}
-                    onChange={(val) => setPlannedHomeLatInput(val)}
-                    onBlur={() => {
-                      if (isInvalidInputNumber(plannedHomeLatInput)) {
-                        setPlannedHomeLatInput(
-                          intToCoord(plannedHomePosition?.lat).toFixed(
-                            coordsFractionDigits,
-                          ),
-                        )
+              <div className="flex flex-col gap-2">
+                <p className="font-bold">
+                  Planned home{" "}
+                  <span>
+                    <Tooltip
+                      className="inline"
+                      label={
+                        <>
+                          <p className="text-wrap max-w-80">
+                            The planned home location is used to approximate the
+                            starting location of the mission. The dashboard
+                            displays the <i>actual</i> home location used by the
+                            drone.
+                          </p>
+                        </>
                       }
-                    }}
-                    min={-90}
-                    max={90}
-                    step={0.000001}
-                    hideControls
-                  />
-                  <NumberInput
-                    label="Lon"
-                    value={plannedHomeLonInput}
-                    onChange={(val) => setPlannedHomeLonInput(val)}
-                    onBlur={() => {
-                      if (isInvalidInputNumber(plannedHomeLonInput)) {
-                        setPlannedHomeLonInput(
-                          intToCoord(plannedHomePosition?.lon).toFixed(
-                            coordsFractionDigits,
-                          ),
-                        )
-                      }
-                    }}
-                    min={-180}
-                    max={180}
-                    step={0.000001}
-                    hideControls
-                  />
-                  <NumberInput
-                    label="Alt"
-                    value={plannedHomeAltInput}
-                    onChange={(val) => setPlannedHomeAltInput(val)}
-                    onBlur={() => {
-                      if (isInvalidInputNumber(plannedHomeAltInput)) {
-                        setPlannedHomeAltInput(plannedHomePosition?.alt)
-                      }
-                    }}
-                    min={0.1}
-                    allowNegative={false}
-                    hideControls
-                  />
-                  <Button
-                    className="mt-2"
-                    onClick={() =>
-                      dispatch(
-                        setPlannedHomePosition({
-                          lat: coordToInt(plannedHomeLatInput),
-                          lon: coordToInt(plannedHomeLonInput),
-                          alt: plannedHomeAltInput,
-                        }),
+                    >
+                      <IconInfoCircle size={20} />
+                    </Tooltip>
+                  </span>
+                </p>
+                <NumberInput
+                  label="Lat"
+                  value={plannedHomeLatInput}
+                  onChange={(val) => setPlannedHomeLatInput(val)}
+                  onBlur={() => {
+                    if (isInvalidInputNumber(plannedHomeLatInput)) {
+                      setPlannedHomeLatInput(
+                        intToCoord(plannedHomePosition?.lat).toFixed(
+                          coordsFractionDigits,
+                        ),
                       )
                     }
-                  >
-                    Save planned home
-                  </Button>
-                </div>
-
-                <Divider className="my-1" />
-
-                <div className="flex flex-col gap-2">
-                  <p className="font-bold">Mission statistics</p>
-                  <MissionStatistics />
-                </div>
-              </div>
-            </ResizableBox>
-
-            {/* Main content area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Map area */}
-              <div className="flex-1 relative">
-                <MissionsMapSection
-                  passedRef={mapRef}
-                  missionItems={missionItems}
-                  fenceItems={fenceItems}
-                  rallyItems={rallyItems}
+                  }}
+                  min={-90}
+                  max={90}
+                  step={0.000001}
+                  hideControls
                 />
+                <NumberInput
+                  label="Lon"
+                  value={plannedHomeLonInput}
+                  onChange={(val) => setPlannedHomeLonInput(val)}
+                  onBlur={() => {
+                    if (isInvalidInputNumber(plannedHomeLonInput)) {
+                      setPlannedHomeLonInput(
+                        intToCoord(plannedHomePosition?.lon).toFixed(
+                          coordsFractionDigits,
+                        ),
+                      )
+                    }
+                  }}
+                  min={-180}
+                  max={180}
+                  step={0.000001}
+                  hideControls
+                />
+                <NumberInput
+                  label="Alt"
+                  value={plannedHomeAltInput}
+                  onChange={(val) => setPlannedHomeAltInput(val)}
+                  onBlur={() => {
+                    if (isInvalidInputNumber(plannedHomeAltInput)) {
+                      setPlannedHomeAltInput(plannedHomePosition?.alt)
+                    }
+                  }}
+                  min={0.1}
+                  allowNegative={false}
+                  hideControls
+                />
+                <Button
+                  className="mt-2"
+                  onClick={() =>
+                    dispatch(
+                      setPlannedHomePosition({
+                        lat: coordToInt(plannedHomeLatInput),
+                        lon: coordToInt(plannedHomeLonInput),
+                        alt: plannedHomeAltInput,
+                      }),
+                    )
+                  }
+                >
+                  Save planned home
+                </Button>
               </div>
 
-              {/* Resizable Bottom Bar */}
-              <ResizableBox
-                width={Infinity}
-                height={300}
-                minConstraints={[Infinity, 100]}
-                maxConstraints={[Infinity, 400]}
-                resizeHandles={["n"]}
-                axis="y"
-                handle={
-                  <div className="w-full h-2 bg-falcongrey-900 hover:bg-falconred-500 cursor-row-resize absolute top-0 left-0 z-10"></div>
-                }
-                className="relative bg-falcongrey-800 overflow-y-auto"
-                onResizeStop={(_, { size }) => {
-                  setTableSectionHeight(
-                    size.height -
-                      tabsListRef.current.clientHeight -
-                      resizeTableHeightPadding,
-                  )
-                }}
-              >
-                <Tabs
-                  value={activeTab}
-                  onChange={(value) => dispatch(setActiveTab(value))}
-                  className="mt-2"
-                >
-                  <Tabs.List grow ref={tabsListRef}>
-                    <Tabs.Tab
-                      value="mission"
-                      color={tailwindColors.yellow[400]}
-                    >
-                      Mission
-                    </Tabs.Tab>
-                    <Tabs.Tab value="fence" color={tailwindColors.blue[400]}>
-                      Fence
-                    </Tabs.Tab>
-                    <Tabs.Tab value="rally" color={tailwindColors.purple[400]}>
-                      Rally
-                    </Tabs.Tab>
-                  </Tabs.List>
+              <Divider className="my-1" />
 
-                  <Tabs.Panel value="mission">
-                    <MissionItemsTable
-                      tableSectionHeight={tableSectionHeight}
-                    />
-                  </Tabs.Panel>
-                  <Tabs.Panel value="fence">
-                    <FenceItemsTable tableSectionHeight={tableSectionHeight} />
-                  </Tabs.Panel>
-                  <Tabs.Panel value="rally">
-                    <RallyItemsTable tableSectionHeight={tableSectionHeight} />
-                  </Tabs.Panel>
-                </Tabs>
-              </ResizableBox>
+              <div className="flex flex-col gap-2">
+                <p className="font-bold">Mission statistics</p>
+                <MissionStatistics />
+              </div>
             </div>
+          </ResizableBox>
+
+          {/* Main content area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Map area */}
+            <div className="flex-1 relative">
+              <MissionsMapSection
+                passedRef={mapRef}
+                missionItems={missionItems}
+                fenceItems={fenceItems}
+                rallyItems={rallyItems}
+              />
+            </div>
+
+            {/* Resizable Bottom Bar */}
+            <ResizableBox
+              width={Infinity}
+              height={300}
+              minConstraints={[Infinity, 100]}
+              maxConstraints={[Infinity, 400]}
+              resizeHandles={["n"]}
+              axis="y"
+              handle={
+                <div className="w-full h-2 bg-falcongrey-900 hover:bg-falconred-500 cursor-row-resize absolute top-0 left-0 z-10"></div>
+              }
+              className="relative bg-falcongrey-800 overflow-y-auto"
+              onResizeStop={(_, { size }) => {
+                setTableSectionHeight(
+                  size.height -
+                    tabsListRef.current.clientHeight -
+                    resizeTableHeightPadding,
+                )
+              }}
+            >
+              <Tabs
+                value={activeTab}
+                onChange={(value) => dispatch(setActiveTab(value))}
+                className="mt-2"
+              >
+                <Tabs.List grow ref={tabsListRef}>
+                  <Tabs.Tab value="mission" color={tailwindColors.yellow[400]}>
+                    Mission
+                  </Tabs.Tab>
+                  <Tabs.Tab value="fence" color={tailwindColors.blue[400]}>
+                    Fence
+                  </Tabs.Tab>
+                  <Tabs.Tab value="rally" color={tailwindColors.purple[400]}>
+                    Rally
+                  </Tabs.Tab>
+                </Tabs.List>
+
+                <Tabs.Panel value="mission">
+                  <MissionItemsTable tableSectionHeight={tableSectionHeight} />
+                </Tabs.Panel>
+                <Tabs.Panel value="fence">
+                  <FenceItemsTable tableSectionHeight={tableSectionHeight} />
+                </Tabs.Panel>
+                <Tabs.Panel value="rally">
+                  <RallyItemsTable tableSectionHeight={tableSectionHeight} />
+                </Tabs.Panel>
+              </Tabs>
+            </ResizableBox>
           </div>
         </div>
-      ) : (
-        <NoDroneConnected tab="missions" />
-      )}
+      </div>
     </Layout>
   )
 }

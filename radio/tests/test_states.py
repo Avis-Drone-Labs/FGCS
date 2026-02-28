@@ -8,11 +8,11 @@ from .helpers import NoDrone, send_and_receive
 def test_setState_no_drone_connection(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    """Test that setState fails when no drone is connected"""
+    """Test that setState succeeds when no drone is connected"""
     with NoDrone():
-        assert send_and_receive("set_state", "dashboard") == {
-            "message": "Must be connected to the drone to set the drone state."
-        }
+        socketio_client.emit("set_state", {"state": "dashboard"})
+        assert len(socketio_client.get_received()) == 0
+        assert droneStatus.state == "dashboard"
 
 
 @falcon_test(pass_drone_status=True)
@@ -69,16 +69,3 @@ def test_setState_config_rc_state(
     socketio_client.emit("set_state", {"state": "config.rc"})
     assert len(socketio_client.get_received()) == 0
     assert len(droneStatus.drone.message_listeners) == 5
-
-
-# TODO: Sort this out
-# @falcon_test(pass_drone_status=True)
-# def test_setState_params_state(socketio_client: SocketIOTestClient, droneStatus) -> None:
-#     """Test setting state to params"""
-#     # pytest.skip(reason="Issues with parameterController to be fixed in alpha 0.1.8")
-#     droneStatus.drone.message_listeners = {}
-#
-#     socketio_client.emit("set_state", {"state": "params"})
-#     time.sleep(15)
-#     assert len(socketio_client.get_received()[-1]["args"][0]) == 1400
-#     assert len(droneStatus.drone.message_listeners) == 1

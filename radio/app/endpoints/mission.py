@@ -4,6 +4,12 @@ from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
 from app import logger, socketio
+from app.controllers.missionController import (
+    exportMissionToFile as exportMissionToFileNotConnected,
+)
+from app.controllers.missionController import (
+    importMissionFromFile as importMissionFromFileNotConnected,
+)
 from app.utils import notConnectedError
 
 
@@ -183,9 +189,6 @@ def importMissionFromFile(data: ImportMissionFileType) -> None:
         logger.debug(f"Current state: {droneStatus.state}")
         return
 
-    if not droneStatus.drone:
-        return notConnectedError(action="import mission from file")
-
     mission_type = data.get("type")
     mission_type_array = ["mission", "fence", "rally"]
 
@@ -204,9 +207,14 @@ def importMissionFromFile(data: ImportMissionFileType) -> None:
 
     file_path = data.get("file_path", "")
 
-    result = droneStatus.drone.missionController.importMissionFromFile(
-        mission_type_array.index(mission_type), file_path
-    )
+    if droneStatus.drone is not None:
+        result = droneStatus.drone.missionController.importMissionFromFile(
+            mission_type_array.index(mission_type), file_path
+        )
+    else:
+        result = importMissionFromFileNotConnected(
+            mission_type_array.index(mission_type), file_path
+        )
 
     if not result.get("success"):
         logger.error(result.get("message"))
@@ -235,9 +243,6 @@ def exportMissionToFile(data: ExportMissionFileType) -> None:
         logger.debug(f"Current state: {droneStatus.state}")
         return
 
-    if not droneStatus.drone:
-        return notConnectedError(action="export mission to file")
-
     mission_type = data.get("type")
     mission_type_array = ["mission", "fence", "rally"]
 
@@ -257,9 +262,14 @@ def exportMissionToFile(data: ExportMissionFileType) -> None:
     file_path = data.get("file_path", "")
     items = data.get("items", [])
 
-    result = droneStatus.drone.missionController.exportMissionToFile(
-        mission_type_array.index(mission_type), file_path, items
-    )
+    if droneStatus.drone is not None:
+        result = droneStatus.drone.missionController.exportMissionToFile(
+            mission_type_array.index(mission_type), file_path, items
+        )
+    else:
+        result = exportMissionToFileNotConnected(
+            mission_type_array.index(mission_type), file_path, items
+        )
 
     if not result.get("success"):
         logger.error(result.get("message"))

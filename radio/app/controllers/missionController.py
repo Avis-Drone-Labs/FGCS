@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from logging import getLogger
 from threading import current_thread
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
@@ -16,6 +17,352 @@ TYPE_MISSION = mavutil.mavlink.MAV_MISSION_TYPE_MISSION
 TYPE_FENCE = mavutil.mavlink.MAV_MISSION_TYPE_FENCE
 TYPE_RALLY = mavutil.mavlink.MAV_MISSION_TYPE_RALLY
 MISSION_TYPES = [TYPE_MISSION, TYPE_FENCE, TYPE_RALLY]
+
+logger = getLogger("fgcs")
+
+
+def _checkMissionType(mission_type: int) -> Response:
+    """
+    Check if the mission type is valid.
+
+    Args:
+        mission_type (int): The type of mission to check.
+
+    Returns:
+        Response: A response dict with success status.
+    """
+    if mission_type not in MISSION_TYPES:
+        return {
+            "success": False,
+            "message": f"Invalid mission type {mission_type}. Must be one of {MISSION_TYPES}",
+        }
+    return {"success": True}
+
+
+def _convertCoordinate(coordinate) -> Number:
+    """
+    Convert a coordinate between int and float formats.
+
+    Args:
+        coordinate: The coordinate to convert (int or float).
+
+    Returns:
+        Number: The converted coordinate.
+    """
+    gps_coordinate_scale = 1e7
+
+    if isinstance(coordinate, float):
+        return int(coordinate * gps_coordinate_scale)
+    elif isinstance(coordinate, int):
+        return coordinate / gps_coordinate_scale
+
+    raise ValueError(
+        f"Invalid coordinate type {type(coordinate)}. Must be int or float."
+    )
+
+
+def _getMissionName(mission_type: int) -> str:
+    """
+    Get the name of the mission type.
+
+    Args:
+        mission_type (int): The type of mission to get the name for.
+
+    Returns:
+        str: The name of the mission type.
+    """
+    if mission_type == TYPE_MISSION:
+        return "mission"
+    elif mission_type == TYPE_FENCE:
+        return "fence"
+    elif mission_type == TYPE_RALLY:
+        return "rally"
+    else:
+        logger.error(f"Invalid mission type {mission_type}")
+        return "unknown"
+
+
+def _getCommandName(command: int) -> str:
+    """
+    Get the name of the command type.
+
+    Args:
+        command (int): The command to get the name for.
+
+    Returns:
+        str: The name of the command.
+    """
+    try:
+        return mavutil.mavlink.enums["MAV_CMD"][command].name
+    except KeyError:
+        return f"Unknown command {command}"
+
+
+def _parseWaypointsListIntoLoader(
+    waypoints: List[dict],
+    mission_type: int,
+    target_system: int = 1,
+    target_component: int = 1,
+) -> mavwp.MAVWPLoader:
+    """
+    Parses a list of waypoints into a MAVWPLoader object.
+
+    Args:
+        waypoints (List[dict]): The list of waypoints to parse.
+        mission_type (int): The type of mission. 0=Mission,1=Fence,2=Rally.
+        target_system (int): The target system ID (default: 1).
+        target_component (int): The target component ID (default: 1).
+
+    Returns:
+        mavwp.MAVWPLoader: The loader object with parsed waypoints.
+    """
+    if mission_type == TYPE_MISSION:
+        loader = mavwp.MAVWPLoader(
+            target_system=target_system, target_component=target_component
+        )
+    elif mission_type == TYPE_FENCE:
+        loader = mavwp.MissionItemProtocol_Fence(
+            target_system=target_system, target_component=target_component
+        )
+    elif mission_type == TYPE_RALLY:
+        loader = mavwp.MissionItemProtocol_Rally(
+            target_system=target_system, target_component=target_component
+        )
+    else:
+        logger.error(f"Invalid mission type {mission_type}")
+        raise ValueError(f"Invalid mission type {mission_type}")
+
+    for wp in waypoints:
+        if isinstance(wp, mavutil.mavlink.MAVLink_mission_item_int_message):
+            loader.add(wp)
+        elif isinstance(wp, dict):
+            # Convert dict to MAVLink mission item int message
+            p = mavutil.mavlink.MAVLink_mission_item_int_message(
+                target_system,
+                target_component,
+                wp["seq"],
+                wp["frame"],
+                wp["command"],
+                wp["current"],
+                wp["autocontinue"],
+                wp["param1"],
+                wp["param2"],
+                wp["param3"],
+                wp["param4"],
+                int(wp["x"]),
+                int(wp["y"]),
+                wp["z"],
+                wp["mission_type"],
+            )
+            loader.add(p)
+        else:
+            logger.error(f"Invalid waypoint type {type(wp)} in waypoints list")
+            raise ValueError(f"Invalid waypoint type {type(wp)} in waypoints list")
+
+    logger.debug(
+        f"Parsed {loader.count()} waypoints into loader for mission type {mission_type}"
+    )
+    return loader
+
+
+def importMissionFromFile(
+    mission_type: int, file_path: str, target_system: int = 1, target_component: int = 1
+) -> Response:
+    """
+    Imports a mission from a file, return the waypoints loaded.
+
+    Args:
+        mission_type (int): The type of mission to import. 0=Mission,1=Fence,2=Rally.
+        file_path (str): The path to the waypoint file to import.
+        target_system (int): The target system ID (default: 1).
+        target_component (int): The target component ID (default: 1).
+
+    Returns:
+        Response: A response dict with success status and waypoint data.
+    """
+    mission_type_check = _checkMissionType(mission_type)
+    if not mission_type_check.get("success"):
+        return mission_type_check
+
+    if not file_path or not os.path.exists(file_path):
+        logger.error(f"Waypoint file not found at {file_path}")
+        return {
+            "success": False,
+            "message": f"Waypoint file not found at {file_path}",
+        }
+
+    logger.debug(
+        f"Importing waypoint file from {file_path} for mission type {mission_type}"
+    )
+
+    if mission_type == TYPE_MISSION:
+        loader = mavwp.MAVWPLoader(
+            target_system=target_system, target_component=target_component
+        )
+    elif mission_type == TYPE_FENCE:
+        loader = mavwp.MissionItemProtocol_Fence(
+            target_system=target_system, target_component=target_component
+        )
+    else:
+        loader = mavwp.MissionItemProtocol_Rally(
+            target_system=target_system, target_component=target_component
+        )
+
+    try:
+        loader.load(file_path)
+    except Exception as e:
+        logger.error(f"Failed to load waypoint file: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to load waypoint file: {e}",
+        }
+
+    # Remove the first point if it's a command 16 as this is usually a home point or placeholder.
+    if mission_type in [TYPE_FENCE, TYPE_RALLY]:
+        if loader.count() > 0:
+            first_wp = loader.item(0)
+            if first_wp.command == 16:
+                loader.remove(first_wp)
+        else:
+            logger.error("Loader is empty; no waypoints to process.")
+            return {
+                "success": False,
+                "message": "Loader is empty; no waypoints to process.",
+            }
+
+    for wp in loader.wpoints:
+        # Check if mission type correlates to correct command
+        if (
+            (
+                mission_type == TYPE_RALLY
+                and wp.command != mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT
+            )
+            or (
+                mission_type == TYPE_FENCE
+                and wp.command
+                not in [
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                ]
+            )
+            or (
+                mission_type == TYPE_MISSION
+                and wp.command
+                in [
+                    mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
+                    mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
+                ]
+            )
+        ):
+            logger.error(
+                f"Waypoint command {_getCommandName(wp.command)} does not match mission type {_getMissionName(mission_type)}"
+            )
+            return {
+                "success": False,
+                "message": f"Could not load the waypoint file. Waypoint command {_getCommandName(wp.command)} does not match mission type {_getMissionName(mission_type)}",
+            }
+
+        # Convert coordinates to the correct format
+        if hasattr(wp, "x") and hasattr(wp, "y"):
+            try:
+                wp.x = _convertCoordinate(wp.x)
+                wp.y = _convertCoordinate(wp.y)
+            except ValueError as e:
+                logger.error(f"Error converting coordinates for waypoint {wp}: {e}")
+                return {
+                    "success": False,
+                    "message": f"Error converting coordinates for waypoint {wp}: {e}",
+                }
+
+    logger.info(f"Loaded waypoint file with {loader.count()} points successfully")
+    return {
+        "success": True,
+        "message": f"Waypoint file loaded {loader.count()} points successfully",
+        "data": [wp.to_dict() for wp in loader.wpoints],
+    }
+
+
+def exportMissionToFile(
+    mission_type: int,
+    file_path: str,
+    waypoints: List[dict],
+    target_system: int = 1,
+    target_component: int = 1,
+) -> Response:
+    """
+    Exports a mission to a file from a given list of waypoints.
+
+    Args:
+        mission_type (int): The type of mission to export. 0=Mission,1=Fence,2=Rally.
+        file_path (str): The path to the waypoint file to export.
+        waypoints (List[dict]): The list of waypoints to upload. Each waypoint should be a dict with the required fields.
+        target_system (int): The target system ID (default: 1).
+        target_component (int): The target component ID (default: 1).
+
+    Returns:
+        Response: A response dict with success status.
+    """
+    mission_type_check = _checkMissionType(mission_type)
+    if not mission_type_check.get("success"):
+        return mission_type_check
+
+    try:
+        loader = _parseWaypointsListIntoLoader(
+            waypoints, mission_type, target_system, target_component
+        )
+    except ValueError as e:
+        logger.error(f"Error parsing waypoints: {e}")
+        return {
+            "success": False,
+            "message": f"Error parsing waypoints: {e}",
+        }
+
+    # Convert coordinates to the correct format for saving
+    for wp in loader.wpoints:
+        if hasattr(wp, "x") and hasattr(wp, "y"):
+            try:
+                wp.x = _convertCoordinate(wp.x)
+                wp.y = _convertCoordinate(wp.y)
+            except ValueError as e:
+                logger.error(f"Error converting coordinates for waypoint {wp}: {e}")
+                return {
+                    "success": False,
+                    "message": f"Error converting coordinates for waypoint {wp}: {e}",
+                }
+
+    if loader.count() == 0:
+        return {
+            "success": False,
+            "message": f"No waypoints loaded for the mission type of {_getMissionName(mission_type)}",
+        }
+
+    logger.debug(
+        f"Exporting waypoint file to {file_path} for mission type {_getMissionName(mission_type)}"
+    )
+
+    try:
+        loader.save(file_path)
+    except Exception as e:
+        logger.error(f"Failed to save waypoint file: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to save waypoint file: {e}",
+        }
+
+    logger.info(
+        f"Saved waypoint file with {loader.count()} points successfully to {file_path}"
+    )
+    return {
+        "success": True,
+        "message": f"Waypoint file saved {loader.count()} points successfully to {file_path}",
+    }
 
 
 class MissionController:
@@ -43,54 +390,6 @@ class MissionController:
             target_system=drone.target_system, target_component=drone.target_component
         )
 
-    def _checkMissionType(self, mission_type: int) -> Response:
-        if mission_type not in MISSION_TYPES:
-            return {
-                "success": False,
-                "message": f"Invalid mission type {mission_type}. Must be one of {MISSION_TYPES}",
-            }
-        return {"success": True}
-
-    def _convertCoordinate(self, coordinate) -> Number:
-        gps_coordinate_scale = 1e7
-
-        if isinstance(coordinate, float):
-            return int(coordinate * gps_coordinate_scale)
-        elif isinstance(coordinate, int):
-            return coordinate / gps_coordinate_scale
-
-        raise ValueError(
-            f"Invalid coordinate type {type(coordinate)}. Must be int or float."
-        )
-
-    def _getMissionName(self, mission_type: int) -> str:
-        """
-        Get the name of the mission type.
-
-        Args:
-            mission_type (int): The type of mission to get the name for.
-        """
-        if mission_type == TYPE_MISSION:
-            return "mission"
-        elif mission_type == TYPE_FENCE:
-            return "fence"
-        elif mission_type == TYPE_RALLY:
-            return "rally"
-        else:
-            raise ValueError(f"Invalid mission type {mission_type}")
-
-    def _getCommandName(self, command: int) -> str:
-        """
-        Get the name of the command type.
-
-        Args:
-            command (int): The command to get the name for.
-        """
-        try:
-            return mavutil.mavlink.enums["MAV_CMD"][command].name
-        except KeyError:
-            return f"Unknown command {command}"
-
     def getCurrentMission(
         self,
         mission_type: int,
@@ -104,7 +403,7 @@ class MissionController:
             progressUpdateCallback (Optional[Callable]): A callback function to update the progress of the mission fetch.
                 The callback should accept a string message and a float progress value.
         """
-        mission_type_check = self._checkMissionType(mission_type)
+        mission_type_check = _checkMissionType(mission_type)
         if not mission_type_check.get("success"):
             return mission_type_check
 
@@ -177,7 +476,7 @@ class MissionController:
             progressUpdateCallback (Optional[Callable]): A callback function to update the progress of the mission fetch.
                 The callback should accept a string message and a float progress value.
         """
-        mission_type_check = self._checkMissionType(mission_type)
+        mission_type_check = _checkMissionType(mission_type)
         if not mission_type_check.get("success"):
             return mission_type_check
 
@@ -309,7 +608,7 @@ class MissionController:
         Returns:
             Dict: The details of the mission item
         """
-        mission_type_check = self._checkMissionType(mission_type)
+        mission_type_check = _checkMissionType(mission_type)
         if not mission_type_check.get("success"):
             return mission_type_check
 
@@ -465,7 +764,7 @@ class MissionController:
         Args:
             mission_type (int): The type of mission to clear. 0=Mission,1=Fence,2=Rally.
         """
-        mission_type_check = self._checkMissionType(mission_type)
+        mission_type_check = _checkMissionType(mission_type)
         if not mission_type_check.get("success"):
             return mission_type_check
 
@@ -522,57 +821,16 @@ class MissionController:
     ) -> mavwp.MAVWPLoader:
         """
         Parses a list of waypoints into a MAVWPLoader object.
+
+        This is a wrapper method that calls the standalone _parseWaypointsListIntoLoader function
+        with the drone's target_system and target_component.
         """
-
-        if mission_type == TYPE_MISSION:
-            loader = mavwp.MAVWPLoader(
-                target_system=self.drone.target_system,
-                target_component=self.drone.target_component,
-            )
-        elif mission_type == TYPE_FENCE:
-            loader = mavwp.MissionItemProtocol_Fence(
-                target_system=self.drone.target_system,
-                target_component=self.drone.target_component,
-            )
-        elif mission_type == TYPE_RALLY:
-            loader = mavwp.MissionItemProtocol_Rally(
-                target_system=self.drone.target_system,
-                target_component=self.drone.target_component,
-            )
-
-        for wp in waypoints:
-            if isinstance(wp, mavutil.mavlink.MAVLink_mission_item_int_message):
-                loader.add(wp)
-            elif isinstance(wp, dict):
-                # Convert dict to MAVLink mission item int message
-                p = mavutil.mavlink.MAVLink_mission_item_int_message(
-                    self.drone.target_system,
-                    self.drone.target_component,
-                    wp["seq"],
-                    wp["frame"],
-                    wp["command"],
-                    wp["current"],
-                    wp["autocontinue"],
-                    wp["param1"],
-                    wp["param2"],
-                    wp["param3"],
-                    wp["param4"],
-                    int(wp["x"]),
-                    int(wp["y"]),
-                    wp["z"],
-                    wp["mission_type"],
-                )
-                loader.add(p)
-            else:
-                self.drone.logger.error(
-                    f"Invalid waypoint type {type(wp)} in waypoints list"
-                )
-                raise ValueError(f"Invalid waypoint type {type(wp)} in waypoints list")
-
-        self.drone.logger.debug(
-            f"Parsed {loader.count()} waypoints into loader for mission type {mission_type}"
+        return _parseWaypointsListIntoLoader(
+            waypoints,
+            mission_type,
+            target_system=self.drone.target_system,
+            target_component=self.drone.target_component,
         )
-        return loader
 
     def uploadMission(
         self,
@@ -589,11 +847,18 @@ class MissionController:
             progressUpdateCallback (Optional[Callable]): A callback function to update the progress of the mission writing.
                 The callback should accept a string message and a float progress value.
         """
-        mission_type_check = self._checkMissionType(mission_type)
+        mission_type_check = _checkMissionType(mission_type)
         if not mission_type_check.get("success"):
             return mission_type_check
 
-        new_loader = self._parseWaypointsListIntoLoader(waypoints, mission_type)
+        try:
+            new_loader = self._parseWaypointsListIntoLoader(waypoints, mission_type)
+        except ValueError as e:
+            self.drone.logger.error(f"Error parsing waypoints: {e}")
+            return {
+                "success": False,
+                "message": f"Error parsing waypoints: {e}",
+            }
 
         clear_mission_response = self.clearMission(mission_type)
         if not clear_mission_response.get("success"):
@@ -722,161 +987,38 @@ class MissionController:
         """
         Imports a mission from a file, return the waypoints loaded.
 
+        This is a wrapper method that calls the standalone importMissionFromFile function
+        with the drone's target_system and target_component.
+
         Args:
             mission_type (int): The type of mission to import. 0=Mission,1=Fence,2=Rally.
             file_path (str): The path to the waypoint file to import.
         """
-        mission_type_check = self._checkMissionType(mission_type)
-        if not mission_type_check.get("success"):
-            return mission_type_check
-
-        if not file_path or not os.path.exists(file_path):
-            self.drone.logger.error(f"Waypoint file not found at {file_path}")
-            return {
-                "success": False,
-                "message": f"Waypoint file not found at {file_path}",
-            }
-
-        self.drone.logger.debug(
-            f"Importing waypoint file from {file_path} for mission type {mission_type}"
+        return importMissionFromFile(
+            mission_type,
+            file_path,
+            target_system=self.drone.target_system,
+            target_component=self.drone.target_component,
         )
-
-        if mission_type == TYPE_MISSION:
-            loader = mavwp.MAVWPLoader(
-                target_system=self.drone.target_system,
-                target_component=self.drone.target_component,
-            )
-        elif mission_type == TYPE_FENCE:
-            loader = mavwp.MissionItemProtocol_Fence(
-                target_system=self.drone.target_system,
-                target_component=self.drone.target_component,
-            )
-        else:
-            loader = mavwp.MissionItemProtocol_Rally(
-                target_system=self.drone.target_system,
-                target_component=self.drone.target_component,
-            )
-
-        try:
-            loader.load(file_path)
-        except Exception as e:
-            self.drone.logger.error(f"Failed to load waypoint file: {e}")
-            return {
-                "success": False,
-                "message": f"Failed to load waypoint file: {e}",
-            }
-
-        # Remove the first point if it's a command 16 as this is usually a home point or placeholder.
-        if mission_type in [TYPE_FENCE, TYPE_RALLY]:
-            if loader.count() > 0:
-                first_wp = loader.item(0)
-                if first_wp.command == 16:
-                    loader.remove(first_wp)
-            else:
-                self.drone.logger.error("Loader is empty; no waypoints to process.")
-                return {
-                    "success": False,
-                    "message": "Loader is empty; no waypoints to process.",
-                }
-
-        for wp in loader.wpoints:
-            # Check if mission type correlates to correct command
-            if (
-                (
-                    mission_type == TYPE_RALLY
-                    and wp.command != mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT
-                )
-                or (
-                    mission_type == TYPE_FENCE
-                    and wp.command
-                    not in [
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
-                    ]
-                )
-                or (
-                    mission_type == TYPE_MISSION
-                    and wp.command
-                    in [
-                        mavutil.mavlink.MAV_CMD_NAV_RALLY_POINT,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_RETURN_POINT,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION,
-                        mavutil.mavlink.MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
-                    ]
-                )
-            ):
-                self.drone.logger.error(
-                    f"Waypoint command {self._getCommandName(wp.command)} does not match mission type {self._getMissionName(mission_type)}"
-                )
-                return {
-                    "success": False,
-                    "message": f"Could not load the waypoint file. Waypoint command {self._getCommandName(wp.command)} does not match mission type {self._getMissionName(mission_type)}",
-                }
-
-            # Convert coordinates to the correct format
-            if hasattr(wp, "x") and hasattr(wp, "y"):
-                wp.x = self._convertCoordinate(wp.x)
-                wp.y = self._convertCoordinate(wp.y)
-
-        self.drone.logger.info(
-            f"Loaded waypoint file with {loader.count()} points successfully"
-        )
-        return {
-            "success": True,
-            "message": f"Waypoint file loaded {loader.count()} points successfully",
-            "data": [wp.to_dict() for wp in loader.wpoints],
-        }
 
     def exportMissionToFile(
         self, mission_type: int, file_path: str, waypoints: List[dict]
     ) -> Response:
         """
-        Exports a mission to a file from a given list of waypoints.
+        Exports a mission to a file.
+
+        This is a wrapper method that calls the standalone exportMissionToFile function
+        with the drone's target_system and target_component.
 
         Args:
             mission_type (int): The type of mission to export. 0=Mission,1=Fence,2=Rally.
             file_path (str): The path to the waypoint file to export.
-            waypoints (List[dict]): The list of waypoints to upload. Each waypoint should be a dict with the required fields.
+            waypoints (list): The list of waypoints to export.
         """
-        mission_type_check = self._checkMissionType(mission_type)
-        if not mission_type_check.get("success"):
-            return mission_type_check
-
-        loader = self._parseWaypointsListIntoLoader(waypoints, mission_type)
-
-        for wp in loader.wpoints:
-            if hasattr(wp, "x") and hasattr(wp, "y"):
-                wp.x = self._convertCoordinate(wp.x)
-                wp.y = self._convertCoordinate(wp.y)
-
-        if loader.count() == 0:
-            return {
-                "success": False,
-                "message": f"No waypoints loaded for the mission type of {self._getMissionName(mission_type)}",
-            }
-
-        self.drone.logger.debug(
-            f"Exporting waypoint file to {file_path} for mission type {self._getMissionName(mission_type)}"
+        return exportMissionToFile(
+            mission_type,
+            file_path,
+            waypoints,
+            target_system=self.drone.target_system,
+            target_component=self.drone.target_component,
         )
-
-        try:
-            loader.save(file_path)
-        except Exception as e:
-            self.drone.logger.error(f"Failed to save waypoint file: {e}")
-            return {
-                "success": False,
-                "message": f"Failed to save waypoint file: {e}",
-            }
-
-        self.drone.logger.info(
-            f"Saved waypoint file with {loader.count()} points successfully to {file_path}"
-        )
-        return {
-            "success": True,
-            "message": f"Waypoint file saved {loader.count()} points successfully to {file_path}",
-        }

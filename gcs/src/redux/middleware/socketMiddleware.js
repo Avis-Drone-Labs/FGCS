@@ -395,7 +395,7 @@ const socketMiddleware = (store) => {
           }
         })
 
-        socket.socket.on("connecting", (msg) => {
+        socket.socket.on("connecting", () => {
           store.dispatch(setConnecting(true))
         })
 
@@ -1427,9 +1427,11 @@ const socketMiddleware = (store) => {
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-        Object.values(ParamSpecificSocketEvents).map((event) =>
-          socket.socket.off(event),
-        )
+        Object.values(ParamSpecificSocketEvents)
+          .filter(
+            (event) => event !== ParamSpecificSocketEvents.onRebootAutopilot,
+          )
+          .map((event) => socket.socket.off(event))
         Object.values(MissionSpecificSocketEvents)
           .filter(
             (event) =>

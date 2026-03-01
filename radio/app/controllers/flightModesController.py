@@ -110,7 +110,7 @@ class FlightModesController:
                 }
             mode_name = mavutil.mavlink.enums["COPTER_MODE"][flight_mode].name
 
-        param_type = 2
+        param_type = mavutil.mavlink.MAV_PARAM_TYPE_INT8
         param_set_success = self.drone.paramsController.setParam(
             f"FLTMODE{mode_number}", flight_mode, param_type
         )
@@ -145,7 +145,7 @@ class FlightModesController:
                 "message": f"Invalid flight mode channel, must be between 1 and 16 inclusive, got {channel}.",
             }
 
-        param_type = 2
+        param_type = mavutil.mavlink.MAV_PARAM_TYPE_INT8
         param_set_success = self.drone.paramsController.setParam(
             "FLTMODE_CH", channel, param_type
         )

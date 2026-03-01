@@ -395,6 +395,10 @@ const socketMiddleware = (store) => {
           }
         })
 
+        socket.socket.on("connecting", (msg) => {
+          store.dispatch(setConnecting(true))
+        })
+
         // Fetch com ports and list them
         socket.socket.on("list_com_ports", (msg) => {
           store.dispatch(setFetchingComPorts(false))
@@ -818,6 +822,8 @@ const socketMiddleware = (store) => {
             store.dispatch(setAutoPilotRebootModalOpen(false))
             showSuccessNotification(msg.message)
             store.dispatch(setRebootData({}))
+          } else {
+            store.dispatch(setConnecting(false))
           }
         })
 

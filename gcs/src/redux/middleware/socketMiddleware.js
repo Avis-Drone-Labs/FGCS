@@ -395,7 +395,7 @@ const socketMiddleware = (store) => {
           }
         })
 
-        socket.socket.on("connecting", () => {
+        socket.socket.on("reboot_connecting", () => {
           store.dispatch(setConnecting(true))
         })
 

@@ -43,7 +43,7 @@ def rebootAutopilot() -> None:
 
     time.sleep(1.5)  # Wait for the port to be released and let the autopilot reboot
 
-    socketio.emit("connecting")
+    socketio.emit("reboot_connecting")
 
     tries = 0
     while tries < 3:

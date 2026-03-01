@@ -470,6 +470,17 @@ const socketMiddleware = (store) => {
           store.dispatch(setHasEverHadGpsFix(false))
         })
 
+        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          store.dispatch(setRebootData(msg))
+          if (msg.success) {
+            store.dispatch(setAutoPilotRebootModalOpen(false))
+            showSuccessNotification(msg.message)
+            store.dispatch(setRebootData({}))
+          } else {
+            store.dispatch(setConnecting(false))
+          }
+        })
+
         // Simulation status messages
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
           const operationId = msg.operationId || "simulation-loading"
@@ -815,17 +826,6 @@ const socketMiddleware = (store) => {
             }
           },
         )
-
-        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
-          store.dispatch(setRebootData(msg))
-          if (msg.success) {
-            store.dispatch(setAutoPilotRebootModalOpen(false))
-            showSuccessNotification(msg.message)
-            store.dispatch(setRebootData({}))
-          } else {
-            store.dispatch(setConnecting(false))
-          }
-        })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
           store.dispatch(setParams(msg))

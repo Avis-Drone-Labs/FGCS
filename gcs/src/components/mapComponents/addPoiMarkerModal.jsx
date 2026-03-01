@@ -11,10 +11,10 @@ export default function AddPoiMarkerModal({
 }) {
   const dispatch = useDispatch()
 
-  const [poilabel, setPoiLabel] = useState("")
+  const [poiLabel, setPoiLabel] = useState("")
 
   function addMarker() {
-    dispatch(addPoiMarker({ label: poilabel, lat, lon }))
+    dispatch(addPoiMarker({ label: poiLabel, lat, lon }))
     setPoiLabel("")
     setModalOpened(false)
   }
@@ -33,11 +33,11 @@ export default function AddPoiMarkerModal({
       <div className="flex flex-col gap-4">
         <TextInput
           placeholder="Enter POI label"
-          value={poilabel}
+          value={poiLabel}
           onChange={(event) => setPoiLabel(event.currentTarget.value)}
         />
         <div className="flex gap-2">
-          <Button onClick={addMarker} color="green" disabled={!poilabel}>
+          <Button onClick={addMarker} color="green" disabled={!poiLabel.trim()}>
             Add Marker
           </Button>
         </div>

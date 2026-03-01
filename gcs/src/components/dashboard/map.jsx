@@ -50,7 +50,10 @@ import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { showInfoNotification } from "../../helpers/notification"
 import { emitReposition } from "../../redux/slices/droneConnectionSlice"
+import AddPoiMarkerModal from "../mapComponents/addPoiMarkerModal"
+import ContextMenuSubMenuItem from "../mapComponents/contextMenuSubMenuItem"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
+import POIMarkersContainer from "../mapComponents/poiMarkersContainer"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const coordsFractionDigits = 7
@@ -68,6 +71,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
   const { getSetting } = useSettings()
+  const [addPoiMarkerModalOpened, setAddPoiMarkerModalOpened] = useState(false)
 
   // Check if maps should be synchronized (from settings)
   const syncMaps = getSetting("General.syncMapViews") || false
@@ -325,6 +329,8 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           measureDistanceEnd={measureDistanceEnd}
         />
 
+        <POIMarkersContainer />
+
         <Modal opened={opened} onClose={close} title="Enter altitude" centered>
           <form
             className="flex flex-col space-y-2"
@@ -360,6 +366,13 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           onClose={stopMeasureDistance}
         />
 
+        <AddPoiMarkerModal
+          modalOpened={addPoiMarkerModalOpened}
+          setModalOpened={setAddPoiMarkerModalOpened}
+          lat={clickedGpsCoords.lat}
+          lon={clickedGpsCoords.lng}
+        />
+
         {clicked && (
           <div
             ref={contextMenuRef}
@@ -381,6 +394,18 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             <ContextMenuItem onClick={measureDistance}>
               <p>Measure distance</p>
             </ContextMenuItem>
+            <ContextMenuSubMenuItem title={"POI marker"}>
+              <ContextMenuItem
+                onClick={() => {
+                  setAddPoiMarkerModalOpened(true)
+                }}
+              >
+                <p>Add POI marker</p>
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => {}}>
+                <p>Delete POI marker</p>
+              </ContextMenuItem>
+            </ContextMenuSubMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {

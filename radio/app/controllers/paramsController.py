@@ -317,7 +317,12 @@ class ParamsController:
             self.drone.logger.error("Could not reserve PARAM_VALUE messages")
             return False
 
+        # Ensure we try at least once
+        if retries <= 0:
+            retries = 1
+
         retries_remaining = retries
+
         try:
             # Keep trying to set the parameter until we get an ack or run out of retries or timeout
             while retries_remaining > 0 and not got_ack:

@@ -18,6 +18,15 @@ import Map from "react-map-gl/maplibre"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  selectDashboardContextMenu,
+  updateDashboardContextMenuState,
+} from "../../redux/slices/dashboardSlice"
+import {
+  deletePoiMarker,
+  emitReposition,
+  selectPoiMarkers,
+} from "../../redux/slices/droneConnectionSlice"
+import {
   selectFlightModeString,
   selectGPS,
   selectGpsTrack,
@@ -42,14 +51,12 @@ import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
 import MarkerPin from "../mapComponents/markerPin"
 import MissionItems from "../mapComponents/missionItems"
-import useContextMenu from "../mapComponents/useContextMenu"
-
 // Tailwind styling
 import { distance, envelope, featureCollection, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 import { showInfoNotification } from "../../helpers/notification"
-import { emitReposition } from "../../redux/slices/droneConnectionSlice"
+import { getContainerPointFromEvent } from "../../helpers/pointer"
 import AddPoiMarkerModal from "../mapComponents/addPoiMarkerModal"
 import ContextMenuSubMenuItem from "../mapComponents/contextMenuSubMenuItem"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
@@ -67,6 +74,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const flightModeString = useSelector(selectFlightModeString)
   const guidedModePinData = useSelector(selectGuidedModePinData)
   const gpsTrack = useSelector(selectGpsTrack)
+  const poiMarkers = useSelector(selectPoiMarkers)
 
   const [position, setPosition] = useState(null)
   const [firstCenteredToDrone, setFirstCenteredToDrone] = useState(false)
@@ -95,12 +103,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const [filteredMissionItems, setFilteredMissionItems] = useState([])
 
   const contextMenuRef = useRef()
-  const { clicked, setClicked, points, setPoints } = useContextMenu()
-  const [
-    contextMenuPositionCalculationInfo,
-    setContextMenuPositionCalculationInfo,
-  ] = useState()
-  const [clickedGpsCoords, setClickedGpsCoords] = useState({ lng: 0, lat: 0 })
+  const contextMenuState = useSelector(selectDashboardContextMenu)
 
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
@@ -109,6 +112,30 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   const [measureDistanceStart, setMeasureDistanceStart] = useState(null)
   const [measureDistanceEnd, setMeasureDistanceEnd] = useState(null)
   const [measureDistanceResult, setMeasureDistanceResult] = useState(null)
+
+  useEffect(() => {
+    const closeContextMenu = () =>
+      dispatch(updateDashboardContextMenuState({ isOpen: false }))
+
+    document.addEventListener("click", closeContextMenu)
+    return () => {
+      document.removeEventListener("click", closeContextMenu)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (contextMenuRef.current) {
+      const boundingRect = contextMenuRef.current.getBoundingClientRect()
+      dispatch(
+        updateDashboardContextMenuState({
+          menuSize: {
+            width: Math.round(boundingRect.width),
+            height: Math.round(boundingRect.height),
+          },
+        }),
+      )
+    }
+  }, [contextMenuRef.current])
 
   useEffect(() => {
     // Check latest gpsData point is valid
@@ -137,35 +164,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItems.missionItems))
   }, [missionItems])
-
-  useEffect(() => {
-    if (contextMenuRef.current) {
-      const contextMenuWidth = Math.round(
-        contextMenuRef.current.getBoundingClientRect().width,
-      )
-      const contextMenuHeight = Math.round(
-        contextMenuRef.current.getBoundingClientRect().height,
-      )
-      let x = contextMenuPositionCalculationInfo.clickedPoint.x
-      let y = contextMenuPositionCalculationInfo.clickedPoint.y
-
-      if (
-        contextMenuWidth + contextMenuPositionCalculationInfo.clickedPoint.x >
-        contextMenuPositionCalculationInfo.canvasSize.width
-      ) {
-        x = contextMenuPositionCalculationInfo.clickedPoint.x - contextMenuWidth
-      }
-      if (
-        contextMenuHeight + contextMenuPositionCalculationInfo.clickedPoint.y >
-        contextMenuPositionCalculationInfo.canvasSize.height
-      ) {
-        y =
-          contextMenuPositionCalculationInfo.clickedPoint.y - contextMenuHeight
-      }
-
-      setPoints({ x, y })
-    }
-  }, [contextMenuPositionCalculationInfo])
 
   function zoomToDrone() {
     if (passedRef.current && position) {
@@ -212,14 +210,14 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
   function measureDistance() {
     if (measureDistanceStart === null) {
-      setMeasureDistanceStart(clickedGpsCoords)
+      setMeasureDistanceStart(contextMenuState.gpsCoords)
       showInfoNotification('Click "Measure distance" again to finish measuring')
     } else {
-      setMeasureDistanceEnd(clickedGpsCoords)
+      setMeasureDistanceEnd(contextMenuState.gpsCoords)
       setMeasureDistanceResult(
         distance(
           [measureDistanceStart.lng, measureDistanceStart.lat],
-          [clickedGpsCoords.lng, clickedGpsCoords.lat],
+          [contextMenuState.gpsCoords.lng, contextMenuState.gpsCoords.lat],
           { units: "meters" },
         ),
       )
@@ -241,6 +239,17 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
         attributionControl={false}
         dragRotate={false}
         touchRotate={false}
+        onLoad={(e) => {
+          const canvas = e.target.getCanvas()
+          dispatch(
+            updateDashboardContextMenuState({
+              canvasSize: {
+                width: canvas.clientWidth,
+                height: canvas.clientHeight,
+              },
+            }),
+          )
+        }}
         onMoveEnd={(newViewState) =>
           setInitialViewState({
             latitude: newViewState.viewState.latitude,
@@ -251,15 +260,22 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
         onDragStart={onDragstart}
         onContextMenu={(e) => {
           e.preventDefault()
-          setClicked(true)
-          setClickedGpsCoords(e.lngLat)
-          setContextMenuPositionCalculationInfo({
-            clickedPoint: e.point,
-            canvasSize: {
-              height: e.originalEvent.target.clientHeight,
-              width: e.originalEvent.target.clientWidth,
-            },
-          })
+          const canvas = e.target.getCanvas()
+          const pt = getContainerPointFromEvent(e.originalEvent ?? e, canvas)
+          dispatch(
+            updateDashboardContextMenuState({
+              isOpen: true,
+              position: pt,
+              gpsCoords: e.lngLat,
+              markerId: null,
+            }),
+          )
+        }}
+        onMouseDown={() => {
+          dispatch(updateDashboardContextMenuState({ isOpen: false }))
+        }}
+        onClick={() => {
+          dispatch(updateDashboardContextMenuState({ isOpen: false }))
         }}
         cursor="default"
       >
@@ -338,8 +354,8 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
               e.preventDefault()
               dispatch(
                 emitReposition({
-                  lat: clickedGpsCoords.lat,
-                  lon: clickedGpsCoords.lng,
+                  lat: contextMenuState.gpsCoords.lat,
+                  lon: contextMenuState.gpsCoords.lng,
                   alt: repositionAltitude,
                 }),
               )
@@ -369,15 +385,18 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
         <AddPoiMarkerModal
           modalOpened={addPoiMarkerModalOpened}
           setModalOpened={setAddPoiMarkerModalOpened}
-          lat={clickedGpsCoords.lat}
-          lon={clickedGpsCoords.lng}
+          lat={contextMenuState.gpsCoords.lat}
+          lon={contextMenuState.gpsCoords.lng}
         />
 
-        {clicked && (
+        {contextMenuState.isOpen && (
           <div
             ref={contextMenuRef}
             className="absolute bg-falcongrey-700 rounded-md p-1 z-20"
-            style={{ top: points.y, left: points.x }}
+            style={{
+              top: contextMenuState.position.y,
+              left: contextMenuState.position.x,
+            }}
           >
             <ContextMenuItem onClick={zoomToDrone}>
               <p>Zoom to drone</p>
@@ -402,23 +421,32 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
               >
                 <p>Add POI marker</p>
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => {}}>
-                <p>Delete POI marker</p>
-              </ContextMenuItem>
+              {poiMarkers.find(
+                (marker) => marker.id === contextMenuState?.markerId,
+              ) && (
+                <ContextMenuItem
+                  onClick={() => {
+                    dispatch(deletePoiMarker({ id: contextMenuState.markerId }))
+                  }}
+                >
+                  <p>Delete POI marker</p>
+                </ContextMenuItem>
+              )}
             </ContextMenuSubMenuItem>
             <Divider className="my-1" />
             <ContextMenuItem
               onClick={() => {
                 clipboard.copy(
-                  `${clickedGpsCoords.lat}, ${clickedGpsCoords.lng}`,
+                  `${contextMenuState.gpsCoords.lat}, ${contextMenuState.gpsCoords.lng}`,
                 )
                 showInfoNotification("Copied to clipboard")
               }}
             >
               <div className="w-full flex justify-between gap-2">
                 <p>
-                  {clickedGpsCoords.lat.toFixed(coordsFractionDigits)},{" "}
-                  {clickedGpsCoords.lng.toFixed(coordsFractionDigits)}
+                  {contextMenuState.gpsCoords.lat.toFixed(coordsFractionDigits)}
+                  ,{" "}
+                  {contextMenuState.gpsCoords.lng.toFixed(coordsFractionDigits)}
                 </p>
                 <svg
                   className="relative -right-1"

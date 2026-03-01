@@ -12,11 +12,18 @@ import {
   selectRebootData,
   setAutoPilotRebootModalOpen,
 } from "../../redux/slices/paramsSlice.js"
+import {
+  selectConnecting,
+  selectConnectionStatus,
+} from "../../redux/slices/droneConnectionSlice.js"
+import ConnectionProgress from "../connectionProgress.jsx"
 
 export default function AutopilotRebootModal() {
   const dispatch = useDispatch()
   const rebootData = useSelector(selectRebootData)
   const opened = useSelector(selectAutoPilotRebootModalOpen)
+  const connecting = useSelector(selectConnecting)
+  const droneConnectionStatus = useSelector(selectConnectionStatus)
 
   return (
     <Modal
@@ -34,7 +41,14 @@ export default function AutopilotRebootModal() {
     >
       <div className="flex flex-col items-center justify-center">
         {rebootData.message === undefined ? (
-          <Loader />
+          connecting ? (
+            <ConnectionProgress
+              connecting={connecting}
+              status={droneConnectionStatus}
+            />
+          ) : (
+            <Loader />
+          )
         ) : (
           <>
             {!rebootData.success && (

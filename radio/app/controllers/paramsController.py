@@ -317,10 +317,11 @@ class ParamsController:
             self.drone.logger.error("Could not reserve PARAM_VALUE messages")
             return False
 
+        retries_remaining = retries
         try:
             # Keep trying to set the parameter until we get an ack or run out of retries or timeout
-            while retries > 0 and not got_ack:
-                retries -= 1
+            while retries_remaining > 0 and not got_ack:
+                retries_remaining -= 1
                 self.drone.master.param_set_send(
                     param_name.upper(), vfloat, parm_type=param_type
                 )
@@ -344,13 +345,13 @@ class ParamsController:
                     elif abs(ack.param_value - param_value) > 0.0001:
                         # Use a small tolerance for float comparison
                         self.drone.logger.warning(
-                            f"Could not set {param_name} to {param_value}, keeping value as {ack.param_value} instead"
+                            f"Could not set {param_name} to {param_value}, keeping value as {ack.param_value} instead. Trying again {retries_remaining} times."
                         )
                         self.drone.logger.debug(
                             f"Ack: {ack.to_dict()}, param_name: {param_name}, param_value: {param_value}"
                         )
-                        saved_param = False
-                        break
+                        got_ack = False
+                        continue
                     else:
                         self.drone.logger.debug(
                             f"Got parameter saving ack for {param_name} for value {param_value}"
@@ -360,7 +361,9 @@ class ParamsController:
                         break
 
             if not got_ack:
-                self.drone.logger.error(f"timeout setting {param_name} to {vfloat}")
+                self.drone.logger.error(
+                    f"Timeout setting {param_name} to {vfloat}, attempted {retries} times."
+                )
 
             return saved_param
         except serial.serialutil.SerialException:

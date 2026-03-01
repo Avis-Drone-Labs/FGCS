@@ -41,7 +41,14 @@ export default function AutopilotRebootModal() {
     >
       <div className="flex flex-col items-center justify-center">
         {rebootData.message === undefined ? (
-          <Loader />
+          connecting ? (
+            <ConnectionProgress
+              connecting={connecting}
+              status={droneConnectionStatus}
+            />
+          ) : (
+            <Loader />
+          )
         ) : (
           <>
             {!rebootData.success && (
@@ -61,10 +68,6 @@ export default function AutopilotRebootModal() {
           </>
         )}
       </div>
-      <ConnectionProgress
-        connecting={connecting}
-        status={droneConnectionStatus}
-      />
     </Modal>
   )
 }

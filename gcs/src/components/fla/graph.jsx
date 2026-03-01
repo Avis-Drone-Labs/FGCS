@@ -8,6 +8,8 @@ as graph annotations to show events or different flight modes.
 import { useEffect, useMemo, useRef, useState } from "react"
 
 // 3rd party imports
+import "chartjs-adapter-moment"
+
 import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
 import {
   IconCapture,
@@ -26,6 +28,7 @@ import {
   LineElement,
   LinearScale,
   PointElement,
+  TimeScale,
   Title,
   Tooltip,
 } from "chart.js"
@@ -86,6 +89,7 @@ const customCanvasBackgroundColor = {
 
 ChartJS.register(
   CategoryScale,
+  TimeScale,
   LinearScale,
   PointElement,
   LineElement,

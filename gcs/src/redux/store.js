@@ -4,6 +4,7 @@ import socketMiddleware from "./middleware/socketMiddleware"
 import applicationSlice from "./slices/applicationSlice"
 import checklistSlice, { setChecklistItems } from "./slices/checklistSlice"
 import configSlice from "./slices/configSlice"
+import dashboardSlice from "./slices/dashboardSlice"
 import droneConnectionSlice, {
   setBaudrate,
   setConnectionType,
@@ -35,6 +36,7 @@ const rootReducer = combineSlices(
   configSlice,
   checklistSlice,
   applicationSlice,
+  dashboardSlice,
   ftpSlice,
   simulationParamsSlice,
 )

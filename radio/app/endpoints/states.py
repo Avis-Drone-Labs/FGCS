@@ -25,6 +25,7 @@ STATES_MESSAGE_LISTENERS = {
         "GPS_RAW_INT",
         "GPS2_RAW",
         "RC_CHANNELS",
+        "ESC_TELEMETRY_1_TO_4",
         "ESC_TELEMETRY_5_TO_8",
         "MISSION_CURRENT",
         "EKF_STATUS_REPORT",
@@ -77,6 +78,10 @@ def set_state(data: SetStateType) -> None:
         droneStatus.drone.setupDataStreams()
         for message in STATES_MESSAGE_LISTENERS["dashboard"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
+
+        logger.info(
+            f"Telemetry listeners now: {sorted(droneStatus.drone.message_listeners.keys())}"
+        )
     elif droneStatus.state == "missions":
         droneStatus.drone.setupSingleDataStream(
             mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS

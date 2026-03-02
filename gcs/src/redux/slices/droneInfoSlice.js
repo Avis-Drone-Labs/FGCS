@@ -31,6 +31,10 @@ const droneInfoSlice = createSlice({
       heading: 0.0,
       throttle: 0.0,
     },
+    escData: {
+      escTelemetry1To4: null,
+      escTelemetry5To8: null,
+    },
     gpsData: {
       lat: 0.0,
       lon: 0.0,
@@ -178,6 +182,12 @@ const droneInfoSlice = createSlice({
       if (action.payload !== state.aircraftType) {
         state.aircraftType = action.payload
       }
+    },
+    setEscTelemetry1To4: (state, action) => {
+      state.escData.escTelemetry1To4 = action.payload
+    },
+    setEscTelemetry5To8: (state, action) => {
+      state.escData.escTelemetry5To8 = action.payload
     },
     setTelemetryData: (state, action) => {
       state.telemetryData = {
@@ -353,6 +363,8 @@ const droneInfoSlice = createSlice({
     selectHasEverHadGpsFix: (state) => state.hasEverHadGpsFix,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
+    selectEscTelemetry1To4: (state) => state.escData.escTelemetry1To4,
+    selectEscTelemetry5To8: (state) => state.escData.escTelemetry5To8,
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
@@ -376,6 +388,8 @@ export const {
   changeExtraData,
   setExtraData,
   setDroneAircraftType,
+  setEscTelemetry1To4,
+  setEscTelemetry5To8,
   setTelemetryData,
   setGpsData,
   setHomePosition,

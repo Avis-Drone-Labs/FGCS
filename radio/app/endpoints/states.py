@@ -79,9 +79,6 @@ def set_state(data: SetStateType) -> None:
         for message in STATES_MESSAGE_LISTENERS["dashboard"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
 
-        logger.info(
-            f"Telemetry listeners now: {sorted(droneStatus.drone.message_listeners.keys())}"
-        )
     elif droneStatus.state == "missions":
         droneStatus.drone.setupSingleDataStream(
             mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS

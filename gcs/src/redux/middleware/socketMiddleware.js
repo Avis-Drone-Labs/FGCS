@@ -395,6 +395,10 @@ const socketMiddleware = (store) => {
           }
         })
 
+        socket.socket.on("reboot_connecting", () => {
+          store.dispatch(setConnecting(true))
+        })
+
         // Fetch com ports and list them
         socket.socket.on("list_com_ports", (msg) => {
           store.dispatch(setFetchingComPorts(false))
@@ -464,6 +468,17 @@ const socketMiddleware = (store) => {
           store.dispatch(setReadFileData(null))
           store.dispatch(setTotalTimeFlying(0))
           store.dispatch(setHasEverHadGpsFix(false))
+        })
+
+        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          store.dispatch(setRebootData(msg))
+          if (msg.success) {
+            store.dispatch(setAutoPilotRebootModalOpen(false))
+            showSuccessNotification(msg.message)
+            store.dispatch(setRebootData({}))
+          } else {
+            store.dispatch(setConnecting(false))
+          }
         })
 
         // Simulation status messages
@@ -811,15 +826,6 @@ const socketMiddleware = (store) => {
             }
           },
         )
-
-        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
-          store.dispatch(setRebootData(msg))
-          if (msg.success) {
-            store.dispatch(setAutoPilotRebootModalOpen(false))
-            showSuccessNotification(msg.message)
-            store.dispatch(setRebootData({}))
-          }
-        })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
           store.dispatch(setParams(msg))
@@ -1421,9 +1427,11 @@ const socketMiddleware = (store) => {
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-        Object.values(ParamSpecificSocketEvents).map((event) =>
-          socket.socket.off(event),
-        )
+        Object.values(ParamSpecificSocketEvents)
+          .filter(
+            (event) => event !== ParamSpecificSocketEvents.onRebootAutopilot,
+          )
+          .map((event) => socket.socket.off(event))
         Object.values(MissionSpecificSocketEvents)
           .filter(
             (event) =>

@@ -699,3 +699,24 @@ export async function getMessages(
 
   return datasets
 }
+
+export async function getMessageDataForTable(
+  _event: unknown,
+  requestedMessage: string,
+): Promise<MessageObject[] | { success: false; error: string }> {
+  if (!logData) {
+    console.error("getMessageDataForTable: logData is null or undefined.")
+    return { success: false, error: "Log data not loaded." }
+  }
+
+  if (!requestedMessage.trim()) {
+    return { success: false, error: "Invalid message type." }
+  }
+
+  const series = logData[requestedMessage] as MessageObject[]
+  if (!Array.isArray(series) || series.length === 0) {
+    return { success: false, error: "No data available for this message type." }
+  }
+
+  return series
+}

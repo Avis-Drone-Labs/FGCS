@@ -126,14 +126,14 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
           defaultValue={"chart_cards"}
           className="flex flex-col flex-1 min-h-0"
         >
-          <Tabs.List className="flex-shrink-0">
+          <Tabs.List>
             <Tabs.Tab value="chart_cards">Chart Cards</Tabs.Tab>
             <Tabs.Tab value="data_table">Data Table</Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="chart_cards" className="flex-1 min-h-0 h-full">
+          <Tabs.Panel value="chart_cards" className="min-h-0 h-full pb-4">
             <ScrollArea className="h-full">
-              <div className="grid grid-cols-5 gap-4 pt-4 pb-4">
+              <div className="grid grid-cols-5 gap-4 py-4">
                 {chartData.datasets.map((item) => (
                   <Fragment key={item.label}>
                     <ChartDataCard
@@ -146,7 +146,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
               </div>
             </ScrollArea>
           </Tabs.Panel>
-          <Tabs.Panel value="data_table" className="flex-1 min-h-0 h-full">
+          <Tabs.Panel value="data_table" className="min-h-0 h-full pb-4">
             <DataTable />
           </Tabs.Panel>
         </Tabs>

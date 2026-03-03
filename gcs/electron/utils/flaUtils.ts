@@ -10,19 +10,13 @@ import type {
 } from "../types/flaTypes"
 
 const ignoredMessages: string[] = [
-  "ERR",
-  "EV",
-  "MSG",
-  "VER",
   "TIMESYNC",
-  "PARAM_VALUE",
   "TSYN",
   "UNIT",
   "FILE",
   "FMTU",
   "FMT",
   "MULT",
-  "PARM",
   "units",
   "format",
   "aircraftType",

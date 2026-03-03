@@ -1,54 +1,21 @@
-import { Select } from "@mantine/core"
+import { Select, Table } from "@mantine/core"
+import { useVirtualizer } from "@tanstack/react-virtual"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
-import { FixedSizeList } from "react-window"
-import {
-  selectFormatMessages,
-  selectMessageFilters,
-} from "../../redux/slices/logAnalyserSlice"
+import { selectMessageFilters } from "../../redux/slices/logAnalyserSlice"
 
-// Virtualized row component
-const VirtualRow = ({ index, style, data }) => {
-  const { rows, columns } = data
-  const row = rows[index]
-
-  if (!row) return null
-
-  return (
-    <div
-      style={style}
-      className={`flex border-b border-neutral-700 ${
-        index % 2 === 0 ? "bg-falcongrey-800" : "bg-falcongrey-850"
-      } hover:bg-falcongrey-700`}
-    >
-      {columns.map((column, colIndex) => (
-        <div
-          key={column}
-          className={`px-4 py-3 text-sm border-r border-neutral-700 ${
-            colIndex === 0 ? "w-48 flex-shrink-0" : "flex-1 min-w-32"
-          } ${colIndex === columns.length - 1 ? "border-r-0" : ""}`}
-        >
-          {row[column] !== undefined && row[column] !== null
-            ? typeof row[column] === "number"
-              ? row[column].toFixed(6)
-              : row[column]
-            : "-"}
-        </div>
-      ))}
-    </div>
-  )
-}
+const TABLE_CELL_MIN_WIDTH = 80
+const TABLE_CELL_DEFAULT_WIDTH = 150
 
 export default function DataTable() {
   const messageFilters = useSelector(selectMessageFilters)
-  const formatMessages = useSelector(selectFormatMessages)
 
-  console.log(formatMessages)
-
-  const [selectedMessage, setSelectedMessage] = useState(null)
+  const [selectedMessage, setSelectedMessage] = useState("MSG")
   const [messageTableData, setMessageTableData] = useState(null)
-  const listContainerRef = useRef(null)
-  const [listHeight, setListHeight] = useState(400)
+  const [columnWidths, setColumnWidths] = useState({})
+  const [resizingColumn, setResizingColumn] = useState(null)
+  const parentRef = useRef(null)
+  const persistedWidthsRef = useRef({})
 
   // Get available message types from messageFilters
   const messageTypes = useMemo(() => {
@@ -74,75 +41,183 @@ export default function DataTable() {
     fetchTableData()
   }, [selectedMessage])
 
-  // Calculate available height for the list
-  useEffect(() => {
-    const updateHeight = () => {
-      if (listContainerRef.current) {
-        const containerHeight = listContainerRef.current.clientHeight
-        setListHeight(containerHeight)
-      }
-    }
-
-    updateHeight()
-    window.addEventListener("resize", updateHeight)
-    return () => window.removeEventListener("resize", updateHeight)
-  }, [messageTableData])
-
-  // Extract columns from the first row of data
+  // Extract columns from the first row of data and ensure minimum 16 columns
   const columns = useMemo(() => {
     if (!messageTableData || messageTableData.length === 0) return []
-    return Object.keys(messageTableData[0])
+    const dataColumns = Object.keys(messageTableData[0])
+
+    // If we have fewer than 16 columns, pad with empty column names
+    if (dataColumns.length < 16) {
+      const emptyColumns = Array.from(
+        { length: 16 - dataColumns.length },
+        (_, i) => `_empty_${i}`,
+      )
+      return [...dataColumns, ...emptyColumns]
+    }
+
+    return dataColumns
   }, [messageTableData])
 
+  // Initialize default column widths when data changes
+  useEffect(() => {
+    if (
+      !messageTableData ||
+      messageTableData.length === 0 ||
+      columns.length === 0
+    ) {
+      return
+    }
+
+    const widths = {}
+
+    // Set width for all columns, using persisted widths by column index
+    columns.forEach((column, index) => {
+      const persistedWidth = persistedWidthsRef.current[index]
+      widths[column] = persistedWidth || TABLE_CELL_DEFAULT_WIDTH
+    })
+
+    setColumnWidths(widths)
+  }, [messageTableData, columns])
+
+  // Handle column resize
+  const handleMouseDown = (column, columnIndex, e) => {
+    e.preventDefault()
+    setResizingColumn(column)
+
+    const startX = e.clientX
+    const startWidth = columnWidths[column]
+
+    const handleMouseMove = (e) => {
+      const diff = e.clientX - startX
+      const newWidth = Math.max(TABLE_CELL_MIN_WIDTH, startWidth + diff)
+      setColumnWidths((prev) => ({ ...prev, [column]: newWidth }))
+      // Persist the width change by column index
+      persistedWidthsRef.current[columnIndex] = newWidth
+    }
+
+    const handleMouseUp = () => {
+      setResizingColumn(null)
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+
+    document.addEventListener("mousemove", handleMouseMove)
+    document.addEventListener("mouseup", handleMouseUp)
+  }
+
+  // Initialize virtualizer
+  const rowVirtualizer = useVirtualizer({
+    count: messageTableData?.length ?? 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40, // Initial estimate
+    overscan: 5,
+    measureElement: (element) => element?.getBoundingClientRect().height ?? 40,
+  })
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Message selector - Fixed at top */}
-      <div className="flex flex-col gap-2 py-4 flex-shrink-0 bg-falcongrey-800">
-        <Select
-          label="Select Message Type"
-          placeholder="Choose a message to display"
-          data={messageTypes}
-          value={selectedMessage}
-          onChange={setSelectedMessage}
-          searchable
-          clearable
-          maxDropdownHeight={400}
-          className="max-w-md"
-        />
-      </div>
-
-      {/* Div-based Table with virtualization */}
+    <div className="flex flex-col h-full min-h-0 py-4">
       {messageTableData && messageTableData.length > 0 && (
-        <div className="flex flex-col flex-1 min-h-0 border border-neutral-700">
-          {/* Header */}
-          <div className="flex bg-falcongrey-900 border-b-2 border-neutral-600 sticky top-0 z-10 flex-shrink-0">
-            {columns.map((column, index) => (
-              <div
-                key={column}
-                className={`px-4 py-3 text-sm font-semibold border-r border-neutral-700 ${
-                  index === 0 ? "w-48 flex-shrink-0" : "flex-1 min-w-32"
-                } ${index === columns.length - 1 ? "border-r-0" : ""}`}
-              >
-                {column}
-              </div>
-            ))}
-          </div>
-
-          {/* Virtualized Rows */}
-          <div className="flex-1 overflow-auto" ref={listContainerRef}>
-            <FixedSizeList
-              height={listHeight}
-              width="100%"
-              itemSize={48}
-              itemCount={messageTableData.length}
-              itemData={{
-                rows: messageTableData,
-                columns: columns,
+        <div
+          className="flex-1 min-h-0 overflow-auto border-gray-600 border"
+          ref={parentRef}
+        >
+          <Table
+            striped
+            highlightOnHover
+            withColumnBorders
+            stickyHeader
+            className="text-sm w-max table-fixed"
+          >
+            <Table.Thead>
+              <Table.Tr>
+                {columns.map((column, index) => (
+                  <Table.Th
+                    key={column}
+                    className="whitespace-nowrap"
+                    style={{
+                      width: `${columnWidths[column]}px`,
+                      minWidth: `${columnWidths[column]}px`,
+                      maxWidth: `${columnWidths[column]}px`,
+                      position: "relative",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {index === 0 ? (
+                        <Select
+                          placeholder="Select message"
+                          data={messageTypes}
+                          value={selectedMessage}
+                          onChange={setSelectedMessage}
+                          maxDropdownHeight={400}
+                          size="xs"
+                          allowDeselect={false}
+                        />
+                      ) : (
+                        <span>
+                          {column.startsWith("_empty_") ? "" : column}
+                        </span>
+                      )}
+                      {!column.startsWith("_empty_") && index !== 0 && (
+                        <div
+                          onMouseDown={(e) => handleMouseDown(column, index, e)}
+                          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize select-none z-10"
+                          style={{
+                            backgroundColor:
+                              resizingColumn === column
+                                ? "rgba(241, 167, 160, 0.6)"
+                                : "transparent",
+                          }}
+                        />
+                      )}
+                    </div>
+                  </Table.Th>
+                ))}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                position: "relative",
               }}
             >
-              {VirtualRow}
-            </FixedSizeList>
-          </div>
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const row = messageTableData[virtualRow.index]
+                return (
+                  <Table.Tr
+                    key={virtualRow.index}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    {columns.map((column) => (
+                      <Table.Td
+                        key={column}
+                        className="truncate"
+                        style={{
+                          position: "relative",
+                          width: `${columnWidths[column]}px`,
+                          minWidth: `${columnWidths[column]}px`,
+                          maxWidth: `${columnWidths[column]}px`,
+                        }}
+                      >
+                        {column.startsWith("_empty_")
+                          ? ""
+                          : row[column] !== undefined &&
+                            row[column] !== null &&
+                            row[column]}
+                      </Table.Td>
+                    ))}
+                  </Table.Tr>
+                )
+              })}
+            </Table.Tbody>
+          </Table>
         </div>
       )}
 

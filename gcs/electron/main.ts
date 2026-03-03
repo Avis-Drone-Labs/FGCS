@@ -39,6 +39,7 @@ import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
+import registerEscIPC, { destroyEscWindow } from "./modules/escWindow"
 import { readParamsFile } from "./utils/paramsFile"
 import registerGraphWindowIPC, {
   destroyAllGraphWindows,
@@ -273,6 +274,7 @@ function createWindow() {
   })
 
   registerVideoIPC(win)
+  registerEscIPC(win)
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
@@ -463,6 +465,7 @@ function startBackend() {
 
 function closeWindows() {
   destroyVideoWindow()
+  destroyEscWindow()
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()

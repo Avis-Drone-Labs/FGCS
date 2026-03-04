@@ -12,7 +12,7 @@ export default function ConnectionProgress({ connecting, status }) {
           <>
             <p className="text-center mt-4">{status.message}</p>
             <p className="text-center mb-4 text-falcongrey-400 text-sm">
-              Fetching {param}
+              {param ? <>Fetching {param}</> : "Fetching params..."}
             </p>
             <Progress
               animated

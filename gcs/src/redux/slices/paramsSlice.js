@@ -125,6 +125,7 @@ const paramsSlice = createSlice({
     resetParamState: (state) => {
       state.fetchingVars = false
       state.fetchingVarsProgress = { progress: 0, param_id: "" }
+      state.fetchingParam = false
       state.params = []
       state.shownParams = []
       state.modifiedParams = []

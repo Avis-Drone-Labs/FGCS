@@ -22,6 +22,7 @@ def rebootAutopilot() -> None:
     droneDisconnectCb = droneStatus.drone.droneDisconnectCb
     droneConnectStatusCb = droneStatus.drone.droneConnectStatusCb
     linkDebugStatsCb = droneStatus.drone.linkDebugStatsCb
+    fetchingParameterCb = droneStatus.drone.fetchingParameterCb
     forwarding_address = droneStatus.drone.forwarding_address
 
     socketio.emit("disconnected_from_drone")
@@ -53,6 +54,7 @@ def rebootAutopilot() -> None:
             droneDisconnectCb=droneDisconnectCb,
             droneConnectStatusCb=droneConnectStatusCb,
             linkDebugStatsCb=linkDebugStatsCb,
+            fetchingParameterCb=fetchingParameterCb,
         )
         if droneStatus.drone.connectionError:
             tries += 1

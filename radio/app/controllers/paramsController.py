@@ -6,7 +6,6 @@ from threading import Thread, current_thread
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 import serial
-from app import socketio
 from app.customTypes import IncomingParam, Number, Response
 from app.utils import sendingCommandLock
 from pymavlink import mavutil
@@ -62,15 +61,15 @@ class ParamsController:
         try:
             time.sleep(0.05)  # Brief pause for stability
 
+            if self.drone.fetchingParameterCb:
+                self.drone.fetchingParameterCb(param_name)
+
             self.drone.master.mav.param_request_read_send(
                 self.drone.target_system,
                 self.drone.target_component,
                 param_name.encode(),
                 -1,
             )
-
-            self.drone.logger.debug(f"Param name: {param_name}")
-            socketio.emit("fetching_param", {"param": param_name})
 
             # Wait for the specific parameter response
             response = self.drone.wait_for_message(

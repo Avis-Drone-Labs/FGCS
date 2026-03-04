@@ -535,7 +535,7 @@ const socketMiddleware = (store) => {
         })
 
         socket.socket.on("fetching_param", (msg) => {
-          store.dispatch(setFetchingParam(msg.param))
+          store.dispatch(setFetchingParam(msg.message))
         })
 
         // Link stats

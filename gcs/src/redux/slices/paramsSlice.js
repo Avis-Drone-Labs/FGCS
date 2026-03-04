@@ -11,6 +11,7 @@ const paramsSlice = createSlice({
     showModifiedParams: false,
     fetchingVars: false,
     fetchingVarsProgress: { progress: 0, param_id: "" },
+    fetchingParam: "",
     searchValue: "",
     hasFetchedOnce: false,
     loadParamsFileModalOpen: false,
@@ -55,6 +56,10 @@ const paramsSlice = createSlice({
     setFetchingVarsProgress: (state, action) => {
       if (action.payload === state.fetchingVarsProgress) return
       state.fetchingVarsProgress = action.payload
+    },
+    setFetchingParam: (state, action) => {
+      if (action.payload === state.fetchingParam) return
+      state.fetchingParam = action.payload
     },
     setParamSearchValue: (state, action) => {
       if (action.payload === state.searchValue) return
@@ -182,6 +187,7 @@ const paramsSlice = createSlice({
     selectShowModifiedParams: (state) => state.showModifiedParams,
     selectFetchingVars: (state) => state.fetchingVars,
     selectFetchingVarsProgress: (state) => state.fetchingVarsProgress,
+    selectFetchingParam: (state) => state.fetchingParam,
     selectParamSearchValue: (state) => state.searchValue,
     selectHasFetchedOnce: (state) => state.hasFetchedOnce,
     selectLoadParamsFileModalOpen: (state) => state.loadParamsFileModalOpen,
@@ -207,6 +213,7 @@ export const {
   setModifiedParams,
   setFetchingVars,
   setFetchingVarsProgress,
+  setFetchingParam,
   setParamSearchValue,
   toggleShowModifiedParams,
   appendModifiedParams,
@@ -239,6 +246,7 @@ export const {
   selectModifiedParams,
   selectFetchingVars,
   selectFetchingVarsProgress,
+  selectFetchingParam,
   selectShowModifiedParams,
   selectParamSearchValue,
   selectHasFetchedOnce,

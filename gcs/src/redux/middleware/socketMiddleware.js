@@ -124,6 +124,7 @@ import {
 import {
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
+  setFetchingParam,
   setFetchingVars,
   setFetchingVarsProgress,
   setHasFetchedOnce,
@@ -531,6 +532,10 @@ const socketMiddleware = (store) => {
             )
             store.dispatch(setConnectedToSimulator(true))
           }
+        })
+
+        socket.socket.on("fetching_param", (msg) => {
+          store.dispatch(setFetchingParam(msg.param))
         })
 
         // Link stats

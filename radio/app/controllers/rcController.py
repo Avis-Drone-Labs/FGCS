@@ -33,6 +33,7 @@ class RcController:
             param_key (str): The key for the parameter within the dictionary
             param_name (str): The name of the parameter
         """
+        self.drone.logger.debug("MOOOOOO")
         param = self.drone.paramsController.getSingleParam(param_name).get("data")
         if param:
             params_dict[param_key] = param.param_value

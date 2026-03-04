@@ -3,6 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import moment from "moment"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
+import { showErrorNotification } from "../../helpers/notification"
 import {
   selectMessageFilters,
   selectUtcAvailable,
@@ -29,6 +30,17 @@ export default function DataTable() {
   const [resizingColumn, setResizingColumn] = useState(null)
   const parentRef = useRef(null)
   const persistedWidthsRef = useRef({})
+  const cleanupResizeRef = useRef(null)
+
+  // Cleanup resize listeners on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupResizeRef.current) {
+        cleanupResizeRef.current()
+        cleanupResizeRef.current = null
+      }
+    }
+  }, [])
 
   // Get available message types from messageFilters
   const messageTypes = useMemo(() => {
@@ -43,12 +55,16 @@ export default function DataTable() {
         return
       }
 
-      const messageTableData = await window.ipcRenderer.invoke(
+      const result = await window.ipcRenderer.invoke(
         "fla:get-message-data-for-table",
         selectedMessage,
       )
 
-      setMessageTableData(messageTableData)
+      if (Array.isArray(result)) {
+        setMessageTableData(result)
+      } else if (!result?.success) {
+        showErrorNotification(result?.message)
+      }
     }
 
     fetchTableData()
@@ -132,10 +148,18 @@ export default function DataTable() {
       setResizingColumn(null)
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
+      cleanupResizeRef.current = null
     }
 
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("mouseup", handleMouseUp)
+
+    // Store cleanup function in ref so it can be called on unmount
+    cleanupResizeRef.current = () => {
+      setResizingColumn(null)
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
   }
 
   // Initialize virtualizer
@@ -168,9 +192,9 @@ export default function DataTable() {
                     key={column}
                     className="whitespace-nowrap"
                     style={{
-                      width: `${columnWidths[column]}px`,
-                      minWidth: `${columnWidths[column]}px`,
-                      maxWidth: `${columnWidths[column]}px`,
+                      width: `${columnWidths[column] ?? TABLE_CELL_DEFAULT_WIDTH}px`,
+                      minWidth: `${columnWidths[column] ?? TABLE_CELL_DEFAULT_WIDTH}px`,
+                      maxWidth: `${columnWidths[column] ?? TABLE_CELL_DEFAULT_WIDTH}px`,
                       position: "relative",
                     }}
                   >
@@ -246,9 +270,9 @@ export default function DataTable() {
                           className="truncate"
                           style={{
                             position: "relative",
-                            width: `${columnWidths[column]}px`,
-                            minWidth: `${columnWidths[column]}px`,
-                            maxWidth: `${columnWidths[column]}px`,
+                            width: `${columnWidths[column] ?? TABLE_CELL_DEFAULT_WIDTH}px`,
+                            minWidth: `${columnWidths[column] ?? TABLE_CELL_DEFAULT_WIDTH}px`,
+                            maxWidth: `${columnWidths[column] ?? TABLE_CELL_DEFAULT_WIDTH}px`,
                           }}
                         >
                           {column.startsWith("_empty_")

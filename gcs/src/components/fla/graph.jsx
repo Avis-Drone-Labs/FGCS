@@ -381,8 +381,16 @@ export default function Graph({ data, customColors, openPresetModal }) {
         // https://stackoverflow.com/a/8179549/10077669
         const labelColor = backgroundColor.replace(/[^,]+(?=\))/, "1")
 
+        // Get time values: use UtcTimeUS if available, otherwise TimeUS
+        const getTimeValue = (mode) => {
+          if (utcAvailable && mode.UtcTimeUS !== undefined) {
+            return mode.UtcTimeUS
+          }
+          return mode.TimeUS
+        }
+
         // Critical fix: Convert timestamp to Date object for time scale
-        let xMinValue = flightMode.TimeUS
+        let xMinValue = getTimeValue(flightMode)
         let xMaxValue = xMax
 
         // Check if we're using a time scale
@@ -390,11 +398,11 @@ export default function Graph({ data, customColors, openPresetModal }) {
 
         // Convert timestamps to Date objects when using time scale
         if (isTimeScale) {
-          xMinValue = new Date(flightMode.TimeUS)
+          xMinValue = new Date(xMinValue)
 
           // Handle xMax
           if (nextFlightMode !== undefined) {
-            xMaxValue = new Date(nextFlightMode.TimeUS)
+            xMaxValue = new Date(getTimeValue(nextFlightMode))
           } else {
             // Stretch to the latest date
             let maxTime = 0
@@ -411,7 +419,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
         } else {
           // For non-time scales, handle next flight mode
           if (nextFlightMode !== undefined) {
-            xMaxValue = nextFlightMode.TimeUS
+            xMaxValue = getTimeValue(nextFlightMode)
           }
         }
 

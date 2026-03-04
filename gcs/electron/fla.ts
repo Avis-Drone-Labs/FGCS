@@ -684,8 +684,12 @@ export async function getMessages(
 
     for (let j = 0; j < len; j++) {
       const point = series[j]
+      // Use UtcTimeUS if available, otherwise fall back to TimeUS
+      const timeValue =
+        point.UtcTimeUS !== undefined ? point.UtcTimeUS : point.TimeUS
+
       // making sure all the entries are numbers
-      x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
+      x[j] = typeof timeValue === "number" ? timeValue : 0
       y[j] = typeof point[fieldName] === "number" ? point[fieldName] : 0
     }
 

@@ -187,7 +187,7 @@ def fetchingParameterCb(param_name: str) -> None:
     """
     socketio.emit(
         "fetching_param",
-        {"message": param_name},
+        {"success": True, "message": param_name},
     )
 
 

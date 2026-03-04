@@ -699,3 +699,35 @@ export async function getMessages(
 
   return datasets
 }
+
+export async function saveParamsToFile(
+  _event: unknown,
+  filePath: string,
+  params: Array<{ name: string; value: number }>,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Sort params alphabetically by name
+    const sortedParams = [...params].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )
+
+    // Write params to file in the format: PARAM_NAME,value
+    const content = sortedParams
+      .map((param) => `${param.name.toUpperCase()},${param.value}`)
+      .join("\n")
+
+    await fs.promises.writeFile(filePath, content + "\n", "utf-8")
+
+    console.log(`Parameters saved to ${filePath}`)
+    return {
+      success: true,
+      message: `Parameters saved successfully to ${filePath}`,
+    }
+  } catch (error) {
+    console.error("Failed to save params to file:", error)
+    return {
+      success: false,
+      message: `Failed to save parameters: ${error instanceof Error ? error.message : String(error)}`,
+    }
+  }
+}

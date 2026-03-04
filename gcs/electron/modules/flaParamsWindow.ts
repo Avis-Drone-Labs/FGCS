@@ -43,7 +43,10 @@ export function openFlaParamsWindow(
 
   if (paramsData !== null) {
     flaParamsWin.webContents.once("did-finish-load", () => {
-      flaParamsWin?.webContents.send("app:send-fla-params", paramsData)
+      flaParamsWin?.webContents.send("app:send-fla-params", {
+        params: paramsData,
+        filename: fileName,
+      })
     })
   }
 }

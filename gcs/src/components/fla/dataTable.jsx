@@ -1,14 +1,27 @@
 import { Select, Table } from "@mantine/core"
 import { useVirtualizer } from "@tanstack/react-virtual"
+import moment from "moment"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
-import { selectMessageFilters } from "../../redux/slices/logAnalyserSlice"
+import {
+  selectMessageFilters,
+  selectUtcAvailable,
+} from "../../redux/slices/logAnalyserSlice"
 
 const TABLE_CELL_MIN_WIDTH = 80
 const TABLE_CELL_DEFAULT_WIDTH = 150
 
+// Helper function to format UtcTimeUS to human-readable string
+function formatUtcTime(seconds) {
+  if (typeof seconds !== "number" || !isFinite(seconds)) {
+    return seconds
+  }
+  return moment(seconds).format("YYYY-MM-DD HH:mm:ss.SSS")
+}
+
 export default function DataTable() {
   const messageFilters = useSelector(selectMessageFilters)
+  const utcAvailable = useSelector(selectUtcAvailable)
 
   const [selectedMessage, setSelectedMessage] = useState("MSG")
   const [messageTableData, setMessageTableData] = useState(null)
@@ -42,21 +55,41 @@ export default function DataTable() {
   }, [selectedMessage])
 
   // Extract columns from the first row of data and ensure minimum 16 columns
+  // Order: "name" first, "TimeUS" second, "UtcTimeUS" third (if utcAvailable), then rest
   const columns = useMemo(() => {
     if (!messageTableData || messageTableData.length === 0) return []
     const dataColumns = Object.keys(messageTableData[0])
 
-    // If we have fewer than 16 columns, pad with empty column names
-    if (dataColumns.length < 16) {
-      const emptyColumns = Array.from(
-        { length: 16 - dataColumns.length },
-        (_, i) => `_empty_${i}`,
-      )
-      return [...dataColumns, ...emptyColumns]
+    const orderedColumns = []
+
+    if (dataColumns.includes("name")) {
+      orderedColumns.push("name")
     }
 
-    return dataColumns
-  }, [messageTableData])
+    if (dataColumns.includes("TimeUS")) {
+      orderedColumns.push("TimeUS")
+    }
+
+    if (utcAvailable && dataColumns.includes("UtcTimeUS")) {
+      orderedColumns.push("UtcTimeUS")
+    }
+
+    const remainingColumns = dataColumns.filter(
+      (col) => !orderedColumns.includes(col),
+    )
+    orderedColumns.push(...remainingColumns)
+
+    // If we have fewer than 16 columns, pad with empty column names
+    if (orderedColumns.length < 16) {
+      const emptyColumns = Array.from(
+        { length: 16 - orderedColumns.length },
+        (_, i) => `_empty_${i}`,
+      )
+      return [...orderedColumns, ...emptyColumns]
+    }
+
+    return orderedColumns
+  }, [messageTableData, utcAvailable])
 
   // Initialize default column widths when data changes
   useEffect(() => {
@@ -195,24 +228,37 @@ export default function DataTable() {
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    {columns.map((column) => (
-                      <Table.Td
-                        key={column}
-                        className="truncate"
-                        style={{
-                          position: "relative",
-                          width: `${columnWidths[column]}px`,
-                          minWidth: `${columnWidths[column]}px`,
-                          maxWidth: `${columnWidths[column]}px`,
-                        }}
-                      >
-                        {column.startsWith("_empty_")
-                          ? ""
-                          : row[column] !== undefined &&
-                            row[column] !== null &&
-                            row[column]}
-                      </Table.Td>
-                    ))}
+                    {columns.map((column) => {
+                      let cellValue = row[column]
+
+                      // Format UtcTimeUS as human-readable date/time
+                      if (
+                        column === "UtcTimeUS" &&
+                        cellValue !== undefined &&
+                        cellValue !== null
+                      ) {
+                        cellValue = formatUtcTime(cellValue)
+                      }
+
+                      return (
+                        <Table.Td
+                          key={column}
+                          className="truncate"
+                          style={{
+                            position: "relative",
+                            width: `${columnWidths[column]}px`,
+                            minWidth: `${columnWidths[column]}px`,
+                            maxWidth: `${columnWidths[column]}px`,
+                          }}
+                        >
+                          {column.startsWith("_empty_")
+                            ? ""
+                            : cellValue !== undefined &&
+                              cellValue !== null &&
+                              cellValue}
+                        </Table.Td>
+                      )
+                    })}
                   </Table.Tr>
                 )
               })}

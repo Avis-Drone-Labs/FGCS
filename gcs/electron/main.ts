@@ -16,7 +16,7 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
+import openFilePath, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -565,10 +565,10 @@ app.whenReady().then(() => {
       dialog.showErrorBox(
         "Missing Required Files",
         `The following required data files are missing:\n\n${fileCheck.missingFiles.join("\n")}\n\n` +
-          `Please run the following commands from the data directory within the 'gcs' folder:\n` +
-          `  python generate_param_definitions.py\n` +
-          `  python generate_log_message_descriptions.py\n\n` +
-          `Then restart the application.`,
+        `Please run the following commands from the data directory within the 'gcs' folder:\n` +
+        `  python generate_param_definitions.py\n` +
+        `  python generate_log_message_descriptions.py\n\n` +
+        `Then restart the application.`,
       )
       app.quit()
       return
@@ -577,7 +577,7 @@ app.whenReady().then(() => {
 
   createLoadingWindow()
   // Open file and Get Recent Logs
-  ipcMain.handle("fla:open-file", openFile)
+  ipcMain.handle("fla:open-file", openFilePath)
   ipcMain.handle("fla:get-recent-logs", async () => {
     try {
       const recentLogs = getRecentFiles()

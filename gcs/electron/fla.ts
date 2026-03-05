@@ -173,7 +173,7 @@ async function parseDataflashLogFile(
             }
           }
 
-          ;(messages[messageName] as MessageObject[]).push(messageObj)
+          ; (messages[messageName] as MessageObject[]).push(messageObj)
         }
       }
 
@@ -311,7 +311,7 @@ async function parseFgcsTelemetryLogFile(
         messages[messageName] = []
       }
 
-      ;(messages[messageName] as MessageObject[]).push(messageObj)
+      ; (messages[messageName] as MessageObject[]).push(messageObj)
 
       const now = Date.now()
       if (now - lastUpdateTime > UPDATE_THROTTLE_MS) {
@@ -537,12 +537,86 @@ function processAndSaveLogData(
   }
 }
 
-export default async function openFile(
+export default async function openFilePath(
   event: { sender: WebContents },
   filePath: string | null,
 ): Promise<ParseResult> {
   if (filePath == null) {
     return { success: false, error: "No file path provided" }
+  }
+
+  try {
+    // (nitpicking) Check if file is empty before proceeding
+    const stats = fs.statSync(filePath)
+    if (stats.size === 0) {
+      return { success: false, error: "Log file is empty." }
+    }
+
+    const logType = await determineLogFileType(filePath)
+
+    if (logType === null) {
+      return { success: false, error: "Unknown log file type" }
+    }
+
+    let messages: Messages | null = null
+
+    if (logType === "dataflash_bin") {
+      messages = parseDataflashBinFile(filePath, event.sender)
+    } else {
+      const fileStream = fs.createReadStream(filePath)
+      const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+      })
+
+      if (logType === "dataflash_log") {
+        messages = await parseDataflashLogFile(
+          rl,
+          fileStream,
+          stats.size,
+          event.sender,
+        )
+      } else if (logType === "fgcs_telemetry") {
+        messages = await parseFgcsTelemetryLogFile(
+          rl,
+          fileStream,
+          stats.size,
+          event.sender,
+        )
+      } else if (logType === "mp_telemetry") {
+        // TODO: implement
+        // messages = await parseMpTelemetryLogFile(fileLines, event.sender)
+        return {
+          success: false,
+          error: "MP telemetry parsing not yet implemented",
+        }
+      }
+    }
+
+    if (messages !== null) {
+      // returns a lightweight summary after processing
+      const summary = processAndSaveLogData(messages, logType)
+
+      // add recent file
+      recentLogsManager.addRecentLog(filePath)
+      return { success: true, summary }
+    } else {
+      return { success: false, error: "Failed to parse log file" }
+    }
+  } catch (err: unknown) {
+    console.error("Error parsing log file:", err)
+    const errorMessage =
+      err instanceof Error ? err.message : "Unknown parsing error"
+    return { success: false, error: errorMessage }
+  }
+}
+
+export async function openFile(
+  event: { sender: WebContents },
+  file: File | null,
+): Promise<ParseResult> {
+  if (file == null) {
+    return { success: false, error: "No file provided" }
   }
 
   try {

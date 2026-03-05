@@ -432,6 +432,44 @@ export const selectAttitudeDeg = createSelector(
   },
 )
 
+export const selectEscTelemetry = createSelector(
+  [
+    droneInfoSlice.selectors.selectEscTelemetry1To4,
+    droneInfoSlice.selectors.selectEscTelemetry5To8,
+  ],
+  (esc1To4, esc5To8) => {
+    const escs = []
+
+    function pushEscPacket(packet, baseIndex) {
+      if (!packet) return
+
+      // Most fields are arrays of length 4, but guard anyway
+      const rpm = packet.rpm ?? []
+      const count = Math.min(4, rpm.length)
+
+      for (let i = 0; i < count; i++) {
+        escs.push({
+          escId: baseIndex + i + 1,
+          rpm: packet.rpm?.[i] ?? null,
+          current: packet.current?.[i] ?? null,
+          voltage: packet.voltage?.[i] ?? null,
+          temperature: packet.temperature?.[i] ?? null,
+          totalcurrent: packet.totalcurrent?.[i] ?? null,
+          timestamp: packet.timestamp ?? null,
+        })
+      }
+    }
+
+    // ESC 1-4
+    pushEscPacket(esc1To4, 0)
+
+    // ESC 5-8
+    pushEscPacket(esc5To8, 4)
+
+    return escs
+  },
+)
+
 export const selectAlt = createSelector(
   [droneInfoSlice.selectors.selectGPS],
   ({ alt, relativeAlt }) => {
@@ -500,44 +538,6 @@ export const calculateGpsTrackHeadingThunk = () => (dispatch, getState) => {
     // Keep previous heading
   }
 }
-
-export const selectEscTelemetry = createSelector(
-  [
-    droneInfoSlice.selectors.selectEscTelemetry1To4,
-    droneInfoSlice.selectors.selectEscTelemetry5To8,
-  ],
-  (esc1To4, esc5To8) => {
-    const escs = []
-
-    function pushEscPacket(packet, baseIndex) {
-      if (!packet) return
-
-      // Most fields are arrays of length 4, but guard anyway
-      const rpm = packet.rpm ?? []
-      const count = Math.min(4, rpm.length)
-
-      for (let i = 0; i < count; i++) {
-        escs.push({
-          escId: baseIndex + i + 1,
-          rpm: packet.rpm?.[i] ?? null,
-          current: packet.current?.[i] ?? null,
-          voltage: packet.voltage?.[i] ?? null,
-          temperature: packet.temperature?.[i] ?? null,
-          totalcurrent: packet.totalcurrent?.[i] ?? null,
-          timestamp: packet.timestamp ?? null,
-        })
-      }
-    }
-
-    // ESC 1-4
-    pushEscPacket(esc1To4, 0)
-
-    // ESC 5-8
-    pushEscPacket(esc5To8, 4)
-
-    return escs
-  },
-)
 
 export const {
   selectFlightSwVersion,

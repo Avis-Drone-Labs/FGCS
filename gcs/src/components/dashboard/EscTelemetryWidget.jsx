@@ -1,14 +1,9 @@
 /*
-  Floating ESC telemetry widget (same positioning + UI pattern as VideoWidget)
+  Floating ESC telemetry widget (row-positioned like VideoWidget)
 */
 import { useMemo, useState } from "react"
 import { ActionIcon, Text } from "@mantine/core"
-import {
-  IconBolt,
-  IconMaximize,
-  IconMinus,
-  IconResize,
-} from "@tabler/icons-react"
+import { IconBolt, IconMaximize, IconMinus, IconResize } from "@tabler/icons-react"
 import { useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
@@ -32,12 +27,7 @@ function EscTile({ esc }) {
   return (
     <div className="rounded-md border border-falcongrey-700 bg-falcongrey-900 p-2">
       <div className="flex flex-row items-center justify-between mb-1">
-        <div className="text-slate-200 text-xs font-semibold">
-          ESC {esc.escId}
-        </div>
-        <div className="text-slate-500 text-[10px]">
-          {esc.timestamp ? new Date(esc.timestamp).toLocaleTimeString() : "—"}
-        </div>
+        <div className="text-slate-200 text-xs font-semibold">ESC {esc.escId}</div>
       </div>
 
       <div className="flex flex-col gap-y-0.5">
@@ -50,10 +40,6 @@ function EscTile({ esc }) {
           <div className="text-slate-200 text-xs">{fmt(esc.current, 2)}</div>
         </div>
         <div className="flex flex-row items-center justify-between">
-          <div className="text-slate-500 text-[10px]">V</div>
-          <div className="text-slate-200 text-xs">{fmt(esc.voltage, 2)}</div>
-        </div>
-        <div className="flex flex-row items-center justify-between">
           <div className="text-slate-500 text-[10px]">°C</div>
           <div className="text-slate-200 text-xs">{fmtTemp(esc.temperature)}</div>
         </div>
@@ -62,30 +48,53 @@ function EscTile({ esc }) {
   )
 }
 
-export default function EscTelemetryWidget({ telemetryPanelWidth }) {
-  const escs = useSelector(selectEscTelemetry)
+export default function EscTelemetryWidget({
+  telemetryPanelWidth, // unused now, kept so your callsites don’t break
+  onMaximizedChange,
+}) {
+  //const escs = useSelector(selectEscTelemetry)
+  const realEscs = useSelector(selectEscTelemetry)
+
+  const escs = Array.from({ length: 8 }).map((_, i) => ({
+    escId: i + 1,
+    rpm: Math.floor(Math.random() * 6000),
+    current: (Math.random() * 20).toFixed(2),
+    temperature: Math.floor(30 + Math.random() * 20)
+  }))
 
   const [isMaximized, setIsMaximized] = useState(false)
   const [scale, setScale] = useState(1)
 
-  const dimensions = useMemo(() => {
-    const baseWidth = 350
-    const width = baseWidth * scale
-    // make it a bit taller than video default so 2 rows of tiles fit nicely
-    const height = Math.round((197 * 1.15) * scale)
-    return { width, height }
-  }, [scale])
+  const setMaximized = (next) => {
+    setIsMaximized(next)
+    onMaximizedChange?.(next)
+  }
 
   const hasAnyData =
     Array.isArray(escs) &&
     escs.some(
       (e) =>
         e &&
-        (e.rpm != null ||
-          e.current != null ||
-          e.voltage != null ||
-          e.temperature != null),
+        (e.rpm != null || e.current != null || e.temperature != null),
     )
+
+  const dimensions = useMemo(() => {
+    const baseWidth = 350
+    const width = baseWidth * scale
+
+    const cols = 4
+    const count = Array.isArray(escs) ? escs.length : 0
+    const rows = Math.max(1, Math.ceil(count / cols))
+
+    const tileH = 74 * scale
+    const gapH = 8 * scale
+    const paddingH = 32 * scale
+
+    const height = Math.round(rows * tileH + (rows - 1) * gapH + paddingH)
+    const clampedHeight = Math.max(180 * scale, Math.min(420 * scale, height))
+
+    return { width, height: clampedHeight }
+  }, [scale, escs])
 
   function handleResizeStart(e) {
     const startX = e.clientX
@@ -111,9 +120,15 @@ export default function EscTelemetryWidget({ telemetryPanelWidth }) {
   // Minimized view
   if (!isMaximized) {
     return (
-      <div className="rounded-md" style={{ background: GetOutsideVisibilityColor() }}>
+      <div
+        className="rounded-md"
+        style={{ background: GetOutsideVisibilityColor() }}
+      >
         <div className="p-2 flex items-center gap-2">
-          <IconBolt size={16} className={hasAnyData ? "text-slate-200" : "text-slate-500"} />
+          <IconBolt
+            size={16}
+            className={hasAnyData ? "text-slate-200" : "text-slate-500"}
+          />
           <Text size="sm" className="truncate max-w-[150px]">
             {hasAnyData ? "ESC telemetry" : "No ESC telemetry"}
           </Text>
@@ -121,7 +136,7 @@ export default function EscTelemetryWidget({ telemetryPanelWidth }) {
           <ActionIcon
             size="sm"
             variant="subtle"
-            onClick={() => setIsMaximized(true)}
+            onClick={() => setMaximized(true)}
             className="text-slate-400 hover:text-slate-200"
             title="Maximize ESC widget"
           >
@@ -132,13 +147,10 @@ export default function EscTelemetryWidget({ telemetryPanelWidth }) {
     )
   }
 
-  // Full view
+  // Full view (make it stretch nicely when parent uses items-stretch)
   return (
-    <div
-        className="min-w-[350px] rounded-md"
-        style={{ background: GetOutsideVisibilityColor() }}
-    >
-      <div className="p-2">
+    <div className="min-w-[350px] min-h-[225px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
+      <div className="p-2 h-full flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <Text>ESC telemetry</Text>
 
@@ -146,7 +158,7 @@ export default function EscTelemetryWidget({ telemetryPanelWidth }) {
             <ActionIcon
               size="sm"
               variant="subtle"
-              onClick={() => setIsMaximized(false)}
+              onClick={() => setMaximized(false)}
               className="text-slate-400 hover:text-slate-200"
               title="Minimize ESC widget"
             >
@@ -166,7 +178,7 @@ export default function EscTelemetryWidget({ telemetryPanelWidth }) {
         </div>
 
         <div
-          className="rounded overflow-hidden mx-auto"
+          className="rounded overflow-hidden mx-auto flex-1"
           style={{
             width: `${dimensions.width}px`,
             height: `${dimensions.height}px`,

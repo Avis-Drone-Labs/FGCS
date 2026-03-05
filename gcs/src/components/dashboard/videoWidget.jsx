@@ -396,10 +396,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
       {/* Full view */}
       {isMaximized && (
-        <div
-          className={`min-w-[350px] rounded-md ${isPoppedOut ? "hidden" : ""}`}
-          style={{ background: GetOutsideVisibilityColor() }}
-        >
+        <div className="min-w-[350px] min-h-[253px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
           <div className="p-2">
             <div className="flex items-center justify-between mb-2">
               <Text>{videoSource?.name || "No video selected"}</Text>

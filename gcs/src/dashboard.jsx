@@ -29,7 +29,8 @@ import { ResizableBox } from "react-resizable"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import { selectConnectedToDrone,
+        selectVideoMaximized } from "./redux/slices/droneConnectionSlice"
 import {
   selectAircraftTypeString,
   selectBatteryData,
@@ -104,6 +105,11 @@ export default function Dashboard() {
   const hasSecondaryGps = useSelector(selectHasSecondaryGps)
 
   const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
+
+  const videoMaximized = useSelector(selectVideoMaximized)
+  const [escMaximized, setEscMaximized] = useState(false)
+
+  const stretchWidgets = videoMaximized || escMaximized
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -341,6 +347,7 @@ export default function Dashboard() {
           <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
           <EscTelemetryWidget telemetryPanelWidth={telemetryPanelSize.width} />
         </div>
+
 
         <div className="absolute bottom-0 right-0 z-20">
           <ResizableBox

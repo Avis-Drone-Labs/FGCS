@@ -31,6 +31,10 @@ const droneInfoSlice = createSlice({
       heading: 0.0,
       throttle: 0.0,
     },
+    escData: {
+      escTelemetry1To4: null,
+      escTelemetry5To8: null,
+    },
     gpsData: {
       lat: 0.0,
       lon: 0.0,
@@ -178,6 +182,12 @@ const droneInfoSlice = createSlice({
       if (action.payload !== state.aircraftType) {
         state.aircraftType = action.payload
       }
+    },
+    setEscTelemetry1To4: (state, action) => {
+      state.escData.escTelemetry1To4 = action.payload
+    },
+    setEscTelemetry5To8: (state, action) => {
+      state.escData.escTelemetry5To8 = action.payload
     },
     setTelemetryData: (state, action) => {
       state.telemetryData = {
@@ -353,6 +363,8 @@ const droneInfoSlice = createSlice({
     selectHasEverHadGpsFix: (state) => state.hasEverHadGpsFix,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
+    selectEscTelemetry1To4: (state) => state.escData.escTelemetry1To4,
+    selectEscTelemetry5To8: (state) => state.escData.escTelemetry5To8,
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
@@ -376,6 +388,8 @@ export const {
   changeExtraData,
   setExtraData,
   setDroneAircraftType,
+  setEscTelemetry1To4,
+  setEscTelemetry5To8,
   setTelemetryData,
   setGpsData,
   setHomePosition,
@@ -415,6 +429,44 @@ export const selectAttitudeDeg = createSelector(
       pitch: pitch * (180 / Math.PI),
       yaw: yaw * (180 / Math.PI),
     }
+  },
+)
+
+export const selectEscTelemetry = createSelector(
+  [
+    droneInfoSlice.selectors.selectEscTelemetry1To4,
+    droneInfoSlice.selectors.selectEscTelemetry5To8,
+  ],
+  (esc1To4, esc5To8) => {
+    const escs = []
+
+    function pushEscPacket(packet, baseIndex) {
+      if (!packet) return
+
+      // Most fields are arrays of length 4, but guard anyway
+      const rpm = packet.rpm ?? []
+      const count = Math.min(4, rpm.length)
+
+      for (let i = 0; i < count; i++) {
+        escs.push({
+          escId: baseIndex + i + 1,
+          rpm: packet.rpm?.[i] ?? null,
+          current: packet.current?.[i] ?? null,
+          voltage: packet.voltage?.[i] ?? null,
+          temperature: packet.temperature?.[i] ?? null,
+          totalcurrent: packet.totalcurrent?.[i] ?? null,
+          timestamp: packet.timestamp ?? null,
+        })
+      }
+    }
+
+    // ESC 1-4
+    pushEscPacket(esc1To4, 0)
+
+    // ESC 5-8
+    pushEscPacket(esc5To8, 4)
+
+    return escs
   },
 )
 

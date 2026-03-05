@@ -29,7 +29,8 @@ import { ResizableBox } from "react-resizable"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import { selectConnectedToDrone,
+        selectVideoMaximized } from "./redux/slices/droneConnectionSlice"
 import {
   selectAircraftTypeString,
   selectBatteryData,
@@ -64,6 +65,7 @@ import StatusMessages from "./components/dashboard/statusMessages"
 import TabsSection from "./components/dashboard/tabsSection"
 import TelemetrySection from "./components/dashboard/telemetrySection/telemetry"
 import VideoWidget from "./components/dashboard/videoWidget"
+import EscTelemetryWidget from "./components/dashboard/EscTelemetryWidget"
 import Layout from "./components/layout"
 
 // Tailwind styling
@@ -103,6 +105,11 @@ export default function Dashboard() {
   const hasSecondaryGps = useSelector(selectHasSecondaryGps)
 
   const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
+
+  const videoMaximized = useSelector(selectVideoMaximized)
+  const [escMaximized, setEscMaximized] = useState(false)
+
+  const stretchWidgets = videoMaximized || escMaximized
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -332,8 +339,15 @@ export default function Dashboard() {
           mapRef={mapRef}
         />
 
-        {/* Video Widget for RTSP streams */}
-        <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
+        {/* Bottom widgets row */}
+        <div
+          className="absolute bottom-2 z-10 flex items-end gap-2"
+          style={{ left: `${telemetryPanelSize.width + 8}px` }}
+        >
+          <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
+          <EscTelemetryWidget telemetryPanelWidth={telemetryPanelSize.width} />
+        </div>
+
 
         <div className="absolute bottom-0 right-0 z-20">
           <ResizableBox

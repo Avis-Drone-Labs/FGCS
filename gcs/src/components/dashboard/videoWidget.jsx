@@ -366,13 +366,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
       {/* Minimized view */}
       {!isMaximized && !isPoppedOut && (
-        <div
-          className="absolute bottom-2 rounded-md z-10"
-          style={{
-            left: `${telemetryPanelWidth + 8}px`,
-            background: GetOutsideVisibilityColor(),
-          }}
-        >
+        <div className="rounded-md" style={{ background: GetOutsideVisibilityColor() }}>
           <div className="p-2 flex items-center gap-2">
             {videoSource && error === null ? (
               <div
@@ -402,13 +396,7 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
       {/* Full view */}
       {isMaximized && (
-        <div
-          className={`absolute bottom-2 min-w-[350px] rounded-md z-10 ${isPoppedOut ? "hidden" : ""}`}
-          style={{
-            left: `${telemetryPanelWidth + 8}px`,
-            background: GetOutsideVisibilityColor(),
-          }}
-        >
+        <div className="min-w-[350px] min-h-[253px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
           <div className="p-2">
             <div className="flex items-center justify-between mb-2">
               <Text>{videoSource?.name || "No video selected"}</Text>

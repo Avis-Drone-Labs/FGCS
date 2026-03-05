@@ -27,6 +27,7 @@ export default function SelectFlightLog({ getLogSummary }) {
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const [
     downloadModalOpened,
     { open: openDownloadModal, close: closeDownloadModal },
@@ -97,6 +98,50 @@ export default function SelectFlightLog({ getLogSummary }) {
     [dispatch, getLogSummary],
   )
 
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    (e) => {
+      e.preventDefault()
+      setIsDragging(false)
+
+      const files = Array.from(e.dataTransfer.files)
+
+      if (files.length > 0) {
+        const file = files[0]
+        const path = window.ipcRenderer.readFilePath(file)
+        console.log(
+          `${JSON.stringify({
+            name: file.name,
+            path: path,
+            size: file.size,
+          })}`,
+        )
+        const ext = file.name.split(".").pop().toLowerCase()
+        if (["bin", "log", "ftlog"].includes(ext)) {
+          handleFile({
+            name: file.name,
+            path: path,
+            size: file.size,
+          })
+        } else {
+          showErrorNotification(
+            "Invalid file type. Please upload a .bin, .log, or .ftlog file",
+          )
+        }
+      }
+    },
+    [handleFile],
+  )
+
   useEffect(() => {
     const onProgress = (_event, message) =>
       setLoadingFileProgress(message.percent)
@@ -139,7 +184,14 @@ export default function SelectFlightLog({ getLogSummary }) {
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
-        <div className="flex flex-col gap-4">
+        <div
+          className={`flex flex-col gap-4 p-8 border-2 border-dashed rounded-lg transition-colors ${
+            isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <Button onClick={selectFile} loading={loadingFile}>
             Analyse a log
           </Button>
@@ -156,6 +208,9 @@ export default function SelectFlightLog({ getLogSummary }) {
           >
             Clear Logs
           </Button>
+          <p className="text-center text-xs text-gray-500 mt-2 pointer-events-none">
+            or drag and drop a log file here
+          </p>
         </div>
         <Divider size="xs" orientation="vertical" />
         <div className="relative">

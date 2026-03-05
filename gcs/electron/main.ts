@@ -16,7 +16,12 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
+import openFile, {
+  clearRecentFiles,
+  getMessages,
+  getRecentFiles,
+  saveParamsToFile,
+} from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -28,6 +33,9 @@ import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerFlaParamsIPC, {
   destroyFlaParamsWindow,
 } from "./modules/flaParamsWindow"
+import registerGraphWindowIPC, {
+  destroyAllGraphWindows,
+} from "./modules/graphWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -40,9 +48,6 @@ import registerVibeStatusIPC, {
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 import { readParamsFile } from "./utils/paramsFile"
-import registerGraphWindowIPC, {
-  destroyAllGraphWindows,
-} from "./modules/graphWindow"
 
 // Check if required data files exist
 function checkRequiredDataFiles(): {
@@ -611,6 +616,9 @@ app.whenReady().then(() => {
 
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", getMessages)
+
+  // Save FLA params to file
+  ipcMain.handle("fla:save-params-to-file", saveParamsToFile)
 
   // Open native save dialog
   ipcMain.handle("app:get-save-file-path", async (event, options) => {

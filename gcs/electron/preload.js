@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron"
+import { contextBridge, ipcRenderer, webUtils } from "electron"
 
 // --------- Expose some API to the Renderer process ---------
 // Whitelist of allowed IPC channels for security
@@ -116,6 +116,11 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     throw new Error(
       `IPC removeAllListeners channel '${channel}' is not allowed`,
     )
+  },
+
+  // Get file path
+  readFilePath (file) {
+	return webUtils.getPathForFile(file)
   },
 })
 

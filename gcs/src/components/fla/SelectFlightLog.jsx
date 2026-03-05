@@ -112,12 +112,12 @@ export default function SelectFlightLog({ getLogSummary }) {
     (e) => {
       e.preventDefault()
       setIsDragging(false)
-      console.log(e.dataTransfer.files)
+
       const files = Array.from(e.dataTransfer.files)
-      console.log(files)
+
       if (files.length > 0) {
         const file = files[0]
-        const path = file.path
+        const path = window.ipcRenderer.readFilePath(file);
         console.log(`${JSON.stringify({
           name: file.name,
           path: path,
@@ -185,7 +185,7 @@ export default function SelectFlightLog({ getLogSummary }) {
         <div
           className={`flex flex-col gap-4 p-8 border-2 border-dashed rounded-lg transition-colors ${isDragging
             ? "border-blue-500 bg-blue-500/10"
-            : "border-transparent hover:border-falcongrey-600/50"
+            : "border-transparent"
             }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -207,8 +207,8 @@ export default function SelectFlightLog({ getLogSummary }) {
           >
             Clear Logs
           </Button>
-          <p className="text-center text-sm text-gray-500 mt-2 pointer-events-none">
-            or drag and drop log file here
+          <p className="text-center text-xs text-gray-500 mt-2 pointer-events-none">
+            or drag and drop a log file here
           </p>
         </div>
         <Divider size="xs" orientation="vertical" />

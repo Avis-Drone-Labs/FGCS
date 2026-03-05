@@ -16,7 +16,7 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-import openFilePath, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
+import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -577,7 +577,7 @@ app.whenReady().then(() => {
 
   createLoadingWindow()
   // Open file and Get Recent Logs
-  ipcMain.handle("fla:open-file", openFilePath)
+  ipcMain.handle("fla:open-file", openFile)
   ipcMain.handle("fla:get-recent-logs", async () => {
     try {
       const recentLogs = getRecentFiles()

@@ -21,6 +21,7 @@ import openFile, {
   getMessageDataForTable,
   getMessages,
   getRecentFiles,
+  saveParamsToFile,
 } from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
@@ -619,6 +620,9 @@ app.whenReady().then(() => {
 
   // Get message data for table
   ipcMain.handle("fla:get-message-data-for-table", getMessageDataForTable)
+ 
+  // Save FLA params to file
+  ipcMain.handle("fla:save-params-to-file", saveParamsToFile)
 
   // Open native save dialog
   ipcMain.handle("app:get-save-file-path", async (event, options) => {

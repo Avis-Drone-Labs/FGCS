@@ -61,6 +61,9 @@ class ParamsController:
         try:
             time.sleep(0.05)  # Brief pause for stability
 
+            if self.drone.fetchingParameterCb:
+                self.drone.fetchingParameterCb(param_name)
+
             self.drone.master.mav.param_request_read_send(
                 self.drone.target_system,
                 self.drone.target_component,

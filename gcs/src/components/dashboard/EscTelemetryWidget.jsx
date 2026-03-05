@@ -149,7 +149,7 @@ export default function EscTelemetryWidget({
 
   // Full view (make it stretch nicely when parent uses items-stretch)
   return (
-    <div className="min-w-[350px] min-h-[225px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
+    <div className="min-w-[350px] min-h-[253px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
       <div className="p-2 h-full flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <Text>ESC telemetry</Text>

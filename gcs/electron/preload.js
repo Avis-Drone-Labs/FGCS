@@ -119,8 +119,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   },
 
   // Get file path
-  readFilePath (file) {
-	return webUtils.getPathForFile(file)
+  readFilePath(file) {
+    return webUtils.getPathForFile(file)
   },
 })
 

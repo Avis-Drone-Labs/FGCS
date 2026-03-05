@@ -117,12 +117,14 @@ export default function SelectFlightLog({ getLogSummary }) {
 
       if (files.length > 0) {
         const file = files[0]
-        const path = window.ipcRenderer.readFilePath(file);
-        console.log(`${JSON.stringify({
-          name: file.name,
-          path: path,
-          size: file.size,
-        })}`)
+        const path = window.ipcRenderer.readFilePath(file)
+        console.log(
+          `${JSON.stringify({
+            name: file.name,
+            path: path,
+            size: file.size,
+          })}`,
+        )
         const ext = file.name.split(".").pop().toLowerCase()
         if (["bin", "log", "ftlog"].includes(ext)) {
           handleFile({
@@ -183,10 +185,9 @@ export default function SelectFlightLog({ getLogSummary }) {
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
         <div
-          className={`flex flex-col gap-4 p-8 border-2 border-dashed rounded-lg transition-colors ${isDragging
-            ? "border-blue-500 bg-blue-500/10"
-            : "border-transparent"
-            }`}
+          className={`flex flex-col gap-4 p-8 border-2 border-dashed rounded-lg transition-colors ${
+            isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+          }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}

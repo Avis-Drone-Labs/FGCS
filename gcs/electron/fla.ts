@@ -173,7 +173,7 @@ async function parseDataflashLogFile(
             }
           }
 
-          ; (messages[messageName] as MessageObject[]).push(messageObj)
+          ;(messages[messageName] as MessageObject[]).push(messageObj)
         }
       }
 
@@ -311,7 +311,7 @@ async function parseFgcsTelemetryLogFile(
         messages[messageName] = []
       }
 
-      ; (messages[messageName] as MessageObject[]).push(messageObj)
+      ;(messages[messageName] as MessageObject[]).push(messageObj)
 
       const now = Date.now()
       if (now - lastUpdateTime > UPDATE_THROTTLE_MS) {

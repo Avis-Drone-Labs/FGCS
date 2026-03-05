@@ -565,10 +565,10 @@ app.whenReady().then(() => {
       dialog.showErrorBox(
         "Missing Required Files",
         `The following required data files are missing:\n\n${fileCheck.missingFiles.join("\n")}\n\n` +
-        `Please run the following commands from the data directory within the 'gcs' folder:\n` +
-        `  python generate_param_definitions.py\n` +
-        `  python generate_log_message_descriptions.py\n\n` +
-        `Then restart the application.`,
+          `Please run the following commands from the data directory within the 'gcs' folder:\n` +
+          `  python generate_param_definitions.py\n` +
+          `  python generate_log_message_descriptions.py\n\n` +
+          `Then restart the application.`,
       )
       app.quit()
       return

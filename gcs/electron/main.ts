@@ -620,7 +620,7 @@ app.whenReady().then(() => {
 
   // Get message data for table
   ipcMain.handle("fla:get-message-data-for-table", getMessageDataForTable)
- 
+
   // Save FLA params to file
   ipcMain.handle("fla:save-params-to-file", saveParamsToFile)
 

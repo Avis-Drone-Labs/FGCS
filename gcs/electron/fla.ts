@@ -724,6 +724,7 @@ export async function getMessageDataForTable(
   }
 
   return series
+}
 
 export async function saveParamsToFile(
   _event: unknown,

@@ -28,6 +28,7 @@ import type {
   LogType,
   MessageObject,
   Messages,
+  ParamObject,
   ParseResult,
   RecentLog,
 } from "./types/flaTypes"
@@ -703,7 +704,7 @@ export async function getMessages(
 export async function saveParamsToFile(
   _event: unknown,
   filePath: string,
-  params: Array<{ name: string; value: number }>,
+  params: Array<ParamObject>,
 ): Promise<{ success: boolean; message: string }> {
   try {
     // Sort params alphabetically by name

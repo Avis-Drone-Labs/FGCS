@@ -47,14 +47,15 @@ export default function FlaParamsWindow() {
         }
       }
     } catch (error) {
-      showErrorNotification(`Failed to save parameters: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      showErrorNotification(`Failed to save parameters: ${message}`)
     }
   }
 
   useEffect(() => {
     const handler = (_event, data) => {
       setParams(data.params)
-      setFileName(data.filename)
+      setFileName(data.fileName)
     }
     window.ipcRenderer.on("app:send-fla-params", handler)
 

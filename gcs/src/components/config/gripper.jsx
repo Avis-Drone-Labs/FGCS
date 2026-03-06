@@ -225,10 +225,6 @@ export default function Gripper() {
                 }}
                 decimalScale={5}
                 hideControls
-                min={param.param_def?.Range ? param.param_def?.Range.low : null}
-                max={
-                  param.param_def?.Range ? param.param_def?.Range.high : null
-                }
                 suffix={param.param_def?.Units}
               />
             )}

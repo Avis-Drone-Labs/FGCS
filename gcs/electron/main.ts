@@ -17,7 +17,6 @@ import path from "node:path"
 import packageInfo from "../package.json"
 
 import openFile, {
-  clearRecentFiles,
   getMessageDataForTable,
   getMessages,
   getRecentFiles,
@@ -612,8 +611,6 @@ app.whenReady().then(() => {
       return []
     }
   })
-  // Clear recent logs
-  ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", getMessages)

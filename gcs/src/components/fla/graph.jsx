@@ -14,8 +14,6 @@ import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
 import {
   IconCapture,
   IconCopy,
-  IconTimelineEvent,
-  IconTimelineEventX,
   IconZoomIn,
   IconZoomOut,
   IconZoomReset,
@@ -493,7 +491,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
       <PanelGroup direction="horizontal" style={{ height: "auto" }}>
         <Panel minSize={20}>
           <div
-            className="chart-container relative"
+            className="chart-container relative cursor-crosshair"
             style={{ minHeight: "60vh" }}
           >
             <Line ref={chartRef} options={config} data={data} />
@@ -541,18 +539,9 @@ export default function Graph({ data, customColors, openPresetModal }) {
             <IconCapture size={18} />
           </ActionIcon>
         </MantineTooltip>
-        <MantineTooltip label="Copy graph">
+        <MantineTooltip label="Copy graph as image">
           <ActionIcon size={32} variant="filled" onClick={copyGraphToClipboard}>
             <IconCopy size={18} />
-          </ActionIcon>
-        </MantineTooltip>
-        <MantineTooltip label={showEvents ? "Hide events" : "Show events"}>
-          <ActionIcon size={32} variant="filled" onClick={toggleShowEvents}>
-            {showEvents ? (
-              <IconTimelineEventX size={18} />
-            ) : (
-              <IconTimelineEvent size={18} />
-            )}
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label="Clear Filters">
@@ -595,6 +584,12 @@ export default function Graph({ data, customColors, openPresetModal }) {
             </Button>
           </MantineTooltip>
         )}
+
+        <MantineTooltip label={showEvents ? "Hide events" : "Show events"}>
+          <Button className="min-h-8 max-h-8" onClick={toggleShowEvents}>
+            {showEvents ? "Hide events" : "Show events"}
+          </Button>
+        </MantineTooltip>
       </div>
     </div>
   )

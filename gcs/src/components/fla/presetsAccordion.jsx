@@ -113,7 +113,13 @@ export default function PresetsAccordion({
   }, [presetCategories, logType, messageFilters, formatMessages])
 
   return (
-    <Accordion multiple={true}>
+    <Accordion
+      multiple={true}
+      classNames={{
+        control: "!py-1",
+        label: "!py-1",
+      }}
+    >
       {/* Custom Presets */}
       {processedPresetCategories.custom.map((category) => (
         <Fragment key={category.name}>

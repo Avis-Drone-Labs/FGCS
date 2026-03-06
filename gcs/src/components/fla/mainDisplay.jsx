@@ -72,7 +72,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
           </div>
           <div className="flex justify-between px-4 py-2 text-gray-200 rounded bg-falcongrey-700">
             <div className="whitespace-nowrap">Aircraft Type:</div>
-            <div className="text-white ml-auto">
+            <div className="text-white ml-auto capitalize">
               {aircraftType ?? "No Aircraft Type"}
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
           )}
         </div>
         <ScrollArea className="flex-1 min-h-0">
-          <Accordion multiple={true}>
+          <Accordion multiple={true} defaultValue={["messages"]}>
             {/* Presets */}
             <Accordion.Item key="presets" value="presets">
               <Accordion.Control className="rounded-md">
@@ -133,7 +133,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
 
           <Tabs.Panel value="chart_cards" className="min-h-0 h-full pb-4">
             <ScrollArea className="h-full">
-              <div className="grid grid-cols-5 gap-4 py-4">
+              <div className="grid grid-cols-6 gap-2 py-2">
                 {chartData.datasets.map((item) => (
                   <Fragment key={item.label}>
                     <ChartDataCard

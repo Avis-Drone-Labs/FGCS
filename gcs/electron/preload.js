@@ -5,7 +5,6 @@ import { contextBridge, ipcRenderer } from "electron"
 const ALLOWED_INVOKE_CHANNELS = [
   "fla:open-file",
   "fla:get-recent-logs",
-  "fla:clear-recent-logs",
   "fla:get-messages",
   "fla:get-message-data-for-table",
   "fla:save-params-to-file",

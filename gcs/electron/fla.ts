@@ -129,6 +129,7 @@ async function parseDataflashLogFile(
         // File data
       } else if (messageName === "MSG") {
         // MSG data
+        // TODO: Use "VER" message for this data
         const text = splitLineData[2]?.trim()
 
         if (aircraftType === null && text) {
@@ -139,43 +140,39 @@ async function parseDataflashLogFile(
             aircraftType = "copter"
           }
         }
-      } else {
-        // Message data
-        const formatMessage = formatMessages[messageName]
-        if (formatMessage) {
-          if (!messages[messageName]) {
-            messages[messageName] = []
-          }
+      }
 
-          const messageObj: MessageObject = {
-            name: messageName,
-          }
+      // Message data
+      const formatMessage = formatMessages[messageName]
+      if (formatMessage) {
+        if (!messages[messageName]) {
+          messages[messageName] = []
+        }
 
-          const fields = formatMessage.fields
-          const format = formatMessage.format
-          const fieldsLength = fields.length
+        const messageObj: MessageObject = {
+          name: messageName,
+        }
 
-          for (
-            let i = 0;
-            i < fieldsLength && i < splitLineData.length - 1;
-            i++
-          ) {
-            const field = fields[i]
-            const formatType = format[i]
-            const value = splitLineData[i + 1]?.trim()
+        const fields = formatMessage.fields
+        const format = formatMessage.format
+        const fieldsLength = fields.length
 
-            if (value !== undefined && value !== "") {
-              if (stringTypes.has(formatType)) {
-                messageObj[field] = value
-              } else {
-                const numValue = parseFloat(value)
-                messageObj[field] = isNaN(numValue) ? 0 : numValue
-              }
+        for (let i = 0; i < fieldsLength && i < splitLineData.length - 1; i++) {
+          const field = fields[i]
+          const formatType = format[i]
+          const value = splitLineData[i + 1]?.trim()
+
+          if (value !== undefined && value !== "") {
+            if (stringTypes.has(formatType)) {
+              messageObj[field] = value
+            } else {
+              const numValue = parseFloat(value)
+              messageObj[field] = isNaN(numValue) ? 0 : numValue
             }
           }
-
-          ;(messages[messageName] as MessageObject[]).push(messageObj)
         }
+
+        ;(messages[messageName] as MessageObject[]).push(messageObj)
       }
 
       const now = Date.now()

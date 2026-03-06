@@ -63,7 +63,8 @@ export default function DataTable() {
       if (Array.isArray(result)) {
         setMessageTableData(result)
       } else if (!result?.success) {
-        showErrorNotification(result?.message)
+        console.log(result)
+        showErrorNotification(result?.error)
       }
     }
 

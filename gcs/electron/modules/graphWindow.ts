@@ -147,7 +147,7 @@ export function openGraphWindow(
     } catch (e) {
       // If it threw, treat it as dead and try again once
       graphWins[graphKey] = undefined
-      return openGraphWindow({ graphKey, meta })
+      return openGraphWindow({ graphKey, meta }, parentWindow)
     }
   }
 

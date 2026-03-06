@@ -7,7 +7,12 @@ export function getCenteredWindowPosition(
   windowHeight: number,
 ): { x: number; y: number } | undefined {
   if (!parentWindow) {
-    return undefined
+    const focusedWindow = BrowserWindow.getFocusedWindow()
+    if (focusedWindow) {
+      parentWindow = focusedWindow
+    } else {
+      return undefined
+    }
   }
 
   const parentBounds = parentWindow.getBounds()

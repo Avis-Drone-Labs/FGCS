@@ -1,4 +1,4 @@
-import { Accordion, Button, ScrollArea, Tooltip } from "@mantine/core"
+import { Accordion, Button, ScrollArea, Tabs, Tooltip } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 import { Fragment } from "react"
 import { useSelector } from "react-redux"
@@ -9,6 +9,7 @@ import {
   selectMessageMeans,
 } from "../../redux/slices/logAnalyserSlice.js"
 import ChartDataCard from "./chartDataCard.jsx"
+import DataTable from "./dataTable.jsx"
 import Graph from "./graph.jsx"
 import MessagesFiltersAccordion from "./messagesFiltersAccordion.jsx"
 import { usePresetCategories } from "./presetCategories.js"
@@ -39,10 +40,10 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
   ] = useDisclosure(false)
 
   return (
-    <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-y-auto overflow-x-hidden">
+    <div className="flex h-full gap-4 px-2 py-4 mb-4 overflow-hidden">
       {/* Message selection column */}
-      <div className="w-1/4 pb-6">
-        <div className="flex flex-col mb-2 text-sm gap-y-2">
+      <div className="w-1/4 pb-6 flex flex-col min-h-0">
+        <div className="flex flex-col mb-2 text-sm gap-y-2 flex-shrink-0">
           <div className="flex flex-row justify-between">
             <Tooltip label={file.path}>
               <div className="px-4 py-2 text-gray-200 bg-falcongrey-700 rounded truncate max-w-[400px] inline-block">
@@ -82,7 +83,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
             </div>
           )}
         </div>
-        <ScrollArea className="h-full max-h-[90%]">
+        <ScrollArea className="flex-1 min-h-0">
           <Accordion multiple={true}>
             {/* Presets */}
             <Accordion.Item key="presets" value="presets">
@@ -120,27 +121,42 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
           customColors={customColors}
           openPresetModal={openSavePresetModal}
         />
-        {/* Plots Setup */}
-        <ScrollArea.Autosize>
-          <div className="grid grid-cols-5 gap-4 pt-4">
-            {chartData.datasets.map((item) => (
-              <Fragment key={item.label}>
-                <ChartDataCard
-                  item={item}
-                  unit={item.yAxisID} // item.yAxisID is the unit
-                  messageMeans={messageMeans}
-                />
-              </Fragment>
-            ))}
-          </div>
-        </ScrollArea.Autosize>
-        <SavePresetModal
-          isSavePresetModalOpen={isSavePresetModalOpen}
-          closeSavePresetModal={closeSavePresetModal}
-          saveCustomPreset={saveCustomPreset}
-          findExistingPreset={findExistingPreset}
-        />
+
+        <Tabs
+          defaultValue={"chart_cards"}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <Tabs.List>
+            <Tabs.Tab value="chart_cards">Chart Cards</Tabs.Tab>
+            <Tabs.Tab value="data_table">Data Table</Tabs.Tab>
+          </Tabs.List>
+
+          <Tabs.Panel value="chart_cards" className="min-h-0 h-full pb-4">
+            <ScrollArea className="h-full">
+              <div className="grid grid-cols-5 gap-4 py-4">
+                {chartData.datasets.map((item) => (
+                  <Fragment key={item.label}>
+                    <ChartDataCard
+                      item={item}
+                      unit={item.yAxisID} // item.yAxisID is the unit
+                      messageMeans={messageMeans}
+                    />
+                  </Fragment>
+                ))}
+              </div>
+            </ScrollArea>
+          </Tabs.Panel>
+          <Tabs.Panel value="data_table" className="min-h-0 h-full pb-4">
+            <DataTable />
+          </Tabs.Panel>
+        </Tabs>
       </div>
+      <SavePresetModal
+        isSavePresetModalOpen={isSavePresetModalOpen}
+        closeSavePresetModal={closeSavePresetModal}
+        saveCustomPreset={saveCustomPreset}
+        findExistingPreset={findExistingPreset}
+      />
     </div>
   )
 }

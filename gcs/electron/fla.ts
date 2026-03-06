@@ -129,6 +129,7 @@ async function parseDataflashLogFile(
         // File data
       } else if (messageName === "MSG") {
         // MSG data
+        // TODO: Use "VER" message for this data
         const text = splitLineData[2]?.trim()
 
         if (aircraftType === null && text) {
@@ -139,43 +140,39 @@ async function parseDataflashLogFile(
             aircraftType = "copter"
           }
         }
-      } else {
-        // Message data
-        const formatMessage = formatMessages[messageName]
-        if (formatMessage) {
-          if (!messages[messageName]) {
-            messages[messageName] = []
-          }
+      }
 
-          const messageObj: MessageObject = {
-            name: messageName,
-          }
+      // Message data
+      const formatMessage = formatMessages[messageName]
+      if (formatMessage) {
+        if (!messages[messageName]) {
+          messages[messageName] = []
+        }
 
-          const fields = formatMessage.fields
-          const format = formatMessage.format
-          const fieldsLength = fields.length
+        const messageObj: MessageObject = {
+          name: messageName,
+        }
 
-          for (
-            let i = 0;
-            i < fieldsLength && i < splitLineData.length - 1;
-            i++
-          ) {
-            const field = fields[i]
-            const formatType = format[i]
-            const value = splitLineData[i + 1]?.trim()
+        const fields = formatMessage.fields
+        const format = formatMessage.format
+        const fieldsLength = fields.length
 
-            if (value !== undefined && value !== "") {
-              if (stringTypes.has(formatType)) {
-                messageObj[field] = value
-              } else {
-                const numValue = parseFloat(value)
-                messageObj[field] = isNaN(numValue) ? 0 : numValue
-              }
+        for (let i = 0; i < fieldsLength && i < splitLineData.length - 1; i++) {
+          const field = fields[i]
+          const formatType = format[i]
+          const value = splitLineData[i + 1]?.trim()
+
+          if (value !== undefined && value !== "") {
+            if (stringTypes.has(formatType)) {
+              messageObj[field] = value
+            } else {
+              const numValue = parseFloat(value)
+              messageObj[field] = isNaN(numValue) ? 0 : numValue
             }
           }
-
-          ;(messages[messageName] as MessageObject[]).push(messageObj)
         }
+
+        ;(messages[messageName] as MessageObject[]).push(messageObj)
       }
 
       const now = Date.now()
@@ -696,8 +693,12 @@ export async function getMessages(
 
     for (let j = 0; j < len; j++) {
       const point = series[j]
+      // Use UtcTimeUS if available, otherwise fall back to TimeUS
+      const timeValue =
+        point.UtcTimeUS !== undefined ? point.UtcTimeUS : point.TimeUS
+
       // making sure all the entries are numbers
-      x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
+      x[j] = typeof timeValue === "number" ? timeValue : 0
       y[j] = typeof point[fieldName] === "number" ? point[fieldName] : 0
     }
 
@@ -710,6 +711,27 @@ export async function getMessages(
   }
 
   return datasets
+}
+
+export async function getMessageDataForTable(
+  _event: unknown,
+  requestedMessage: string,
+): Promise<MessageObject[] | { success: false; error: string }> {
+  if (!logData) {
+    console.error("getMessageDataForTable: logData is null or undefined.")
+    return { success: false, error: "Log data not loaded." }
+  }
+
+  if (!requestedMessage.trim()) {
+    return { success: false, error: "Invalid message type." }
+  }
+
+  const series = logData[requestedMessage] as MessageObject[]
+  if (!Array.isArray(series) || series.length === 0) {
+    return { success: false, error: "No data available for this message type." }
+  }
+
+  return series
 }
 
 export async function saveParamsToFile(

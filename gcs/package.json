@@ -38,6 +38,7 @@
     "@robloche/chartjs-plugin-streaming": "^3.1.0",
     "@tabler/icons-react": "^3.37.1",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@tanstack/react-virtual": "^3.13.19",
     "@tiptap/extension-link": "^2.11.6",
     "@tiptap/pm": "^2.11.6",
     "@tiptap/react": "^2.11.6",

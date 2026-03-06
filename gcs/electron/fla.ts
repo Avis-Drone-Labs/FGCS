@@ -376,6 +376,17 @@ function parseDataflashBinFile(
       aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
       ...transformedMessages,
     }
+
+    if (
+      Array.isArray(parsedData?.PARM) &&
+      parsedData.PARM.some(
+        (param: MessageObject) =>
+          param.Name === "Q_ENABLE" && param.Value === 1,
+      )
+    ) {
+      parsedData.aircraftType = "quadplane"
+    }
+
     webContents.send("fla:log-parse-progress", {
       percent: 100,
     })

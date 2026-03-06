@@ -46,7 +46,7 @@ import {
 } from "./utils/flaUtils"
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
-const recentLogsManager = createRecentLogsManager()
+const recentLogsManager = createRecentLogsManager(20)
 let logData: Messages | null = null
 let defaultMessageFilters: Record<string, unknown> = {}
 
@@ -431,11 +431,6 @@ async function determineLogFileType(filePath: string): Promise<LogType> {
 // New function to get recent files
 export function getRecentFiles(): RecentLog[] {
   return recentLogsManager.getRecentLogs()
-}
-
-// New function to clear recent files
-export function clearRecentFiles(): void {
-  recentLogsManager.clearRecentLogs()
 }
 
 async function getFirstLine(pathToFile: string): Promise<string> {

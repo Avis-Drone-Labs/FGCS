@@ -3,7 +3,7 @@ import * as fs from "fs"
 import * as path from "path"
 import type { RecentLog } from "../types/flaTypes"
 
-export default function createRecentLogsManager(maxRecentLogs: number = 10) {
+export default function createRecentLogsManager(maxRecentLogs: number) {
   // JSON file to hold paths to recently opened logs
   const recentLogsPath: string = path.join(
     app.getPath("userData"),
@@ -87,11 +87,6 @@ export default function createRecentLogsManager(maxRecentLogs: number = 10) {
         saveRecentLogs()
       }
       return existingFiles
-    },
-
-    clearRecentLogs(): void {
-      recentLogs = []
-      saveRecentLogs()
     },
   }
 }

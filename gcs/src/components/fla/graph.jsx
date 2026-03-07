@@ -487,26 +487,23 @@ export default function Graph({ data, customColors, openPresetModal }) {
   }, [events, flightModes, datasetKey])
 
   return (
-    <div>
-      <PanelGroup direction="horizontal" style={{ height: "auto" }}>
+    <div className="h-full flex flex-col">
+      <PanelGroup direction="horizontal" className="flex-1 min-h-0">
         <Panel minSize={20}>
-          <div
-            className="chart-container relative cursor-crosshair"
-            style={{ minHeight: "60vh" }}
-          >
+          <div className="chart-container relative cursor-crosshair h-full">
             <Line ref={chartRef} options={config} data={data} />
           </div>
         </Panel>
         {showMap && (
           <>
-            <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+            <PanelResizeHandle className='w-1 bg-falcongrey-700 hover:bg-falconred-500 data-[resize-handle-state="hover"]:bg-falconred-500 data-[resize-handle-state="drag"]:bg-falconred-500' />
             <Panel minSize={10}>
               <FlaMapSection />
             </Panel>
           </>
         )}
       </PanelGroup>
-      <div className="flex flex-row gap-2 py-2">
+      <div className="flex flex-row gap-2 py-2 flex-shrink-0">
         <MantineTooltip label="Zoom in">
           <ActionIcon
             variant="filled"

@@ -20,6 +20,12 @@ const logAnalyserSlice = createSlice({
     firmwareVersion: null,
     params: null,
     mapPositionData: null,
+    panelLayout: {
+      leftSidebar: 20,
+      rightContent: 80,
+      graph: 70,
+      tabs: 30,
+    },
   },
   reducers: {
     setFile: (state, action) => {
@@ -76,6 +82,19 @@ const logAnalyserSlice = createSlice({
     setMapPositionData: (state, action) => {
       state.mapPositionData = action.payload
     },
+    setPanelLayout: (state, action) => {
+      state.panelLayout = action.payload
+    },
+    setHorizontalLayout: (state, action) => {
+      // action.payload is [leftSidebar, rightContent]
+      state.panelLayout.leftSidebar = action.payload[0]
+      state.panelLayout.rightContent = action.payload[1]
+    },
+    setVerticalLayout: (state, action) => {
+      // action.payload is [graph, tabs]
+      state.panelLayout.graph = action.payload[0]
+      state.panelLayout.tabs = action.payload[1]
+    },
   },
   selectors: {
     selectFile: (state) => state.file,
@@ -97,6 +116,15 @@ const logAnalyserSlice = createSlice({
     selectParams: (state) => state.params,
     selectMapPositionData: (state) => state.mapPositionData,
     selectCanShowMapPositionData: (state) => state.mapPositionData !== null,
+    selectPanelLayout: (state) => state.panelLayout,
+    selectHorizontalLayout: (state) => [
+      state.panelLayout.leftSidebar,
+      state.panelLayout.rightContent,
+    ],
+    selectVerticalLayout: (state) => [
+      state.panelLayout.graph,
+      state.panelLayout.tabs,
+    ],
   },
 })
 
@@ -119,6 +147,9 @@ export const {
   setFirmwareVersion,
   setParams,
   setMapPositionData,
+  setPanelLayout,
+  setHorizontalLayout,
+  setVerticalLayout,
 } = logAnalyserSlice.actions
 
 export const {
@@ -141,6 +172,9 @@ export const {
   selectParams,
   selectMapPositionData,
   selectCanShowMapPositionData,
+  selectPanelLayout,
+  selectHorizontalLayout,
+  selectVerticalLayout,
 } = logAnalyserSlice.selectors
 
 export default logAnalyserSlice

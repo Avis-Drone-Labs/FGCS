@@ -56,6 +56,7 @@ const droneInfoSlice = createSlice({
       systemStatus: 0,
     },
     onboardControlSensorsEnabled: 0,
+    onboardControlSensorsHealth: 0,
     gpsRawIntData: {
       fixType: 0,
       satellitesVisible: 0,
@@ -259,6 +260,11 @@ const droneInfoSlice = createSlice({
         state.onboardControlSensorsEnabled = action.payload
       }
     },
+    setOnboardControlSensorsHealth: (state, action) => {
+      if (action.payload !== state.onboardControlSensorsHealth) {
+        state.onboardControlSensorsHealth = action.payload
+      }
+    },
     setRSSIData: (state, action) => {
       if (action.payload !== state.rssi) {
         state.rssi = action.payload
@@ -345,8 +351,9 @@ const droneInfoSlice = createSlice({
     selectNotificationSound: (state) => state.notificationSound,
     selectFlightMode: (state) => state.heartbeatData.customMode,
     selectSystemStatus: (state) => MAV_STATE[state.heartbeatData.systemStatus],
-    selectPrearmEnabled: (state) =>
-      state.onboardControlSensorsEnabled & 268435456,
+    selectReadyToArm: (state) =>
+      !(state.onboardControlSensorsEnabled & 268435456) ||
+      state.onboardControlSensorsHealth & 268435456,
     selectGPSRawInt: (state) => state.gpsRawIntData,
     selectGPS2RawInt: (state) => state.gps2RawIntData,
     selectHasSecondaryGps: (state) => state.hasSecondaryGps,
@@ -386,6 +393,7 @@ export const {
   setHasEverHadGpsFix,
   setBatteryData,
   setOnboardControlSensorsEnabled,
+  setOnboardControlSensorsHealth,
   setRSSIData,
   setGraphValues,
   setLastGraphMessage,
@@ -498,7 +506,7 @@ export const {
   selectHeartbeat,
   selectIsArmed,
   selectIsFlying,
-  selectPrearmEnabled,
+  selectReadyToArm,
   selectGPSRawInt,
   selectGPS2RawInt,
   selectHasSecondaryGps,

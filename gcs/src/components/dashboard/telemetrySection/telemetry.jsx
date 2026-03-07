@@ -16,6 +16,7 @@ import {
   selectHomePosition,
   selectIsArmed,
   selectNavController,
+  selectReadyToArm,
   selectTelemetry,
 } from "../../../redux/slices/droneInfoSlice"
 import EkfDisplay from "./ekfDisplay"
@@ -32,6 +33,7 @@ export default function TelemetrySection({
   const flightMode = useSelector(selectFlightModeString)
   const gpsData = useSelector(selectGPS)
   const isArmed = useSelector(selectIsArmed)
+  const readyToArm = useSelector(selectReadyToArm)
   const telemetryData = useSelector(selectTelemetry)
   const attitudeData = useSelector(selectAttitude)
   const navControllerOutputData = useSelector(selectNavController)
@@ -58,6 +60,14 @@ export default function TelemetrySection({
     <div>
       {/* Information above indicators */}
       <div className="flex flex-col items-center gap-4 py-4 cursor-default">
+        {!isArmed && (
+          <Text
+            size={`${telemetryFontSize * 1.5}rem`}
+            c={readyToArm ? "green.6" : "red.6"}
+          >
+            {readyToArm ? "Ready to arm" : "Not ready to arm"}
+          </Text>
+        )}
         <Text
           fw={700}
           size={`${telemetryFontSize * 1.5}rem`}

@@ -118,13 +118,14 @@ export default function SelectFlightLog({ getLogSummary }) {
       if (files.length > 0) {
         const file = files[0]
         const path = window.ipcRenderer.readFilePath(file)
-        console.log(
-          `${JSON.stringify({
-            name: file.name,
-            path: path,
-            size: file.size,
-          })}`,
-        )
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `${JSON.stringify({
+              name: file.name,
+              size: file.size,
+            })}`,
+          )
+        }
         const ext = file.name.split(".").pop().toLowerCase()
         if (["bin", "log", "ftlog"].includes(ext)) {
           handleFile({

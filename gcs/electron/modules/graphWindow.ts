@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron"
 import path from "path"
+import { getCenteredWindowPosition } from "../utils/windowUtils"
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
@@ -74,7 +75,10 @@ function sendInit(graphKey: GraphKey) {
   }
 }
 
-export function openGraphWindow({ graphKey, meta }: OpenArgs) {
+export function openGraphWindow(
+  { graphKey, meta }: OpenArgs,
+  parentWindow?: BrowserWindow,
+) {
   // Always cache latest meta for this slot (used by ready-handshake)
   lastMeta[graphKey] = meta
 
@@ -82,7 +86,7 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
   let win = getGraphWin(graphKey)
 
   if (!win) {
-    win = new BrowserWindow({
+    const windowOptions: Electron.BrowserWindowConstructorOptions = {
       width: 700,
       height: 350,
       frame: true,
@@ -96,7 +100,20 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
       fullscreen: false,
       fullscreenable: false,
       alwaysOnTop: true,
-    })
+    }
+
+    // Position window in the center of the parent window
+    const centeredPosition = getCenteredWindowPosition(
+      parentWindow,
+      windowOptions.width!,
+      windowOptions.height!,
+    )
+    if (centeredPosition) {
+      windowOptions.x = centeredPosition.x
+      windowOptions.y = centeredPosition.y
+    }
+
+    win = new BrowserWindow(windowOptions)
 
     graphWins[graphKey] = win
     win.setMenuBarVisibility(false)
@@ -130,7 +147,7 @@ export function openGraphWindow({ graphKey, meta }: OpenArgs) {
     } catch (e) {
       // If it threw, treat it as dead and try again once
       graphWins[graphKey] = undefined
-      return openGraphWindow({ graphKey, meta })
+      return openGraphWindow({ graphKey, meta }, parentWindow)
     }
   }
 
@@ -180,8 +197,9 @@ export default function registerGraphWindowIPC(appWin?: BrowserWindow) {
     sendInit(graphKey)
   })
 
-  ipcMain.handle("app:open-graph-window", (_event, args: OpenArgs) => {
-    openGraphWindow(args)
+  ipcMain.handle("app:open-graph-window", (event, args: OpenArgs) => {
+    const parentWindow = BrowserWindow.fromWebContents(event.sender)
+    openGraphWindow(args, parentWindow || undefined)
   })
 
   ipcMain.handle("app:close-graph-window", (_event, args: CloseArgs) => {

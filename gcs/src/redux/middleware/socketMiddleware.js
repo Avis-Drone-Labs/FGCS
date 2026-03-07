@@ -272,6 +272,8 @@ const socketMiddleware = (store) => {
       case "SYS_STATUS":
         store.dispatch(
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
+        )
+        store.dispatch(
           setOnboardControlSensorsHealth(msg.onboard_control_sensors_health),
         )
         break

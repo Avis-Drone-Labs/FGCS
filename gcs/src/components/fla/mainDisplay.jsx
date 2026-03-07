@@ -7,9 +7,8 @@ import {
   selectAircraftType,
   selectFile,
   selectFirmwareVersion,
-  selectHorizontalLayout,
   selectMessageMeans,
-  selectVerticalLayout,
+  selectPanelLayout,
   setHorizontalLayout,
   setVerticalLayout,
 } from "../../redux/slices/logAnalyserSlice.js"
@@ -32,8 +31,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
   const aircraftType = useSelector(selectAircraftType)
   const messageMeans = useSelector(selectMessageMeans)
   const firmwareVersion = useSelector(selectFirmwareVersion)
-  const horizontalLayout = useSelector(selectHorizontalLayout)
-  const verticalLayout = useSelector(selectVerticalLayout)
+  const panelLayout = useSelector(selectPanelLayout)
 
   // Debounced layout update handlers (300ms delay)
   const debouncedSetHorizontalLayout = useDebouncedCallback(
@@ -66,7 +64,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
         onLayout={debouncedSetHorizontalLayout}
       >
         {/* Left Panel - Message selection column */}
-        <Panel defaultSize={horizontalLayout[0]} minSize={10}>
+        <Panel defaultSize={panelLayout.leftSidebar} minSize={10}>
           <div className="pb-6 flex flex-col min-h-0 h-full pr-2">
             <div className="flex flex-col mb-2 text-sm gap-y-2 flex-shrink-0">
               <div className="flex flex-row justify-between">
@@ -145,14 +143,14 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
         <PanelResizeHandle className='w-1 bg-falcongrey-700 hover:bg-falconred-500 data-[resize-handle-state="hover"]:bg-falconred-500 data-[resize-handle-state="drag"]:bg-falconred-500 transition-colors cursor-col-resize' />
 
         {/* Right Panel - Graph and Tabs */}
-        <Panel defaultSize={horizontalLayout[1]} minSize={65}>
+        <Panel defaultSize={panelLayout.rightContent} minSize={65}>
           <PanelGroup
             direction="vertical"
             className="h-full"
             onLayout={debouncedSetVerticalLayout}
           >
             {/* Top Panel - Graph */}
-            <Panel defaultSize={verticalLayout[0]} minSize={30}>
+            <Panel defaultSize={panelLayout.graph} minSize={30}>
               <div className="h-full pl-2 min-w-0">
                 <Graph
                   data={chartData}
@@ -166,7 +164,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
             <PanelResizeHandle className='h-1 bg-falcongrey-700 hover:bg-falconred-500 data-[resize-handle-state="hover"]:bg-falconred-500 data-[resize-handle-state="drag"]:bg-falconred-500 transition-colors cursor-row-resize' />
 
             {/* Bottom Panel - Tabs */}
-            <Panel defaultSize={verticalLayout[1]} minSize={15}>
+            <Panel defaultSize={panelLayout.tabs} minSize={15}>
               <div className="h-full px-2 py-1 min-w-0 flex flex-col">
                 <Tabs
                   defaultValue={"chart_cards"}

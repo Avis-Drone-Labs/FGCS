@@ -117,14 +117,6 @@ const logAnalyserSlice = createSlice({
     selectMapPositionData: (state) => state.mapPositionData,
     selectCanShowMapPositionData: (state) => state.mapPositionData !== null,
     selectPanelLayout: (state) => state.panelLayout,
-    selectHorizontalLayout: (state) => [
-      state.panelLayout.leftSidebar,
-      state.panelLayout.rightContent,
-    ],
-    selectVerticalLayout: (state) => [
-      state.panelLayout.graph,
-      state.panelLayout.tabs,
-    ],
   },
 })
 
@@ -173,8 +165,6 @@ export const {
   selectMapPositionData,
   selectCanShowMapPositionData,
   selectPanelLayout,
-  selectHorizontalLayout,
-  selectVerticalLayout,
 } = logAnalyserSlice.selectors
 
 export default logAnalyserSlice

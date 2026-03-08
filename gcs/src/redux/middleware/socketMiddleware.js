@@ -46,6 +46,7 @@ import {
 import SocketFactory from "../../helpers/socket"
 import {
   emitGetFlightModeConfig,
+  emitGetGripperConfig,
   setChannelsConfig,
   setCurrentPwmValue,
   setFailsafeConfig,
@@ -62,11 +63,20 @@ import {
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
+<<<<<<< HEAD
   setRefreshingFailsafeConfigData,
   setShowMotorTestWarningModal,
   updateChannelsConfigParam,
   updateGripperConfigParam,
   updateFailsafeConfigParam,
+=======
+  setServoConfig,
+  setServoPwmOutputs,
+  setShowMotorTestWarningModal,
+  updateChannelsConfigParam,
+  updateGripperConfigParam,
+  updateServoConfigParam,
+>>>>>>> main
 } from "../slices/configSlice.js"
 import {
   appendToGpsTrack,
@@ -89,6 +99,7 @@ import {
   setLoiterRadius,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
+  setOnboardControlSensorsHealth,
   setRSSIData,
   setTelemetryData,
   setTotalTimeFlying,
@@ -123,6 +134,7 @@ import {
 import {
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
+  setFetchingParam,
   setFetchingVars,
   setFetchingVarsProgress,
   setHasFetchedOnce,
@@ -191,6 +203,8 @@ const MissionSpecificSocketEvents = Object.freeze({
 const ConfigSpecificSocketEvents = Object.freeze({
   onFailsafeConfig: "failsafe_config",
   onGripperEnabled: "is_gripper_enabled",
+  onSetGripperEnabledResult: "set_gripper_enabled_result",
+  onSetGripperDisabledResult: "set_gripper_disabled_result",
   onSetGripperResult: "set_gripper_result",
   onGripperConfig: "gripper_config",
   setGripperParamResult: "set_gripper_param_result",
@@ -203,6 +217,10 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onRcConfig: "rc_config",
   onSetRcConfigResult: "set_rc_config_result",
   onBatchSetRcConfigResult: "batch_set_rc_config_result",
+  onServoConfig: "servo_config",
+  onSetServoConfigResult: "set_servo_config_result",
+  onBatchSetServoConfigResult: "batch_set_servo_config_result",
+  onTestServoPwmResult: "test_servo_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -223,6 +241,16 @@ const socketMiddleware = (store) => {
     }
 
     store.dispatch(setRadioPwmChannels(chans))
+  }
+
+  function handleServoOutputRaw(msg) {
+    const outputs = {}
+    for (let i = 1; i <= 16; i++) {
+      const pwm = msg[`servo${i}_raw`]
+      if (typeof pwm === "number") outputs[i] = pwm
+    }
+
+    store.dispatch(setServoPwmOutputs(outputs))
   }
 
   const incomingMessageHandler = (msg) => {
@@ -255,6 +283,9 @@ const socketMiddleware = (store) => {
       case "SYS_STATUS":
         store.dispatch(
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
+        )
+        store.dispatch(
+          setOnboardControlSensorsHealth(msg.onboard_control_sensors_health),
         )
         break
       case "GPS_RAW_INT": {
@@ -319,6 +350,9 @@ const socketMiddleware = (store) => {
         window.ipcRenderer.invoke("app:update-vibe-status", data)
         break
       }
+      case "SERVO_OUTPUT_RAW":
+        handleServoOutputRaw(msg)
+        break
     }
   }
 
@@ -375,6 +409,10 @@ const socketMiddleware = (store) => {
               closeDashboardMissionFetchingNotificationNoSuccessThunk(),
             )
           }
+        })
+
+        socket.socket.on("reboot_connecting", () => {
+          store.dispatch(setConnecting(true))
         })
 
         // Fetch com ports and list them
@@ -448,6 +486,17 @@ const socketMiddleware = (store) => {
           store.dispatch(setHasEverHadGpsFix(false))
         })
 
+        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          store.dispatch(setRebootData(msg))
+          if (msg.success) {
+            store.dispatch(setAutoPilotRebootModalOpen(false))
+            showSuccessNotification(msg.message)
+            store.dispatch(setRebootData({}))
+          } else {
+            store.dispatch(setConnecting(false))
+          }
+        })
+
         // Simulation status messages
         socket.socket.on(SocketEvents.onSimulationLoading, (msg) => {
           const operationId = msg.operationId || "simulation-loading"
@@ -515,6 +564,10 @@ const socketMiddleware = (store) => {
           }
         })
 
+        socket.socket.on("fetching_param", (msg) => {
+          store.dispatch(setFetchingParam(msg.message))
+        })
+
         // Link stats
         socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
           window.ipcRenderer.invoke("app:update-link-stats", msg)
@@ -566,39 +619,66 @@ const socketMiddleware = (store) => {
           }
 
           // Handle graph messages
-          // Function to get the graph data from a message
           function getGraphDataFromMessage(msg, targetMessageKey) {
             const returnDataArray = []
-            for (let graphKey in storeState.droneInfo.graphs.selectedGraphs) {
-              const messageKey =
-                storeState.droneInfo.graphs.selectedGraphs[graphKey]
-              if (messageKey && messageKey.includes(targetMessageKey)) {
-                const [, valueName] = messageKey.split(".")
 
-                // Applying Data Formatters
-                let formatted_value = msg[valueName]
-                if (messageKey in dataFormatters) {
-                  formatted_value = dataFormatters[messageKey](
-                    msg[valueName].toFixed(3),
-                  )
-                }
+            // SAFETY: if storeState or selectedGraphs missing, bail cleanly
+            const selectedGraphs = storeState?.droneInfo?.graphs?.selectedGraphs
+            if (!selectedGraphs) return false
 
-                returnDataArray.push({
-                  data: { x: Date.now(), y: formatted_value },
-                  graphKey: graphKey,
-                })
+            for (const graphKey in selectedGraphs) {
+              const messageKey = selectedGraphs[graphKey] // e.g. "ATTITUDE.yaw"
+              if (!messageKey) continue
+
+              // Safer than `includes` (prevents weird accidental matches)
+              if (!messageKey.startsWith(`${targetMessageKey}.`)) continue
+
+              const [, valueName] = messageKey.split(".")
+              const raw = msg?.[valueName]
+
+              // SAFETY: skip if value isn't present
+              if (raw === undefined || raw === null) continue
+
+              // Coerce to number if possible
+              const rawNum = Number(raw)
+              if (!Number.isFinite(rawNum)) continue
+
+              let formatted_value = rawNum
+
+              // Applying Data Formatters (guarded)
+              if (messageKey in dataFormatters) {
+                // formatter expects a string in your original code
+                formatted_value = dataFormatters[messageKey](rawNum.toFixed(3))
               }
+
+              returnDataArray.push({
+                data: { x: Date.now(), y: formatted_value },
+                graphKey,
+              })
             }
-            if (returnDataArray.length) {
-              return returnDataArray
-            }
-            return false
+
+            return returnDataArray.length ? returnDataArray : false
           }
-          store.dispatch(
-            setLastGraphMessage(
-              getGraphDataFromMessage(msg, msg.mavpackettype),
-            ),
-          )
+
+          let graphData = false
+          try {
+            graphData = getGraphDataFromMessage(msg, msg.mavpackettype)
+          } catch (e) {
+            console.error("Graph extraction crashed:", e, {
+              mavpackettype: msg?.mavpackettype,
+            })
+            graphData = false
+          }
+
+          // keep existing tab behaviour
+          store.dispatch(setLastGraphMessage(graphData))
+
+          // forward to any open graph windows
+          if (graphData) {
+            window.ipcRenderer
+              .invoke("app:update-graph-windows", graphData)
+              .catch((e) => console.error("update-graph-windows failed:", e))
+          }
 
           // Handle Flight Mode incoming data
           if (
@@ -612,6 +692,98 @@ const socketMiddleware = (store) => {
             )
           }
         })
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onImportMissionResult,
+          (msg) => {
+            if (msg.success) {
+              const storeState = store.getState()
+
+              if (msg.mission_type === "mission") {
+                const missionItemsWithIds = []
+                for (let missionItem of msg.items) {
+                  missionItemsWithIds.push(addIdToItem(missionItem))
+                }
+
+                // Check if first item is a home location, then open modal to
+                // select whether to update planned home position
+                if (missionItemsWithIds.length > 0) {
+                  const potentialHomeLocation = missionItemsWithIds[0]
+                  const currentPlannedHomeLocation =
+                    storeState.missionInfo.plannedHomePosition
+
+                  // Check if the potential home location is different from the current planned home location
+                  if (
+                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
+                    (potentialHomeLocation.x !==
+                      currentPlannedHomeLocation.lat ||
+                      potentialHomeLocation.y !==
+                        currentPlannedHomeLocation.lon ||
+                      potentialHomeLocation.z !==
+                        currentPlannedHomeLocation.alt)
+                  ) {
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadData({
+                        lat: potentialHomeLocation.x,
+                        lon: potentialHomeLocation.y,
+                        alt: potentialHomeLocation.z,
+                        from: "file",
+                      }),
+                    )
+                    store.dispatch(
+                      setUpdatePlannedHomePositionFromLoadModal(true),
+                    )
+                  }
+                }
+                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    mission: true,
+                  }),
+                )
+              } else if (msg.mission_type === "fence") {
+                const fenceItemsWithIds = []
+                for (let fence of msg.items) {
+                  fenceItemsWithIds.push(addIdToItem(fence))
+                }
+                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    fence: true,
+                  }),
+                )
+              } else if (msg.mission_type === "rally") {
+                const rallyItemsWithIds = []
+                for (let rallyItem of msg.items) {
+                  rallyItemsWithIds.push(addIdToItem(rallyItem))
+                }
+
+                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
+                store.dispatch(
+                  setUnwrittenChanges({
+                    ...storeState.missionInfo.unwrittenChanges,
+                    rally: true,
+                  }),
+                )
+              }
+
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          MissionSpecificSocketEvents.onExportMissionResult,
+          (msg) => {
+            msg.success
+              ? showSuccessNotification(msg.message)
+              : showErrorNotification(msg.message)
+          },
+        )
       }
     }
 
@@ -674,15 +846,6 @@ const socketMiddleware = (store) => {
             }
           },
         )
-
-        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
-          store.dispatch(setRebootData(msg))
-          if (msg.success) {
-            store.dispatch(setAutoPilotRebootModalOpen(false))
-            showSuccessNotification(msg.message)
-            store.dispatch(setRebootData({}))
-          }
-        })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
           store.dispatch(setParams(msg))
@@ -936,89 +1099,6 @@ const socketMiddleware = (store) => {
         )
 
         socket.socket.on(
-          MissionSpecificSocketEvents.onImportMissionResult,
-          (msg) => {
-            if (msg.success) {
-              const storeState = store.getState()
-
-              if (msg.mission_type === "mission") {
-                const missionItemsWithIds = []
-                for (let missionItem of msg.items) {
-                  missionItemsWithIds.push(addIdToItem(missionItem))
-                }
-
-                // Check if first item is a home location, then open modal to
-                // select whether to update planned home position
-                if (missionItemsWithIds.length > 0) {
-                  const potentialHomeLocation = missionItemsWithIds[0]
-                  const currentPlannedHomeLocation =
-                    storeState.missionInfo.plannedHomePosition
-
-                  // Check if the potential home location is different from the current planned home location
-                  if (
-                    isGlobalFrameHomeCommand(potentialHomeLocation) &&
-                    (potentialHomeLocation.x !==
-                      currentPlannedHomeLocation.lat ||
-                      potentialHomeLocation.y !==
-                        currentPlannedHomeLocation.lon ||
-                      potentialHomeLocation.z !==
-                        currentPlannedHomeLocation.alt)
-                  ) {
-                    store.dispatch(
-                      setUpdatePlannedHomePositionFromLoadData({
-                        lat: potentialHomeLocation.x,
-                        lon: potentialHomeLocation.y,
-                        alt: potentialHomeLocation.z,
-                        from: "file",
-                      }),
-                    )
-                    store.dispatch(
-                      setUpdatePlannedHomePositionFromLoadModal(true),
-                    )
-                  }
-                }
-                store.dispatch(setDrawingMissionItems(missionItemsWithIds))
-                store.dispatch(
-                  setUnwrittenChanges({
-                    ...storeState.missionInfo.unwrittenChanges,
-                    mission: true,
-                  }),
-                )
-              } else if (msg.mission_type === "fence") {
-                const fenceItemsWithIds = []
-                for (let fence of msg.items) {
-                  fenceItemsWithIds.push(addIdToItem(fence))
-                }
-                store.dispatch(setDrawingFenceItems(fenceItemsWithIds))
-                store.dispatch(
-                  setUnwrittenChanges({
-                    ...storeState.missionInfo.unwrittenChanges,
-                    fence: true,
-                  }),
-                )
-              } else if (msg.mission_type === "rally") {
-                const rallyItemsWithIds = []
-                for (let rallyItem of msg.items) {
-                  rallyItemsWithIds.push(addIdToItem(rallyItem))
-                }
-
-                store.dispatch(setDrawingRallyItems(rallyItemsWithIds))
-                store.dispatch(
-                  setUnwrittenChanges({
-                    ...storeState.missionInfo.unwrittenChanges,
-                    rally: true,
-                  }),
-                )
-              }
-
-              showSuccessNotification(msg.message)
-            } else {
-              showErrorNotification(msg.message)
-            }
-          },
-        )
-
-        socket.socket.on(
           MissionSpecificSocketEvents.onMissionControlResult,
           (msg) => {
             msg.success
@@ -1030,15 +1110,6 @@ const socketMiddleware = (store) => {
         socket.socket.on(MissionSpecificSocketEvents.onTargetInfo, (msg) => {
           store.dispatch(setTargetInfo(msg))
         })
-
-        socket.socket.on(
-          MissionSpecificSocketEvents.onExportMissionResult,
-          (msg) => {
-            msg.success
-              ? showSuccessNotification(msg.message)
-              : showErrorNotification(msg.message)
-          },
-        )
 
         socket.socket.on(
           MissionSpecificSocketEvents.onCurrentMissionProgress,
@@ -1061,6 +1132,31 @@ const socketMiddleware = (store) => {
           ConfigSpecificSocketEvents.onGripperEnabled,
           (enabled) => {
             store.dispatch(setGetGripperEnabled(enabled))
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperEnabledResult,
+          (result) => {
+            if (result.success) {
+              store.dispatch(setGetGripperEnabled(true))
+              store.dispatch(emitGetGripperConfig())
+              showSuccessNotification(result.message)
+            } else {
+              showErrorNotification(result.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetGripperDisabledResult,
+          (result) => {
+            if (result.success) {
+              store.dispatch(setGetGripperEnabled(false))
+              showSuccessNotification(result.message)
+            } else {
+              showErrorNotification(result.message)
+            }
           },
         )
 
@@ -1252,6 +1348,66 @@ const socketMiddleware = (store) => {
           },
         )
 
+        socket.socket.on(ConfigSpecificSocketEvents.onServoConfig, (msg) => {
+          const config = {}
+
+          for (let i = 1; i < 17; i++) {
+            config[i] = msg[`SERVO_${i}`]
+          }
+
+          store.dispatch(setServoConfig(config))
+        })
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetServoConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+              store.dispatch(
+                updateServoConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetServoConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateServoConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onTestServoPwmResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
         socket.socket.on(FtpSpecificSocketEvents.onListFilesResult, (msg) => {
           store.dispatch(setLoadingListFiles(false))
           if (msg.success) {
@@ -1313,12 +1469,18 @@ const socketMiddleware = (store) => {
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-        Object.values(ParamSpecificSocketEvents).map((event) =>
-          socket.socket.off(event),
-        )
-        Object.values(MissionSpecificSocketEvents).map((event) =>
-          socket.socket.off(event),
-        )
+        Object.values(ParamSpecificSocketEvents)
+          .filter(
+            (event) => event !== ParamSpecificSocketEvents.onRebootAutopilot,
+          )
+          .map((event) => socket.socket.off(event))
+        Object.values(MissionSpecificSocketEvents)
+          .filter(
+            (event) =>
+              event !== MissionSpecificSocketEvents.onImportMissionResult &&
+              event !== MissionSpecificSocketEvents.onExportMissionResult,
+          )
+          .map((event) => socket.socket.off(event))
         Object.values(ConfigSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )

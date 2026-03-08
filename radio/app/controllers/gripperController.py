@@ -160,6 +160,40 @@ class GripperController:
         finally:
             self.drone.release_message_type("COMMAND_ACK", self.controller_id)
 
+    def enableGripper(self) -> Response:
+        """
+        Enable the gripper
+        """
+
+        success = self.drone.paramsController.setParam(
+            "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
+        )
+
+        if success:
+            return {"success": True, "message": "Enabled gripper"}
+        else:
+            return {
+                "success": False,
+                "message": "Failed to enable gripper",
+            }
+
+    def disableGripper(self) -> Response:
+        """
+        Disable the gripper
+        """
+
+        success = self.drone.paramsController.setParam(
+            "GRIP_ENABLE", 0, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
+        )
+
+        if success:
+            return {"success": True, "message": "Disabled gripper"}
+        else:
+            return {
+                "success": False,
+                "message": "Failed to disable gripper",
+            }
+
     def getConfig(self) -> dict:
         """
         Get the current gripper config from cached parameters.

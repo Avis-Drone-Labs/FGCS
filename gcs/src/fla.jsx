@@ -69,7 +69,11 @@ export default function FLA() {
     dispatch(
       setLogEvents(
         summary.logEvents.map((event) => ({
-          time: event.TimeUS,
+          // If UTC is available, use UtcTimeUS, otherwise TimeUS
+          time:
+            summary.utcAvailable && event.UtcTimeUS !== undefined
+              ? event.UtcTimeUS
+              : event.TimeUS,
           message: logEventIds[event.Id],
         })),
       ),

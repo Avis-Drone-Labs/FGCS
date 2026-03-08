@@ -15,7 +15,7 @@ export default function MenuItem(props) {
       ) : (
         <div onClick={props.onClick}>{props.name}</div>
       )}
-      <div className="text-falcongray-90 opacity-50">{props.shortcut}</div>
+      <div className="text-falcongrey-300 opacity-50">{props.shortcut}</div>
     </div>
   )
 }

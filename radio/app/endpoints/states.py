@@ -2,10 +2,9 @@ from pymavlink import mavutil
 from typing_extensions import TypedDict
 
 import app.droneStatus as droneStatus
-from app import socketio
+from app import logger, socketio
 from app.utils import (
     missingParameterError,
-    notConnectedError,
     sendMessage,
 )
 
@@ -39,6 +38,7 @@ STATES_MESSAGE_LISTENERS = {
         "RC_CHANNELS",
     ],
     "config.rc": ["RC_CHANNELS"],
+    "config.servo": ["SERVO_OUTPUT_RAW"],
 }
 
 
@@ -50,16 +50,16 @@ def set_state(data: SetStateType) -> None:
     Args:
         data: The form data passed in from the frontend, this contains the state we wish to change to
     """
-    if not droneStatus.drone:
-        return notConnectedError(action="set the drone state")
-
     # Ensure that a state was actually sent
     if (newState := data.get("state", None)) is None:
         return missingParameterError("set_state", "state")
 
+    logger.info(f"Changing state to {newState}")
+
     droneStatus.state = newState
 
-    droneStatus.drone.logger.info(f"Changing state to {droneStatus.state}")
+    if not droneStatus.drone:
+        return
 
     # Reset all data streams
     droneStatus.drone.stopAllDataStreams()
@@ -105,4 +105,11 @@ def set_state(data: SetStateType) -> None:
         )
 
         for message in STATES_MESSAGE_LISTENERS["config.rc"]:
+            droneStatus.drone.addMessageListener(message, sendMessage)
+    elif droneStatus.state == "config.servo":
+        droneStatus.drone.sendDataStreamRequestMessage(
+            mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS, 4
+        )
+
+        for message in STATES_MESSAGE_LISTENERS["config.servo"]:
             droneStatus.drone.addMessageListener(message, sendMessage)

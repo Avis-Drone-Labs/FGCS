@@ -24,6 +24,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
+from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
 from app.utils import (
     commandAccepted,
@@ -50,18 +51,22 @@ DATASTREAM_RATES = {
 }
 
 VALID_BAUDRATES = [
-    300,
     1200,
     4800,
     9600,
-    19200,
     13400,
+    19200,
     38400,
     57600,
     75880,
     115200,
     230400,
-    250000,
+    460800,
+    500000,
+    625000,
+    921600,
+    1000000,
+    1500000,
 ]
 
 
@@ -76,6 +81,7 @@ class Drone:
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
         linkDebugStatsCb: Optional[Callable] = None,
+        fetchingParameterCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -94,6 +100,7 @@ class Drone:
         self.droneDisconnectCb = droneDisconnectCb
         self.droneConnectStatusCb = droneConnectStatusCb
         self.linkDebugStatsCb = linkDebugStatsCb
+        self.fetchingParameterCb = fetchingParameterCb
 
         self.connectionError: Optional[str] = None
 
@@ -109,6 +116,7 @@ class Drone:
             "Setting up the mission controller",
             "Setting up the frame controller",
             "Setting up the RC controller",
+            "Setting up the Servo Controller",
             "Setting up the nav controller",
             "Setting up the FTP controller",
             "Connection complete",
@@ -144,12 +152,24 @@ class Drone:
                 self.connectionError = str(e)
             return
 
-        initial_heartbeat = self.master.wait_heartbeat(timeout=5)
-        if initial_heartbeat is None:
-            self.logger.error("Heartbeat timed out after 5 seconds")
-            self.master.close()
+        try:
+            initial_heartbeat = self.master.wait_heartbeat(timeout=5)
+            if initial_heartbeat is None:
+                self.logger.error("Heartbeat timed out after 5 seconds")
+                self.master.close()
+                self.master = None
+                self.connectionError = "Could not connect to the drone."
+                return
+        except Exception as e:
+            self.logger.error(
+                "Error while waiting for heartbeat: " + str(e), exc_info=True
+            )
+            if self.master is not None:
+                self.master.close()
             self.master = None
-            self.connectionError = "Could not connect to the drone."
+            self.connectionError = (
+                "An error occured while waiting for a heartbeat from the drone."
+            )
             return
 
         self.sendConnectionStatusUpdate(1)
@@ -284,9 +304,12 @@ class Drone:
         self.rcController = RcController(self)
 
         self.sendConnectionStatusUpdate(11)
-        self.navController = NavController(self)
+        self.servoController = ServoController(self)
 
         self.sendConnectionStatusUpdate(12)
+        self.navController = NavController(self)
+
+        self.sendConnectionStatusUpdate(13)
         self.ftpController = FtpController(self)
 
     def sendConnectionStatusUpdate(self, msg_index):
@@ -956,57 +979,6 @@ class Drone:
             self.release_message_type("COMMAND_ACK", self.controller_id)
             self.close()
             return True
-
-    # TODO: Move this out into a controller
-    @sendingCommandLock
-    def setServo(self, servo_instance: int, pwm_value: int) -> Response:
-        """Set a servo to a specific PWM value.
-
-        Args:
-            servo_instance (int): The number of the servo to set
-            pwm_value (int): The PWM value to set the servo to
-
-        Returns:
-            Response: The response from the servo set command
-        """
-        if not self.reserve_message_type("COMMAND_ACK", self.controller_id):
-            return {
-                "success": False,
-                "message": "Could not reserve COMMAND_ACK messages",
-            }
-
-        try:
-            self.sendCommand(
-                mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
-                param1=servo_instance,  # Servo instance number
-                param2=pwm_value,  # PWM value
-            )
-
-            response = self.wait_for_message(
-                "COMMAND_ACK",
-                self.controller_id,
-                condition_func=lambda msg: msg.command
-                == mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
-            )
-
-            if commandAccepted(response, mavutil.mavlink.MAV_CMD_DO_SET_SERVO):
-                return {"success": True, "message": f"Setting servo to {pwm_value}"}
-            else:
-                self.logger.error(
-                    f"Failed to set servo {servo_instance} to {pwm_value}"
-                )
-                return {
-                    "success": False,
-                    "message": f"Failed to set servo {servo_instance} to {pwm_value}",
-                }
-
-        except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": "Setting servo failed, serial exception",
-            }
-        finally:
-            self.release_message_type("COMMAND_ACK", self.controller_id)
 
     def sendCommand(
         self,

@@ -22,26 +22,19 @@ import NoDroneConnected from "./components/noDroneConnected"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import Ftp from "./components/config/ftp"
-import {
-  emitGetGripperEnabled,
-  selectActiveTab,
-  selectGetGripperEnabled,
-  setActiveTab,
-} from "./redux/slices/configSlice"
+import { selectActiveTab, setActiveTab } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import ServoOutput from "./components/config/servoOutput"
 
 export default function Config() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const getGripperEnabled = useSelector(selectGetGripperEnabled)
   const activeTab = useSelector(selectActiveTab)
   const paddingTop = "mt-4"
 
   useEffect(() => {
     if (!connected) {
       dispatch(setActiveTab(null))
-    } else {
-      dispatch(emitGetGripperEnabled())
     }
   }, [connected])
 
@@ -58,13 +51,15 @@ export default function Config() {
             onChange={(newTab) => dispatch(setActiveTab(newTab))}
           >
             <Tabs.List>
-              <Tabs.Tab value="gripper" disabled={!getGripperEnabled}>
-                Gripper
-              </Tabs.Tab>
+              <Tabs.Tab value="gripper">Gripper</Tabs.Tab>
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>
               <Tabs.Tab value="rc_calibration">RC Calibration</Tabs.Tab>
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
+<<<<<<< HEAD
               <Tabs.Tab value="failsafes">Failsafes</Tabs.Tab>
+=======
+              <Tabs.Tab value="servo">Servo Output</Tabs.Tab>
+>>>>>>> main
               <Tabs.Tab value="ftp">FTP</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
@@ -87,9 +82,15 @@ export default function Config() {
                 <FlightModes />
               </div>
             </Tabs.Panel>
+<<<<<<< HEAD
             <Tabs.Panel value="failsafes">
               <div className="size-full">
                 <Failsafes />
+=======
+            <Tabs.Panel value="servo">
+              <div className={paddingTop}>
+                <ServoOutput />
+>>>>>>> main
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="ftp">

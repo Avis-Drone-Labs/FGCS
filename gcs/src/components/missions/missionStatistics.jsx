@@ -288,8 +288,8 @@ export default function MissionStatistics() {
         label="Max distance between waypoints"
         value={maxDistanceBetweenWaypoints.maxDistance}
         tooltip={
-          maxDistanceBetweenWaypoints.points &&
-          `Between ${maxDistanceBetweenWaypoints.points[0].seq} and ${maxDistanceBetweenWaypoints.points[1].seq}`
+          maxDistanceBetweenWaypoints?.points?.length > 1 &&
+          `Between ${maxDistanceBetweenWaypoints.points[0]?.seq} and ${maxDistanceBetweenWaypoints.points[1]?.seq}`
         }
         units="m"
       />
@@ -298,7 +298,7 @@ export default function MissionStatistics() {
         label="Max slope gradient"
         value={maxSlopeGradient.maxGradient}
         tooltip={
-          maxSlopeGradient.points &&
+          maxSlopeGradient?.points?.length > 1 &&
           `Between ${maxSlopeGradient.points[0]?.seq} and ${maxSlopeGradient.points[1]?.seq}`
         }
         units="%"

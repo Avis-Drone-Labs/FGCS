@@ -254,39 +254,41 @@ export default function Params() {
                 }
                 className="relative bg-falcongrey-800 overflow-hidden flex flex-col"
               >
-                <div className="flex flex-col gap-4 p-4 flex-shrink-0">
-                  <div className="flex flex-col gap-4">
-                    <Button onClick={refreshParams} className="grow">
-                      Refresh params
-                    </Button>
-                    <Button
-                      disabled={!modifiedParams.length}
-                      onClick={() =>
-                        dispatch(emitSetMultipleParams(modifiedParams))
-                      }
-                      className="grow"
-                    >
-                      Write params
-                    </Button>
+                <>
+                  <div className="flex flex-col gap-4 p-4 flex-shrink-0">
+                    <div className="flex flex-col gap-4">
+                      <Button onClick={refreshParams} className="grow">
+                        Refresh params
+                      </Button>
+                      <Button
+                        disabled={!modifiedParams.length}
+                        onClick={() =>
+                          dispatch(emitSetMultipleParams(modifiedParams))
+                        }
+                        className="grow"
+                      >
+                        Write params
+                      </Button>
+                    </div>
+                    <Divider />
+                    <div className="flex flex-col gap-4">
+                      <Button onClick={saveParamsToFile} className="grow">
+                        Save to file
+                      </Button>
+                      <Button onClick={loadParamsFromFile} className="grow">
+                        Load from file
+                      </Button>
+                    </div>
+                    <Divider />
+                    <div className="flex flex-col gap-4">
+                      <Button onClick={rebootCallback} color={"red"}>
+                        Reboot FC
+                      </Button>
+                    </div>
+                    <Divider />
                   </div>
-                  <Divider />
-                  <div className="flex flex-col gap-4">
-                    <Button onClick={saveParamsToFile} className="grow">
-                      Save to file
-                    </Button>
-                    <Button onClick={loadParamsFromFile} className="grow">
-                      Load from file
-                    </Button>
-                  </div>
-                  <Divider />
-                  <div className="flex flex-col gap-4">
-                    <Button onClick={rebootCallback} color={"red"}>
-                      Reboot FC
-                    </Button>
-                  </div>
-                  <Divider />
-                </div>
-                <ParamsTree />
+                  <ParamsTree />
+                </>
               </ResizableBox>
             )}
 

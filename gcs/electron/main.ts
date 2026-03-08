@@ -16,7 +16,12 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
+import openFile, {
+  getMessageDataForTable,
+  getMessages,
+  getRecentFiles,
+  saveParamsToFile,
+} from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -28,6 +33,9 @@ import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerFlaParamsIPC, {
   destroyFlaParamsWindow,
 } from "./modules/flaParamsWindow"
+import registerGraphWindowIPC, {
+  destroyAllGraphWindows,
+} from "./modules/graphWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -277,6 +285,7 @@ function createWindow() {
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
   registerFlaParamsIPC()
+  registerGraphWindowIPC(win)
 
   // Open links in browser, not within the electron window.
   // Note, links must have target="_blank"
@@ -465,6 +474,7 @@ function closeWindows() {
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
   destroyFlaParamsWindow()
+  destroyAllGraphWindows()
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -601,11 +611,15 @@ app.whenReady().then(() => {
       return []
     }
   })
-  // Clear recent logs
-  ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", getMessages)
+
+  // Get message data for table
+  ipcMain.handle("fla:get-message-data-for-table", getMessageDataForTable)
+
+  // Save FLA params to file
+  ipcMain.handle("fla:save-params-to-file", saveParamsToFile)
 
   // Open native save dialog
   ipcMain.handle("app:get-save-file-path", async (event, options) => {

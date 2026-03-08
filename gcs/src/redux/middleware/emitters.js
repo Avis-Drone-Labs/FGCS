@@ -1,23 +1,38 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
+<<<<<<< HEAD
   emitGetFailsafeConfig,
+=======
+  emitBatchSetServoConfigParams,
+>>>>>>> main
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
+  emitGetServoConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
   emitSetFlightModeChannel,
   emitSetGripper,
   emitSetGripperConfigParam,
+<<<<<<< HEAD
   emitSetFailsafeConfigParam,
+=======
+  emitSetGripperDisabled,
+  emitSetGripperEnabled,
+>>>>>>> main
   emitSetRcConfigParam,
+  emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
+<<<<<<< HEAD
   setRefreshingFailsafeConfigData,
+=======
+  emitTestServoPwm,
+>>>>>>> main
   setRefreshingGripperConfigData,
 } from "../slices/configSlice"
 import {
@@ -40,12 +55,6 @@ import {
   setCurrentPage,
   setIsForwarding,
 } from "../slices/droneConnectionSlice"
-import {
-  setSimulationStatus,
-  SimulationStatus,
-  emitStartSimulation,
-  emitStopSimulation,
-} from "../slices/simulationParamsSlice"
 import {
   emitListFiles,
   emitListLogFiles,
@@ -71,6 +80,12 @@ import {
   emitSetMultipleParams,
   setParamsWriteProgressModalOpen,
 } from "../slices/paramsSlice"
+import {
+  emitStartSimulation,
+  emitStopSimulation,
+  setSimulationStatus,
+  SimulationStatus,
+} from "../slices/simulationParamsSlice"
 import { resetMessages } from "../slices/statusTextSlice"
 
 export function handleEmitters(socket, store, action) {
@@ -149,11 +164,7 @@ export function handleEmitters(socket, store, action) {
       emitter: emitSetState,
       callback: () => {
         store.dispatch(setCurrentPage(action.payload))
-        const storeState = store.getState()
-        const isDroneConnected = storeState.droneConnection.connected
-        if (isDroneConnected) {
-          socket.socket.emit("set_state", { state: action.payload })
-        }
+        socket.socket.emit("set_state", { state: action.payload })
       },
     },
     {
@@ -353,6 +364,14 @@ export function handleEmitters(socket, store, action) {
       callback: () => socket.socket.emit("get_gripper_enabled"),
     },
     {
+      emitter: emitSetGripperEnabled,
+      callback: () => socket.socket.emit("set_gripper_enabled"),
+    },
+    {
+      emitter: emitSetGripperDisabled,
+      callback: () => socket.socket.emit("set_gripper_disabled"),
+    },
+    {
       emitter: emitGetGripperConfig,
       callback: () => {
         socket.socket.emit("get_gripper_config")
@@ -444,6 +463,36 @@ export function handleEmitters(socket, store, action) {
       callback: () => {
         socket.socket.emit("batch_set_rc_config_params", {
           params: action.payload.params,
+        })
+      },
+    },
+    {
+      emitter: emitGetServoConfig,
+      callback: () => socket.socket.emit("get_servo_config"),
+    },
+    {
+      emitter: emitSetServoConfigParam,
+      callback: () => {
+        socket.socket.emit("set_servo_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
+    },
+    {
+      emitter: emitBatchSetServoConfigParams,
+      callback: () => {
+        socket.socket.emit("batch_set_servo_config_params", {
+          params: action.payload.params,
+        })
+      },
+    },
+    {
+      emitter: emitTestServoPwm,
+      callback: () => {
+        socket.socket.emit("test_servo_pwm", {
+          servo_instance: action.payload.servo_instance,
+          pwm_value: action.payload.pwm_value,
         })
       },
     },

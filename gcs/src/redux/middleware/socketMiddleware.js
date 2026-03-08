@@ -61,22 +61,16 @@ import {
   setNumberOfMotors,
   setRadioCalibrationModalOpen,
   setRadioPwmChannels,
+  setRefreshingFailsafeConfigData,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
-<<<<<<< HEAD
-  setRefreshingFailsafeConfigData,
-  setShowMotorTestWarningModal,
-  updateChannelsConfigParam,
-  updateGripperConfigParam,
-  updateFailsafeConfigParam,
-=======
   setServoConfig,
   setServoPwmOutputs,
   setShowMotorTestWarningModal,
   updateChannelsConfigParam,
+  updateFailsafeConfigParam,
   updateGripperConfigParam,
-  updateServoConfigParam,
->>>>>>> main
+  updateServoConfigParam
 } from "../slices/configSlice.js"
 import {
   appendToGpsTrack,

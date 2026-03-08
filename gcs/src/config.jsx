@@ -13,18 +13,18 @@ import { Tabs } from "@mantine/core"
 // Custom component and helpers
 import Failsafes from "./components/config/failsafe"
 import FlightModes from "./components/config/flightModes"
+import Ftp from "./components/config/ftp"
 import Gripper from "./components/config/gripper"
 import Motortestpanel from "./components/config/motorTest"
 import RadioCalibration from "./components/config/radioCalibration"
+import ServoOutput from "./components/config/servoOutput"
 import Layout from "./components/layout"
 import NoDroneConnected from "./components/noDroneConnected"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
-import Ftp from "./components/config/ftp"
 import { selectActiveTab, setActiveTab } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
-import ServoOutput from "./components/config/servoOutput"
 
 export default function Config() {
   const dispatch = useDispatch()
@@ -55,11 +55,8 @@ export default function Config() {
               <Tabs.Tab value="motor_test">Motor Test</Tabs.Tab>
               <Tabs.Tab value="rc_calibration">RC Calibration</Tabs.Tab>
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
-<<<<<<< HEAD
               <Tabs.Tab value="failsafes">Failsafes</Tabs.Tab>
-=======
               <Tabs.Tab value="servo">Servo Output</Tabs.Tab>
->>>>>>> main
               <Tabs.Tab value="ftp">FTP</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
@@ -82,15 +79,14 @@ export default function Config() {
                 <FlightModes />
               </div>
             </Tabs.Panel>
-<<<<<<< HEAD
             <Tabs.Panel value="failsafes">
               <div className="size-full">
                 <Failsafes />
-=======
+              </div>
+            </Tabs.Panel>
             <Tabs.Panel value="servo">
               <div className={paddingTop}>
                 <ServoOutput />
->>>>>>> main
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="ftp">

@@ -1,11 +1,8 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
-<<<<<<< HEAD
   emitGetFailsafeConfig,
-=======
   emitBatchSetServoConfigParams,
->>>>>>> main
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
@@ -17,22 +14,16 @@ import {
   emitSetFlightModeChannel,
   emitSetGripper,
   emitSetGripperConfigParam,
-<<<<<<< HEAD
   emitSetFailsafeConfigParam,
-=======
   emitSetGripperDisabled,
   emitSetGripperEnabled,
->>>>>>> main
   emitSetRcConfigParam,
   emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
   emitTestOneMotor,
-<<<<<<< HEAD
   setRefreshingFailsafeConfigData,
-=======
   emitTestServoPwm,
->>>>>>> main
   setRefreshingGripperConfigData,
 } from "../slices/configSlice"
 import {

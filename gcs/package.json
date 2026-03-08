@@ -30,7 +30,6 @@
     "@headlessui/react": "2.1.4",
     "@mantine/code-highlight": "^7.17.1",
     "@mantine/core": "^7.17.3",
-    "@mantine/dropzone": "^7.17.3",
     "@mantine/hooks": "^7.17.3",
     "@mantine/notifications": "^7.4.0",
     "@mantine/spotlight": "^7.15.3",

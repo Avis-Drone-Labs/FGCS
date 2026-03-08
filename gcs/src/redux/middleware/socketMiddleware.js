@@ -70,7 +70,7 @@ import {
   updateChannelsConfigParam,
   updateFailsafeConfigParam,
   updateGripperConfigParam,
-  updateServoConfigParam
+  updateServoConfigParam,
 } from "../slices/configSlice.js"
 import {
   appendToGpsTrack,

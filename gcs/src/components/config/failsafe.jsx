@@ -1,8 +1,6 @@
 import { useEffect, useMemo } from "react"
 
-import {
-  LoadingOverlay, NumberInput, Select, Switch
-} from "@mantine/core"
+import { LoadingOverlay, NumberInput, Select, Switch } from "@mantine/core"
 import { useDebouncedCallback } from "@mantine/hooks"
 
 import { useDispatch, useSelector } from "react-redux"
@@ -78,7 +76,9 @@ export default function Failsafes() {
                   suffix="V"
                   min={0}
                   value={params.BATT_LOW_VOLT}
-                  onChange={(value) => debouncedUpdate("BATT_LOW_VOLT", Number(value))}
+                  onChange={(value) =>
+                    debouncedUpdate("BATT_LOW_VOLT", Number(value))
+                  }
                   disabled={failsafeConfig.BATT_LOW_VOLT == undefined}
                 />
                 <NumberInput
@@ -88,7 +88,9 @@ export default function Failsafes() {
                   suffix="mAh"
                   min={0}
                   value={failsafeConfig.BATT_LOW_MAH}
-                  onChange={(value) => debouncedUpdate("BATT_LOW_MAH", Number(value))}
+                  onChange={(value) =>
+                    debouncedUpdate("BATT_LOW_MAH", Number(value))
+                  }
                   disabled={failsafeConfig.BATT_LOW_MAH == undefined}
                 />
               </div>
@@ -124,7 +126,9 @@ export default function Failsafes() {
                   suffix="V"
                   min={0}
                   value={failsafeConfig.BATT_CRT_VOLT}
-                  onChange={(value) => debouncedUpdate("BATT_CRT_VOLT", Number(value))}
+                  onChange={(value) =>
+                    debouncedUpdate("BATT_CRT_VOLT", Number(value))
+                  }
                   disabled={failsafeConfig.BATT_CRT_VOLT == undefined}
                 />
                 <NumberInput
@@ -134,7 +138,9 @@ export default function Failsafes() {
                   suffix="mAh"
                   min={0}
                   value={failsafeConfig.BATT_CRT_MAH}
-                  onChange={(value) => debouncedUpdate("BATT_CRT_MAH", Number(value))}
+                  onChange={(value) =>
+                    debouncedUpdate("BATT_CRT_MAH", Number(value))
+                  }
                   disabled={failsafeConfig.BATT_CRT_MAH == undefined}
                 />
               </div>
@@ -177,7 +183,9 @@ export default function Failsafes() {
                       suffix="s"
                       min={0}
                       value={failsafeConfig.RC_FS_TIMEOUT}
-                      onChange={(value) => debouncedUpdate("RC_FS_TIMEOUT", Number(value))}
+                      onChange={(value) =>
+                        debouncedUpdate("RC_FS_TIMEOUT", Number(value))
+                      }
                       disabled={failsafeConfig.RC_FS_TIMEOUT == undefined}
                     />
                     <Select
@@ -213,7 +221,9 @@ export default function Failsafes() {
                       suffix="s"
                       min={0}
                       value={failsafeConfig.FS_GCS_TIMEOUT}
-                      onChange={(value) => debouncedUpdate("FS_GCS_TIMEOUT", Number(value))}
+                      onChange={(value) =>
+                        debouncedUpdate("FS_GCS_TIMEOUT", Number(value))
+                      }
                       disabled={failsafeConfig.FS_GCS_TIMEOUT == undefined}
                     />
                     <Select
@@ -251,7 +261,9 @@ export default function Failsafes() {
                     label="EKF Threshold"
                     min={0}
                     value={failsafeConfig.FS_EKF_THRESH}
-                    onChange={(value) => debouncedUpdate("FS_EKF_THRESH", Number(value))}
+                    onChange={(value) =>
+                      debouncedUpdate("FS_EKF_THRESH", Number(value))
+                    }
                     disabled={failsafeConfig.FS_EKF_THRESH == undefined}
                   />
                   <Select
@@ -295,7 +307,9 @@ export default function Failsafes() {
                     suffix="s"
                     min={0}
                     value={failsafeConfig.FS_SHORT_TIMEOUT}
-                    onChange={(value) => debouncedUpdate("FS_SHORT_TIMEOUT", Number(value))}
+                    onChange={(value) =>
+                      debouncedUpdate("FS_SHORT_TIMEOUT", Number(value))
+                    }
                     disabled={failsafeConfig.FS_SHORT_TIMEOUT == undefined}
                   />
                   <Select
@@ -327,7 +341,9 @@ export default function Failsafes() {
                     suffix="s"
                     min={0}
                     value={failsafeConfig.FS_LONG_TIMEOUT}
-                    onChange={(value) => debouncedUpdate("FS_LONG_TIMEOUT", Number(value))}
+                    onChange={(value) =>
+                      debouncedUpdate("FS_LONG_TIMEOUT", Number(value))
+                    }
                     disabled={failsafeConfig.FS_LONG_TIMEOUT == undefined}
                   />
                   <Select
@@ -357,7 +373,9 @@ export default function Failsafes() {
                     <h1 className="font-semibold">Throttle Failsafe</h1>
                     <Switch
                       checked={failsafeConfig.THR_FAILSAFE}
-                      onChange={(value) => debouncedUpdate("THR_FAILSAFE", Number(value))}
+                      onChange={(value) =>
+                        debouncedUpdate("THR_FAILSAFE", Number(value))
+                      }
                       disabled={failsafeConfig.THR_FAILSAFE == undefined}
                     />
                   </div>
@@ -368,7 +386,9 @@ export default function Failsafes() {
                     suffix="µs"
                     min={925}
                     max={2200}
-                    onChange={(value) => debouncedUpdate("THR_FS_VALUE", Number(value))}
+                    onChange={(value) =>
+                      debouncedUpdate("THR_FS_VALUE", Number(value))
+                    }
                     disabled={!failsafeConfig.THR_FAILSAFE}
                   />
                 </div>

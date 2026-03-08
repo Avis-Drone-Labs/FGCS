@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron"
 import path from "path"
 import { ParamObject } from "../types/flaTypes"
+import { getCenteredWindowPosition } from "../utils/windowUtils"
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
@@ -9,12 +10,13 @@ let flaParamsWin: BrowserWindow | null = null
 export function openFlaParamsWindow(
   paramsData: ParamObject[] | null,
   fileName: string | null,
+  parentWindow?: BrowserWindow,
 ) {
   if (flaParamsWin !== null) {
     destroyFlaParamsWindow()
   }
 
-  flaParamsWin = new BrowserWindow({
+  const windowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 800,
     height: 1200,
     frame: true,
@@ -27,7 +29,20 @@ export function openFlaParamsWindow(
     },
     fullscreen: false,
     fullscreenable: false,
-  })
+  }
+
+  // Position window in the center of the parent window
+  const centeredPosition = getCenteredWindowPosition(
+    parentWindow,
+    windowOptions.width!,
+    windowOptions.height!,
+  )
+  if (centeredPosition) {
+    windowOptions.x = centeredPosition.x
+    windowOptions.y = centeredPosition.y
+  }
+
+  flaParamsWin = new BrowserWindow(windowOptions)
 
   if (VITE_DEV_SERVER_URL) {
     flaParamsWin?.loadURL(VITE_DEV_SERVER_URL + "flaParams.html")
@@ -64,8 +79,9 @@ export default function registerFlaParamsIPC() {
   ipcMain.removeHandler("app:open-fla-params-window")
   ipcMain.removeHandler("app:close-fla-params-window")
 
-  ipcMain.handle("app:open-fla-params-window", (_, data) => {
-    openFlaParamsWindow(data.params, data.fileName)
+  ipcMain.handle("app:open-fla-params-window", (event, data) => {
+    const parentWindow = BrowserWindow.fromWebContents(event.sender)
+    openFlaParamsWindow(data.params, data.fileName, parentWindow || undefined)
   })
   ipcMain.handle("app:close-fla-params-window", () => closeFlaParamsWindow())
 }

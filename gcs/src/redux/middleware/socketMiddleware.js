@@ -1101,6 +1101,7 @@ const socketMiddleware = (store) => {
           ConfigSpecificSocketEvents.setFailsafeParamResult,
           (msg) => {
             if (msg.success) {
+              showSuccessNotification(msg.message)
               store.dispatch(
                 updateFailsafeConfigParam({
                   param_id: msg.param_id,

@@ -48,7 +48,7 @@ export default function Config() {
   return (
     <Layout currentPage="config">
       {connected ? (
-        <div className="w-full h-full">
+        <div className="size-full">
           <Tabs
             orientation="vertical"
             color={"red"}
@@ -88,7 +88,7 @@ export default function Config() {
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="failsafes">
-              <div className={paddingTop}>
+              <div className="size-full">
                 <Failsafes />
               </div>
             </Tabs.Panel>

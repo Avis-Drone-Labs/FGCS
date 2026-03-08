@@ -5,9 +5,6 @@ import {
   Progress,
   ScrollArea,
 } from "@mantine/core"
-import { Dropzone } from "@mantine/dropzone"
-import { fromEvent } from "file-selector"
-import "@mantine/dropzone/styles.css"
 import { useDisclosure } from "@mantine/hooks"
 import moment from "moment"
 import { useCallback, useEffect, useMemo, useState } from "react"
@@ -30,6 +27,7 @@ export default function SelectFlightLog({ getLogSummary }) {
   const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const [
     downloadModalOpened,
     { open: openDownloadModal, close: closeDownloadModal },
@@ -70,6 +68,7 @@ export default function SelectFlightLog({ getLogSummary }) {
         console.log(
           `Starting to load file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
         )
+
         // the result contains a lightweight summary of the log
         const result = await window.ipcRenderer.invoke(
           "fla:open-file",
@@ -99,27 +98,27 @@ export default function SelectFlightLog({ getLogSummary }) {
     [dispatch, getLogSummary],
   )
 
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging((prev) => prev || true)
+  }, [])
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+
   const handleDrop = useCallback(
-    (files) => {
+    (e) => {
+      e.preventDefault()
+      setIsDragging(false)
+
+      const files = Array.from(e.dataTransfer.files)
+
       if (files.length > 0) {
         const file = files[0]
+        const path = window.ipcRenderer.getPathForFile(file)
 
-        // Thanks to getFilesFromEvent, this file is the native electron File object
-        // and its path property is intact! Let's ensure we grab it:
-        console.log(file)
-        const path = window.ipcRenderer.readFilePath(file)
-
-        console.log(
-          `${JSON.stringify({
-            name: file.name,
-            path: path,
-            size: file.size,
-          })}`,
-        )
-        if (!path) {
-          showErrorNotification("Could not read file path. Please try selecting the file instead of dragging and dropping.")
-          return
-        }
         handleFile({
           name: file.name,
           path: path,
@@ -172,52 +171,34 @@ export default function SelectFlightLog({ getLogSummary }) {
   return (
     <div className="flex flex-col items-center justify-center h-full mx-auto">
       <div className="flex flex-row items-center justify-center gap-8">
-        <Dropzone
-          getFilesFromEvent={async (event) => {
-            const files = await fromEvent(event);
-            console.log(files[0].path)
-            return files.map((f) => new File([f], f.name, { type: f.type }));
-          }}
+        <div
+          className={`flex flex-col gap-4 p-8 border-2 border-dashed rounded-lg transition-colors ${
+            isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          loading={loadingFile}
-          onReject={() => {
-            showErrorNotification(
-              "Invalid file type. Please upload a .bin, .log, or .ftlog file",
-            )
-          }}
-          maxSize={2 * 1024 ** 3}
-          accept={{
-            "application/octet-stream": [".bin", ".ftlog", ".log"],
-            "text/plain": [".log", ".bin", ".ftlog"],
-          }}
-          activateOnClick={false}
-          className="transition-all duration-200 w-72 border-2 border-dashed data-[idle]:bg-transparent data-[idle]:border-transparent data-[accept]:bg-blue-500/10 data-[accept]:border-blue-500"
-          styles={{
-            inner: { pointerEvents: "all" },
-          }}
         >
-          <div className="flex flex-col gap-4 items-stretch justify-center h-full">
-            <Button onClick={selectFile} >
-              Analyse a log
+          <Button onClick={selectFile} loading={loadingFile}>
+            Analyse a log
+          </Button>
+          {connected && (
+            <Button onClick={openDownloadModal} color="blue" variant="filled">
+              Download from Drone
             </Button>
-            {connected && (
-              <Button onClick={openDownloadModal} color="blue" variant="filled">
-                Download from Drone
-              </Button>
-            )}
-            <Button
-              disabled={logsExist}
-              color="red"
-              variant="filled"
-              onClick={clearFgcsLogs}
-            >
-              Clear Logs
-            </Button>
-            <p className="text-center text-xs text-gray-500 mt-2 pointer-events-none">
-              or drag and drop a log file here
-            </p>
-          </div>
-        </Dropzone>
+          )}
+          <Button
+            disabled={logsExist}
+            color="red"
+            variant="filled"
+            onClick={clearFgcsLogs}
+          >
+            Clear Logs
+          </Button>
+          <p className="text-center text-xs text-gray-500 mt-2 pointer-events-none">
+            or drag and drop a log file here
+          </p>
+        </div>
         <Divider size="xs" orientation="vertical" />
         <div className="relative">
           <LoadingOverlay visible={recentFgcsLogs === null || loadingFile} />

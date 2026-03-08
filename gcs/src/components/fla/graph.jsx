@@ -44,6 +44,7 @@ import {
   selectFile,
   selectFlightModeMessages,
   selectLogEvents,
+  selectMapPositionData,
   selectMessageFilters,
   selectParams,
   selectUtcAvailable,
@@ -115,6 +116,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
   const file = useSelector(selectFile)
   const fileName = file?.name
   const canShowMapPositionData = useSelector(selectCanShowMapPositionData)
+  const mapPositionData = useSelector(selectMapPositionData)
 
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
@@ -122,12 +124,141 @@ export default function Graph({ data, customColors, openPresetModal }) {
   const [showEvents, setShowEvents] = useState(false)
   const chartRef = useRef(null)
   const [showMap, setShowMap] = useState(false)
+  const [hoverPosition, setHoverPosition] = useState(null)
 
   // Create a stable key from dataset labels to detect actual data changes
   const datasetKey = useMemo(
     () => data.datasets.map((d) => d.label).join(","),
     [data.datasets],
   )
+
+  // Find GPS position based on timestamp - optimized with early termination
+  const findGpsPositionAtTime = useMemo(() => {
+    return (timestamp) => {
+      if (!mapPositionData) return null
+
+      // Try GPS first, then GPS2, then POS
+      const dataSources = [
+        mapPositionData.gps,
+        mapPositionData.gps2,
+        mapPositionData.pos,
+      ]
+
+      for (const dataSource of dataSources) {
+        if (!dataSource || dataSource.length === 0) continue
+
+        // Get the time field to use for comparison
+        const getTimeValue = (point) => {
+          return utcAvailable && point.UtcTimeUS !== undefined
+            ? point.UtcTimeUS
+            : point.TimeUS
+        }
+
+        // Since data is chronologically ordered, we can optimize:
+        let closestPoint = null
+        let minDiff = Infinity
+
+        // Start from a reasonable position if we can estimate it
+        const firstPointTime = getTimeValue(dataSource[0])
+        const lastPointTime = getTimeValue(dataSource[dataSource.length - 1])
+
+        // Quick boundary checks
+        if (timestamp <= firstPointTime) {
+          return { lat: dataSource[0].lat, lon: dataSource[0].lon }
+        }
+        if (timestamp >= lastPointTime) {
+          return {
+            lat: dataSource[dataSource.length - 1].lat,
+            lon: dataSource[dataSource.length - 1].lon,
+          }
+        }
+
+        // Estimate starting position (linear interpolation)
+        const timeRange = lastPointTime - firstPointTime
+        const targetOffset = timestamp - firstPointTime
+        const estimatedIndex = Math.floor(
+          (targetOffset / timeRange) * dataSource.length,
+        )
+
+        // Search around the estimated position first (likely to be close)
+        const searchRadius = 50 // Check 50 points on each side
+        const startIdx = Math.max(0, estimatedIndex - searchRadius)
+        const endIdx = Math.min(
+          dataSource.length,
+          estimatedIndex + searchRadius,
+        )
+
+        for (let i = startIdx; i < endIdx; i++) {
+          const point = dataSource[i]
+          const pointTime = getTimeValue(point)
+          const diff = Math.abs(pointTime - timestamp)
+
+          if (diff < minDiff) {
+            minDiff = diff
+            closestPoint = point
+          }
+
+          // Early termination: if we've passed the timestamp and diff is increasing
+          if (pointTime > timestamp && diff > minDiff) {
+            break
+          }
+        }
+
+        if (closestPoint) {
+          return {
+            lat: closestPoint.lat,
+            lon: closestPoint.lon,
+          }
+        }
+      }
+
+      return null
+    }
+  }, [mapPositionData, utcAvailable])
+
+  // Handle mouse move on chart to update hover position
+  const handleChartMouseMove = (event) => {
+    if (!chartRef.current || !showMap) return
+
+    const chart = chartRef.current
+    const canvas = chart.canvas
+    if (!canvas) return
+
+    // Get the mouse position relative to the canvas
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+
+    // Get the x scale (time scale)
+    const xScale = chart.scales.x
+    if (!xScale) return
+
+    // Get the timestamp at the mouse position
+    let timestamp = xScale.getValueForPixel(x)
+
+    if (timestamp !== null && timestamp !== undefined) {
+      // The chart returns values in the same unit as the data
+      // For time scales, this is typically milliseconds, so convert to microseconds
+      if (timestamp instanceof Date) {
+        timestamp = timestamp.getTime() * 1000 // Convert ms to microseconds
+      } else if (typeof timestamp === "number") {
+        // If timestamp looks like milliseconds (13 digits), convert to microseconds
+        if (timestamp > 1e12 && timestamp < 1e16) {
+          // Already in microseconds, use as is
+        } else if (timestamp > 1e9 && timestamp < 1e13) {
+          // In milliseconds, convert to microseconds
+          timestamp = timestamp * 1000
+        }
+      }
+
+      const gpsPosition = findGpsPositionAtTime(timestamp)
+      setHoverPosition(gpsPosition)
+    }
+  }
+
+  // Handle mouse leave to clear hover position
+  const handleChartMouseLeave = () => {
+    setHoverPosition(null)
+  }
 
   // Toggle show events without resetting zoom
   function toggleShowEvents() {
@@ -490,7 +621,11 @@ export default function Graph({ data, customColors, openPresetModal }) {
     <div className="h-full flex flex-col">
       <PanelGroup direction="horizontal" className="flex-1 min-h-0">
         <Panel minSize={20}>
-          <div className="chart-container relative cursor-crosshair h-full">
+          <div
+            className="chart-container relative cursor-crosshair h-full"
+            onMouseMove={handleChartMouseMove}
+            onMouseLeave={handleChartMouseLeave}
+          >
             <Line ref={chartRef} options={config} data={data} />
           </div>
         </Panel>
@@ -498,7 +633,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
           <>
             <PanelResizeHandle className='w-1 bg-falcongrey-700 hover:bg-falconred-500 data-[resize-handle-state="hover"]:bg-falconred-500 data-[resize-handle-state="drag"]:bg-falconred-500' />
             <Panel minSize={10}>
-              <FlaMapSection />
+              <FlaMapSection hoverPosition={hoverPosition} />
             </Panel>
           </>
         )}

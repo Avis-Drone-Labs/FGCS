@@ -276,26 +276,31 @@ function extractLatLonFromGpsMessages(
     return undefined
   }
 
-  const extractedData = gpsMessages
-    .map((msg: MessageObject) => {
-      // Only process messages with a status more than 2 (3D fix and above)
-      if (((msg as { Status?: number }).Status ?? 0) > 2) {
-        const lat = (msg as { Lat?: unknown }).Lat
-        const lon = (msg as { Lng?: unknown }).Lng
-        if (
-          typeof lat !== "number" ||
-          typeof lon !== "number" ||
-          lat === 0 ||
-          lon === 0
-        ) {
-          return undefined
-        }
-        return { lat, lon }
-      } else {
-        return undefined
+  const extractedData: MapPositionDataObject[] = []
+
+  for (const msg of gpsMessages) {
+    // Only process messages with a status more than 2 (3D fix and above)
+    if (((msg as { Status?: number }).Status ?? 0) > 2) {
+      const lat = (msg as { Lat?: unknown }).Lat
+      const lon = (msg as { Lng?: unknown }).Lng
+      const TimeUS = (msg as { TimeUS?: unknown }).TimeUS
+      const UtcTimeUS = (msg as { UtcTimeUS?: unknown }).UtcTimeUS
+
+      if (
+        typeof lat === "number" &&
+        typeof lon === "number" &&
+        lat !== 0 &&
+        lon !== 0
+      ) {
+        extractedData.push({
+          lat,
+          lon,
+          TimeUS: typeof TimeUS === "number" ? TimeUS : undefined,
+          UtcTimeUS: typeof UtcTimeUS === "number" ? UtcTimeUS : undefined,
+        })
       }
-    })
-    .filter((item): item is MapPositionDataObject => item !== undefined)
+    }
+  }
 
   if (extractedData.length > 0) {
     return extractedData
@@ -310,21 +315,28 @@ function extractLatLonFromPosMessages(
     return undefined
   }
 
-  const extractedData = posMessages
-    .map((msg: MessageObject) => {
-      const lat = (msg as { Lat?: unknown }).Lat
-      const lon = (msg as { Lng?: unknown }).Lng
-      if (
-        typeof lat !== "number" ||
-        typeof lon !== "number" ||
-        lat === 0 ||
-        lon === 0
-      ) {
-        return undefined
-      }
-      return { lat, lon }
-    })
-    .filter((item): item is MapPositionDataObject => item !== undefined)
+  const extractedData: MapPositionDataObject[] = []
+
+  for (const msg of posMessages) {
+    const lat = (msg as { Lat?: unknown }).Lat
+    const lon = (msg as { Lng?: unknown }).Lng
+    const TimeUS = (msg as { TimeUS?: unknown }).TimeUS
+    const UtcTimeUS = (msg as { UtcTimeUS?: unknown }).UtcTimeUS
+
+    if (
+      typeof lat === "number" &&
+      typeof lon === "number" &&
+      lat !== 0 &&
+      lon !== 0
+    ) {
+      extractedData.push({
+        lat,
+        lon,
+        TimeUS: typeof TimeUS === "number" ? TimeUS : undefined,
+        UtcTimeUS: typeof UtcTimeUS === "number" ? UtcTimeUS : undefined,
+      })
+    }
+  }
 
   if (extractedData.length > 0) {
     return extractedData

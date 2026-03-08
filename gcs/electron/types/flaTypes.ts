@@ -88,6 +88,8 @@ export interface ParamObject {
 export interface MapPositionDataObject {
   lat: number
   lon: number
+  TimeUS?: number
+  UtcTimeUS?: number
 }
 
 export interface MapPositionData {

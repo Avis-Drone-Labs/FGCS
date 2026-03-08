@@ -5,7 +5,7 @@
 import { envelope, featureCollection, point } from "@turf/turf"
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { useMemo, useRef } from "react"
-import Map from "react-map-gl/maplibre"
+import Map, { Marker } from "react-map-gl/maplibre"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
@@ -16,7 +16,7 @@ import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-function FlaMapSectionNonMemo() {
+function FlaMapSectionNonMemo({ hoverPosition }) {
   const mapPositionData = useSelector(selectMapPositionData)
   const mapPositionDataBounds = useMemo(() => {
     let dataSource = null
@@ -93,6 +93,37 @@ function FlaMapSectionNonMemo() {
             ])}
             colour={tailwindColors.blue[400]}
           />
+        )}
+
+        {/* Drone marker at hover position */}
+        {hoverPosition && (
+          <Marker
+            longitude={intToCoord(hoverPosition.lon)}
+            latitude={intToCoord(hoverPosition.lat)}
+            anchor="center"
+          >
+            <div className="relative">
+              {/* Drone icon - using a simple SVG plane/drone shape */}
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="drop-shadow-lg"
+              >
+                {/* Simple drone/plane icon */}
+                <path
+                  d="M12 2L15 8H21L16 12L18 18L12 15L6 18L8 12L3 8H9L12 2Z"
+                  fill="#FF6B6B"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </Marker>
         )}
 
         <div className="absolute top-0 right-0 bg-falcongrey-TRANSLUCENT cursor-default flex flex-row gap-2 p-1 select-none">

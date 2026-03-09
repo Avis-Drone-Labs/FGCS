@@ -169,9 +169,8 @@ export default function SelectFlightLog({ getLogSummary }) {
 
   return (
     <div
-      className={`flex flex-col items-center justify-center h-full w-full mx-auto border-2 border-dashed transition-colors ${
-        isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
-      }`}
+      className={`flex flex-col items-center justify-center h-full w-full mx-auto border-2 border-dashed transition-colors ${isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+        }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -186,20 +185,6 @@ export default function SelectFlightLog({ getLogSummary }) {
               Download from Drone
             </Button>
           )}
-<<<<<<< 1005-feature-drop-files-into-fla
-          <Button
-            disabled={logsExist}
-            color="red"
-            variant="filled"
-            onClick={clearFgcsLogs}
-          >
-            Clear Logs
-          </Button>
-          <p className="text-center text-xs text-gray-400 mt-2">
-            or drag and drop a log file
-          </p>
-=======
->>>>>>> main
         </div>
         <Divider size="xs" orientation="vertical" />
         <div className="relative">

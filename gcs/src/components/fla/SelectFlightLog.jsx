@@ -169,8 +169,9 @@ export default function SelectFlightLog({ getLogSummary }) {
 
   return (
     <div
-      className={`flex flex-col items-center justify-center h-full w-full mx-auto border-2 border-dashed transition-colors ${isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
-        }`}
+      className={`flex flex-col items-center justify-center h-full w-full mx-auto border-2 border-dashed transition-colors ${
+        isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+      }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

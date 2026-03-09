@@ -14,8 +14,6 @@ import { ActionIcon, Button, Tooltip as MantineTooltip } from "@mantine/core"
 import {
   IconCapture,
   IconCopy,
-  IconTimelineEvent,
-  IconTimelineEventX,
   IconZoomIn,
   IconZoomOut,
   IconZoomReset,
@@ -381,8 +379,16 @@ export default function Graph({ data, customColors, openPresetModal }) {
         // https://stackoverflow.com/a/8179549/10077669
         const labelColor = backgroundColor.replace(/[^,]+(?=\))/, "1")
 
+        // Get time values: use UtcTimeUS if available, otherwise TimeUS
+        const getTimeValue = (mode) => {
+          if (utcAvailable && mode.UtcTimeUS !== undefined) {
+            return mode.UtcTimeUS
+          }
+          return mode.TimeUS
+        }
+
         // Critical fix: Convert timestamp to Date object for time scale
-        let xMinValue = flightMode.TimeUS
+        let xMinValue = getTimeValue(flightMode)
         let xMaxValue = xMax
 
         // Check if we're using a time scale
@@ -390,11 +396,11 @@ export default function Graph({ data, customColors, openPresetModal }) {
 
         // Convert timestamps to Date objects when using time scale
         if (isTimeScale) {
-          xMinValue = new Date(flightMode.TimeUS)
+          xMinValue = new Date(xMinValue)
 
           // Handle xMax
           if (nextFlightMode !== undefined) {
-            xMaxValue = new Date(nextFlightMode.TimeUS)
+            xMaxValue = new Date(getTimeValue(nextFlightMode))
           } else {
             // Stretch to the latest date
             let maxTime = 0
@@ -411,7 +417,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
         } else {
           // For non-time scales, handle next flight mode
           if (nextFlightMode !== undefined) {
-            xMaxValue = nextFlightMode.TimeUS
+            xMaxValue = getTimeValue(nextFlightMode)
           }
         }
 
@@ -481,26 +487,23 @@ export default function Graph({ data, customColors, openPresetModal }) {
   }, [events, flightModes, datasetKey])
 
   return (
-    <div>
-      <PanelGroup direction="horizontal" style={{ height: "auto" }}>
+    <div className="h-full flex flex-col">
+      <PanelGroup direction="horizontal" className="flex-1 min-h-0">
         <Panel minSize={20}>
-          <div
-            className="chart-container relative"
-            style={{ minHeight: "60vh" }}
-          >
+          <div className="chart-container relative cursor-crosshair h-full">
             <Line ref={chartRef} options={config} data={data} />
           </div>
         </Panel>
         {showMap && (
           <>
-            <PanelResizeHandle className='w-1 bg-zinc-700 hover:bg-zinc-500 data-[resize-handle-state="hover"]:bg-zinc-500 data-[resize-handle-state="drag"]:bg-zinc-500' />
+            <PanelResizeHandle className='w-1 bg-falcongrey-700 hover:bg-falconred-500 data-[resize-handle-state="hover"]:bg-falconred-500 data-[resize-handle-state="drag"]:bg-falconred-500' />
             <Panel minSize={10}>
               <FlaMapSection />
             </Panel>
           </>
         )}
       </PanelGroup>
-      <div className="flex flex-row gap-2 py-2">
+      <div className="flex flex-row gap-2 py-2 flex-shrink-0">
         <MantineTooltip label="Zoom in">
           <ActionIcon
             variant="filled"
@@ -533,18 +536,9 @@ export default function Graph({ data, customColors, openPresetModal }) {
             <IconCapture size={18} />
           </ActionIcon>
         </MantineTooltip>
-        <MantineTooltip label="Copy graph">
+        <MantineTooltip label="Copy graph as image">
           <ActionIcon size={32} variant="filled" onClick={copyGraphToClipboard}>
             <IconCopy size={18} />
-          </ActionIcon>
-        </MantineTooltip>
-        <MantineTooltip label={showEvents ? "Hide events" : "Show events"}>
-          <ActionIcon size={32} variant="filled" onClick={toggleShowEvents}>
-            {showEvents ? (
-              <IconTimelineEventX size={18} />
-            ) : (
-              <IconTimelineEvent size={18} />
-            )}
           </ActionIcon>
         </MantineTooltip>
         <MantineTooltip label="Clear Filters">
@@ -587,6 +581,12 @@ export default function Graph({ data, customColors, openPresetModal }) {
             </Button>
           </MantineTooltip>
         )}
+
+        <MantineTooltip label={showEvents ? "Hide events" : "Show events"}>
+          <Button className="min-h-8 max-h-8" onClick={toggleShowEvents}>
+            {showEvents ? "Hide events" : "Show events"}
+          </Button>
+        </MantineTooltip>
       </div>
     </div>
   )

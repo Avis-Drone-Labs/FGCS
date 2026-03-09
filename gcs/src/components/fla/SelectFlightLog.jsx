@@ -24,7 +24,7 @@ import { readableBytes } from "./utils"
 export default function SelectFlightLog({ getLogSummary }) {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
+  const [recentLogs, setRecentLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -33,13 +33,8 @@ export default function SelectFlightLog({ getLogSummary }) {
     { open: openDownloadModal, close: closeDownloadModal },
   ] = useDisclosure(false)
 
-  async function getFgcsLogs() {
-    setRecentFgcsLogs(await window.ipcRenderer.invoke("fla:get-recent-logs"))
-  }
-
-  async function clearFgcsLogs() {
-    await window.ipcRenderer.invoke("fla:clear-recent-logs")
-    getFgcsLogs()
+  async function getRecentLogs() {
+    setRecentLogs(await window.ipcRenderer.invoke("fla:get-recent-logs"))
   }
 
   const selectFile = async () => {
@@ -137,15 +132,15 @@ export default function SelectFlightLog({ getLogSummary }) {
     const onProgress = (_event, message) =>
       setLoadingFileProgress(message.percent)
     window.ipcRenderer.on("fla:log-parse-progress", onProgress)
-    getFgcsLogs()
+    getRecentLogs()
     return () => {
       window.ipcRenderer.removeAllListeners("fla:log-parse-progress")
     }
   }, [])
 
   const recentLogItems = useMemo(() => {
-    if (!recentFgcsLogs) return null
-    return recentFgcsLogs.map((log, idx) => (
+    if (!recentLogs) return null
+    return recentLogs.map((log, idx) => (
       <div
         key={idx}
         className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-600 hover:rounded-sm"
@@ -163,14 +158,14 @@ export default function SelectFlightLog({ getLogSummary }) {
         </div>
       </div>
     ))
-  }, [recentFgcsLogs, handleFile])
+  }, [recentLogs, handleFile])
 
   const logsExist = useMemo(() => {
     return (
       recentLogItems === null ||
-      (recentFgcsLogs !== null && recentLogItems.length === 0)
+      (recentLogs !== null && recentLogItems.length === 0)
     )
-  }, [recentLogItems, recentFgcsLogs])
+  }, [recentLogItems, recentLogs])
 
   return (
     <div
@@ -191,6 +186,7 @@ export default function SelectFlightLog({ getLogSummary }) {
               Download from Drone
             </Button>
           )}
+<<<<<<< 1005-feature-drop-files-into-fla
           <Button
             disabled={logsExist}
             color="red"
@@ -202,12 +198,14 @@ export default function SelectFlightLog({ getLogSummary }) {
           <p className="text-center text-xs text-gray-400 mt-2">
             or drag and drop a log file
           </p>
+=======
+>>>>>>> main
         </div>
         <Divider size="xs" orientation="vertical" />
         <div className="relative">
-          <LoadingOverlay visible={recentFgcsLogs === null || loadingFile} />
+          <LoadingOverlay visible={recentLogs === null || loadingFile} />
           <div className="flex flex-col items-center gap-2">
-            <p className="font-bold">Recent FGCS telemetry logs</p>
+            <p className="font-bold">Recent logs</p>
             <ScrollArea.Autosize
               className="relative"
               type="always"

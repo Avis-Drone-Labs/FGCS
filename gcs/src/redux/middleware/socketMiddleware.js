@@ -62,9 +62,9 @@ import {
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
-  setShowMotorTestWarningModal,
   setServoConfig,
   setServoPwmOutputs,
+  setShowMotorTestWarningModal,
   updateChannelsConfigParam,
   updateGripperConfigParam,
   updateServoConfigParam,
@@ -90,6 +90,7 @@ import {
   setLoiterRadius,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
+  setOnboardControlSensorsHealth,
   setRSSIData,
   setTelemetryData,
   setTotalTimeFlying,
@@ -124,6 +125,7 @@ import {
 import {
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
+  setFetchingParam,
   setFetchingVars,
   setFetchingVarsProgress,
   setHasFetchedOnce,
@@ -270,6 +272,9 @@ const socketMiddleware = (store) => {
       case "SYS_STATUS":
         store.dispatch(
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
+        )
+        store.dispatch(
+          setOnboardControlSensorsHealth(msg.onboard_control_sensors_health),
         )
         break
       case "GPS_RAW_INT": {
@@ -546,6 +551,10 @@ const socketMiddleware = (store) => {
             )
             store.dispatch(setConnectedToSimulator(true))
           }
+        })
+
+        socket.socket.on("fetching_param", (msg) => {
+          store.dispatch(setFetchingParam(msg.message))
         })
 
         // Link stats

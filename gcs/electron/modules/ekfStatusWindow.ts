@@ -1,13 +1,14 @@
 import { BrowserWindow, ipcMain } from "electron"
 import path from "path"
+import { getCenteredWindowPosition } from "../utils/windowUtils"
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
 let ekfStatusWin: BrowserWindow | null = null
 
-export function openEkfStatusWindow() {
+export function openEkfStatusWindow(parentWindow?: BrowserWindow) {
   if (ekfStatusWin === null) {
-    ekfStatusWin = new BrowserWindow({
+    const windowOptions: Electron.BrowserWindowConstructorOptions = {
       width: 700,
       height: 400,
       frame: true,
@@ -21,7 +22,20 @@ export function openEkfStatusWindow() {
       fullscreen: false,
       fullscreenable: false,
       alwaysOnTop: true,
-    })
+    }
+
+    // Position window in the center of the parent window
+    const centeredPosition = getCenteredWindowPosition(
+      parentWindow,
+      windowOptions.width!,
+      windowOptions.height!,
+    )
+    if (centeredPosition) {
+      windowOptions.x = centeredPosition.x
+      windowOptions.y = centeredPosition.y
+    }
+
+    ekfStatusWin = new BrowserWindow(windowOptions)
   }
 
   if (VITE_DEV_SERVER_URL) {
@@ -51,8 +65,9 @@ export default function registerEkfStatusIPC() {
   ipcMain.removeHandler("app:close-ekf-status-window")
   ipcMain.removeHandler("app:update-ekf-status")
 
-  ipcMain.handle("app:open-ekf-status-window", () => {
-    openEkfStatusWindow()
+  ipcMain.handle("app:open-ekf-status-window", (event) => {
+    const parentWindow = BrowserWindow.fromWebContents(event.sender)
+    openEkfStatusWindow(parentWindow || undefined)
   })
   ipcMain.handle("app:close-ekf-status-window", () => closeEkfStatusWindow())
   ipcMain.handle("app:update-ekf-status", (_, ekfStatusData) => {

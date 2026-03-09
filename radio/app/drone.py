@@ -81,6 +81,7 @@ class Drone:
         droneDisconnectCb: Optional[Callable] = None,
         droneConnectStatusCb: Optional[Callable] = None,
         linkDebugStatsCb: Optional[Callable] = None,
+        fetchingParameterCb: Optional[Callable] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -99,6 +100,7 @@ class Drone:
         self.droneDisconnectCb = droneDisconnectCb
         self.droneConnectStatusCb = droneConnectStatusCb
         self.linkDebugStatsCb = linkDebugStatsCb
+        self.fetchingParameterCb = fetchingParameterCb
 
         self.connectionError: Optional[str] = None
 

@@ -21,6 +21,17 @@ function microsecondsToDisplayTime(microseconds, roundTo) {
   ).padStart(2, "0")}`
 }
 
+function getChartLabel(context) {
+  const label = context.dataset.label || ""
+  const value = context.parsed.y
+  const unit = context.dataset.yAxisID || ""
+  // Round to 5 decimal places and remove trailing zeros
+  const roundedValue = parseFloat(value.toFixed(5))
+  // Don't display "UNKNOWN" as a unit
+  const displayUnit = unit === "UNKNOWN" ? "" : unit
+  return `${label}: ${roundedValue} ${displayUnit}`.trim()
+}
+
 const defaultOptions = {
   responsive: true,
   parsing: false,
@@ -38,6 +49,10 @@ const defaultOptions = {
         },
         pinch: {
           enabled: true,
+        },
+        drag: {
+          enabled: true,
+          modifierKey: "ctrl",
         },
         mode: "xy",
       },
@@ -69,6 +84,7 @@ export const dataflashOptions = {
         title: function (context) {
           return microsecondsToDisplayTime(context[0].parsed.x, 5)
         },
+        label: getChartLabel,
       },
     },
   },
@@ -97,6 +113,7 @@ export const fgcsOptions = {
         title: function (context) {
           return moment(context[0].parsed.x).format("MMMM Do YYYY, h:mm:ss a")
         },
+        label: getChartLabel,
       },
     },
   },

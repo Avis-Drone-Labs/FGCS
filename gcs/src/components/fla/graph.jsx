@@ -154,11 +154,6 @@ export default function Graph({ data, customColors, openPresetModal }) {
             : point.TimeUS
         }
 
-        // Since data is chronologically ordered, we can optimize:
-        let closestPoint = null
-        let minDiff = Infinity
-
-        // Start from a reasonable position if we can estimate it
         const firstPointTime = getTimeValue(dataSource[0])
         const lastPointTime = getTimeValue(dataSource[dataSource.length - 1])
 
@@ -173,42 +168,55 @@ export default function Graph({ data, customColors, openPresetModal }) {
           }
         }
 
-        // Estimate starting position (linear interpolation)
-        const timeRange = lastPointTime - firstPointTime
-        const targetOffset = timestamp - firstPointTime
-        const estimatedIndex = Math.floor(
-          (targetOffset / timeRange) * dataSource.length,
-        )
+        // console log timestamp in readeable time
+        console.log(new Date(timestamp).toLocaleString())
 
-        // Search around the estimated position first (likely to be close)
-        const searchRadius = 50 // Check 50 points on each side
-        const startIdx = Math.max(0, estimatedIndex - searchRadius)
-        const endIdx = Math.min(
-          dataSource.length,
-          estimatedIndex + searchRadius,
-        )
+        // Binary search to find the closest point
+        let left = 0
+        let right = dataSource.length - 1
 
-        for (let i = startIdx; i < endIdx; i++) {
-          const point = dataSource[i]
-          const pointTime = getTimeValue(point)
-          const diff = Math.abs(pointTime - timestamp)
+        while (left < right) {
+          const mid = Math.floor((left + right) / 2)
+          const midTime = getTimeValue(dataSource[mid])
 
-          if (diff < minDiff) {
-            minDiff = diff
-            closestPoint = point
+          if (midTime === timestamp) {
+            // Exact match found
+            return {
+              lat: dataSource[mid].lat,
+              lon: dataSource[mid].lon,
+            }
           }
 
-          // Early termination: if we've passed the timestamp and diff is increasing
-          if (pointTime > timestamp && diff > minDiff) {
-            break
+          if (midTime < timestamp) {
+            left = mid + 1
+          } else {
+            right = mid
           }
         }
 
-        if (closestPoint) {
-          return {
-            lat: closestPoint.lat,
-            lon: closestPoint.lon,
+        // At this point, left === right
+        // Compare with the previous element to find the closest
+        let closestPoint = dataSource[left]
+        let minDiff = Math.abs(getTimeValue(closestPoint) - timestamp)
+
+        if (left > 0) {
+          const prevPoint = dataSource[left - 1]
+          const prevDiff = Math.abs(getTimeValue(prevPoint) - timestamp)
+
+          if (prevDiff < minDiff) {
+            closestPoint = prevPoint
           }
+        }
+
+        // console.log(
+        //   `Binary search completed. Left index: ${left}, Time at left index: ${getTimeValue(dataSource[left])}`,
+        //   closestPoint,
+        //   dataSource,
+        // )
+
+        return {
+          lat: closestPoint.lat,
+          lon: closestPoint.lon,
         }
       }
 

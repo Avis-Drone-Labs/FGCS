@@ -131,6 +131,11 @@ function FlaMapSectionNonMemo({ hoverPosition }) {
           <p className="text-red-400">GPS2</p>
           <p className="text-blue-400">POS</p>
         </div>
+
+        <div className="absolute top-10 right-0 bg-falcongrey-TRANSLUCENT cursor-default flex flex-row gap-2 p-1 select-none">
+          <p className="text-yellow-400">{hoverPosition?.lon}</p>
+          <p className="text-yellow-400">{hoverPosition?.lat}</p>
+        </div>
       </Map>
     </div>
   )

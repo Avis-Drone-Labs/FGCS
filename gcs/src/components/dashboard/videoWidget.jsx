@@ -33,7 +33,7 @@ import {
 } from "../../redux/slices/droneConnectionSlice"
 import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 
-export default function VideoWidget({ telemetryPanelWidth }) {
+export default function VideoWidget() {
   const videoSource = useSelector(selectVideoSource)
   const isMaximized = useSelector(selectVideoMaximized)
   const scale = useSelector(selectVideoScale) // Scale factor for resizing
@@ -366,7 +366,10 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
       {/* Minimized view */}
       {!isMaximized && !isPoppedOut && (
-        <div className="rounded-md" style={{ background: GetOutsideVisibilityColor() }}>
+        <div
+          className="rounded-md"
+          style={{ background: GetOutsideVisibilityColor() }}
+        >
           <div className="p-2 flex items-center gap-2">
             {videoSource && error === null ? (
               <div
@@ -396,7 +399,10 @@ export default function VideoWidget({ telemetryPanelWidth }) {
 
       {/* Full view */}
       {isMaximized && (
-        <div className="min-w-[350px] min-h-[253px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
+        <div
+          className="min-w-[350px] min-h-[253px] rounded-md flex flex-col"
+          style={{ background: GetOutsideVisibilityColor() }}
+        >
           <div className="p-2">
             <div className="flex items-center justify-between mb-2">
               <Text>{videoSource?.name || "No video selected"}</Text>

@@ -1,12 +1,42 @@
 /*
   Floating ESC telemetry widget (row-positioned like VideoWidget)
+
+  Notes:
+  - Uses fake ESC data for now so layout/thresholds can be tested easily.
+  - Thresholds are user-configurable and stored in localStorage.
+  - Only the numeric values change colour.
 */
 import { useMemo, useState } from "react"
-import { ActionIcon, Text } from "@mantine/core"
-import { IconBolt, IconMaximize, IconMinus, IconResize } from "@tabler/icons-react"
+import { ActionIcon, NumberInput, Popover, Stack, Text } from "@mantine/core"
+import { useLocalStorage } from "@mantine/hooks"
+import {
+  IconBolt,
+  IconMaximize,
+  IconMinus,
+  IconResize,
+  IconSettings,
+} from "@tabler/icons-react"
 import { useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
+
+const DEFAULT_ESC_THRESHOLDS = {
+  rpm: {
+    warning: 2000,
+    danger: 1000,
+    higherIsBetter: true,
+  },
+  current: {
+    warning: 15,
+    danger: 20,
+    higherIsBetter: false,
+  },
+  temperature: {
+    warning: 60,
+    danger: 80,
+    higherIsBetter: false,
+  },
+}
 
 function fmt(value, decimals = 0) {
   if (value === null || value === undefined) return "—"
@@ -23,59 +53,77 @@ function fmtTemp(value) {
   return degC.toFixed(0)
 }
 
-function EscTile({ esc }) {
+function getThresholdColor(value, config) {
+  if (value === null || value === undefined) return "text-slate-200"
+
+  const n = Number(value)
+  if (!Number.isFinite(n)) return "text-slate-200"
+
+  if (config.higherIsBetter) {
+    if (n <= config.danger) return "text-red-400"
+    if (n <= config.warning) return "text-yellow-400"
+    return "text-green-400"
+  }
+
+  if (n >= config.danger) return "text-red-400"
+  if (n >= config.warning) return "text-yellow-400"
+  return "text-green-400"
+}
+
+function EscTile({ esc, thresholds }) {
+  const rpmClass = getThresholdColor(esc.rpm, thresholds.rpm)
+  const currentClass = getThresholdColor(esc.current, thresholds.current)
+  const temperatureClass = getThresholdColor(
+    esc.temperature,
+    thresholds.temperature,
+  )
+
   return (
     <div className="rounded-md border border-falcongrey-700 bg-falcongrey-900 p-2">
       <div className="flex flex-row items-center justify-between mb-1">
-        <div className="text-slate-200 text-xs font-semibold">ESC {esc.escId}</div>
+        <div className="text-slate-200 text-xs font-semibold">
+          ESC {esc.escId}
+        </div>
       </div>
 
       <div className="flex flex-col gap-y-0.5">
         <div className="flex flex-row items-center justify-between">
           <div className="text-slate-500 text-[10px]">RPM</div>
-          <div className="text-slate-200 text-xs">{fmt(esc.rpm, 0)}</div>
+          <div className={`text-xs ${rpmClass}`}>{fmt(esc.rpm, 0)}</div>
         </div>
+
         <div className="flex flex-row items-center justify-between">
           <div className="text-slate-500 text-[10px]">A</div>
-          <div className="text-slate-200 text-xs">{fmt(esc.current, 2)}</div>
+          <div className={`text-xs ${currentClass}`}>{fmt(esc.current, 2)}</div>
         </div>
+
         <div className="flex flex-row items-center justify-between">
           <div className="text-slate-500 text-[10px]">°C</div>
-          <div className="text-slate-200 text-xs">{fmtTemp(esc.temperature)}</div>
+          <div className={`text-xs ${temperatureClass}`}>
+            {fmtTemp(esc.temperature)}
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-export default function EscTelemetryWidget({
-  telemetryPanelWidth, // unused now, kept so your callsites don’t break
-  onMaximizedChange,
-}) {
-  //const escs = useSelector(selectEscTelemetry)
-  const realEscs = useSelector(selectEscTelemetry)
-
-  const escs = Array.from({ length: 8 }).map((_, i) => ({
-    escId: i + 1,
-    rpm: Math.floor(Math.random() * 6000),
-    current: (Math.random() * 20).toFixed(2),
-    temperature: Math.floor(30 + Math.random() * 20)
-  }))
+export default function EscTelemetryWidget() {
+  const escs = useSelector(selectEscTelemetry)
 
   const [isMaximized, setIsMaximized] = useState(false)
   const [scale, setScale] = useState(1)
+  const [settingsOpened, setSettingsOpened] = useState(false)
 
-  const setMaximized = (next) => {
-    setIsMaximized(next)
-    onMaximizedChange?.(next)
-  }
+  const [thresholds, setThresholds] = useLocalStorage({
+    key: "escTelemetryThresholds",
+    defaultValue: DEFAULT_ESC_THRESHOLDS,
+  })
 
   const hasAnyData =
     Array.isArray(escs) &&
     escs.some(
-      (e) =>
-        e &&
-        (e.rpm != null || e.current != null || e.temperature != null),
+      (e) => e && (e.rpm != null || e.current != null || e.temperature != null),
     )
 
   const dimensions = useMemo(() => {
@@ -84,7 +132,7 @@ export default function EscTelemetryWidget({
 
     const cols = 4
     const count = Array.isArray(escs) ? escs.length : 0
-    const rows = Math.max(1, Math.ceil(count / cols))
+    const rows = Math.max(1, Math.ceil(Math.min(count, 8) / cols))
 
     const tileH = 74 * scale
     const gapH = 8 * scale
@@ -117,6 +165,24 @@ export default function EscTelemetryWidget({
     document.addEventListener("mouseup", handleMouseUp)
   }
 
+  function updateThreshold(metric, field, value) {
+    const numericValue = Number(value)
+
+    setThresholds((prev) => ({
+      ...prev,
+      [metric]: {
+        ...prev[metric],
+        [field]: Number.isFinite(numericValue)
+          ? numericValue
+          : prev[metric][field],
+      },
+    }))
+  }
+
+  function resetThresholds() {
+    setThresholds(DEFAULT_ESC_THRESHOLDS)
+  }
+
   // Minimized view
   if (!isMaximized) {
     return (
@@ -124,19 +190,21 @@ export default function EscTelemetryWidget({
         className="rounded-md"
         style={{ background: GetOutsideVisibilityColor() }}
       >
-        <div className="p-2 flex items-center gap-2">
-          <IconBolt
-            size={16}
-            className={hasAnyData ? "text-slate-200" : "text-slate-500"}
-          />
-          <Text size="sm" className="truncate max-w-[150px]">
-            {hasAnyData ? "ESC telemetry" : "No ESC telemetry"}
-          </Text>
+        <div className="p-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IconBolt
+              size={16}
+              className={hasAnyData ? "text-slate-200" : "text-slate-500"}
+            />
+            <Text size="sm" className="truncate max-w-[150px]">
+              {hasAnyData ? "ESC telemetry" : "No ESC telemetry"}
+            </Text>
+          </div>
 
           <ActionIcon
             size="sm"
             variant="subtle"
-            onClick={() => setMaximized(true)}
+            onClick={() => setIsMaximized(true)}
             className="text-slate-400 hover:text-slate-200"
             title="Maximize ESC widget"
           >
@@ -147,9 +215,12 @@ export default function EscTelemetryWidget({
     )
   }
 
-  // Full view (make it stretch nicely when parent uses items-stretch)
+  // Full view
   return (
-    <div className="min-w-[350px] min-h-[253px] rounded-md flex flex-col" style={{ background: GetOutsideVisibilityColor() }}>
+    <div
+      className="min-w-[350px] min-h-[253px] rounded-md flex flex-col"
+      style={{ background: GetOutsideVisibilityColor() }}
+    >
       <div className="p-2 h-full flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <Text>ESC telemetry</Text>
@@ -158,7 +229,7 @@ export default function EscTelemetryWidget({
             <ActionIcon
               size="sm"
               variant="subtle"
-              onClick={() => setMaximized(false)}
+              onClick={() => setIsMaximized(false)}
               className="text-slate-400 hover:text-slate-200"
               title="Minimize ESC widget"
             >
@@ -174,6 +245,104 @@ export default function EscTelemetryWidget({
             >
               <IconResize size={16} />
             </ActionIcon>
+
+            <Popover
+              opened={settingsOpened}
+              onChange={setSettingsOpened}
+              position="top"
+              withArrow
+              shadow="md"
+              width={260}
+            >
+              <Popover.Target>
+                <ActionIcon
+                  size="sm"
+                  variant="subtle"
+                  onClick={() => setSettingsOpened((o) => !o)}
+                  className="text-slate-400 hover:text-slate-200"
+                  title="ESC threshold settings"
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+              </Popover.Target>
+
+              <Popover.Dropdown>
+                <Stack gap="xs">
+                  <Text size="sm" fw={600}>
+                    ESC Thresholds
+                  </Text>
+
+                  <Text size="xs" fw={600}>
+                    RPM
+                  </Text>
+                  <NumberInput
+                    label="Warning"
+                    value={thresholds.rpm.warning}
+                    onChange={(value) =>
+                      updateThreshold("rpm", "warning", value)
+                    }
+                    allowDecimal={false}
+                  />
+                  <NumberInput
+                    label="Danger"
+                    value={thresholds.rpm.danger}
+                    onChange={(value) =>
+                      updateThreshold("rpm", "danger", value)
+                    }
+                    allowDecimal={false}
+                  />
+
+                  <Text size="xs" fw={600}>
+                    Current (A)
+                  </Text>
+                  <NumberInput
+                    label="Warning"
+                    value={thresholds.current.warning}
+                    onChange={(value) =>
+                      updateThreshold("current", "warning", value)
+                    }
+                    decimalScale={2}
+                  />
+                  <NumberInput
+                    label="Danger"
+                    value={thresholds.current.danger}
+                    onChange={(value) =>
+                      updateThreshold("current", "danger", value)
+                    }
+                    decimalScale={2}
+                  />
+
+                  <Text size="xs" fw={600}>
+                    Temperature (°C)
+                  </Text>
+                  <NumberInput
+                    label="Warning"
+                    value={thresholds.temperature.warning}
+                    onChange={(value) =>
+                      updateThreshold("temperature", "warning", value)
+                    }
+                    allowDecimal={false}
+                  />
+                  <NumberInput
+                    label="Danger"
+                    value={thresholds.temperature.danger}
+                    onChange={(value) =>
+                      updateThreshold("temperature", "danger", value)
+                    }
+                    allowDecimal={false}
+                  />
+
+                  <Text
+                    size="xs"
+                    c="blue"
+                    className="cursor-pointer text-center w-full"
+                    onClick={resetThresholds}
+                  >
+                    Reset thresholds
+                  </Text>
+                </Stack>
+              </Popover.Dropdown>
+            </Popover>
           </div>
         </div>
 
@@ -192,9 +361,9 @@ export default function EscTelemetryWidget({
             </div>
           ) : (
             <div className="w-full h-full overflow-auto p-2">
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 justify-items-center">
                 {escs.map((esc) => (
-                  <EscTile key={esc.escId} esc={esc} />
+                  <EscTile key={esc.escId} esc={esc} thresholds={thresholds} />
                 ))}
               </div>
             </div>

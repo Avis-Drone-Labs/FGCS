@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 import time
-from threading import Thread, current_thread
+from threading import Thread
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 import serial
@@ -29,7 +29,7 @@ class ParamsController:
         Args:
             drone (Drone): The main drone object
         """
-        self.controller_id = f"params_{current_thread().ident}"
+        self.controller_id = f"params_{id(self)}"
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0
@@ -156,6 +156,11 @@ class ParamsController:
                             self.total_number_of_params = msg.param_count
 
                         if msg.param_index == msg.param_count - 1:
+                            self.drone.release_message_type(
+                                "PARAM_VALUE", self.controller_id
+                            )
+                            # Give some time for the message type to be released
+                            time.sleep(1)
                             self.is_requesting_params = False
                             self.current_param_index = 0
                             self.current_param_id = ""

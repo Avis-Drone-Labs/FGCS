@@ -13,6 +13,7 @@ from app.utils import (
     droneErrorCb,
     getComPortNames,
     getFlightSwVersionString,
+    fetchingParameterCb,
 )
 
 
@@ -140,6 +141,7 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneDisconnectCb=disconnectFromDrone,
         droneConnectStatusCb=droneConnectStatusCb,
         linkDebugStatsCb=sendLinkDebugStats,
+        fetchingParameterCb=fetchingParameterCb,
     )
 
     if drone.connectionError is not None:

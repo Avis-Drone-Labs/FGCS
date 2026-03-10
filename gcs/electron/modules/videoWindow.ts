@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron"
 import path from "path"
+import { getCenteredWindowPosition } from "../utils/windowUtils"
 
 let videoPopoutWin: BrowserWindow | null = null
 
@@ -42,7 +43,7 @@ export function openVideoPopout(
   mainWindow: BrowserWindow | null = null,
 ) {
   if (videoPopoutWin === null) {
-    videoPopoutWin = new BrowserWindow({
+    const windowOptions: Electron.BrowserWindowConstructorOptions = {
       width: 400,
       height: 300,
       frame: false,
@@ -57,7 +58,20 @@ export function openVideoPopout(
       fullscreen: false,
       fullscreenable: false,
       alwaysOnTop: true,
-    })
+    }
+
+    // Position window in the center of the parent window
+    const centeredPosition = getCenteredWindowPosition(
+      mainWindow || undefined,
+      windowOptions.width!,
+      windowOptions.height!,
+    )
+    if (centeredPosition) {
+      windowOptions.x = centeredPosition.x
+      windowOptions.y = centeredPosition.y
+    }
+
+    videoPopoutWin = new BrowserWindow(windowOptions)
   }
 
   loadVideo(type, videoStreamId, name, streamUrl)

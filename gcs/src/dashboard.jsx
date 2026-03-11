@@ -338,8 +338,8 @@ export default function Dashboard() {
           className="absolute bottom-2 z-10 flex flex-col gap-2"
           style={{ left: `${telemetryPanelSize.width + 8}px` }}
         >
-          <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
-          <EscTelemetryWidget telemetryPanelWidth={telemetryPanelSize.width} />
+          <VideoWidget />
+          <EscTelemetryWidget />
         </div>
 
         <div className="absolute bottom-0 right-0 z-20">

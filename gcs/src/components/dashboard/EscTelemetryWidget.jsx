@@ -144,26 +144,26 @@ export default function EscTelemetryWidget() {
     return { width, height: clampedHeight }
   }, [scale, escs])
 
-  function handleResizeStart(e) {
-    const startX = e.clientX
-    const startScale = scale
+    function handleResizeStart(e) {
+      const startX = e.clientX
+      const startScale = scale
 
-    const handleMouseMove = (ev) => {
-      const deltaX = ev.clientX - startX
-      const scaleChange = deltaX / 200
-      const newScale = startScale + scaleChange
-      const clamped = Math.max(1, Math.min(3, newScale))
-      setScale(clamped)
+      const handleMouseMove = (ev) => {
+        const deltaX = ev.clientX - startX
+        const scaleChange = deltaX / 200
+        const newScale = startScale + scaleChange
+        const clamped = Math.max(1, Math.min(3, newScale))
+        setScale(clamped)
+      }
+
+      const handleMouseUp = () => {
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+      }
+
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
     }
-
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
-  }
 
   function updateThreshold(metric, field, value) {
     const numericValue = Number(value)

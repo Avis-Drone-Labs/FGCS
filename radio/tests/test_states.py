@@ -32,7 +32,7 @@ def test_setState_dashboard_state(
     """Test setting state to dashboard"""
     socketio_client.emit("set_state", {"state": "dashboard"})
     assert len(socketio_client.get_received()) == 0
-    assert len(droneStatus.drone.message_listeners) == 16
+    assert len(droneStatus.drone.message_listeners) == 17
 
 
 @falcon_test(pass_drone_status=True)

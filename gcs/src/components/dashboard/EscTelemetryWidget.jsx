@@ -1,10 +1,5 @@
 /*
   Floating ESC telemetry widget (row-positioned like VideoWidget)
-
-  Notes:
-  - Uses fake ESC data for now so layout/thresholds can be tested easily.
-  - Thresholds are user-configurable and stored in localStorage.
-  - Only the numeric values change colour.
 */
 import { useMemo, useState } from "react"
 import { ActionIcon, NumberInput, Popover, Stack, Text } from "@mantine/core"
@@ -144,26 +139,26 @@ export default function EscTelemetryWidget() {
     return { width, height: clampedHeight }
   }, [scale, escs])
 
-    function handleResizeStart(e) {
-      const startX = e.clientX
-      const startScale = scale
+  function handleResizeStart(e) {
+    const startX = e.clientX
+    const startScale = scale
 
-      const handleMouseMove = (ev) => {
-        const deltaX = ev.clientX - startX
-        const scaleChange = deltaX / 200
-        const newScale = startScale + scaleChange
-        const clamped = Math.max(1, Math.min(3, newScale))
-        setScale(clamped)
-      }
-
-      const handleMouseUp = () => {
-        document.removeEventListener("mousemove", handleMouseMove)
-        document.removeEventListener("mouseup", handleMouseUp)
-      }
-
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
+    const handleMouseMove = (ev) => {
+      const deltaX = ev.clientX - startX
+      const scaleChange = deltaX / 200
+      const newScale = startScale + scaleChange
+      const clamped = Math.max(1, Math.min(3, newScale))
+      setScale(clamped)
     }
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseup", handleMouseUp)
+    }
+
+    document.addEventListener("mousemove", handleMouseMove)
+    document.addEventListener("mouseup", handleMouseUp)
+  }
 
   function updateThreshold(metric, field, value) {
     const numericValue = Number(value)

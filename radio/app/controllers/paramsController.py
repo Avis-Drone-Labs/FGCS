@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 import time
-from threading import Thread
+from threading import Thread, current_thread
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 import serial
@@ -29,7 +29,7 @@ class ParamsController:
         Args:
             drone (Drone): The main drone object
         """
-        self.controller_id = f"params_{id(self)}"
+        self.controller_id = f"params_{current_thread().ident}"
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0
@@ -127,13 +127,14 @@ class ParamsController:
         The thread function to get all parameters from the drone.
         """
         timeout = time.time() + 120  # 120 seconds from now
+        receiving_params = True
 
         try:
-            while self.is_requesting_params:
+            while receiving_params:
                 try:
                     if time.time() > timeout:
                         self.drone.logger.error("Get all params thread timed out")
-                        self.is_requesting_params = False
+                        receiving_params = False
                         self.current_param_index = 0
                         self.current_param_id = ""
                         self.total_number_of_params = 0
@@ -156,12 +157,7 @@ class ParamsController:
                             self.total_number_of_params = msg.param_count
 
                         if msg.param_index == msg.param_count - 1:
-                            self.drone.release_message_type(
-                                "PARAM_VALUE", self.controller_id
-                            )
-                            # Give some time for the message type to be released
-                            time.sleep(1)
-                            self.is_requesting_params = False
+                            receiving_params = False
                             self.current_param_index = 0
                             self.current_param_id = ""
                             self.total_number_of_params = 0
@@ -173,7 +169,7 @@ class ParamsController:
 
                 except Exception as e:
                     self.drone.logger.error(e, exc_info=True)
-                    self.is_requesting_params = False
+                    receiving_params = False
                     self.current_param_index = 0
                     self.current_param_id = ""
                     self.total_number_of_params = 0
@@ -182,6 +178,8 @@ class ParamsController:
         finally:
             # Always release the message type when done
             self.drone.release_message_type("PARAM_VALUE", self.controller_id)
+            time.sleep(1)  # Pause to ensure release
+            self.is_requesting_params = False
 
     def setMultipleParams(
         self,

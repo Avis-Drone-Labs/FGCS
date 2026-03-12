@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import struct
 import time
-from threading import Thread, current_thread
+from threading import Thread
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 import serial
@@ -29,7 +29,7 @@ class ParamsController:
         Args:
             drone (Drone): The main drone object
         """
-        self.controller_id = f"params_{current_thread().ident}"
+        self.controller_id = f"params_{id(self)}"
         self.drone = drone
         self.params: List[Any] = []
         self.current_param_index = 0

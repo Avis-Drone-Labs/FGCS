@@ -26,6 +26,7 @@ def setup_failsafe_params():
     set_params(FAILSAFE_TEST_PARAMS)
 
 
+@pytest.mark.copter_only
 @falcon_test(pass_drone_status=True)
 def test_getFailsafeConfig(socketio_client: SocketIOTestClient, droneStatus):
     # Failure: wrong state
@@ -51,6 +52,7 @@ def test_getFailsafeConfig(socketio_client: SocketIOTestClient, droneStatus):
     assert "FS_THR_ENABLE" in result["params"]
 
 
+@pytest.mark.plane_only
 @falcon_test(pass_drone_status=True)
 def test_getFailsafeConfig_fixedWing(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config.failsafe"

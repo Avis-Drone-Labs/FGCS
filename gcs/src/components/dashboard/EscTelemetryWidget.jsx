@@ -16,19 +16,9 @@ import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
 
 const DEFAULT_ESC_THRESHOLDS = {
-  rpm: {
-    warning: 2000,
-    danger: 1000,
-    higherIsBetter: true,
-  },
-  current: {
-    warning: 15,
-    danger: 20,
-    higherIsBetter: false,
-  },
   temperature: {
-    warning: 60,
-    danger: 80,
+    warning: 90,
+    danger: 120,
     higherIsBetter: false,
   },
 }

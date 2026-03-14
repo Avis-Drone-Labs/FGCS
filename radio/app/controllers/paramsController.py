@@ -121,8 +121,9 @@ class ParamsController:
         self.getAllParamsThread.start()
 
         # Wait so param_fetch_all doesn't silently return
-        if time.time() - getattr(self.drone.master, "param_fetch_start", 0) < 2.0:
-            time.sleep(2.0 - (time.time() - self.drone.master.param_fetch_start))
+        start = getattr(self.drone.master, "param_fetch_start", 0.0)
+        elapsed = time.time() - start
+        time.sleep(max(0.0, 2.0 - elapsed))
 
         self.drone.master.param_fetch_all()
 

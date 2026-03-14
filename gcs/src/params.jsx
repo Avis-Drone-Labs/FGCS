@@ -105,11 +105,14 @@ export default function Params() {
   useEffect(() => {
     if (!params) return
 
-    // Filter parameters based on search value
+    // Filter parameters based on search value. Match only from the start of
+    // the param ID
     const filteredParams = (
       showModifiedParams ? modifiedParams : params
     ).filter((param) =>
-      param.param_id.toLowerCase().includes(debouncedSearchValue.toLowerCase()),
+      param.param_id
+        .toLowerCase()
+        .startsWith(debouncedSearchValue.toLowerCase()),
     )
 
     // Show the filtered parameters

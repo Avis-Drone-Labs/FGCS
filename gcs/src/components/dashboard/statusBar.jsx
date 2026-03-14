@@ -13,12 +13,7 @@ import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"
-import {
-  selectAlt,
-  selectBatteryData,
-  selectGPS,
-  selectTelemetry,
-} from "../../redux/slices/droneInfoSlice"
+import { selectAlt, selectBatteryData } from "../../redux/slices/droneInfoSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
 // Helper imports
@@ -83,10 +78,7 @@ export default function StatusBar(props) {
 
     for (const [i, altitude] of minAltitudes.entries()) {
       // This stops warnings being shown on takeoff
-      if (
-        highestAltitudeRef.current > altitude &&
-        relativeAlt < altitude
-      ) {
+      if (highestAltitudeRef.current > altitude && relativeAlt < altitude) {
         dispatchAlert({
           category: AlertCategory.Altitude,
           severity:

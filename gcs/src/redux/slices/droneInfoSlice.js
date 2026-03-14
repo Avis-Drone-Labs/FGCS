@@ -44,7 +44,7 @@ const droneInfoSlice = createSlice({
       vy: 0,
       vz: 0,
       hdg: 0,
-      timestamp: 0
+      timestamp: 0,
     },
     gpsTrack: [],
     gpsTrackHeading: 0,

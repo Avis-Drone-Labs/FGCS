@@ -130,7 +130,7 @@ class ParamsController:
         receiving_params = True
 
         try:
-            while receiving_params:
+            while receiving_params and self.is_requesting_params:
                 try:
                     if time.time() > timeout:
                         self.drone.logger.error("Get all params thread timed out")

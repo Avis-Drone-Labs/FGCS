@@ -128,8 +128,6 @@ export default function ValueInput({ index, paramDef, className }) {
       onChange={(value) => addToModifiedParams(value, param)}
       decimalScale={5}
       hideControls
-      min={paramDef?.Range ? paramDef?.Range.low : null}
-      max={paramDef?.Range ? paramDef?.Range.high : null}
       suffix={paramDef?.Units}
     />
   )

@@ -17,7 +17,7 @@ import path from "node:path"
 import packageInfo from "../package.json"
 
 import openFile, {
-  clearRecentFiles,
+  getMessageDataForTable,
   getMessages,
   getRecentFiles,
   saveParamsToFile,
@@ -611,11 +611,12 @@ app.whenReady().then(() => {
       return []
     }
   })
-  // Clear recent logs
-  ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", getMessages)
+
+  // Get message data for table
+  ipcMain.handle("fla:get-message-data-for-table", getMessageDataForTable)
 
   // Save FLA params to file
   ipcMain.handle("fla:save-params-to-file", saveParamsToFile)

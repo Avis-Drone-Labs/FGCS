@@ -41,7 +41,6 @@ const defaultOptions = {
     zoom: {
       pan: {
         enabled: true,
-        modifierKey: "ctrl",
         mode: "xy",
       },
       zoom: {
@@ -53,6 +52,7 @@ const defaultOptions = {
         },
         drag: {
           enabled: true,
+          modifierKey: "ctrl",
         },
         mode: "xy",
       },

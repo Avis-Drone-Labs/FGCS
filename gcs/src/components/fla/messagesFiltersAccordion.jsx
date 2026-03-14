@@ -181,7 +181,13 @@ export default function MessagesFiltersAccordion() {
   if (!messageFilters) return null
 
   return (
-    <Accordion multiple={true}>
+    <Accordion
+      multiple={true}
+      classNames={{
+        control: "!py-1",
+        label: "!py-1",
+      }}
+    >
       {Object.keys(messageFilters).map((messageName) => (
         <Accordion.Item value={messageName} key={messageName}>
           <Accordion.Control className="rounded-md">

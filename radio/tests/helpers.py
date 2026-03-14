@@ -6,8 +6,6 @@ from app import droneStatus, logger
 from app.customTypes import Number
 from serial.serialutil import SerialException
 
-from . import socketio_client
-
 
 class FakeTCP:
     """
@@ -88,7 +86,9 @@ class WaitForMessageReturnsNone:
             droneStatus.drone.wait_for_message = self.wait_for_message  # type: ignore[method-assign]
 
 
-def send_and_receive(endpoint: str, args: Optional[Union[dict, str]] = None) -> dict:
+def send_and_receive(
+    socketio_client, endpoint: str, args: Optional[Union[dict, str]] = None
+) -> dict:
     """Sends a request to the socketio test client and returns the response
 
     Parameters

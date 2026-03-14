@@ -2,9 +2,7 @@ import json
 import os
 
 import pytest
-from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import NoDrone
 from .mission_test_files.upload_mission_helper import uploadMission
 
@@ -15,36 +13,35 @@ MISSION_FILES_PATH = os.path.join(
 
 
 @pytest.fixture()
-def upload_default_mission():
+def upload_default_mission(drone_status):
     """
     Uploads the default mission, fence, and rally files to the drone before running a test.
     """
-    # Setup
+    # Should be imported after the fixture to ensure the drone_status is fresh
 
-    # Should be imported after the fixture to ensure the droneStatus is fresh
-    import app.droneStatus as droneStatus
+    assert (
+        drone_status.drone is not None
+    ), "Drone must be connected before running tests"
 
-    assert droneStatus.drone is not None, "Drone must be connected before running tests"
-
-    droneStatus.drone.is_listening = False
+    drone_status.drone.is_listening = False
 
     uploadMission(
         os.path.join(MISSION_FILES_PATH, "default_mission.txt"),
         "mission",
-        droneStatus.drone.master,
+        drone_status.drone.master,
     )
     uploadMission(
         os.path.join(MISSION_FILES_PATH, "default_fence.txt"),
         "fence",
-        droneStatus.drone.master,
+        drone_status.drone.master,
     )
     uploadMission(
         os.path.join(MISSION_FILES_PATH, "default_rally.txt"),
         "rally",
-        droneStatus.drone.master,
+        drone_status.drone.master,
     )
 
-    droneStatus.drone.is_listening = True
+    drone_status.drone.is_listening = True
 
     yield  # this is where the testing happens
 
@@ -71,11 +68,8 @@ def delete_export_files():
             os.remove(file_path)
 
 
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMissionAll_wrongState(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "params"
+def test_getCurrentMissionAll_wrongState(socketio_client, drone_status):
+    drone_status.state = "params"
     socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
@@ -86,11 +80,8 @@ def test_getCurrentMissionAll_wrongState(
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMissionAll_correctState(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "dashboard"
+def test_getCurrentMissionAll_correctState(socketio_client, drone_status):
+    drone_status.state = "dashboard"
     socketio_client.emit("get_current_mission_all")
     socketio_result = socketio_client.get_received()[0]
 
@@ -107,11 +98,8 @@ def test_getCurrentMissionAll_correctState(
     assert socketio_result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMissionAll_noDroneConnection(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "dashboard"
+def test_getCurrentMissionAll_noDroneConnection(socketio_client, drone_status):
+    drone_status.state = "dashboard"
 
     with NoDrone():
         socketio_client.emit("get_current_mission_all")
@@ -123,9 +111,8 @@ def test_getCurrentMissionAll_noDroneConnection(
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "params"
+def test_getCurrentMission_wrongState(socketio_client, drone_status):
+    drone_status.state = "params"
     socketio_client.emit("get_current_mission", {"type": "mission"})
     socketio_result = socketio_client.get_received()[0]
 
@@ -136,11 +123,8 @@ def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, drone
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMission_correctMission(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_getCurrentMission_correctMission(socketio_client, drone_status):
+    drone_status.state = "missions"
     socketio_client.emit("get_current_mission", {"type": "mission"})
     socketio_result = socketio_client.get_received()[-1]
 
@@ -158,11 +142,8 @@ def test_getCurrentMission_correctMission(
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMission_correctFence(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_getCurrentMission_correctFence(socketio_client, drone_status):
+    drone_status.state = "missions"
     socketio_client.emit("get_current_mission", {"type": "fence"})
     socketio_result = socketio_client.get_received()[-1]
 
@@ -180,11 +161,8 @@ def test_getCurrentMission_correctFence(
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_getCurrentMission_correctRally(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_getCurrentMission_correctRally(socketio_client, drone_status):
+    drone_status.state = "missions"
     socketio_client.emit("get_current_mission", {"type": "rally"})
     socketio_result = socketio_client.get_received()[-1]
 
@@ -201,11 +179,8 @@ def test_getCurrentMission_correctRally(
     assert socketio_result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_wrongState(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "params"
+def test_writeCurrentMission_wrongState(socketio_client, drone_status):
+    drone_status.state = "params"
     socketio_client.emit("write_current_mission", {})
     socketio_result = socketio_client.get_received()[0]
 
@@ -215,11 +190,8 @@ def test_writeCurrentMission_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_uploadMissionSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_writeCurrentMission_uploadMissionSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     with open(
         os.path.join(
             MISSION_FILES_PATH,
@@ -249,11 +221,8 @@ def test_writeCurrentMission_uploadMissionSuccess(
     assert written_items == returned_items
 
 
-@falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_uploadFenceSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_writeCurrentMission_uploadFenceSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     with open(
         os.path.join(
             MISSION_FILES_PATH, "test_writeCurrentMission_uploadFenceSuccess_data.json"
@@ -282,11 +251,8 @@ def test_writeCurrentMission_uploadFenceSuccess(
     assert written_items == returned_items
 
 
-@falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_uploadRallySuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_writeCurrentMission_uploadRallySuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     with open(
         os.path.join(
             MISSION_FILES_PATH, "test_writeCurrentMission_uploadRallySuccess_data.json"
@@ -315,11 +281,8 @@ def test_writeCurrentMission_uploadRallySuccess(
     assert written_items == returned_items
 
 
-@falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_incorrectMissionType(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_writeCurrentMission_incorrectMissionType(socketio_client, drone_status):
+    drone_status.state = "missions"
     data = {
         "type": "unknown",
         "items": [],
@@ -335,11 +298,8 @@ def test_writeCurrentMission_incorrectMissionType(
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_writeCurrentMission_noWaypoints(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_writeCurrentMission_noWaypoints(socketio_client, drone_status):
+    drone_status.state = "missions"
     data = {
         "type": "mission",
         "items": [],
@@ -355,11 +315,8 @@ def test_writeCurrentMission_noWaypoints(
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_importMissionFromFile_missionImportSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_importMissionFromFile_missionImportSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     import_file_path = os.path.join(MISSION_FILES_PATH, "default_mission.txt")
     with open(
         os.path.join(
@@ -379,11 +336,8 @@ def test_importMissionFromFile_missionImportSuccess(
     assert result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
-def test_importMissionFromFile_fenceImportSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_importMissionFromFile_fenceImportSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     import_file_path = os.path.join(MISSION_FILES_PATH, "default_fence.txt")
     with open(
         os.path.join(
@@ -403,11 +357,8 @@ def test_importMissionFromFile_fenceImportSuccess(
     assert result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
-def test_importMissionFromFile_rallyImportSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_importMissionFromFile_rallyImportSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     import_file_path = os.path.join(MISSION_FILES_PATH, "default_rally.txt")
     with open(
         os.path.join(
@@ -427,11 +378,8 @@ def test_importMissionFromFile_rallyImportSuccess(
     assert result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
-def test_importMissionFromFile_fileNotFound(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_importMissionFromFile_fileNotFound(socketio_client, drone_status):
+    drone_status.state = "missions"
     file_path = os.path.join(MISSION_FILES_PATH, "nonexistent.txt")
 
     socketio_client.emit(
@@ -446,11 +394,10 @@ def test_importMissionFromFile_fileNotFound(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_rallyWithMission(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ):
-    droneStatus.state = "missions"
+    drone_status.state = "missions"
     file_path = os.path.join(MISSION_FILES_PATH, "default_mission.txt")
 
     socketio_client.emit(
@@ -465,11 +412,10 @@ def test_importMissionFromFile_incorrectMissionType_rallyWithMission(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_fenceWithMission(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ):
-    droneStatus.state = "missions"
+    drone_status.state = "missions"
     file_path = os.path.join(MISSION_FILES_PATH, "default_mission.txt")
 
     socketio_client.emit(
@@ -484,11 +430,10 @@ def test_importMissionFromFile_incorrectMissionType_fenceWithMission(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_rallyWithFence(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ):
-    droneStatus.state = "missions"
+    drone_status.state = "missions"
     file_path = os.path.join(MISSION_FILES_PATH, "default_fence.txt")
 
     socketio_client.emit(
@@ -503,11 +448,10 @@ def test_importMissionFromFile_incorrectMissionType_rallyWithFence(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_fenceWithRally(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ):
-    droneStatus.state = "missions"
+    drone_status.state = "missions"
     file_path = os.path.join(MISSION_FILES_PATH, "default_rally.txt")
 
     socketio_client.emit(
@@ -524,11 +468,8 @@ def test_importMissionFromFile_incorrectMissionType_fenceWithRally(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_exportMissionToFile_missionExportSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_exportMissionToFile_missionExportSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     export_file_path = os.path.join(MISSION_FILES_PATH, "exported_mission.txt")
 
     # Get current mission items
@@ -560,11 +501,8 @@ def test_exportMissionToFile_missionExportSuccess(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_exportMissionToFile_fenceExportSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_exportMissionToFile_fenceExportSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     export_file_path = os.path.join(MISSION_FILES_PATH, "exported_fence.txt")
 
     # Get current mission items
@@ -596,11 +534,8 @@ def test_exportMissionToFile_fenceExportSuccess(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
-def test_exportMissionToFile_rallyExportSuccess(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_exportMissionToFile_rallyExportSuccess(socketio_client, drone_status):
+    drone_status.state = "missions"
     export_file_path = os.path.join(MISSION_FILES_PATH, "exported_rally.txt")
 
     # Get current mission items
@@ -630,11 +565,8 @@ def test_exportMissionToFile_rallyExportSuccess(
         assert f.read() == f_expected.read()
 
 
-@falcon_test(pass_drone_status=True)
-def test_exportMissionToFile_noWaypoints(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "missions"
+def test_exportMissionToFile_noWaypoints(socketio_client, drone_status):
+    drone_status.state = "missions"
     file_path = os.path.join(MISSION_FILES_PATH, "exported_empty.txt")
 
     socketio_client.emit(

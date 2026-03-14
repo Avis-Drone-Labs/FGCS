@@ -1,8 +1,6 @@
 import pytest
-from flask_socketio.test_client import SocketIOTestClient
 from pymavlink.mavutil import mavlink
 
-from . import falcon_test
 from .helpers import NoDrone, set_params
 
 
@@ -20,9 +18,8 @@ def setup_function():
     set_params(params)
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFrameDetails_wrongState(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "params"
+def test_getFrameDetails_wrongState(socketio_client, drone_status):
+    drone_status.state = "params"
     socketio_client.emit("get_frame_config")
     socketio_result = socketio_client.get_received()[0]
 
@@ -32,9 +29,8 @@ def test_getFrameDetails_wrongState(socketio_client: SocketIOTestClient, droneSt
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFrameDetails_correctState(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.motor_test"
+def test_getFrameDetails_correctState(socketio_client, drone_status):
+    drone_status.state = "config.motor_test"
     socketio_client.emit("get_frame_config")
     socketio_result = socketio_client.get_received()[0]
 
@@ -45,11 +41,8 @@ def test_getFrameDetails_correctState(socketio_client: SocketIOTestClient, drone
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFrameDetails_noDroneConnection(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.motor_test"
+def test_getFrameDetails_noDroneConnection(socketio_client, drone_status):
+    drone_status.state = "config.motor_test"
 
     with NoDrone():
         socketio_client.emit("get_frame_config")

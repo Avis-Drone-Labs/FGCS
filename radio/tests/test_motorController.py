@@ -1,79 +1,75 @@
-from flask_socketio.test_client import SocketIOTestClient
-
-from . import falcon_test
 from .helpers import FakeTCP, WaitForMessageReturnsNone
 
 
 def validate_motor_test_values(
-    droneStatus, params, expected_throttle=0, expected_duration=0, expected_err=None
+    drone_status, params, expected_throttle=0, expected_duration=0, expected_err=None
 ):
     """Helper function to validate motor test values for throttle and duration."""
     (
         throttle,
         duration,
         err,
-    ) = droneStatus.drone.motorTestController.checkMotorTestValues(params)
+    ) = drone_status.drone.motorTestController.checkMotorTestValues(params)
     assert throttle == expected_throttle
     assert duration == expected_duration
     assert err == expected_err
 
 
-def run_motor_test(droneStatus, test_func, params, expected_success, expected_message):
+def run_motor_test(drone_status, test_func, params, expected_success, expected_message):
     """Helper function to run a motor test and check the response."""
     data = test_func(params)
     assert data.get("success") == expected_success
     assert data.get("message") == expected_message
 
 
-@falcon_test(pass_drone_status=True)
-def test_checkMotorTestValues(client: SocketIOTestClient, droneStatus):
+def test_checkMotorTestValues(drone_status):
     # Invalid throttle tests - Invalid 1, Invalid Boundary 1, Invalid 2, Invalid Boundary 2, Invalid 3
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": 200, "duration": 10},
         expected_err="Invalid value for throttle",
     )
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": 101, "duration": 10},
         expected_err="Invalid value for throttle",
     )
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": -1, "duration": 10},
         expected_err="Invalid value for throttle",
     )
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": -100, "duration": 10},
         expected_err="Invalid value for throttle",
     )
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": None, "duration": 10},
         expected_err="Invalid value for throttle",
     )
 
     # Invalid duration tests - Invalid 1, Invalid Boundary, Invalid 2
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": 50, "duration": -200},
         expected_err="Invalid value for duration",
     )
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": 50, "duration": -1},
         expected_err="Invalid value for duration",
     )
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": 50, "duration": None},
         expected_err="Invalid value for duration",
     )
 
     # Valid throttle and duration
     validate_motor_test_values(
-        droneStatus,
+        drone_status,
         {"throttle": 50, "duration": 5},
         expected_throttle=50,
         expected_duration=5,
@@ -81,41 +77,40 @@ def test_checkMotorTestValues(client: SocketIOTestClient, droneStatus):
     )
 
 
-@falcon_test(pass_drone_status=True)
-def test_testOneMotor(client: SocketIOTestClient, droneStatus):
-    test_func = droneStatus.drone.motorTestController.testOneMotor
+def test_testOneMotor(drone_status):
+    test_func = drone_status.drone.motorTestController.testOneMotor
 
     # Invalid throttle tests - Invalid 1, Invalid Boundary Upper, Invalid 2, Invalid Boundary Lower, Invalid 3
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 200, "duration": 10, "motorInstance": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 101, "duration": 10, "motorInstance": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": -1, "duration": 10, "motorInstance": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": -100, "duration": 10, "motorInstance": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": None, "duration": 10, "motorInstance": 4},
         False,
@@ -124,21 +119,21 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
 
     # Invalid duration tests - Invalid 1, Invalid Boundary, Invalid 2
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": -200, "motorInstance": 4},
         False,
         "Invalid value for duration",
     )  #
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": -1, "motorInstance": 4},
         False,
         "Invalid value for duration",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": None, "motorInstance": 4},
         False,
@@ -147,21 +142,21 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
 
     # Invalid motorInstance tests - Invalid Boundary, Invalid 1, Invalid
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "motorInstance": 0},
         False,
         "Invalid value for motorInstance",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "motorInstance": -100},
         False,
         "Invalid value for motorInstance",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "motorInstance": None},
         False,
@@ -171,7 +166,7 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
     # Serial exception simulation
     with FakeTCP():
         run_motor_test(
-            droneStatus,
+            drone_status,
             test_func,
             {"throttle": 90, "duration": 10, "motorInstance": 4},
             False,
@@ -181,7 +176,7 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
     # Motor test not started due to not receiving acknowledgement message
     with WaitForMessageReturnsNone():
         run_motor_test(
-            droneStatus,
+            drone_status,
             test_func,
             {"throttle": 90, "duration": 10, "motorInstance": 4},
             False,
@@ -190,7 +185,7 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
 
     # Valid motor test
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "motorInstance": 4},
         True,
@@ -198,41 +193,40 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
     )
 
 
-@falcon_test(pass_drone_status=True)
-def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
-    test_func = droneStatus.drone.motorTestController.testMotorSequence
+def test_testMotorSequence(drone_status):
+    test_func = drone_status.drone.motorTestController.testMotorSequence
 
     # Invalid throttle tests - Invalid 1, Invalid Boundary Upper, Invalid 2, Invalid Boundary Lower, Invalid 3
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 200, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 101, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": None, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": -1, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": -100, "duration": 10, "number_of_motors": 4},
         False,
@@ -241,21 +235,21 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
 
     # Invalid duration tests - Invalid 1, Invalid Boundary, Invalid 2
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": -200, "number_of_motors": 4},
         False,
         "Invalid value for duration",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": -1, "number_of_motors": 4},
         False,
         "Invalid value for duration",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": None, "number_of_motors": 4},
         False,
@@ -264,21 +258,21 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
 
     # Invalid number_of_motors tests - Invalid Boundary, Invalid 1, Invalid
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": 0},
         False,
         "Invalid value for number_of_motors",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": -100},
         False,
         "Invalid value for number_of_motors",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": None},
         False,
@@ -288,7 +282,7 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
     # Serial exception simulation
     with FakeTCP():
         run_motor_test(
-            droneStatus,
+            drone_status,
             test_func,
             {"throttle": 90, "duration": 10, "number_of_motors": 4},
             False,
@@ -298,7 +292,7 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
     # Motor test not started due to not receiving acknowledgement message
     with WaitForMessageReturnsNone():
         run_motor_test(
-            droneStatus,
+            drone_status,
             test_func,
             {"throttle": 90, "duration": 10, "number_of_motors": 4},
             False,
@@ -307,7 +301,7 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
 
     # Valid motor sequence test
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": 4},
         True,
@@ -315,41 +309,40 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
     )
 
 
-@falcon_test(pass_drone_status=True)
-def test_testAllMotors(client: SocketIOTestClient, droneStatus):
-    test_func = droneStatus.drone.motorTestController.testAllMotors
+def test_testAllMotors(drone_status):
+    test_func = drone_status.drone.motorTestController.testAllMotors
 
     # Invalid throttle tests - Invalid 1, Invalid Boundary Upper, Invalid 2, Invalid Boundary Lower, Invalid 3
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 150, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 101, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": -100, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": -1, "duration": 10, "number_of_motors": 4},
         False,
         "Invalid value for throttle",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": None, "duration": 10, "number_of_motors": 4},
         False,
@@ -358,21 +351,21 @@ def test_testAllMotors(client: SocketIOTestClient, droneStatus):
 
     # Invalid duration tests - Invalid 1, Invalid Boundary, Invalid 2
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": -200, "number_of_motors": 4},
         False,
         "Invalid value for duration",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": -1, "number_of_motors": 4},
         False,
         "Invalid value for duration",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": None, "number_of_motors": 4},
         False,
@@ -381,21 +374,21 @@ def test_testAllMotors(client: SocketIOTestClient, droneStatus):
 
     # Invalid number_of_motors tests - Invalid Boundary, Invalid 1, Invalid 2
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": 0},
         False,
         "Invalid value for number_of_motors",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": -100},
         False,
         "Invalid value for number_of_motors",
     )
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": None},
         False,
@@ -405,7 +398,7 @@ def test_testAllMotors(client: SocketIOTestClient, droneStatus):
     # Serial exception simulation
     with FakeTCP():
         run_motor_test(
-            droneStatus,
+            drone_status,
             test_func,
             {"throttle": 90, "duration": 10, "number_of_motors": 4},
             False,
@@ -415,7 +408,7 @@ def test_testAllMotors(client: SocketIOTestClient, droneStatus):
     # Motor test not started due to not receiving acknowledgement message
     with WaitForMessageReturnsNone():
         run_motor_test(
-            droneStatus,
+            drone_status,
             test_func,
             {"throttle": 90, "duration": 10, "number_of_motors": 4},
             False,
@@ -424,7 +417,7 @@ def test_testAllMotors(client: SocketIOTestClient, droneStatus):
 
     # Valid All motors test
     run_motor_test(
-        droneStatus,
+        drone_status,
         test_func,
         {"throttle": 90, "duration": 10, "number_of_motors": 4},
         True,

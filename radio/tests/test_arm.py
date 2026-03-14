@@ -1,62 +1,54 @@
 import time
 
 import pytest
-from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import FakeTCP, NoDrone
 
 
 @pytest.fixture(scope="module", autouse=True)
-def run_once_before_all_tests():
+def run_once_before_all_tests(drone_status):
     """
     Ensures that the drone is disarmed once and the proper flight mode is set before all tests in this module
     """
-    from app import droneStatus
-
     # Setup: Disarm before tests and set the flight mode
-    droneStatus.drone.master.arducopter_disarm()
-    wait_for_disarm(droneStatus)
-    droneStatus.drone.master.set_mode_apm("STABILIZE")
+    drone_status.drone.master.arducopter_disarm()
+    wait_for_disarm(drone_status)
+    drone_status.drone.master.set_mode_apm("STABILIZE")
 
     yield
 
 
 @pytest.fixture(autouse=True)
-def disarm_after_each_test():
+def disarm_after_each_test(drone_status):
     """
     Ensures that the drone is disarmed after each individual test
     """
-    from app import droneStatus
-
     # Run the test
     yield
 
     # Teardown: Disarm after each test
-    droneStatus.drone.master.arducopter_disarm()
-    wait_for_disarm(droneStatus)
+    drone_status.drone.master.arducopter_disarm()
+    wait_for_disarm(drone_status)
 
 
-def wait_for_disarm(droneStatus) -> None:
+def wait_for_disarm(drone_status) -> None:
     """Waits until the drone is disarmed"""
     timeout = time.time() + 10  # 10 seconds from now
-    while droneStatus.drone.armed:
+    while drone_status.drone.armed:
         if time.time() > timeout:
             raise TimeoutError("Timed out waiting for drone to disarm")
         time.sleep(0.05)
 
 
-def assert_drone_armed(droneStatus, armed: bool) -> None:
+# TODO: Add timeout and have function for asserting disarmed as well
+def assert_drone_armed(drone_status, armed: bool) -> None:
     time.sleep(1)  # Give some time for the state to update
-    assert droneStatus.drone.armed == armed
-    assert bool(droneStatus.drone.master.motors_armed()) == armed
+    assert drone_status.drone.armed == armed
+    assert bool(drone_status.drone.master.motors_armed()) == armed
 
 
-@falcon_test(pass_drone_status=True)
-def test_arm_succeeds_when_disarmed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    assert_drone_armed(droneStatus, armed=False)
+def test_arm_succeeds_when_disarmed(socketio_client, drone_status) -> None:
+    assert_drone_armed(drone_status, armed=False)
 
     socketio_client.emit("arm_disarm", {"arm": True})
 
@@ -68,16 +60,13 @@ def test_arm_succeeds_when_disarmed(
             "was_force": False,
         },
     }
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
-def test_arm_fails_when_already_armed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    droneStatus.drone.master.arducopter_arm()
+def test_arm_fails_when_already_armed(socketio_client, drone_status) -> None:
+    drone_status.drone.master.arducopter_arm()
     time.sleep(1)
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": True})
 
@@ -89,16 +78,13 @@ def test_arm_fails_when_already_armed(
             "was_force": False,
         },
     }
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
-def test_disarm_succeeds_when_armed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    droneStatus.drone.master.arducopter_arm()
+def test_disarm_succeeds_when_armed(socketio_client, drone_status) -> None:
+    drone_status.drone.master.arducopter_arm()
     time.sleep(1)
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": False})
 
@@ -110,14 +96,11 @@ def test_disarm_succeeds_when_armed(
             "was_force": False,
         },
     }
-    assert_drone_armed(droneStatus, armed=False)
+    assert_drone_armed(drone_status, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
-def test_disarm_fails_when_already_disarmed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    assert_drone_armed(droneStatus, armed=False)
+def test_disarm_fails_when_already_disarmed(socketio_client, drone_status) -> None:
+    assert_drone_armed(drone_status, armed=False)
 
     socketio_client.emit("arm_disarm", {"arm": False})
 
@@ -129,14 +112,11 @@ def test_disarm_fails_when_already_disarmed(
             "was_force": False,
         },
     }
-    assert_drone_armed(droneStatus, armed=False)
+    assert_drone_armed(drone_status, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
-def test_force_arm_succeeds_when_disarmed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    assert_drone_armed(droneStatus, armed=False)
+def test_force_arm_succeeds_when_disarmed(socketio_client, drone_status) -> None:
+    assert_drone_armed(drone_status, armed=False)
 
     socketio_client.emit("arm_disarm", {"arm": True, "force": True})
 
@@ -148,16 +128,13 @@ def test_force_arm_succeeds_when_disarmed(
             "was_force": True,
         },
     }
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
-def test_force_arm_fails_when_already_armed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    droneStatus.drone.master.arducopter_arm()
+def test_force_arm_fails_when_already_armed(socketio_client, drone_status) -> None:
+    drone_status.drone.master.arducopter_arm()
     time.sleep(1)
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": True, "force": True})
 
@@ -169,16 +146,13 @@ def test_force_arm_fails_when_already_armed(
             "was_force": True,
         },
     }
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
-def test_force_disarm_succeeds_when_armed(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    droneStatus.drone.master.arducopter_arm()
+def test_force_disarm_succeeds_when_armed(socketio_client, drone_status) -> None:
+    drone_status.drone.master.arducopter_arm()
     time.sleep(1)
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": False, "force": True})
 
@@ -190,14 +164,13 @@ def test_force_disarm_succeeds_when_armed(
             "was_force": True,
         },
     }
-    assert_drone_armed(droneStatus, armed=False)
+    assert_drone_armed(drone_status, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_fails_when_already_disarmed(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ) -> None:
-    assert_drone_armed(droneStatus, armed=False)
+    assert_drone_armed(drone_status, armed=False)
 
     socketio_client.emit("arm_disarm", {"arm": False, "force": True})
 
@@ -209,16 +182,12 @@ def test_force_disarm_fails_when_already_disarmed(
             "was_force": True,
         },
     }
-    assert_drone_armed(droneStatus, armed=False)
+    assert_drone_armed(drone_status, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
-def test_arm_fails_with_serial_exception(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    assert_drone_armed(droneStatus, armed=False)
-
+def test_arm_fails_with_serial_exception(socketio_client, drone_status) -> None:
     with FakeTCP():
+        assert_drone_armed(drone_status, armed=False)
         socketio_client.emit("arm_disarm", {"arm": True})
 
         assert socketio_client.get_received()[0]["args"][0] == {
@@ -231,11 +200,8 @@ def test_arm_fails_with_serial_exception(
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_force_arm_fails_with_serial_exception(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    assert_drone_armed(droneStatus, armed=False)
+def test_force_arm_fails_with_serial_exception(socketio_client, drone_status) -> None:
+    assert_drone_armed(drone_status, armed=False)
 
     with FakeTCP():
         socketio_client.emit("arm_disarm", {"arm": True, "force": True})
@@ -250,13 +216,10 @@ def test_force_arm_fails_with_serial_exception(
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_disarm_fails_with_serial_exception(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
-    droneStatus.drone.master.arducopter_arm()
+def test_disarm_fails_with_serial_exception(socketio_client, drone_status) -> None:
+    drone_status.drone.master.arducopter_arm()
     time.sleep(1)
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
     with FakeTCP():
         socketio_client.emit("arm_disarm", {"arm": False})
@@ -271,13 +234,12 @@ def test_disarm_fails_with_serial_exception(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_fails_with_serial_exception(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
+    drone_status.drone.master.arducopter_arm()
     time.sleep(1)
-    assert_drone_armed(droneStatus, armed=True)
+    assert_drone_armed(drone_status, armed=True)
 
     with FakeTCP():
         socketio_client.emit("arm_disarm", {"arm": False, "force": True})
@@ -292,10 +254,7 @@ def test_force_disarm_fails_with_serial_exception(
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_arm_fails_when_no_drone_connected(
-    socketio_client: SocketIOTestClient, droneStatus
-) -> None:
+def test_arm_fails_when_no_drone_connected(socketio_client, drone_status) -> None:
     with NoDrone():
         socketio_client.emit("arm_disarm", {"arm": True})
 
@@ -306,9 +265,8 @@ def test_arm_fails_when_no_drone_connected(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_fails_when_no_drone_connected(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ) -> None:
     with NoDrone():
         socketio_client.emit("arm_disarm", {"arm": False, "force": True})
@@ -320,9 +278,8 @@ def test_force_disarm_fails_when_no_drone_connected(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_arm_disarm_fails_with_missing_arm_parameter(
-    socketio_client: SocketIOTestClient, droneStatus
+    socketio_client, drone_status
 ) -> None:
     socketio_client.emit("arm_disarm", {})
 

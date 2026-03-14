@@ -14,6 +14,7 @@ import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 // Redux
 import { useSelector } from "react-redux"
 import {
+  selectAlt,
   selectBatteryData,
   selectGPS,
   selectTelemetry,
@@ -42,7 +43,7 @@ export default function StatusBar(props) {
   const isConnectedToSocket = useSelector(selectIsConnectedToSocket)
   const [time, setTime] = useState(moment())
   const batteryData = useSelector(selectBatteryData)
-  const gpsData = useSelector(selectGPS)
+  const alt = useSelector(selectAlt)
 
   // Update clock every second
   useEffect(() => {
@@ -57,8 +58,7 @@ export default function StatusBar(props) {
 
   useEffect(() => {
     const maxAltitude = getSetting("Dashboard.maxAltitudeAlert")
-    // relativeAlt is in mm, convert to m
-    const relativeAlt = gpsData.relative_alt / 1000
+    const relativeAlt = alt.relativeAlt
 
     if (relativeAlt > maxAltitude) {
       dispatchAlert({
@@ -80,8 +80,7 @@ export default function StatusBar(props) {
       getSetting("Dashboard.minAltitudeAlerts") ?? []
     ).slice()
     minAltitudes.sort((a1, a2) => a1 - a2)
-    console.log(relativeAlt)
-    console.log(minAltitudes)
+
     for (const [i, altitude] of minAltitudes.entries()) {
       // This stops warnings being shown on takeoff
       if (
@@ -103,7 +102,7 @@ export default function StatusBar(props) {
     }
 
     dismissAlert(AlertCategory.Altitude)
-  }, [gpsData])
+  }, [alt])
 
   useEffect(() => {
     const batteryAlertPercentages = getSetting("Dashboard.batteryAlert") ?? []

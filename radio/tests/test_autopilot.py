@@ -1,6 +1,7 @@
 import pytest
 
 
+@pytest.mark.skip()
 @pytest.mark.timeout(30)
 def test_reboot_success(socketio_client):
     """

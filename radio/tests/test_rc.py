@@ -43,7 +43,7 @@ def setup_function(drone_status):
             ]
         )
 
-    set_params(params)
+    set_params(drone_status, params)
 
     drone_status.drone.rcController.fetchParams()  # Refresh RC data
 

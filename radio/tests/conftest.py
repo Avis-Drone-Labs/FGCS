@@ -16,16 +16,7 @@ def pytest_configure(config):
     )
 
 
-def pytest_addoption(parser):
-    """Add CLI options for pytest runs."""
-    parser.addoption(
-        "--fc",
-        action="store_true",
-        help="Run tests against a physical flight controller",
-    )
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def drone_status(request):
     """Create and provide the shared `droneStatus` module with an initialized Drone."""
     connection_string = "tcp:127.0.0.1:5760"

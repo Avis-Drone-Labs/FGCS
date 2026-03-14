@@ -20,7 +20,7 @@ def setup_function(drone_status):
         ("FLTMODE_CH", 6, mavlink.MAV_PARAM_TYPE_UINT8),
     ]
 
-    set_params(params)
+    set_params(drone_status, params)
 
     drone_status.drone.flightModesController.refreshData()  # Refresh flight mode data
 

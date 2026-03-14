@@ -8,7 +8,7 @@ from .helpers import FakeTCP, NoDrone, send_and_receive, set_params
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_function():
+def setup_function(drone_status):
     """
     Setup parameters before all tests run
     """
@@ -17,7 +17,7 @@ def setup_function():
         ("GRIP_ENABLE", 1, mavlink.MAV_PARAM_TYPE_UINT8),
     ]
 
-    set_params(params)
+    set_params(drone_status, params)
 
 
 @pytest.fixture(scope="module", autouse=True)

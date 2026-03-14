@@ -128,9 +128,9 @@ def gps_failure():
     droneStatus.drone.master.param_set_send("SIM_GPS2_DISABLE", 0.0, 2)
 
 
-def set_params(params: List[tuple[str, Number, int]]) -> None:
+def set_params(drone_status, params: List[tuple[str, Number, int]]) -> None:
     """Sets multiple parameters on the drone with robust retry logic"""
-    if droneStatus.drone is None:
+    if drone_status.drone is None:
         raise RuntimeError("No drone connected to set parameters on.")
 
     for param in params:
@@ -142,7 +142,7 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
         while retry_count < max_retries and not param_set_successfully:
             try:
                 # Clear any pending messages first to avoid stale responses
-                droneStatus.drone.master.recv_match(
+                drone_status.drone.master.recv_match(
                     type="PARAM_VALUE", blocking=False, timeout=0.1
                 )
 
@@ -150,9 +150,9 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
                 logger.debug(
                     f"Attempt {retry_count + 1}: Setting {param_name} to {param_value} (type: {param_type})"
                 )
-                droneStatus.drone.master.mav.param_set_send(
-                    droneStatus.drone.master.target_system,
-                    droneStatus.drone.master.target_component,
+                drone_status.drone.master.mav.param_set_send(
+                    drone_status.drone.master.target_system,
+                    drone_status.drone.master.target_component,
                     param_name.encode("utf-8"),
                     param_value,
                     param_type,
@@ -163,7 +163,7 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
                 start_time = time.time()
 
                 while time.time() - start_time < base_timeout:
-                    message = droneStatus.drone.master.recv_match(
+                    message = drone_status.drone.master.recv_match(
                         type="PARAM_VALUE", blocking=False, timeout=0.1
                     )
 

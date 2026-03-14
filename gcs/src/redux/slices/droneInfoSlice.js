@@ -34,11 +34,17 @@ const droneInfoSlice = createSlice({
       throttle: 0.0,
     },
     gpsData: {
-      lat: 0.0,
-      lon: 0.0,
-      hdg: 0.0,
-      alt: 0.0,
-      relativeAlt: 0.0,
+      mavpackettype: "GLOBAL_POSITION_INT",
+      time_boot_ms: 0,
+      lat: 0,
+      lon: 0,
+      alt: 0,
+      relative_alt: 0,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      hdg: 0,
+      timestamp: 0,
     },
     gpsTrack: [],
     gpsTrackHeading: 0,
@@ -439,8 +445,8 @@ export const selectAttitudeDeg = createSelector(
 
 export const selectAlt = createSelector(
   [droneInfoSlice.selectors.selectGPS],
-  ({ alt, relativeAlt }) => {
-    return { alt: alt / 1000, relativeAlt: relativeAlt / 1000 }
+  ({ alt, relative_alt }) => {
+    return { alt: alt / 1000, relativeAlt: relative_alt / 1000 }
   },
 )
 

@@ -1,5 +1,7 @@
 import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
+import { CHECKLIST_AUTO_BINDINGS } from "../../helpers/checklistAutoBindings"
+import { setConnected } from "./droneConnectionSlice"
 
 const checklistSlice = createSlice({
   name: "checklist",
@@ -44,6 +46,56 @@ const checklistSlice = createSlice({
         )
       }
     },
+    setChecklistItemStateBinding: (state, action) => {
+      const { checklistId, itemName, stateBinding } = action.payload
+      const binding = stateBinding?.trim()
+
+      state.items = state.items.map((checklist) => {
+        if (checklist.id !== checklistId) {
+          return checklist
+        }
+
+        if (!Array.isArray(checklist.value)) {
+          return checklist
+        }
+
+        return {
+          ...checklist,
+          value: checklist.value.map((valueItem) => {
+            if (valueItem.name !== itemName) {
+              return valueItem
+            }
+
+            if (binding) {
+              return { ...valueItem, stateBinding: binding }
+            }
+
+            const { stateBinding: _, ...rest } = valueItem
+            return rest
+          }),
+        }
+      })
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(setConnected, (state, action) => {
+      const isConnected = action.payload
+
+      state.items.forEach((checklist) => {
+        if (!Array.isArray(checklist.value)) {
+          return
+        }
+
+        checklist.value.forEach((valueItem) => {
+          if (
+            valueItem.stateBinding ===
+            CHECKLIST_AUTO_BINDINGS.DroneConnected.key
+          ) {
+            valueItem.checked = isConnected
+          }
+        })
+      })
+    })
   },
   selectors: {
     selectChecklists: (state) => {
@@ -75,6 +127,7 @@ export const {
   setChecklistItems,
   setNewChecklistName,
   setChecklistValueById,
+  setChecklistItemStateBinding,
 } = checklistSlice.actions
 export const { selectChecklists } = checklistSlice.selectors
 

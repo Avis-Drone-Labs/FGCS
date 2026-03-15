@@ -2,6 +2,7 @@ import app.droneStatus as droneStatus  # noqa: F401
 import pytest
 from app.drone import Drone
 from app.utils import getComPort
+from app.customTypes import VehicleType
 
 
 def pytest_configure(config):
@@ -72,9 +73,9 @@ def check_aircraft_type(request):
     aircraft_type = droneStatus.drone.aircraft_type
 
     # Skip if marked as plane_only but not a plane
-    if "plane_only" in markers and aircraft_type != 1:
+    if "plane_only" in markers and aircraft_type != VehicleType.FIXED_WING.value:
         pytest.skip(f"Test requires plane SITL (current type: {aircraft_type})")
 
     # Skip if marked as copter_only but not a copter
-    if "copter_only" in markers and aircraft_type != 2:
+    if "copter_only" in markers and aircraft_type != VehicleType.MULTIROTOR.value:
         pytest.skip(f"Test requires copter SITL (current type: {aircraft_type})")

@@ -2,6 +2,7 @@ import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
 import { CHECKLIST_AUTO_BINDINGS } from "../../helpers/checklistAutoBindings"
 import { setConnected } from "./droneConnectionSlice"
+import { setHeartbeatData } from "./droneInfoSlice"
 
 const checklistSlice = createSlice({
   name: "checklist",
@@ -79,22 +80,19 @@ const checklistSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(setConnected, (state, action) => {
-      const isConnected = action.payload
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.DroneConnected.key,
+        action.payload,
+      )
+    })
 
-      state.items.forEach((checklist) => {
-        if (!Array.isArray(checklist.value)) {
-          return
-        }
-
-        checklist.value.forEach((valueItem) => {
-          if (
-            valueItem.stateBinding ===
-            CHECKLIST_AUTO_BINDINGS.DroneConnected.key
-          ) {
-            valueItem.checked = isConnected
-          }
-        })
-      })
+    builder.addCase(setHeartbeatData, (state, action) => {
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.DroneArmed.key,
+        Boolean(action.payload.base_mode & 128),
+      )
     })
   },
   selectors: {
@@ -103,6 +101,20 @@ const checklistSlice = createSlice({
     },
   },
 })
+
+function applyAutoBinding(state, bindingKey, checked) {
+  state.items.forEach((checklist) => {
+    if (!Array.isArray(checklist.value)) {
+      return
+    }
+
+    checklist.value.forEach((valueItem) => {
+      if (valueItem.stateBinding === bindingKey) {
+        valueItem.checked = checked
+      }
+    })
+  })
+}
 
 function doesItemExistById(state, id) {
   return state.items.find((element) => element.id === id)

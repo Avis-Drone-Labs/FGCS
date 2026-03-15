@@ -6,6 +6,10 @@ export const CHECKLIST_AUTO_BINDINGS = Object.freeze({
     key: "drone.connected",
     label: "Drone Connected",
   }),
+  DroneArmed: Object.freeze({
+    key: "drone.armed",
+    label: "Drone Armed",
+  }),
 })
 
 export const CHECKLIST_AUTO_BINDING_OPTIONS = Object.freeze(

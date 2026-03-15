@@ -94,35 +94,28 @@ export default function EditCheckList({ checklist, opened, close }) {
       <form onSubmit={handleSave}>
         <div className="flex flex-col gap-4">
           {/* Inputs */}
-          <h1>Name</h1>
+          <h1>Checklist Name</h1>
           <TextInput
             value={name}
             onChange={(event) => setName(event.currentTarget.value)}
           />
 
-          <div>
-            <h1>Items</h1>
-            <h2 className="text-falcongrey-300 text-sm">
-              Edit checklist items directly
-            </h2>
-          </div>
-
           <div className="flex flex-col gap-3">
-            <div className={`grid w-full grid-cols-5 gap-2`}>
-              <h1 className="col-span-2">Name</h1>
+            <div className="flex w-full gap-2">
+              <h1 className="w-1/2">List Item</h1>
               <h1>Auto complete?</h1>
             </div>
             {items.map((item, index) => (
               <div
                 key={index}
-                className={`grid w-full grid-cols-5 gap-2`}
+                className="flex w-full gap-2"
               >
                 <TextInput
                   value={item.name}
                   onChange={(event) =>
                     updateItem(index, "name", event.currentTarget.value)
                   }
-                  className="col-span-2"
+                  className="w-1/2"
                 />
                 <Select 
                   placeholder="No auto completion"
@@ -133,6 +126,7 @@ export default function EditCheckList({ checklist, opened, close }) {
                     updateItem(index, "checked", false)               
                   }}
                   value={item.stateBinding ?? null}
+                  className="grow"
                 />
                 <ActionIcon
                   color="red"

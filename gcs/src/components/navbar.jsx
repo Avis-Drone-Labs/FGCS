@@ -119,7 +119,7 @@ export default function Navbar() {
         }),
       )
     } else if (type === ConnectionType.Network) {
-      if (ip === "" || port === "") {
+      if ((networkType !== "udpin" && ip === "") || port === "") {
         showErrorNotification("IP Address and Port cannot be empty")
         return
       }

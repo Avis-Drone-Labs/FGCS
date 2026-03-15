@@ -1,7 +1,7 @@
 from typing import Optional
+
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import FakeTCP, NoDrone
 
 
@@ -75,8 +75,7 @@ def send_testMotors(
     return client.get_received()[0]
 
 
-@falcon_test(pass_drone_status=True)
-def test_testOneMotor(socketio_client: SocketIOTestClient, droneStatus) -> None:
+def test_testOneMotor(socketio_client, drone_status) -> None:
     # Test correct motor being tested
     result = send_testOneMotor(socketio_client, 1, 50, 1)
     assert_motorResult(result, True, "A")
@@ -112,14 +111,14 @@ def test_testOneMotor(socketio_client: SocketIOTestClient, droneStatus) -> None:
     assert_motorResult(result, False, err="Invalid value for motorInstance")
 
     # Test serial exception
-    with FakeTCP():
+    with FakeTCP(drone_status):
         result = send_testOneMotor(socketio_client, 1, 50, 1)
         assert_motorResult(
             result, False, err="Motor test for motor A not started, serial exception"
         )
 
     # Test not conneceted to drone
-    with NoDrone():
+    with NoDrone(drone_status):
         result = send_testOneMotor(socketio_client, 1, 50, 1)
         assert result["name"] == "connection_error"
         assert result["args"][0] == {
@@ -127,8 +126,7 @@ def test_testOneMotor(socketio_client: SocketIOTestClient, droneStatus) -> None:
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_testMotorSequence(socketio_client: SocketIOTestClient, droneStatus) -> None:
+def test_testMotorSequence(socketio_client, drone_status) -> None:
     # Test with varying number of motors and valid throttle / duration
     result = send_testMotors(socketio_client, 50, 1, num_motors=1)
     assert_motorResult(result, True)
@@ -158,14 +156,14 @@ def test_testMotorSequence(socketio_client: SocketIOTestClient, droneStatus) -> 
     assert_motorResult(result, False, err="Invalid value for duration")
 
     # Test serial exception handling
-    with FakeTCP():
+    with FakeTCP(drone_status):
         result = send_testMotors(socketio_client, 50, 1)
         assert_motorResult(
             result, False, err="Motor sequence test not started, serial exception"
         )
 
     # Test not conneceted to drone
-    with NoDrone():
+    with NoDrone(drone_status):
         result = send_testMotors(socketio_client, 50, 1)
         assert result["name"] == "connection_error"
         assert result["args"][0] == {
@@ -173,8 +171,7 @@ def test_testMotorSequence(socketio_client: SocketIOTestClient, droneStatus) -> 
         }
 
 
-@falcon_test()
-def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
+def test_testAllMotors(socketio_client, drone_status) -> None:
     # Test with varying number of motors and valid throttle / duration
     result = send_testMotors(socketio_client, 50, 1, num_motors=1, test_all=True)
     assert_motorResult(result, True, message="All motor test started successfully")
@@ -214,14 +211,14 @@ def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
     assert_motorResult(result, False, err="Invalid value for duration")
 
     # Test serial exception handling
-    with FakeTCP():
+    with FakeTCP(drone_status):
         result = send_testMotors(socketio_client, 50, 1, test_all=True)
         assert_motorResult(
             result, False, err="All motor test not started, serial exception"
         )
 
     # Test not conneceted to drone
-    with NoDrone():
+    with NoDrone(drone_status):
         result = send_testMotors(socketio_client, 50, 1, test_all=True)
         assert result["name"] == "connection_error"
         assert result["args"][0] == {

@@ -1,8 +1,5 @@
 import os
 
-from flask_socketio.test_client import SocketIOTestClient
-
-from . import falcon_test
 from .helpers import NoDrone
 
 FTP_FILES_PATH = os.path.join(
@@ -11,9 +8,8 @@ FTP_FILES_PATH = os.path.join(
 )
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_noPath_success(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_listFiles_noPath_success(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("list_files", {})
     socketio_result = socketio_client.get_received()[0]
 
@@ -32,9 +28,8 @@ def test_listFiles_noPath_success(socketio_client: SocketIOTestClient, droneStat
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_emptyPath_failure(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_listFiles_emptyPath_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("list_files", {"path": ""})
     socketio_result = socketio_client.get_received()[0]
 
@@ -45,9 +40,8 @@ def test_listFiles_emptyPath_failure(socketio_client: SocketIOTestClient, droneS
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_homePath_success(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_listFiles_homePath_success(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("list_files", {"path": "/"})
     socketio_result = socketio_client.get_received()[0]
 
@@ -66,9 +60,8 @@ def test_listFiles_homePath_success(socketio_client: SocketIOTestClient, droneSt
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_subPath_success(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_listFiles_subPath_success(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("list_files", {"path": "/terrain"})
     socketio_result = socketio_client.get_received()[0]
 
@@ -99,11 +92,8 @@ def test_listFiles_subPath_success(socketio_client: SocketIOTestClient, droneSta
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_unknownPath_failure(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.ftp"
+def test_listFiles_unknownPath_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("list_files", {"path": "/random/path/that/does/not/exist"})
     socketio_result = socketio_client.get_received()[0]
 
@@ -114,13 +104,10 @@ def test_listFiles_unknownPath_failure(
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_noDroneConnection_failure(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.ftp"
+def test_listFiles_noDroneConnection_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("list_files", {})
         socketio_result = socketio_client.get_received()[0]
 
@@ -130,9 +117,8 @@ def test_listFiles_noDroneConnection_failure(
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_missingPath_failure(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_readFile_missingPath_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("read_file", {})
     socketio_result = socketio_client.get_received()[0]
 
@@ -143,9 +129,8 @@ def test_readFile_missingPath_failure(socketio_client: SocketIOTestClient, drone
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_emptyPath_failure(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_readFile_emptyPath_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("read_file", {"path": ""})
     socketio_result = socketio_client.get_received()[0]
 
@@ -156,9 +141,8 @@ def test_readFile_emptyPath_failure(socketio_client: SocketIOTestClient, droneSt
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_validFile_success(socketio_client: SocketIOTestClient, droneStatus):
-    droneStatus.state = "config.ftp"
+def test_readFile_validFile_success(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("read_file", {"path": "/@ROMFS/locations.txt"})
 
     # Get all received messages and filter out progress updates
@@ -184,11 +168,8 @@ def test_readFile_validFile_success(socketio_client: SocketIOTestClient, droneSt
     assert socketio_result["args"][0]["data"]["file_name"] == "locations.txt"
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_nonExistentFile_failure(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.ftp"
+def test_readFile_nonExistentFile_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("read_file", {"path": "/random/file/that/does/not/exist.txt"})
     socketio_result = socketio_client.get_received()[0]
 
@@ -199,11 +180,8 @@ def test_readFile_nonExistentFile_failure(
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_directoryPath_failure(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.ftp"
+def test_readFile_directoryPath_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
     socketio_client.emit("read_file", {"path": "/@ROMFS"})
     socketio_result = socketio_client.get_received()[0]
 
@@ -214,13 +192,10 @@ def test_readFile_directoryPath_failure(
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_noDroneConnection_failure(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.ftp"
+def test_readFile_noDroneConnection_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("read_file", {"path": "/@ROMFS/locations.txt"})
         socketio_result = socketio_client.get_received()[0]
 
@@ -230,13 +205,10 @@ def test_readFile_noDroneConnection_failure(
         }
 
 
-@falcon_test(pass_drone_status=True)
-def test_listLogFiles_noDroneConnection_failure(
-    socketio_client: SocketIOTestClient, droneStatus
-):
-    droneStatus.state = "config.ftp"
+def test_listLogFiles_noDroneConnection_failure(socketio_client, drone_status):
+    drone_status.state = "config.ftp"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("list_log_files")
         socketio_result = socketio_client.get_received()[0]
 

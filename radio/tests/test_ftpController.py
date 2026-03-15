@@ -1,15 +1,9 @@
 from typing import List
 
-from flask_socketio.test_client import SocketIOTestClient
 from pymavlink import mavftp
 
-from . import falcon_test
 
-
-@falcon_test(pass_drone_status=True)
-def test_convertDirectoryEntriesToDicts_success(
-    client: SocketIOTestClient, droneStatus
-):
+def test_convertDirectoryEntriesToDicts_success(drone_status):
     entries: List[mavftp.DirectoryEntry] = [
         mavftp.DirectoryEntry(name=".", is_dir=True, size_b=0),
         mavftp.DirectoryEntry(name="..", is_dir=True, size_b=0),
@@ -17,7 +11,7 @@ def test_convertDirectoryEntriesToDicts_success(
         mavftp.DirectoryEntry(name="folder1", is_dir=True, size_b=0),
     ]
 
-    result = droneStatus.drone.ftpController._convertDirectoryEntriesToDicts(
+    result = drone_status.drone.ftpController._convertDirectoryEntriesToDicts(
         entries, "/"
     )
 
@@ -29,10 +23,7 @@ def test_convertDirectoryEntriesToDicts_success(
     ]
 
 
-@falcon_test(pass_drone_status=True)
-def test_convertDirectoryEntriesToDicts_subPathSuccess(
-    client: SocketIOTestClient, droneStatus
-):
+def test_convertDirectoryEntriesToDicts_subPathSuccess(drone_status):
     entries: List[mavftp.DirectoryEntry] = [
         mavftp.DirectoryEntry(name=".", is_dir=True, size_b=0),
         mavftp.DirectoryEntry(name="..", is_dir=True, size_b=0),
@@ -40,7 +31,7 @@ def test_convertDirectoryEntriesToDicts_subPathSuccess(
         mavftp.DirectoryEntry(name="folder1", is_dir=True, size_b=0),
     ]
 
-    result = droneStatus.drone.ftpController._convertDirectoryEntriesToDicts(
+    result = drone_status.drone.ftpController._convertDirectoryEntriesToDicts(
         entries, "/test/path"
     )
 
@@ -57,102 +48,91 @@ def test_convertDirectoryEntriesToDicts_subPathSuccess(
     ]
 
 
-@falcon_test(pass_drone_status=True)
-def test_convertDirectoryEntriesToDicts_emptyEntriesNoPath_success(
-    client: SocketIOTestClient, droneStatus
-):
+def test_convertDirectoryEntriesToDicts_emptyEntriesNoPath_success(drone_status):
     entries: List[mavftp.DirectoryEntry] = []
 
-    result = droneStatus.drone.ftpController._convertDirectoryEntriesToDicts(entries)
+    result = drone_status.drone.ftpController._convertDirectoryEntriesToDicts(entries)
 
     assert result == []
 
 
-@falcon_test(pass_drone_status=True)
-def test_convertDirectoryEntriesToDicts_emptyEntries_success(
-    client: SocketIOTestClient, droneStatus
-):
+def test_convertDirectoryEntriesToDicts_emptyEntries_success(drone_status):
     entries: List[mavftp.DirectoryEntry] = []
 
-    result = droneStatus.drone.ftpController._convertDirectoryEntriesToDicts(
+    result = drone_status.drone.ftpController._convertDirectoryEntriesToDicts(
         entries, "/"
     )
 
     assert result == []
 
 
-@falcon_test(pass_drone_status=True)
-def test_listFiles_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
+def test_listFiles_blockedByCurrentOp(drone_status):
     """Test that listFiles is blocked when another operation is in progress"""
-    droneStatus.drone.ftpController.current_op = "read_file"
+    drone_status.drone.ftpController.current_op = "read_file"
 
-    result = droneStatus.drone.ftpController.listFiles("/")
+    result = drone_status.drone.ftpController.listFiles("/")
 
     assert result == {
         "success": False,
         "message": "FTP operation already in progress: read_file",
     }
 
-    droneStatus.drone.ftpController.current_op = None
+    drone_status.drone.ftpController.current_op = None
 
 
-@falcon_test(pass_drone_status=True)
-def test_readFile_blockedByCurrentOp(client: SocketIOTestClient, droneStatus):
+def test_readFile_blockedByCurrentOp(drone_status):
     """Test that readFile is blocked when another operation is in progress"""
-    droneStatus.drone.ftpController.current_op = "list_files"
+    drone_status.drone.ftpController.current_op = "list_files"
 
-    result = droneStatus.drone.ftpController.readFile("/test.txt")
+    result = drone_status.drone.ftpController.readFile("/test.txt")
 
     assert result == {
         "success": False,
         "message": "FTP operation already in progress: list_files",
     }
 
-    droneStatus.drone.ftpController.current_op = None
+    drone_status.drone.ftpController.current_op = None
 
 
-@falcon_test(pass_drone_status=True)
-def test_currentOp_clearedOnListFilesError(client: SocketIOTestClient, droneStatus):
+def test_currentOp_clearedOnListFilesError(drone_status):
     """Test that current_op is cleared even when listFiles fails"""
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
-    result = droneStatus.drone.ftpController.listFiles("")
+    result = drone_status.drone.ftpController.listFiles("")
 
     assert result == {"success": False, "message": "Path cannot be empty"}
     # Verify current_op is still None after error
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
 
-@falcon_test(pass_drone_status=True)
-def test_currentOp_clearedOnReadFileError(client: SocketIOTestClient, droneStatus):
+def test_currentOp_clearedOnReadFileError(drone_status):
     """Test that current_op is cleared even when readFile fails"""
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
-    result = droneStatus.drone.ftpController.readFile("")
+    result = drone_status.drone.ftpController.readFile("")
 
     assert result == {"success": False, "message": "File path cannot be empty"}
 
     # Verify current_op is still None after error
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
 
-@falcon_test(pass_drone_status=True)
-def test_multipleOperations_sequential(client: SocketIOTestClient, droneStatus):
+def test_multipleOperations_sequential(drone_status):
     """Test that operations can run sequentially after previous one completes"""
     # Verify current_op is None initially
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
     # First operation with empty path (will fail but clear current_op)
-    result1 = droneStatus.drone.ftpController.listFiles("")
+    result1 = drone_status.drone.ftpController.listFiles("")
     assert result1 == {"success": False, "message": "Path cannot be empty"}
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
     # Second operation should be allowed since first is complete
-    result2 = droneStatus.drone.ftpController.readFile("")
+    result2 = drone_status.drone.ftpController.readFile("")
     assert result2 == {"success": False, "message": "File path cannot be empty"}
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None
 
     # Third operation should also be allowed
-    result3 = droneStatus.drone.ftpController.listFiles("")
+    result3 = drone_status.drone.ftpController.listFiles("")
     assert result3 == {"success": False, "message": "Path cannot be empty"}
-    assert droneStatus.drone.ftpController.current_op is None
+    assert drone_status.drone.ftpController.current_op is None

@@ -1,4 +1,3 @@
-import app.droneStatus as droneStatus
 import pytest
 from app import create_app, socketio
 from app.drone import Drone
@@ -39,6 +38,7 @@ def drone_status(request):
         pytest.exit(1)
 
     # Set the module-level droneStatus
+    global droneStatus
     droneStatus.drone = drone
 
     try:
@@ -52,6 +52,10 @@ def drone_status(request):
                 drone.master.close()
         except Exception:
             pass
+        if tr:
+            tr.write_line("\033[1;31;40mTEARING DOWN\033[0m")
+        else:
+            print("\033[1;31;40mTEARING DOWN\033[0m")
         droneStatus.drone = None
 
 

@@ -3,64 +3,80 @@
 */
 
 // Native Imports
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { Button, Modal, TextInput } from "@mantine/core"
-import { useEditor } from "@tiptap/react"
-import BulletList from "@tiptap/extension-bullet-list"
-import ListItem from "@tiptap/extension-list-item"
-import { RichTextEditor } from "@mantine/tiptap"
-import { Node } from "@tiptap/core"
+import { ActionIcon, Button, Checkbox, Modal, TextInput, Select } from "@mantine/core"
+import { IconPlus, IconTrashX } from "@tabler/icons-react"
+
+// Helpers
+import { CHECKLIST_AUTO_BINDINGS } from "../../../helpers/checklistAutoBindings.js"
 
 // Redux
 import { useDispatch } from "react-redux"
-import { setNewChecklistName } from "../../../redux/slices/checklistSlice.js"
+import {
+  setChecklistValueById,
+  setNewChecklistName,
+} from "../../../redux/slices/checklistSlice.js"
 
-export default function EditCheckList({
-  opened,
-  close,
-  passedName,
-  checklistId,
-  checkListSet,
-  generateCheckboxListString,
-  generateCheckboxList,
-}) {
+export default function EditCheckList({ checklist, opened, close }) {
   const dispatch = useDispatch()
-  const [name, setName] = useState(passedName)
-  const [checkboxList, setCheckboxList] = checkListSet
+  const [name, setName] = useState(checklist.name)
+  const [items, setItems] = useState(checklist.value ?? [])
 
-  const Document = Node.create({
-    name: "doc",
-    topNode: true,
-    content: "list+",
-  })
+  const autoChecklistBindingsOptions = Object.values(CHECKLIST_AUTO_BINDINGS).map((item) => ({
+    value: item.key,
+    label: item.label,
+  }))
 
-  const Paragraph = Node.create({
-    name: "paragraph",
-    group: "block",
-    content: "inline*",
-    parseHTML() {
-      return [{ tag: "p" }]
-    },
-    renderHTML({ HTMLAttributes }) {
-      return ["p", HTMLAttributes, 0]
-    },
-  })
+  useEffect(() => {
+    if (!opened) {
+      return
+    }
 
-  const Text = Node.create({
-    name: "text",
-    group: "inline",
-  })
+    setName(checklist.name)
+    setItems(checklist.value ?? [])
+  }, [opened, checklist.id])
 
-  const editor = useEditor({
-    extensions: [Document, Text, Paragraph, BulletList, ListItem],
-    content: checkboxList,
-    onUpdate: ({ editor }) => {
-      setCheckboxList(editor.getHTML())
-    },
-    autofocus: "end",
-  })
+  function updateItem(index, key, value) {
+    setItems((currentItems) =>
+      currentItems.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item
+        }
+
+        if (key === "stateBinding") {
+          const trimmedValue = value.trim()
+          return {
+            ...item,
+            stateBinding: trimmedValue === "" ? null : trimmedValue,
+          }
+        }
+
+        return { ...item, [key]: value }
+      }),
+    )
+  }
+
+  function removeItem(index) {
+    setItems((currentItems) =>
+      currentItems.filter((_, itemIndex) => itemIndex !== index),
+    )
+  }
+
+  function addItem() {
+    setItems((currentItems) => [
+      ...currentItems,
+      { name: "", checked: false, stateBinding: null },
+    ])
+  }
+
+  function handleSave(event) {
+    event.preventDefault()
+    dispatch(setNewChecklistName({ id: checklist.id, newName: name }))
+    dispatch(setChecklistValueById({ id: checklist.id, value: items }))
+    close()
+  }
 
   return (
     <Modal
@@ -75,15 +91,8 @@ export default function EditCheckList({
       size={"xl"}
       centered
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          dispatch(setNewChecklistName({ id: checklistId, newName: name }))
-          generateCheckboxList()
-          close()
-        }}
-      >
-        <div className="flex flex-col gap-2">
+      <form onSubmit={handleSave}>
+        <div className="flex flex-col gap-4">
           {/* Inputs */}
           <h1>Name</h1>
           <TextInput
@@ -94,32 +103,63 @@ export default function EditCheckList({
           <div>
             <h1>Items</h1>
             <h2 className="text-falcongrey-300 text-sm">
-              Bullet point list of items
+              Edit checklist items directly
             </h2>
           </div>
-          <RichTextEditor
-            editor={editor}
-            classNames={{ content: "!list-disc" }}
-          >
-            {/*
-              Going to keep this for future use with code blocks, no need to delete.
-              <RichTextEditor.Toolbar sticky stickyOffset={60}>
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.BulletList />
-                </RichTextEditor.ControlsGroup>
-              </RichTextEditor.Toolbar>
-            */}
 
-            <RichTextEditor.Content />
-          </RichTextEditor>
+          <div className="flex flex-col gap-3">
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className="flex items-end gap-2"
+              >
+                <TextInput
+                  label="Name"
+                  value={item.name}
+                  onChange={(event) =>
+                    updateItem(index, "name", event.currentTarget.value)
+                  }
+                />
+                <Select 
+                  label="Auto completion (change name soon)"
+                  placeholder="No auto completion"
+                  data = {autoChecklistBindingsOptions}
+                  clearable
+                  onChange={(value) => 
+                    updateItem(
+                      index,
+                      "stateBinding",
+                      value
+                    )                    
+                  }
+                  value={item.stateBinding}
+                />
+                <ActionIcon
+                  color="red"
+                  variant="light"
+                  type="button"
+                  onClick={() => removeItem(index)}
+                >
+                  <IconTrashX size={20} stroke={1.5} />
+                </ActionIcon>
+              </div>
+            ))}
+
+            <Button
+              leftSection={<IconPlus size={16} />}
+              onClick={addItem}
+              type="button"
+              variant="subtle"
+            >
+              Add Item
+            </Button>
+          </div>
 
           {/* Controls */}
           <div className="w-full flex justify-between pt-2">
             <Button
-              onClick={() => {
-                close()
-                generateCheckboxListString(true)
-              }}
+              onClick={close}
+              type="button"
               variant="filled"
               color={"red"}
             >

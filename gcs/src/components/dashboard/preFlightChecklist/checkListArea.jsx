@@ -122,6 +122,7 @@ export default function CheckListArea({ id }) {
             label="Item controlled by auto completion, this can't be manually checked" 
             disabled={item.stateBinding == null} 
             openDelay={500}
+            key={`${item.name}-${index}`}
           >
             <Checkbox
               checked={item.checked}

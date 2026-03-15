@@ -6,11 +6,11 @@
 import { useEffect, useState } from "react"
 
 // 3rd Party Imports
-import { ActionIcon, Button, Checkbox, Modal, TextInput, Select } from "@mantine/core"
+import { ActionIcon, Button, Modal, TextInput, Select } from "@mantine/core"
 import { IconPlus, IconTrashX } from "@tabler/icons-react"
 
 // Helpers
-import { CHECKLIST_AUTO_BINDINGS } from "../../../helpers/checklistAutoBindings.js"
+import { CHECKLIST_AUTO_BINDING_OPTIONS } from "../../../helpers/checklistAutoBindings.js"
 
 // Redux
 import { useDispatch } from "react-redux"
@@ -24,7 +24,7 @@ export default function EditCheckList({ checklist, opened, close }) {
   const [name, setName] = useState(checklist.name)
   const [items, setItems] = useState(checklist.value ?? [])
 
-  const autoChecklistBindingsOptions = Object.values(CHECKLIST_AUTO_BINDINGS).map((item) => ({
+  const autoChecklistBindingsOptions = CHECKLIST_AUTO_BINDING_OPTIONS.map((item) => ({
     value: item.key,
     label: item.label,
   }))
@@ -46,7 +46,7 @@ export default function EditCheckList({ checklist, opened, close }) {
         }
 
         if (key === "stateBinding") {
-          const trimmedValue = value.trim()
+          const trimmedValue = typeof value === "string" ? value.trim() : ""
           return {
             ...item,
             stateBinding: trimmedValue === "" ? null : trimmedValue,
@@ -108,37 +108,38 @@ export default function EditCheckList({ checklist, opened, close }) {
           </div>
 
           <div className="flex flex-col gap-3">
+            <div className={`grid w-full grid-cols-5 gap-2`}>
+              <h1 className="col-span-2">Name</h1>
+              <h1>Auto complete?</h1>
+            </div>
             {items.map((item, index) => (
               <div
                 key={index}
-                className="flex items-end gap-2"
+                className={`grid w-full grid-cols-5 gap-2`}
               >
                 <TextInput
-                  label="Name"
                   value={item.name}
                   onChange={(event) =>
                     updateItem(index, "name", event.currentTarget.value)
                   }
+                  className="col-span-2"
                 />
                 <Select 
-                  label="Auto completion (change name soon)"
                   placeholder="No auto completion"
                   data = {autoChecklistBindingsOptions}
                   clearable
-                  onChange={(value) => 
-                    updateItem(
-                      index,
-                      "stateBinding",
-                      value
-                    )                    
-                  }
-                  value={item.stateBinding}
+                  onChange={(value) => {
+                    updateItem(index, "stateBinding", value)
+                    updateItem(index, "checked", false)               
+                  }}
+                  value={item.stateBinding ?? null}
                 />
                 <ActionIcon
                   color="red"
                   variant="light"
                   type="button"
                   onClick={() => removeItem(index)}
+                  className="self-stretch !h-auto"
                 >
                   <IconTrashX size={20} stroke={1.5} />
                 </ActionIcon>
@@ -149,7 +150,7 @@ export default function EditCheckList({ checklist, opened, close }) {
               leftSection={<IconPlus size={16} />}
               onClick={addItem}
               type="button"
-              variant="subtle"
+              variant="light"
             >
               Add Item
             </Button>

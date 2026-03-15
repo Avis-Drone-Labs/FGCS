@@ -48,7 +48,7 @@ const checklistSlice = createSlice({
     },
     setChecklistItemStateBinding: (state, action) => {
       const { checklistId, itemName, stateBinding } = action.payload
-      const binding = stateBinding?.trim()
+      const binding = typeof stateBinding === "string" ? stateBinding.trim() : null
 
       state.items = state.items.map((checklist) => {
         if (checklist.id !== checklistId) {

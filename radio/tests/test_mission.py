@@ -101,7 +101,7 @@ def test_getCurrentMissionAll_correctState(socketio_client, drone_status):
 def test_getCurrentMissionAll_noDroneConnection(socketio_client, drone_status):
     drone_status.state = "dashboard"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("get_current_mission_all")
         socketio_result = socketio_client.get_received()[0]
 

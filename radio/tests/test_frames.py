@@ -44,7 +44,7 @@ def test_getFrameDetails_correctState(socketio_client, drone_status):
 def test_getFrameDetails_noDroneConnection(socketio_client, drone_status):
     drone_status.state = "config.motor_test"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("get_frame_config")
         socketio_result = socketio_client.get_received()[0]
 

@@ -42,7 +42,7 @@ def run_once_after_all_tests(drone_status):
 def test_gripperEnabled(socketio_client, drone_status):
     # Failure with no drone connected
     drone_status.state = "config.gripper"
-    with NoDrone():
+    with NoDrone(drone_status):
         assert send_and_receive(socketio_client, "get_gripper_enabled") == {
             "message": "You must be connected to the drone to access the gripper."
         }
@@ -60,7 +60,7 @@ def test_setGripper(socketio_client, drone_status):
 
     # Failure with no drone connected
     drone_status.state = "config.gripper"
-    with NoDrone():
+    with NoDrone(drone_status):
         assert send_and_receive(socketio_client, "set_gripper", "release") == {
             "message": "You must be connected to the drone to access the gripper."
         }
@@ -83,7 +83,7 @@ def test_setGripper(socketio_client, drone_status):
     }
 
     # Serial exception handled correctly
-    with FakeTCP():
+    with FakeTCP(drone_status):
         assert send_and_receive(socketio_client, "set_gripper", "grab") == {
             "success": False,
             "message": "Setting gripper failed, serial exception",

@@ -164,7 +164,7 @@ def test_testOneMotor(drone_status):
     )
 
     # Serial exception simulation
-    with FakeTCP():
+    with FakeTCP(drone_status):
         run_motor_test(
             drone_status,
             test_func,
@@ -174,7 +174,7 @@ def test_testOneMotor(drone_status):
         )
 
     # Motor test not started due to not receiving acknowledgement message
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         run_motor_test(
             drone_status,
             test_func,
@@ -280,7 +280,7 @@ def test_testMotorSequence(drone_status):
     )
 
     # Serial exception simulation
-    with FakeTCP():
+    with FakeTCP(drone_status):
         run_motor_test(
             drone_status,
             test_func,
@@ -290,7 +290,7 @@ def test_testMotorSequence(drone_status):
         )
 
     # Motor test not started due to not receiving acknowledgement message
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         run_motor_test(
             drone_status,
             test_func,
@@ -396,7 +396,7 @@ def test_testAllMotors(drone_status):
     )
 
     # Serial exception simulation
-    with FakeTCP():
+    with FakeTCP(drone_status):
         run_motor_test(
             drone_status,
             test_func,
@@ -406,7 +406,7 @@ def test_testAllMotors(drone_status):
         )
 
     # Motor test not started due to not receiving acknowledgement message
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         run_motor_test(
             drone_status,
             test_func,

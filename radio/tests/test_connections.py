@@ -2,7 +2,7 @@ import pytest
 
 from .helpers import NoDrone
 
-# TODO: Fix this fixture so reconnection and disconect works correctly.
+# TODO: Fix this fixture so reconnection and disconnect works correctly.
 # @pytest.fixture(scope="module", autouse=True)
 # def run_once_after_all_tests():
 #     """
@@ -52,7 +52,7 @@ def test_getTargetInfo(socketio_client, drone_status):
 
 
 def test_startForwarding_noDroneConnected(socketio_client, drone_status):
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("start_forwarding", {"address": "udpout:127.0.0.1:14550"})
         socketio_result = socketio_client.get_received()
 
@@ -124,7 +124,7 @@ def test_startForwarding_alreadyForwarding(socketio_client, drone_status):
 
 
 def test_stopForwarding_noDroneConnected(socketio_client, drone_status):
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("stop_forwarding")
         socketio_result = socketio_client.get_received()
 

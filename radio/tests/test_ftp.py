@@ -107,7 +107,7 @@ def test_listFiles_unknownPath_failure(socketio_client, drone_status):
 def test_listFiles_noDroneConnection_failure(socketio_client, drone_status):
     drone_status.state = "config.ftp"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("list_files", {})
         socketio_result = socketio_client.get_received()[0]
 
@@ -195,7 +195,7 @@ def test_readFile_directoryPath_failure(socketio_client, drone_status):
 def test_readFile_noDroneConnection_failure(socketio_client, drone_status):
     drone_status.state = "config.ftp"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("read_file", {"path": "/@ROMFS/locations.txt"})
         socketio_result = socketio_client.get_received()[0]
 
@@ -208,7 +208,7 @@ def test_readFile_noDroneConnection_failure(socketio_client, drone_status):
 def test_listLogFiles_noDroneConnection_failure(socketio_client, drone_status):
     drone_status.state = "config.ftp"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("list_log_files")
         socketio_result = socketio_client.get_received()[0]
 

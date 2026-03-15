@@ -36,7 +36,7 @@ def test_getFlightModes_success(drone_status):
 
 
 def test_getFlightModes_failure(drone_status):
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         drone_status.drone.flightModesController.getFlightModes()
         assert len(drone_status.drone.flightModesController.flight_modes) == 6
         for items in drone_status.drone.flightModesController.flight_modes:
@@ -44,7 +44,7 @@ def test_getFlightModes_failure(drone_status):
 
 
 def test_getFlightModeChannel_failure(drone_status):
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         original_flight_mode_channel = (
             drone_status.drone.flightModesController.flight_mode_channel
         )
@@ -62,14 +62,14 @@ def test_refreshdata(drone_status):
 
 
 def test_setCurrentFlightMode(drone_status):
-    with FakeTCP():
+    with FakeTCP(drone_status):
         response = drone_status.drone.flightModesController.setCurrentFlightMode(1)
         assert response == {
             "success": False,
             "message": "Could not set flight mode, serial exception",
         }
 
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         response = drone_status.drone.flightModesController.setCurrentFlightMode(1)
         assert response == {
             "success": False,
@@ -123,7 +123,7 @@ def test_setFlightMode_invalidData_copter(drone_status):
         "message": "Invalid copter flight mode, must be between 0 and 27 inclusive, got 28",
     }
 
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         response = drone_status.drone.flightModesController.setFlightMode(1, 1)
         assert response == {
             "success": False,
@@ -155,7 +155,7 @@ def test_setFlightMode_invalidData_plane(drone_status):
         "message": "Invalid plane flight mode, must be between 0 and 24 inclusive, got 25",
     }
 
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         response = drone_status.drone.flightModesController.setFlightMode(1, 1)
         assert response == {
             "success": False,

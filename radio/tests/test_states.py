@@ -3,7 +3,7 @@ from .helpers import NoDrone, send_and_receive
 
 def test_setState_no_drone_connection(socketio_client, drone_status) -> None:
     """Test that setState succeeds when no drone is connected"""
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("set_state", {"state": "dashboard"})
         assert len(socketio_client.get_received()) == 0
         assert drone_status.state == "dashboard"

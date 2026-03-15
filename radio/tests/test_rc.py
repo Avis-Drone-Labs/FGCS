@@ -93,7 +93,7 @@ def test_getRcConfig_correctState(socketio_client, drone_status):
 def test_getRcConfig_noDroneConnection(socketio_client, drone_status):
     drone_status.state = "config.rc"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("get_rc_config")
         socketio_result = socketio_client.get_received()[0]
 
@@ -117,7 +117,7 @@ def test_setRcConfigParam_wrongState(socketio_client, drone_status):
 def test_setRcConfigParam_noDroneConnection(socketio_client, drone_status):
     drone_status.state = "config.rc"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit(
             "set_rc_config_param", {"param_id": "RC1_OPTION", "value": 10}
         )
@@ -188,7 +188,7 @@ def test_batchSetRcConfigParams_wrongState(socketio_client, drone_status):
 def test_batchSetRcConfigParams_noDroneConnection(socketio_client, drone_status):
     drone_status.state = "config.rc"
 
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit(
             "batch_set_rc_config_params",
             {

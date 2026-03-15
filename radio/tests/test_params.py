@@ -387,7 +387,7 @@ def test_setMultipleParams_WaitForMessageReturnsNone(
     socketio_client, drone_status
 ) -> None:
     drone_status.state = "params"
-    with WaitForMessageReturnsNone():
+    with WaitForMessageReturnsNone(drone_status):
         socketio_result = send_and_receive_params(
             socketio_client,
             "set_multiple_params",

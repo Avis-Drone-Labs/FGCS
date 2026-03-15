@@ -186,7 +186,7 @@ def test_force_disarm_fails_when_already_disarmed(
 
 
 def test_arm_fails_with_serial_exception(socketio_client, drone_status) -> None:
-    with FakeTCP():
+    with FakeTCP(drone_status):
         assert_drone_armed(drone_status, armed=False)
         socketio_client.emit("arm_disarm", {"arm": True})
 
@@ -203,7 +203,7 @@ def test_arm_fails_with_serial_exception(socketio_client, drone_status) -> None:
 def test_force_arm_fails_with_serial_exception(socketio_client, drone_status) -> None:
     assert_drone_armed(drone_status, armed=False)
 
-    with FakeTCP():
+    with FakeTCP(drone_status):
         socketio_client.emit("arm_disarm", {"arm": True, "force": True})
 
         assert socketio_client.get_received()[0]["args"][0] == {
@@ -221,7 +221,7 @@ def test_disarm_fails_with_serial_exception(socketio_client, drone_status) -> No
     time.sleep(1)
     assert_drone_armed(drone_status, armed=True)
 
-    with FakeTCP():
+    with FakeTCP(drone_status):
         socketio_client.emit("arm_disarm", {"arm": False})
 
         assert socketio_client.get_received()[0]["args"][0] == {
@@ -241,7 +241,7 @@ def test_force_disarm_fails_with_serial_exception(
     time.sleep(1)
     assert_drone_armed(drone_status, armed=True)
 
-    with FakeTCP():
+    with FakeTCP(drone_status):
         socketio_client.emit("arm_disarm", {"arm": False, "force": True})
 
         assert socketio_client.get_received()[0]["args"][0] == {
@@ -255,7 +255,7 @@ def test_force_disarm_fails_with_serial_exception(
 
 
 def test_arm_fails_when_no_drone_connected(socketio_client, drone_status) -> None:
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("arm_disarm", {"arm": True})
 
         result = socketio_client.get_received()[0]
@@ -268,7 +268,7 @@ def test_arm_fails_when_no_drone_connected(socketio_client, drone_status) -> Non
 def test_force_disarm_fails_when_no_drone_connected(
     socketio_client, drone_status
 ) -> None:
-    with NoDrone():
+    with NoDrone(drone_status):
         socketio_client.emit("arm_disarm", {"arm": False, "force": True})
 
         result = socketio_client.get_received()[0]

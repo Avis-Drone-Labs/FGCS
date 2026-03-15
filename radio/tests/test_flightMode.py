@@ -231,7 +231,7 @@ def test_setCurrentFlightMode_successfullySet(socketio_client, drone_status):
 
 
 def test_flightModeEndpoints_noDrone(socketio_client, drone_status):
-    with NoDrone():
+    with NoDrone(drone_status):
         # Test get flight mode config
         drone_status.state = "config.flight_modes"
         socketio_client.emit("get_flight_mode_config")

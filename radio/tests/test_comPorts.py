@@ -4,11 +4,11 @@ import pytest
 from app.drone import Drone
 from serial.tools import list_ports
 
-from .helpers import send_and_receive
+from .helpers import NoDrone, send_and_receive
 
 VALID_DRONE_PORT: str
 
-# TODO: Fix this fixture so reconnection and disconect works correctly.
+# TODO: Fix this fixture so reconnection and disconnect works correctly.
 # @pytest.fixture(scope="module", autouse=True)
 # def run_once_after_all_tests(drone_status):
 #     """
@@ -51,50 +51,53 @@ def test_getComPort(socketio_client, drone_status) -> None:
     )
 
 
-def test_connectToDrone_badType(socketio_client) -> None:
+def test_connectToDrone_badType(socketio_client, drone_status) -> None:
     # Failure on bad connection type
-    assert send_and_receive(socketio_client, "connect_to_drone", {}) == {
-        "message": "Connection type not specified."
-    }
-    assert send_and_receive(
-        socketio_client, "connect_to_drone", {"connectionType": "testtype"}
-    ) == {"message": "Connection type not specified."}
+    with NoDrone(drone_status):
+        assert send_and_receive(socketio_client, "connect_to_drone", {}) == {
+            "message": "Connection type not specified."
+        }
+        assert send_and_receive(
+            socketio_client, "connect_to_drone", {"connectionType": "testtype"}
+        ) == {"message": "Connection type not specified."}
 
 
-def test_connectToDrone_badPort(socketio_client) -> None:
+def test_connectToDrone_badPort(socketio_client, drone_status) -> None:
     # Failure on no port specified
-    assert send_and_receive(
-        socketio_client, "connect_to_drone", {"connectionType": "serial"}
-    ) == {"message": "COM port not specified."}
-    assert send_and_receive(
-        socketio_client, "connect_to_drone", {"connectionType": "network"}
-    ) == {"message": "Connection address not specified."}
+    with NoDrone(drone_status):
+        assert send_and_receive(
+            socketio_client, "connect_to_drone", {"connectionType": "serial"}
+        ) == {"message": "COM port not specified."}
+        assert send_and_receive(
+            socketio_client, "connect_to_drone", {"connectionType": "network"}
+        ) == {"message": "Connection address not specified."}
 
-    # Failure on bad port specified
-    assert send_and_receive(
-        socketio_client,
-        "connect_to_drone",
-        {"connectionType": "serial", "port": "testport"},
-    ) == {"message": "COM port not found."}
-    assert send_and_receive(
-        socketio_client,
-        "connect_to_drone",
-        {"connectionType": "serial", "port": "COM10:5761"},
-    ) == {"message": "COM port not found."}
+        # Failure on bad port specified
+        assert send_and_receive(
+            socketio_client,
+            "connect_to_drone",
+            {"connectionType": "serial", "port": "testport"},
+        ) == {"message": "COM port not found."}
+        assert send_and_receive(
+            socketio_client,
+            "connect_to_drone",
+            {"connectionType": "serial", "port": "COM10:5761"},
+        ) == {"message": "COM port not found."}
 
-    socketio_client.emit(
-        "connect_to_drone", {"connectionType": "network", "port": "testport"}
-    )
-    assert socketio_client.get_received()[1]["args"][0] == {
-        "message": "Could not connect to drone, invalid port."
-    }
+        socketio_client.emit(
+            "connect_to_drone", {"connectionType": "network", "port": "testport"}
+        )
+        assert socketio_client.get_received()[1]["args"][0] == {
+            "message": "Could not connect to drone, invalid port."
+        }
 
-    socketio_client.emit(
-        "connect_to_drone", {"connectionType": "network", "port": "tcp:127.0.0.1:5761"}
-    )
-    assert socketio_client.get_received()[1]["args"][0] == {
-        "message": "Could not connect to drone, connection refused."
-    }
+        socketio_client.emit(
+            "connect_to_drone",
+            {"connectionType": "network", "port": "tcp:127.0.0.1:5761"},
+        )
+        assert socketio_client.get_received()[1]["args"][0] == {
+            "message": "Could not connect to drone, connection refused."
+        }
 
 
 @pytest.mark.skip()

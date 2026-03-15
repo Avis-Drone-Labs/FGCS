@@ -1,3 +1,4 @@
+import app.droneStatus as droneStatus
 import pytest
 from app import create_app, socketio
 from app.drone import Drone
@@ -38,7 +39,6 @@ def drone_status(request):
         pytest.exit(1)
 
     # Set the module-level droneStatus
-    global droneStatus
     droneStatus.drone = drone
 
     try:

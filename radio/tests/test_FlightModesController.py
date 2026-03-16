@@ -136,12 +136,12 @@ def test_setFlightMode_invalidData_copter(droneStatus):
 
 @pytest.mark.copter_only
 def test_setFlightMode_success_copter(droneStatus):
-    response = droneStatus.drone.flightModesController.setFlightMode(1, 5)
+    response = droneStatus.drone.flightModesController.setFlightMode(1, 2)
     assert response == {
         "success": True,
-        "message": "Flight mode 1 set to COPTER_MODE_LOITER",
+        "message": "Flight mode 1 set to COPTER_MODE_ALT_HOLD",
     }
-    assert droneStatus.drone.flightModesController.flight_modes[0] == 5
+    assert droneStatus.drone.flightModesController.flight_modes[0] == 2
 
 
 @pytest.mark.plane_only

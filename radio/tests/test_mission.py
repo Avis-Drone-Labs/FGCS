@@ -4,7 +4,6 @@ import os
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import NoDrone
 from .mission_test_files.upload_mission_helper import uploadMission
 
@@ -71,7 +70,6 @@ def delete_export_files():
             os.remove(file_path)
 
 
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMissionAll_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -86,7 +84,6 @@ def test_getCurrentMissionAll_wrongState(
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMissionAll_correctState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -107,7 +104,6 @@ def test_getCurrentMissionAll_correctState(
     assert socketio_result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMissionAll_noDroneConnection(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -123,7 +119,6 @@ def test_getCurrentMissionAll_noDroneConnection(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "params"
     socketio_client.emit("get_current_mission", {"type": "mission"})
@@ -136,7 +131,6 @@ def test_getCurrentMission_wrongState(socketio_client: SocketIOTestClient, drone
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMission_correctMission(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -158,7 +152,6 @@ def test_getCurrentMission_correctMission(
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMission_correctFence(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -180,7 +173,6 @@ def test_getCurrentMission_correctFence(
 
 
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_getCurrentMission_correctRally(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -201,7 +193,6 @@ def test_getCurrentMission_correctRally(
     assert socketio_result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -215,7 +206,6 @@ def test_writeCurrentMission_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_uploadMissionSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -249,7 +239,6 @@ def test_writeCurrentMission_uploadMissionSuccess(
     assert written_items == returned_items
 
 
-@falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_uploadFenceSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -282,7 +271,6 @@ def test_writeCurrentMission_uploadFenceSuccess(
     assert written_items == returned_items
 
 
-@falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_uploadRallySuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -315,7 +303,6 @@ def test_writeCurrentMission_uploadRallySuccess(
     assert written_items == returned_items
 
 
-@falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_incorrectMissionType(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -335,7 +322,6 @@ def test_writeCurrentMission_incorrectMissionType(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_writeCurrentMission_noWaypoints(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -355,7 +341,6 @@ def test_writeCurrentMission_noWaypoints(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_missionImportSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -379,7 +364,6 @@ def test_importMissionFromFile_missionImportSuccess(
     assert result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_fenceImportSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -403,7 +387,6 @@ def test_importMissionFromFile_fenceImportSuccess(
     assert result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_rallyImportSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -427,7 +410,6 @@ def test_importMissionFromFile_rallyImportSuccess(
     assert result["args"][0] == result_data
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_fileNotFound(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -446,7 +428,6 @@ def test_importMissionFromFile_fileNotFound(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_rallyWithMission(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -465,7 +446,6 @@ def test_importMissionFromFile_incorrectMissionType_rallyWithMission(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_fenceWithMission(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -484,7 +464,6 @@ def test_importMissionFromFile_incorrectMissionType_fenceWithMission(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_rallyWithFence(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -503,7 +482,6 @@ def test_importMissionFromFile_incorrectMissionType_rallyWithFence(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_importMissionFromFile_incorrectMissionType_fenceWithRally(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -524,7 +502,6 @@ def test_importMissionFromFile_incorrectMissionType_fenceWithRally(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_exportMissionToFile_missionExportSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -560,7 +537,6 @@ def test_exportMissionToFile_missionExportSuccess(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_exportMissionToFile_fenceExportSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -596,7 +572,6 @@ def test_exportMissionToFile_fenceExportSuccess(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("upload_default_mission")
-@falcon_test(pass_drone_status=True)
 def test_exportMissionToFile_rallyExportSuccess(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -630,7 +605,6 @@ def test_exportMissionToFile_rallyExportSuccess(
         assert f.read() == f_expected.read()
 
 
-@falcon_test(pass_drone_status=True)
 def test_exportMissionToFile_noWaypoints(
     socketio_client: SocketIOTestClient, droneStatus
 ):

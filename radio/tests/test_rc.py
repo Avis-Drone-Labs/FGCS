@@ -2,7 +2,6 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 from pymavlink.mavutil import mavlink
 
-from . import falcon_test
 from .helpers import NoDrone, set_params
 
 
@@ -52,7 +51,6 @@ def setup_function():
     droneStatus.drone.rcController.fetchParams()  # Refresh RC data
 
 
-@falcon_test(pass_drone_status=True)
 def test_getRcConfig_wrongState(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "params"
     socketio_client.emit("get_rc_config")
@@ -64,7 +62,6 @@ def test_getRcConfig_wrongState(socketio_client: SocketIOTestClient, droneStatus
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_getRcConfig_correctState(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config.rc"
     socketio_client.emit("get_rc_config")
@@ -96,7 +93,6 @@ def test_getRcConfig_correctState(socketio_client: SocketIOTestClient, droneStat
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_getRcConfig_noDroneConnection(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -112,7 +108,6 @@ def test_getRcConfig_noDroneConnection(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setRcConfigParam_wrongState(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "params"
     socketio_client.emit("set_rc_config_param", {"param_id": "RC1_OPTION", "value": 10})
@@ -124,7 +119,6 @@ def test_setRcConfigParam_wrongState(socketio_client: SocketIOTestClient, droneS
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setRcConfigParam_noDroneConnection(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -142,7 +136,6 @@ def test_setRcConfigParam_noDroneConnection(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setRcConfigParam_missingData(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config.rc"
 
@@ -165,7 +158,6 @@ def test_setRcConfigParam_missingData(socketio_client: SocketIOTestClient, drone
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setRcConfigParam_success(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config.rc"
 
@@ -181,7 +173,6 @@ def test_setRcConfigParam_success(socketio_client: SocketIOTestClient, droneStat
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_batchSetRcConfigParams_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -203,7 +194,6 @@ def test_batchSetRcConfigParams_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_batchSetRcConfigParams_noDroneConnection(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -227,7 +217,6 @@ def test_batchSetRcConfigParams_noDroneConnection(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_batchSetRcConfigParams_emptyParams(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -243,7 +232,6 @@ def test_batchSetRcConfigParams_emptyParams(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_batchSetRcConfigParams_missingData(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -263,7 +251,6 @@ def test_batchSetRcConfigParams_missingData(
     )
 
 
-@falcon_test(pass_drone_status=True)
 def test_batchSetRcConfigParams_success(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -291,7 +278,6 @@ def test_batchSetRcConfigParams_success(
     ]
 
 
-@falcon_test(pass_drone_status=True)
 def test_batchSetRcConfigParams_partialFailure(
     socketio_client: SocketIOTestClient, droneStatus
 ):

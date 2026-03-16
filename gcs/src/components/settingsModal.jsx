@@ -105,7 +105,7 @@ function ReleaseCheckRow() {
       // Allow manual check in dev and production
       const currentVersion = await window.ipcRenderer.invoke("app:get-version")
 
-      const releases = await octokit.request(
+      const releasesResponse = await octokit.request(
         "GET /repos/{owner}/{repo}/releases",
         {
           owner: "Avis-Drone-Labs",
@@ -114,21 +114,35 @@ function ReleaseCheckRow() {
         },
       )
 
-      if (releases.status !== 200) {
+      if (releasesResponse.status !== 200) {
         setResult({ error: "Failed to fetch releases" })
         return
       }
+
+      const releases = Array.isArray(releasesResponse.data)
+        ? [...releasesResponse.data]
+        : []
 
       if (releases.length === 0) {
         setResult({ found: false })
         return
       }
 
+      // Filter out draft or unpublished releases
+      const publishedReleases = releases.filter(
+        (release) => !release.draft && release.published_at,
+      )
+
+      if (publishedReleases.length === 0) {
+        setResult({ found: false })
+        return
+      }
+
       // Choose the most recent prerelease or release by published_at
-      releases.sort(
+      publishedReleases.sort(
         (a, b) => new Date(b.published_at) - new Date(a.published_at),
       )
-      const latest = releases[0]
+      const latest = publishedReleases[0]
       const latestTag = latest.tag_name
 
       const isNewer = semverGt(latestTag, currentVersion)

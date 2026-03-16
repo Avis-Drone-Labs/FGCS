@@ -61,6 +61,28 @@ def _convertCoordinate(coordinate) -> Number:
     )
 
 
+def _wp_to_dict(
+    wp: mavutil.mavlink.MAVLink_mission_item_int_message,
+    altitude_decimal_places: int = 4,
+) -> dict:
+    """
+    Convert a MAVLink mission item to a dict, rounding the altitude (z) field
+    to a fixed number of decimal places to avoid floating-point noise in
+    exported files.
+
+    Args:
+        wp: A MAVLink mission item object with a to_dict() method.
+        altitude_decimal_places (int): Number of decimal places to round z to.
+
+    Returns:
+        dict: The waypoint as a dictionary with z rounded.
+    """
+    d = wp.to_dict()
+    if "z" in d and isinstance(d["z"], float):
+        d["z"] = round(d["z"], altitude_decimal_places)
+    return d
+
+
 def _getMissionName(mission_type: int) -> str:
     """
     Get the name of the mission type.
@@ -285,7 +307,7 @@ def importMissionFromFile(
     return {
         "success": True,
         "message": f"Waypoint file loaded {loader.count()} points successfully",
-        "data": [wp.to_dict() for wp in loader.wpoints],
+        "data": [_wp_to_dict(wp) for wp in loader.wpoints],
     }
 
 
@@ -419,7 +441,7 @@ class MissionController:
 
             return {
                 "success": True,
-                "data": [item.to_dict() for item in mission_items.get("data", [])],
+                "data": [_wp_to_dict(item) for item in mission_items.get("data", [])],
             }
         except serial.serialutil.SerialException:
             return {
@@ -456,9 +478,9 @@ class MissionController:
         return {
             "success": True,
             "data": {
-                "mission_items": [item.to_dict() for item in mission_items],
-                "fence_items": [item.to_dict() for item in fence_items],
-                "rally_items": [item.to_dict() for item in rally_items],
+                "mission_items": [_wp_to_dict(item) for item in mission_items],
+                "fence_items": [_wp_to_dict(item) for item in fence_items],
+                "rally_items": [_wp_to_dict(item) for item in rally_items],
             },
         }
 

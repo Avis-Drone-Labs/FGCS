@@ -75,13 +75,14 @@ function ChartDataCard({ item, unit, messageMeans }) {
     <div className="inline-flex flex-col items-center gap-2 px-2 py-2 mr-3 text-xs font-bold text-white border border-gray-700 rounded-lg bg-grey-200">
       {/* Title and Delete Button */}
       <div className="inline-flex items-center content-center justify-between w-full">
-        <p className="text-md">
+        <p className="text-md flex-1 min-w-0 break-words">
           {item.label} <span className="text-gray-400">({unit})</span>
         </p>
         <ActionIcon
           variant="subtle"
           color={"red"}
           onClick={() => removeDataset(item.label)}
+          className="self-start"
         >
           <IconTrash size={18} />
         </ActionIcon>
@@ -100,8 +101,8 @@ function ChartDataCard({ item, unit, messageMeans }) {
         onChangeEnd={(color) => changeColor(item.label, color)}
       />
 
-      {/* Min, max, min */}
-      <Box className="w-full text-gray-400">
+      {/* Min, max, mean */}
+      <Box className="w-full text-gray-400 mt-auto">
         Min: {messageMeans[item.label]?.min}, Max:{" "}
         {messageMeans[item.label]?.max}, Mean: {messageMeans[item.label]?.mean}
       </Box>

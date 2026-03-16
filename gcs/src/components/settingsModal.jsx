@@ -1,30 +1,30 @@
 import {
   Button,
   Checkbox,
+  Group,
   Input,
   Modal,
   NumberInput,
   ScrollArea,
   Select,
   Tabs,
-  TextInput,
-  Group,
   Text,
+  TextInput,
 } from "@mantine/core"
 import { useSettings } from "../helpers/settings"
 
 import { ActionIcon, Tooltip } from "@mantine/core"
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks"
 import {
   IconAlertCircle,
   IconCheck,
   IconRestore,
-  IconTrash,
   IconSettings,
+  IconTrash,
 } from "@tabler/icons-react"
 import { Octokit } from "octokit"
 import { memo, useEffect, useState } from "react"
 import semverGt from "semver/functions/gt"
-import { useDisclosure, useDebouncedValue } from "@mantine/hooks"
 import DefaultSettings from "../../data/default_settings.json"
 import {
   closeLoadingNotification,
@@ -94,7 +94,7 @@ function BoolSetting({ settingName }) {
   )
 }
 
-function PrereleaseCheckRow() {
+function ReleaseCheckRow() {
   const [checking, setChecking] = useState(false)
   const [result, setResult] = useState(null)
 
@@ -119,17 +119,16 @@ function PrereleaseCheckRow() {
         return
       }
 
-      const prereleases = releases.data.filter((r) => r.prerelease)
-      if (prereleases.length === 0) {
+      if (releases.length === 0) {
         setResult({ found: false })
         return
       }
 
-      // Choose the most recent prerelease by published_at
-      prereleases.sort(
+      // Choose the most recent prerelease or release by published_at
+      releases.sort(
         (a, b) => new Date(b.published_at) - new Date(a.published_at),
       )
-      const latest = prereleases[0]
+      const latest = releases[0]
       const latestTag = latest.tag_name
 
       const isNewer = semverGt(latestTag, currentVersion)
@@ -781,7 +780,7 @@ function SettingsModal() {
                   )}
                   {tab === "General" && (
                     <div className="pt-4">
-                      <PrereleaseCheckRow />
+                      <ReleaseCheckRow />
                     </div>
                   )}
                 </Tabs.Panel>

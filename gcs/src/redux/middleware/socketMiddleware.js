@@ -20,6 +20,7 @@ import {
   setConnectionModal,
   setConnectionStatus,
   setFetchingComPorts,
+  setForceArmModalOpened,
   setForceDisarmModalOpened,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
@@ -799,6 +800,9 @@ const socketMiddleware = (store) => {
             // Check if this was a disarm attempt and was not a force disarm
             if (msg.data?.was_disarming && !msg.data?.was_force) {
               store.dispatch(setForceDisarmModalOpened(true))
+            } else if (!msg.data?.was_disarming && !msg.data?.was_force) {
+              // Failed non-force arm attempt — offer force arm
+              store.dispatch(setForceArmModalOpened(true))
             } else {
               showErrorNotification(msg.message)
             }

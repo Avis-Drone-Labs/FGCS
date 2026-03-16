@@ -55,6 +55,7 @@ class ArmController:
                 param1=1,  # 0=disarm, 1=arm
                 param2=21196 if force else 0,  # force arm/disarm
             )
+            self.drone.logger.info(f"Arming, force: {force}")
 
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
@@ -68,7 +69,7 @@ class ArmController:
                 self.drone.logger.debug("Waiting for arm")
                 while not self.drone.armed:
                     time.sleep(0.05)
-                self.drone.logger.debug("ARMED")
+
                 return {
                     "success": True,
                     "message": "Armed successfully",
@@ -131,6 +132,8 @@ class ArmController:
                 param2=21196 if force else 0,  # force arm/disarm
             )
 
+            self.drone.logger.info(f"Disarming, force: {force}")
+
             response = self.drone.wait_for_message(
                 "COMMAND_ACK",
                 self.controller_id,
@@ -143,7 +146,7 @@ class ArmController:
                 self.drone.logger.debug("Waiting for disarm")
                 while self.drone.armed:
                     time.sleep(0.05)
-                self.drone.logger.debug("DISARMED")
+
                 return {
                     "success": True,
                     "message": "Disarmed successfully",

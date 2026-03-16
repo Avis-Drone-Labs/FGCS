@@ -102,7 +102,7 @@ function ChartDataCard({ item, unit, messageMeans }) {
       />
 
       {/* Min, max, min */}
-      <Box className="w-full text-gray-400">
+      <Box className="w-full text-gray-400 mt-auto">
         Min: {messageMeans[item.label]?.min}, Max:{" "}
         {messageMeans[item.label]?.max}, Mean: {messageMeans[item.label]?.mean}
       </Box>

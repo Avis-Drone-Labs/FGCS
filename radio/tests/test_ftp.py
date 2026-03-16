@@ -1,13 +1,6 @@
-import os
-
 from flask_socketio.test_client import SocketIOTestClient
 
 from .helpers import NoDrone
-
-FTP_FILES_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "ftp_test_files",
-)
 
 
 def test_listFiles_noPath_success(socketio_client: SocketIOTestClient, droneStatus):

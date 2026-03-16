@@ -232,9 +232,6 @@ pytest -x
 # Run specific test file
 pytest tests/test_params.py
 
-# Run with physical device
-pytest --fc -s
-
 # Run specific test
 pytest -k "test_param_set"
 

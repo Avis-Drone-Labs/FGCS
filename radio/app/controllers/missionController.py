@@ -67,8 +67,7 @@ def _wp_to_dict(
 ) -> dict:
     """
     Convert a MAVLink mission item to a dict, rounding the altitude (z) field
-    to a fixed number of decimal places to avoid floating-point noise in
-    exported files.
+    to a fixed number of decimal places to avoid floating-point noise.
 
     Args:
         wp: A MAVLink mission item object with a to_dict() method.

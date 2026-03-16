@@ -116,17 +116,12 @@ const ArmTakeoffLandAction = () => {
   const isArmed = useSelector(selectIsArmed)
   const rebootCallback = useRebootCallback()
 
-  function armDisarm(arm, force = false) {
-    // TODO: Add force arm ability
-    dispatch(emitArmDisarm({ arm: arm, force: force }))
-  }
-
   return (
     <>
       <div className="flex flex-wrap flex-cols gap-2">
         <Button
           onClick={() => {
-            armDisarm(!isArmed)
+            dispatch(emitArmDisarm({ arm: !isArmed, force: false }))
           }}
           className="grow"
         >

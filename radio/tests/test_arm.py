@@ -66,6 +66,7 @@ def test_arm_succeeds_when_disarmed(
         "data": {
             "was_disarming": False,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
@@ -87,6 +88,7 @@ def test_arm_fails_when_already_armed(
         "data": {
             "was_disarming": False,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
@@ -108,6 +110,7 @@ def test_disarm_succeeds_when_armed(
         "data": {
             "was_disarming": True,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
@@ -127,6 +130,7 @@ def test_disarm_fails_when_already_disarmed(
         "data": {
             "was_disarming": True,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
@@ -146,6 +150,7 @@ def test_force_arm_succeeds_when_disarmed(
         "data": {
             "was_disarming": False,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
@@ -167,6 +172,7 @@ def test_force_arm_fails_when_already_armed(
         "data": {
             "was_disarming": False,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
@@ -188,6 +194,7 @@ def test_force_disarm_succeeds_when_armed(
         "data": {
             "was_disarming": True,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
@@ -207,6 +214,7 @@ def test_force_disarm_fails_when_already_disarmed(
         "data": {
             "was_disarming": True,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
@@ -227,6 +235,7 @@ def test_arm_fails_with_serial_exception(
             "data": {
                 "was_disarming": False,
                 "was_force": False,
+                "offer_force": False,
             },
         }
 
@@ -246,6 +255,7 @@ def test_force_arm_fails_with_serial_exception(
             "data": {
                 "was_disarming": False,
                 "was_force": True,
+                "offer_force": False,
             },
         }
 
@@ -267,6 +277,7 @@ def test_disarm_fails_with_serial_exception(
             "data": {
                 "was_disarming": True,
                 "was_force": False,
+                "offer_force": False,
             },
         }
 
@@ -288,6 +299,7 @@ def test_force_disarm_fails_with_serial_exception(
             "data": {
                 "was_disarming": True,
                 "was_force": True,
+                "offer_force": False,
             },
         }
 

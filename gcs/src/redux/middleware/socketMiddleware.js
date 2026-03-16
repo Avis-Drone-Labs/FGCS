@@ -797,10 +797,16 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
           if (!msg.success) {
+            const offerForce = msg.data?.offer_force === true
+
             // Check if this was a disarm attempt and was not a force disarm
-            if (msg.data?.was_disarming && !msg.data?.was_force) {
+            if (msg.data?.was_disarming && !msg.data?.was_force && offerForce) {
               store.dispatch(setForceDisarmModalOpened(true))
-            } else if (!msg.data?.was_disarming && !msg.data?.was_force) {
+            } else if (
+              !msg.data?.was_disarming &&
+              !msg.data?.was_force &&
+              offerForce
+            ) {
               // Failed non-force arm attempt — offer force arm
               store.dispatch(setForceArmModalOpened(true))
             } else {

@@ -37,6 +37,7 @@ class ArmController:
         return_data = {
             "was_disarming": False,
             "was_force": force,
+            "offer_force": False,
         }
 
         if self.drone.armed:
@@ -77,6 +78,7 @@ class ArmController:
                 }
             else:
                 self.drone.logger.debug("Arming failed")
+                return_data["offer_force"] = True
                 return {
                     "success": False,
                     "message": "Could not arm, command not accepted",
@@ -109,6 +111,7 @@ class ArmController:
         return_data = {
             "was_disarming": True,
             "was_force": force,
+            "offer_force": False,
         }
 
         if not self.drone.armed:
@@ -154,6 +157,7 @@ class ArmController:
                 }
             else:
                 self.drone.logger.debug("Could not disarm, command not accepted")
+                return_data["offer_force"] = True
                 return {
                     "success": False,
                     "message": "Could not disarm, command not accepted",

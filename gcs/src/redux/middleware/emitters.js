@@ -151,8 +151,14 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetState,
       callback: () => {
-        store.dispatch(setCurrentPage(action.payload))
-        socket.socket.emit("set_state", { state: action.payload })
+        const newState = action.payload
+
+        store.dispatch(setCurrentPage(newState))
+
+        // Individual config pages handle setting state
+        if (newState !== "config") {
+          socket.socket.emit("set_state", { state: newState })
+        }
       },
     },
     {

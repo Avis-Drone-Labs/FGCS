@@ -115,6 +115,7 @@ import {
   setDrawingFenceItems,
   setDrawingMissionItems,
   setDrawingRallyItems,
+  setIsFetchingDashboardMission,
   setMissionProgressData,
   setMissionProgressModal,
   setShouldFetchAllMissionsOnDashboard,
@@ -428,6 +429,7 @@ const socketMiddleware = (store) => {
         socket.socket.on("disconnected_from_drone", () => {
           store.dispatch(setConnected(false))
           store.dispatch(setConnectedToSimulator(false))
+          store.dispatch(setIsFetchingDashboardMission(false))
           window.ipcRenderer.send("window:update-title", "FGCS")
         })
 
@@ -989,6 +991,7 @@ const socketMiddleware = (store) => {
               store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
             }
             store.dispatch(closeDashboardMissionFetchingNotificationThunk())
+            store.dispatch(setIsFetchingDashboardMission(false))
           },
         )
 

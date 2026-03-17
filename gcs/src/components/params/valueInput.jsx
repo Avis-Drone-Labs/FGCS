@@ -6,7 +6,7 @@
 */
 
 // 3rd party imports
-import { NumberInput, Select } from "@mantine/core"
+import { NumberInput, Select, Tooltip } from "@mantine/core"
 
 // Custom components, helpers and data
 import BitmaskSelect from "./bitmaskSelect"
@@ -20,7 +20,7 @@ import {
   updateModifiedParamValue,
 } from "../../redux/slices/paramsSlice"
 
-export default function ValueInput({ index, paramDef, className }) {
+export default function ValueInput({ index, paramDef, className, disabled }) {
   const dispatch = useDispatch()
   const params = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
@@ -88,8 +88,10 @@ export default function ValueInput({ index, paramDef, className }) {
     }
   }
 
+  let input = null
+
   if (paramDef?.Values && !paramDef?.Range) {
-    return (
+    input = (
       <Select // Values input
         className={className}
         value={`${cleanFloat(param_value)}`}
@@ -99,24 +101,26 @@ export default function ValueInput({ index, paramDef, className }) {
           label: `${key}: ${paramDef?.Values[key]}`,
         }))}
         allowDeselect={false}
+        disabled={disabled}
       />
     )
   }
 
   if (paramDef?.Bitmask) {
-    return (
+    input = (
       <BitmaskSelect // Bitmask input
         className={className}
         value={param_value}
         onChange={addToModifiedParams}
         param={param}
         options={paramDef?.Bitmask}
+        disabled={disabled}
       />
     )
   }
 
   // Default return NumberInput, with range if the param supports it
-  return (
+  input = (
     <NumberInput
       className={className}
       label={
@@ -129,6 +133,18 @@ export default function ValueInput({ index, paramDef, className }) {
       decimalScale={5}
       hideControls
       suffix={paramDef?.Units}
+      disabled={disabled}
     />
+  )
+
+  return (
+    <Tooltip
+      label="Read-Only"
+      disabled={!disabled}
+    >
+      <div className={className}>
+        {input}
+      </div>
+    </Tooltip>
   )
 }

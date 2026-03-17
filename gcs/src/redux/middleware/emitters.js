@@ -58,6 +58,7 @@ import {
   emitGetTargetInfo,
   emitImportMissionFromFile,
   emitWriteCurrentMission,
+  setIsFetchingDashboardMission,
   setShouldFetchAllMissionsOnDashboard,
   showDashboardMissionFetchingNotificationThunk,
 } from "../slices/missionSlice"
@@ -162,6 +163,12 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitGetCurrentMissionAll,
       callback: () => {
+        const storeState = store.getState()
+        // Prevent duplicate fetches while one is already in progress
+        if (storeState.missionInfo.isFetchingDashboardMission) {
+          return
+        }
+        store.dispatch(setIsFetchingDashboardMission(true))
         socket.socket.emit("get_current_mission_all")
         store.dispatch(showDashboardMissionFetchingNotificationThunk())
       },

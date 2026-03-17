@@ -410,6 +410,7 @@ const missionInfoSlice = createSlice({
       state.dashboardMissionFetchingNotificationId = action.payload
     },
     setIsFetchingDashboardMission: (state, action) => {
+      if (action.payload === state.isFetchingDashboardMission) return
       state.isFetchingDashboardMission = action.payload
     },
 

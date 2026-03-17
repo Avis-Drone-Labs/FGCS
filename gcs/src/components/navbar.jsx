@@ -153,8 +153,6 @@ export default function Navbar() {
     }
   }, [comPorts, selectedComPort])
 
-  console.log(currentPage)
-
   useEffect(() => {
     const handler = () => dispatch(setForwardingAddressModalOpened(true))
     window.ipcRenderer.on("mavlink-forwarding:open", handler)

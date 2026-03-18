@@ -248,7 +248,8 @@ export default function SerialPorts() {
       </Table>
 
       <Text size="md" fw={500} mt="md">
-        Note: Changes to the serial port settings will not take effect until the board is rebooted.
+        Note: Changes to the serial port settings will not take effect until the
+        board is rebooted.
       </Text>
     </div>
   )

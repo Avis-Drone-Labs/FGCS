@@ -14,7 +14,7 @@ import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
   COMMONLY_USED_MISSION_TABLE_LABELS,
   COPTER_MISSION_ITEM_COMMANDS_LIST,
-  getFrameDropdownData,
+  MAV_FRAME_DROPDOWN_DATA,
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
 
@@ -168,9 +168,18 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
       </TableTd>
       <TableTd>
         <Select
-          data={getFrameDropdownData()}
+          data={MAV_FRAME_DROPDOWN_DATA}
           value={missionItem.frame.toString()}
-          onChange={(value) => updateMissionItemData("frame", parseInt(value))}
+          onChange={(value) => {
+            if (value === null) {
+              return
+            }
+            const parsedFrame = parseInt(value)
+            if (Number.isNaN(parsedFrame)) {
+              return
+            }
+            updateMissionItemData("frame", parsedFrame)
+          }}
           allowDeselect={false}
           classNames={{ dropdown: "!min-w-fit" }}
           comboboxProps={{ position: "top-start" }}

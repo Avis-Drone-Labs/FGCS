@@ -12,7 +12,7 @@ import {
 import { IconTrash } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
-import { getFrameDropdownData } from "../../helpers/mavlinkConstants"
+import { MAV_FRAME_DROPDOWN_DATA } from "../../helpers/mavlinkConstants"
 import {
   removeDrawingItem,
   selectDrawingRallyItemByIdx,
@@ -79,9 +79,18 @@ export default function RallyItemsTableRow({ rallyItemIndex }) {
       </TableTd>
       <TableTd>
         <Select
-          data={getFrameDropdownData()}
+          data={MAV_FRAME_DROPDOWN_DATA}
           value={rallyItem.frame.toString()}
-          onChange={(value) => updateRallyItemData("frame", parseInt(value))}
+          onChange={(value) => {
+            if (value === null) {
+              return
+            }
+            const parsedFrame = parseInt(value)
+            if (Number.isNaN(parsedFrame)) {
+              return
+            }
+            updateRallyItemData("frame", parsedFrame)
+          }}
           allowDeselect={false}
           classNames={{ dropdown: "!min-w-fit" }}
           comboboxProps={{ position: "top-start" }}

@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
   FENCE_ITEM_COMMANDS_LIST,
-  getFrameDropdownData,
+  MAV_FRAME_DROPDOWN_DATA,
 } from "../../helpers/mavlinkConstants"
 import {
   removeDrawingItem,
@@ -109,9 +109,18 @@ export default function FenceItemsTableRow({ fenceItemIndex }) {
       </TableTd>
       <TableTd>
         <Select
-          data={getFrameDropdownData()}
+          data={MAV_FRAME_DROPDOWN_DATA}
           value={fenceItem.frame.toString()}
-          onChange={(value) => updateFenceItemData("frame", parseInt(value))}
+          onChange={(value) => {
+            if (value === null) {
+              return
+            }
+            const parsedFrame = parseInt(value)
+            if (Number.isNaN(parsedFrame)) {
+              return
+            }
+            updateFenceItemData("frame", parsedFrame)
+          }}
           allowDeselect={false}
           classNames={{ dropdown: "!min-w-fit" }}
           comboboxProps={{ position: "top-start" }}

@@ -33,16 +33,6 @@ export function getPositionFrameName(frameId) {
   return frameName || "UNKNOWN"
 }
 
-export function getPositionFrameValue(frameName) {
-  if (frameName === undefined || frameName === null) {
-    return 0
-  }
-
-  return Object.keys(MAV_FRAME_LIST).find(
-    (key) => MAV_FRAME_LIST[key] === frameName,
-  )
-}
-
 export function centiDegToDeg(val) {
   if (val === null || val === undefined) {
     return null

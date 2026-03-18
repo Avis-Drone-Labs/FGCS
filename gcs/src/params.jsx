@@ -56,6 +56,7 @@ import {
   setPendingFetchAction,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
+import RebootPromptModal from "./components/params/rebootPromptModal.jsx"
 
 function cleanFloat(value, decimals = 5) {
   if (typeof value === "number") {
@@ -240,6 +241,7 @@ export default function Params() {
       <LoadParamsFileModal />
       <ParamsWriteModal />
       <ParamsFailedToWriteModal />
+      <RebootPromptModal />
 
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">

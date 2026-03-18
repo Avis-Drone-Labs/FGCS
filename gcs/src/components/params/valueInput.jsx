@@ -17,6 +17,7 @@ import {
   appendModifiedParams,
   selectModifiedParams,
   selectShownParams,
+  setRebootPromptModalOpen,
   updateModifiedParamValue,
 } from "../../redux/slices/paramsSlice"
 
@@ -73,6 +74,9 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
           param_value: value,
         }),
       )
+      if (paramDef?.RebootRequired === "True") {
+        dispatch(setRebootPromptModalOpen(true))
+      }
     } else {
       // Otherwise add it to modified params
       dispatch(
@@ -138,13 +142,8 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
   )
 
   return (
-    <Tooltip
-      label="Read-Only"
-      disabled={!disabled}
-    >
-      <div className={className}>
-        {input}
-      </div>
+    <Tooltip label="Read-Only" disabled={!disabled}>
+      <div className={className}>{input}</div>
     </Tooltip>
   )
 }

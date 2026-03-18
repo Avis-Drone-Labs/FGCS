@@ -207,6 +207,8 @@ const paramsSlice = createSlice({
     selectFetchParamsWarningModalOpen: (state) =>
       state.fetchParamsWarningModalOpen,
     selectRebootPromptModalOpen: (state) => state.rebootPromptModalOpen,
+    selectRebootRequired: (state) =>
+      state.modifiedParams.some((param) => param.reboot_required === true),
     selectPendingFetchAction: (state) => state.pendingFetchAction,
   },
 })
@@ -266,6 +268,7 @@ export const {
   selectParamsFailedToWriteModalOpen,
   selectFetchParamsWarningModalOpen,
   selectRebootPromptModalOpen,
+  selectRebootRequired,
   selectPendingFetchAction,
 } = paramsSlice.selectors
 

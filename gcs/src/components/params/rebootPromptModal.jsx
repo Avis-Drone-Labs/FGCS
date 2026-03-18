@@ -18,6 +18,7 @@ export default function RebootPromptModal() {
         dispatch(setRebootPromptModalOpen(false))
       }}
       title="Reboot Required"
+      withCloseButton={false}
       centered
       overlayProps={{
         backgroundOpacity: 0.55,
@@ -29,7 +30,7 @@ export default function RebootPromptModal() {
         },
       }}
     >
-      <p>You have changed params that require a reboot to take effect.</p>
+      <p>A reboot is required for your recent changes to apply.</p>
 
       <Group justify="space-between" className="mt-4">
         <Button

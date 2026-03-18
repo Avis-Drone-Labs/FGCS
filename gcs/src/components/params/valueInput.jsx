@@ -74,9 +74,6 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
           param_value: value,
         }),
       )
-      if (paramDef?.RebootRequired === "True") {
-        dispatch(setRebootPromptModalOpen(true))
-      }
     } else {
       // Otherwise add it to modified params
       dispatch(
@@ -86,6 +83,7 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
             param_value: value,
             param_type: param.param_type,
             initial_value: param.param_value,
+            reboot_required: paramDef?.RebootRequired === "True",
           },
         ]),
       )

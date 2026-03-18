@@ -43,6 +43,7 @@ import {
   selectModifiedParams,
   selectParams,
   selectParamSearchValue,
+  selectRebootRequired,
   selectShowModifiedParams,
   selectShownParams,
   setFetchingVars,
@@ -54,6 +55,7 @@ import {
   setModifiedParams,
   setParams,
   setPendingFetchAction,
+  setRebootPromptModalOpen,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
 import RebootPromptModal from "./components/params/rebootPromptModal.jsx"
@@ -83,6 +85,7 @@ export default function Params() {
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
+  const rebootRequired = useSelector(selectRebootRequired)
 
   // Searchbar states
   const searchValue = useSelector(selectParamSearchValue)
@@ -267,9 +270,12 @@ export default function Params() {
                       </Button>
                       <Button
                         disabled={!modifiedParams.length}
-                        onClick={() =>
+                        onClick={() => {
                           dispatch(emitSetMultipleParams(modifiedParams))
-                        }
+                          if (rebootRequired) {
+                            dispatch(setRebootPromptModalOpen(true))
+                          }
+                        }}
                         className="grow"
                       >
                         Write params

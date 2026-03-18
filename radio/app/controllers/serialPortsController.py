@@ -43,7 +43,6 @@ class SerialPortsController:
     ) -> None:
         """
         Gets and set the value of a cached parameter inside a dictionary.
-        Silently skips if param doesn't exist in cache (some params may not exist on all firmware).
 
         Args:
             params_dict (dict): The dictionary to store the parameters
@@ -74,7 +73,6 @@ class SerialPortsController:
                 port_params, "protocol", f"SERIAL{port_number}_PROTOCOL"
             )
             self._getAndSetParam(port_params, "baud", f"SERIAL{port_number}_BAUD")
-            # OPTIONS param may not exist on all firmware versions
             self._getAndSetParam(port_params, "options", f"SERIAL{port_number}_OPTIONS")
 
             self.params[f"SERIAL_{port_number}"] = port_params

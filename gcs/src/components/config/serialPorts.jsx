@@ -39,7 +39,7 @@ function OptionsBitmaskSelect({ value, onChange, options }) {
     binaryString
       .split("")
       .reverse()
-      .map((bit, index) => {
+      .forEach((bit, index) => {
         if (bit === "1") {
           selectedArray.push(`${index}`)
         }
@@ -97,6 +97,10 @@ export default function SerialPorts() {
 
   // Helper to handle param change
   function handleParamChange(param_id, value) {
+    // Guard against null/undefined values from Mantine components
+    if (value === null || value === undefined) {
+      return
+    }
     dispatch(
       emitSetSerialPortConfigParam({
         param_id,

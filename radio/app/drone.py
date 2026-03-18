@@ -317,6 +317,9 @@ class Drone:
         self.sendConnectionStatusUpdate(14)
         self.ftpController = FtpController(self)
 
+        # Final phase: connection complete
+        self.sendConnectionStatusUpdate(15)
+
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)
         if msg_index < 0 or msg_index >= total_msgs:

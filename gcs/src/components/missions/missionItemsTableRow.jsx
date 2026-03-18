@@ -10,16 +10,13 @@ import {
   TableTr,
 } from "@mantine/core"
 import { IconArrowDown, IconArrowUp, IconTrash } from "@tabler/icons-react"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
-  coordToInt,
-  getPositionFrameName,
-  intToCoord,
-} from "../../helpers/dataFormatters"
-import {
+  COMMONLY_USED_MISSION_TABLE_LABELS,
   COPTER_MISSION_ITEM_COMMANDS_LIST,
+  getFrameDropdownData,
   PLANE_MISSION_ITEM_COMMANDS_LIST,
 } from "../../helpers/mavlinkConstants"
-import { COMMONLY_USED_MISSION_TABLE_LABELS } from "../../helpers/mavlinkConstants"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -169,7 +166,16 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
           hideControls
         />
       </TableTd>
-      <TableTd>{getPositionFrameName(missionItem.frame)}</TableTd>
+      <TableTd>
+        <Select
+          data={getFrameDropdownData()}
+          value={missionItem.frame.toString()}
+          onChange={(value) => updateMissionItemData("frame", parseInt(value))}
+          allowDeselect={false}
+          classNames={{ dropdown: "!min-w-fit" }}
+          comboboxProps={{ position: "top-start" }}
+        />
+      </TableTd>
       <TableTd className="h-full">
         <div className="flex flex-row gap-2">
           <ActionIcon

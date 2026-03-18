@@ -1,3 +1,5 @@
+import { getPositionFrameValue } from "./dataFormatters"
+
 export const MAV_STATE = [
   "UNINIT",
   "BOOT",
@@ -477,6 +479,19 @@ export const MAV_FRAME_LIST = {
   21: "MAV_FRAME_LOCAL_FRD",
   22: "MAV_FRAME_LOCAL_FLU",
   23: "MAV_FRAME_ENUM_END",
+}
+
+export function getFrameDropdownData() {
+  const frameMap = {
+    [getPositionFrameValue("MAV_FRAME_GLOBAL")]: "Absolute",
+    [getPositionFrameValue("MAV_FRAME_GLOBAL_RELATIVE_ALT")]: "Relative",
+    [getPositionFrameValue("MAV_FRAME_GLOBAL_TERRAIN_ALT")]: "Terrain",
+  }
+
+  return Object.entries(frameMap).map(([frameValue, label]) => ({
+    value: frameValue,
+    label: label,
+  }))
 }
 
 export const EKF_STATUS_FLAGS = {

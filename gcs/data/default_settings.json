@@ -112,5 +112,106 @@
         }
       ]
     }
+  },
+  "Developer": {
+    "MAV_DATA_STREAM_ALL": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_ALL",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_RAW_SENSORS": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_RAW_SENSORS",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_EXTENDED_STATUS": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_EXTENDED_STATUS",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_RC_CHANNELS": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_RC_CHANNELS",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_RAW_CONTROLLER": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_RAW_CONTROLLER",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_POSITION": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_POSITION",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_EXTRA1": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_EXTRA1",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_EXTRA2": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_EXTRA2",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    },
+    "MAV_DATA_STREAM_EXTRA3": {
+      "default": 5,
+      "type": "number",
+      "range": [
+        0,
+        100000
+      ],
+      "display": "MAV_DATA_STREAM_EXTRA3",
+      "suffix": "Hz",
+      "group": "Data stream rates"
+    }
   }
 }

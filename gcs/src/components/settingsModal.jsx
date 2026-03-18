@@ -741,6 +741,10 @@ function SettingsModal() {
         >
           <Tabs.List>
             {settingTabs.map((t) => {
+              // Only show developer tag when developer features are on
+              if (!getSetting("General.experimentalDeveloperFeatures") && t === "Developer") {
+                return <></>
+              }
               return (
                 <Tabs.Tab key={t} value={t}>
                   {t}

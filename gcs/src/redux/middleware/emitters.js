@@ -1,12 +1,14 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
+  emitBatchSetSerialPortConfigParams,
   emitBatchSetServoConfigParams,
   emitGetFlightModeConfig,
   emitGetFrameConfig,
   emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
+  emitGetSerialPortsConfig,
   emitGetServoConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
@@ -16,6 +18,7 @@ import {
   emitSetGripperDisabled,
   emitSetGripperEnabled,
   emitSetRcConfigParam,
+  emitSetSerialPortConfigParam,
   emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
@@ -465,6 +468,27 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("test_servo_pwm", {
           servo_instance: action.payload.servo_instance,
           pwm_value: action.payload.pwm_value,
+        })
+      },
+    },
+    {
+      emitter: emitGetSerialPortsConfig,
+      callback: () => socket.socket.emit("get_serial_ports_config"),
+    },
+    {
+      emitter: emitSetSerialPortConfigParam,
+      callback: () => {
+        socket.socket.emit("set_serial_port_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
+        })
+      },
+    },
+    {
+      emitter: emitBatchSetSerialPortConfigParams,
+      callback: () => {
+        socket.socket.emit("batch_set_serial_port_config_params", {
+          params: action.payload.params,
         })
       },
     },

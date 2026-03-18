@@ -62,11 +62,13 @@ import {
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
+  setSerialPortsConfig,
   setServoConfig,
   setServoPwmOutputs,
   setShowMotorTestWarningModal,
   updateChannelsConfigParam,
   updateGripperConfigParam,
+  updateSerialPortConfigParam,
   updateServoConfigParam,
 } from "../slices/configSlice.js"
 import {
@@ -210,6 +212,9 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onSetServoConfigResult: "set_servo_config_result",
   onBatchSetServoConfigResult: "batch_set_servo_config_result",
   onTestServoPwmResult: "test_servo_result",
+  onSerialPortsConfig: "serial_ports_config",
+  onSetSerialPortConfigResult: "set_serial_port_config_result",
+  onBatchSetSerialPortConfigResult: "batch_set_serial_port_config_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -1371,6 +1376,58 @@ const socketMiddleware = (store) => {
               showSuccessNotification(msg.message)
             } else {
               showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSerialPortsConfig,
+          (msg) => {
+            const config = {}
+
+            for (let i = 1; i <= 7; i++) {
+              config[i] = msg[`SERIAL_${i}`]
+            }
+
+            store.dispatch(setSerialPortsConfig(config))
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetSerialPortConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+              store.dispatch(
+                updateSerialPortConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetSerialPortConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateSerialPortConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
             }
           },
         )

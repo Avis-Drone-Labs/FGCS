@@ -126,6 +126,9 @@ export default function Graph({ data, customColors, openPresetModal }) {
   const chartRef = useRef(null)
   const [showMap, setShowMap] = useState(false)
   const [hoverPosition, setHoverPosition] = useState(null)
+  const hoverRafIdRef = useRef(null)
+  const pendingMouseEventRef = useRef(null)
+  const lastHoverBestTimeRef = useRef(null)
 
   // Create a stable key from dataset labels to detect actual data changes
   const datasetKey = useMemo(
@@ -290,18 +293,29 @@ export default function Graph({ data, customColors, openPresetModal }) {
     }
   }, [attTimeline])
 
-  // Handle mouse move on chart to update hover position
-  const handleChartMouseMove = (event) => {
-    if (!chartRef.current || !showMap) return
+  function clearHoverPosition() {
+    pendingMouseEventRef.current = null
+    lastHoverBestTimeRef.current = null
+    setHoverPosition((prev) => (prev === null ? prev : null))
+  }
+
+  function processPendingHover() {
+    if (!chartRef.current || !showMap) {
+      clearHoverPosition()
+      return
+    }
+
+    const nativeEvent = pendingMouseEventRef.current
+    if (!nativeEvent) return
 
     const chart = chartRef.current
-    const position = getRelativePosition(event.nativeEvent, chart)
+    const position = getRelativePosition(nativeEvent, chart)
     const chartArea = chart.chartArea
     if (!position || !chartArea) return
 
     // Ignore hover events outside the chart plotting area.
     if (position.x < chartArea.left || position.x > chartArea.right) {
-      setHoverPosition(null)
+      clearHoverPosition()
       return
     }
 
@@ -311,34 +325,69 @@ export default function Graph({ data, customColors, openPresetModal }) {
 
     // Get the timestamp at the mouse position
     let timestamp = xScale.getValueForPixel(position.x)
+    if (timestamp === null || timestamp === undefined) return
 
-    if (timestamp !== null && timestamp !== undefined) {
-      // Keep the value in the same unit used by the chart data.
-      // - UTC mode (time scale): milliseconds
-      // - Dataflash mode (linear): microseconds
-      if (timestamp instanceof Date) {
-        timestamp = timestamp.getTime()
-      }
-
-      const gpsPosition = findGpsPositionAtTime(timestamp)
-      if (gpsPosition) {
-        const yaw = findYawAtTime(timestamp)
-        setHoverPosition({
-          ...gpsPosition,
-          yaw,
-          hoverTime: timestamp,
-          deltaTime: Math.abs(gpsPosition.time - timestamp),
-        })
-      } else {
-        setHoverPosition(null)
-      }
+    // Keep the value in the same unit used by the chart data.
+    // - UTC mode (time scale): milliseconds
+    // - Dataflash mode (linear): microseconds
+    if (timestamp instanceof Date) {
+      timestamp = timestamp.getTime()
     }
+
+    const gpsPosition = findGpsPositionAtTime(timestamp)
+    if (!gpsPosition) {
+      clearHoverPosition()
+      return
+    }
+
+    // Skip state updates when the nearest point hasn't changed.
+    if (lastHoverBestTimeRef.current === gpsPosition.time) {
+      return
+    }
+
+    const yaw = findYawAtTime(timestamp)
+    lastHoverBestTimeRef.current = gpsPosition.time
+    setHoverPosition({
+      ...gpsPosition,
+      yaw,
+      hoverTime: timestamp,
+      deltaTime: Math.abs(gpsPosition.time - timestamp),
+    })
+  }
+
+  function requestHoverUpdate() {
+    if (hoverRafIdRef.current !== null) return
+
+    hoverRafIdRef.current = window.requestAnimationFrame(() => {
+      hoverRafIdRef.current = null
+      processPendingHover()
+    })
+  }
+
+  // Handle mouse move on chart to update hover position
+  const handleChartMouseMove = (event) => {
+    if (!showMap) return
+
+    pendingMouseEventRef.current = event.nativeEvent
+    requestHoverUpdate()
   }
 
   // Handle mouse leave to clear hover position
   const handleChartMouseLeave = () => {
-    setHoverPosition(null)
+    if (hoverRafIdRef.current !== null) {
+      window.cancelAnimationFrame(hoverRafIdRef.current)
+      hoverRafIdRef.current = null
+    }
+    clearHoverPosition()
   }
+
+  useEffect(() => {
+    return () => {
+      if (hoverRafIdRef.current !== null) {
+        window.cancelAnimationFrame(hoverRafIdRef.current)
+      }
+    }
+  }, [])
 
   // Toggle show events without resetting zoom
   function toggleShowEvents() {

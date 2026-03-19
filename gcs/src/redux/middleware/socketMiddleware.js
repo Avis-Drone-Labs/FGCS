@@ -124,6 +124,7 @@ import {
 } from "../slices/missionSlice"
 import {
   resetParamsWriteProgressData,
+  selectRebootRequired,
   setAutoPilotRebootModalOpen,
   setFetchingParam,
   setFetchingVars,
@@ -137,6 +138,7 @@ import {
   setParamsWriteProgressData,
   setParamsWriteProgressModalOpen,
   setRebootData,
+  setRebootPromptModalOpen,
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
@@ -870,6 +872,9 @@ const socketMiddleware = (store) => {
 
           const modifiedParams = store.getState().paramsSlice.modifiedParams
 
+          // Find if any params require a reboot before clearing
+          const rebootRequired = selectRebootRequired(store.getState())
+
           // Only clear the params that got set successfully
           store.dispatch(
             setModifiedParams(
@@ -893,6 +898,10 @@ const socketMiddleware = (store) => {
           if (paramsNotSet.length !== 0) {
             store.dispatch(setParamsFailedToWrite(paramsNotSet))
             store.dispatch(setParamsFailedToWriteModalOpen(true))
+          }
+
+          if (rebootRequired) {
+            store.dispatch(setRebootPromptModalOpen(true))
           }
         })
 

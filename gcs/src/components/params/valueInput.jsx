@@ -105,9 +105,7 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
         disabled={disabled}
       />
     )
-  }
-
-  if (paramDef?.Bitmask) {
+  } else if (paramDef?.Bitmask) {
     input = (
       <BitmaskSelect // Bitmask input
         className={className}
@@ -118,25 +116,25 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
         disabled={disabled}
       />
     )
+  } else {
+    // Default return NumberInput, with range if the param supports it
+    input = (
+      <NumberInput
+        className={className}
+        label={
+          paramDef?.Range
+            ? `${paramDef?.Range.low} - ${paramDef?.Range.high}`
+            : ""
+        }
+        value={param_value}
+        onChange={(value) => addToModifiedParams(value, param)}
+        decimalScale={5}
+        hideControls
+        suffix={paramDef?.Units}
+        disabled={disabled}
+      />
+    )
   }
-
-  // Default return NumberInput, with range if the param supports it
-  input = (
-    <NumberInput
-      className={className}
-      label={
-        paramDef?.Range
-          ? `${paramDef?.Range.low} - ${paramDef?.Range.high}`
-          : ""
-      }
-      value={param_value}
-      onChange={(value) => addToModifiedParams(value, param)}
-      decimalScale={5}
-      hideControls
-      suffix={paramDef?.Units}
-      disabled={disabled}
-    />
-  )
 
   return (
     <Tooltip label="Read-Only" disabled={!disabled}>

@@ -132,6 +132,7 @@ const paramsSlice = createSlice({
       state.modifiedParams = []
       state.rebootData = {}
       state.searchValue = ""
+      state.rebootPromptModalOpen = false
     },
     setHasFetchedOnce: (state, action) => {
       state.hasFetchedOnce = action.payload

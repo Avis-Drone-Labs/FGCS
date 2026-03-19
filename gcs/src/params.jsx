@@ -43,7 +43,6 @@ import {
   selectModifiedParams,
   selectParams,
   selectParamSearchValue,
-  selectRebootRequired,
   selectShowModifiedParams,
   selectShownParams,
   setFetchingVars,
@@ -85,7 +84,6 @@ export default function Params() {
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
   const showModifiedParams = useSelector(selectShowModifiedParams)
-  const rebootRequired = useSelector(selectRebootRequired)
 
   // Searchbar states
   const searchValue = useSelector(selectParamSearchValue)
@@ -272,9 +270,6 @@ export default function Params() {
                         disabled={!modifiedParams.length}
                         onClick={() => {
                           dispatch(emitSetMultipleParams(modifiedParams))
-                          if (rebootRequired) {
-                            dispatch(setRebootPromptModalOpen(true))
-                          }
                         }}
                         className="grow"
                       >

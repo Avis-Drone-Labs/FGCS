@@ -31,8 +31,22 @@ import {
   redColor,
   showLoadingNotification,
 } from "../helpers/notification"
+import { useDispatch } from "react-redux"
+import { emitSetStreamRates } from "../redux/slices/droneConnectionSlice"
 
 const octokit = new Octokit({})
+
+const STREAM_MAP = {
+  MAV_DATA_STREAM_ALL: 0,
+  MAV_DATA_STREAM_RAW_SENSORS: 1,
+  MAV_DATA_STREAM_EXTENDED_STATUS: 2,
+  MAV_DATA_STREAM_RC_CHANNELS: 3,
+  MAV_DATA_STREAM_RAW_CONTROLLER: 4 ,
+  MAV_DATA_STREAM_POSITION: 6,
+  MAV_DATA_STREAM_EXTRA1: 10,
+  MAV_DATA_STREAM_EXTRA2: 11,
+  MAV_DATA_STREAM_EXTRA3: 12
+}
 
 const isValidNumber = (num, range) => {
   return (
@@ -199,7 +213,7 @@ function ReleaseCheckRow() {
 
 function SetRatesRow() {
   const { getSetting } = useSettings()
-
+  const dispatch = useDispatch()
 
   const onClick = () => {
     const MAV_DATA_STREAM_ALL = getSetting("Developer.MAV_DATA_STREAM_ALL")
@@ -212,7 +226,11 @@ function SetRatesRow() {
     const MAV_DATA_STREAM_EXTRA2 = getSetting("Developer.MAV_DATA_STREAM_EXTRA2")
     const MAV_DATA_STREAM_EXTRA3 = getSetting("Developer.MAV_DATA_STREAM_EXTRA3")
 
-    console.log(MAV_DATA_STREAM_ALL)
+
+    for (const [name, value] of Object.entries(STREAM_MAP)) {
+      let rate = getSetting(`Developer.${name}`)
+      dispatch(emitSetStreamRates({stream: value, rate: rate}))
+    }
   }
 
   return (

@@ -37,6 +37,7 @@ import {
   emitSetCurrentFlightMode,
   emitSetLoiterRadius,
   emitSetState,
+  emitSetStreamRates,
   emitStartForwarding,
   emitStopForwarding,
   emitTakeoff,
@@ -209,6 +210,14 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("set_current_flight_mode", {
           newFlightMode: action.payload.newFlightMode,
         }),
+    },
+    {
+      emitter: emitSetStreamRates,
+      callback: () =>
+        socket.socket.emit("set_stream_rate", {
+          stream: action.payload.stream,
+          rate: action.payload.rate
+        })
     },
 
     {

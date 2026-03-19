@@ -13,6 +13,11 @@ class SetStateType(TypedDict):
     state: str
 
 
+class SetStreamRateType(TypedDict):
+    stream: int
+    rate: int
+
+
 GLOBAL_MESSAGE_LISTENERS = ["HEARTBEAT", "STATUSTEXT", "GLOBAL_POSITION_INT", "VFR_HUD"]
 
 STATES_MESSAGE_LISTENERS = {
@@ -113,3 +118,12 @@ def set_state(data: SetStateType) -> None:
 
         for message in STATES_MESSAGE_LISTENERS["config.servo"]:
             droneStatus.drone.addMessageListener(message, sendMessage)
+
+
+@socketio.on("set_stream_rate")
+def set_stream_rate(data: SetStreamRateType):
+    if not droneStatus.drone:
+        return
+
+    print("Setting data stream rate")
+    droneStatus.drone.sendDataStreamRequestMessage(data["stream"], data["rate"])

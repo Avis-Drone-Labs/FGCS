@@ -66,6 +66,7 @@ const missionInfoSlice = createSlice({
     },
     shouldFetchAllMissionsOnDashboard: true, // bool so that the dashboard can refresh its data when switched to if needed
     dashboardMissionFetchingNotificationId: null,
+    isFetchingDashboardMission: false, // flag to prevent duplicate mission fetches
   },
   reducers: {
     setCurrentMission: (state, action) => {
@@ -408,6 +409,10 @@ const missionInfoSlice = createSlice({
         return
       state.dashboardMissionFetchingNotificationId = action.payload
     },
+    setIsFetchingDashboardMission: (state, action) => {
+      if (action.payload === state.isFetchingDashboardMission) return
+      state.isFetchingDashboardMission = action.payload
+    },
 
     // Emits
     emitGetTargetInfo: () => {},
@@ -440,6 +445,8 @@ const missionInfoSlice = createSlice({
       state.shouldFetchAllMissionsOnDashboard,
     selectDashboardMissionFetchingNotificationId: (state) =>
       state.dashboardMissionFetchingNotificationId,
+    selectIsFetchingDashboardMission: (state) =>
+      state.isFetchingDashboardMission,
   },
 })
 
@@ -584,6 +591,7 @@ export const {
   selectContextMenu,
   selectShouldFetchAllMissionsOnDashboard,
   selectDashboardMissionFetchingNotificationId,
+  selectIsFetchingDashboardMission,
 } = missionInfoSlice.selectors
 
 export const {
@@ -617,6 +625,7 @@ export const {
   emitExportMissionToFile,
   setShouldFetchAllMissionsOnDashboard,
   setDashboardMissionFetchingNotificationId,
+  setIsFetchingDashboardMission,
   emitControlMission,
 } = missionInfoSlice.actions
 

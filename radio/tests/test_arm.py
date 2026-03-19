@@ -3,7 +3,6 @@ import time
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import FakeTCP, NoDrone
 
 
@@ -52,7 +51,6 @@ def assert_drone_armed(droneStatus, armed: bool) -> None:
     assert bool(droneStatus.drone.master.motors_armed()) == armed
 
 
-@falcon_test(pass_drone_status=True)
 def test_arm_succeeds_when_disarmed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -66,12 +64,12 @@ def test_arm_succeeds_when_disarmed(
         "data": {
             "was_disarming": False,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
 def test_arm_fails_when_already_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -87,12 +85,12 @@ def test_arm_fails_when_already_armed(
         "data": {
             "was_disarming": False,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
 def test_disarm_succeeds_when_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -108,12 +106,12 @@ def test_disarm_succeeds_when_armed(
         "data": {
             "was_disarming": True,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
 def test_disarm_fails_when_already_disarmed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -127,12 +125,12 @@ def test_disarm_fails_when_already_disarmed(
         "data": {
             "was_disarming": True,
             "was_force": False,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_arm_succeeds_when_disarmed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -146,12 +144,12 @@ def test_force_arm_succeeds_when_disarmed(
         "data": {
             "was_disarming": False,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_arm_fails_when_already_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -167,12 +165,12 @@ def test_force_arm_fails_when_already_armed(
         "data": {
             "was_disarming": False,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=True)
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_succeeds_when_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -188,12 +186,12 @@ def test_force_disarm_succeeds_when_armed(
         "data": {
             "was_disarming": True,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_fails_when_already_disarmed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -207,12 +205,12 @@ def test_force_disarm_fails_when_already_disarmed(
         "data": {
             "was_disarming": True,
             "was_force": True,
+            "offer_force": False,
         },
     }
     assert_drone_armed(droneStatus, armed=False)
 
 
-@falcon_test(pass_drone_status=True)
 def test_arm_fails_with_serial_exception(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -227,11 +225,11 @@ def test_arm_fails_with_serial_exception(
             "data": {
                 "was_disarming": False,
                 "was_force": False,
+                "offer_force": False,
             },
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_arm_fails_with_serial_exception(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -246,11 +244,11 @@ def test_force_arm_fails_with_serial_exception(
             "data": {
                 "was_disarming": False,
                 "was_force": True,
+                "offer_force": False,
             },
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_disarm_fails_with_serial_exception(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -267,11 +265,11 @@ def test_disarm_fails_with_serial_exception(
             "data": {
                 "was_disarming": True,
                 "was_force": False,
+                "offer_force": False,
             },
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_fails_with_serial_exception(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -288,11 +286,11 @@ def test_force_disarm_fails_with_serial_exception(
             "data": {
                 "was_disarming": True,
                 "was_force": True,
+                "offer_force": False,
             },
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_arm_fails_when_no_drone_connected(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -306,7 +304,6 @@ def test_arm_fails_when_no_drone_connected(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_force_disarm_fails_when_no_drone_connected(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -320,7 +317,6 @@ def test_force_disarm_fails_when_no_drone_connected(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_arm_disarm_fails_with_missing_arm_parameter(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:

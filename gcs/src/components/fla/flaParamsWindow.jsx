@@ -100,7 +100,7 @@ export default function FlaParamsWindow() {
               .filter((param) =>
                 param.name
                   .toLowerCase()
-                  .includes(paramSearchValue.toLowerCase()),
+                  .startsWith(paramSearchValue.toLowerCase()),
               )
               .map((param) => (
                 <Table.Tr key={param.name}>

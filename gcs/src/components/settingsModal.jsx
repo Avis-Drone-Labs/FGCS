@@ -197,6 +197,37 @@ function ReleaseCheckRow() {
   )
 }
 
+function SetRatesRow() {
+  const { getSetting } = useSettings()
+
+
+  const onClick = () => {
+    const MAV_DATA_STREAM_ALL = getSetting("Developer.MAV_DATA_STREAM_ALL")
+    const MAV_DATA_STREAM_RAW_SENSORS = getSetting("Developer.MAV_DATA_STREAM_RAW_SENSORS")
+    const MAV_DATA_STREAM_EXTENDED_STATUS = getSetting("Developer.MAV_DATA_STREAM_EXTENDED_STATUS")
+    const MAV_DATA_STREAM_RC_CHANNELS = getSetting("Developer.MAV_DATA_STREAM_RC_CHANNELS")
+    const MAV_DATA_STREAM_RAW_CONTROLLER = getSetting("Developer.MAV_DATA_STREAM_RAW_CONTROLLER")
+    const MAV_DATA_STREAM_POSITION = getSetting("Developer.MAV_DATA_STREAM_POSITION")
+    const MAV_DATA_STREAM_EXTRA1 = getSetting("Developer.MAV_DATA_STREAM_EXTRA1")
+    const MAV_DATA_STREAM_EXTRA2 = getSetting("Developer.MAV_DATA_STREAM_EXTRA2")
+    const MAV_DATA_STREAM_EXTRA3 = getSetting("Developer.MAV_DATA_STREAM_EXTRA3")
+
+    console.log(MAV_DATA_STREAM_ALL)
+  }
+
+  return (
+    <div className="px-10 flex items-center gap-4">
+      <div className="flex-1">
+      </div>
+      <div className="flex-2 items-center gap-2">
+        <Button size="xs" color="blue" onClick={onClick}>
+          Set rates
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function OptionSetting({ settingName, options }) {
   const { getSetting, setSetting } = useSettings()
   return (
@@ -299,12 +330,12 @@ function ExtendableTextSetting({ settingName, df }) {
   const [items, setItems] = useState(
     getSetting(settingName).length > 0
       ? getSetting(settingName).map((item) => {
-          const newItem = { id: generateId() }
-          df.fields.forEach((field) => {
-            newItem[field.key] = item[field.key] || ""
-          })
-          return newItem
+        const newItem = { id: generateId() }
+        df.fields.forEach((field) => {
+          newItem[field.key] = item[field.key] || ""
         })
+        return newItem
+      })
       : [],
   )
 
@@ -569,7 +600,7 @@ function Setting({ settingName, df, initialValue }) {
 
     setChangedFromDefault(
       !["[]", '""'].includes(JSON.stringify(df.default)) &&
-        JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
+      JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
     )
   }, [getSetting(settingName)])
 
@@ -801,6 +832,12 @@ function SettingsModal() {
                       <ReleaseCheckRow />
                     </div>
                   )}
+                  {tab === "Developer" && (
+                    <>
+                      <SetRatesRow />
+                    </>
+                  )
+                  }
                 </Tabs.Panel>
               )
             })}
@@ -824,7 +861,7 @@ function SettingsModal() {
                 setting
                   .split(".")
                   .reduce((title, value) => title[value], DefaultSettings)[
-                  "display"
+                "display"
                 ]
               }
             </p>

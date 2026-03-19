@@ -9,12 +9,20 @@ import Map, { Marker } from "react-map-gl/maplibre"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import arrow from "../../assets/arrow.svg"
 import { intToCoord } from "../../helpers/dataFormatters"
 import { useSettings } from "../../helpers/settings"
 import { selectMapPositionData } from "../../redux/slices/logAnalyserSlice"
 import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
+
+function normalizeHeading(yaw) {
+  if (typeof yaw !== "number" || !Number.isFinite(yaw)) {
+    return 0
+  }
+  return ((yaw % 360) + 360) % 360
+}
 
 function FlaMapSectionNonMemo({ hoverPosition }) {
   const mapPositionData = useSelector(selectMapPositionData)
@@ -102,27 +110,13 @@ function FlaMapSectionNonMemo({ hoverPosition }) {
             latitude={intToCoord(hoverPosition.lat)}
             anchor="center"
           >
-            <div className="relative">
-              {/* Drone icon - using a simple SVG plane/drone shape */}
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="drop-shadow-lg"
-              >
-                {/* Simple drone/plane icon */}
-                <path
-                  d="M12 2L15 8H21L16 12L18 18L12 15L6 18L8 12L3 8H9L12 2Z"
-                  fill="#FF6B6B"
-                  stroke="#FFFFFF"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            <img
+              src={arrow}
+              className="w-6 h-6 drop-shadow-lg"
+              style={{
+                transform: `rotate(${normalizeHeading(hoverPosition.yaw)}deg)`,
+              }}
+            />
           </Marker>
         )}
 
@@ -130,11 +124,6 @@ function FlaMapSectionNonMemo({ hoverPosition }) {
           <p className="text-yellow-400">GPS</p>
           <p className="text-red-400">GPS2</p>
           <p className="text-blue-400">POS</p>
-        </div>
-
-        <div className="absolute top-10 right-0 bg-falcongrey-TRANSLUCENT cursor-default flex flex-row gap-2 p-1 select-none">
-          <p className="text-yellow-400">{hoverPosition?.lon}</p>
-          <p className="text-yellow-400">{hoverPosition?.lat}</p>
         </div>
       </Map>
     </div>

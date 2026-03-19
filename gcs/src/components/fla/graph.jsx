@@ -30,6 +30,7 @@ import {
   Title,
   Tooltip,
 } from "chart.js"
+import { getRelativePosition } from "chart.js/helpers"
 import annotationPlugin from "chartjs-plugin-annotation"
 import zoomPlugin from "chartjs-plugin-zoom"
 import createColormap from "colormap"
@@ -132,134 +133,205 @@ export default function Graph({ data, customColors, openPresetModal }) {
     [data.datasets],
   )
 
-  // Find GPS position based on timestamp - optimized with early termination
+  // Build one sorted timeline of map points from GPS1 only so hover snaps to a
+  // single source
+  const mapTimeline = useMemo(() => {
+    if (!mapPositionData) return []
+
+    const getTimeValue = (point) => {
+      const value = utcAvailable ? point.UtcTimeUS : point.TimeUS
+      return typeof value === "number" && Number.isFinite(value) ? value : null
+    }
+
+    const timeline = []
+
+    if (Array.isArray(mapPositionData.gps) && mapPositionData.gps.length > 0) {
+      for (const point of mapPositionData.gps) {
+        const time = getTimeValue(point)
+        if (
+          time === null ||
+          typeof point.lat !== "number" ||
+          typeof point.lon !== "number"
+        ) {
+          continue
+        }
+
+        timeline.push({
+          time,
+          lat: point.lat,
+          lon: point.lon,
+        })
+      }
+    }
+
+    timeline.sort((a, b) => a.time - b.time)
+
+    return timeline
+  }, [mapPositionData, utcAvailable])
+
+  const attTimeline = useMemo(() => {
+    if (!mapPositionData || !Array.isArray(mapPositionData.att)) return []
+
+    const timeline = []
+    for (const point of mapPositionData.att) {
+      const timeValue = utcAvailable ? point.UtcTimeUS : point.TimeUS
+      if (
+        typeof timeValue !== "number" ||
+        !Number.isFinite(timeValue) ||
+        typeof point.yaw !== "number" ||
+        !Number.isFinite(point.yaw)
+      ) {
+        continue
+      }
+      timeline.push({ time: timeValue, yaw: point.yaw })
+    }
+
+    timeline.sort((a, b) => a.time - b.time)
+
+    return timeline
+  }, [mapPositionData, utcAvailable])
+
+  // Binary search nearest map point to the hovered chart time.
   const findGpsPositionAtTime = useMemo(() => {
     return (timestamp) => {
-      if (!mapPositionData) return null
+      if (
+        !Array.isArray(mapTimeline) ||
+        mapTimeline.length === 0 ||
+        typeof timestamp !== "number" ||
+        !Number.isFinite(timestamp)
+      ) {
+        return null
+      }
 
-      // Try GPS first, then GPS2, then POS
-      const dataSources = [
-        mapPositionData.gps,
-        mapPositionData.gps2,
-        mapPositionData.pos,
-      ]
+      let left = 0
+      let right = mapTimeline.length
 
-      for (const dataSource of dataSources) {
-        if (!dataSource || dataSource.length === 0) continue
-
-        // Get the time field to use for comparison
-        const getTimeValue = (point) => {
-          return utcAvailable && point.UtcTimeUS !== undefined
-            ? point.UtcTimeUS
-            : point.TimeUS
-        }
-
-        const firstPointTime = getTimeValue(dataSource[0])
-        const lastPointTime = getTimeValue(dataSource[dataSource.length - 1])
-
-        // Quick boundary checks
-        if (timestamp <= firstPointTime) {
-          return { lat: dataSource[0].lat, lon: dataSource[0].lon }
-        }
-        if (timestamp >= lastPointTime) {
-          return {
-            lat: dataSource[dataSource.length - 1].lat,
-            lon: dataSource[dataSource.length - 1].lon,
-          }
-        }
-
-        // console log timestamp in readeable time
-        console.log(new Date(timestamp).toLocaleString())
-
-        // Binary search to find the closest point
-        let left = 0
-        let right = dataSource.length - 1
-
-        while (left < right) {
-          const mid = Math.floor((left + right) / 2)
-          const midTime = getTimeValue(dataSource[mid])
-
-          if (midTime === timestamp) {
-            // Exact match found
-            return {
-              lat: dataSource[mid].lat,
-              lon: dataSource[mid].lon,
-            }
-          }
-
-          if (midTime < timestamp) {
-            left = mid + 1
-          } else {
-            right = mid
-          }
-        }
-
-        // At this point, left === right
-        // Compare with the previous element to find the closest
-        let closestPoint = dataSource[left]
-        let minDiff = Math.abs(getTimeValue(closestPoint) - timestamp)
-
-        if (left > 0) {
-          const prevPoint = dataSource[left - 1]
-          const prevDiff = Math.abs(getTimeValue(prevPoint) - timestamp)
-
-          if (prevDiff < minDiff) {
-            closestPoint = prevPoint
-          }
-        }
-
-        // console.log(
-        //   `Binary search completed. Left index: ${left}, Time at left index: ${getTimeValue(dataSource[left])}`,
-        //   closestPoint,
-        //   dataSource,
-        // )
-
-        return {
-          lat: closestPoint.lat,
-          lon: closestPoint.lon,
+      while (left < right) {
+        const mid = Math.floor((left + right) / 2)
+        if (mapTimeline[mid].time < timestamp) {
+          left = mid + 1
+        } else {
+          right = mid
         }
       }
 
-      return null
+      const candidates = []
+      // Check the closest entries on both sides of the found index
+      if (left < mapTimeline.length) candidates.push(mapTimeline[left])
+      if (left > 0) candidates.push(mapTimeline[left - 1])
+
+      if (candidates.length === 0) return null
+
+      let best = candidates[0]
+      let bestDiff = Math.abs(best.time - timestamp)
+
+      // Iterate through candidates to find the closest one
+      for (let i = 1; i < candidates.length; i++) {
+        const candidate = candidates[i]
+        const diff = Math.abs(candidate.time - timestamp)
+        if (diff < bestDiff) {
+          best = candidate
+          bestDiff = diff
+        }
+      }
+
+      return {
+        lat: best.lat,
+        lon: best.lon,
+        time: best.time,
+      }
     }
-  }, [mapPositionData, utcAvailable])
+  }, [mapTimeline])
+
+  // Binary search nearest attitude point to the hovered chart time to get yaw
+  // for map hover
+  const findYawAtTime = useMemo(() => {
+    return (timestamp) => {
+      if (
+        !Array.isArray(attTimeline) ||
+        attTimeline.length === 0 ||
+        typeof timestamp !== "number" ||
+        !Number.isFinite(timestamp)
+      ) {
+        return null
+      }
+
+      let left = 0
+      let right = attTimeline.length
+
+      while (left < right) {
+        const mid = Math.floor((left + right) / 2)
+        if (attTimeline[mid].time < timestamp) {
+          left = mid + 1
+        } else {
+          right = mid
+        }
+      }
+
+      const candidates = []
+      // Check the closest entries on both sides of the found index
+      if (left < attTimeline.length) candidates.push(attTimeline[left])
+      if (left > 0) candidates.push(attTimeline[left - 1])
+      if (candidates.length === 0) return null
+
+      let best = candidates[0]
+      let bestDiff = Math.abs(best.time - timestamp)
+      // Iterate through candidates to find the closest one
+      for (let i = 1; i < candidates.length; i++) {
+        const candidate = candidates[i]
+        const diff = Math.abs(candidate.time - timestamp)
+        if (diff < bestDiff) {
+          best = candidate
+          bestDiff = diff
+        }
+      }
+
+      return best.yaw
+    }
+  }, [attTimeline])
 
   // Handle mouse move on chart to update hover position
   const handleChartMouseMove = (event) => {
     if (!chartRef.current || !showMap) return
 
     const chart = chartRef.current
-    const canvas = chart.canvas
-    if (!canvas) return
+    const position = getRelativePosition(event.nativeEvent, chart)
+    const chartArea = chart.chartArea
+    if (!position || !chartArea) return
 
-    // Get the mouse position relative to the canvas
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
+    // Ignore hover events outside the chart plotting area.
+    if (position.x < chartArea.left || position.x > chartArea.right) {
+      setHoverPosition(null)
+      return
+    }
 
-    // Get the x scale (time scale)
+    // Get the x scale (time scale or linear time axis)
     const xScale = chart.scales.x
     if (!xScale) return
 
     // Get the timestamp at the mouse position
-    let timestamp = xScale.getValueForPixel(x)
+    let timestamp = xScale.getValueForPixel(position.x)
 
     if (timestamp !== null && timestamp !== undefined) {
-      // The chart returns values in the same unit as the data
-      // For time scales, this is typically milliseconds, so convert to microseconds
+      // Keep the value in the same unit used by the chart data.
+      // - UTC mode (time scale): milliseconds
+      // - Dataflash mode (linear): microseconds
       if (timestamp instanceof Date) {
-        timestamp = timestamp.getTime() * 1000 // Convert ms to microseconds
-      } else if (typeof timestamp === "number") {
-        // If timestamp looks like milliseconds (13 digits), convert to microseconds
-        if (timestamp > 1e12 && timestamp < 1e16) {
-          // Already in microseconds, use as is
-        } else if (timestamp > 1e9 && timestamp < 1e13) {
-          // In milliseconds, convert to microseconds
-          timestamp = timestamp * 1000
-        }
+        timestamp = timestamp.getTime()
       }
 
       const gpsPosition = findGpsPositionAtTime(timestamp)
-      setHoverPosition(gpsPosition)
+      if (gpsPosition) {
+        const yaw = findYawAtTime(timestamp)
+        setHoverPosition({
+          ...gpsPosition,
+          yaw,
+          hoverTime: timestamp,
+          deltaTime: Math.abs(gpsPosition.time - timestamp),
+        })
+      } else {
+        setHoverPosition(null)
+      }
     }
   }
 

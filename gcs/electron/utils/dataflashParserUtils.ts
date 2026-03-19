@@ -1,6 +1,7 @@
 import type {
   AircraftType,
   FormatMessage,
+  MapHeadingDataObject,
   MapPositionData,
   MapPositionDataObject,
   MessageObject,
@@ -241,7 +242,7 @@ function canDisplayMapPositionData(logMessages: Messages) {
 }
 
 function getMapPositionData(logMessages: Messages): MapPositionData {
-  // Get position data from GPS and POS messages. GPS is the same GPS[0]
+  // Get position/heading data from GPS, POS and ATT messages.
 
   const mapPositionData: MapPositionData = {}
 
@@ -263,6 +264,11 @@ function getMapPositionData(logMessages: Messages): MapPositionData {
   if ("POS" in logMessages) {
     mapPositionData.pos = extractLatLonFromPosMessages(
       logMessages["POS"] as MessageObject[],
+    )
+  }
+  if ("ATT" in logMessages) {
+    mapPositionData.att = extractYawFromAttMessages(
+      logMessages["ATT"] as MessageObject[],
     )
   }
 
@@ -308,6 +314,34 @@ function extractLatLonFromGpsMessages(
   return undefined
 }
 
+function extractYawFromAttMessages(
+  attMessages: MessageObject[],
+): MapHeadingDataObject[] | undefined {
+  if (!attMessages || attMessages.length === 0) {
+    return undefined
+  }
+
+  const extractedData: MapHeadingDataObject[] = []
+
+  for (const msg of attMessages) {
+    const yaw = (msg as { Yaw?: unknown }).Yaw
+    const TimeUS = (msg as { TimeUS?: unknown }).TimeUS
+    const UtcTimeUS = (msg as { UtcTimeUS?: unknown }).UtcTimeUS
+
+    if (typeof yaw === "number" && Number.isFinite(yaw)) {
+      extractedData.push({
+        yaw,
+        TimeUS: typeof TimeUS === "number" ? TimeUS : undefined,
+        UtcTimeUS: typeof UtcTimeUS === "number" ? UtcTimeUS : undefined,
+      })
+    }
+  }
+
+  if (extractedData.length > 0) {
+    return extractedData
+  }
+  return undefined
+}
 function extractLatLonFromPosMessages(
   posMessages: MessageObject[],
 ): MapPositionDataObject[] | undefined {

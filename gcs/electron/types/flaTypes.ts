@@ -92,10 +92,17 @@ export interface MapPositionDataObject {
   UtcTimeUS?: number
 }
 
+export interface MapHeadingDataObject {
+  yaw: number
+  TimeUS?: number
+  UtcTimeUS?: number
+}
+
 export interface MapPositionData {
   gps?: MapPositionDataObject[] | undefined
   gps2?: MapPositionDataObject[] | undefined
   pos?: MapPositionDataObject[] | undefined
+  att?: MapHeadingDataObject[] | undefined
 }
 
 export interface LogSummary {

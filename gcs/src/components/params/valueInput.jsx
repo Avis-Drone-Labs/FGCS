@@ -17,7 +17,6 @@ import {
   appendModifiedParams,
   selectModifiedParams,
   selectShownParams,
-  setRebootPromptModalOpen,
   updateModifiedParamValue,
 } from "../../redux/slices/paramsSlice"
 

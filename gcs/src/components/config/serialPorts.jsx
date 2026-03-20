@@ -109,17 +109,14 @@ export default function SerialPorts() {
     )
   }
 
-  // Build serial port rows (1-7)
-  const serialPortRows = Array.from({ length: 7 }, (_, i) => {
-    const portNumber = i + 1
-    const config = serialPortsConfig[portNumber] || {}
-    return {
-      number: portNumber,
+  // Build serial port rows
+  const serialPortRows = Object.entries(serialPortsConfig)
+    .map(([key, config]) => ({
+      number: Number(key.split("_")[1]),
       protocol: config.protocol,
       baud: config.baud,
       options: config.options,
-    }
-  })
+    }))
 
   useEffect(() => {
     if (connected) {

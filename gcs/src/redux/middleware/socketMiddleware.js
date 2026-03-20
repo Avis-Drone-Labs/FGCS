@@ -1383,13 +1383,7 @@ const socketMiddleware = (store) => {
         socket.socket.on(
           ConfigSpecificSocketEvents.onSerialPortsConfig,
           (msg) => {
-            const config = {}
-
-            for (let i = 1; i <= 7; i++) {
-              config[i] = msg[`SERIAL_${i}`]
-            }
-
-            store.dispatch(setSerialPortsConfig(config))
+            store.dispatch(setSerialPortsConfig(msg))
           },
         )
 

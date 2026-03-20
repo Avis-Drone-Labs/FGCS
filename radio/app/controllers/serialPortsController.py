@@ -61,17 +61,21 @@ class SerialPortsController:
     def fetchParams(self) -> None:
         """
         Fetches the serial port parameters from the drone.
-        Only fetches SERIAL1-7.
+        Tries SERIAL1-10 and only stores ports that exist.
         """
         self.drone.logger.debug("Fetching serial port parameters")
 
-        # Fetch SERIAL1-7 parameters
-        for port_number in range(1, 8):
+        for port_number in range(1, 11):
             port_params = self.params.get(f"SERIAL_{port_number}", {})
 
             self._getAndSetParam(
                 port_params, "protocol", f"SERIAL{port_number}_PROTOCOL"
             )
+
+            # if get protocol times out, skip the others. They dont exist
+            if "protocol" not in port_params:
+                continue
+
             self._getAndSetParam(port_params, "baud", f"SERIAL{port_number}_BAUD")
             self._getAndSetParam(port_params, "options", f"SERIAL{port_number}_OPTIONS")
 
@@ -84,9 +88,8 @@ class SerialPortsController:
         Returns:
             dict: The serial port configuration
         """
-        # Get SERIAL1-7 parameters from cache
-        for port_number in range(1, 8):
-            port_params = self.params.get(f"SERIAL_{port_number}", {})
+        for port_key, port_params in self.params.items():
+            port_number = port_key.split("_")[1]
 
             self._getAndSetCachedParam(
                 port_params, "protocol", f"SERIAL{port_number}_PROTOCOL"
@@ -95,8 +98,6 @@ class SerialPortsController:
             self._getAndSetCachedParam(
                 port_params, "options", f"SERIAL{port_number}_OPTIONS"
             )
-
-            self.params[f"SERIAL_{port_number}"] = port_params
 
         return self.params
 

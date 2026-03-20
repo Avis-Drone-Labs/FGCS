@@ -198,18 +198,18 @@ const configSlice = createSlice({
     },
     updateSerialPortConfigParam: (state, action) => {
       const { param_id, value } = action.payload
-      // Handle SERIAL1-7 params
-      const serialMatch = param_id.match(/^SERIAL([1-7])_(.+)$/)
+      // Handle SERIALn params
+      const serialMatch = param_id.match(/^SERIAL(\d+)_(.+)$/)
       if (serialMatch) {
-        const portNum = serialMatch[1]
+        const portKey = `SERIAL_${serialMatch[1]}`
         const paramType = serialMatch[2].toLowerCase()
-        if (!state.serialPortsConfig[portNum]) {
-          state.serialPortsConfig[portNum] = {}
+        if (!state.serialPortsConfig[portKey]) {
+          state.serialPortsConfig[portKey] = {}
         }
         const validParamTypes = ["protocol", "baud", "options"]
         if (!validParamTypes.includes(paramType)) return
-        if (state.serialPortsConfig[portNum][paramType] === value) return
-        state.serialPortsConfig[portNum][paramType] = value
+        if (state.serialPortsConfig[portKey][paramType] === value) return
+        state.serialPortsConfig[portKey][paramType] = value
       }
     },
 

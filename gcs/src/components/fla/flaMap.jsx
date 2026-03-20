@@ -5,10 +5,11 @@
 import { envelope, featureCollection, point } from "@turf/turf"
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { useMemo, useRef } from "react"
-import Map from "react-map-gl/maplibre"
+import Map, { Marker } from "react-map-gl/maplibre"
 import { useSelector } from "react-redux"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
+import arrow from "../../assets/arrow.svg"
 import { intToCoord } from "../../helpers/dataFormatters"
 import { useSettings } from "../../helpers/settings"
 import { selectMapPositionData } from "../../redux/slices/logAnalyserSlice"
@@ -16,7 +17,14 @@ import DrawLineCoordinates from "../mapComponents/drawLineCoordinates"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
-function FlaMapSectionNonMemo() {
+function normalizeHeading(yaw) {
+  if (typeof yaw !== "number" || !Number.isFinite(yaw)) {
+    return 0
+  }
+  return ((yaw % 360) + 360) % 360
+}
+
+function FlaMapSectionNonMemo({ hoverPosition }) {
   const mapPositionData = useSelector(selectMapPositionData)
   const mapPositionDataBounds = useMemo(() => {
     let dataSource = null
@@ -93,6 +101,23 @@ function FlaMapSectionNonMemo() {
             ])}
             colour={tailwindColors.blue[400]}
           />
+        )}
+
+        {/* Drone marker at hover position */}
+        {hoverPosition && (
+          <Marker
+            longitude={intToCoord(hoverPosition.lon)}
+            latitude={intToCoord(hoverPosition.lat)}
+            anchor="center"
+          >
+            <img
+              src={arrow}
+              className="w-6 h-6 drop-shadow-lg"
+              style={{
+                transform: `rotate(${normalizeHeading(hoverPosition.yaw)}deg)`,
+              }}
+            />
+          </Marker>
         )}
 
         <div className="absolute top-0 right-0 bg-falcongrey-TRANSLUCENT cursor-default flex flex-row gap-2 p-1 select-none">

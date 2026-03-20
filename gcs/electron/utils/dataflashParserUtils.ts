@@ -1,6 +1,7 @@
 import type {
   AircraftType,
   FormatMessage,
+  MapHeadingDataObject,
   MapPositionData,
   MapPositionDataObject,
   MessageObject,
@@ -241,7 +242,7 @@ function canDisplayMapPositionData(logMessages: Messages) {
 }
 
 function getMapPositionData(logMessages: Messages): MapPositionData {
-  // Get position data from GPS and POS messages. GPS is the same GPS[0]
+  // Get position/heading data from GPS, POS and ATT messages.
 
   const mapPositionData: MapPositionData = {}
 
@@ -265,6 +266,11 @@ function getMapPositionData(logMessages: Messages): MapPositionData {
       logMessages["POS"] as MessageObject[],
     )
   }
+  if ("ATT" in logMessages) {
+    mapPositionData.att = extractYawFromAttMessages(
+      logMessages["ATT"] as MessageObject[],
+    )
+  }
 
   return mapPositionData
 }
@@ -276,26 +282,31 @@ function extractLatLonFromGpsMessages(
     return undefined
   }
 
-  const extractedData = gpsMessages
-    .map((msg: MessageObject) => {
-      // Only process messages with a status more than 2 (3D fix and above)
-      if (((msg as { Status?: number }).Status ?? 0) > 2) {
-        const lat = (msg as { Lat?: unknown }).Lat
-        const lon = (msg as { Lng?: unknown }).Lng
-        if (
-          typeof lat !== "number" ||
-          typeof lon !== "number" ||
-          lat === 0 ||
-          lon === 0
-        ) {
-          return undefined
-        }
-        return { lat, lon }
-      } else {
-        return undefined
+  const extractedData: MapPositionDataObject[] = []
+
+  for (const msg of gpsMessages) {
+    // Only process messages with a status more than 2 (3D fix and above)
+    if (((msg as { Status?: number }).Status ?? 0) > 2) {
+      const lat = (msg as { Lat?: unknown }).Lat
+      const lon = (msg as { Lng?: unknown }).Lng
+      const TimeUS = (msg as { TimeUS?: unknown }).TimeUS
+      const UtcTimeUS = (msg as { UtcTimeUS?: unknown }).UtcTimeUS
+
+      if (
+        typeof lat === "number" &&
+        typeof lon === "number" &&
+        lat !== 0 &&
+        lon !== 0
+      ) {
+        extractedData.push({
+          lat,
+          lon,
+          TimeUS: typeof TimeUS === "number" ? TimeUS : undefined,
+          UtcTimeUS: typeof UtcTimeUS === "number" ? UtcTimeUS : undefined,
+        })
       }
-    })
-    .filter((item): item is MapPositionDataObject => item !== undefined)
+    }
+  }
 
   if (extractedData.length > 0) {
     return extractedData
@@ -303,6 +314,34 @@ function extractLatLonFromGpsMessages(
   return undefined
 }
 
+function extractYawFromAttMessages(
+  attMessages: MessageObject[],
+): MapHeadingDataObject[] | undefined {
+  if (!attMessages || attMessages.length === 0) {
+    return undefined
+  }
+
+  const extractedData: MapHeadingDataObject[] = []
+
+  for (const msg of attMessages) {
+    const yaw = (msg as { Yaw?: unknown }).Yaw
+    const TimeUS = (msg as { TimeUS?: unknown }).TimeUS
+    const UtcTimeUS = (msg as { UtcTimeUS?: unknown }).UtcTimeUS
+
+    if (typeof yaw === "number" && Number.isFinite(yaw)) {
+      extractedData.push({
+        yaw,
+        TimeUS: typeof TimeUS === "number" ? TimeUS : undefined,
+        UtcTimeUS: typeof UtcTimeUS === "number" ? UtcTimeUS : undefined,
+      })
+    }
+  }
+
+  if (extractedData.length > 0) {
+    return extractedData
+  }
+  return undefined
+}
 function extractLatLonFromPosMessages(
   posMessages: MessageObject[],
 ): MapPositionDataObject[] | undefined {
@@ -310,21 +349,28 @@ function extractLatLonFromPosMessages(
     return undefined
   }
 
-  const extractedData = posMessages
-    .map((msg: MessageObject) => {
-      const lat = (msg as { Lat?: unknown }).Lat
-      const lon = (msg as { Lng?: unknown }).Lng
-      if (
-        typeof lat !== "number" ||
-        typeof lon !== "number" ||
-        lat === 0 ||
-        lon === 0
-      ) {
-        return undefined
-      }
-      return { lat, lon }
-    })
-    .filter((item): item is MapPositionDataObject => item !== undefined)
+  const extractedData: MapPositionDataObject[] = []
+
+  for (const msg of posMessages) {
+    const lat = (msg as { Lat?: unknown }).Lat
+    const lon = (msg as { Lng?: unknown }).Lng
+    const TimeUS = (msg as { TimeUS?: unknown }).TimeUS
+    const UtcTimeUS = (msg as { UtcTimeUS?: unknown }).UtcTimeUS
+
+    if (
+      typeof lat === "number" &&
+      typeof lon === "number" &&
+      lat !== 0 &&
+      lon !== 0
+    ) {
+      extractedData.push({
+        lat,
+        lon,
+        TimeUS: typeof TimeUS === "number" ? TimeUS : undefined,
+        UtcTimeUS: typeof UtcTimeUS === "number" ? UtcTimeUS : undefined,
+      })
+    }
+  }
 
   if (extractedData.length > 0) {
     return extractedData

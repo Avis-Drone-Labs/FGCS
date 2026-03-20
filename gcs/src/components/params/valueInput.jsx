@@ -94,7 +94,6 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
   if (paramDef?.Values && !paramDef?.Range) {
     input = (
       <Select // Values input
-        className={className}
         value={`${cleanFloat(param_value)}`}
         onChange={(value) => addToModifiedParams(sanitiseInput(value), param)}
         data={Object.keys(paramDef?.Values).map((key) => ({
@@ -108,7 +107,6 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
   } else if (paramDef?.Bitmask) {
     input = (
       <BitmaskSelect // Bitmask input
-        className={className}
         value={param_value}
         onChange={addToModifiedParams}
         param={param}
@@ -120,7 +118,6 @@ export default function ValueInput({ index, paramDef, className, disabled }) {
     // Default return NumberInput, with range if the param supports it
     input = (
       <NumberInput
-        className={className}
         label={
           paramDef?.Range
             ? `${paramDef?.Range.low} - ${paramDef?.Range.high}`

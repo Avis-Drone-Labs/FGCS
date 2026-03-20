@@ -110,13 +110,14 @@ export default function SerialPorts() {
   }
 
   // Build serial port rows
-  const serialPortRows = Object.entries(serialPortsConfig)
-    .map(([key, config]) => ({
+  const serialPortRows = Object.entries(serialPortsConfig).map(
+    ([key, config]) => ({
       number: Number(key.split("_")[1]),
       protocol: config.protocol,
       baud: config.baud,
       options: config.options,
-    }))
+    }),
+  )
 
   useEffect(() => {
     if (connected) {

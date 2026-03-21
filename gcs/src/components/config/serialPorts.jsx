@@ -153,7 +153,7 @@ export default function SerialPorts() {
             const protocolOptions = protocolDef?.Values
               ? Object.entries(protocolDef.Values).map(([value, label]) => ({
                   value,
-                  label: `${label}`,
+                  label: `${value}: ${label}`,
                 }))
               : []
 
@@ -161,7 +161,7 @@ export default function SerialPorts() {
             const baudOptions = baudDef?.Values
               ? Object.entries(baudDef.Values).map(([value, label]) => ({
                   value,
-                  label: `${label}`,
+                  label: `${value}: ${label}`,
                 }))
               : []
 

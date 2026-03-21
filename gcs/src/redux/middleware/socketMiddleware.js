@@ -142,16 +142,12 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
+import { pushMessage } from "../slices/statusTextSlice.js"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
-  // socket.on events
   Connect: "connect",
   Disconnect: "disconnect",
-
-  // droneConnectionSlice
-  // getComPorts: "get_com_ports",
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
   linkDebugStats: "link_debug_stats",
@@ -473,7 +469,6 @@ const socketMiddleware = (store) => {
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
           store.dispatch(setShowMotorTestWarningModal(true))
-          store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))

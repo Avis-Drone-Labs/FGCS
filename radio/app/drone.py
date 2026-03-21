@@ -24,6 +24,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
+from app.controllers.serialPortsController import SerialPortsController
 from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
 from app.utils import (
@@ -116,7 +117,8 @@ class Drone:
             "Setting up the mission controller",
             "Setting up the frame controller",
             "Setting up the RC controller",
-            "Setting up the Servo Controller",
+            "Setting up the Servo controller",
+            "Setting up the Serial Ports controller",
             "Setting up the nav controller",
             "Setting up the FTP controller",
             "Connection complete",
@@ -307,10 +309,16 @@ class Drone:
         self.servoController = ServoController(self)
 
         self.sendConnectionStatusUpdate(12)
-        self.navController = NavController(self)
+        self.serialPortsController = SerialPortsController(self)
 
         self.sendConnectionStatusUpdate(13)
+        self.navController = NavController(self)
+
+        self.sendConnectionStatusUpdate(14)
         self.ftpController = FtpController(self)
+
+        # Final phase: connection complete
+        self.sendConnectionStatusUpdate(15)
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)

@@ -2,7 +2,7 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(40)
 def test_reboot_success(socketio_client: SocketIOTestClient):
     """
     Tests if the autopilot has been rebooted

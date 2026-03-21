@@ -7,6 +7,7 @@ import {
   emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
+  emitGetSerialPortsConfig,
   emitGetServoConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
@@ -16,6 +17,7 @@ import {
   emitSetGripperDisabled,
   emitSetGripperEnabled,
   emitSetRcConfigParam,
+  emitSetSerialPortConfigParam,
   emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
@@ -478,6 +480,19 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("test_servo_pwm", {
           servo_instance: action.payload.servo_instance,
           pwm_value: action.payload.pwm_value,
+        })
+      },
+    },
+    {
+      emitter: emitGetSerialPortsConfig,
+      callback: () => socket.socket.emit("get_serial_ports_config"),
+    },
+    {
+      emitter: emitSetSerialPortConfigParam,
+      callback: () => {
+        socket.socket.emit("set_serial_port_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
         })
       },
     },

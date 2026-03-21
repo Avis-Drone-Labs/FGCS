@@ -1,21 +1,9 @@
 import pytest
-from flask_socketio import SocketIOTestClient
+from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import NoDrone, send_and_receive
 
 
-@pytest.fixture(scope="module", autouse=True)
-def run_once_before_all_tests():
-    """Ensure serial ports controller is initialized before tests run."""
-    from app import droneStatus
-
-    assert droneStatus.drone is not None
-    assert droneStatus.drone.serialPortsController is not None
-    yield
-
-
-@falcon_test(pass_drone_status=True)
 def test_getSerialPortsConfig_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -27,7 +15,6 @@ def test_getSerialPortsConfig_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_getSerialPortsConfig_noDrone(socketio_client: SocketIOTestClient, droneStatus):
     """Should return error when no drone is connected."""
     droneStatus.state = "config.serial_ports"
@@ -40,7 +27,6 @@ def test_getSerialPortsConfig_noDrone(socketio_client: SocketIOTestClient, drone
         )
 
 
-@falcon_test(pass_drone_status=True)
 def test_getSerialPortsConfig_success(socketio_client: SocketIOTestClient, droneStatus):
     """Should return serial port config when on the correct screen and connected."""
     droneStatus.state = "config.serial_ports"
@@ -63,7 +49,6 @@ def test_getSerialPortsConfig_success(socketio_client: SocketIOTestClient, drone
         assert "options" in port_data
 
 
-@falcon_test(pass_drone_status=True)
 def test_setSerialPortConfigParam_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -78,7 +63,6 @@ def test_setSerialPortConfigParam_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setSerialPortConfigParam_noDrone(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -96,7 +80,6 @@ def test_setSerialPortConfigParam_noDrone(
         )
 
 
-@falcon_test(pass_drone_status=True)
 def test_setSerialPortConfigParam_missingParamId(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -109,7 +92,6 @@ def test_setSerialPortConfigParam_missingParamId(
     assert result == {"message": "Param ID and value must be specified."}
 
 
-@falcon_test(pass_drone_status=True)
 def test_setSerialPortConfigParam_missingValue(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -122,7 +104,6 @@ def test_setSerialPortConfigParam_missingValue(
     assert result == {"message": "Param ID and value must be specified."}
 
 
-@falcon_test(pass_drone_status=True)
 def test_setSerialPortConfigParam_success(
     socketio_client: SocketIOTestClient, droneStatus
 ):

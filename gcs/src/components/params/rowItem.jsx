@@ -88,7 +88,12 @@ const RowItem = memo(({ index, style }) => {
       </div>
 
       <div className="flex items-end w-4/12 justify-between gap-x-4">
-        <ValueInput index={index} paramDef={paramDef} className="grow" />
+        <ValueInput
+          index={index}
+          paramDef={paramDef}
+          className="grow"
+          disabled={paramDef?.ReadOnly === "True"}
+        />
         {hasBeenModified && (
           <Tooltip
             label={`Reset to previous value of ${paramPreviousValue?.param_value}`}

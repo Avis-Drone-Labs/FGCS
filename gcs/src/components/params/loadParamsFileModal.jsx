@@ -16,16 +16,22 @@ import {
   selectLoadParamsFileModalOpen,
   setLoadParamsFileModalOpen,
 } from "../../redux/slices/paramsSlice"
+import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
+import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
+import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 
 export default function LoadParamsFileModal() {
   const dispatch = useDispatch()
   const opened = useSelector(selectLoadParamsFileModalOpen)
   const loadedFileName = useSelector(selectLoadedFileName)
   const loadedParams = useSelector(selectLoadedParams)
+  const aircraftType = useSelector(selectAircraftType)
 
   const [paramSearchValue, setParamSearchValue] = useState("")
 
   function acceptLoadedParams() {
+    const paramDefMap =
+      aircraftType === 1 ? apmParamDefsPlane : apmParamDefsCopter
     dispatch(
       appendModifiedParams(
         loadedParams.map((param) => ({
@@ -33,6 +39,7 @@ export default function LoadParamsFileModal() {
           param_value: param.newValue,
           param_type: param.type,
           initial_value: param.oldValue,
+          reboot_required: paramDefMap[param.id]?.RebootRequired === "True",
         })),
       ),
     )

@@ -139,6 +139,7 @@ import {
   setParamsWriteProgressData,
   setParamsWriteProgressModalOpen,
   setRebootData,
+  setRebootPromptModalOpen,
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
@@ -920,6 +921,14 @@ const socketMiddleware = (store) => {
           if (paramsNotSet.length !== 0) {
             store.dispatch(setParamsFailedToWrite(paramsNotSet))
             store.dispatch(setParamsFailedToWriteModalOpen(true))
+          }
+
+          const rebootRequired = paramsSetSuccessfully.some(
+            (param) => param.reboot_required === true,
+          )
+
+          if (rebootRequired) {
+            store.dispatch(setRebootPromptModalOpen(true))
           }
         })
 

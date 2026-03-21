@@ -15,6 +15,7 @@ export default function BitmaskSelect({
   onChange,
   param,
   options,
+  disabled,
 }) {
   const [selected, selectedHandler] = useListState([])
 
@@ -63,6 +64,7 @@ export default function BitmaskSelect({
           value: `${key}`,
           label: `${options[key]}`,
         }))}
+        disabled={disabled}
       />
     </ScrollArea.Autosize>
   )

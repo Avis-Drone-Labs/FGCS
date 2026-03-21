@@ -1,7 +1,6 @@
 from typing import Optional
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import FakeTCP, NoDrone
 
 
@@ -75,7 +74,6 @@ def send_testMotors(
     return client.get_received()[0]
 
 
-@falcon_test(pass_drone_status=True)
 def test_testOneMotor(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Test correct motor being tested
     result = send_testOneMotor(socketio_client, 1, 50, 1)
@@ -127,7 +125,6 @@ def test_testOneMotor(socketio_client: SocketIOTestClient, droneStatus) -> None:
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_testMotorSequence(socketio_client: SocketIOTestClient, droneStatus) -> None:
     # Test with varying number of motors and valid throttle / duration
     result = send_testMotors(socketio_client, 50, 1, num_motors=1)
@@ -173,7 +170,6 @@ def test_testMotorSequence(socketio_client: SocketIOTestClient, droneStatus) -> 
         }
 
 
-@falcon_test()
 def test_testAllMotors(socketio_client: SocketIOTestClient) -> None:
     # Test with varying number of motors and valid throttle / duration
     result = send_testMotors(socketio_client, 50, 1, num_motors=1, test_all=True)

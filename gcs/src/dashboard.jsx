@@ -52,6 +52,7 @@ import { useSettings } from "./helpers/settings"
 import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
 
 // Import components
+import ForceArmModal from "./components/dashboard/ForceArmModal"
 import ForceDisarmModal from "./components/dashboard/ForceDisarmModal"
 
 // Custom component
@@ -376,6 +377,7 @@ export default function Dashboard() {
         </div>
       </div>
       <ForceDisarmModal />
+      <ForceArmModal />
     </Layout>
   )
 }

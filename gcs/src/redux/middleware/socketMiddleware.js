@@ -20,6 +20,7 @@ import {
   setConnectionModal,
   setConnectionStatus,
   setFetchingComPorts,
+  setForceArmModalOpened,
   setForceDisarmModalOpened,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
@@ -116,6 +117,7 @@ import {
   setDrawingFenceItems,
   setDrawingMissionItems,
   setDrawingRallyItems,
+  setIsFetchingDashboardMission,
   setMissionProgressData,
   setMissionProgressModal,
   setShouldFetchAllMissionsOnDashboard,
@@ -390,6 +392,9 @@ const socketMiddleware = (store) => {
         socket.socket.on("disconnect", () => {
           store.dispatch(setConnected(false))
           store.dispatch(setConnecting(false))
+          store.dispatch(
+            closeDashboardMissionFetchingNotificationNoSuccessThunk(),
+          )
         })
 
         socket.socket.on("is_connected_to_drone", (msg) => {
@@ -399,9 +404,6 @@ const socketMiddleware = (store) => {
             store.dispatch(setConnected(false))
             store.dispatch(setConnecting(false))
             store.dispatch(emitGetComPorts())
-            store.dispatch(
-              closeDashboardMissionFetchingNotificationNoSuccessThunk(),
-            )
           }
         })
 
@@ -432,6 +434,11 @@ const socketMiddleware = (store) => {
         socket.socket.on("disconnected_from_drone", () => {
           store.dispatch(setConnected(false))
           store.dispatch(setConnectedToSimulator(false))
+          store.dispatch(setIsFetchingDashboardMission(false))
+          store.dispatch(
+            closeDashboardMissionFetchingNotificationNoSuccessThunk(),
+          )
+
           window.ipcRenderer.send("window:update-title", "FGCS")
         })
 
@@ -478,6 +485,7 @@ const socketMiddleware = (store) => {
           store.dispatch(setReadFileData(null))
           store.dispatch(setTotalTimeFlying(0))
           store.dispatch(setHasEverHadGpsFix(false))
+          store.dispatch(setIsFetchingDashboardMission(false))
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
@@ -801,9 +809,18 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
           if (!msg.success) {
+            const offerForce = msg.data?.offer_force === true
+
             // Check if this was a disarm attempt and was not a force disarm
-            if (msg.data?.was_disarming && !msg.data?.was_force) {
+            if (msg.data?.was_disarming && !msg.data?.was_force && offerForce) {
               store.dispatch(setForceDisarmModalOpened(true))
+            } else if (
+              !msg.data?.was_disarming &&
+              !msg.data?.was_force &&
+              offerForce
+            ) {
+              // Failed non-force arm attempt — offer force arm
+              store.dispatch(setForceArmModalOpened(true))
             } else {
               showErrorNotification(msg.message)
             }
@@ -984,6 +1001,7 @@ const socketMiddleware = (store) => {
               store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
             }
             store.dispatch(closeDashboardMissionFetchingNotificationThunk())
+            store.dispatch(setIsFetchingDashboardMission(false))
           },
         )
 

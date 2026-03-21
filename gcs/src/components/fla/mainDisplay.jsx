@@ -180,7 +180,7 @@ export default function MainDisplay({ closeLogFile, chartData, customColors }) {
                     className="min-h-0 h-full pb-4"
                   >
                     <ScrollArea className="h-full">
-                      <div className="grid grid-cols-6 gap-2 py-2">
+                      <div className="grid grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-2 py-2">
                         {chartData.datasets.map((item) => (
                           <Fragment key={item.label}>
                             <ChartDataCard

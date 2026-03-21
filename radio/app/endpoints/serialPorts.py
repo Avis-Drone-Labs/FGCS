@@ -1,6 +1,6 @@
 import app.droneStatus as droneStatus
 from app import logger, socketio
-from app.customTypes import BatchSetConfigParams, SetConfigParam
+from app.customTypes import SetConfigParam
 from app.utils import notConnectedError
 
 

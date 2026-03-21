@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.customTypes import Number, Response, SetConfigParam
+from app.customTypes import Number
 
 if TYPE_CHECKING:
     from app.drone import Drone

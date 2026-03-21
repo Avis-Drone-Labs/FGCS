@@ -78,6 +78,7 @@ import {
   setBatteryData,
   setDroneAircraftType,
   setEkfStatusReportData,
+  setExtraData,
   setFlightSwVersion,
   setGps2RawIntData,
   setGpsData,
@@ -92,7 +93,6 @@ import {
   setOnboardControlSensorsEnabled,
   setOnboardControlSensorsHealth,
   setRSSIData,
-  setSelectedDisplayTelemetry,
   setTelemetryData,
   setTotalTimeFlying,
   setVibrationData,
@@ -596,22 +596,18 @@ const socketMiddleware = (store) => {
           const packetType = msg.mavpackettype
           const storeState = store.getState()
           if (storeState !== undefined) {
-            const selectedDisplayTelemetry =
-              storeState.droneInfo.selectedDisplayTelemetry
-            const updatedSelectedDisplayTelemetry =
-              selectedDisplayTelemetry.map((dataItem) => {
-                if (dataItem.currently_selected.startsWith(packetType)) {
-                  const specificData = dataItem.currently_selected.split(".")[1]
-                  if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-                    return { ...dataItem, value: msg[specificData] }
-                  }
+            const extraDroneData = storeState.droneInfo.extraDroneData
+            const updatedExtraDroneData = extraDroneData.map((dataItem) => {
+              if (dataItem.currently_selected.startsWith(packetType)) {
+                const specificData = dataItem.currently_selected.split(".")[1]
+                if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+                  return { ...dataItem, value: msg[specificData] }
                 }
-                return dataItem
-              })
+              }
+              return dataItem
+            })
 
-            store.dispatch(
-              setSelectedDisplayTelemetry(updatedSelectedDisplayTelemetry),
-            )
+            store.dispatch(setExtraData(updatedExtraDroneData))
           }
 
           // Handle graph messages

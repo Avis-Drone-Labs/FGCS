@@ -1,5 +1,4 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
-import { defaultDataMessages } from "../helpers/dashboardDefaultDataMessages"
 import armedMiddleware from "./middleware/armedMiddleware"
 import socketMiddleware from "./middleware/socketMiddleware"
 import applicationSlice from "./slices/applicationSlice"
@@ -17,10 +16,7 @@ import droneConnectionSlice, {
   setPort,
   setSelectedComPorts,
 } from "./slices/droneConnectionSlice"
-import droneInfoSlice, {
-  setGraphValues,
-  setSelectedDisplayTelemetry,
-} from "./slices/droneInfoSlice"
+import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
 import ftpSlice from "./slices/ftpSlice"
 import logAnalyserSlice from "./slices/logAnalyserSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
@@ -126,25 +122,6 @@ if (selectedRealtimeGraphs !== null) {
         graph_d: null,
       }),
     )
-  }
-}
-
-const selectedDisplayTelemetry = localStorage.getItem(
-  "selectedDisplayTelemetry",
-)
-if (selectedDisplayTelemetry !== null) {
-  try {
-    const parsedSelectedDisplayTelemetry = JSON.parse(selectedDisplayTelemetry)
-    if (
-      Array.isArray(parsedSelectedDisplayTelemetry) &&
-      parsedSelectedDisplayTelemetry.length > 0
-    ) {
-      store.dispatch(
-        setSelectedDisplayTelemetry(parsedSelectedDisplayTelemetry),
-      )
-    }
-  } catch {
-    store.dispatch(setSelectedDisplayTelemetry(defaultDataMessages))
   }
 }
 
@@ -262,16 +239,6 @@ store.subscribe(() => {
     updateJSONLocalStorageIfChanged(
       "selectedRealtimeGraphs",
       store_mut.droneInfo.graphs.selectedGraphs,
-    )
-  }
-
-  if (
-    Array.isArray(store_mut.droneInfo.selectedDisplayTelemetry) &&
-    store_mut.droneInfo.selectedDisplayTelemetry.length > 0
-  ) {
-    updateJSONLocalStorageIfChanged(
-      "selectedDisplayTelemetry",
-      store_mut.droneInfo.selectedDisplayTelemetry,
     )
   }
 

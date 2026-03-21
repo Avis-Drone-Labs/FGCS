@@ -1,4 +1,3 @@
-import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
 from .helpers import NoDrone, send_and_receive

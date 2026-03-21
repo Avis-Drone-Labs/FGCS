@@ -13,6 +13,10 @@ export function coordToInt(val) {
   return parseInt(val * 1e7)
 }
 
+export function dec2bin(dec) {
+  return (dec >>> 0).toString(2)
+}
+
 export const dataFormatters = {
   "ATTITUDE.pitch": radToDeg,
   "ATTITUDE.roll": radToDeg,

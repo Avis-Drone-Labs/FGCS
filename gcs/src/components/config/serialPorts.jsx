@@ -1,5 +1,5 @@
 // Serial Ports Configuration Page
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import {
   Table,
   Select,
@@ -13,6 +13,7 @@ import { useListState } from "@mantine/hooks"
 // Custom components, helpers and data
 import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
 import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
+import { dec2bin } from "../../helpers/dataFormatters"
 
 import { useSelector, useDispatch } from "react-redux"
 import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
@@ -58,16 +59,16 @@ function OptionsBitmaskSelect({ value, onChange, options }) {
     onChange(bitmask)
   }
 
-  function dec2bin(dec) {
-    return (dec >>> 0).toString(2)
-  }
-
-  const data = options
-    ? Object.keys(options).map((key) => ({
-        value: `${key}`,
-        label: `${options[key]}`,
-      }))
-    : []
+  const data = useMemo(
+    () =>
+      options
+        ? Object.keys(options).map((key) => ({
+            value: `${key}`,
+            label: `${options[key]}`,
+          }))
+        : [],
+    [options],
+  )
 
   return (
     <ScrollArea.Autosize className="max-h-24 min-w-[200px]">
@@ -75,7 +76,6 @@ function OptionsBitmaskSelect({ value, onChange, options }) {
         value={selected}
         onChange={createBitmask}
         data={data}
-        size="xs"
         placeholder="Select options"
       />
     </ScrollArea.Autosize>
@@ -110,13 +110,15 @@ export default function SerialPorts() {
   }
 
   // Build serial port rows
-  const serialPortRows = Object.entries(serialPortsConfig).map(
-    ([key, config]) => ({
-      number: Number(key.split("_")[1]),
-      protocol: config.protocol,
-      baud: config.baud,
-      options: config.options,
-    }),
+  const serialPortRows = useMemo(
+    () =>
+      Object.entries(serialPortsConfig).map(([key, config]) => ({
+        number: Number(key.split("_")[1]),
+        protocol: config.protocol,
+        baud: config.baud,
+        options: config.options,
+      })),
+    [serialPortsConfig],
   )
 
   useEffect(() => {
@@ -128,15 +130,11 @@ export default function SerialPorts() {
 
   return (
     <div className="p-4 overflow-auto">
-      <Text size="lg" fw={500} mb="md">
-        Serial Port Configuration
-      </Text>
-
       <Table withRowBorders={false} className="!w-fit">
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Port</Table.Th>
-            <Table.Th>Speed</Table.Th>
+            <Table.Th>Baud Rate</Table.Th>
             <Table.Th>Protocol</Table.Th>
             <Table.Th>Options</Table.Th>
           </Table.Tr>
@@ -183,11 +181,6 @@ export default function SerialPorts() {
                       <ScrollArea.Autosize className="max-h-48 max-w-80">
                         <div>
                           {baudDef?.Description || "Baud rate selection"}
-                          {baudDef?.Range && (
-                            <Text size="xs" mt={4}>
-                              Range: {baudDef.Range.low} - {baudDef.Range.high}
-                            </Text>
-                          )}
                         </div>
                       </ScrollArea.Autosize>
                     }
@@ -198,7 +191,6 @@ export default function SerialPorts() {
                       data={baudOptions}
                       value={port.baud?.toString() || ""}
                       placeholder="Select baud"
-                      size="xs"
                       className="min-w-[120px]"
                       onChange={(val) => handleParamChange(baudParam, val)}
                     />
@@ -218,7 +210,6 @@ export default function SerialPorts() {
                       data={protocolOptions}
                       value={port.protocol?.toString() || ""}
                       placeholder="Select protocol"
-                      size="xs"
                       className="min-w-[180px]"
                       onChange={(val) => handleParamChange(protocolParam, val)}
                     />
@@ -249,7 +240,7 @@ export default function SerialPorts() {
         </Table.Tbody>
       </Table>
 
-      <Text size="md" fw={500} mt="md">
+      <Text size="md" fw={500} mt="md" c="dimmed">
         Note: Changes to the serial port settings will not take effect until the
         board is rebooted.
       </Text>

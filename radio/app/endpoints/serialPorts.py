@@ -73,34 +73,3 @@ def setSerialPortConfigParam(data: SetConfigParam) -> None:
             "message": f"Failed to set parameter {param_id} to {value}.",
         }
     socketio.emit("set_serial_port_config_result", result)
-
-
-@socketio.on("batch_set_serial_port_config_params")
-def batchSetSerialPortConfigParams(data: BatchSetConfigParams) -> None:
-    """
-    Sets multiple serial port config parameters on the drone.
-    """
-    if droneStatus.state != "config.serial_ports":
-        socketio.emit(
-            "params_error",
-            {
-                "message": "You must be on the serial ports config screen to set serial port config parameters."
-            },
-        )
-        logger.debug(f"Current state: {droneStatus.state}")
-        return
-
-    if not droneStatus.drone:
-        return notConnectedError(action="set multiple serial port config parameters")
-
-    params = data.get("params", [])
-    if not params:
-        socketio.emit(
-            "batch_set_serial_port_config_result",
-            {"success": True, "message": "No parameters specified."},
-        )
-        return
-
-    result = droneStatus.drone.serialPortsController.batchSetConfigParams(params)
-
-    socketio.emit("batch_set_serial_port_config_result", result)

@@ -485,14 +485,6 @@ export function handleEmitters(socket, store, action) {
       },
     },
     {
-      emitter: emitBatchSetSerialPortConfigParams,
-      callback: () => {
-        socket.socket.emit("batch_set_serial_port_config_params", {
-          params: action.payload.params,
-        })
-      },
-    },
-    {
       emitter: emitListFiles,
       callback: () => {
         socket.socket.emit("list_files", {

@@ -470,25 +470,56 @@ def test_refreshParams_timeout(
             )
 
 
-def test_refreshParams_successfullyRefreshed(
-    socketio_client: SocketIOTestClient, droneStatus
+def test_refreshParams_alwaysFetchesAndEmitsProgress(
+    socketio_client: SocketIOTestClient, droneStatus, monkeypatch
 ) -> None:
     droneStatus.state = "params"
-    socketio_result = send_and_receive_params(socketio_client, "refresh_params")
-    assert (
-        socketio_result["name"] == "param_request_update"
-        or socketio_result["name"] == "params"
+    droneStatus.drone.paramsController.params = [
+        {"param_id": "EXISTING_PARAM", "param_value": 1.0, "param_type": 9}
+    ]
+
+    call_count = 0
+
+    def fake_fetch_all_params_blocking(timeout_secs=120, progress_update_callback=None):
+        nonlocal call_count
+        call_count += 1
+
+        if progress_update_callback:
+            progress_update_callback(
+                {
+                    "current_param_index": 1,
+                    "current_param_id": "TEST_PARAM",
+                    "total_number_of_params": 2,
+                }
+            )
+
+        droneStatus.drone.paramsController.params = [
+            {"param_id": "TEST_PARAM", "param_value": 2.0, "param_type": 9}
+        ]
+        return {"success": True, "message": "Got all params"}
+
+    monkeypatch.setattr(
+        droneStatus.drone.paramsController,
+        "fetchAllParamsBlocking",
+        fake_fetch_all_params_blocking,
     )
 
-    # TODO: Fix flaky test
-    pytest.skip(reason="Flaky test, needs fixing in alpha 0.1.8")
-    if socketio_result["name"] == "param_request_update":
-        assert len(socketio_result["args"][0]) == 2
-        assert socketio_result["args"][0]["total_number_of_params"] == 1400
-        assert socketio_result["args"][0]["current_param_index"] <= 1400
+    socketio_client.emit("refresh_params")
+    first_refresh_events = socketio_client.get_received()
 
-    if socketio_result["name"] == "params":
-        assert socketio_result["args"][0] == droneStatus.drone.paramsController.params
+    assert any(
+        event["name"] == "param_request_update" for event in first_refresh_events
+    )
+    assert any(event["name"] == "params" for event in first_refresh_events)
+
+    socketio_client.emit("refresh_params")
+    second_refresh_events = socketio_client.get_received()
+
+    assert any(
+        event["name"] == "param_request_update" for event in second_refresh_events
+    )
+    assert any(event["name"] == "params" for event in second_refresh_events)
+    assert call_count == 2
 
 
 def test_exportParamsToFile_wrongState(

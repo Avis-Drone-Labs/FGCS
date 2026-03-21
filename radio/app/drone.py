@@ -108,19 +108,9 @@ class Drone:
         self.connection_phases = [
             "Connecting to drone",
             "Received heartbeat",
-            "Cleaned temp logs",
-            "Setting up the parameters controller",
-            "Setting up the arm controller",
-            "Setting up the flight modes controller",
-            "Setting up the motor controller",
-            "Setting up the gripper controller",
-            "Setting up the mission controller",
-            "Setting up the frame controller",
-            "Setting up the RC controller",
-            "Setting up the Servo controller",
-            "Setting up the Serial Ports controller",
-            "Setting up the nav controller",
-            "Setting up the FTP controller",
+            "Initializing connection",
+            "Fetching parameters",
+            "Initializing controllers",
             "Connection complete",
         ]
 
@@ -266,9 +256,26 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
-        self.setupControllers()
+        self.sendConnectionStatusUpdate(3)
+        self.paramsController: ParamsController = ParamsController(self)
+        fetch_all_params_result = self.paramsController.fetchAllParamsBlocking(
+            timeout_secs=120,
+            progress_update_callback=self.sendParamFetchConnectionStatusUpdate,
+        )
 
-        self.sendConnectionStatusUpdate(13)
+        if not fetch_all_params_result.get("success"):
+            fetch_error_message = fetch_all_params_result.get(
+                "message", "Could not fetch all drone parameters"
+            )
+            self.logger.error(fetch_error_message)
+            self.master.close()
+            self.master = None
+            self.connectionError = fetch_error_message
+            return
+
+        self.sendConnectionStatusUpdate(4)
+        self.setupControllers()
+        self.sendConnectionStatusUpdate(5)
 
         self.sendStatusTextMessage(
             mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
@@ -281,44 +288,34 @@ class Drone:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
     def setupControllers(self) -> None:
-        self.sendConnectionStatusUpdate(3)
-        self.paramsController = ParamsController(self)
-
-        self.sendConnectionStatusUpdate(4)
         self.armController = ArmController(self)
-
-        self.sendConnectionStatusUpdate(5)
         self.flightModesController = FlightModesController(self)
-
-        self.sendConnectionStatusUpdate(6)
         self.motorTestController = MotorTestController(self)
-
-        self.sendConnectionStatusUpdate(7)
         self.gripperController = GripperController(self)
-
-        self.sendConnectionStatusUpdate(8)
         self.missionController = MissionController(self)
-
-        self.sendConnectionStatusUpdate(9)
         self.frameController = FrameController(self)
-
-        self.sendConnectionStatusUpdate(10)
         self.rcController = RcController(self)
-
-        self.sendConnectionStatusUpdate(11)
         self.servoController = ServoController(self)
-
-        self.sendConnectionStatusUpdate(12)
         self.serialPortsController = SerialPortsController(self)
-
-        self.sendConnectionStatusUpdate(13)
         self.navController = NavController(self)
-
-        self.sendConnectionStatusUpdate(14)
         self.ftpController = FtpController(self)
 
-        # Final phase: connection complete
-        self.sendConnectionStatusUpdate(15)
+    def sendParamFetchConnectionStatusUpdate(self, data: dict) -> None:
+        if not self.droneConnectStatusCb:
+            return
+
+        total_params = max(int(data.get("total_number_of_params", 0)), 1)
+        current_index = max(int(data.get("current_param_index", 0)) + 1, 1)
+        current_index = min(current_index, total_params)
+        current_param_id = data.get("current_param_id", "")
+
+        # Reserve 60% to 90% of the progress bar for parameter fetch.
+        progress = 60 + int((current_index / total_params) * 30)
+        message = f"Fetching parameters ({current_index}/{total_params})"
+        if current_param_id:
+            message = f"{message}: {current_param_id}"
+
+        self.droneConnectStatusCb({"message": message, "progress": progress})
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)
@@ -885,12 +882,8 @@ class Drone:
 
         this_thread = current_thread()
 
-        self.paramsController.is_requesting_params = False
-        if (
-            hasattr(self.paramsController, "getAllParamsThread")
-            and self.paramsController.getAllParamsThread is not None
-        ):
-            self.paramsController.getAllParamsThread.join(timeout=3)
+        if self.paramsController is not None:
+            self.paramsController.is_requesting_params = False
 
         for thread in [
             getattr(self, "listener_thread", None),

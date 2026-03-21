@@ -34,33 +34,10 @@ class GripperController:
         self.drone = drone
         self.params: dict = {}
 
-        if not self.getEnabledFromDrone():
+        if not self.getEnabled():
             self.drone.logger.info("Gripper is not enabled.")
         else:
             self.getGripperParams()
-
-    def getEnabledFromDrone(self) -> bool:
-        """
-        Gets the enabled status of the gripper by checking the value of the GRIP_ENABLE param
-
-        Returns:
-            Optional[bool]
-        """
-        self.drone.logger.debug("Fetching gripper enabled state")
-        gripper_enabled_response = self.drone.paramsController.getSingleParam(
-            param_name="GRIP_ENABLE"
-        )
-        if not (gripper_enabled_response.get("success")):
-            self.drone.logger.warning(
-                f"Gripper state could not be fetched from drone: {gripper_enabled_response.get('message')}"
-            )
-            return False
-
-        gripper_enabled_response_data = gripper_enabled_response.get("data")
-        if gripper_enabled_response_data:
-            return bool(gripper_enabled_response_data.param_value)
-
-        return False
 
     def getEnabled(self) -> bool:
         """
@@ -69,22 +46,20 @@ class GripperController:
         Returns:
             Optional[bool]
         """
-        gripper_enabled_param = self.drone.paramsController.getCachedParam(
+        gripper_enabled_param = self.drone.paramsController.getSingleParam(
             "GRIP_ENABLE"
         )
         if not gripper_enabled_param:
-            self.drone.logger.warning(
-                "Gripper state could not be fetched from cache, fetching from drone"
-            )
-            return self.getEnabledFromDrone()
+            self.drone.logger.warning("Gripper state could not be fetched from cache")
+            return False
 
         return bool(gripper_enabled_param.get("param_value"))
 
     def getGripperParams(self) -> None:
         """
-        Gets the gripper related parameters from the drone.
+        Gets the gripper related parameters from cache.
         """
-        self.drone.logger.debug("Fetching gripper parameters")
+        self.drone.logger.debug("Fetching gripper parameters from cache")
         for param in GRIPPER_PARAMS:
             self.params[param] = self.drone.paramsController.getSingleParam(param)
 
@@ -200,7 +175,7 @@ class GripperController:
         """
         config = {}
         for param in GRIPPER_PARAMS:
-            self.params[param] = self.drone.paramsController.getCachedParam(param)
+            self.params[param] = self.drone.paramsController.getSingleParam(param)
             config[param] = self.params[param].get("param_value", "UNKNOWN")
 
         return config

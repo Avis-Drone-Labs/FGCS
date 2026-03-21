@@ -28,28 +28,18 @@ class FrameController:
     def getFrameType(self) -> None:
         """
         Gets the current frame type of the drone."""
-        self.drone.logger.debug("Fetching frame type")
-        frame_type_result = self.drone.paramsController.getSingleParam("FRAME_TYPE")
-
-        if frame_type_result.get("success"):
-            frame_type_data = frame_type_result.get("data")
-            if frame_type_data:
-                self.frame_type = frame_type_data.param_value
-        else:
-            self.drone.logger.error(frame_type_result.get("message"))
+        self.drone.logger.debug("Fetching frame type from cache")
+        self.frame_type = self.drone.paramsController.getSingleParam("FRAME_TYPE").get(
+            "param_value", "UNKNOWN"
+        )
 
     def getFrameClass(self) -> None:
         """
         Gets the current frame class of the drone."""
-        self.drone.logger.debug("Fetching frame class")
-        frame_class_result = self.drone.paramsController.getSingleParam("FRAME_CLASS")
-
-        if frame_class_result.get("success"):
-            frame_class_data = frame_class_result.get("data")
-            if frame_class_data:
-                self.frame_class = frame_class_data.param_value
-        else:
-            self.drone.logger.error(frame_class_result.get("message"))
+        self.drone.logger.debug("Fetching frame class from cache")
+        self.frame_class = self.drone.paramsController.getSingleParam(
+            "FRAME_CLASS"
+        ).get("param_value", 0)
 
     def getConfig(self) -> dict:
         """
@@ -58,10 +48,10 @@ class FrameController:
         Returns:
             dict: The frame config of the drone
         """
-        self.frame_type = self.drone.paramsController.getCachedParam("FRAME_TYPE").get(
+        self.frame_type = self.drone.paramsController.getSingleParam("FRAME_TYPE").get(
             "param_value", "UNKNOWN"
         )
-        self.frame_class = self.drone.paramsController.getCachedParam(
+        self.frame_class = self.drone.paramsController.getSingleParam(
             "FRAME_CLASS"
         ).get("param_value", 0)
 

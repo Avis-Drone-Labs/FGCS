@@ -28,6 +28,7 @@ import FetchParamsWarningModal from "./components/params/fetchParamsWarningModal
 import LoadParamsFileModal from "./components/params/loadParamsFileModal.jsx"
 import ParamsFailedToWriteModal from "./components/params/paramsFailedToWriteModal.jsx"
 import ParamsWriteModal from "./components/params/paramsWriteModal.jsx"
+import RebootPromptModal from "./components/params/rebootPromptModal.jsx"
 import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
 import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
@@ -56,7 +57,6 @@ import {
   setPendingFetchAction,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
-import RebootPromptModal from "./components/params/rebootPromptModal.jsx"
 
 function cleanFloat(value, decimals = 5) {
   if (typeof value === "number") {

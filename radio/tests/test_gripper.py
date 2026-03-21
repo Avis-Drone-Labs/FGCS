@@ -28,15 +28,19 @@ def run_once_after_all_tests():
     """
     from app import droneStatus
 
-    droneStatus.drone.paramsController.getAllParams()
-    time.sleep(0.5)
-    while droneStatus.drone.paramsController.is_requesting_params:
-        pass
+    # Prime cache for cache-only reads.
+    droneStatus.drone.paramsController.saveParam(
+        "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
+    )
+
     yield
 
     # Ensure gripper is definitely re-enabled even if tests pass
     droneStatus.drone.paramsController.setParam(
         "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+    )
+    droneStatus.drone.paramsController.saveParam(
+        "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
     )
     time.sleep(0.5)
 

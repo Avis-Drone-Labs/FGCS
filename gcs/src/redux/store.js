@@ -140,11 +140,15 @@ if (selectedDisplayTelemetry !== null) {
       parsedSelectedDisplayTelemetry.length > 0
     ) {
       store.dispatch(
-        setSelectedDisplayTelemetry(parsedSelectedDisplayTelemetry),
+        setSelectedDisplayTelemetry(
+          mergeSelectedDisplayTelemetryConfigWithDefaults(
+            parsedSelectedDisplayTelemetry,
+          ),
+        ),
       )
     }
   } catch {
-    store.dispatch(setSelectedDisplayTelemetry(defaultDataMessages))
+    store.dispatch(setSelectedDisplayTelemetry([...defaultDataMessages]))
   }
 }
 
@@ -198,6 +202,49 @@ const updateJSONLocalStorageIfChanged = (key, newValue) => {
       localStorage.setItem(key, stringValue)
     }
   }
+}
+
+// We only want to store the necessary fields of the selected display telemetry
+// in local storage, and not the value which is updated frequently with incoming
+// messages.
+function toSelectedDisplayTelemetryPersistedConfig(selectedDisplayTelemetry) {
+  return selectedDisplayTelemetry.map(
+    ({ boxId, currently_selected, display_name }) => ({
+      boxId,
+      currently_selected,
+      display_name,
+    }),
+  )
+}
+
+// When loading the selected display telemetry config from local storage, we
+// want to merge it with the default config to ensure any new telemetry options
+// are included and old ones that have been removed are not included. We also
+// want to ensure that if the default config changes (e.g. display names updated)
+// that these changes are reflected while still keeping the user's selected
+// telemetry and display names.
+function mergeSelectedDisplayTelemetryConfigWithDefaults(persistedConfig) {
+  const defaultSelectedDisplayTelemetry =
+    store.getState().droneInfo.selectedDisplayTelemetry
+
+  const persistedConfigByBoxId = new Map(
+    persistedConfig
+      .filter((item) => item && item.boxId != null)
+      .map((item) => [item.boxId, item]),
+  )
+
+  return defaultSelectedDisplayTelemetry.map((defaultItem) => {
+    const persistedItem = persistedConfigByBoxId.get(defaultItem.boxId)
+    if (!persistedItem) {
+      return defaultItem
+    }
+
+    return {
+      ...defaultItem,
+      currently_selected: persistedItem.currently_selected,
+      display_name: persistedItem.display_name,
+    }
+  })
 }
 
 // Update states when a new message comes in
@@ -271,7 +318,9 @@ store.subscribe(() => {
   ) {
     updateJSONLocalStorageIfChanged(
       "selectedDisplayTelemetry",
-      store_mut.droneInfo.selectedDisplayTelemetry,
+      toSelectedDisplayTelemetryPersistedConfig(
+        store_mut.droneInfo.selectedDisplayTelemetry,
+      ),
     )
   }
 

@@ -85,9 +85,7 @@ const droneInfoSlice = createSlice({
     notificationSound: "",
     aircraftType: 2, // Default to copter, will be updated on heartbeat
     batteryData: [],
-    extraDroneData: [
-      ...defaultDataMessages, // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
-    ],
+    selectedDisplayTelemetry: [...defaultDataMessages],
     guidedModePinData: {
       lat: 0, // Stored in coords not int
       lon: 0, // Stored in coords not int
@@ -172,15 +170,15 @@ const droneInfoSlice = createSlice({
     soundPlayed: (state) => {
       state.notificationSound = ""
     },
-    changeExtraData: (state, action) => {
-      state.extraDroneData[action.payload.index] = {
-        ...state.extraDroneData[action.payload.index],
+    changeSelectedDisplayTelemetry: (state, action) => {
+      state.selectedDisplayTelemetry[action.payload.index] = {
+        ...state.selectedDisplayTelemetry[action.payload.index],
         ...action.payload.data,
       }
     },
-    setExtraData: (state, action) => {
-      if (action.payload !== state.extraDroneData) {
-        state.extraDroneData = action.payload
+    setSelectedDisplayTelemetry: (state, action) => {
+      if (action.payload !== state.selectedDisplayTelemetry) {
+        state.selectedDisplayTelemetry = action.payload
       }
     },
     setDroneAircraftType: (state, action) => {
@@ -380,7 +378,7 @@ const droneInfoSlice = createSlice({
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
-    selectExtraDroneData: (state) => state.extraDroneData,
+    selectSelectedDisplayTelemetry: (state) => state.selectedDisplayTelemetry,
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
     selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
@@ -397,8 +395,8 @@ export const {
   setFlightSwVersion,
   setHeartbeatData,
   soundPlayed,
-  changeExtraData,
-  setExtraData,
+  changeSelectedDisplayTelemetry,
+  setSelectedDisplayTelemetry,
   setDroneAircraftType,
   setTelemetryData,
   setGpsData,
@@ -536,7 +534,7 @@ export const {
   selectAircraftType,
   selectBatteryData,
   selectGuidedModePinData,
-  selectExtraDroneData,
+  selectSelectedDisplayTelemetry,
   selectGraphValues,
   selectLastGraphMessage,
   selectEkfStatusReportData,

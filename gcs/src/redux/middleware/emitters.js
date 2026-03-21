@@ -1,7 +1,6 @@
 import { showErrorNotification } from "../../helpers/notification"
 import {
   emitBatchSetRcConfigParams,
-  emitBatchSetSerialPortConfigParams,
   emitBatchSetServoConfigParams,
   emitGetFlightModeConfig,
   emitGetFrameConfig,

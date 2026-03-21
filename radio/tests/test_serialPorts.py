@@ -1,7 +1,7 @@
 import pytest
 from flask_socketio import SocketIOTestClient
 
-from . import falcon_test
+from . import falcon_test  # type: ignore[attr-defined]
 from .helpers import NoDrone, send_and_receive
 
 

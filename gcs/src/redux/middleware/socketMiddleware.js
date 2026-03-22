@@ -34,7 +34,11 @@ import {
 // socket factory
 import { dataFormatters } from "../../helpers/dataFormatters.js"
 import { isGlobalFrameHomeCommand } from "../../helpers/filterMissions.js"
-import { FRAME_CLASS_MAP } from "../../helpers/mavlinkConstants.js"
+import {
+  EKF_STATUS_WARNING_LEVEL,
+  FRAME_CLASS_MAP,
+} from "../../helpers/mavlinkConstants.js"
+import { CHECKLIST_AUTO_BINDINGS } from "../../helpers/checklistAutoBindings"
 import {
   closeLoadingNotification,
   redColor,
@@ -139,6 +143,7 @@ import {
   updateParamValue,
 } from "../slices/paramsSlice.js"
 import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
+import { setChecklistAutoBindingChecked } from "../slices/checklistSlice"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
@@ -318,6 +323,15 @@ const socketMiddleware = (store) => {
           flags: msg.flags,
         }
         store.dispatch(setEkfStatusReportData(data))
+
+        const { ekfCalculatedStatus } = store.getState().droneInfo
+        store.dispatch(
+          setChecklistAutoBindingChecked({
+            bindingKey: CHECKLIST_AUTO_BINDINGS.EkfAllGreen.key,
+            checked: ekfCalculatedStatus <= EKF_STATUS_WARNING_LEVEL,
+          }),
+        )
+
         window.ipcRenderer.invoke("app:update-ekf-status", data)
         break
       }

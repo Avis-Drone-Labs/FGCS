@@ -178,6 +178,12 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
                                 logger.info(
                                     f"Successfully set {param_name} to {param_value} (confirmed: {received_value})"
                                 )
+                                # Keep cached params coherent with direct MAVLink writes used in tests.
+                                droneStatus.drone.paramsController.saveParam(
+                                    param_name,
+                                    received_value,
+                                    param_type,
+                                )
                                 param_set_successfully = True
                                 break
                             else:

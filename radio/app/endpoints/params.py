@@ -7,6 +7,8 @@ import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.utils import notConnectedError
 
+PARAM_REQUEST_UPDATE_THROTTLE_SECS = 0.2
+
 
 class ExportParamsFileType(TypedDict):
     file_path: str
@@ -28,6 +30,28 @@ def setMultipleParamsProgressUpdateCallback(
     socketio.emit("set_multiple_params_progress", data)
 
 
+@socketio.on("get_params")
+def get_params() -> None:
+    """
+    Get cached parameters from the params controller.
+    """
+    drone = droneStatus.drone
+    if drone is None:
+        return
+
+    if droneStatus.state != "params":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the params screen to get parameters."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    socketio.emit(
+        "get_params_result", {"success": True, "data": drone.paramsController.params}
+    )
+
+
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list: List[Any]) -> None:
     """
@@ -39,17 +63,17 @@ def set_multiple_params(params_list: List[Any]) -> None:
     if droneStatus.state != "params":
         socketio.emit(
             "params_error",
-            {
-                "message": "You must be on the params screen to save parameters."
-            },
+            {"message": "You must be on the params screen to save parameters."},
         )
         logger.debug(f"Current state: {droneStatus.state}")
         return
 
-    if not droneStatus.drone:
+    drone = droneStatus.drone
+    if drone is None:
         return
 
-    response = droneStatus.drone.paramsController.setMultipleParams(
+    params_controller = drone.paramsController
+    response = params_controller.setMultipleParams(
         params_list, setMultipleParamsProgressUpdateCallback
     )
     if response.get("success"):
@@ -71,43 +95,55 @@ def refresh_params() -> None:
         logger.debug(f"Current state: {droneStatus.state}")
         return
 
-    if not droneStatus.drone:
+    drone = droneStatus.drone
+    if drone is None:
         return
 
-    droneStatus.drone.paramsController.getAllParams()
+    params_controller = drone.paramsController
 
-    timeout_secs = 120
-
-    timeout = time.time() + timeout_secs
     last_index_sent = -1
+    last_progress_emit_time = 0.0
 
-    while droneStatus.drone and droneStatus.drone.paramsController.is_requesting_params:
-        if time.time() > timeout:
-            socketio.emit(
-                "params_error",
-                {
-                    "message": f"Parameter request timed out after {timeout_secs} seconds."
-                },
-            )
+    def send_param_request_update(progress_data: dict) -> None:
+        nonlocal last_index_sent, last_progress_emit_time
+        current_param_index = progress_data.get("current_param_index", -1)
+        if current_param_index <= last_index_sent:
             return
 
+        total_params = max(int(progress_data.get("total_number_of_params", 0)), 1)
+        current_index = max(int(current_param_index) + 1, 1)
+        is_final_update = current_index >= total_params
+
+        now = time.monotonic()
         if (
-            last_index_sent != droneStatus.drone.paramsController.current_param_index
-            and droneStatus.drone.paramsController.current_param_index > last_index_sent
+            not is_final_update
+            and now - last_progress_emit_time < PARAM_REQUEST_UPDATE_THROTTLE_SECS
         ):
-            socketio.emit(
-                "param_request_update",
-                {
-                    "current_param_index": droneStatus.drone.paramsController.current_param_index,
-                    "current_param_id": droneStatus.drone.paramsController.current_param_id,
-                    "total_number_of_params": droneStatus.drone.paramsController.total_number_of_params,
-                },
-            )
-            last_index_sent = droneStatus.drone.paramsController.current_param_index
+            return
 
-        time.sleep(0.2)
+        socketio.emit("param_request_update", progress_data)
+        last_index_sent = current_param_index
+        last_progress_emit_time = now
 
-    socketio.emit("params", droneStatus.drone.paramsController.params)
+    response = params_controller.fetchAllParamsBlocking(
+        timeout_secs=120,
+        progress_update_callback=send_param_request_update,
+    )
+
+    if not response.get("success"):
+        socketio.emit(
+            "params_error",
+            {
+                "message": response.get(
+                    "message", "An error occurred while fetching parameters."
+                )
+            },
+        )
+        return
+
+    socketio.emit(
+        "get_params_result", {"success": True, "data": drone.paramsController.params}
+    )
 
 
 @socketio.on("export_params_to_file")
@@ -126,7 +162,8 @@ def export_params_to_file(data: ExportParamsFileType) -> None:
         logger.debug(f"Current state: {droneStatus.state}")
         return
 
-    if not droneStatus.drone:
+    drone = droneStatus.drone
+    if drone is None:
         notConnectedError(action="export params to file")
         return
 
@@ -139,6 +176,6 @@ def export_params_to_file(data: ExportParamsFileType) -> None:
         logger.error("No file path provided for exporting parameters.")
         return
 
-    result = droneStatus.drone.paramsController.exportParamsToFile(file_path)
+    result = drone.paramsController.exportParamsToFile(file_path)
 
     socketio.emit("export_params_result", result)

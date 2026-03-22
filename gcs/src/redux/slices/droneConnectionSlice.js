@@ -13,6 +13,7 @@ const initialState = {
   connection_modal: false,
   connection_status: {
     message: "",
+    sub_message: "",
     progress: 0,
   },
   connected_to_simulator: false,

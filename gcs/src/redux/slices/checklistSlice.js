@@ -77,7 +77,8 @@ const checklistSlice = createSlice({
               return { ...valueItem, stateBinding: binding }
             }
 
-            const { stateBinding: _, ...rest } = valueItem
+            const rest = { ...valueItem }
+            delete rest.stateBinding
             return rest
           }),
         }

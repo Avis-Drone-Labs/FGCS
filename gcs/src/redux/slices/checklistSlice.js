@@ -7,7 +7,7 @@ import {
   setGpsRawIntData,
   setVibrationData,
 } from "./droneInfoSlice"
-import { EKF_STATUS_WARNING_LEVEL } from "../../helpers/mavlinkConstants"
+import { EKF_STATUS_WARNING_LEVEL, VIBE_STATUS_WARNING_LEVEL } from "../../helpers/mavlinkConstants"
 
 const checklistSlice = createSlice({
   name: "checklist",
@@ -134,7 +134,7 @@ const checklistSlice = createSlice({
       applyAutoBinding(
         state,
         CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
-        Boolean(vibrationMetric < 30), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
+        Boolean(vibrationMetric < VIBE_STATUS_WARNING_LEVEL), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
       )
     })
   },

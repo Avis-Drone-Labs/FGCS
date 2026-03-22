@@ -149,7 +149,7 @@ import {
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
-import { pushMessage, resetMessages } from "../slices/statusTextSlice.js"
+import { pushMessage } from "../slices/statusTextSlice.js"
 import { setChecklistAutoBindingChecked } from "../slices/checklistSlice"
 import { handleEmitters } from "./emitters.js"
 

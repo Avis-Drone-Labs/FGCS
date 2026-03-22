@@ -130,11 +130,11 @@ const checklistSlice = createSlice({
           Math.abs(vibration_y ?? 0),
           Math.abs(vibration_z ?? 0),
         )
-        
+
         applyAutoBinding(
           state,
           CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
-          Boolean(vibrationMetric < 30),  // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
+          Boolean(vibrationMetric < 30), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
         )
       })
   },

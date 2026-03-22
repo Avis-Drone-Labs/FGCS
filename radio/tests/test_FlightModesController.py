@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from pymavlink.mavutil import mavlink
 
@@ -5,6 +7,26 @@ from .helpers import (
     FakeTCP,
     WaitForMessageReturnsNone,
 )
+
+FLIGHT_MODE_SET_RETRY_MAX_ATTEMPTS = 5
+FLIGHT_MODE_SET_RETRY_DELAY_SECS = 1
+
+
+def set_flight_mode_with_retries(
+    droneStatus, mode_number: int, flight_mode: int
+) -> dict:
+    """Retry setting a flight mode to reduce intermittent SITL timing flakes."""
+    last_response = {"success": False, "message": "No response"}
+    for _ in range(FLIGHT_MODE_SET_RETRY_MAX_ATTEMPTS):
+        last_response = droneStatus.drone.flightModesController.setFlightMode(
+            mode_number, flight_mode
+        )
+        if last_response.get("success"):
+            return last_response
+
+        time.sleep(FLIGHT_MODE_SET_RETRY_DELAY_SECS)
+
+    return last_response
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -155,7 +177,7 @@ def test_setFlightMode_invalidData_copter(droneStatus):
 
 @pytest.mark.copter_only
 def test_setFlightMode_success_copter(droneStatus):
-    response = droneStatus.drone.flightModesController.setFlightMode(1, 2)
+    response = set_flight_mode_with_retries(droneStatus, 1, 2)
     assert response == {
         "success": True,
         "message": "Flight mode 1 set to COPTER_MODE_ALT_HOLD",

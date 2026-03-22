@@ -10,6 +10,13 @@ const paramDefinitionModules = import.meta.glob(
   "../../data/gen_apm_params_def_*_*.json",
 )
 
+const modulePathByFileName = Object.fromEntries(
+  Object.keys(paramDefinitionModules).map((path) => [
+    path.split("/").pop(),
+    path,
+  ]),
+)
+
 function getAircraftKey(aircraftType) {
   if (aircraftType === 1) {
     return "plane"
@@ -61,17 +68,21 @@ function getResolvedVersion(aircraftKey, requestedVersion) {
   return getLatestVersion(aircraftKey) || versions[versions.length - 1]
 }
 
-function findModulePath(aircraftKey, version) {
-  if (!version) {
+function getManifestFileName(aircraftKey, version) {
+  if (!aircraftKey || !version) {
     return null
   }
 
-  const targetSuffix = `gen_apm_params_def_${aircraftKey}_${version}.json`
-  return (
-    Object.keys(paramDefinitionModules).find((path) =>
-      path.endsWith(targetSuffix),
-    ) || null
-  )
+  return manifest?.vehicles?.[aircraftKey]?.files?.[version] || null
+}
+
+function findModulePath(aircraftKey, version) {
+  const manifestFileName = getManifestFileName(aircraftKey, version)
+  if (!manifestFileName) {
+    return null
+  }
+
+  return modulePathByFileName[manifestFileName] || null
 }
 
 export function useParamDefinitions() {

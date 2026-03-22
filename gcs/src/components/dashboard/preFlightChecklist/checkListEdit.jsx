@@ -24,10 +24,12 @@ export default function EditCheckList({ checklist, opened, close }) {
   const [name, setName] = useState(checklist.name)
   const [items, setItems] = useState(checklist.value ?? [])
 
-  const autoChecklistBindingsOptions = CHECKLIST_AUTO_BINDING_OPTIONS.map((item) => ({
-    value: item.key,
-    label: item.label,
-  }))
+  const autoChecklistBindingsOptions = CHECKLIST_AUTO_BINDING_OPTIONS.map(
+    (item) => ({
+      value: item.key,
+      label: item.label,
+    }),
+  )
 
   useEffect(() => {
     if (!opened) {
@@ -106,10 +108,7 @@ export default function EditCheckList({ checklist, opened, close }) {
               <h1>Auto complete?</h1>
             </div>
             {items.map((item, index) => (
-              <div
-                key={index}
-                className="flex w-full gap-2"
-              >
+              <div key={index} className="flex w-full gap-2">
                 <TextInput
                   value={item.name}
                   onChange={(event) =>
@@ -117,13 +116,13 @@ export default function EditCheckList({ checklist, opened, close }) {
                   }
                   className="w-1/2"
                 />
-                <Select 
+                <Select
                   placeholder="No auto completion"
-                  data = {autoChecklistBindingsOptions}
+                  data={autoChecklistBindingsOptions}
                   clearable
                   onChange={(value) => {
                     updateItem(index, "stateBinding", value)
-                    updateItem(index, "checked", false)               
+                    updateItem(index, "checked", false)
                   }}
                   value={item.stateBinding ?? null}
                   className="grow"

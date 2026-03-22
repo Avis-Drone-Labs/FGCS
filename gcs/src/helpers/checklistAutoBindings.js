@@ -20,20 +20,20 @@ export const CHECKLIST_AUTO_BINDINGS = Object.freeze({
   }),
   CompassHealthy: Object.freeze({
     key: "compass.healthy",
-    label: "Compass Healthy"
+    label: "Compass Healthy",
   }),
   AccelerometerHealthy: Object.freeze({
     key: "accelerometer.healthy",
-    label: "Accelerometer Healthy"
+    label: "Accelerometer Healthy",
   }),
 
-  // Handled in the socket middleware 
+  // Handled in the socket middleware
   EkfAllGreen: Object.freeze({
     key: "ekf.all.green",
     label: "EKF all green",
   }),
 
-  // For future: Look into how laptop battery could be used, this will likely be 
+  // For future: Look into how laptop battery could be used, this will likely be
   // in the middleware?
 })
 

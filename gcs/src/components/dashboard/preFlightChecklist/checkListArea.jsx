@@ -118,9 +118,9 @@ export default function CheckListArea({ id }) {
         </div>
 
         {checklist.value.map((item, index) => (
-          <Tooltip 
-            label="Auto completing field, this can't be manually checked" 
-            disabled={item.stateBinding == null} 
+          <Tooltip
+            label="Auto completing field, this can't be manually checked"
+            disabled={item.stateBinding == null}
             openDelay={500}
             key={`${item.name}-${index}`}
           >

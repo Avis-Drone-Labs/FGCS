@@ -2,7 +2,11 @@ import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
 import { CHECKLIST_AUTO_BINDINGS } from "../../helpers/checklistAutoBindings"
 import { setConnected } from "./droneConnectionSlice"
-import { setEkfStatusReportData, setGpsRawIntData, setVibrationData } from "./droneInfoSlice"
+import {
+  setEkfStatusReportData,
+  setGpsRawIntData,
+  setVibrationData,
+} from "./droneInfoSlice"
 import { EKF_STATUS_WARNING_LEVEL } from "../../helpers/mavlinkConstants"
 
 const checklistSlice = createSlice({
@@ -50,7 +54,8 @@ const checklistSlice = createSlice({
     },
     setChecklistItemStateBinding: (state, action) => {
       const { checklistId, itemName, stateBinding } = action.payload
-      const binding = typeof stateBinding === "string" ? stateBinding.trim() : null
+      const binding =
+        typeof stateBinding === "string" ? stateBinding.trim() : null
 
       state.items = state.items.map((checklist) => {
         if (checklist.id !== checklistId) {
@@ -91,39 +96,39 @@ const checklistSlice = createSlice({
         action.payload,
       )
     }),
-    builder.addCase(setGpsRawIntData, (state, action) => {
-      applyAutoBinding(
-        state,
-        CHECKLIST_AUTO_BINDINGS.GpsSatsGt10.key,
-        Boolean(action.payload.satellites_visible > 10)
-      )
+      builder.addCase(setGpsRawIntData, (state, action) => {
+        applyAutoBinding(
+          state,
+          CHECKLIST_AUTO_BINDINGS.GpsSatsGt10.key,
+          Boolean(action.payload.satellites_visible > 10),
+        )
 
-      applyAutoBinding(
-        state,
-        CHECKLIST_AUTO_BINDINGS.GpsHdopLt1.key,
-        Boolean(action.payload.hdop < 1)
-      )
+        applyAutoBinding(
+          state,
+          CHECKLIST_AUTO_BINDINGS.GpsHdopLt1.key,
+          Boolean(action.payload.hdop < 1),
+        )
 
-      applyAutoBinding(
-        state,
-        CHECKLIST_AUTO_BINDINGS.GpsFixGte3.key,
-        Boolean(action.payload.fixType >= 3)
-      )
-    }),
-    builder.addCase(setEkfStatusReportData, (state, action) => {
-      applyAutoBinding(
-        state,
-        CHECKLIST_AUTO_BINDINGS.CompassHealthy.key,
-        Boolean(action.payload.compass_variance <= EKF_STATUS_WARNING_LEVEL)
-      )
-    }),
-    builder.addCase(setVibrationData, (state, action) => {
-      applyAutoBinding(
-        state,
-        CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
-        Boolean(action.payload < 30)  // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
-      )
-    })
+        applyAutoBinding(
+          state,
+          CHECKLIST_AUTO_BINDINGS.GpsFixGte3.key,
+          Boolean(action.payload.fixType >= 3),
+        )
+      }),
+      builder.addCase(setEkfStatusReportData, (state, action) => {
+        applyAutoBinding(
+          state,
+          CHECKLIST_AUTO_BINDINGS.CompassHealthy.key,
+          Boolean(action.payload.compass_variance <= EKF_STATUS_WARNING_LEVEL),
+        )
+      }),
+      builder.addCase(setVibrationData, (state, action) => {
+        applyAutoBinding(
+          state,
+          CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
+          Boolean(action.payload < 30), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
+        )
+      })
   },
   selectors: {
     selectChecklists: (state) => {

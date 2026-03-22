@@ -178,6 +178,19 @@ def notConnectedError(action: Optional[str] = None) -> None:
     )
 
 
+def fetchingParameterCb(param_name: str) -> None:
+    """
+    Send the parameter currently being fetched to the socket.
+
+    Args:
+        param_name (str): The name of the parameter currently being fetched.
+    """
+    socketio.emit(
+        "fetching_param",
+        {"success": True, "message": param_name},
+    )
+
+
 def missingParameterError(endpoint: str, params: Union[str, list[str]]) -> None:
     """ "
     Send error to the socket indicating that a request made to the server was missing required parameters

@@ -238,7 +238,7 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
         {category.name}
       </Accordion.Control>
       <Accordion.Panel>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {filteredPresets.length === 0 ? (
             <div className="flex items-center justify-center py-4">
               <IconInfoCircle size={20} />
@@ -252,7 +252,7 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
               const isAvailable = preset.isAvailable
 
               return (
-                <div key={idx} className="flex items-center gap-2">
+                <div key={idx} className="flex items-center gap-1">
                   <MantineTooltip
                     label={
                       isAvailable

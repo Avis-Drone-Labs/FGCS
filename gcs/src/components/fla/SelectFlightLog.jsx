@@ -24,21 +24,17 @@ import { readableBytes } from "./utils"
 export default function SelectFlightLog({ getLogSummary }) {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const [recentFgcsLogs, setRecentFgcsLogs] = useState(null)
+  const [recentLogs, setRecentLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const [
     downloadModalOpened,
     { open: openDownloadModal, close: closeDownloadModal },
   ] = useDisclosure(false)
 
-  async function getFgcsLogs() {
-    setRecentFgcsLogs(await window.ipcRenderer.invoke("fla:get-recent-logs"))
-  }
-
-  async function clearFgcsLogs() {
-    await window.ipcRenderer.invoke("fla:clear-recent-logs")
-    getFgcsLogs()
+  async function getRecentLogs() {
+    setRecentLogs(await window.ipcRenderer.invoke("fla:get-recent-logs"))
   }
 
   const selectFile = async () => {
@@ -97,19 +93,54 @@ export default function SelectFlightLog({ getLogSummary }) {
     [dispatch, getLogSummary],
   )
 
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setIsDragging((prev) => prev || true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files)
+
+    if (files.length > 0) {
+      const file = files[0]
+      const path = window.ipcRenderer.getPathForFile(file)
+
+      const ext = file.name.split(".").pop().toLowerCase()
+      if (["bin", "log", "ftlog"].includes(ext)) {
+        handleFile({
+          name: file.name,
+          path: path,
+          size: file.size,
+        })
+      } else {
+        showErrorNotification(
+          "Invalid file type. Please upload a .bin, .log, or .ftlog file",
+        )
+      }
+    }
+  }
+
   useEffect(() => {
     const onProgress = (_event, message) =>
       setLoadingFileProgress(message.percent)
     window.ipcRenderer.on("fla:log-parse-progress", onProgress)
-    getFgcsLogs()
+    getRecentLogs()
     return () => {
       window.ipcRenderer.removeAllListeners("fla:log-parse-progress")
     }
   }, [])
 
   const recentLogItems = useMemo(() => {
-    if (!recentFgcsLogs) return null
-    return recentFgcsLogs.map((log, idx) => (
+    if (!recentLogs) return null
+    return recentLogs.map((log, idx) => (
       <div
         key={idx}
         className="flex flex-col px-4 py-2 hover:cursor-pointer hover:bg-falcongrey-600 hover:rounded-sm"
@@ -127,19 +158,26 @@ export default function SelectFlightLog({ getLogSummary }) {
         </div>
       </div>
     ))
-  }, [recentFgcsLogs, handleFile])
+  }, [recentLogs, handleFile])
 
   const logsExist = useMemo(() => {
     return (
       recentLogItems === null ||
-      (recentFgcsLogs !== null && recentLogItems.length === 0)
+      (recentLogs !== null && recentLogItems.length === 0)
     )
-  }, [recentLogItems, recentFgcsLogs])
+  }, [recentLogItems, recentLogs])
 
   return (
-    <div className="flex flex-col items-center justify-center h-full mx-auto">
+    <div
+      className={`flex flex-col items-center justify-center h-full w-full mx-auto border-2 border-dashed transition-colors ${
+        isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex flex-row items-center justify-center gap-8">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 p-8">
           <Button onClick={selectFile} loading={loadingFile}>
             Analyse a log
           </Button>
@@ -148,20 +186,12 @@ export default function SelectFlightLog({ getLogSummary }) {
               Download from Drone
             </Button>
           )}
-          <Button
-            disabled={logsExist}
-            color="red"
-            variant="filled"
-            onClick={clearFgcsLogs}
-          >
-            Clear Logs
-          </Button>
         </div>
         <Divider size="xs" orientation="vertical" />
         <div className="relative">
-          <LoadingOverlay visible={recentFgcsLogs === null || loadingFile} />
+          <LoadingOverlay visible={recentLogs === null || loadingFile} />
           <div className="flex flex-col items-center gap-2">
-            <p className="font-bold">Recent FGCS telemetry logs</p>
+            <p className="font-bold">Recent logs</p>
             <ScrollArea.Autosize
               className="relative"
               type="always"
@@ -183,7 +213,7 @@ export default function SelectFlightLog({ getLogSummary }) {
       {loadingFile && (
         <Progress
           value={loadingFileProgress}
-          className="w-full my-4"
+          className="w-1/2 my-4"
           color="green"
         />
       )}

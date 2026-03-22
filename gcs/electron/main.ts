@@ -16,7 +16,12 @@ import fs from "node:fs"
 import path from "node:path"
 import packageInfo from "../package.json"
 
-import openFile, { clearRecentFiles, getMessages, getRecentFiles } from "./fla"
+import openFile, {
+  getMessageDataForTable,
+  getMessages,
+  getRecentFiles,
+  saveParamsToFile,
+} from "./fla"
 import registerAboutIPC, {
   destroyAboutWindow,
   openAboutPopout,
@@ -28,6 +33,9 @@ import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerFlaParamsIPC, {
   destroyFlaParamsWindow,
 } from "./modules/flaParamsWindow"
+import registerGraphWindowIPC, {
+  destroyAllGraphWindows,
+} from "./modules/graphWindow"
 import registerLinkStatsIPC, {
   destroyLinkStatsWindow,
   openLinkStatsWindow,
@@ -40,18 +48,29 @@ import registerVibeStatusIPC, {
 } from "./modules/vibeStatusWindow"
 import registerVideoIPC, { destroyVideoWindow } from "./modules/videoWindow"
 import { readParamsFile } from "./utils/paramsFile"
-import registerGraphWindowIPC, {
-  destroyAllGraphWindows,
-} from "./modules/graphWindow"
 
 // Check if required data files exist
 function checkRequiredDataFiles(): {
   success: boolean
   missingFiles: string[]
 } {
+  interface ParamVersionManifest {
+    vehicles?: Record<
+      string,
+      {
+        versions?: string[]
+        files?: Record<string, string>
+      }
+    >
+  }
+
+  const manifestPath = path.join(
+    __dirname,
+    "../data/gen_apm_params_versions.json",
+  )
+
   const requiredFiles = [
-    path.join(__dirname, "../data/gen_apm_params_def_copter.json"),
-    path.join(__dirname, "../data/gen_apm_params_def_plane.json"),
+    manifestPath,
     path.join(__dirname, "../data/gen_log_messages_desc_copter.json"),
     path.join(__dirname, "../data/gen_log_messages_desc_plane.json"),
   ]
@@ -61,6 +80,41 @@ function checkRequiredDataFiles(): {
   for (const filePath of requiredFiles) {
     if (!fs.existsSync(filePath)) {
       missingFiles.push(path.basename(filePath))
+    }
+  }
+
+  if (fs.existsSync(manifestPath)) {
+    try {
+      const manifest: ParamVersionManifest = JSON.parse(
+        fs.readFileSync(manifestPath, "utf-8"),
+      )
+
+      for (const aircraftType of ["plane", "copter"]) {
+        const versions = manifest.vehicles?.[aircraftType]?.versions ?? []
+        const fileMap = manifest.vehicles?.[aircraftType]?.files ?? {}
+
+        if (versions.length === 0) {
+          missingFiles.push(`${aircraftType} versions in manifest`)
+          continue
+        }
+
+        for (const version of versions) {
+          const fileName = fileMap[version]
+          if (!fileName) {
+            missingFiles.push(
+              `${aircraftType} ${version} file mapping in manifest`,
+            )
+            continue
+          }
+
+          const filePath = path.join(__dirname, "../data", fileName)
+          if (!fs.existsSync(filePath)) {
+            missingFiles.push(fileName)
+          }
+        }
+      }
+    } catch {
+      missingFiles.push(path.basename(manifestPath))
     }
   }
 
@@ -606,11 +660,15 @@ app.whenReady().then(() => {
       return []
     }
   })
-  // Clear recent logs
-  ipcMain.handle("fla:clear-recent-logs", clearRecentFiles)
 
   // Load Messages on demand
   ipcMain.handle("fla:get-messages", getMessages)
+
+  // Get message data for table
+  ipcMain.handle("fla:get-message-data-for-table", getMessageDataForTable)
+
+  // Save FLA params to file
+  ipcMain.handle("fla:save-params-to-file", saveParamsToFile)
 
   // Open native save dialog
   ipcMain.handle("app:get-save-file-path", async (event, options) => {

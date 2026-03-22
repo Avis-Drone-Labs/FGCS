@@ -20,6 +20,7 @@ import {
   setConnectionModal,
   setConnectionStatus,
   setFetchingComPorts,
+  setForceArmModalOpened,
   setForceDisarmModalOpened,
   setSelectedComPorts,
 } from "../slices/droneConnectionSlice"
@@ -66,11 +67,13 @@ import {
   setRadioPwmChannels,
   setRefreshingFlightModeData,
   setRefreshingGripperConfigData,
-  setShowMotorTestWarningModal,
+  setSerialPortsConfig,
   setServoConfig,
   setServoPwmOutputs,
+  setShowMotorTestWarningModal,
   updateChannelsConfigParam,
   updateGripperConfigParam,
+  updateSerialPortConfigParam,
   updateServoConfigParam,
 } from "../slices/configSlice.js"
 import {
@@ -81,7 +84,6 @@ import {
   setBatteryData,
   setDroneAircraftType,
   setEkfStatusReportData,
-  setExtraData,
   setFlightSwVersion,
   setGps2RawIntData,
   setGpsData,
@@ -94,7 +96,9 @@ import {
   setLoiterRadius,
   setNavControllerOutput,
   setOnboardControlSensorsEnabled,
+  setOnboardControlSensorsHealth,
   setRSSIData,
+  setSelectedDisplayTelemetry,
   setTelemetryData,
   setTotalTimeFlying,
   setVibrationData,
@@ -117,6 +121,7 @@ import {
   setDrawingFenceItems,
   setDrawingMissionItems,
   setDrawingRallyItems,
+  setIsFetchingDashboardMission,
   setMissionProgressData,
   setMissionProgressModal,
   setShouldFetchAllMissionsOnDashboard,
@@ -128,6 +133,7 @@ import {
 import {
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
+  setFetchingParam,
   setFetchingVars,
   setFetchingVarsProgress,
   setHasFetchedOnce,
@@ -139,6 +145,7 @@ import {
   setParamsWriteProgressData,
   setParamsWriteProgressModalOpen,
   setRebootData,
+  setRebootPromptModalOpen,
   setShownParams,
   updateParamValue,
 } from "../slices/paramsSlice.js"
@@ -147,12 +154,8 @@ import { setChecklistAutoBindingChecked } from "../slices/checklistSlice"
 import { handleEmitters } from "./emitters.js"
 
 const SocketEvents = Object.freeze({
-  // socket.on events
   Connect: "connect",
   Disconnect: "disconnect",
-
-  // droneConnectionSlice
-  // getComPorts: "get_com_ports",
   isConnectedToDrone: "is_connected_to_drone",
   listComPorts: "list_com_ports",
   linkDebugStats: "link_debug_stats",
@@ -213,6 +216,9 @@ const ConfigSpecificSocketEvents = Object.freeze({
   onSetServoConfigResult: "set_servo_config_result",
   onBatchSetServoConfigResult: "batch_set_servo_config_result",
   onTestServoPwmResult: "test_servo_result",
+  onSerialPortsConfig: "serial_ports_config",
+  onSetSerialPortConfigResult: "set_serial_port_config_result",
+  onBatchSetSerialPortConfigResult: "batch_set_serial_port_config_result",
 })
 
 const FtpSpecificSocketEvents = Object.freeze({
@@ -275,6 +281,9 @@ const socketMiddleware = (store) => {
       case "SYS_STATUS":
         store.dispatch(
           setOnboardControlSensorsEnabled(msg.onboard_control_sensors_enabled),
+        )
+        store.dispatch(
+          setOnboardControlSensorsHealth(msg.onboard_control_sensors_health),
         )
         break
       case "GPS_RAW_INT": {
@@ -394,6 +403,9 @@ const socketMiddleware = (store) => {
         socket.socket.on("disconnect", () => {
           store.dispatch(setConnected(false))
           store.dispatch(setConnecting(false))
+          store.dispatch(
+            closeDashboardMissionFetchingNotificationNoSuccessThunk(),
+          )
         })
 
         socket.socket.on("is_connected_to_drone", (msg) => {
@@ -403,10 +415,11 @@ const socketMiddleware = (store) => {
             store.dispatch(setConnected(false))
             store.dispatch(setConnecting(false))
             store.dispatch(emitGetComPorts())
-            store.dispatch(
-              closeDashboardMissionFetchingNotificationNoSuccessThunk(),
-            )
           }
+        })
+
+        socket.socket.on("reboot_connecting", () => {
+          store.dispatch(setConnecting(true))
         })
 
         // Fetch com ports and list them
@@ -432,6 +445,11 @@ const socketMiddleware = (store) => {
         socket.socket.on("disconnected_from_drone", () => {
           store.dispatch(setConnected(false))
           store.dispatch(setConnectedToSimulator(false))
+          store.dispatch(setIsFetchingDashboardMission(false))
+          store.dispatch(
+            closeDashboardMissionFetchingNotificationNoSuccessThunk(),
+          )
+
           window.ipcRenderer.send("window:update-title", "FGCS")
         })
 
@@ -471,13 +489,24 @@ const socketMiddleware = (store) => {
           store.dispatch(setAutoPilotRebootModalOpen(false))
           store.dispatch(setShouldFetchAllMissionsOnDashboard(true))
           store.dispatch(setShowMotorTestWarningModal(true))
-          store.dispatch(resetMessages())
           store.dispatch(resetGpsTrack())
           store.dispatch(resetFiles())
           store.dispatch(setIsReadingFile(false))
           store.dispatch(setReadFileData(null))
           store.dispatch(setTotalTimeFlying(0))
           store.dispatch(setHasEverHadGpsFix(false))
+          store.dispatch(setIsFetchingDashboardMission(false))
+        })
+
+        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
+          store.dispatch(setRebootData(msg))
+          if (msg.success) {
+            store.dispatch(setAutoPilotRebootModalOpen(false))
+            showSuccessNotification(msg.message)
+            store.dispatch(setRebootData({}))
+          } else {
+            store.dispatch(setConnecting(false))
+          }
         })
 
         // Simulation status messages
@@ -547,6 +576,10 @@ const socketMiddleware = (store) => {
           }
         })
 
+        socket.socket.on("fetching_param", (msg) => {
+          store.dispatch(setFetchingParam(msg.message))
+        })
+
         // Link stats
         socket.socket.on(SocketEvents.linkDebugStats, (msg) => {
           window.ipcRenderer.invoke("app:update-link-stats", msg)
@@ -583,18 +616,33 @@ const socketMiddleware = (store) => {
           const packetType = msg.mavpackettype
           const storeState = store.getState()
           if (storeState !== undefined) {
-            const extraDroneData = storeState.droneInfo.extraDroneData
-            const updatedExtraDroneData = extraDroneData.map((dataItem) => {
-              if (dataItem.currently_selected.startsWith(packetType)) {
-                const specificData = dataItem.currently_selected.split(".")[1]
-                if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
-                  return { ...dataItem, value: msg[specificData] }
-                }
-              }
-              return dataItem
-            })
+            const selectedDisplayTelemetry =
+              storeState.droneInfo.selectedDisplayTelemetry
+            let hasSelectedDisplayTelemetryChange = false
 
-            store.dispatch(setExtraData(updatedExtraDroneData))
+            const updatedSelectedDisplayTelemetry =
+              selectedDisplayTelemetry.map((dataItem) => {
+                if (
+                  typeof dataItem.currently_selected === "string" &&
+                  dataItem.currently_selected.startsWith(packetType)
+                ) {
+                  const specificData = dataItem.currently_selected.split(".")[1]
+                  if (Object.prototype.hasOwnProperty.call(msg, specificData)) {
+                    const nextValue = msg[specificData]
+                    if (dataItem.value !== nextValue) {
+                      hasSelectedDisplayTelemetryChange = true
+                      return { ...dataItem, value: nextValue }
+                    }
+                  }
+                }
+                return dataItem
+              })
+
+            if (hasSelectedDisplayTelemetryChange) {
+              store.dispatch(
+                setSelectedDisplayTelemetry(updatedSelectedDisplayTelemetry),
+              )
+            }
           }
 
           // Handle graph messages
@@ -786,9 +834,18 @@ const socketMiddleware = (store) => {
 
         socket.socket.on(DroneSpecificSocketEvents.onArmDisarm, (msg) => {
           if (!msg.success) {
+            const offerForce = msg.data?.offer_force === true
+
             // Check if this was a disarm attempt and was not a force disarm
-            if (msg.data?.was_disarming && !msg.data?.was_force) {
+            if (msg.data?.was_disarming && !msg.data?.was_force && offerForce) {
               store.dispatch(setForceDisarmModalOpened(true))
+            } else if (
+              !msg.data?.was_disarming &&
+              !msg.data?.was_force &&
+              offerForce
+            ) {
+              // Failed non-force arm attempt — offer force arm
+              store.dispatch(setForceArmModalOpened(true))
             } else {
               showErrorNotification(msg.message)
             }
@@ -825,15 +882,6 @@ const socketMiddleware = (store) => {
             }
           },
         )
-
-        socket.socket.on(ParamSpecificSocketEvents.onRebootAutopilot, (msg) => {
-          store.dispatch(setRebootData(msg))
-          if (msg.success) {
-            store.dispatch(setAutoPilotRebootModalOpen(false))
-            showSuccessNotification(msg.message)
-            store.dispatch(setRebootData({}))
-          }
-        })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
           store.dispatch(setParams(msg))
@@ -892,6 +940,14 @@ const socketMiddleware = (store) => {
           if (paramsNotSet.length !== 0) {
             store.dispatch(setParamsFailedToWrite(paramsNotSet))
             store.dispatch(setParamsFailedToWriteModalOpen(true))
+          }
+
+          const rebootRequired = paramsSetSuccessfully.some(
+            (param) => param.reboot_required === true,
+          )
+
+          if (rebootRequired) {
+            store.dispatch(setRebootPromptModalOpen(true))
           }
         })
 
@@ -978,6 +1034,7 @@ const socketMiddleware = (store) => {
               store.dispatch(setShouldFetchAllMissionsOnDashboard(false))
             }
             store.dispatch(closeDashboardMissionFetchingNotificationThunk())
+            store.dispatch(setIsFetchingDashboardMission(false))
           },
         )
 
@@ -1374,6 +1431,52 @@ const socketMiddleware = (store) => {
           },
         )
 
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSerialPortsConfig,
+          (msg) => {
+            store.dispatch(setSerialPortsConfig(msg))
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onSetSerialPortConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+              store.dispatch(
+                updateSerialPortConfigParam({
+                  param_id: msg.param_id,
+                  value: msg.value,
+                }),
+              )
+            } else {
+              showErrorNotification(msg.message)
+            }
+          },
+        )
+
+        socket.socket.on(
+          ConfigSpecificSocketEvents.onBatchSetSerialPortConfigResult,
+          (msg) => {
+            if (msg.success) {
+              showSuccessNotification(msg.message)
+            } else {
+              showErrorNotification(msg.message)
+            }
+
+            if (msg.data?.length > 0) {
+              for (const successfullySetParam of msg.data) {
+                store.dispatch(
+                  updateSerialPortConfigParam({
+                    param_id: successfullySetParam.param_id,
+                    value: successfullySetParam.value,
+                  }),
+                )
+              }
+            }
+          },
+        )
+
         socket.socket.on(FtpSpecificSocketEvents.onListFilesResult, (msg) => {
           store.dispatch(setLoadingListFiles(false))
           if (msg.success) {
@@ -1435,9 +1538,11 @@ const socketMiddleware = (store) => {
         Object.values(DroneSpecificSocketEvents).map((event) =>
           socket.socket.off(event),
         )
-        Object.values(ParamSpecificSocketEvents).map((event) =>
-          socket.socket.off(event),
-        )
+        Object.values(ParamSpecificSocketEvents)
+          .filter(
+            (event) => event !== ParamSpecificSocketEvents.onRebootAutopilot,
+          )
+          .map((event) => socket.socket.off(event))
         Object.values(MissionSpecificSocketEvents)
           .filter(
             (event) =>

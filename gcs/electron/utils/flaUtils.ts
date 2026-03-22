@@ -10,19 +10,13 @@ import type {
 } from "../types/flaTypes"
 
 const ignoredMessages: string[] = [
-  "ERR",
-  "EV",
-  "MSG",
-  "VER",
   "TIMESYNC",
-  "PARAM_VALUE",
   "TSYN",
   "UNIT",
   "FILE",
   "FMTU",
   "FMT",
   "MULT",
-  "PARM",
   "units",
   "format",
   "aircraftType",
@@ -240,7 +234,7 @@ export function convertTimeUStoUTC(
   logMessages: LoadedLogMessages,
   gpsOffset: number,
 ): LoadedLogMessages {
-  // This still takes some time for some reason
+  // Add UtcTimeUS alongside TimeUS instead of replacing it
   const convertedMessages: LoadedLogMessages = { ...logMessages }
 
   Object.keys(convertedMessages)
@@ -250,7 +244,7 @@ export function convertTimeUStoUTC(
       if (Array.isArray(messages)) {
         convertedMessages[key] = messages.map((message: MessageObject) => ({
           ...message,
-          TimeUS: (message.TimeUS as number) / 1000 + gpsOffset,
+          UtcTimeUS: (message.TimeUS as number) / 1000 + gpsOffset,
         }))
       }
     })

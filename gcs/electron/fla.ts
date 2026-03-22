@@ -28,6 +28,7 @@ import type {
   LogType,
   MessageObject,
   Messages,
+  ParamObject,
   ParseResult,
   RecentLog,
 } from "./types/flaTypes"
@@ -45,7 +46,7 @@ import {
 } from "./utils/flaUtils"
 
 const UPDATE_THROTTLE_MS = 100 // Update every 100ms
-const recentLogsManager = createRecentLogsManager()
+const recentLogsManager = createRecentLogsManager(20)
 let logData: Messages | null = null
 let defaultMessageFilters: Record<string, unknown> = {}
 
@@ -128,6 +129,7 @@ async function parseDataflashLogFile(
         // File data
       } else if (messageName === "MSG") {
         // MSG data
+        // TODO: Use "VER" message for this data
         const text = splitLineData[2]?.trim()
 
         if (aircraftType === null && text) {
@@ -138,43 +140,39 @@ async function parseDataflashLogFile(
             aircraftType = "copter"
           }
         }
-      } else {
-        // Message data
-        const formatMessage = formatMessages[messageName]
-        if (formatMessage) {
-          if (!messages[messageName]) {
-            messages[messageName] = []
-          }
+      }
 
-          const messageObj: MessageObject = {
-            name: messageName,
-          }
+      // Message data
+      const formatMessage = formatMessages[messageName]
+      if (formatMessage) {
+        if (!messages[messageName]) {
+          messages[messageName] = []
+        }
 
-          const fields = formatMessage.fields
-          const format = formatMessage.format
-          const fieldsLength = fields.length
+        const messageObj: MessageObject = {
+          name: messageName,
+        }
 
-          for (
-            let i = 0;
-            i < fieldsLength && i < splitLineData.length - 1;
-            i++
-          ) {
-            const field = fields[i]
-            const formatType = format[i]
-            const value = splitLineData[i + 1]?.trim()
+        const fields = formatMessage.fields
+        const format = formatMessage.format
+        const fieldsLength = fields.length
 
-            if (value !== undefined && value !== "") {
-              if (stringTypes.has(formatType)) {
-                messageObj[field] = value
-              } else {
-                const numValue = parseFloat(value)
-                messageObj[field] = isNaN(numValue) ? 0 : numValue
-              }
+        for (let i = 0; i < fieldsLength && i < splitLineData.length - 1; i++) {
+          const field = fields[i]
+          const formatType = format[i]
+          const value = splitLineData[i + 1]?.trim()
+
+          if (value !== undefined && value !== "") {
+            if (stringTypes.has(formatType)) {
+              messageObj[field] = value
+            } else {
+              const numValue = parseFloat(value)
+              messageObj[field] = isNaN(numValue) ? 0 : numValue
             }
           }
-
-          ;(messages[messageName] as MessageObject[]).push(messageObj)
         }
+
+        ;(messages[messageName] as MessageObject[]).push(messageObj)
       }
 
       const now = Date.now()
@@ -375,6 +373,17 @@ function parseDataflashBinFile(
       aircraftType: getAircraftTypeFromMavType(parser.getMavType()),
       ...transformedMessages,
     }
+
+    if (
+      Array.isArray(parsedData?.PARM) &&
+      parsedData.PARM.some(
+        (param: MessageObject) =>
+          param.Name === "Q_ENABLE" && param.Value === 1,
+      )
+    ) {
+      parsedData.aircraftType = "quadplane"
+    }
+
     webContents.send("fla:log-parse-progress", {
       percent: 100,
     })
@@ -422,11 +431,6 @@ async function determineLogFileType(filePath: string): Promise<LogType> {
 // New function to get recent files
 export function getRecentFiles(): RecentLog[] {
   return recentLogsManager.getRecentLogs()
-}
-
-// New function to clear recent files
-export function clearRecentFiles(): void {
-  recentLogsManager.clearRecentLogs()
 }
 
 async function getFirstLine(pathToFile: string): Promise<string> {
@@ -490,13 +494,6 @@ function processAndSaveLogData(
     params = getParamObjects(loadedLogMessages["PARM"] as MessageObject[])
   }
 
-  if (
-    logType === "dataflash_bin" &&
-    canDisplayMapPositionData(loadedLogMessages)
-  ) {
-    mapPositionData = getMapPositionData(loadedLogMessages)
-  }
-
   // 5. Calculate means on the final, fully-expanded data
   const means = calculateMeanValues(finalMessages)
 
@@ -508,6 +505,12 @@ function processAndSaveLogData(
     format: finalFormats,
     aircraftType: aircraftType,
   } // Save the complete data with required properties
+
+  // Extract map position data after UTC conversion is complete
+  if (logType === "dataflash_bin" && canDisplayMapPositionData(logData)) {
+    mapPositionData = getMapPositionData(logData)
+  }
+
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
   // 7. Get firmware version from VER message if available
@@ -684,8 +687,12 @@ export async function getMessages(
 
     for (let j = 0; j < len; j++) {
       const point = series[j]
+      // Use UtcTimeUS if available, otherwise fall back to TimeUS
+      const timeValue =
+        point.UtcTimeUS !== undefined ? point.UtcTimeUS : point.TimeUS
+
       // making sure all the entries are numbers
-      x[j] = typeof point.TimeUS === "number" ? point.TimeUS : 0
+      x[j] = typeof timeValue === "number" ? timeValue : 0
       y[j] = typeof point[fieldName] === "number" ? point[fieldName] : 0
     }
 
@@ -698,4 +705,57 @@ export async function getMessages(
   }
 
   return datasets
+}
+
+export async function getMessageDataForTable(
+  _event: unknown,
+  requestedMessage: string,
+): Promise<MessageObject[] | { success: false; error: string }> {
+  if (!logData) {
+    console.error("getMessageDataForTable: logData is null or undefined.")
+    return { success: false, error: "Log data not loaded." }
+  }
+
+  if (!requestedMessage.trim()) {
+    return { success: false, error: "Invalid message type." }
+  }
+
+  const series = logData[requestedMessage] as MessageObject[]
+  if (!Array.isArray(series) || series.length === 0) {
+    return { success: false, error: "No data available for this message type." }
+  }
+
+  return series
+}
+
+export async function saveParamsToFile(
+  _event: unknown,
+  filePath: string,
+  params: Array<ParamObject>,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Sort params alphabetically by name
+    const sortedParams = [...params].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )
+
+    // Write params to file in the format: PARAM_NAME,value
+    const content = sortedParams
+      .map((param) => `${param.name.toUpperCase()},${param.value}`)
+      .join("\n")
+
+    await fs.promises.writeFile(filePath, content + "\n", "utf-8")
+
+    console.log(`Parameters saved to ${filePath}`)
+    return {
+      success: true,
+      message: `Parameters saved successfully to ${filePath}`,
+    }
+  } catch (error) {
+    console.error("Failed to save params to file:", error)
+    return {
+      success: false,
+      message: `Failed to save parameters: ${error instanceof Error ? error.message : String(error)}`,
+    }
+  }
 }

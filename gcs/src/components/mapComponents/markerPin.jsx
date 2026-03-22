@@ -8,9 +8,11 @@ import React from "react"
 // Map and mantine imports
 import { Tooltip } from "@mantine/core"
 import { Marker } from "react-map-gl"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { coordToInt } from "../../helpers/dataFormatters"
 import { getContainerPointFromEvent } from "../../helpers/pointer"
+import { updateDashboardContextMenuState } from "../../redux/slices/dashboardSlice"
+import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import {
   updateContextMenuState,
   updateDrawingItem,
@@ -29,6 +31,7 @@ const MarkerPin = React.memo(
     dragEndCallback = null,
   }) => {
     const dispatch = useDispatch()
+    const currentPage = useSelector(selectCurrentPage)
 
     return (
       <div
@@ -52,8 +55,15 @@ const MarkerPin = React.memo(
           )
           // use helper to get point inside container
           const pt = getContainerPointFromEvent(e.nativeEvent, container)
+
+          // Dispatch to the appropriate context menu based on the type
+          const contextMenuAction =
+            currentPage === "dashboard"
+              ? updateDashboardContextMenuState
+              : updateContextMenuState
+
           dispatch(
-            updateContextMenuState({
+            contextMenuAction({
               isOpen: true,
               position: { x: pt.x, y: pt.y },
               gpsCoords: { lat: lat, lng: lon },

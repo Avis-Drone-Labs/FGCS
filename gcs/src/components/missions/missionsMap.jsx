@@ -48,6 +48,10 @@ import tailwindConfig from "../../../tailwind.config"
 import { useDispatch, useSelector } from "react-redux"
 import { getContainerPointFromEvent } from "../../helpers/pointer"
 import {
+  deletePoiMarker,
+  selectPoiMarkers,
+} from "../../redux/slices/droneConnectionSlice"
+import {
   selectFlightModeString,
   selectGPS,
   selectGuidedModePinData,
@@ -65,7 +69,9 @@ import {
   setPlannedHomePositionToDronesHomePositionThunk,
   updateContextMenuState,
 } from "../../redux/slices/missionSlice"
+import AddPoiMarkerModal from "../mapComponents/addPoiMarkerModal"
 import ContextMenuSpecificCommandItems from "../mapComponents/contextMenuSpecificCommandItems"
+import POIMarkersContainer from "../mapComponents/poiMarkersContainer"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
@@ -86,6 +92,7 @@ function MapSectionNonMemo({
   const currentTab = useSelector(selectActiveTab)
   const contextMenuState = useSelector(selectContextMenu)
   const guidedModePinData = useSelector(selectGuidedModePinData)
+  const poiMarkers = useSelector(selectPoiMarkers)
 
   const [position, setPosition] = useState(null)
   const { getSetting } = useSettings()
@@ -118,6 +125,8 @@ function MapSectionNonMemo({
   const [measureDistanceStart, setMeasureDistanceStart] = useState(null)
   const [measureDistanceEnd, setMeasureDistanceEnd] = useState(null)
   const [measureDistanceResult, setMeasureDistanceResult] = useState(null)
+
+  const [addPoiMarkerModalOpened, setAddPoiMarkerModalOpened] = useState(false)
 
   useEffect(() => {
     const closeContextMenu = () =>
@@ -431,9 +440,18 @@ function MapSectionNonMemo({
           measureDistanceEnd={measureDistanceEnd}
         />
 
+        <POIMarkersContainer />
+
         <DistanceMeasurementModal
           measureDistanceResult={measureDistanceResult}
           onClose={stopMeasureDistance}
+        />
+
+        <AddPoiMarkerModal
+          modalOpened={addPoiMarkerModalOpened}
+          setModalOpened={setAddPoiMarkerModalOpened}
+          lat={contextMenuState.gpsCoords.lat}
+          lon={contextMenuState.gpsCoords.lng}
         />
 
         {contextMenuState.isOpen && (
@@ -525,6 +543,26 @@ function MapSectionNonMemo({
             <ContextMenuItem onClick={measureDistance}>
               <p>Measure distance</p>
             </ContextMenuItem>
+            <ContextMenuSubMenuItem title={"POI marker"}>
+              <ContextMenuItem
+                onClick={() => {
+                  setAddPoiMarkerModalOpened(true)
+                }}
+              >
+                <p>Add POI marker</p>
+              </ContextMenuItem>
+              {poiMarkers.find(
+                (marker) => marker.id === contextMenuState?.markerId,
+              ) && (
+                <ContextMenuItem
+                  onClick={() => {
+                    dispatch(deletePoiMarker({ id: contextMenuState.markerId }))
+                  }}
+                >
+                  <p>Delete POI marker</p>
+                </ContextMenuItem>
+              )}
+            </ContextMenuSubMenuItem>
             <Divider />
             <ContextMenuSubMenuItem title={"Polygon"}>
               <ContextMenuItem

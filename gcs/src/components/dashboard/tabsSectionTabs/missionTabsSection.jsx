@@ -22,6 +22,7 @@ import {
 import {
   emitControlMission,
   selectCurrentMission,
+  selectIsFetchingDashboardMission,
 } from "../../../redux/slices/missionSlice"
 import { NoConnectionMsg } from "../tabsSection"
 
@@ -75,6 +76,9 @@ const MissionInfo = () => {
 
 const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
   const dispatch = useDispatch()
+  const isFetchingDashboardMission = useSelector(
+    selectIsFetchingDashboardMission,
+  )
   // this is repeated code, will be updated after socket functionality is changed
   function setNewFlightMode(modeNumber) {
     if (modeNumber === null || modeNumber === currentFlightModeNumber) {
@@ -130,6 +134,7 @@ const AutoStartRestartMission = ({ aircraftType, currentFlightModeNumber }) => {
             dispatch(emitGetCurrentMissionAll())
           }}
           className="grow"
+          loading={isFetchingDashboardMission}
         >
           Read mission
         </Button>

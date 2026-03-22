@@ -37,8 +37,9 @@ yarn.lock
 /playwright/.cache/
 
 # Generated parameter files
-gen_apm_params_def_copter.json
-gen_apm_params_def_plane.json
+gen_apm_params_def_copter_*.json
+gen_apm_params_def_plane_*.json
+gen_apm_params_versions.json
 
 # Generated log message description files
 gen_log_messages_desc_copter.json

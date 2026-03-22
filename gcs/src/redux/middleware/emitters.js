@@ -7,6 +7,7 @@ import {
   emitGetGripperConfig,
   emitGetGripperEnabled,
   emitGetRcConfig,
+  emitGetSerialPortsConfig,
   emitGetServoConfig,
   emitRefreshFlightModeData,
   emitSetFlightMode,
@@ -16,6 +17,7 @@ import {
   emitSetGripperDisabled,
   emitSetGripperEnabled,
   emitSetRcConfigParam,
+  emitSetSerialPortConfigParam,
   emitSetServoConfigParam,
   emitTestAllMotors,
   emitTestMotorSequence,
@@ -58,6 +60,7 @@ import {
   emitGetTargetInfo,
   emitImportMissionFromFile,
   emitWriteCurrentMission,
+  setIsFetchingDashboardMission,
   setShouldFetchAllMissionsOnDashboard,
   showDashboardMissionFetchingNotificationThunk,
 } from "../slices/missionSlice"
@@ -151,8 +154,14 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitSetState,
       callback: () => {
-        store.dispatch(setCurrentPage(action.payload))
-        socket.socket.emit("set_state", { state: action.payload })
+        const newState = action.payload
+
+        store.dispatch(setCurrentPage(newState))
+
+        // Individual config pages handle setting state
+        if (newState !== "config") {
+          socket.socket.emit("set_state", { state: newState })
+        }
       },
     },
     {
@@ -162,6 +171,12 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitGetCurrentMissionAll,
       callback: () => {
+        const storeState = store.getState()
+        // Prevent duplicate fetches while one is already in progress
+        if (storeState.missionInfo.isFetchingDashboardMission) {
+          return
+        }
+        store.dispatch(setIsFetchingDashboardMission(true))
         socket.socket.emit("get_current_mission_all")
         store.dispatch(showDashboardMissionFetchingNotificationThunk())
       },
@@ -465,6 +480,19 @@ export function handleEmitters(socket, store, action) {
         socket.socket.emit("test_servo_pwm", {
           servo_instance: action.payload.servo_instance,
           pwm_value: action.payload.pwm_value,
+        })
+      },
+    },
+    {
+      emitter: emitGetSerialPortsConfig,
+      callback: () => socket.socket.emit("get_serial_ports_config"),
+    },
+    {
+      emitter: emitSetSerialPortConfigParam,
+      callback: () => {
+        socket.socket.emit("set_serial_port_config_param", {
+          param_id: action.payload.param_id,
+          value: action.payload.value,
         })
       },
     },

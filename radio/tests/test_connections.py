@@ -1,7 +1,6 @@
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import NoDrone
 
 
@@ -24,7 +23,6 @@ def run_once_after_all_tests():
     droneStatus.drone.logger.info(f"Re-connected to drone on {VALID_DRONE_PORT}")
 
 
-@falcon_test()
 def test_connect(socketio_client: SocketIOTestClient):
     """Test connecting to socket"""
     socketio_client.emit("connect")
@@ -32,7 +30,6 @@ def test_connect(socketio_client: SocketIOTestClient):
     assert len(socketio_result) == 0  # No message sent back
 
 
-@falcon_test(pass_drone_status=True)
 def test_isConnectedToDrone_with_drone(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -45,7 +42,6 @@ def test_isConnectedToDrone_with_drone(
     assert socketio_result[0]["name"] == "is_connected_to_drone"  # Correct name emitted
 
 
-@falcon_test(pass_drone_status=True)
 def test_getTargetInfo(socketio_client: SocketIOTestClient, droneStatus):
     socketio_client.emit("get_target_info")
     socketio_result = socketio_client.get_received()
@@ -58,7 +54,6 @@ def test_getTargetInfo(socketio_client: SocketIOTestClient, droneStatus):
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_startForwarding_noDroneConnected(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -73,7 +68,6 @@ def test_startForwarding_noDroneConnected(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_startForwarding_missingAddress(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -87,7 +81,6 @@ def test_startForwarding_missingAddress(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_startForwarding_badAddressFormat(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -117,7 +110,6 @@ def test_startForwarding_badAddressFormat(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_startForwarding_success(socketio_client: SocketIOTestClient, droneStatus):
     socketio_client.emit("start_forwarding", {"address": "udpout:127.0.0.1:14550"})
     socketio_result = socketio_client.get_received()
@@ -129,7 +121,6 @@ def test_startForwarding_success(socketio_client: SocketIOTestClient, droneStatu
     assert droneStatus.drone.forwarding_address == "udpout:127.0.0.1:14550"
 
 
-@falcon_test(pass_drone_status=True)
 def test_startForwarding_alreadyForwarding(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -143,7 +134,6 @@ def test_startForwarding_alreadyForwarding(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_stopForwarding_noDroneConnected(
     socketio_client: SocketIOTestClient, droneStatus
 ):
@@ -158,7 +148,6 @@ def test_stopForwarding_noDroneConnected(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_stopForwarding_success(socketio_client: SocketIOTestClient, droneStatus):
     assert droneStatus.drone.forwarding_address == "udpout:127.0.0.1:14550"
     socketio_client.emit("stop_forwarding")
@@ -171,7 +160,6 @@ def test_stopForwarding_success(socketio_client: SocketIOTestClient, droneStatus
     assert droneStatus.drone.forwarding_address is None
 
 
-@falcon_test(pass_drone_status=True)
 def test_stopForwarding_notForwarding(socketio_client: SocketIOTestClient, droneStatus):
     assert droneStatus.drone.forwarding_address is None
     socketio_client.emit("stop_forwarding")
@@ -184,7 +172,6 @@ def test_stopForwarding_notForwarding(socketio_client: SocketIOTestClient, drone
 
 
 # Has to be the final test otherwise the socket disconnects
-@falcon_test(pass_drone_status=True)
 def test_disconnect(socketio_client: SocketIOTestClient, droneStatus):
     """Test disconnecting from socket"""
     socketio_client.emit("disconnect")

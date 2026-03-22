@@ -66,6 +66,7 @@ import {
 } from "../slices/missionSlice"
 import {
   emitExportParamsToFile,
+  emitGetParams,
   emitRebootAutopilot,
   emitRefreshParams,
   emitSetMultipleParams,
@@ -320,6 +321,10 @@ export function handleEmitters(socket, store, action) {
     {
       emitter: emitRebootAutopilot,
       callback: () => socket.socket.emit("reboot_autopilot"),
+    },
+    {
+      emitter: emitGetParams,
+      callback: () => socket.socket.emit("get_params"),
     },
     {
       emitter: emitRefreshParams,

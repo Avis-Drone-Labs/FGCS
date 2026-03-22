@@ -4,6 +4,10 @@ import { selectFetchingParam } from "../redux/slices/paramsSlice"
 
 export default function ConnectionProgress({ connecting, status }) {
   const param = useSelector(selectFetchingParam)
+  const subMessage = status?.sub_message || ""
+  const fallbackSubMessage = param ? `Fetching ${param}` : ""
+  const details = subMessage || fallbackSubMessage
+
   return (
     <>
       {connecting &&
@@ -11,9 +15,11 @@ export default function ConnectionProgress({ connecting, status }) {
         typeof status.progress === "number" && (
           <>
             <p className="text-center mt-4">{status.message}</p>
-            <p className="text-center mb-4 text-falcongrey-400 text-sm">
-              {param ? <>Fetching {param}</> : "Fetching params..."}
-            </p>
+            {details && (
+              <p className="text-center mb-4 text-falcongrey-400 text-sm">
+                {details}
+              </p>
+            )}
             <Progress
               animated
               size="lg"

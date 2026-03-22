@@ -17,8 +17,7 @@ import {
   Table,
   Text,
 } from "@mantine/core"
-import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
-import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -35,7 +34,6 @@ import {
   emitSetState,
   selectConnectedToDrone,
 } from "../../redux/slices/droneConnectionSlice"
-import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
 
 // Styling imports
 import resolveConfig from "tailwindcss/resolveConfig"
@@ -64,19 +62,13 @@ function getPercentageValueFromPWM(pwmValue) {
 export default function RadioCalibration() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const aircraftTypeString = useSelector(selectAircraftTypeString)
   const pwmChannels = useSelector(selectRadioPwmChannels)
   const channelsConfig = useSelector(selectRadioChannelsConfig)
+  const { paramDefs } = useParamDefinitions()
 
   const calibrationModalOpened = useSelector(selectRadioCalibrationModalOpen)
   const [initialCalibrationPwms, setInitialCalibrationPwms] = useState(null)
   const [calibrationData, setCalibrationData] = useState({})
-
-  const paramDefs = useMemo(() => {
-    return aircraftTypeString === "Copter"
-      ? apmParamDefsCopter
-      : apmParamDefsPlane
-  }, [aircraftTypeString])
 
   const rcSelectOptions = useMemo(() => {
     const rcOptions = paramDefs.RC1_OPTION?.Values

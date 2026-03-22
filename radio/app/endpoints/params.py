@@ -1,3 +1,4 @@
+import time
 from typing import Any, List
 
 from typing_extensions import TypedDict
@@ -5,6 +6,8 @@ from typing_extensions import TypedDict
 import app.droneStatus as droneStatus
 from app import logger, socketio
 from app.utils import notConnectedError
+
+PARAM_REQUEST_UPDATE_THROTTLE_SECS = 0.2
 
 
 class ExportParamsFileType(TypedDict):
@@ -99,15 +102,28 @@ def refresh_params() -> None:
     params_controller = drone.paramsController
 
     last_index_sent = -1
+    last_progress_emit_time = 0.0
 
     def send_param_request_update(progress_data: dict) -> None:
-        nonlocal last_index_sent
+        nonlocal last_index_sent, last_progress_emit_time
         current_param_index = progress_data.get("current_param_index", -1)
         if current_param_index <= last_index_sent:
             return
 
+        total_params = max(int(progress_data.get("total_number_of_params", 0)), 1)
+        current_index = max(int(current_param_index) + 1, 1)
+        is_final_update = current_index >= total_params
+
+        now = time.monotonic()
+        if (
+            not is_final_update
+            and now - last_progress_emit_time < PARAM_REQUEST_UPDATE_THROTTLE_SECS
+        ):
+            return
+
         socketio.emit("param_request_update", progress_data)
         last_index_sent = current_param_index
+        last_progress_emit_time = now
 
     response = params_controller.fetchAllParamsBlocking(
         timeout_secs=120,

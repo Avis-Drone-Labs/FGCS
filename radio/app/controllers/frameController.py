@@ -48,12 +48,8 @@ class FrameController:
         Returns:
             dict: The frame config of the drone
         """
-        self.frame_type = self.drone.paramsController.getSingleParam("FRAME_TYPE").get(
-            "param_value", "UNKNOWN"
-        )
-        self.frame_class = self.drone.paramsController.getSingleParam(
-            "FRAME_CLASS"
-        ).get("param_value", 0)
+        self.getFrameType()
+        self.getFrameClass()
 
         return {
             "frame_type": self.frame_type,

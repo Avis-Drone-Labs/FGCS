@@ -127,6 +127,7 @@ import {
   setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
+  emitRefreshParams,
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
   setFetchingParam,
@@ -937,6 +938,24 @@ const socketMiddleware = (store) => {
 
           if (rebootRequired) {
             store.dispatch(setRebootPromptModalOpen(true))
+          }
+
+          // Refresh params if an _ENABLE param has been changed
+          const hasEnableParam = paramsSetSuccessfully.some((param) =>
+            String(param?.param_id || "")
+              .toUpperCase()
+              .endsWith("_ENABLE"),
+          )
+          const isOnParamsPage =
+            store.getState().droneConnection.currentPage === "params"
+          const isAlreadyFetching = store.getState().paramsSlice.fetchingVars
+
+          if (hasEnableParam && isOnParamsPage && !isAlreadyFetching) {
+            store.dispatch(
+              setFetchingVarsProgress({ progress: 0, param_id: "" }),
+            )
+            store.dispatch(setFetchingVars(true))
+            store.dispatch(emitRefreshParams())
           }
         })
 

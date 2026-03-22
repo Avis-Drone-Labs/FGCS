@@ -177,6 +177,7 @@ const paramsSlice = createSlice({
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
+    emitGetParams: () => {},
     emitRefreshParams: () => {},
     emitSetMultipleParams: () => {},
     emitExportParamsToFile: () => {},
@@ -241,6 +242,7 @@ export const {
   setRebootPromptModalOpen,
   setPendingFetchAction,
   emitRebootAutopilot,
+  emitGetParams,
   emitRefreshParams,
   emitSetMultipleParams,
   emitExportParamsToFile,

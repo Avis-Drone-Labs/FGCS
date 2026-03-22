@@ -35,12 +35,12 @@ import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import { selectIsArmed, selectIsFlying } from "./redux/slices/droneInfoSlice.js"
 import {
   emitExportParamsToFile,
+  emitGetParams,
   emitRefreshParams,
   emitSetMultipleParams,
   resetParamState,
   selectFetchingVars,
   selectFetchingVarsProgress,
-  selectHasFetchedOnce,
   selectModifiedParams,
   selectParams,
   selectParamSearchValue,
@@ -48,7 +48,6 @@ import {
   selectShownParams,
   setFetchingVars,
   setFetchParamsWarningModalOpen,
-  setHasFetchedOnce,
   setLoadedFileName,
   setLoadedParams,
   setLoadParamsFileModalOpen,
@@ -78,7 +77,6 @@ export default function Params() {
   const isFlying = useSelector(selectIsFlying)
 
   // Parameter states
-  const hasFetchedOnce = useSelector(selectHasFetchedOnce)
   const params = useSelector(selectParams)
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
@@ -96,12 +94,13 @@ export default function Params() {
   useEffect(() => {
     if (!connected) {
       dispatch(resetParamState())
+      return
     }
 
-    if (connected && !hasFetchedOnce && !fetchingVars) {
-      fetchParams()
+    if (!fetchingVars && params.length === 0) {
+      dispatch(emitGetParams())
     }
-  }, [connected])
+  }, [connected, dispatch, fetchingVars, params.length])
 
   useEffect(() => {
     if (!params) return
@@ -133,7 +132,6 @@ export default function Params() {
   function fetchParamsForFirstTime() {
     dispatch(setFetchingVars(true))
     dispatch(emitRefreshParams())
-    dispatch(setHasFetchedOnce(true))
     dispatch(setPendingFetchAction(null))
   }
 

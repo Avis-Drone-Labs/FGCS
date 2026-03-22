@@ -27,6 +27,28 @@ def setMultipleParamsProgressUpdateCallback(
     socketio.emit("set_multiple_params_progress", data)
 
 
+@socketio.on("get_params")
+def get_params() -> None:
+    """
+    Get cached parameters from the params controller.
+    """
+    drone = droneStatus.drone
+    if drone is None:
+        return
+
+    if droneStatus.state != "params":
+        socketio.emit(
+            "params_error",
+            {"message": "You must be on the params screen to get parameters."},
+        )
+        logger.debug(f"Current state: {droneStatus.state}")
+        return
+
+    socketio.emit(
+        "get_params_result", {"success": True, "data": drone.paramsController.params}
+    )
+
+
 @socketio.on("set_multiple_params")
 def set_multiple_params(params_list: List[Any]) -> None:
     """
@@ -103,7 +125,9 @@ def refresh_params() -> None:
         )
         return
 
-    socketio.emit("params", params_controller.params)
+    socketio.emit(
+        "get_params_result", {"success": True, "data": drone.paramsController.params}
+    )
 
 
 @socketio.on("export_params_to_file")

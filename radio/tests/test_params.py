@@ -448,6 +448,31 @@ def test_refreshParams_wrongState(
     }
 
 
+def test_getParams_wrongState(socketio_client: SocketIOTestClient, droneStatus) -> None:
+    droneStatus.state = "dashboard"
+    socketio_result = send_and_receive_params(socketio_client, "get_params")
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the params screen to get parameters.",
+    }
+
+
+def test_getParams_returnsCachedParams(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "params"
+    expected_params = [
+        {"param_id": "ACRO_BAL_ROLL", "param_value": 2.0, "param_type": 9}
+    ]
+    droneStatus.drone.paramsController.params = expected_params
+
+    socketio_result = send_and_receive_params(socketio_client, "get_params")
+
+    assert socketio_result["name"] == "get_params_result"
+    assert socketio_result["args"][0] == {"success": True, "data": expected_params}
+
+
 @pytest.mark.skip(reason="Need to find a better way to simulate a timeout")
 def test_refreshParams_timeout(
     socketio_client: SocketIOTestClient, droneStatus
@@ -457,17 +482,18 @@ def test_refreshParams_timeout(
         socketio_result = send_and_receive_params(socketio_client, "refresh_params")
         assert (
             socketio_result["name"] == "params_error"
-            or socketio_result["name"] == "params"
+            or socketio_result["name"] == "get_params_result"
         )
         if socketio_result["name"] == "params_error":
             assert socketio_result["args"][0] == {
                 "message": "Parameter request timed out after 3 minutes."
             }
 
-        if socketio_result["name"] == "params":
-            assert (
-                socketio_result["args"][0] == droneStatus.drone.paramsController.params
-            )
+        if socketio_result["name"] == "get_params_result":
+            assert socketio_result["args"][0] == {
+                "success": True,
+                "data": droneStatus.drone.paramsController.params,
+            }
 
 
 def test_refreshParams_alwaysFetchesAndEmitsProgress(
@@ -510,7 +536,16 @@ def test_refreshParams_alwaysFetchesAndEmitsProgress(
     assert any(
         event["name"] == "param_request_update" for event in first_refresh_events
     )
-    assert any(event["name"] == "params" for event in first_refresh_events)
+    assert any(event["name"] == "get_params_result" for event in first_refresh_events)
+    assert any(
+        event["name"] == "get_params_result"
+        and event["args"][0]
+        == {
+            "success": True,
+            "data": [{"param_id": "TEST_PARAM", "param_value": 2.0, "param_type": 9}],
+        }
+        for event in first_refresh_events
+    )
 
     socketio_client.emit("refresh_params")
     second_refresh_events = socketio_client.get_received()
@@ -518,7 +553,16 @@ def test_refreshParams_alwaysFetchesAndEmitsProgress(
     assert any(
         event["name"] == "param_request_update" for event in second_refresh_events
     )
-    assert any(event["name"] == "params" for event in second_refresh_events)
+    assert any(event["name"] == "get_params_result" for event in second_refresh_events)
+    assert any(
+        event["name"] == "get_params_result"
+        and event["args"][0]
+        == {
+            "success": True,
+            "data": [{"param_id": "TEST_PARAM", "param_value": 2.0, "param_type": 9}],
+        }
+        for event in second_refresh_events
+    )
     assert call_count == 2
 
 

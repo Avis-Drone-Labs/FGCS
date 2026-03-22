@@ -181,6 +181,7 @@ def test_setFlightMode_success_copter(droneStatus):
     assert response == {
         "success": True,
         "message": "Flight mode 1 set to COPTER_MODE_ALT_HOLD",
+        "data": {"param_id": "FLTMODE1", "value": 2},
     }
     assert droneStatus.drone.flightModesController.flight_modes[0] == 2
 
@@ -213,6 +214,7 @@ def test_setFlightMode_success_plane(droneStatus):
     assert response == {
         "success": True,
         "message": "Flight mode 1 set to PLANE_MODE_FLY_BY_WIRE_A",
+        "data": {"param_id": "FLTMODE1", "value": 5},
     }
     assert droneStatus.drone.flightModesController.flight_modes[0] == 5
 

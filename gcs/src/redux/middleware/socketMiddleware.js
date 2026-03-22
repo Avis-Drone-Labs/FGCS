@@ -131,6 +131,7 @@ import {
   setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
+  emitRefreshParams,
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
   setFetchingParam,
@@ -249,6 +250,32 @@ const socketMiddleware = (store) => {
     }
 
     store.dispatch(setServoPwmOutputs(outputs))
+  }
+
+  function syncSingleParamInParamsSlice(paramId, value) {
+    if (!paramId || value === undefined) {
+      return
+    }
+
+    store.dispatch(
+      updateParamValue({
+        param_id: paramId,
+        param_value: value,
+      }),
+    )
+  }
+
+  function syncBatchParamsInParamsSlice(paramsList) {
+    if (!Array.isArray(paramsList) || paramsList.length === 0) {
+      return
+    }
+
+    for (const param of paramsList) {
+      const paramId = param?.param_id
+      const paramValue =
+        param?.param_value !== undefined ? param.param_value : param?.value
+      syncSingleParamInParamsSlice(paramId, paramValue)
+    }
   }
 
   const incomingMessageHandler = (msg) => {
@@ -952,6 +979,24 @@ const socketMiddleware = (store) => {
           if (rebootRequired) {
             store.dispatch(setRebootPromptModalOpen(true))
           }
+
+          // Refresh params if an _ENABLE param has been changed
+          const hasEnableParam = paramsSetSuccessfully.some((param) =>
+            String(param?.param_id || "")
+              .toUpperCase()
+              .endsWith("_ENABLE"),
+          )
+          const isOnParamsPage =
+            store.getState().droneConnection.currentPage === "params"
+          const isAlreadyFetching = store.getState().paramsSlice.fetchingVars
+
+          if (hasEnableParam && isOnParamsPage && !isAlreadyFetching) {
+            store.dispatch(
+              setFetchingVarsProgress({ progress: 0, param_id: "" }),
+            )
+            store.dispatch(setFetchingVars(true))
+            store.dispatch(emitRefreshParams())
+          }
         })
 
         socket.socket.on(ParamSpecificSocketEvents.onParamError, (msg) => {
@@ -1230,6 +1275,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1261,6 +1307,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             if (msg.success) {
               showSuccessNotification(msg.message)
+              syncSingleParamInParamsSlice(msg.data?.param_id, msg.data?.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1274,6 +1321,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             if (msg.success) {
               showSuccessNotification(msg.message)
+              syncSingleParamInParamsSlice(msg.data?.param_id, msg.data?.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1343,6 +1391,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1369,6 +1418,7 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+              syncBatchParamsInParamsSlice(msg.data)
             }
             store.dispatch(setRadioCalibrationModalOpen(false))
           },
@@ -1395,6 +1445,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1419,6 +1470,7 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+              syncBatchParamsInParamsSlice(msg.data)
             }
           },
         )
@@ -1452,6 +1504,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1476,6 +1529,7 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+              syncBatchParamsInParamsSlice(msg.data)
             }
           },
         )

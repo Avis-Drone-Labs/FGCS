@@ -39,6 +39,7 @@ from app.utils import (
 # Constants
 
 LOG_LINE_LIMIT = 50000
+CONNECT_STATUS_PARAM_THROTTLE_SECS = 0.2
 
 
 DATASTREAM_RATES = {
@@ -105,6 +106,8 @@ class Drone:
 
         self.connectionError: Optional[str] = None
         self._last_connect_progress: float = 0.0
+        self._last_param_progress_emit_time: float = 0.0
+        self._last_connect_status_payload: Optional[dict] = None
 
         self.connection_phases = [
             "Waiting for heartbeat",
@@ -299,10 +302,33 @@ class Drone:
         self.navController = NavController(self)
         self.ftpController = FtpController(self)
 
-    def sendParamFetchConnectionStatusUpdate(self, data: dict) -> None:
+    def _emitConnectionStatus(
+        self, message: str, progress: float, sub_message: str = ""
+    ) -> None:
         if not self.droneConnectStatusCb:
             return
 
+        progress = round(min(max(float(progress), 0.0), 100.0), 2)
+        progress = max(progress, self._last_connect_progress)
+        payload = {
+            "message": message,
+            "sub_message": sub_message,
+            "progress": progress,
+        }
+
+        if payload == self._last_connect_status_payload:
+            return
+
+        try:
+            self.droneConnectStatusCb(payload)
+        except Exception:
+            self.logger.exception("Connection status callback failed")
+            return
+
+        self._last_connect_status_payload = payload.copy()
+        self._last_connect_progress = progress
+
+    def sendParamFetchConnectionStatusUpdate(self, data: dict) -> None:
         total_params = max(int(data.get("total_number_of_params", 0)), 1)
         current_index = max(int(data.get("current_param_index", 0)) + 1, 1)
         current_index = min(current_index, total_params)
@@ -314,16 +340,23 @@ class Drone:
         if current_param_id:
             sub_message = f"{sub_message}: {current_param_id}"
 
-        self.droneConnectStatusCb(
-            {
-                "message": "Fetching Params",
-                "sub_message": sub_message,
-                "progress": progress,
-            }
-        )
-        self._last_connect_progress = progress
+        now = time.monotonic()
+        is_final_update = current_index >= total_params
+        if (
+            not is_final_update
+            and now - self._last_param_progress_emit_time
+            < CONNECT_STATUS_PARAM_THROTTLE_SECS
+        ):
+            return
 
-    def sendConnectionStatusUpdate(self, msg_index):
+        self._emitConnectionStatus(
+            message="Fetching Params",
+            sub_message=sub_message,
+            progress=progress,
+        )
+        self._last_param_progress_emit_time = now
+
+    def sendConnectionStatusUpdate(self, msg_index: int) -> None:
         total_msgs = len(self.connection_phases)
         if msg_index < 0 or msg_index >= total_msgs:
             self.logger.error(f"Invalid connection status index {msg_index}")
@@ -332,21 +365,8 @@ class Drone:
         msg = self.connection_phases[msg_index]
 
         # Do not regress progress during non-fetch stages.
-        progress = (
-            100.0
-            if msg_index == total_msgs - 1
-            else float(getattr(self, "_last_connect_progress", 0.0))
-        )
-        self._last_connect_progress = progress
-
-        if self.droneConnectStatusCb:
-            self.droneConnectStatusCb(
-                {
-                    "message": msg,
-                    "sub_message": "",
-                    "progress": progress,
-                }
-            )
+        progress = 100.0 if msg_index == total_msgs - 1 else self._last_connect_progress
+        self._emitConnectionStatus(message=msg, sub_message="", progress=progress)
 
     @staticmethod
     def checkBaudrateValid(baud: int) -> bool:

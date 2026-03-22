@@ -1,29 +1,29 @@
 // Serial Ports Configuration Page
-import { useEffect, useMemo } from "react"
 import {
-  Table,
-  Select,
   MultiSelect,
   ScrollArea,
+  Select,
+  Table,
   Text,
   Tooltip,
 } from "@mantine/core"
 import { useListState } from "@mantine/hooks"
+import { useEffect, useMemo } from "react"
 
 // Custom components, helpers and data
-import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
-import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
 import { dec2bin } from "../../helpers/dataFormatters"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 
-import { useSelector, useDispatch } from "react-redux"
-import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
+import { useDispatch, useSelector } from "react-redux"
 import {
   emitGetSerialPortsConfig,
   emitSetSerialPortConfigParam,
   selectSerialPortsConfig,
 } from "../../redux/slices/configSlice"
-import { emitSetState } from "../../redux/slices/droneConnectionSlice"
-import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
 
 // Bitmask Select component for OPTIONS field.
 function OptionsBitmaskSelect({ value, onChange, options }) {
@@ -84,15 +84,13 @@ function OptionsBitmaskSelect({ value, onChange, options }) {
 
 export default function SerialPorts() {
   const dispatch = useDispatch()
-  const aircraftType = useSelector(selectAircraftType)
+  const { paramDefs } = useParamDefinitions()
   const serialPortsConfig = useSelector(selectSerialPortsConfig)
   const connected = useSelector(selectConnectedToDrone)
 
   // Helper to get paramDef for a given param_id
   function getParamDef(param_id) {
-    if (aircraftType === 1) return apmParamDefsPlane[param_id]
-    if (aircraftType === 2) return apmParamDefsCopter[param_id]
-    return undefined
+    return paramDefs[param_id]
   }
 
   // Helper to handle param change

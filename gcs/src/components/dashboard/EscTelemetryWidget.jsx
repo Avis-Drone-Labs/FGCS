@@ -3,7 +3,6 @@
 */
 import { useMemo, useState } from "react"
 import { ActionIcon, NumberInput, Popover, Stack, Text } from "@mantine/core"
-import { useLocalStorage } from "@mantine/hooks"
 import {
   IconBolt,
   IconMaximize,
@@ -17,8 +16,10 @@ import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
 import {
   selectEscTelemetryMaximised,
   selectEscTelemetryScale,
+  selectEscTelemetryThresholds,
   setEscTelemetryMaximised,
   setEscTelemetryScale,
+  setEscTelemetryThresholds,
 } from "../../redux/slices/droneConnectionSlice"
 
 const DEFAULT_ESC_THRESHOLDS = {
@@ -110,10 +111,7 @@ export default function EscTelemetryWidget() {
   const scale = useSelector(selectEscTelemetryScale)
   const [settingsOpened, setSettingsOpened] = useState(false)
 
-  const [thresholds, setThresholds] = useLocalStorage({
-    key: "escTelemetryThresholds",
-    defaultValue: DEFAULT_ESC_THRESHOLDS,
-  })
+  const thresholds = useSelector(selectEscTelemetryThresholds)
 
   const hasAnyData =
     Array.isArray(escs) &&
@@ -163,19 +161,21 @@ export default function EscTelemetryWidget() {
   function updateThreshold(metric, field, value) {
     const numericValue = Number(value)
 
-    setThresholds((prev) => ({
-      ...prev,
-      [metric]: {
-        ...prev[metric],
-        [field]: Number.isFinite(numericValue)
-          ? numericValue
-          : prev[metric][field],
-      },
-    }))
+    dispatch(
+      setEscTelemetryThresholds({
+        ...thresholds,
+        [metric]: {
+          ...thresholds[metric],
+          [field]: Number.isFinite(numericValue)
+            ? numericValue
+            : thresholds[metric][field],
+        },
+      }),
+    )
   }
 
   function resetThresholds() {
-    setThresholds(DEFAULT_ESC_THRESHOLDS)
+    dispatch(setEscTelemetryThresholds(DEFAULT_ESC_THRESHOLDS))
   }
 
   if (!isMaximised) {

@@ -58,7 +58,7 @@ export default function PreFlightChecklistTab({ tabPadding }) {
         {
           checked: false,
           name: "Your first item, press edit to add more!",
-          stateBinding: "drone.connected",
+          stateBinding: null,
         },
       ]
     }

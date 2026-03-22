@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 import time
 from threading import current_thread
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class CachedParam(TypedDict):
-    param_name: str
+    param_id: str
     param_value: Number
     param_type: int
 
@@ -29,13 +29,13 @@ class ParamsController:
         Args:
             drone (Drone): The main drone object
         """
-        self.controller_id = f"params_{current_thread().ident}"
-        self.drone = drone
-        self.params: List[Any] = []
-        self.current_param_index = 0
-        self.current_param_id = ""
-        self.total_number_of_params = 0
-        self.is_requesting_params = False
+        self.controller_id: str = f"params_{current_thread().ident}"
+        self.drone: Drone = drone
+        self.params: List[CachedParam] = []
+        self.current_param_index: int = 0
+        self.current_param_id: str = ""
+        self.total_number_of_params: int = 0
+        self.is_requesting_params: bool = False
 
     def _resetFetchState(self) -> None:
         self.is_requesting_params = False
@@ -90,11 +90,13 @@ class ParamsController:
         try:
             while self.is_requesting_params:
                 if time.time() > timeout:
-                    self.drone.logger.error("Get all params thread timed out")
+                    self.drone.logger.error(
+                        f"Fetching all parameters timed out after {timeout_secs} seconds"
+                    )
                     self.params = []
                     return {
                         "success": False,
-                        "message": f"Parameter request timed out after {timeout_secs} seconds.",
+                        "message": f"Fetching all parameters timed out after {timeout_secs} seconds.",
                     }
 
                 msg = self.drone.wait_for_message(
@@ -187,14 +189,14 @@ class ParamsController:
                 }
                 if not done:
                     params_could_not_set.append(param)
-                    progress_update_callback_data[
-                        "message"
-                    ] = f"Failed to write {param_id}"
+                    progress_update_callback_data["message"] = (
+                        f"Failed to write {param_id}"
+                    )
                 else:
                     params_set_successfully.append(param)
-                    progress_update_callback_data[
-                        "message"
-                    ] = f"Wrote {param_id} successfully"
+                    progress_update_callback_data["message"] = (
+                        f"Wrote {param_id} successfully"
+                    )
 
                 if progress_update_callback:
                     progress_update_callback(progress_update_callback_data)

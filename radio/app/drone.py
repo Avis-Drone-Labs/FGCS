@@ -264,6 +264,8 @@ class Drone:
         )
 
         if not fetch_all_params_result.get("success"):
+            self.is_active.clear()
+            self.stopAllThreads()
             fetch_error_message = fetch_all_params_result.get(
                 "message", "Could not fetch all drone parameters"
             )
@@ -882,7 +884,7 @@ class Drone:
 
         this_thread = current_thread()
 
-        if self.paramsController is not None:
+        if getattr(self, "paramsController", None) is not None:
             self.paramsController.is_requesting_params = False
 
         for thread in [

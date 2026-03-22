@@ -108,7 +108,7 @@ export default function EditCheckList({ checklist, opened, close }) {
               <h1>Auto complete?</h1>
             </div>
             {items.map((item, index) => (
-              <div key={index} className="flex w-full gap-2">
+              <div key={item.id} className="flex w-full gap-2">
                 <TextInput
                   value={item.name}
                   onChange={(event) =>

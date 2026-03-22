@@ -11,9 +11,15 @@ import {
   IconResize,
   IconSettings,
 } from "@tabler/icons-react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
+import {
+  selectEscTelemetryMaximised,
+  selectEscTelemetryScale,
+  setEscTelemetryMaximised,
+  setEscTelemetryScale,
+} from "../../redux/slices/droneConnectionSlice"
 
 const DEFAULT_ESC_THRESHOLDS = {
   temperature: {
@@ -32,13 +38,19 @@ function fmt(value, decimals = 0) {
 
 function fmtTemp(value) {
   if (value === null || value === undefined) return "—"
+
   const n = Number(value)
   if (!Number.isFinite(n)) return "—"
+
+  // Some MAVLink ESC telemetry implementations report temperature in
+  // centi-degrees Celsius rather than degrees Celsius. If the value is
+  // unrealistically high for an ESC temperature, assume centi-degrees
+  // and convert to °C.
   const degC = n > 200 ? n / 100.0 : n
   return degC.toFixed(0)
 }
 
-function getThresholdColor(value, config) {
+function getTemperatureThresholdColor(value, config) {
   if (value === null || value === undefined) return "text-slate-200"
 
   const n = Number(value)
@@ -56,9 +68,7 @@ function getThresholdColor(value, config) {
 }
 
 function EscTile({ esc, thresholds }) {
-  const rpmClass = getThresholdColor(esc.rpm, thresholds.rpm)
-  const currentClass = getThresholdColor(esc.current, thresholds.current)
-  const temperatureClass = getThresholdColor(
+  const temperatureClass = getTemperatureThresholdColor(
     esc.temperature,
     thresholds.temperature,
   )
@@ -73,17 +83,17 @@ function EscTile({ esc, thresholds }) {
 
       <div className="flex flex-col gap-y-0.5">
         <div className="flex flex-row items-center justify-between">
-          <div className="text-slate-500 text-[10px]">RPM</div>
-          <div className={`text-xs ${rpmClass}`}>{fmt(esc.rpm, 0)}</div>
+          <div className="text-slate-500 text-xs">RPM</div>
+          <div className="text-xs text-slate-200">{fmt(esc.rpm, 0)}</div>
         </div>
 
         <div className="flex flex-row items-center justify-between">
-          <div className="text-slate-500 text-[10px]">A</div>
-          <div className={`text-xs ${currentClass}`}>{fmt(esc.current, 2)}</div>
+          <div className="text-slate-500 text-xs">A</div>
+          <div className="text-xs text-slate-200">{fmt(esc.current, 2)}</div>
         </div>
 
         <div className="flex flex-row items-center justify-between">
-          <div className="text-slate-500 text-[10px]">°C</div>
+          <div className="text-slate-500 text-xs">°C</div>
           <div className={`text-xs ${temperatureClass}`}>
             {fmtTemp(esc.temperature)}
           </div>
@@ -94,10 +104,10 @@ function EscTile({ esc, thresholds }) {
 }
 
 export default function EscTelemetryWidget() {
+  const dispatch = useDispatch()
   const escs = useSelector(selectEscTelemetry)
-
-  const [isMaximized, setIsMaximized] = useState(false)
-  const [scale, setScale] = useState(1)
+  const isMaximised = useSelector(selectEscTelemetryMaximised)
+  const scale = useSelector(selectEscTelemetryScale)
   const [settingsOpened, setSettingsOpened] = useState(false)
 
   const [thresholds, setThresholds] = useLocalStorage({
@@ -138,7 +148,7 @@ export default function EscTelemetryWidget() {
       const scaleChange = deltaX / 200
       const newScale = startScale + scaleChange
       const clamped = Math.max(1, Math.min(3, newScale))
-      setScale(clamped)
+      dispatch(setEscTelemetryScale(clamped))
     }
 
     const handleMouseUp = () => {
@@ -168,8 +178,7 @@ export default function EscTelemetryWidget() {
     setThresholds(DEFAULT_ESC_THRESHOLDS)
   }
 
-  // Minimized view
-  if (!isMaximized) {
+  if (!isMaximised) {
     return (
       <div
         className="rounded-md"
@@ -189,9 +198,9 @@ export default function EscTelemetryWidget() {
           <ActionIcon
             size="sm"
             variant="subtle"
-            onClick={() => setIsMaximized(true)}
+            onClick={() => dispatch(setEscTelemetryMaximised(true))}
             className="text-slate-400 hover:text-slate-200"
-            title="Maximize ESC widget"
+            title="Maximise ESC widget"
           >
             <IconMaximize size={16} />
           </ActionIcon>
@@ -200,7 +209,6 @@ export default function EscTelemetryWidget() {
     )
   }
 
-  // Full view
   return (
     <div
       className="min-w-[350px] min-h-[253px] rounded-md flex flex-col"
@@ -214,9 +222,9 @@ export default function EscTelemetryWidget() {
             <ActionIcon
               size="sm"
               variant="subtle"
-              onClick={() => setIsMaximized(false)}
+              onClick={() => dispatch(setEscTelemetryMaximised(false))}
               className="text-slate-400 hover:text-slate-200"
-              title="Minimize ESC widget"
+              title="Minimise ESC widget"
             >
               <IconMinus size={16} />
             </ActionIcon>
@@ -256,46 +264,6 @@ export default function EscTelemetryWidget() {
                   <Text size="sm" fw={600}>
                     ESC Thresholds
                   </Text>
-
-                  <Text size="xs" fw={600}>
-                    RPM
-                  </Text>
-                  <NumberInput
-                    label="Warning"
-                    value={thresholds.rpm.warning}
-                    onChange={(value) =>
-                      updateThreshold("rpm", "warning", value)
-                    }
-                    allowDecimal={false}
-                  />
-                  <NumberInput
-                    label="Danger"
-                    value={thresholds.rpm.danger}
-                    onChange={(value) =>
-                      updateThreshold("rpm", "danger", value)
-                    }
-                    allowDecimal={false}
-                  />
-
-                  <Text size="xs" fw={600}>
-                    Current (A)
-                  </Text>
-                  <NumberInput
-                    label="Warning"
-                    value={thresholds.current.warning}
-                    onChange={(value) =>
-                      updateThreshold("current", "warning", value)
-                    }
-                    decimalScale={2}
-                  />
-                  <NumberInput
-                    label="Danger"
-                    value={thresholds.current.danger}
-                    onChange={(value) =>
-                      updateThreshold("current", "danger", value)
-                    }
-                    decimalScale={2}
-                  />
 
                   <Text size="xs" fw={600}>
                     Temperature (°C)

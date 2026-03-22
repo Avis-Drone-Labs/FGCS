@@ -24,10 +24,10 @@ import { useDispatch, useSelector } from "react-redux"
 import Webcam from "react-webcam"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import {
-  selectVideoMaximized,
+  selectVideoMaximised,
   selectVideoScale,
   selectVideoSource,
-  setVideoMaximized,
+  setVideoMaximised,
   setVideoScale,
   setVideoSource,
 } from "../../redux/slices/droneConnectionSlice"
@@ -35,7 +35,7 @@ import VideoWidgetSourceSelectModal from "./videoWidgetSourceSelectModal"
 
 export default function VideoWidget() {
   const videoSource = useSelector(selectVideoSource)
-  const isMaximized = useSelector(selectVideoMaximized)
+  const isMaximised = useSelector(selectVideoMaximised)
   const scale = useSelector(selectVideoScale) // Scale factor for resizing
   const dispatch = useDispatch()
 
@@ -57,11 +57,11 @@ export default function VideoWidget() {
   const jsmpegPlayerRef = useRef(null)
 
   function minimizeVideoWidget() {
-    dispatch(setVideoMaximized(false))
+    dispatch(setVideoMaximised(false))
   }
 
-  function maximizeVideoWidget() {
-    dispatch(setVideoMaximized(true))
+  function maximiseVideoWidget() {
+    dispatch(setVideoMaximised(true))
   }
 
   function handleResizeStart(e) {
@@ -365,7 +365,7 @@ export default function VideoWidget() {
       />
 
       {/* Minimized view */}
-      {!isMaximized && !isPoppedOut && (
+      {!isMaximised && !isPoppedOut && (
         <div
           className="rounded-md"
           style={{ background: GetOutsideVisibilityColor() }}
@@ -387,9 +387,9 @@ export default function VideoWidget() {
             <ActionIcon
               size="sm"
               variant="subtle"
-              onClick={maximizeVideoWidget}
+              onClick={maximiseVideoWidget}
               className="text-slate-400 hover:text-slate-200"
-              title="Maximize video widget"
+              title="Maximise video widget"
             >
               <IconMaximize size={16} />
             </ActionIcon>
@@ -398,7 +398,7 @@ export default function VideoWidget() {
       )}
 
       {/* Full view */}
-      {isMaximized && (
+      {isMaximised && (
         <div
           className="min-w-[350px] min-h-[253px] rounded-md flex flex-col"
           style={{ background: GetOutsideVisibilityColor() }}

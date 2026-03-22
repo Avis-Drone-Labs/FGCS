@@ -2,12 +2,8 @@ import { createSelector, createSlice } from "@reduxjs/toolkit"
 import { v4 as uuidv4 } from "uuid"
 import { CHECKLIST_AUTO_BINDINGS } from "../../helpers/checklistAutoBindings"
 import { setConnected } from "./droneConnectionSlice"
-import {
-  setEkfStatusReportData,
-  setGpsRawIntData,
-  setVibrationData,
-} from "./droneInfoSlice"
-import { EKF_STATUS_WARNING_LEVEL, VIBE_STATUS_WARNING_LEVEL } from "../../helpers/mavlinkConstants"
+import { setEkfStatusReportData, setGpsRawIntData } from "./droneInfoSlice"
+import { EKF_STATUS_WARNING_LEVEL } from "../../helpers/mavlinkConstants"
 
 const checklistSlice = createSlice({
   name: "checklist",
@@ -121,20 +117,6 @@ const checklistSlice = createSlice({
         state,
         CHECKLIST_AUTO_BINDINGS.CompassHealthy.key,
         Boolean(action.payload.compass_variance <= EKF_STATUS_WARNING_LEVEL),
-      )
-    })
-    builder.addCase(setVibrationData, (state, action) => {
-      const { vibration_x, vibration_y, vibration_z } = action.payload || {}
-      const vibrationMetric = Math.max(
-        Math.abs(vibration_x ?? 0),
-        Math.abs(vibration_y ?? 0),
-        Math.abs(vibration_z ?? 0),
-      )
-
-      applyAutoBinding(
-        state,
-        CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
-        Boolean(vibrationMetric < VIBE_STATUS_WARNING_LEVEL), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
       )
     })
   },

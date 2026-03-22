@@ -22,10 +22,10 @@ export const CHECKLIST_AUTO_BINDINGS = Object.freeze({
     key: "compass.healthy",
     label: "Compass Healthy",
   }),
-  AccelerometerHealthy: Object.freeze({
-    key: "accelerometer.healthy",
-    label: "Accelerometer Healthy",
-  }),
+  // AccelerometerHealthy: Object.freeze({
+  //   key: "accelerometer.healthy",
+  //   label: "Accelerometer Healthy",
+  // }),
 
   // Handled in the socket middleware
   EkfAllGreen: Object.freeze({

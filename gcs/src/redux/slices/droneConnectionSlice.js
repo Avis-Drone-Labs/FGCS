@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
+import { v4 as uuidv4 } from "uuid"
 
 export const ConnectionType = {
   Serial: "serial",
@@ -45,6 +46,9 @@ const initialState = {
   videoScale: 1,
 
   forceDisarmModalOpened: false,
+  forceArmModalOpened: false,
+
+  poiMarkers: [],
 }
 
 const droneConnectionSlice = createSlice({
@@ -148,6 +152,22 @@ const droneConnectionSlice = createSlice({
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
     },
+    setForceArmModalOpened: (state, action) => {
+      state.forceArmModalOpened = action.payload
+    },
+    addPoiMarker: (state, action) => {
+      state.poiMarkers.push({
+        id: uuidv4(),
+        lat: action.payload.lat,
+        lon: action.payload.lon,
+        label: action.payload.label,
+      })
+    },
+    deletePoiMarker: (state, action) => {
+      state.poiMarkers = state.poiMarkers.filter(
+        (marker) => marker.id !== action.payload.id,
+      )
+    },
 
     // Emits
     emitIsConnectedToDrone: () => {},
@@ -193,6 +213,8 @@ const droneConnectionSlice = createSlice({
     selectVideoMaximized: (state) => state.videoMaximized,
     selectVideoScale: (state) => state.videoScale,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
+    selectForceArmModalOpened: (state) => state.forceArmModalOpened,
+    selectPoiMarkers: (state) => state.poiMarkers,
   },
 })
 
@@ -220,6 +242,9 @@ export const {
   setVideoMaximized,
   setVideoScale,
   setForceDisarmModalOpened,
+  setForceArmModalOpened,
+  addPoiMarker,
+  deletePoiMarker,
 
   // Emitters
   emitIsConnectedToDrone,
@@ -262,6 +287,8 @@ export const {
   selectVideoMaximized,
   selectVideoScale,
   selectForceDisarmModalOpened,
+  selectForceArmModalOpened,
+  selectPoiMarkers,
 } = droneConnectionSlice.selectors
 
 export default droneConnectionSlice

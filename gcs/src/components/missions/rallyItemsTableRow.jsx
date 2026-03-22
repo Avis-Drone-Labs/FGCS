@@ -11,11 +11,8 @@ import {
 } from "@mantine/core"
 import { IconTrash } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
-import {
-  coordToInt,
-  getPositionFrameName,
-  intToCoord,
-} from "../../helpers/dataFormatters"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
+import { MAV_FRAME_DROPDOWN_DATA } from "../../helpers/mavlinkConstants"
 import {
   removeDrawingItem,
   selectDrawingRallyItemByIdx,
@@ -80,7 +77,25 @@ export default function RallyItemsTableRow({ rallyItemIndex }) {
           hideControls
         />
       </TableTd>
-      <TableTd>{getPositionFrameName(rallyItem.frame)}</TableTd>
+      <TableTd>
+        <Select
+          data={MAV_FRAME_DROPDOWN_DATA}
+          value={rallyItem.frame.toString()}
+          onChange={(value) => {
+            if (value === null) {
+              return
+            }
+            const parsedFrame = parseInt(value)
+            if (Number.isNaN(parsedFrame)) {
+              return
+            }
+            updateRallyItemData("frame", parsedFrame)
+          }}
+          allowDeselect={false}
+          classNames={{ dropdown: "!min-w-fit" }}
+          comboboxProps={{ position: "top-start" }}
+        />
+      </TableTd>
       <TableTd>
         <ActionIcon
           onClick={() => dispatch(removeDrawingItem(rallyItem.id))}

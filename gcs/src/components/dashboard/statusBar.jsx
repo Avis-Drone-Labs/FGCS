@@ -13,10 +13,7 @@ import { IconClock, IconNetwork, IconNetworkOff } from "@tabler/icons-react"
 
 // Redux
 import { useSelector } from "react-redux"
-import {
-  selectBatteryData,
-  selectTelemetry,
-} from "../../redux/slices/droneInfoSlice"
+import { selectAlt, selectBatteryData } from "../../redux/slices/droneInfoSlice"
 import { selectIsConnectedToSocket } from "../../redux/slices/socketSlice"
 
 // Helper imports
@@ -41,7 +38,7 @@ export default function StatusBar(props) {
   const isConnectedToSocket = useSelector(selectIsConnectedToSocket)
   const [time, setTime] = useState(moment())
   const batteryData = useSelector(selectBatteryData)
-  const telemetryData = useSelector(selectTelemetry)
+  const alt = useSelector(selectAlt)
 
   // Update clock every second
   useEffect(() => {
@@ -56,7 +53,9 @@ export default function StatusBar(props) {
 
   useEffect(() => {
     const maxAltitude = getSetting("Dashboard.maxAltitudeAlert")
-    if (telemetryData.alt > maxAltitude) {
+    const relativeAlt = alt.relativeAlt
+
+    if (relativeAlt > maxAltitude) {
       dispatchAlert({
         category: AlertCategory.Altitude,
         severity: AlertSeverity.Red,
@@ -67,8 +66,8 @@ export default function StatusBar(props) {
       dismissAlert(AlertCategory.Altitude)
     }
 
-    if (telemetryData.alt > highestAltitudeRef.current) {
-      highestAltitudeRef.current = telemetryData.alt
+    if (relativeAlt > highestAltitudeRef.current) {
+      highestAltitudeRef.current = relativeAlt
       return
     }
 
@@ -78,10 +77,8 @@ export default function StatusBar(props) {
     minAltitudes.sort((a1, a2) => a1 - a2)
 
     for (const [i, altitude] of minAltitudes.entries()) {
-      if (
-        highestAltitudeRef.current > altitude &&
-        telemetryData.alt < altitude
-      ) {
+      // This stops warnings being shown on takeoff
+      if (highestAltitudeRef.current > altitude && relativeAlt < altitude) {
         dispatchAlert({
           category: AlertCategory.Altitude,
           severity:
@@ -97,7 +94,7 @@ export default function StatusBar(props) {
     }
 
     dismissAlert(AlertCategory.Altitude)
-  }, [telemetryData.alt])
+  }, [alt])
 
   useEffect(() => {
     const batteryAlertPercentages = getSetting("Dashboard.batteryAlert") ?? []

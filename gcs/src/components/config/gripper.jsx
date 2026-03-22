@@ -17,8 +17,7 @@ import {
 } from "@mantine/core"
 
 // Data
-import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
-import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 
 // Redux
 import { useDebouncedCallback } from "@mantine/hooks"
@@ -39,7 +38,6 @@ import {
   emitSetState,
   selectConnectedToDrone,
 } from "../../redux/slices/droneConnectionSlice"
-import { selectAircraftTypeString } from "../../redux/slices/droneInfoSlice"
 
 const GRIPPER_PARAMS = [
   "GRIP_CAN_ID",
@@ -99,7 +97,7 @@ function InputLabel({ param }) {
 export default function Gripper() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
-  const aircraftTypeString = useSelector(selectAircraftTypeString)
+  const { paramDefs } = useParamDefinitions()
   const getGripperEnabled = useSelector(selectGetGripperEnabled)
   const gripperConfig = useSelector(selectGripperConfig)
   const refreshingGripperConfigData = useSelector(
@@ -111,9 +109,6 @@ export default function Gripper() {
       return []
     }
 
-    const paramDefs =
-      aircraftTypeString === "Copter" ? apmParamDefsCopter : apmParamDefsPlane
-
     return GRIPPER_PARAMS.map((param) => {
       return {
         param_id: param,
@@ -121,7 +116,7 @@ export default function Gripper() {
         param_def: paramDefs[param],
       }
     })
-  }, [gripperConfig, aircraftTypeString])
+  }, [gripperConfig, paramDefs])
 
   useEffect(() => {
     if (!connected) {
@@ -225,10 +220,6 @@ export default function Gripper() {
                 }}
                 decimalScale={5}
                 hideControls
-                min={param.param_def?.Range ? param.param_def?.Range.low : null}
-                max={
-                  param.param_def?.Range ? param.param_def?.Range.high : null
-                }
                 suffix={param.param_def?.Units}
               />
             )}

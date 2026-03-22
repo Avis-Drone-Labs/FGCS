@@ -56,6 +56,7 @@ import {
   setPendingFetchAction,
   setShownParams,
 } from "./redux/slices/paramsSlice.js"
+import RebootPromptModal from "./components/params/rebootPromptModal.jsx"
 
 function cleanFloat(value, decimals = 5) {
   if (typeof value === "number") {
@@ -105,11 +106,14 @@ export default function Params() {
   useEffect(() => {
     if (!params) return
 
-    // Filter parameters based on search value
+    // Filter parameters based on search value. Match only from the start of
+    // the param ID
     const filteredParams = (
       showModifiedParams ? modifiedParams : params
     ).filter((param) =>
-      param.param_id.toLowerCase().includes(debouncedSearchValue.toLowerCase()),
+      param.param_id
+        .toLowerCase()
+        .startsWith(debouncedSearchValue.toLowerCase()),
     )
 
     // Show the filtered parameters
@@ -237,6 +241,7 @@ export default function Params() {
       <LoadParamsFileModal />
       <ParamsWriteModal />
       <ParamsFailedToWriteModal />
+      <RebootPromptModal />
 
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">

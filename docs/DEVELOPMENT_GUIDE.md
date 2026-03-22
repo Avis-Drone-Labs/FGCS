@@ -76,6 +76,10 @@ Edit the `.env` file to include your Maptiler API key, it can be generated [on m
     python generate_param_definitions.py
     ```
 
+   This now fetches ArduPlane and ArduCopter definitions for all available 4.x
+   versions (from 4.0 up to latest 4.x) and writes versioned files plus a
+   `gen_apm_params_versions.json` manifest.
+
 ### Running the Application
 
 #### Method 1: Using Scripts (Recommended)
@@ -231,9 +235,6 @@ pytest -x
 
 # Run specific test file
 pytest tests/test_params.py
-
-# Run with physical device
-pytest --fc -s
 
 # Run specific test
 pytest -k "test_param_set"

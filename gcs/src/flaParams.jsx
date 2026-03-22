@@ -9,6 +9,7 @@ import "@mantine/spotlight/styles.css"
 import "@mantine/tiptap/styles.css"
 
 import { MantineProvider } from "@mantine/core"
+import { Notifications } from "@mantine/notifications"
 import React from "react"
 import ReactDOM from "react-dom/client"
 import { CustomMantineTheme } from "./components/customMantineTheme"
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <MantineProvider defaultColorScheme="dark" theme={CustomMantineTheme}>
       <FlaParamsWindow />
+      <Notifications limit={5} position="bottom-center" />
     </MantineProvider>
   </React.StrictMode>,
 )

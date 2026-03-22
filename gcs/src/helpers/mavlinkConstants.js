@@ -479,6 +479,27 @@ export const MAV_FRAME_LIST = {
   23: "MAV_FRAME_ENUM_END",
 }
 
+function getPositionFrameValue(frameName) {
+  return Object.keys(MAV_FRAME_LIST).find(
+    (key) => MAV_FRAME_LIST[key] === frameName,
+  )
+}
+
+function getFrameDropdownData() {
+  const frameMap = {
+    [getPositionFrameValue("MAV_FRAME_GLOBAL")]: "Absolute",
+    [getPositionFrameValue("MAV_FRAME_GLOBAL_RELATIVE_ALT")]: "Relative",
+    [getPositionFrameValue("MAV_FRAME_GLOBAL_TERRAIN_ALT")]: "Terrain",
+  }
+
+  return Object.entries(frameMap).map(([frameValue, label]) => ({
+    value: frameValue,
+    label: label,
+  }))
+}
+
+export const MAV_FRAME_DROPDOWN_DATA = getFrameDropdownData()
+
 export const EKF_STATUS_FLAGS = {
   1: "EKF_ATTITUDE",
   2: "EKF_VELOCITY_HORIZ",

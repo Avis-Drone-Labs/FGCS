@@ -1,13 +1,14 @@
 import { BrowserWindow, ipcMain } from "electron"
 import path from "path"
+import { getCenteredWindowPosition } from "../utils/windowUtils"
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
 let linkStatsWin: BrowserWindow | null = null
 
-export function openLinkStatsWindow() {
+export function openLinkStatsWindow(parentWindow?: BrowserWindow) {
   if (linkStatsWin === null) {
-    linkStatsWin = new BrowserWindow({
+    const windowOptions: Electron.BrowserWindowConstructorOptions = {
       width: 500,
       height: 300,
       frame: true,
@@ -20,7 +21,20 @@ export function openLinkStatsWindow() {
       },
       fullscreen: false,
       fullscreenable: false,
-    })
+    }
+
+    // Position window in the center of the parent window
+    const centeredPosition = getCenteredWindowPosition(
+      parentWindow,
+      windowOptions.width!,
+      windowOptions.height!,
+    )
+    if (centeredPosition) {
+      windowOptions.x = centeredPosition.x
+      windowOptions.y = centeredPosition.y
+    }
+
+    linkStatsWin = new BrowserWindow(windowOptions)
   }
 
   if (VITE_DEV_SERVER_URL) {
@@ -50,8 +64,9 @@ export default function registerLinkStatsIPC() {
   ipcMain.removeHandler("app:close-link-stats-window")
   ipcMain.removeHandler("app:update-link-stats")
 
-  ipcMain.handle("app:open-link-stats-window", () => {
-    openLinkStatsWindow()
+  ipcMain.handle("app:open-link-stats-window", (event) => {
+    const parentWindow = BrowserWindow.fromWebContents(event.sender)
+    openLinkStatsWindow(parentWindow || undefined)
   })
   ipcMain.handle("app:close-link-stats-window", () => closeLinkStatsWindow())
   ipcMain.handle("app:update-link-stats", (_, linkStats) => {

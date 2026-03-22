@@ -8,6 +8,8 @@ import {
   MAV_STATE,
 } from "../../helpers/mavlinkConstants"
 
+const MAV_SYS_STATUS_PREARM_CHECK = 268435456
+
 // TODO: Make this configurable in the future?
 const GPS_TRACK_MAX_LENGTH = 300
 
@@ -32,11 +34,17 @@ const droneInfoSlice = createSlice({
       throttle: 0.0,
     },
     gpsData: {
-      lat: 0.0,
-      lon: 0.0,
-      hdg: 0.0,
-      alt: 0.0,
-      relativeAlt: 0.0,
+      mavpackettype: "GLOBAL_POSITION_INT",
+      time_boot_ms: 0,
+      lat: 0,
+      lon: 0,
+      alt: 0,
+      relative_alt: 0,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      hdg: 0,
+      timestamp: 0,
     },
     gpsTrack: [],
     gpsTrackHeading: 0,
@@ -56,6 +64,7 @@ const droneInfoSlice = createSlice({
       systemStatus: 0,
     },
     onboardControlSensorsEnabled: 0,
+    onboardControlSensorsHealth: 0,
     gpsRawIntData: {
       fixType: 0,
       satellitesVisible: 0,
@@ -76,9 +85,7 @@ const droneInfoSlice = createSlice({
     notificationSound: "",
     aircraftType: 2, // Default to copter, will be updated on heartbeat
     batteryData: [],
-    extraDroneData: [
-      ...defaultDataMessages, // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
-    ],
+    selectedDisplayTelemetry: [...defaultDataMessages],
     guidedModePinData: {
       lat: 0, // Stored in coords not int
       lon: 0, // Stored in coords not int
@@ -163,15 +170,15 @@ const droneInfoSlice = createSlice({
     soundPlayed: (state) => {
       state.notificationSound = ""
     },
-    changeExtraData: (state, action) => {
-      state.extraDroneData[action.payload.index] = {
-        ...state.extraDroneData[action.payload.index],
+    changeSelectedDisplayTelemetry: (state, action) => {
+      state.selectedDisplayTelemetry[action.payload.index] = {
+        ...state.selectedDisplayTelemetry[action.payload.index],
         ...action.payload.data,
       }
     },
-    setExtraData: (state, action) => {
-      if (action.payload !== state.extraDroneData) {
-        state.extraDroneData = action.payload
+    setSelectedDisplayTelemetry: (state, action) => {
+      if (action.payload !== state.selectedDisplayTelemetry) {
+        state.selectedDisplayTelemetry = action.payload
       }
     },
     setDroneAircraftType: (state, action) => {
@@ -257,6 +264,11 @@ const droneInfoSlice = createSlice({
     setOnboardControlSensorsEnabled: (state, action) => {
       if (action.payload !== state.onboardControlSensorsEnabled) {
         state.onboardControlSensorsEnabled = action.payload
+      }
+    },
+    setOnboardControlSensorsHealth: (state, action) => {
+      if (action.payload !== state.onboardControlSensorsHealth) {
+        state.onboardControlSensorsHealth = action.payload
       }
     },
     setRSSIData: (state, action) => {
@@ -345,8 +357,18 @@ const droneInfoSlice = createSlice({
     selectNotificationSound: (state) => state.notificationSound,
     selectFlightMode: (state) => state.heartbeatData.customMode,
     selectSystemStatus: (state) => MAV_STATE[state.heartbeatData.systemStatus],
-    selectPrearmEnabled: (state) =>
-      state.onboardControlSensorsEnabled & 268435456,
+    selectReadyToArm: (state) => {
+      const isEnabled = !!(
+        state.onboardControlSensorsEnabled & MAV_SYS_STATUS_PREARM_CHECK
+      )
+      const isHealthy = !!(
+        state.onboardControlSensorsHealth & MAV_SYS_STATUS_PREARM_CHECK
+      )
+
+      // If pre-arm check is enabled, it must also be healthy
+      // If pre-arm check is disabled, just check if it's healthy
+      return isEnabled ? isHealthy : isHealthy
+    },
     selectGPSRawInt: (state) => state.gpsRawIntData,
     selectGPS2RawInt: (state) => state.gps2RawIntData,
     selectHasSecondaryGps: (state) => state.hasSecondaryGps,
@@ -356,7 +378,7 @@ const droneInfoSlice = createSlice({
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
-    selectExtraDroneData: (state) => state.extraDroneData,
+    selectSelectedDisplayTelemetry: (state) => state.selectedDisplayTelemetry,
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
     selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
@@ -373,8 +395,8 @@ export const {
   setFlightSwVersion,
   setHeartbeatData,
   soundPlayed,
-  changeExtraData,
-  setExtraData,
+  changeSelectedDisplayTelemetry,
+  setSelectedDisplayTelemetry,
   setDroneAircraftType,
   setTelemetryData,
   setGpsData,
@@ -386,6 +408,7 @@ export const {
   setHasEverHadGpsFix,
   setBatteryData,
   setOnboardControlSensorsEnabled,
+  setOnboardControlSensorsHealth,
   setRSSIData,
   setGraphValues,
   setLastGraphMessage,
@@ -420,8 +443,8 @@ export const selectAttitudeDeg = createSelector(
 
 export const selectAlt = createSelector(
   [droneInfoSlice.selectors.selectGPS],
-  ({ alt, relativeAlt }) => {
-    return { alt: alt / 1000, relativeAlt: relativeAlt / 1000 }
+  ({ alt, relative_alt }) => {
+    return { alt: alt / 1000, relativeAlt: relative_alt / 1000 }
   },
 )
 
@@ -498,7 +521,7 @@ export const {
   selectHeartbeat,
   selectIsArmed,
   selectIsFlying,
-  selectPrearmEnabled,
+  selectReadyToArm,
   selectGPSRawInt,
   selectGPS2RawInt,
   selectHasSecondaryGps,
@@ -511,7 +534,7 @@ export const {
   selectAircraftType,
   selectBatteryData,
   selectGuidedModePinData,
-  selectExtraDroneData,
+  selectSelectedDisplayTelemetry,
   selectGraphValues,
   selectLastGraphMessage,
   selectEkfStatusReportData,

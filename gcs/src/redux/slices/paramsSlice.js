@@ -11,6 +11,7 @@ const paramsSlice = createSlice({
     showModifiedParams: false,
     fetchingVars: false,
     fetchingVarsProgress: { progress: 0, param_id: "" },
+    fetchingParam: "",
     searchValue: "",
     hasFetchedOnce: false,
     loadParamsFileModalOpen: false,
@@ -25,6 +26,7 @@ const paramsSlice = createSlice({
     paramsFailedToWrite: [],
     paramsFailedToWriteModalOpen: false,
     fetchParamsWarningModalOpen: false,
+    rebootPromptModalOpen: false,
     pendingFetchAction: null,
   },
   reducers: {
@@ -55,6 +57,10 @@ const paramsSlice = createSlice({
     setFetchingVarsProgress: (state, action) => {
       if (action.payload === state.fetchingVarsProgress) return
       state.fetchingVarsProgress = action.payload
+    },
+    setFetchingParam: (state, action) => {
+      if (action.payload === state.fetchingParam) return
+      state.fetchingParam = action.payload
     },
     setParamSearchValue: (state, action) => {
       if (action.payload === state.searchValue) return
@@ -120,11 +126,13 @@ const paramsSlice = createSlice({
     resetParamState: (state) => {
       state.fetchingVars = false
       state.fetchingVarsProgress = { progress: 0, param_id: "" }
+      state.fetchingParam = ""
       state.params = []
       state.shownParams = []
       state.modifiedParams = []
       state.rebootData = {}
       state.searchValue = ""
+      state.rebootPromptModalOpen = false
     },
     setHasFetchedOnce: (state, action) => {
       state.hasFetchedOnce = action.payload
@@ -160,6 +168,9 @@ const paramsSlice = createSlice({
     setFetchParamsWarningModalOpen: (state, action) => {
       state.fetchParamsWarningModalOpen = action.payload
     },
+    setRebootPromptModalOpen: (state, action) => {
+      state.rebootPromptModalOpen = action.payload
+    },
     setPendingFetchAction: (state, action) => {
       state.pendingFetchAction = action.payload
     },
@@ -182,6 +193,7 @@ const paramsSlice = createSlice({
     selectShowModifiedParams: (state) => state.showModifiedParams,
     selectFetchingVars: (state) => state.fetchingVars,
     selectFetchingVarsProgress: (state) => state.fetchingVarsProgress,
+    selectFetchingParam: (state) => state.fetchingParam,
     selectParamSearchValue: (state) => state.searchValue,
     selectHasFetchedOnce: (state) => state.hasFetchedOnce,
     selectLoadParamsFileModalOpen: (state) => state.loadParamsFileModalOpen,
@@ -195,6 +207,7 @@ const paramsSlice = createSlice({
       state.paramsFailedToWriteModalOpen,
     selectFetchParamsWarningModalOpen: (state) =>
       state.fetchParamsWarningModalOpen,
+    selectRebootPromptModalOpen: (state) => state.rebootPromptModalOpen,
     selectPendingFetchAction: (state) => state.pendingFetchAction,
   },
 })
@@ -207,6 +220,7 @@ export const {
   setModifiedParams,
   setFetchingVars,
   setFetchingVarsProgress,
+  setFetchingParam,
   setParamSearchValue,
   toggleShowModifiedParams,
   appendModifiedParams,
@@ -224,6 +238,7 @@ export const {
   setParamsFailedToWrite,
   setParamsFailedToWriteModalOpen,
   setFetchParamsWarningModalOpen,
+  setRebootPromptModalOpen,
   setPendingFetchAction,
   emitRebootAutopilot,
   emitRefreshParams,
@@ -239,6 +254,7 @@ export const {
   selectModifiedParams,
   selectFetchingVars,
   selectFetchingVarsProgress,
+  selectFetchingParam,
   selectShowModifiedParams,
   selectParamSearchValue,
   selectHasFetchedOnce,
@@ -250,6 +266,7 @@ export const {
   selectParamsFailedToWrite,
   selectParamsFailedToWriteModalOpen,
   selectFetchParamsWarningModalOpen,
+  selectRebootPromptModalOpen,
   selectPendingFetchAction,
 } = paramsSlice.selectors
 

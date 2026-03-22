@@ -373,21 +373,21 @@ class ParamsController:
                 }
             )
 
-    def getSingleParam(self, params: str) -> Union[CachedParam, dict]:
+    def getSingleParam(self, param_id: str) -> Union[CachedParam, dict]:
         """
         Get a single parameter from the cached params.
 
         Args:
-            params (Optional[str]): The name of the parameter to get
+            param_id (str): The ID of the parameter to get
         """
-        if isinstance(params, str):
+        if isinstance(param_id, str):
             try:
-                return next((x for x in self.params if x["param_id"] == params))
+                return next((x for x in self.params if x["param_id"] == param_id))
             except StopIteration:
-                self.drone.logger.error(f"Param {params} not found in cached params")
+                self.drone.logger.error(f"Param {param_id} not found in cached params")
                 return {}
         else:
-            self.drone.logger.error(f"Invalid params type, got {type(params)}")
+            self.drone.logger.error(f"Invalid param_id type, got {type(param_id)}")
             return {}
 
     def exportParamsToFile(self, file_path: str) -> Response:

@@ -54,9 +54,23 @@ function checkRequiredDataFiles(): {
   success: boolean
   missingFiles: string[]
 } {
+  interface ParamVersionManifest {
+    vehicles?: Record<
+      string,
+      {
+        versions?: string[]
+        files?: Record<string, string>
+      }
+    >
+  }
+
+  const manifestPath = path.join(
+    __dirname,
+    "../data/gen_apm_params_versions.json",
+  )
+
   const requiredFiles = [
-    path.join(__dirname, "../data/gen_apm_params_def_copter.json"),
-    path.join(__dirname, "../data/gen_apm_params_def_plane.json"),
+    manifestPath,
     path.join(__dirname, "../data/gen_log_messages_desc_copter.json"),
     path.join(__dirname, "../data/gen_log_messages_desc_plane.json"),
   ]
@@ -66,6 +80,41 @@ function checkRequiredDataFiles(): {
   for (const filePath of requiredFiles) {
     if (!fs.existsSync(filePath)) {
       missingFiles.push(path.basename(filePath))
+    }
+  }
+
+  if (fs.existsSync(manifestPath)) {
+    try {
+      const manifest: ParamVersionManifest = JSON.parse(
+        fs.readFileSync(manifestPath, "utf-8"),
+      )
+
+      for (const aircraftType of ["plane", "copter"]) {
+        const versions = manifest.vehicles?.[aircraftType]?.versions ?? []
+        const fileMap = manifest.vehicles?.[aircraftType]?.files ?? {}
+
+        if (versions.length === 0) {
+          missingFiles.push(`${aircraftType} versions in manifest`)
+          continue
+        }
+
+        for (const version of versions) {
+          const fileName = fileMap[version]
+          if (!fileName) {
+            missingFiles.push(
+              `${aircraftType} ${version} file mapping in manifest`,
+            )
+            continue
+          }
+
+          const filePath = path.join(__dirname, "../data", fileName)
+          if (!fs.existsSync(filePath)) {
+            missingFiles.push(fileName)
+          }
+        }
+      }
+    } catch {
+      missingFiles.push(path.basename(manifestPath))
     }
   }
 

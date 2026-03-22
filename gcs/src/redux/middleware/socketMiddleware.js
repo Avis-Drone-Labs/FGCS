@@ -452,6 +452,7 @@ const socketMiddleware = (store) => {
           store.dispatch(
             setConnectionStatus({
               message: msg.message,
+              sub_message: msg.sub_message || "",
               progress: msg.progress,
             }),
           )

@@ -4,7 +4,7 @@ from typing import Any, List, Optional, Union
 
 from pymavlink import mavutil
 from serial.tools import list_ports
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from app.customTypes import Number, VehicleType
 
@@ -151,6 +151,7 @@ def droneErrorCb(msg: Any) -> None:
 class ConnectionDataType(TypedDict):
     message: str
     progress: Number
+    sub_message: NotRequired[str]
 
 
 def droneConnectStatusCb(msg: ConnectionDataType) -> None:

@@ -104,13 +104,13 @@ class Drone:
         self.fetchingParameterCb = fetchingParameterCb
 
         self.connectionError: Optional[str] = None
+        self._last_connect_progress: float = 0.0
 
         self.connection_phases = [
-            "Connecting to drone",
-            "Received heartbeat",
-            "Initializing connection",
+            "Waiting for heartbeat",
+            "Setting up forwarding",
             "Fetching parameters",
-            "Initializing controllers",
+            "Setting up controllers",
             "Connection complete",
         ]
 
@@ -164,8 +164,6 @@ class Drone:
             )
             return
 
-        self.sendConnectionStatusUpdate(1)
-
         self.aircraft_type = getVehicleType(initial_heartbeat.type)
         if self.aircraft_type not in (
             VehicleType.FIXED_WING.value,
@@ -196,8 +194,6 @@ class Drone:
         self.current_log_file: Optional[Path] = None
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
-
-        self.sendConnectionStatusUpdate(2)
 
         # To ensure that only one command is sent at a time and we wait for a
         # response before sending another command, a thread-safe lock is used
@@ -243,6 +239,7 @@ class Drone:
             return
 
         self.stopAllDataStreams()
+        self.sendConnectionStatusUpdate(1)
 
         if forwarding_address:
             try:
@@ -256,8 +253,8 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
-        self.sendConnectionStatusUpdate(3)
         self.paramsController: ParamsController = ParamsController(self)
+        self.sendConnectionStatusUpdate(2)
         fetch_all_params_result = self.paramsController.fetchAllParamsBlocking(
             timeout_secs=120,
             progress_update_callback=self.sendParamFetchConnectionStatusUpdate,
@@ -275,9 +272,9 @@ class Drone:
             self.connectionError = fetch_error_message
             return
 
-        self.sendConnectionStatusUpdate(4)
+        self.sendConnectionStatusUpdate(3)
         self.setupControllers()
-        self.sendConnectionStatusUpdate(5)
+        self.sendConnectionStatusUpdate(4)
 
         self.sendStatusTextMessage(
             mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
@@ -311,13 +308,20 @@ class Drone:
         current_index = min(current_index, total_params)
         current_param_id = data.get("current_param_id", "")
 
-        # Reserve 60% to 90% of the progress bar for parameter fetch.
-        progress = 60 + int((current_index / total_params) * 30)
-        message = f"Fetching parameters ({current_index}/{total_params})"
+        # Param fetch owns the entire bar while it is running.
+        progress = round((current_index / total_params) * 100, 2)
+        sub_message = f"{current_index}/{total_params}"
         if current_param_id:
-            message = f"{message}: {current_param_id}"
+            sub_message = f"{sub_message}: {current_param_id}"
 
-        self.droneConnectStatusCb({"message": message, "progress": progress})
+        self.droneConnectStatusCb(
+            {
+                "message": "Fetching Params",
+                "sub_message": sub_message,
+                "progress": progress,
+            }
+        )
+        self._last_connect_progress = progress
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)
@@ -327,9 +331,21 @@ class Drone:
 
         msg = self.connection_phases[msg_index]
 
+        # Do not regress progress during non-fetch stages.
+        progress = (
+            100.0
+            if msg_index == total_msgs - 1
+            else float(getattr(self, "_last_connect_progress", 0.0))
+        )
+        self._last_connect_progress = progress
+
         if self.droneConnectStatusCb:
             self.droneConnectStatusCb(
-                {"message": msg, "progress": int((msg_index / (total_msgs - 1)) * 100)}
+                {
+                    "message": msg,
+                    "sub_message": "",
+                    "progress": progress,
+                }
             )
 
     @staticmethod

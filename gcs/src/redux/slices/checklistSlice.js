@@ -96,47 +96,47 @@ const checklistSlice = createSlice({
         CHECKLIST_AUTO_BINDINGS.DroneConnected.key,
         action.payload,
       )
-    }),
-      builder.addCase(setGpsRawIntData, (state, action) => {
-        applyAutoBinding(
-          state,
-          CHECKLIST_AUTO_BINDINGS.GpsSatsGt10.key,
-          Boolean(action.payload.satellites_visible > 10),
-        )
+    })
+    builder.addCase(setGpsRawIntData, (state, action) => {
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.GpsSatsGt10.key,
+        Boolean(action.payload.satellites_visible > 10),
+      )
 
-        applyAutoBinding(
-          state,
-          CHECKLIST_AUTO_BINDINGS.GpsHdopLt1.key,
-          Boolean(action.payload.hdop != null && action.payload.hdop < 1),
-        )
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.GpsHdopLt1.key,
+        Boolean(action.payload.hdop != null && action.payload.hdop < 1),
+      )
 
-        applyAutoBinding(
-          state,
-          CHECKLIST_AUTO_BINDINGS.GpsFixGte3.key,
-          Boolean(action.payload.fix_type >= 3),
-        )
-      }),
-      builder.addCase(setEkfStatusReportData, (state, action) => {
-        applyAutoBinding(
-          state,
-          CHECKLIST_AUTO_BINDINGS.CompassHealthy.key,
-          Boolean(action.payload.compass_variance <= EKF_STATUS_WARNING_LEVEL),
-        )
-      }),
-      builder.addCase(setVibrationData, (state, action) => {
-        const { vibration_x, vibration_y, vibration_z } = action.payload || {}
-        const vibrationMetric = Math.max(
-          Math.abs(vibration_x ?? 0),
-          Math.abs(vibration_y ?? 0),
-          Math.abs(vibration_z ?? 0),
-        )
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.GpsFixGte3.key,
+        Boolean(action.payload.fix_type >= 3),
+      )
+    })
+    builder.addCase(setEkfStatusReportData, (state, action) => {
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.CompassHealthy.key,
+        Boolean(action.payload.compass_variance <= EKF_STATUS_WARNING_LEVEL),
+      )
+    })
+    builder.addCase(setVibrationData, (state, action) => {
+      const { vibration_x, vibration_y, vibration_z } = action.payload || {}
+      const vibrationMetric = Math.max(
+        Math.abs(vibration_x ?? 0),
+        Math.abs(vibration_y ?? 0),
+        Math.abs(vibration_z ?? 0),
+      )
 
-        applyAutoBinding(
-          state,
-          CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
-          Boolean(vibrationMetric < 30), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
-        )
-      })
+      applyAutoBinding(
+        state,
+        CHECKLIST_AUTO_BINDINGS.AccelerometerHealthy.key,
+        Boolean(vibrationMetric < 30), // https://ardupilot.org/copter/docs/common-measuring-vibration.html#real-time-view-in-ground-station
+      )
+    })
   },
   selectors: {
     selectChecklists: (state) => {

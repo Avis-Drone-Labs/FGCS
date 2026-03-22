@@ -114,6 +114,7 @@ class FlightModesController:
             return {
                 "success": True,
                 "message": f"Flight mode {mode_number} set to {mode_name}",
+                "data": {"param_id": f"FLTMODE{mode_number}", "value": flight_mode},
             }
         else:
             return {
@@ -149,6 +150,7 @@ class FlightModesController:
             return {
                 "success": True,
                 "message": f"Flight mode channel set to {channel}",
+                "data": {"param_id": "FLTMODE_CH", "value": channel},
             }
         else:
             return {

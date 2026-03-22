@@ -127,6 +127,7 @@ export default function EscTelemetryWidget() {
     const count = Array.isArray(escs) ? escs.length : 0
     const rows = Math.max(1, Math.ceil(Math.min(count, 8) / cols))
 
+    // Multiples used for current design to fit the two tiles perfectly
     const tileH = 74 * scale
     const gapH = 8 * scale
     const paddingH = 32 * scale

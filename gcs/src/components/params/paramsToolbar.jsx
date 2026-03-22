@@ -78,18 +78,16 @@ export default function ParamsToolbar() {
       />
       <div className="flex items-center gap-2">
         <span className="text-xs text-neutral-400">Quick filters:</span>
-        <Chip.Group>
-          {PARAM_PRESETS.map((preset) => (
-            <Chip
-              key={preset.filter}
-              variant="outline"
-              checked={activePreset?.filter === preset.filter}
-              onChange={() => handlePresetClick(preset)}
-            >
-              {preset.label}
-            </Chip>
-          ))}
-        </Chip.Group>
+        {PARAM_PRESETS.map((preset) => (
+          <Chip
+            key={preset.filter}
+            variant="outline"
+            checked={activePreset?.filter === preset.filter}
+            onChange={() => handlePresetClick(preset)}
+          >
+            {preset.label}
+          </Chip>
+        ))}
       </div>
     </div>
   )

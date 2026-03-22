@@ -951,6 +951,9 @@ const socketMiddleware = (store) => {
           const isAlreadyFetching = store.getState().paramsSlice.fetchingVars
 
           if (hasEnableParam && isOnParamsPage && !isAlreadyFetching) {
+            store.dispatch(
+              setFetchingVarsProgress({ progress: 0, param_id: "" }),
+            )
             store.dispatch(setFetchingVars(true))
             store.dispatch(emitRefreshParams())
           }

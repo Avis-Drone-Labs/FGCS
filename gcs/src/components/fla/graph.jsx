@@ -30,6 +30,7 @@ import {
   Title,
   Tooltip,
 } from "chart.js"
+import { getRelativePosition } from "chart.js/helpers"
 import annotationPlugin from "chartjs-plugin-annotation"
 import zoomPlugin from "chartjs-plugin-zoom"
 import createColormap from "colormap"
@@ -44,6 +45,7 @@ import {
   selectFile,
   selectFlightModeMessages,
   selectLogEvents,
+  selectMapPositionData,
   selectMessageFilters,
   selectParams,
   selectUtcAvailable,
@@ -115,6 +117,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
   const file = useSelector(selectFile)
   const fileName = file?.name
   const canShowMapPositionData = useSelector(selectCanShowMapPositionData)
+  const mapPositionData = useSelector(selectMapPositionData)
 
   const [config, setConfig] = useState({
     ...(utcAvailable ? fgcsOptions : dataflashOptions),
@@ -122,12 +125,269 @@ export default function Graph({ data, customColors, openPresetModal }) {
   const [showEvents, setShowEvents] = useState(false)
   const chartRef = useRef(null)
   const [showMap, setShowMap] = useState(false)
+  const [hoverPosition, setHoverPosition] = useState(null)
+  const hoverRafIdRef = useRef(null)
+  const pendingMouseEventRef = useRef(null)
+  const lastHoverBestTimeRef = useRef(null)
 
   // Create a stable key from dataset labels to detect actual data changes
   const datasetKey = useMemo(
     () => data.datasets.map((d) => d.label).join(","),
     [data.datasets],
   )
+
+  // Build one sorted timeline of map points from GPS1 only so hover snaps to a
+  // single source
+  const mapTimeline = useMemo(() => {
+    if (!mapPositionData) return []
+
+    const getTimeValue = (point) => {
+      const value = utcAvailable ? point.UtcTimeUS : point.TimeUS
+      return typeof value === "number" && Number.isFinite(value) ? value : null
+    }
+
+    const timeline = []
+
+    if (Array.isArray(mapPositionData.gps) && mapPositionData.gps.length > 0) {
+      for (const point of mapPositionData.gps) {
+        const time = getTimeValue(point)
+        if (
+          time === null ||
+          typeof point.lat !== "number" ||
+          typeof point.lon !== "number"
+        ) {
+          continue
+        }
+
+        timeline.push({
+          time,
+          lat: point.lat,
+          lon: point.lon,
+        })
+      }
+    }
+
+    timeline.sort((a, b) => a.time - b.time)
+
+    return timeline
+  }, [mapPositionData, utcAvailable])
+
+  const attTimeline = useMemo(() => {
+    if (!mapPositionData || !Array.isArray(mapPositionData.att)) return []
+
+    const timeline = []
+    for (const point of mapPositionData.att) {
+      const timeValue = utcAvailable ? point.UtcTimeUS : point.TimeUS
+      if (
+        typeof timeValue !== "number" ||
+        !Number.isFinite(timeValue) ||
+        typeof point.yaw !== "number" ||
+        !Number.isFinite(point.yaw)
+      ) {
+        continue
+      }
+      timeline.push({ time: timeValue, yaw: point.yaw })
+    }
+
+    timeline.sort((a, b) => a.time - b.time)
+
+    return timeline
+  }, [mapPositionData, utcAvailable])
+
+  // Binary search nearest map point to the hovered chart time.
+  const findGpsPositionAtTime = useMemo(() => {
+    return (timestamp) => {
+      if (
+        !Array.isArray(mapTimeline) ||
+        mapTimeline.length === 0 ||
+        typeof timestamp !== "number" ||
+        !Number.isFinite(timestamp)
+      ) {
+        return null
+      }
+
+      let left = 0
+      let right = mapTimeline.length
+
+      while (left < right) {
+        const mid = Math.floor((left + right) / 2)
+        if (mapTimeline[mid].time < timestamp) {
+          left = mid + 1
+        } else {
+          right = mid
+        }
+      }
+
+      const candidates = []
+      // Check the closest entries on both sides of the found index
+      if (left < mapTimeline.length) candidates.push(mapTimeline[left])
+      if (left > 0) candidates.push(mapTimeline[left - 1])
+
+      if (candidates.length === 0) return null
+
+      let best = candidates[0]
+      let bestDiff = Math.abs(best.time - timestamp)
+
+      // Iterate through candidates to find the closest one
+      for (let i = 1; i < candidates.length; i++) {
+        const candidate = candidates[i]
+        const diff = Math.abs(candidate.time - timestamp)
+        if (diff < bestDiff) {
+          best = candidate
+          bestDiff = diff
+        }
+      }
+
+      return {
+        lat: best.lat,
+        lon: best.lon,
+        time: best.time,
+      }
+    }
+  }, [mapTimeline])
+
+  // Binary search nearest attitude point to the hovered chart time to get yaw
+  // for map hover
+  const findYawAtTime = useMemo(() => {
+    return (timestamp) => {
+      if (
+        !Array.isArray(attTimeline) ||
+        attTimeline.length === 0 ||
+        typeof timestamp !== "number" ||
+        !Number.isFinite(timestamp)
+      ) {
+        return null
+      }
+
+      let left = 0
+      let right = attTimeline.length
+
+      while (left < right) {
+        const mid = Math.floor((left + right) / 2)
+        if (attTimeline[mid].time < timestamp) {
+          left = mid + 1
+        } else {
+          right = mid
+        }
+      }
+
+      const candidates = []
+      // Check the closest entries on both sides of the found index
+      if (left < attTimeline.length) candidates.push(attTimeline[left])
+      if (left > 0) candidates.push(attTimeline[left - 1])
+      if (candidates.length === 0) return null
+
+      let best = candidates[0]
+      let bestDiff = Math.abs(best.time - timestamp)
+      // Iterate through candidates to find the closest one
+      for (let i = 1; i < candidates.length; i++) {
+        const candidate = candidates[i]
+        const diff = Math.abs(candidate.time - timestamp)
+        if (diff < bestDiff) {
+          best = candidate
+          bestDiff = diff
+        }
+      }
+
+      return best.yaw
+    }
+  }, [attTimeline])
+
+  function clearHoverPosition() {
+    pendingMouseEventRef.current = null
+    lastHoverBestTimeRef.current = null
+    setHoverPosition((prev) => (prev === null ? prev : null))
+  }
+
+  function processPendingHover() {
+    if (!chartRef.current || !showMap) {
+      clearHoverPosition()
+      return
+    }
+
+    const nativeEvent = pendingMouseEventRef.current
+    if (!nativeEvent) return
+
+    const chart = chartRef.current
+    const position = getRelativePosition(nativeEvent, chart)
+    const chartArea = chart.chartArea
+    if (!position || !chartArea) return
+
+    // Ignore hover events outside the chart plotting area.
+    if (position.x < chartArea.left || position.x > chartArea.right) {
+      clearHoverPosition()
+      return
+    }
+
+    // Get the x scale (time scale or linear time axis)
+    const xScale = chart.scales.x
+    if (!xScale) return
+
+    // Get the timestamp at the mouse position
+    let timestamp = xScale.getValueForPixel(position.x)
+    if (timestamp === null || timestamp === undefined) return
+
+    // Keep the value in the same unit used by the chart data.
+    // - UTC mode (time scale): milliseconds
+    // - Dataflash mode (linear): microseconds
+    if (timestamp instanceof Date) {
+      timestamp = timestamp.getTime()
+    }
+
+    const gpsPosition = findGpsPositionAtTime(timestamp)
+    if (!gpsPosition) {
+      clearHoverPosition()
+      return
+    }
+
+    // Skip state updates when the nearest point hasn't changed.
+    if (lastHoverBestTimeRef.current === gpsPosition.time) {
+      return
+    }
+
+    const yaw = findYawAtTime(timestamp)
+    lastHoverBestTimeRef.current = gpsPosition.time
+    setHoverPosition({
+      ...gpsPosition,
+      yaw,
+      hoverTime: timestamp,
+      deltaTime: Math.abs(gpsPosition.time - timestamp),
+    })
+  }
+
+  function requestHoverUpdate() {
+    if (hoverRafIdRef.current !== null) return
+
+    hoverRafIdRef.current = window.requestAnimationFrame(() => {
+      hoverRafIdRef.current = null
+      processPendingHover()
+    })
+  }
+
+  // Handle mouse move on chart to update hover position
+  const handleChartMouseMove = (event) => {
+    if (!showMap) return
+
+    pendingMouseEventRef.current = event.nativeEvent
+    requestHoverUpdate()
+  }
+
+  // Handle mouse leave to clear hover position
+  const handleChartMouseLeave = () => {
+    if (hoverRafIdRef.current !== null) {
+      window.cancelAnimationFrame(hoverRafIdRef.current)
+      hoverRafIdRef.current = null
+    }
+    clearHoverPosition()
+  }
+
+  useEffect(() => {
+    return () => {
+      if (hoverRafIdRef.current !== null) {
+        window.cancelAnimationFrame(hoverRafIdRef.current)
+      }
+    }
+  }, [])
 
   // Toggle show events without resetting zoom
   function toggleShowEvents() {
@@ -490,7 +750,11 @@ export default function Graph({ data, customColors, openPresetModal }) {
     <div className="h-full flex flex-col">
       <PanelGroup direction="horizontal" className="flex-1 min-h-0">
         <Panel minSize={20}>
-          <div className="chart-container relative cursor-crosshair h-full">
+          <div
+            className="chart-container relative cursor-crosshair h-full"
+            onMouseMove={handleChartMouseMove}
+            onMouseLeave={handleChartMouseLeave}
+          >
             <Line ref={chartRef} options={config} data={data} />
           </div>
         </Panel>
@@ -498,7 +762,7 @@ export default function Graph({ data, customColors, openPresetModal }) {
           <>
             <PanelResizeHandle className='w-1 bg-falcongrey-700 hover:bg-falconred-500 data-[resize-handle-state="hover"]:bg-falconred-500 data-[resize-handle-state="drag"]:bg-falconred-500' />
             <Panel minSize={10}>
-              <FlaMapSection />
+              <FlaMapSection hoverPosition={hoverPosition} />
             </Panel>
           </>
         )}

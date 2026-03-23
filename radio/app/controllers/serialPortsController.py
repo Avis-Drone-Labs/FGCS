@@ -1,0 +1,96 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from app.customTypes import Number
+
+if TYPE_CHECKING:
+    from app.drone import Drone
+
+
+class SerialPortsController:
+    def __init__(self, drone: Drone) -> None:
+        """
+        The Serial Ports controller handles all serial port config related actions.
+
+        Args:
+            drone (Drone): The main drone object
+        """
+        self.drone = drone
+        self.params: dict = {}
+        self.param_types: dict = {}
+
+        self.fetchParams()
+
+    def _getAndSetCachedParam(
+        self, params_dict: dict, param_key: str, param_name: str
+    ) -> None:
+        """
+        Gets and set the value of a cached parameter inside a dictionary.
+
+        Args:
+            params_dict (dict): The dictionary to store the parameters
+            param_key (str): The key for the parameter within the dictionary
+            param_name (str): The name of the parameter
+        """
+        cached_param = self.drone.paramsController.getSingleParam(param_name)
+        if cached_param:
+            params_dict[param_key] = cached_param.get("param_value")
+            # Store param_type for setConfigParam
+            param_type = cached_param.get("param_type")
+            if param_type is not None:
+                self.param_types[param_name] = param_type
+        # Don't try to fetch from drone - param may not exist on this firmware
+
+    def fetchParams(self) -> None:
+        """
+        Fetches the serial port parameters from the drone.
+        Tries SERIAL1-9 and only stores ports that exist.
+        """
+        self.drone.logger.debug("Fetching serial port parameters from cache")
+
+        for port_number in range(1, 10):
+            port_params = self.params.get(f"SERIAL_{port_number}", {})
+
+            self._getAndSetCachedParam(
+                port_params, "protocol", f"SERIAL{port_number}_PROTOCOL"
+            )
+
+            # if get protocol times out, skip the others. They dont exist
+            if "protocol" not in port_params:
+                continue
+
+            self._getAndSetCachedParam(port_params, "baud", f"SERIAL{port_number}_BAUD")
+            self._getAndSetCachedParam(
+                port_params, "options", f"SERIAL{port_number}_OPTIONS"
+            )
+
+            self.params[f"SERIAL_{port_number}"] = port_params
+
+    def getConfig(self) -> dict:
+        """
+        Returns the serial port configuration with the cached parameters.
+
+        Returns:
+            dict: The serial port configuration
+        """
+        for port_key, port_params in self.params.items():
+            port_number = port_key.split("_")[1]
+
+            self._getAndSetCachedParam(
+                port_params, "protocol", f"SERIAL{port_number}_PROTOCOL"
+            )
+            self._getAndSetCachedParam(port_params, "baud", f"SERIAL{port_number}_BAUD")
+            self._getAndSetCachedParam(
+                port_params, "options", f"SERIAL{port_number}_OPTIONS"
+            )
+
+        return self.params
+
+    def setConfigParam(self, param_id: str, value: Number) -> bool:
+        """
+        Sets a serial port configuration related parameter on the drone.
+        """
+        param_type = self.param_types.get(param_id)
+
+        return self.drone.paramsController.setParam(param_id, value, param_type)

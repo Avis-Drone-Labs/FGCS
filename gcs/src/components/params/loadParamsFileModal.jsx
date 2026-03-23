@@ -9,6 +9,7 @@ import { Button, Modal, Table, TextInput } from "@mantine/core"
 import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { showSuccessNotification } from "../../helpers/notification"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 import {
   appendModifiedParams,
   selectLoadedFileName,
@@ -22,6 +23,7 @@ export default function LoadParamsFileModal() {
   const opened = useSelector(selectLoadParamsFileModalOpen)
   const loadedFileName = useSelector(selectLoadedFileName)
   const loadedParams = useSelector(selectLoadedParams)
+  const { paramDefs } = useParamDefinitions()
 
   const [paramSearchValue, setParamSearchValue] = useState("")
 
@@ -33,6 +35,7 @@ export default function LoadParamsFileModal() {
           param_value: param.newValue,
           param_type: param.type,
           initial_value: param.oldValue,
+          reboot_required: paramDefs[param.id]?.RebootRequired === "True",
         })),
       ),
     )

@@ -37,10 +37,7 @@ export default function Layout({ children, currentPage }) {
   // Handle switching to states
   useEffect(() => {
     const currentPageLowerCase = currentPage.toLowerCase()
-    // Individual config pages handle setting state
-    if (currentPageLowerCase !== "config") {
-      dispatch(emitSetState(currentPageLowerCase))
-    }
+    dispatch(emitSetState(currentPageLowerCase))
 
     if (!connectedToDrone) return
 

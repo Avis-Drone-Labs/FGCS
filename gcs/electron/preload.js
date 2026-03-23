@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron"
+import { contextBridge, ipcRenderer, webUtils } from "electron"
 
 // --------- Expose some API to the Renderer process ---------
 // Whitelist of allowed IPC channels for security
@@ -117,6 +117,17 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     throw new Error(
       `IPC removeAllListeners channel '${channel}' is not allowed`,
     )
+  },
+
+  // Get file path
+  // TODO: Exposing a generic readFilePath(file) to all renderer
+  // code increases the surface area for leaking full local file paths
+  // (Electron docs recommend avoiding this when possible).
+  // A safer pattern is to keep path resolution inside the preload and expose
+  // a narrower, purpose-built API (e.g., validate extension in preload and
+  // invoke fla:open-file from there, or return only a token/basename when feasible).
+  getPathForFile(file) {
+    return webUtils.getPathForFile(file)
   },
 })
 

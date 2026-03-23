@@ -106,7 +106,9 @@ function EscTile({ esc, thresholds }) {
 
 export default function EscTelemetryWidget() {
   const dispatch = useDispatch()
+
   const escs = useSelector(selectEscTelemetry)
+
   const isMaximised = useSelector(selectEscTelemetryMaximised)
   const scale = useSelector(selectEscTelemetryScale)
   const [settingsOpened, setSettingsOpened] = useState(false)

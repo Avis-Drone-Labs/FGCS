@@ -95,8 +95,7 @@ import {
   setTelemetryData,
   setTotalTimeFlying,
   setVibrationData,
-  setEscTelemetry1To4,
-  setEscTelemetry5To8,
+  setEscTelemetryData,
 } from "../slices/droneInfoSlice"
 import {
   addFiles,
@@ -342,10 +341,8 @@ const socketMiddleware = (store) => {
         break
       }
       case "ESC_TELEMETRY_1_TO_4":
-        store.dispatch(setEscTelemetry1To4(msg))
-        break
       case "ESC_TELEMETRY_5_TO_8":
-        store.dispatch(setEscTelemetry5To8(msg))
+        store.dispatch(setEscTelemetryData(msg))
         break
       case "SERVO_OUTPUT_RAW":
         handleServoOutputRaw(msg)

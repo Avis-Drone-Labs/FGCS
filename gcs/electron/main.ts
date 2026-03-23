@@ -29,6 +29,9 @@ import registerAboutIPC, {
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
+import registerElevationGraphIPC, {
+  destroyElevationGraphWindow,
+} from "./modules/elevationGraphWindow"
 import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerFlaParamsIPC, {
   destroyFlaParamsWindow,
@@ -330,6 +333,7 @@ function createWindow() {
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
+  registerElevationGraphIPC()
   registerVibeStatusIPC()
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
@@ -520,6 +524,7 @@ function closeWindows() {
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
+  destroyElevationGraphWindow()
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
   destroyFlaParamsWindow()

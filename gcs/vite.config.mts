@@ -30,6 +30,7 @@ export default defineConfig({
         aboutWindow: resolve(__dirname, "aboutWindow.html"),
         videoWindow: resolve(__dirname, "videoWindow.html"),
         ekfStatus: resolve(__dirname, "ekfStatus.html"),
+        elevationGraph: resolve(__dirname, "elevationGraph.html"),
         vibeStatus: resolve(__dirname, "vibeStatus.html"),
         flaParams: resolve(__dirname, "flaParams.html"),
         graphWindow: resolve(__dirname, "graphWindow.html"),

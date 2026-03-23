@@ -1,9 +1,9 @@
 #!/bin/bash
 # Make sure line endings are LF for this file!!!
 
-LAT=52.780569089726455
-LON=-0.707923685716297
-ALT=0
+LAT=52.7805691
+LON=-0.7079235
+ALT=0.1
 DIR=270
 VEHICLE="ArduCopter"
 

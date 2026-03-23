@@ -28,18 +28,19 @@ import FetchParamsWarningModal from "./components/params/fetchParamsWarningModal
 import LoadParamsFileModal from "./components/params/loadParamsFileModal.jsx"
 import ParamsFailedToWriteModal from "./components/params/paramsFailedToWriteModal.jsx"
 import ParamsWriteModal from "./components/params/paramsWriteModal.jsx"
+import RebootPromptModal from "./components/params/rebootPromptModal.jsx"
 import { EXCLUDE_PARAMS_LOAD } from "./helpers/mavlinkConstants.js"
 import { showErrorNotification } from "./helpers/notification.js"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice.js"
 import { selectIsArmed, selectIsFlying } from "./redux/slices/droneInfoSlice.js"
 import {
   emitExportParamsToFile,
+  emitGetParams,
   emitRefreshParams,
   emitSetMultipleParams,
   resetParamState,
   selectFetchingVars,
   selectFetchingVarsProgress,
-  selectHasFetchedOnce,
   selectModifiedParams,
   selectParams,
   selectParamSearchValue,
@@ -47,7 +48,6 @@ import {
   selectShownParams,
   setFetchingVars,
   setFetchParamsWarningModalOpen,
-  setHasFetchedOnce,
   setLoadedFileName,
   setLoadedParams,
   setLoadParamsFileModalOpen,
@@ -77,7 +77,6 @@ export default function Params() {
   const isFlying = useSelector(selectIsFlying)
 
   // Parameter states
-  const hasFetchedOnce = useSelector(selectHasFetchedOnce)
   const params = useSelector(selectParams)
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
@@ -95,21 +94,25 @@ export default function Params() {
   useEffect(() => {
     if (!connected) {
       dispatch(resetParamState())
+      return
     }
 
-    if (connected && !hasFetchedOnce && !fetchingVars) {
-      fetchParams()
+    if (!fetchingVars && params.length === 0) {
+      dispatch(emitGetParams())
     }
-  }, [connected])
+  }, [connected, dispatch, fetchingVars, params.length])
 
   useEffect(() => {
     if (!params) return
 
-    // Filter parameters based on search value
+    // Filter parameters based on search value. Match only from the start of
+    // the param ID
     const filteredParams = (
       showModifiedParams ? modifiedParams : params
     ).filter((param) =>
-      param.param_id.toLowerCase().includes(debouncedSearchValue.toLowerCase()),
+      param.param_id
+        .toLowerCase()
+        .startsWith(debouncedSearchValue.toLowerCase()),
     )
 
     // Show the filtered parameters
@@ -129,7 +132,6 @@ export default function Params() {
   function fetchParamsForFirstTime() {
     dispatch(setFetchingVars(true))
     dispatch(emitRefreshParams())
-    dispatch(setHasFetchedOnce(true))
     dispatch(setPendingFetchAction(null))
   }
 
@@ -237,6 +239,7 @@ export default function Params() {
       <LoadParamsFileModal />
       <ParamsWriteModal />
       <ParamsFailedToWriteModal />
+      <RebootPromptModal />
 
       {connected ? (
         <div className="flex flex-col h-screen overflow-hidden">

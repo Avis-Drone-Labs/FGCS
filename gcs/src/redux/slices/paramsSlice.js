@@ -26,6 +26,7 @@ const paramsSlice = createSlice({
     paramsFailedToWrite: [],
     paramsFailedToWriteModalOpen: false,
     fetchParamsWarningModalOpen: false,
+    rebootPromptModalOpen: false,
     pendingFetchAction: null,
   },
   reducers: {
@@ -131,6 +132,7 @@ const paramsSlice = createSlice({
       state.modifiedParams = []
       state.rebootData = {}
       state.searchValue = ""
+      state.rebootPromptModalOpen = false
     },
     setHasFetchedOnce: (state, action) => {
       state.hasFetchedOnce = action.payload
@@ -166,12 +168,16 @@ const paramsSlice = createSlice({
     setFetchParamsWarningModalOpen: (state, action) => {
       state.fetchParamsWarningModalOpen = action.payload
     },
+    setRebootPromptModalOpen: (state, action) => {
+      state.rebootPromptModalOpen = action.payload
+    },
     setPendingFetchAction: (state, action) => {
       state.pendingFetchAction = action.payload
     },
 
     // Emitters (empty objects to be captured in the middleware)
     emitRebootAutopilot: () => {},
+    emitGetParams: () => {},
     emitRefreshParams: () => {},
     emitSetMultipleParams: () => {},
     emitExportParamsToFile: () => {},
@@ -202,6 +208,7 @@ const paramsSlice = createSlice({
       state.paramsFailedToWriteModalOpen,
     selectFetchParamsWarningModalOpen: (state) =>
       state.fetchParamsWarningModalOpen,
+    selectRebootPromptModalOpen: (state) => state.rebootPromptModalOpen,
     selectPendingFetchAction: (state) => state.pendingFetchAction,
   },
 })
@@ -232,8 +239,10 @@ export const {
   setParamsFailedToWrite,
   setParamsFailedToWriteModalOpen,
   setFetchParamsWarningModalOpen,
+  setRebootPromptModalOpen,
   setPendingFetchAction,
   emitRebootAutopilot,
+  emitGetParams,
   emitRefreshParams,
   emitSetMultipleParams,
   emitExportParamsToFile,
@@ -259,6 +268,7 @@ export const {
   selectParamsFailedToWrite,
   selectParamsFailedToWriteModalOpen,
   selectFetchParamsWarningModalOpen,
+  selectRebootPromptModalOpen,
   selectPendingFetchAction,
 } = paramsSlice.selectors
 

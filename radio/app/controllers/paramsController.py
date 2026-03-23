@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import struct
 import time
-from threading import Thread, current_thread
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
+from threading import current_thread
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import serial
 from app.customTypes import IncomingParam, Number, Response
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class CachedParam(TypedDict):
-    param_name: str
+    param_id: str
     param_value: Number
     param_type: int
 
@@ -29,153 +29,122 @@ class ParamsController:
         Args:
             drone (Drone): The main drone object
         """
-        self.controller_id = f"params_{current_thread().ident}"
-        self.drone = drone
-        self.params: List[Any] = []
+        self.controller_id: str = f"params_{current_thread().ident}"
+        self.drone: Drone = drone
+        self.params: List[CachedParam] = []
+        self.current_param_index: int = 0
+        self.current_param_id: str = ""
+        self.total_number_of_params: int = 0
+        self.is_requesting_params: bool = False
+
+    def _resetFetchState(self) -> None:
+        self.is_requesting_params = False
         self.current_param_index = 0
         self.current_param_id = ""
         self.total_number_of_params = 0
-        self.is_requesting_params = False
-        self.getAllParamsThread: Optional[Thread] = None
 
-    @sendingCommandLock
-    def getSingleParam(self, param_name: str, timeout: float = 3) -> Response:
+    def _startFetchAll(self) -> Response:
         """
-        Gets a specific parameter value.
-
-        Args:
-            param_name (str): The name of the parameter to get
-            timeout (float, optional): The time to wait before failing to return the parameter. Defaults to 1 second.
-
-        Returns:
-            Response: The response from the retrieval of the specific parameter
+        Starts the process of fetching all parameters from the drone.
         """
-        failure_message = f"Failed to get parameter {param_name}"
-
-        if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
-            return {
-                "success": False,
-                "message": f"{failure_message}, another controller is using PARAM_VALUE messages",
-            }
-
-        try:
-            time.sleep(0.05)  # Brief pause for stability
-
-            if self.drone.fetchingParameterCb:
-                self.drone.fetchingParameterCb(param_name)
-
-            self.drone.master.mav.param_request_read_send(
-                self.drone.target_system,
-                self.drone.target_component,
-                param_name.encode(),
-                -1,
-            )
-
-            # Wait for the specific parameter response
-            response = self.drone.wait_for_message(
-                "PARAM_VALUE",
-                self.controller_id,
-                timeout,
-                condition_func=lambda msg: msg.param_id == param_name,
-            )
-
-            if response:
-                self.saveParam(
-                    response.param_id, response.param_value, response.param_type
-                )
-                return {
-                    "success": True,
-                    "data": response,
-                }
-            else:
-                self.drone.logger.error(f"Did not receive {param_name} within timeout")
-                return {
-                    "success": False,
-                    "message": f"{failure_message}, timed out",
-                }
-
-        except serial.serialutil.SerialException:
-            return {
-                "success": False,
-                "message": f"{failure_message}, serial exception",
-            }
-        finally:
-            self.drone.release_message_type("PARAM_VALUE", self.controller_id)
-
-    def getAllParams(self) -> None:
-        """
-        Request all parameters from the drone.
-        """
-        self.drone.stopAllDataStreams()
         if not self.drone.reserve_message_type("PARAM_VALUE", self.controller_id):
             self.drone.logger.error(
                 "Could not reserve PARAM_VALUE messages for getAllParams"
             )
-            return
+            return {
+                "success": False,
+                "message": "Could not reserve PARAM_VALUE messages",
+            }
 
         self.is_requesting_params = True
+        self.current_param_index = 0
+        self.current_param_id = ""
+        self.total_number_of_params = 0
+        self.params = []
 
-        self.getAllParamsThread = Thread(
-            target=self.getAllParamsThreadFunc, daemon=True
-        )
-        self.getAllParamsThread.start()
+        # Wait so param_fetch_all does not silently return
+        start = getattr(self.drone.master, "param_fetch_start", 0.0)
+        elapsed = time.time() - start
+        time.sleep(max(0.0, 2.0 - elapsed))
 
         self.drone.master.param_fetch_all()
+        return {
+            "success": True,
+            "message": "Started fetching all parameters",
+        }
 
-    def getAllParamsThreadFunc(self) -> None:
+    def fetchAllParamsBlocking(
+        self,
+        timeout_secs: int = 120,
+        progress_update_callback: Optional[Callable[[dict], None]] = None,
+    ) -> Response:
         """
-        The thread function to get all parameters from the drone.
+        Fetches all parameters from the drone in a blocking manner.
         """
-        timeout = time.time() + 120  # 120 seconds from now
+        start_response = self._startFetchAll()
+        if not start_response.get("success"):
+            return start_response
+
+        timeout = time.time() + timeout_secs
 
         try:
             while self.is_requesting_params:
-                try:
-                    if time.time() > timeout:
-                        self.drone.logger.error("Get all params thread timed out")
-                        self.is_requesting_params = False
-                        self.current_param_index = 0
-                        self.current_param_id = ""
-                        self.total_number_of_params = 0
-                        self.params = []
-                        return
+                if time.time() > timeout:
+                    self.drone.logger.error(
+                        f"Fetching all parameters timed out after {timeout_secs} seconds"
+                    )
+                    self.params = []
+                    return {
+                        "success": False,
+                        "message": f"Fetching all parameters timed out after {timeout_secs} seconds.",
+                    }
 
-                    msg = self.drone.wait_for_message(
-                        "PARAM_VALUE",
-                        self.controller_id,
-                        timeout=1.0,  # Short timeout to check for overall timeout
+                msg = self.drone.wait_for_message(
+                    "PARAM_VALUE",
+                    self.controller_id,
+                    timeout=1.0,
+                )
+
+                if not msg:
+                    continue
+
+                self.saveParam(msg.param_id, msg.param_value, msg.param_type)
+
+                self.current_param_index = msg.param_index
+                self.current_param_id = msg.param_id
+                self.total_number_of_params = msg.param_count
+
+                if progress_update_callback:
+                    progress_update_callback(
+                        {
+                            "current_param_index": self.current_param_index,
+                            "current_param_id": self.current_param_id,
+                            "total_number_of_params": self.total_number_of_params,
+                        }
                     )
 
-                    if msg:
-                        self.saveParam(msg.param_id, msg.param_value, msg.param_type)
+                if msg.param_index == msg.param_count - 1:
+                    self.params = sorted(self.params, key=lambda k: k["param_id"])
+                    self.drone.logger.info("Got all params")
+                    return {
+                        "success": True,
+                        "message": "Got all params",
+                        "data": self.params,
+                    }
 
-                        self.current_param_index = msg.param_index
-                        self.current_param_id = msg.param_id
-
-                        if self.total_number_of_params != msg.param_count:
-                            self.total_number_of_params = msg.param_count
-
-                        if msg.param_index == msg.param_count - 1:
-                            self.is_requesting_params = False
-                            self.current_param_index = 0
-                            self.current_param_id = ""
-                            self.total_number_of_params = 0
-                            self.params = sorted(
-                                self.params, key=lambda k: k["param_id"]
-                            )
-                            self.drone.logger.info("Got all params")
-                            return
-
-                except Exception as e:
-                    self.drone.logger.error(e, exc_info=True)
-                    self.is_requesting_params = False
-                    self.current_param_index = 0
-                    self.current_param_id = ""
-                    self.total_number_of_params = 0
-                    self.params = []
-                    return
+            return {
+                "success": False,
+                "message": "Parameter fetching stopped before completion.",
+            }
+        except Exception as e:
+            self.drone.logger.error(e, exc_info=True)
+            self.params = []
+            return {
+                "success": False,
+                "message": f"Exception while fetching parameters: {str(e)}",
+            }
         finally:
-            # Always release the message type when done
+            self._resetFetchState()
             self.drone.release_message_type("PARAM_VALUE", self.controller_id)
 
     def setMultipleParams(
@@ -220,14 +189,14 @@ class ParamsController:
                 }
                 if not done:
                     params_could_not_set.append(param)
-                    progress_update_callback_data[
-                        "message"
-                    ] = f"Failed to write {param_id}"
+                    progress_update_callback_data["message"] = (
+                        f"Failed to write {param_id}"
+                    )
                 else:
                     params_set_successfully.append(param)
-                    progress_update_callback_data[
-                        "message"
-                    ] = f"Wrote {param_id} successfully"
+                    progress_update_callback_data["message"] = (
+                        f"Wrote {param_id} successfully"
+                    )
 
                 if progress_update_callback:
                     progress_update_callback(progress_update_callback_data)
@@ -404,21 +373,21 @@ class ParamsController:
                 }
             )
 
-    def getCachedParam(self, params: str) -> Union[CachedParam, dict]:
+    def getSingleParam(self, param_id: str) -> Union[CachedParam, dict]:
         """
         Get a single parameter from the cached params.
 
         Args:
-            params (Optional[str]): The name of the parameter to get
+            param_id (str): The ID of the parameter to get
         """
-        if isinstance(params, str):
+        if isinstance(param_id, str):
             try:
-                return next((x for x in self.params if x["param_id"] == params))
+                return next((x for x in self.params if x["param_id"] == param_id))
             except StopIteration:
-                self.drone.logger.error(f"Param {params} not found in cached params")
+                self.drone.logger.error(f"Param {param_id} not found in cached params")
                 return {}
         else:
-            self.drone.logger.error(f"Invalid params type, got {type(params)}")
+            self.drone.logger.error(f"Invalid param_id type, got {type(param_id)}")
             return {}
 
     def exportParamsToFile(self, file_path: str) -> Response:

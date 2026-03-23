@@ -1,6 +1,3 @@
-from flask_socketio.test_client import SocketIOTestClient
-
-from . import falcon_test
 from .helpers import FakeTCP, WaitForMessageReturnsNone
 
 
@@ -25,8 +22,7 @@ def run_motor_test(droneStatus, test_func, params, expected_success, expected_me
     assert data.get("message") == expected_message
 
 
-@falcon_test(pass_drone_status=True)
-def test_checkMotorTestValues(client: SocketIOTestClient, droneStatus):
+def test_checkMotorTestValues(droneStatus):
     # Invalid throttle tests - Invalid 1, Invalid Boundary 1, Invalid 2, Invalid Boundary 2, Invalid 3
     validate_motor_test_values(
         droneStatus,
@@ -81,8 +77,7 @@ def test_checkMotorTestValues(client: SocketIOTestClient, droneStatus):
     )
 
 
-@falcon_test(pass_drone_status=True)
-def test_testOneMotor(client: SocketIOTestClient, droneStatus):
+def test_testOneMotor(droneStatus):
     test_func = droneStatus.drone.motorTestController.testOneMotor
 
     # Invalid throttle tests - Invalid 1, Invalid Boundary Upper, Invalid 2, Invalid Boundary Lower, Invalid 3
@@ -198,8 +193,7 @@ def test_testOneMotor(client: SocketIOTestClient, droneStatus):
     )
 
 
-@falcon_test(pass_drone_status=True)
-def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
+def test_testMotorSequence(droneStatus):
     test_func = droneStatus.drone.motorTestController.testMotorSequence
 
     # Invalid throttle tests - Invalid 1, Invalid Boundary Upper, Invalid 2, Invalid Boundary Lower, Invalid 3
@@ -315,8 +309,7 @@ def test_testMotorSequence(client: SocketIOTestClient, droneStatus):
     )
 
 
-@falcon_test(pass_drone_status=True)
-def test_testAllMotors(client: SocketIOTestClient, droneStatus):
+def test_testAllMotors(droneStatus):
     test_func = droneStatus.drone.motorTestController.testAllMotors
 
     # Invalid throttle tests - Invalid 1, Invalid Boundary Upper, Invalid 2, Invalid Boundary Lower, Invalid 3

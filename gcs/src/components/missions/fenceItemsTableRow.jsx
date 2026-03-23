@@ -11,12 +11,11 @@ import {
 } from "@mantine/core"
 import { IconArrowDown, IconArrowUp, IconTrash } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import {
-  coordToInt,
-  getPositionFrameName,
-  intToCoord,
-} from "../../helpers/dataFormatters"
-import { FENCE_ITEM_COMMANDS_LIST } from "../../helpers/mavlinkConstants"
+  FENCE_ITEM_COMMANDS_LIST,
+  MAV_FRAME_DROPDOWN_DATA,
+} from "../../helpers/mavlinkConstants"
 import {
   removeDrawingItem,
   reorderDrawingItem,
@@ -108,7 +107,25 @@ export default function FenceItemsTableRow({ fenceItemIndex }) {
           hideControls
         />
       </TableTd>
-      <TableTd>{getPositionFrameName(fenceItem.frame)}</TableTd>
+      <TableTd>
+        <Select
+          data={MAV_FRAME_DROPDOWN_DATA}
+          value={fenceItem.frame.toString()}
+          onChange={(value) => {
+            if (value === null) {
+              return
+            }
+            const parsedFrame = parseInt(value)
+            if (Number.isNaN(parsedFrame)) {
+              return
+            }
+            updateFenceItemData("frame", parsedFrame)
+          }}
+          allowDeselect={false}
+          classNames={{ dropdown: "!min-w-fit" }}
+          comboboxProps={{ position: "top-start" }}
+        />
+      </TableTd>
       <TableTd className="h-full">
         <div className="flex flex-row gap-2">
           <ActionIcon

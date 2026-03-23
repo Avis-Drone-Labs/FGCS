@@ -13,6 +13,7 @@ const initialState = {
   connection_modal: false,
   connection_status: {
     message: "",
+    sub_message: "",
     progress: 0,
   },
   connected_to_simulator: false,
@@ -57,6 +58,7 @@ const initialState = {
   },
 
   forceDisarmModalOpened: false,
+  forceArmModalOpened: false,
 
   poiMarkers: [],
 }
@@ -171,6 +173,9 @@ const droneConnectionSlice = createSlice({
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
     },
+    setForceArmModalOpened: (state, action) => {
+      state.forceArmModalOpened = action.payload
+    },
     addPoiMarker: (state, action) => {
       state.poiMarkers.push({
         id: uuidv4(),
@@ -232,6 +237,7 @@ const droneConnectionSlice = createSlice({
     selectEscTelemetryScale: (state) => state.escTelemetryScale,
     selectEscTelemetryThresholds: (state) => state.escTelemetryThresholds,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
+    selectForceArmModalOpened: (state) => state.forceArmModalOpened,
     selectPoiMarkers: (state) => state.poiMarkers,
   },
 })
@@ -263,6 +269,7 @@ export const {
   setEscTelemetryScale,
   setEscTelemetryThresholds,
   setForceDisarmModalOpened,
+  setForceArmModalOpened,
   addPoiMarker,
   deletePoiMarker,
 
@@ -311,6 +318,7 @@ export const {
   selectEscTelemetryScale,
   selectEscTelemetryThresholds,
   selectForceDisarmModalOpened,
+  selectForceArmModalOpened,
   selectPoiMarkers,
 } = droneConnectionSlice.selectors
 

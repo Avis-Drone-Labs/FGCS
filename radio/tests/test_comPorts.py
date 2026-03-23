@@ -1,11 +1,10 @@
 import sys
 
 import pytest
-from app import droneStatus
 from app.drone import Drone
+from flask_socketio.test_client import SocketIOTestClient
 from serial.tools import list_ports
 
-from . import socketio_client
 from .conftest import setupDrone
 from .helpers import send_and_receive
 
@@ -17,6 +16,8 @@ def run_once_after_all_tests():
     """
     Saves the valid connection string then ensures that the drone connection is established again after the tests have run
     """
+    from app import droneStatus
+
     assert droneStatus.drone is not None
     global VALID_DRONE_PORT
     VALID_DRONE_PORT = droneStatus.drone.port
@@ -42,7 +43,7 @@ def get_comport_name(port):
     return port_name
 
 
-def test_getComPort() -> None:
+def test_getComPort(droneStatus) -> None:
     # TODO: we should automate different OS environments for our unit tests maybe?
     assert (
         send_and_receive("get_com_ports")
@@ -64,7 +65,7 @@ def test_connectToDrone_badType() -> None:
     }
 
 
-def test_connectToDrone_badPort() -> None:
+def test_connectToDrone_badPort(socketio_client: SocketIOTestClient) -> None:
     # Failure on no port specified
     assert send_and_receive("connect_to_drone", {"connectionType": "serial"}) == {
         "message": "COM port not specified."
@@ -96,7 +97,9 @@ def test_connectToDrone_badPort() -> None:
     }
 
 
-def test_connectToDrone_validConnection() -> None:
+def test_connectToDrone_validConnection(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
     global VALID_DRONE_PORT
 
     # If network connection then do network tests else do serial tests
@@ -163,7 +166,7 @@ def test_connectToDrone_badBaud() -> None:
     ) == {"message": "Expected integer value for baud, received str."}
 
 
-def test_disconnectFromDrone() -> None:
+def test_disconnectFromDrone(socketio_client: SocketIOTestClient) -> None:
     global VALID_DRONE_PORT
 
     # If network connection then do network tests else do serial tests

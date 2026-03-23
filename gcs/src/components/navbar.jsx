@@ -119,11 +119,19 @@ export default function Navbar() {
         }),
       )
     } else if (type === ConnectionType.Network) {
-      if (ip === "" || port === "") {
+      if ((networkType !== "udpin" && ip === "") || port === "") {
         showErrorNotification("IP Address and Port cannot be empty")
         return
       }
-      const networkString = `${networkType}:${ip}:${port}`
+
+      // UDP In creates a UDP socket that binds to a local port
+      let filteredIp = ip
+      if (networkType === "udpin") {
+        filteredIp = "0.0.0.0"
+      }
+
+      const networkString = `${networkType}:${filteredIp}:${port}`
+
       dispatch(
         emitConnectToDrone({
           port: networkString,
@@ -251,18 +259,21 @@ export default function Navbar() {
                   onChange={(value) => dispatch(setNetworkType(value))}
                   data={[
                     { value: "tcp", label: "TCP" },
-                    { value: "udp", label: "UDP" },
+                    { value: "udpin", label: "UDP In" },
+                    { value: "udpout", label: "UDP Out" },
                   ]}
                 />
-                <TextInput
-                  label="IP Address"
-                  placeholder="127.0.0.1"
-                  value={ip}
-                  onChange={(event) =>
-                    dispatch(setIp(event.currentTarget.value))
-                  }
-                  data-autofocus
-                />
+                {networkType !== "udpin" && (
+                  <TextInput
+                    label="IP Address"
+                    placeholder="127.0.0.1"
+                    value={ip}
+                    onChange={(event) =>
+                      dispatch(setIp(event.currentTarget.value))
+                    }
+                    data-autofocus
+                  />
+                )}
                 <TextInput
                   label="Port"
                   placeholder="5760"

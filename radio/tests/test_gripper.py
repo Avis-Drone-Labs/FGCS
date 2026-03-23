@@ -5,7 +5,6 @@ from flask_socketio import SocketIOTestClient
 from pymavlink import mavutil
 from pymavlink.mavutil import mavlink
 
-from . import falcon_test
 from .helpers import FakeTCP, NoDrone, send_and_receive, set_params
 
 
@@ -29,20 +28,23 @@ def run_once_after_all_tests():
     """
     from app import droneStatus
 
-    droneStatus.drone.paramsController.getAllParams()
-    time.sleep(0.5)
-    while droneStatus.drone.paramsController.is_requesting_params:
-        pass
+    # Prime cache for cache-only reads.
+    droneStatus.drone.paramsController.saveParam(
+        "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
+    )
+
     yield
 
     # Ensure gripper is definitely re-enabled even if tests pass
     droneStatus.drone.paramsController.setParam(
-        "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+        "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
+    )
+    droneStatus.drone.paramsController.saveParam(
+        "GRIP_ENABLE", 1, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
     )
     time.sleep(0.5)
 
 
-@falcon_test(pass_drone_status=True)
 def test_gripperEnabled(socketio_client: SocketIOTestClient, droneStatus):
     # Failure with no drone connected
     droneStatus.state = "config.gripper"
@@ -55,7 +57,6 @@ def test_gripperEnabled(socketio_client: SocketIOTestClient, droneStatus):
     assert send_and_receive("get_gripper_enabled") is True
 
 
-@falcon_test(pass_drone_status=True)
 def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
     # Failure on wrong drone state
     droneStatus.state = "params"
@@ -95,10 +96,9 @@ def test_setGripper(socketio_client: SocketIOTestClient, droneStatus):
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> None:
     droneStatus.drone.paramsController.setParam(
-        "GRIP_ENABLE", 0, mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+        "GRIP_ENABLE", 0, mavutil.mavlink.MAV_PARAM_TYPE_UINT8
     )
     # Allow time for gripper to be updated
     time.sleep(0.5)
@@ -110,7 +110,6 @@ def test_gripperDisabled(socketio_client: SocketIOTestClient, droneStatus) -> No
     }
 
 
-@falcon_test()
 def test_setGripperEnabled(socketio_client: SocketIOTestClient) -> None:
     assert send_and_receive("set_gripper_enabled") == {
         "success": True,
@@ -118,7 +117,6 @@ def test_setGripperEnabled(socketio_client: SocketIOTestClient) -> None:
     }
 
 
-@falcon_test()
 def test_setGripperDisabled(socketio_client: SocketIOTestClient) -> None:
     assert send_and_receive("set_gripper_disabled") == {
         "success": True,

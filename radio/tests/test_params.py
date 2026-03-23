@@ -6,7 +6,6 @@ import pytest
 from flask_socketio.test_client import SocketIOTestClient
 from pymavlink.mavutil import mavlink
 
-from . import falcon_test
 from .helpers import ParamRefreshTimeout, WaitForMessageReturnsNone, set_params
 
 PARAM_FILES_PATH = os.path.join(
@@ -120,7 +119,6 @@ def send_and_receive_params(
         time.sleep(0.05)  # Sleep briefly to avoid busy waiting
 
 
-@falcon_test(pass_drone_status=True)
 def test_setMultipleParams_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -135,7 +133,6 @@ def test_setMultipleParams_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setMultipleParams_missingData(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -151,7 +148,6 @@ def test_setMultipleParams_missingData(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setMultipleParams_invalidData(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -394,7 +390,6 @@ def test_setMultipleParams_invalidData(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setMultipleParams_WaitForMessageReturnsNone(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -418,7 +413,6 @@ def test_setMultipleParams_WaitForMessageReturnsNone(
         }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setMultipleParams_successfullySet_paramsState(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -442,7 +436,6 @@ def test_setMultipleParams_successfullySet_paramsState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_refreshParams_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -455,8 +448,32 @@ def test_refreshParams_wrongState(
     }
 
 
+def test_getParams_wrongState(socketio_client: SocketIOTestClient, droneStatus) -> None:
+    droneStatus.state = "dashboard"
+    socketio_result = send_and_receive_params(socketio_client, "get_params")
+
+    assert socketio_result["name"] == "params_error"
+    assert socketio_result["args"][0] == {
+        "message": "You must be on the params screen to get parameters.",
+    }
+
+
+def test_getParams_returnsCachedParams(
+    socketio_client: SocketIOTestClient, droneStatus
+) -> None:
+    droneStatus.state = "params"
+    expected_params = [
+        {"param_id": "ACRO_BAL_ROLL", "param_value": 2.0, "param_type": 9}
+    ]
+    droneStatus.drone.paramsController.params = expected_params
+
+    socketio_result = send_and_receive_params(socketio_client, "get_params")
+
+    assert socketio_result["name"] == "get_params_result"
+    assert socketio_result["args"][0] == {"success": True, "data": expected_params}
+
+
 @pytest.mark.skip(reason="Need to find a better way to simulate a timeout")
-@falcon_test(pass_drone_status=True)
 def test_refreshParams_timeout(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -465,42 +482,90 @@ def test_refreshParams_timeout(
         socketio_result = send_and_receive_params(socketio_client, "refresh_params")
         assert (
             socketio_result["name"] == "params_error"
-            or socketio_result["name"] == "params"
+            or socketio_result["name"] == "get_params_result"
         )
         if socketio_result["name"] == "params_error":
             assert socketio_result["args"][0] == {
                 "message": "Parameter request timed out after 3 minutes."
             }
 
-        if socketio_result["name"] == "params":
-            assert (
-                socketio_result["args"][0] == droneStatus.drone.paramsController.params
-            )
+        if socketio_result["name"] == "get_params_result":
+            assert socketio_result["args"][0] == {
+                "success": True,
+                "data": droneStatus.drone.paramsController.params,
+            }
 
 
-@falcon_test(pass_drone_status=True)
-def test_refreshParams_successfullyRefreshed(
-    socketio_client: SocketIOTestClient, droneStatus
+def test_refreshParams_alwaysFetchesAndEmitsProgress(
+    socketio_client: SocketIOTestClient, droneStatus, monkeypatch
 ) -> None:
     droneStatus.state = "params"
-    socketio_result = send_and_receive_params(socketio_client, "refresh_params")
-    assert (
-        socketio_result["name"] == "param_request_update"
-        or socketio_result["name"] == "params"
+    droneStatus.drone.paramsController.params = [
+        {"param_id": "EXISTING_PARAM", "param_value": 1.0, "param_type": 9}
+    ]
+
+    call_count = 0
+
+    def fake_fetch_all_params_blocking(timeout_secs=120, progress_update_callback=None):
+        nonlocal call_count
+        call_count += 1
+
+        if progress_update_callback:
+            progress_update_callback(
+                {
+                    "current_param_index": 1,
+                    "current_param_id": "TEST_PARAM",
+                    "total_number_of_params": 2,
+                }
+            )
+
+        droneStatus.drone.paramsController.params = [
+            {"param_id": "TEST_PARAM", "param_value": 2.0, "param_type": 9}
+        ]
+        return {"success": True, "message": "Got all params"}
+
+    monkeypatch.setattr(
+        droneStatus.drone.paramsController,
+        "fetchAllParamsBlocking",
+        fake_fetch_all_params_blocking,
     )
 
-    # TODO: Fix flaky test
-    pytest.skip(reason="Flaky test, needs fixing in alpha 0.1.8")
-    if socketio_result["name"] == "param_request_update":
-        assert len(socketio_result["args"][0]) == 2
-        assert socketio_result["args"][0]["total_number_of_params"] == 1400
-        assert socketio_result["args"][0]["current_param_index"] <= 1400
+    socketio_client.emit("refresh_params")
+    first_refresh_events = socketio_client.get_received()
 
-    if socketio_result["name"] == "params":
-        assert socketio_result["args"][0] == droneStatus.drone.paramsController.params
+    assert any(
+        event["name"] == "param_request_update" for event in first_refresh_events
+    )
+    assert any(event["name"] == "get_params_result" for event in first_refresh_events)
+    assert any(
+        event["name"] == "get_params_result"
+        and event["args"][0]
+        == {
+            "success": True,
+            "data": [{"param_id": "TEST_PARAM", "param_value": 2.0, "param_type": 9}],
+        }
+        for event in first_refresh_events
+    )
+
+    socketio_client.emit("refresh_params")
+    second_refresh_events = socketio_client.get_received()
+
+    assert any(
+        event["name"] == "param_request_update" for event in second_refresh_events
+    )
+    assert any(event["name"] == "get_params_result" for event in second_refresh_events)
+    assert any(
+        event["name"] == "get_params_result"
+        and event["args"][0]
+        == {
+            "success": True,
+            "data": [{"param_id": "TEST_PARAM", "param_value": 2.0, "param_type": 9}],
+        }
+        for event in second_refresh_events
+    )
+    assert call_count == 2
 
 
-@falcon_test(pass_drone_status=True)
 def test_exportParamsToFile_wrongState(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -517,7 +582,6 @@ def test_exportParamsToFile_wrongState(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_exportParamsToFile_noFilePath(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -532,7 +596,6 @@ def test_exportParamsToFile_noFilePath(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_exportParamsToFile_incorrectFilePath(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -557,7 +620,6 @@ def test_exportParamsToFile_incorrectFilePath(
 
 @pytest.mark.usefixtures("delete_export_files")
 @pytest.mark.usefixtures("inject_params")
-@falcon_test(pass_drone_status=True)
 def test_exportParamsToFile_success(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:

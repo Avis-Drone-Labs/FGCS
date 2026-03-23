@@ -1,10 +1,8 @@
 from flask_socketio import SocketIOTestClient
 
-from . import falcon_test
 from .helpers import NoDrone, send_and_receive
 
 
-@falcon_test(pass_drone_status=True)
 def test_setState_no_drone_connection(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -15,7 +13,6 @@ def test_setState_no_drone_connection(
         assert droneStatus.state == "dashboard"
 
 
-@falcon_test(pass_drone_status=True)
 def test_setState_missing_state_parameter(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -25,7 +22,6 @@ def test_setState_missing_state_parameter(
     }
 
 
-@falcon_test(pass_drone_status=True)
 def test_setState_dashboard_state(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -35,7 +31,6 @@ def test_setState_dashboard_state(
     assert len(droneStatus.drone.message_listeners) == 17
 
 
-@falcon_test(pass_drone_status=True)
 def test_setState_graphs_state(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -47,7 +42,6 @@ def test_setState_graphs_state(
     assert len(droneStatus.drone.message_listeners) == 6
 
 
-@falcon_test(pass_drone_status=True)
 def test_setState_config_flight_modes_state(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
@@ -59,7 +53,6 @@ def test_setState_config_flight_modes_state(
     assert len(droneStatus.drone.message_listeners) == 5
 
 
-@falcon_test(pass_drone_status=True)
 def test_setState_config_rc_state(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:

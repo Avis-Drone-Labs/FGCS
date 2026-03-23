@@ -27,6 +27,7 @@ export default function SelectFlightLog({ getLogSummary }) {
   const [recentLogs, setRecentLogs] = useState(null)
   const [loadingFile, setLoadingFile] = useState(false)
   const [loadingFileProgress, setLoadingFileProgress] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const [
     downloadModalOpened,
     { open: openDownloadModal, close: closeDownloadModal },
@@ -92,6 +93,41 @@ export default function SelectFlightLog({ getLogSummary }) {
     [dispatch, getLogSummary],
   )
 
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setIsDragging((prev) => prev || true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files)
+
+    if (files.length > 0) {
+      const file = files[0]
+      const path = window.ipcRenderer.getPathForFile(file)
+
+      const ext = file.name.split(".").pop().toLowerCase()
+      if (["bin", "log", "ftlog"].includes(ext)) {
+        handleFile({
+          name: file.name,
+          path: path,
+          size: file.size,
+        })
+      } else {
+        showErrorNotification(
+          "Invalid file type. Please upload a .bin, .log, or .ftlog file",
+        )
+      }
+    }
+  }
+
   useEffect(() => {
     const onProgress = (_event, message) =>
       setLoadingFileProgress(message.percent)
@@ -132,9 +168,16 @@ export default function SelectFlightLog({ getLogSummary }) {
   }, [recentLogItems, recentLogs])
 
   return (
-    <div className="flex flex-col items-center justify-center h-full mx-auto">
+    <div
+      className={`flex flex-col items-center justify-center h-full w-full mx-auto border-2 border-dashed transition-colors ${
+        isDragging ? "border-blue-500 bg-blue-500/10" : "border-transparent"
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex flex-row items-center justify-center gap-8">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 p-8">
           <Button onClick={selectFile} loading={loadingFile}>
             Analyse a log
           </Button>
@@ -170,7 +213,7 @@ export default function SelectFlightLog({ getLogSummary }) {
       {loadingFile && (
         <Progress
           value={loadingFileProgress}
-          className="w-full my-4"
+          className="w-1/2 my-4"
           color="green"
         />
       )}

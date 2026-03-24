@@ -336,11 +336,11 @@ export default function Dashboard() {
 
         {/* Bottom widgets row */}
         <div
-          className="absolute bottom-2 z-10 flex flex-col gap-2"
+          className="absolute bottom-2 z-10 flex flex-col gap-2 items-start"
           style={{ left: `${telemetryPanelSize.width + 8}px` }}
         >
-          <VideoWidget />
           <EscTelemetryWidget />
+          <VideoWidget />
         </div>
 
         <div className="absolute bottom-0 right-0 z-20">

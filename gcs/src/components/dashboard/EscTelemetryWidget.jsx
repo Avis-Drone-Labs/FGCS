@@ -11,7 +11,9 @@ import {
 } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
+import {
+  selectEscTelemetry
+ } from "../../redux/slices/droneInfoSlice"
 import {
   selectEscTelemetryMaximised,
   selectEscTelemetryThresholds,

@@ -194,7 +194,32 @@ const droneInfoSlice = createSlice({
       const packetType = action.payload?.mavpackettype
       if (!packetType) return
 
-      state.escData[packetType] = action.payload
+      state.escData = {
+        ...state.escData,
+        [packetType]: {
+          ...action.payload,
+          rpm: Array.isArray(action.payload.rpm) ? [...action.payload.rpm] : [],
+          current: Array.isArray(action.payload.current)
+            ? [...action.payload.current]
+            : [],
+          voltage: Array.isArray(action.payload.voltage)
+            ? [...action.payload.voltage]
+            : [],
+          temperature: Array.isArray(action.payload.temperature)
+            ? [...action.payload.temperature]
+            : [],
+          totalcurrent: Array.isArray(action.payload.totalcurrent)
+            ? [...action.payload.totalcurrent]
+            : [],
+        },
+      }
+
+      console.log("ESC REDUX", {
+        timestamp: action.payload.timestamp,
+        rpm: action.payload.rpm,
+        current: action.payload.current,
+        temperature: action.payload.temperature,
+      })
     },
     setTelemetryData: (state, action) => {
       state.telemetryData = {
@@ -356,6 +381,8 @@ const droneInfoSlice = createSlice({
     selectFlightSwVersion: (state) => state.flightSwVersion,
     selectAttitude: (state) => state.attitudeData,
     selectTelemetry: (state) => state.telemetryData,
+    selectEscTelemetry1To4: (state) => state.escData.ESC_TELEMETRY_1_TO_4,
+    selectEscTelemetry5To8: (state) => state.escData.ESC_TELEMETRY_5_TO_8,
     selectGPS: (state) => state.gpsData,
     selectHeading: (state) => centiDegToDeg(state.gpsData.hdg),
     selectHomePosition: (state) => state.homePosition,
@@ -385,8 +412,7 @@ const droneInfoSlice = createSlice({
     selectHasEverHadGpsFix: (state) => state.hasEverHadGpsFix,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
-    selectEscTelemetry1To4: (state) => state.escData.ESC_TELEMETRY_1_TO_4,
-    selectEscTelemetry5To8: (state) => state.escData.ESC_TELEMETRY_5_TO_8,
+
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
@@ -581,6 +607,8 @@ export const {
   selectHeading,
   selectSystemStatus,
   selectNotificationSound,
+  selectEscTelemetry1To4,
+  selectEscTelemetry5To8,
   selectFlightMode,
   selectAircraftType,
   selectBatteryData,

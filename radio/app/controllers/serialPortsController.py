@@ -22,22 +22,6 @@ class SerialPortsController:
 
         self.fetchParams()
 
-    def _getAndSetParam(
-        self, params_dict: dict, param_key: str, param_name: str
-    ) -> None:
-        """
-        Gets and set the value of a parameter inside a dictionary.
-
-        Args:
-            params_dict (dict): The dictionary to store the parameters
-            param_key (str): The key for the parameter within the dictionary
-            param_name (str): The name of the parameter
-        """
-        param = self.drone.paramsController.getSingleParam(param_name).get("data")
-        if param:
-            params_dict[param_key] = param.param_value
-            self.param_types[param_name] = param.param_type
-
     def _getAndSetCachedParam(
         self, params_dict: dict, param_key: str, param_name: str
     ) -> None:
@@ -49,7 +33,7 @@ class SerialPortsController:
             param_key (str): The key for the parameter within the dictionary
             param_name (str): The name of the parameter
         """
-        cached_param = self.drone.paramsController.getCachedParam(param_name)
+        cached_param = self.drone.paramsController.getSingleParam(param_name)
         if cached_param:
             params_dict[param_key] = cached_param.get("param_value")
             # Store param_type for setConfigParam
@@ -63,12 +47,12 @@ class SerialPortsController:
         Fetches the serial port parameters from the drone.
         Tries SERIAL1-9 and only stores ports that exist.
         """
-        self.drone.logger.debug("Fetching serial port parameters")
+        self.drone.logger.debug("Fetching serial port parameters from cache")
 
         for port_number in range(1, 10):
             port_params = self.params.get(f"SERIAL_{port_number}", {})
 
-            self._getAndSetParam(
+            self._getAndSetCachedParam(
                 port_params, "protocol", f"SERIAL{port_number}_PROTOCOL"
             )
 
@@ -76,8 +60,10 @@ class SerialPortsController:
             if "protocol" not in port_params:
                 continue
 
-            self._getAndSetParam(port_params, "baud", f"SERIAL{port_number}_BAUD")
-            self._getAndSetParam(port_params, "options", f"SERIAL{port_number}_OPTIONS")
+            self._getAndSetCachedParam(port_params, "baud", f"SERIAL{port_number}_BAUD")
+            self._getAndSetCachedParam(
+                port_params, "options", f"SERIAL{port_number}_OPTIONS"
+            )
 
             self.params[f"SERIAL_{port_number}"] = port_params
 

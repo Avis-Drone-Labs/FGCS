@@ -127,6 +127,7 @@ import {
   setUpdatePlannedHomePositionFromLoadModal,
 } from "../slices/missionSlice"
 import {
+  emitRefreshParams,
   resetParamsWriteProgressData,
   setAutoPilotRebootModalOpen,
   setFetchingParam,
@@ -173,7 +174,7 @@ const DroneSpecificSocketEvents = Object.freeze({
 
 const ParamSpecificSocketEvents = Object.freeze({
   onRebootAutopilot: "reboot_autopilot",
-  onParamsMessage: "params",
+  onGetParamsResult: "get_params_result",
   onParamRequestUpdate: "param_request_update",
   onParamSetSuccess: "param_set_success",
   onParamError: "params_error",
@@ -244,6 +245,32 @@ const socketMiddleware = (store) => {
     }
 
     store.dispatch(setServoPwmOutputs(outputs))
+  }
+
+  function syncSingleParamInParamsSlice(paramId, value) {
+    if (!paramId || value === undefined) {
+      return
+    }
+
+    store.dispatch(
+      updateParamValue({
+        param_id: paramId,
+        param_value: value,
+      }),
+    )
+  }
+
+  function syncBatchParamsInParamsSlice(paramsList) {
+    if (!Array.isArray(paramsList) || paramsList.length === 0) {
+      return
+    }
+
+    for (const param of paramsList) {
+      const paramId = param?.param_id
+      const paramValue =
+        param?.param_value !== undefined ? param.param_value : param?.value
+      syncSingleParamInParamsSlice(paramId, paramValue)
+    }
   }
 
   const incomingMessageHandler = (msg) => {
@@ -452,6 +479,7 @@ const socketMiddleware = (store) => {
           store.dispatch(
             setConnectionStatus({
               message: msg.message,
+              sub_message: msg.sub_message || "",
               progress: msg.progress,
             }),
           )
@@ -469,7 +497,6 @@ const socketMiddleware = (store) => {
           store.dispatch(setConnecting(false))
           store.dispatch(setConnectionModal(false))
 
-          store.dispatch(setHasFetchedOnce(false))
           store.dispatch(setGuidedModePinData({ lat: 0, lon: 0, alt: 0 }))
           store.dispatch(setRebootData({}))
           store.dispatch(setAutoPilotRebootModalOpen(false))
@@ -869,9 +896,12 @@ const socketMiddleware = (store) => {
           },
         )
 
-        socket.socket.on(ParamSpecificSocketEvents.onParamsMessage, (msg) => {
-          store.dispatch(setParams(msg))
-          store.dispatch(setShownParams(msg))
+        socket.socket.on(ParamSpecificSocketEvents.onGetParamsResult, (msg) => {
+          if (msg.success) {
+            store.dispatch(setParams(msg.data))
+            store.dispatch(setShownParams(msg.data))
+          }
+          store.dispatch(setHasFetchedOnce(true))
           store.dispatch(setFetchingVars(false))
           store.dispatch(setFetchingVarsProgress({ progress: 0, param_id: "" }))
           store.dispatch(setParamSearchValue(""))
@@ -934,6 +964,24 @@ const socketMiddleware = (store) => {
 
           if (rebootRequired) {
             store.dispatch(setRebootPromptModalOpen(true))
+          }
+
+          // Refresh params if an _ENABLE param has been changed
+          const hasEnableParam = paramsSetSuccessfully.some((param) =>
+            String(param?.param_id || "")
+              .toUpperCase()
+              .endsWith("_ENABLE"),
+          )
+          const isOnParamsPage =
+            store.getState().droneConnection.currentPage === "params"
+          const isAlreadyFetching = store.getState().paramsSlice.fetchingVars
+
+          if (hasEnableParam && isOnParamsPage && !isAlreadyFetching) {
+            store.dispatch(
+              setFetchingVarsProgress({ progress: 0, param_id: "" }),
+            )
+            store.dispatch(setFetchingVars(true))
+            store.dispatch(emitRefreshParams())
           }
         })
 
@@ -1213,6 +1261,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1244,6 +1293,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             if (msg.success) {
               showSuccessNotification(msg.message)
+              syncSingleParamInParamsSlice(msg.data?.param_id, msg.data?.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1257,6 +1307,7 @@ const socketMiddleware = (store) => {
           (msg) => {
             if (msg.success) {
               showSuccessNotification(msg.message)
+              syncSingleParamInParamsSlice(msg.data?.param_id, msg.data?.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1326,6 +1377,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1352,6 +1404,7 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+              syncBatchParamsInParamsSlice(msg.data)
             }
             store.dispatch(setRadioCalibrationModalOpen(false))
           },
@@ -1378,6 +1431,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1402,6 +1456,7 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+              syncBatchParamsInParamsSlice(msg.data)
             }
           },
         )
@@ -1435,6 +1490,7 @@ const socketMiddleware = (store) => {
                   value: msg.value,
                 }),
               )
+              syncSingleParamInParamsSlice(msg.param_id, msg.value)
             } else {
               showErrorNotification(msg.message)
             }
@@ -1459,6 +1515,7 @@ const socketMiddleware = (store) => {
                   }),
                 )
               }
+              syncBatchParamsInParamsSlice(msg.data)
             }
           },
         )

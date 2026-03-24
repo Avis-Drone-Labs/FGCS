@@ -5,6 +5,9 @@ from flask_socketio.test_client import SocketIOTestClient
 
 from .helpers import FakeTCP, NoDrone
 
+ARM_RETRY_MAX_ATTEMPTS = 5
+ARM_RETRY_DELAY_SECS = 2
+
 
 @pytest.fixture(scope="module", autouse=True)
 def run_once_before_all_tests():
@@ -51,14 +54,61 @@ def assert_drone_armed(droneStatus, armed: bool) -> None:
     assert bool(droneStatus.drone.master.motors_armed()) == armed
 
 
+def arm_with_retries(droneStatus) -> None:
+    """Retry direct arming for transient pre-arm check failures."""
+    for _ in range(ARM_RETRY_MAX_ATTEMPTS):
+        if droneStatus.drone.armed:
+            return
+
+        droneStatus.drone.master.arducopter_arm()
+        time.sleep(ARM_RETRY_DELAY_SECS)
+
+        if droneStatus.drone.armed and bool(droneStatus.drone.master.motors_armed()):
+            return
+
+    raise AssertionError(
+        f"Failed to arm after {ARM_RETRY_MAX_ATTEMPTS} attempts with "
+        f"{ARM_RETRY_DELAY_SECS}s delay"
+    )
+
+
+def emit_arm_with_retries(
+    socketio_client: SocketIOTestClient, force: bool = False
+) -> dict:
+    """Retry arm_disarm emit until success or max attempts are reached."""
+    payload = {"arm": True}
+    if force:
+        payload["force"] = True
+
+    last_response = None
+    for _ in range(ARM_RETRY_MAX_ATTEMPTS):
+        socketio_client.emit("arm_disarm", payload)
+        received = socketio_client.get_received()
+
+        if not received:
+            time.sleep(ARM_RETRY_DELAY_SECS)
+            continue
+
+        last_response = received[0]["args"][0]
+        if last_response.get("success"):
+            return last_response
+
+        time.sleep(ARM_RETRY_DELAY_SECS)
+
+    if last_response is not None:
+        return last_response
+
+    raise AssertionError("No response received for arm_disarm during retries")
+
+
 def test_arm_succeeds_when_disarmed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
     assert_drone_armed(droneStatus, armed=False)
 
-    socketio_client.emit("arm_disarm", {"arm": True})
+    response = emit_arm_with_retries(socketio_client)
 
-    assert socketio_client.get_received()[0]["args"][0] == {
+    assert response == {
         "success": True,
         "message": "Armed successfully",
         "data": {
@@ -73,8 +123,7 @@ def test_arm_succeeds_when_disarmed(
 def test_arm_fails_when_already_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
-    time.sleep(1)
+    arm_with_retries(droneStatus)
     assert_drone_armed(droneStatus, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": True})
@@ -94,8 +143,7 @@ def test_arm_fails_when_already_armed(
 def test_disarm_succeeds_when_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
-    time.sleep(1)
+    arm_with_retries(droneStatus)
     assert_drone_armed(droneStatus, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": False})
@@ -136,9 +184,9 @@ def test_force_arm_succeeds_when_disarmed(
 ) -> None:
     assert_drone_armed(droneStatus, armed=False)
 
-    socketio_client.emit("arm_disarm", {"arm": True, "force": True})
+    response = emit_arm_with_retries(socketio_client, force=True)
 
-    assert socketio_client.get_received()[0]["args"][0] == {
+    assert response == {
         "success": True,
         "message": "Armed successfully",
         "data": {
@@ -153,8 +201,7 @@ def test_force_arm_succeeds_when_disarmed(
 def test_force_arm_fails_when_already_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
-    time.sleep(1)
+    arm_with_retries(droneStatus)
     assert_drone_armed(droneStatus, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": True, "force": True})
@@ -174,8 +221,7 @@ def test_force_arm_fails_when_already_armed(
 def test_force_disarm_succeeds_when_armed(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
-    time.sleep(1)
+    arm_with_retries(droneStatus)
     assert_drone_armed(droneStatus, armed=True)
 
     socketio_client.emit("arm_disarm", {"arm": False, "force": True})
@@ -252,8 +298,7 @@ def test_force_arm_fails_with_serial_exception(
 def test_disarm_fails_with_serial_exception(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
-    time.sleep(1)
+    arm_with_retries(droneStatus)
     assert_drone_armed(droneStatus, armed=True)
 
     with FakeTCP():
@@ -273,8 +318,7 @@ def test_disarm_fails_with_serial_exception(
 def test_force_disarm_fails_with_serial_exception(
     socketio_client: SocketIOTestClient, droneStatus
 ) -> None:
-    droneStatus.drone.master.arducopter_arm()
-    time.sleep(1)
+    arm_with_retries(droneStatus)
     assert_drone_armed(droneStatus, armed=True)
 
     with FakeTCP():

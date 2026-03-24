@@ -142,6 +142,7 @@ def test_setFlightMode_successfullySet(
     assert socketio_result["args"][0] == {
         "success": True,
         "message": "Flight mode 1 set to COPTER_MODE_CIRCLE",
+        "data": {"param_id": "FLTMODE1", "value": 7},
     }
     assert droneStatus.drone.flightModesController.flight_modes == [7, 9, 6, 3, 5, 0]
 
@@ -198,6 +199,7 @@ def test_setFlightModeChannel_successfullySet(
     assert socketio_result["args"][0] == {
         "success": True,
         "message": "Flight mode channel set to 5",
+        "data": {"param_id": "FLTMODE_CH", "value": 5},
     }
     assert droneStatus.drone.flightModesController.flight_mode_channel == 5
 

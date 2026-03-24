@@ -67,6 +67,7 @@ def setFlightMode(data: SetFlightModeValueAndNumber) -> None:
     result = droneStatus.drone.flightModesController.setFlightMode(
         mode_number, flight_mode
     )
+
     socketio.emit("set_flight_mode_result", result)
 
 
@@ -102,6 +103,7 @@ def setFlightModeChannel(data: SetFlightModeChannelType) -> None:
         return
 
     result = droneStatus.drone.flightModesController.setFlightModeChannel(channel_int)
+
     socketio.emit("set_flight_mode_channel_result", result)
 
 

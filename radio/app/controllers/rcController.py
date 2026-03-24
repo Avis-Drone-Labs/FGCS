@@ -22,22 +22,6 @@ class RcController:
 
         self.fetchParams()
 
-    def _getAndSetParam(
-        self, params_dict: dict, param_key: str, param_name: str
-    ) -> None:
-        """
-        Gets and set the value of a parameter inside a dictionary.
-
-        Args:
-            params_dict (dict): The dictionary to store the parameters
-            param_key (str): The key for the parameter within the dictionary
-            param_name (str): The name of the parameter
-        """
-        param = self.drone.paramsController.getSingleParam(param_name).get("data")
-        if param:
-            params_dict[param_key] = param.param_value
-            self.param_types[param_name] = param.param_type
-
     def _getAndSetCachedParam(
         self, params_dict: dict, param_key: str, param_name: str
     ) -> None:
@@ -49,39 +33,34 @@ class RcController:
             param_key (str): The key for the parameter within the dictionary
             param_name (str): The name of the parameter
         """
-        cached_param = self.drone.paramsController.getCachedParam(param_name)
+        cached_param = self.drone.paramsController.getSingleParam(param_name)
         if cached_param:
             params_dict[param_key] = cached_param.get("param_value")
-        else:
-            self.drone.logger.warning(
-                f"Param {param_name} not found in cache, fetching from drone"
-            )
-            fetched_param = self.drone.paramsController.getSingleParam(param_name).get(
-                "data"
-            )
-            if fetched_param:
-                params_dict[param_key] = fetched_param.param_value
-                self.param_types[param_name] = fetched_param.param_type
+            param_type = cached_param.get("param_type")
+            if param_type is not None:
+                self.param_types[param_name] = param_type
 
     def fetchParams(self) -> None:
         """
         Fetches the RC parameters from the drone.
         """
-        self.drone.logger.debug("Fetching RC parameters")
-        self._getAndSetParam(self.params, "pitch", "RCMAP_PITCH")
-        self._getAndSetParam(self.params, "roll", "RCMAP_ROLL")
-        self._getAndSetParam(self.params, "throttle", "RCMAP_THROTTLE")
-        self._getAndSetParam(self.params, "yaw", "RCMAP_YAW")
+        self.drone.logger.debug("Fetching RC parameters from cache")
+        self._getAndSetCachedParam(self.params, "pitch", "RCMAP_PITCH")
+        self._getAndSetCachedParam(self.params, "roll", "RCMAP_ROLL")
+        self._getAndSetCachedParam(self.params, "throttle", "RCMAP_THROTTLE")
+        self._getAndSetCachedParam(self.params, "yaw", "RCMAP_YAW")
 
         for channel_number in range(1, 17):
             channel_params = self.params.get(f"RC_{channel_number}", {})
 
-            self._getAndSetParam(channel_params, "min", f"RC{channel_number}_MIN")
-            self._getAndSetParam(channel_params, "max", f"RC{channel_number}_MAX")
-            self._getAndSetParam(
+            self._getAndSetCachedParam(channel_params, "min", f"RC{channel_number}_MIN")
+            self._getAndSetCachedParam(channel_params, "max", f"RC{channel_number}_MAX")
+            self._getAndSetCachedParam(
                 channel_params, "reversed", f"RC{channel_number}_REVERSED"
             )
-            self._getAndSetParam(channel_params, "option", f"RC{channel_number}_OPTION")
+            self._getAndSetCachedParam(
+                channel_params, "option", f"RC{channel_number}_OPTION"
+            )
 
             self.params[f"RC_{channel_number}"] = channel_params
 

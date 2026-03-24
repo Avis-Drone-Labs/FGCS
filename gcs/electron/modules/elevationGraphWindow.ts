@@ -48,6 +48,9 @@ export function openElevationGraphWindow(parentWindow?: BrowserWindow) {
     }
 
     elevationGraphWin = new BrowserWindow(windowOptions)
+    elevationGraphWin.once("closed", () => {
+      elevationGraphWin = null
+    })
   }
 
   if (VITE_DEV_SERVER_URL) {
@@ -58,9 +61,6 @@ export function openElevationGraphWindow(parentWindow?: BrowserWindow) {
     )
   }
 
-  elevationGraphWin.on("close", () => {
-    elevationGraphWin = null
-  })
   elevationGraphWin.setMenuBarVisibility(false)
   elevationGraphWin.show()
 }

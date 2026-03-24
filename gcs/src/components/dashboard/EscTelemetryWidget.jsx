@@ -11,9 +11,7 @@ import {
 } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import {
-  selectEscTelemetry
- } from "../../redux/slices/droneInfoSlice"
+import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
 import {
   selectEscTelemetryMaximised,
   selectEscTelemetryThresholds,
@@ -84,12 +82,16 @@ function EscTile({ esc, thresholds }) {
       <div className="flex flex-col gap-y-0.5">
         <div className="flex flex-row items-center justify-between">
           <div className="text-slate-500 text-xs">RPM</div>
-          <div className="text-xs text-slate-200 tabular-nums">{fmt(esc.rpm, 0)}</div>
+          <div className="text-xs text-slate-200 tabular-nums">
+            {fmt(esc.rpm, 0)}
+          </div>
         </div>
 
         <div className="flex flex-row items-center justify-between">
           <div className="text-slate-500 text-xs">A</div>
-          <div className="text-xs text-slate-200 tabular-nums">{fmt(esc.current, 2)}</div>
+          <div className="text-xs text-slate-200 tabular-nums">
+            {fmt(esc.current, 2)}
+          </div>
         </div>
 
         <div className="flex flex-row items-center justify-between">

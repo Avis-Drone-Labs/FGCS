@@ -7,7 +7,6 @@ import {
   IconBolt,
   IconMaximize,
   IconMinus,
-  IconResize,
   IconSettings,
 } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
@@ -15,10 +14,8 @@ import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import { selectEscTelemetry } from "../../redux/slices/droneInfoSlice"
 import {
   selectEscTelemetryMaximised,
-  selectEscTelemetryScale,
   selectEscTelemetryThresholds,
   setEscTelemetryMaximised,
-  setEscTelemetryScale,
   setEscTelemetryThresholds,
 } from "../../redux/slices/droneConnectionSlice"
 
@@ -110,7 +107,6 @@ export default function EscTelemetryWidget() {
   const escs = useSelector(selectEscTelemetry)
 
   const isMaximised = useSelector(selectEscTelemetryMaximised)
-  const scale = useSelector(selectEscTelemetryScale)
   const [settingsOpened, setSettingsOpened] = useState(false)
 
   const thresholds = useSelector(selectEscTelemetryThresholds)
@@ -123,43 +119,20 @@ export default function EscTelemetryWidget() {
 
   const dimensions = useMemo(() => {
     const baseWidth = 350
-    const width = baseWidth * scale
+    const width = baseWidth
 
     const cols = 4
     const count = Array.isArray(escs) ? escs.length : 0
     const rows = Math.max(1, Math.ceil(Math.min(count, 8) / cols))
 
-    // Multiples used for current design to fit the two tiles perfectly
-    const tileH = 74 * scale
-    const gapH = 8 * scale
-    const paddingH = 32 * scale
+    const tileH = 74
+    const gapH = 8
+    const paddingH = 32
 
     const height = Math.round(rows * tileH + (rows - 1) * gapH + paddingH)
-    const clampedHeight = Math.max(180 * scale, Math.min(420 * scale, height))
 
-    return { width, height: clampedHeight }
-  }, [scale, escs])
-
-  function handleResizeStart(e) {
-    const startX = e.clientX
-    const startScale = scale
-
-    const handleMouseMove = (ev) => {
-      const deltaX = ev.clientX - startX
-      const scaleChange = deltaX / 200
-      const newScale = startScale + scaleChange
-      const clamped = Math.max(1, Math.min(3, newScale))
-      dispatch(setEscTelemetryScale(clamped))
-    }
-
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
-  }
+    return { width, height }
+  }, [escs])
 
   function updateThreshold(metric, field, value) {
     const numericValue = Number(value)
@@ -214,7 +187,7 @@ export default function EscTelemetryWidget() {
 
   return (
     <div
-      className="min-w-[350px] min-h-[253px] rounded-md flex flex-col"
+      className="min-w-[350px] rounded-md flex flex-col"
       style={{ background: GetOutsideVisibilityColor() }}
     >
       <div className="p-2 h-full flex flex-col">
@@ -230,16 +203,6 @@ export default function EscTelemetryWidget() {
               title="Minimise ESC widget"
             >
               <IconMinus size={16} />
-            </ActionIcon>
-
-            <ActionIcon
-              size="sm"
-              variant="subtle"
-              onMouseDown={handleResizeStart}
-              className="text-slate-400 hover:text-slate-200 hover:cursor-ne-resize"
-              title="Drag to resize"
-            >
-              <IconResize size={16} />
             </ActionIcon>
 
             <Popover
@@ -317,7 +280,7 @@ export default function EscTelemetryWidget() {
             </div>
           ) : (
             <div className="w-full h-full overflow-auto p-2">
-              <div className="grid grid-cols-4 gap-2 justify-items-center">
+              <div className="grid grid-cols-4 gap-2">
                 {escs.map((esc) => (
                   <EscTile key={esc.escId} esc={esc} thresholds={thresholds} />
                 ))}

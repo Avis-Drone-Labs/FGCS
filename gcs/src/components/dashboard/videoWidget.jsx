@@ -370,20 +370,23 @@ export default function VideoWidget() {
           className="rounded-md"
           style={{ background: GetOutsideVisibilityColor() }}
         >
-          <div className="p-2 flex items-center gap-2">
-            {videoSource && error === null ? (
-              <div
-                className="w-2 h-2 bg-green-500 rounded-full"
-                title="Video active"
-              />
-            ) : error ? (
-              <IconAlertCircle size={16} className="text-falconred" />
-            ) : (
-              <IconVideo size={16} className="text-slate-500" />
-            )}
-            <Text size="sm" className="truncate max-w-[150px]">
-              {videoSource?.name || "No video selected"}
-            </Text>
+          <div className="p-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {videoSource && error === null ? (
+                <div
+                  className="w-2 h-2 bg-green-500 rounded-full"
+                  title="Video active"
+                />
+              ) : error ? (
+                <IconAlertCircle size={16} className="text-falconred" />
+              ) : (
+                <IconVideo size={16} className="text-slate-500" />
+              )}
+              <Text size="sm" className="truncate max-w-[150px]">
+                {videoSource?.name || "No video selected"}
+              </Text>
+            </div>
+
             <ActionIcon
               size="sm"
               variant="subtle"

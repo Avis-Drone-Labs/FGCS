@@ -47,7 +47,6 @@ const initialState = {
   videoScale: 1,
 
   escTelemetryMaximised: false,
-  escTelemetryScale: 1,
 
   escTelemetryThresholds: {
     temperature: {
@@ -164,9 +163,6 @@ const droneConnectionSlice = createSlice({
     setEscTelemetryMaximised: (state, action) => {
       state.escTelemetryMaximised = action.payload
     },
-    setEscTelemetryScale: (state, action) => {
-      state.escTelemetryScale = action.payload
-    },
     setEscTelemetryThresholds: (state, action) => {
       state.escTelemetryThresholds = action.payload
     },
@@ -234,7 +230,6 @@ const droneConnectionSlice = createSlice({
     selectVideoMaximised: (state) => state.videoMaximised,
     selectVideoScale: (state) => state.videoScale,
     selectEscTelemetryMaximised: (state) => state.escTelemetryMaximised,
-    selectEscTelemetryScale: (state) => state.escTelemetryScale,
     selectEscTelemetryThresholds: (state) => state.escTelemetryThresholds,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
     selectForceArmModalOpened: (state) => state.forceArmModalOpened,

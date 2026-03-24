@@ -53,7 +53,7 @@ export default function MissionItems({ missionItems }) {
     return missionItems.find((item) => item.command === 22)
   }, [missionItems])
 
-  const { solid: listOfLineCoords, dotted: listOfDottedLineCoords } = useMemo(
+  const { solid: listOfLineCoords, dotted: listOfDottedLineSegments } = useMemo(
     () => getListOfLineCoordinates(filteredMissionItems),
     [filteredMissionItems, homePosition, takeoffWaypoint],
   )
@@ -62,7 +62,7 @@ export default function MissionItems({ missionItems }) {
     if (filteredMissionItems.length === 0) return { solid: [], dotted: [] }
 
     const lineCoordsList = []
-    const dottedLineCoordsList = []
+    const dottedLineSegmentsList = []
     const stopCommandItem = [...missionItems]
       .filter((item) => [20, 21, 189].includes(item.command))
       .sort((a, b) => a.seq - b.seq)
@@ -87,10 +87,9 @@ export default function MissionItems({ missionItems }) {
         lineCoordsList.push(homeCoord)
       } else {
         // Draw a dotted line from the home position to the first displayed waypoint
-        dottedLineCoordsList.push(homeCoord)
-        dottedLineCoordsList.push([
-          intToCoord(itemsToProcess[0].y),
-          intToCoord(itemsToProcess[0].x),
+        dottedLineSegmentsList.push([
+          homeCoord,
+          [intToCoord(itemsToProcess[0].y), intToCoord(itemsToProcess[0].x)],
         ])
       }
     }
@@ -103,34 +102,27 @@ export default function MissionItems({ missionItems }) {
       lineCoordsList.push([intToCoord(item.y), intToCoord(item.x)])
     })
 
-    // Join the last item to first item if aircraft does not land, with a dotted line
+    // If mission has no terminating land command, show return-to-home as dotted.
     if (
       ![21, 189].includes(itemsToProcess[itemsToProcess.length - 1].command) &&
-      rtlMissionItem === undefined
+      !rtlMissionItem
     ) {
-      dottedLineCoordsList.push([
-        intToCoord(itemsToProcess[0].y), // Use itemsToProcess here
-        intToCoord(itemsToProcess[0].x),
-      ])
-      dottedLineCoordsList.push([
-        intToCoord(itemsToProcess[itemsToProcess.length - 1].y), // Use itemsToProcess here
+      const lastItemCoord = [
+        intToCoord(itemsToProcess[itemsToProcess.length - 1].y),
         intToCoord(itemsToProcess[itemsToProcess.length - 1].x),
-      ])
+      ]
+
+      const returnEndpoint = homeCoord || [
+        intToCoord(itemsToProcess[0].y),
+        intToCoord(itemsToProcess[0].x),
+      ]
+
+      dottedLineSegmentsList.push([lastItemCoord, returnEndpoint])
     }
 
     // If RTL is present, draw a solid line from the last positional waypoint back to home.
-    if (rtlMissionItem && homeCoord) {
-      const lastPositionBeforeRTL = filteredMissionItems
-        .filter((item) => item.seq < rtlMissionItem.seq)
-        .at(-1)
-
-      if (lastPositionBeforeRTL) {
-        lineCoordsList.push([
-          intToCoord(lastPositionBeforeRTL.y),
-          intToCoord(lastPositionBeforeRTL.x),
-        ])
-        lineCoordsList.push(homeCoord)
-      }
+    if (rtlMissionItem && homeCoord && itemsForConnectedPath.length > 0) {
+      lineCoordsList.push(homeCoord)
     }
 
     // Connect jump commands to previously displayed item and jump target item
@@ -157,7 +149,7 @@ export default function MissionItems({ missionItems }) {
       lineCoordsList.push([intToCoord(nextItem.y), intToCoord(nextItem.x)])
     })
 
-    return { solid: lineCoordsList, dotted: dottedLineCoordsList }
+    return { solid: lineCoordsList, dotted: dottedLineSegmentsList }
   }
 
   return (
@@ -185,11 +177,14 @@ export default function MissionItems({ missionItems }) {
         lineProps={{ "line-width": 2 }}
       />
 
-      <DrawLineCoordinates
-        coordinates={listOfDottedLineCoords}
-        colour={tailwindColors.yellow[400]}
-        lineProps={{ "line-width": 2, "line-dasharray": [4, 6] }}
-      />
+      {listOfDottedLineSegments.map((segment, index) => (
+        <DrawLineCoordinates
+          key={index}
+          coordinates={segment}
+          colour={tailwindColors.yellow[400]}
+          lineProps={{ "line-width": 2, "line-dasharray": [4, 6] }}
+        />
+      ))}
     </>
   )
 }

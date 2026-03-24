@@ -28,9 +28,9 @@ import {
 const PARAM_PRESETS = [
   { label: "Serial Ports", filter: "SERIAL" },
   { label: "Battery", filter: "BATT" },
-  { label: "Failsafes", filter: "FS_" },
-  { label: "Arming", filter: "ARMING" },
-  { label: "GPS", filter: "GPS" },
+  { label: "Failsafes", filter: "FS" },
+  { label: "Waypoint", filter: "WP" },
+  { label: "RC", filter: "RC" },
 ]
 
 export default function ParamsToolbar() {

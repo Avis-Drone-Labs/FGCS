@@ -82,7 +82,7 @@ export const dataflashOptions = {
     tooltip: {
       callbacks: {
         title: function (context) {
-          return microsecondsToDisplayTime(context[0].parsed.x, 5)
+          return microsecondsToDisplayTime(context[0].parsed.x, 3)
         },
         label: getChartLabel,
       },
@@ -111,7 +111,9 @@ export const fgcsOptions = {
     tooltip: {
       callbacks: {
         title: function (context) {
-          return moment(context[0].parsed.x).format("MMMM Do YYYY, h:mm:ss a")
+          return moment(context[0].parsed.x).format(
+            "MMMM Do YYYY, HH:mm:ss.SSS",
+          )
         },
         label: getChartLabel,
       },

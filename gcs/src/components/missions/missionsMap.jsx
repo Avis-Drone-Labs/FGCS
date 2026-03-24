@@ -83,6 +83,7 @@ function MapSectionNonMemo({
   fenceItems,
   rallyItems,
   onDragstart,
+  onOpenElevationGraph,
 }) {
   // Redux
   const dispatch = useDispatch()
@@ -305,6 +306,10 @@ function MapSectionNonMemo({
     setMeasureDistanceStart(null)
     setMeasureDistanceEnd(null)
     setMeasureDistanceResult(null)
+  }
+
+  function openElevationGraph() {
+    onOpenElevationGraph?.()
   }
 
   return (
@@ -542,6 +547,9 @@ function MapSectionNonMemo({
             <Divider />
             <ContextMenuItem onClick={measureDistance}>
               <p>Measure distance</p>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={openElevationGraph}>
+              <p>Elevation graph</p>
             </ContextMenuItem>
             <ContextMenuSubMenuItem title={"POI marker"}>
               <ContextMenuItem

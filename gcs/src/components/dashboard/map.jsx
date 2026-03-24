@@ -140,6 +140,12 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   }, [contextMenuRef.current])
 
   useEffect(() => {
+    if (!connectedToDrone) {
+      setPosition(null)
+      setFirstCenteredToDrone(false)
+      return
+    }
+
     // Check latest gpsData point is valid
     if (
       isNaN(gpsData.lat) ||
@@ -147,10 +153,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       gpsData.lon === 0 ||
       gpsData.lat === 0
     ) {
-      // Keep last known icon while still connected, but clear when disconnected.
-      if (!connectedToDrone) {
-        setPosition(null)
-      }
       return
     }
 
@@ -166,7 +168,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       })
       setFirstCenteredToDrone(true)
     }
-  }, [gpsData, connectedToDrone])
+  }, [gpsData, connectedToDrone, firstCenteredToDrone, initialViewState.zoom])
 
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItems.missionItems))

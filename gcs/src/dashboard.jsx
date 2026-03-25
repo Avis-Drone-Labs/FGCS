@@ -65,6 +65,7 @@ import StatusMessages from "./components/dashboard/statusMessages"
 import TabsSection from "./components/dashboard/tabsSection"
 import TelemetrySection from "./components/dashboard/telemetrySection/telemetry"
 import VideoWidget from "./components/dashboard/videoWidget"
+import EscTelemetryWidget from "./components/dashboard/EscTelemetryWidget"
 import Layout from "./components/layout"
 
 // Tailwind styling
@@ -333,8 +334,14 @@ export default function Dashboard() {
           mapRef={mapRef}
         />
 
-        {/* Video Widget for RTSP streams */}
-        <VideoWidget telemetryPanelWidth={telemetryPanelSize.width} />
+        {/* Bottom widgets row */}
+        <div
+          className="absolute bottom-2 z-10 flex flex-col gap-2 items-start"
+          style={{ left: `${telemetryPanelSize.width + 8}px` }}
+        >
+          <EscTelemetryWidget />
+          <VideoWidget />
+        </div>
 
         <div className="absolute bottom-0 right-0 z-20">
           <ResizableBox

@@ -98,6 +98,7 @@ import {
   setTelemetryData,
   setTotalTimeFlying,
   setVibrationData,
+  setEscTelemetryData,
 } from "../slices/droneInfoSlice"
 import {
   addFiles,
@@ -370,6 +371,10 @@ const socketMiddleware = (store) => {
         window.ipcRenderer.invoke("app:update-vibe-status", data)
         break
       }
+      case "ESC_TELEMETRY_1_TO_4":
+      case "ESC_TELEMETRY_5_TO_8":
+        store.dispatch(setEscTelemetryData(msg))
+        break
       case "SERVO_OUTPUT_RAW":
         handleServoOutputRaw(msg)
         break

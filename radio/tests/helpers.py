@@ -133,97 +133,89 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
     if droneStatus.drone is None:
         raise RuntimeError("No drone connected to set parameters on.")
 
-    for param in params:
-        param_name, param_value, param_type = param
-        max_retries = 7
-        retry_count = 0
-        param_set_successfully = False
+    MAX_RETRIES = 7
+    TIMEOUT = 2.0
 
-        while retry_count < max_retries and not param_set_successfully:
-            try:
-                # Clear any pending messages first to avoid stale responses
-                droneStatus.drone.master.recv_match(
-                    type="PARAM_VALUE", blocking=False, timeout=0.1
-                )
+    def drain_all():
+        """Drain the entire buffer"""
+        while True:
+            msg = droneStatus.drone.master.recv_match(blocking=False)
+            if msg is None:
+                break
 
-                # Send parameter set command
-                logger.debug(
-                    f"Attempt {retry_count + 1}: Setting {param_name} to {param_value} (type: {param_type})"
-                )
-                droneStatus.drone.master.mav.param_set_send(
-                    droneStatus.drone.master.target_system,
-                    droneStatus.drone.master.target_component,
-                    param_name.encode("utf-8"),
-                    param_value,
-                    param_type,
-                )
+    pending = {
+        param_name: (param_value, param_type)
+        for param_name, param_value, param_type in params
+    }
+    retries = {name: 0 for name, _, _ in params}
 
-                # Wait for ACK with exponential backoff timeout
-                base_timeout = 2 + (retry_count * 0.5)  # Increase timeout with retries
-                start_time = time.time()
+    logger.debug(f"Setting {len(params)} params")
 
-                while time.time() - start_time < base_timeout:
-                    message = droneStatus.drone.master.recv_match(
-                        type="PARAM_VALUE", blocking=False, timeout=0.1
+    drain_all()
+
+    while pending:
+        # Send all the pending params at once
+        for param_name, (param_value, param_type) in pending.items():
+            droneStatus.drone.master.mav.param_set_send(
+                droneStatus.drone.master.target_system,
+                droneStatus.drone.master.target_component,
+                param_name.encode("utf-8"),
+                param_value,
+                param_type,
+            )
+
+        start_time = time.time()
+
+        while time.time() - start_time < TIMEOUT and pending:
+            msg = droneStatus.drone.master.recv_match(blocking=False)
+
+            if msg is None:
+                time.sleep(0.005)
+                continue
+
+            if msg.get_type() != "PARAM_VALUE":
+                continue
+
+            param_name = msg.param_id
+            if isinstance(param_name, bytes):
+                param_name = param_name.decode("utf-8").strip("\x00")
+
+            if param_name in pending:
+                param_value, param_type = pending[param_name]
+                received_value = msg.param_value
+
+                if (
+                    abs(received_value - param_value) < 0.001
+                ):  # Allow for floating point precision
+                    logger.info(
+                        f"Successfully set {param_name} to {param_value} (confirmed: {received_value})"
                     )
 
-                    if message is not None:
-                        # Check if it's the parameter we're looking for
-                        if message.param_id == param_name:
-                            # Verify the value was actually set correctly
-                            received_value = message.param_value
-                            if (
-                                abs(received_value - param_value) < 0.001
-                            ):  # Allow for floating point precision
-                                logger.info(
-                                    f"Successfully set {param_name} to {param_value} (confirmed: {received_value})"
-                                )
-                                # Keep cached params coherent with direct MAVLink writes used in tests.
-                                droneStatus.drone.paramsController.saveParam(
-                                    param_name,
-                                    received_value,
-                                    param_type,
-                                )
-                                param_set_successfully = True
-                                break
-                            else:
-                                logger.warning(
-                                    f"Parameter {param_name} was set but value mismatch: expected {param_value}, got {received_value}"
-                                )
-                        else:
-                            # Got a different parameter response, keep waiting
-                            logger.debug(
-                                f"Received PARAM_VALUE for {message.param_id}, waiting for {param_name}"
-                            )
-
-                    time.sleep(0.02)  # Reduced polling interval for faster response
-
-                if not param_set_successfully:
-                    # Timeout occurred
-                    retry_count += 1
-                    if retry_count < max_retries:
-                        backoff_delay = 0.2 * (2**retry_count)  # Exponential backoff
-                        logger.warning(
-                            f"Timeout setting {param_name}, retrying in {backoff_delay:.1f}s... ({retry_count}/{max_retries})"
-                        )
-                        time.sleep(backoff_delay)
-                    else:
-                        error_msg = (
-                            f"Failed to set {param_name} after {max_retries} attempts"
-                        )
-                        raise RuntimeError(error_msg)
-            except Exception as e:
-                retry_count += 1
-                if retry_count < max_retries:
-                    backoff_delay = 0.2 * (2**retry_count)
-                    logger.warning(
-                        f"Error setting {param_name}: {e}, retrying in {backoff_delay:.1f}s... ({retry_count}/{max_retries})"
+                    # Keep cached params coherent with direct MAVLink writes used in tests.
+                    droneStatus.drone.paramsController.saveParam(
+                        param_name,
+                        received_value,
+                        param_type,
                     )
-                    time.sleep(backoff_delay)
+
+                    del pending[param_name]
+
                 else:
-                    error_msg = f"Failed after {max_retries} attempts: {e}"
-                    raise RuntimeError(error_msg)
+                    logger.warning(
+                        f"Parameter {param_name} was set but value mismatch: expected {param_value}, got {received_value}"
+                    )
 
-        time.sleep(0.1)
+        # Retry only missing
+        if pending:
+            for param_name in list(pending.keys()):
+                retries[param_name] += 1
+                if retries[param_name] > MAX_RETRIES:
+                    raise RuntimeError(
+                        f"Failed to set {param_name} after {MAX_RETRIES} attempts"
+                    )
+
+            logger.warning(f"Retrying: {list(pending.keys())}")
+
+            drain_all()
 
     logger.info(f"Successfully set all {len(params)} parameters")

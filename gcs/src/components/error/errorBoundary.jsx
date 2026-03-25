@@ -61,7 +61,7 @@ export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
         name: packageJson.productName || packageJson.name,
         version: packageJson.version,
         environment: import.meta.env.MODE,
-        route: window.location.pathname,
+        route: window.location.hash,
       },
       runtime: {
         platform: runtimePlatform,
@@ -104,6 +104,7 @@ export default function ErrorBoundaryFallback({ error, resetErrorBoundary }) {
           <a
             href="https://github.com/Avis-Drone-Labs/FGCS/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=%5BBUG%5D"
             target="_blank"
+            rel="noopener noreferrer"
             className="underline text-falconred-700"
           >
             here

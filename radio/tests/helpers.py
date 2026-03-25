@@ -168,10 +168,10 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
 
         while time.time() - start_time < TIMEOUT and pending:
             try:
-                time.sleep(0.005)  # For stability
                 msg = droneStatus.drone.master.recv_match(blocking=False)
 
                 if msg is None:
+                    time.sleep(0.005)
                     continue
 
                 if msg.get_type() != "PARAM_VALUE":

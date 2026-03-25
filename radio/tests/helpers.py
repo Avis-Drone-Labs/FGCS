@@ -143,10 +143,7 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
             if msg is None:
                 break
 
-    pending = {
-        param_name: (param_value, param_type)
-        for param_name, param_value, param_type in params
-    }
+    pending = {name: (value, param_type) for name, value, param_type in params}
     retries = {name: 0 for name, _, _ in params}
 
     logger.debug(f"Setting {len(params)} params")
@@ -156,60 +153,67 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
     while pending:
         # Send all the pending params at once
         for param_name, (param_value, param_type) in pending.items():
-            droneStatus.drone.master.mav.param_set_send(
-                droneStatus.drone.master.target_system,
-                droneStatus.drone.master.target_component,
-                param_name.encode("utf-8"),
-                param_value,
-                param_type,
-            )
+            try:
+                droneStatus.drone.master.mav.param_set_send(
+                    droneStatus.drone.master.target_system,
+                    droneStatus.drone.master.target_component,
+                    param_name.encode("utf-8"),
+                    param_value,
+                    param_type,
+                )
+            except Exception:
+                logger.warning(f"Error with set_send of param {param_name}")
 
         start_time = time.time()
 
         while time.time() - start_time < TIMEOUT and pending:
-            msg = droneStatus.drone.master.recv_match(blocking=False)
+            try:
+                time.sleep(0.005)  # For stability
+                msg = droneStatus.drone.master.recv_match(blocking=False)
 
-            if msg is None:
-                time.sleep(0.005)
-                continue
+                if msg is None:
+                    continue
 
-            if msg.get_type() != "PARAM_VALUE":
-                continue
+                if msg.get_type() != "PARAM_VALUE":
+                    continue
 
-            param_name = msg.param_id
-            if isinstance(param_name, bytes):
-                param_name = param_name.decode("utf-8").strip("\x00")
+                param_name = msg.param_id
 
-            if param_name in pending:
-                param_value, param_type = pending[param_name]
-                received_value = msg.param_value
+                if param_name in pending:
+                    param_value, param_type = pending[param_name]
+                    received_value = msg.param_value
 
-                if (
-                    abs(received_value - param_value) < 0.001
-                ):  # Allow for floating point precision
-                    logger.info(
-                        f"Successfully set {param_name} to {param_value} (confirmed: {received_value})"
-                    )
+                    if (
+                        abs(received_value - param_value) < 0.001
+                    ):  # Allow for floating point precision
+                        logger.info(
+                            f"Successfully set {param_name} to {param_value} (confirmed: {received_value})"
+                        )
 
-                    # Keep cached params coherent with direct MAVLink writes used in tests.
-                    droneStatus.drone.paramsController.saveParam(
-                        param_name,
-                        received_value,
-                        param_type,
-                    )
+                        # Keep cached params coherent with direct MAVLink writes used in tests.
+                        droneStatus.drone.paramsController.saveParam(
+                            param_name,
+                            received_value,
+                            param_type,
+                        )
 
-                    del pending[param_name]
+                        pending.pop(param_name)
 
-                else:
-                    logger.warning(
-                        f"Parameter {param_name} was set but value mismatch: expected {param_value}, got {received_value}"
-                    )
+                    else:
+                        logger.warning(
+                            f"Parameter {param_name} was set but value mismatch: expected {param_value}, got {received_value}"
+                        )
+            except Exception:
+                logger.warning(f"Error setting params, last param: {param_name}")
 
         # Retry only missing
         if pending:
             for param_name in list(pending.keys()):
                 retries[param_name] += 1
                 if retries[param_name] > MAX_RETRIES:
+                    logger.error(
+                        f"Failed to set {param_name} after {MAX_RETRIES} attempts"
+                    )
                     raise RuntimeError(
                         f"Failed to set {param_name} after {MAX_RETRIES} attempts"
                     )

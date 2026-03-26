@@ -188,7 +188,7 @@ const droneConnectionSlice = createSlice({
     emitTakeoff: () => {},
     emitLand: () => {},
     emitSetCurrentFlightMode: () => {},
-    emitSetStreamRates: () => {}
+    emitSetStreamRates: () => {},
   },
   selectors: {
     selectConnecting: (state) => state.connecting,
@@ -264,7 +264,7 @@ export const {
   emitTakeoff,
   emitLand,
   emitSetCurrentFlightMode,
-  emitSetStreamRates
+  emitSetStreamRates,
 } = droneConnectionSlice.actions
 export const {
   selectConnecting,

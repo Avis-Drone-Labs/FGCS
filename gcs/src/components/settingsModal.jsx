@@ -41,11 +41,11 @@ const STREAM_MAP = {
   MAV_DATA_STREAM_RAW_SENSORS: 1,
   MAV_DATA_STREAM_EXTENDED_STATUS: 2,
   MAV_DATA_STREAM_RC_CHANNELS: 3,
-  MAV_DATA_STREAM_RAW_CONTROLLER: 4 ,
+  MAV_DATA_STREAM_RAW_CONTROLLER: 4,
   MAV_DATA_STREAM_POSITION: 6,
   MAV_DATA_STREAM_EXTRA1: 10,
   MAV_DATA_STREAM_EXTRA2: 11,
-  MAV_DATA_STREAM_EXTRA3: 12
+  MAV_DATA_STREAM_EXTRA3: 12,
 }
 
 const isValidNumber = (num, range) => {
@@ -216,32 +216,17 @@ function SetRatesRow() {
   const dispatch = useDispatch()
 
   const onClick = () => {
-    const MAV_DATA_STREAM_ALL = getSetting("Developer.MAV_DATA_STREAM_ALL")
-    const MAV_DATA_STREAM_RAW_SENSORS = getSetting("Developer.MAV_DATA_STREAM_RAW_SENSORS")
-    const MAV_DATA_STREAM_EXTENDED_STATUS = getSetting("Developer.MAV_DATA_STREAM_EXTENDED_STATUS")
-    const MAV_DATA_STREAM_RC_CHANNELS = getSetting("Developer.MAV_DATA_STREAM_RC_CHANNELS")
-    const MAV_DATA_STREAM_RAW_CONTROLLER = getSetting("Developer.MAV_DATA_STREAM_RAW_CONTROLLER")
-    const MAV_DATA_STREAM_POSITION = getSetting("Developer.MAV_DATA_STREAM_POSITION")
-    const MAV_DATA_STREAM_EXTRA1 = getSetting("Developer.MAV_DATA_STREAM_EXTRA1")
-    const MAV_DATA_STREAM_EXTRA2 = getSetting("Developer.MAV_DATA_STREAM_EXTRA2")
-    const MAV_DATA_STREAM_EXTRA3 = getSetting("Developer.MAV_DATA_STREAM_EXTRA3")
-
-
     for (const [name, value] of Object.entries(STREAM_MAP)) {
       let rate = getSetting(`Developer.${name}`)
-      dispatch(emitSetStreamRates({stream: value, rate: rate}))
+      dispatch(emitSetStreamRates({ stream: value, rate: rate }))
     }
   }
 
   return (
-    <div className="px-10 flex items-center gap-4">
-      <div className="flex-1">
-      </div>
-      <div className="flex-2 items-center gap-2">
-        <Button size="xs" color="blue" onClick={onClick}>
-          Set rates
-        </Button>
-      </div>
+    <div className="mt-0! px-10 flex justify-end">
+      <Button size="compact-xs" color="blue" onClick={onClick}>
+        Set rates
+      </Button>
     </div>
   )
 }
@@ -348,12 +333,12 @@ function ExtendableTextSetting({ settingName, df }) {
   const [items, setItems] = useState(
     getSetting(settingName).length > 0
       ? getSetting(settingName).map((item) => {
-        const newItem = { id: generateId() }
-        df.fields.forEach((field) => {
-          newItem[field.key] = item[field.key] || ""
+          const newItem = { id: generateId() }
+          df.fields.forEach((field) => {
+            newItem[field.key] = item[field.key] || ""
+          })
+          return newItem
         })
-        return newItem
-      })
       : [],
   )
 
@@ -618,7 +603,7 @@ function Setting({ settingName, df, initialValue }) {
 
     setChangedFromDefault(
       !["[]", '""'].includes(JSON.stringify(df.default)) &&
-      JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
+        JSON.stringify(getSetting(settingName)) != JSON.stringify(df.default),
     )
   }, [getSetting(settingName)])
 
@@ -791,7 +776,10 @@ function SettingsModal() {
           <Tabs.List>
             {settingTabs.map((t) => {
               // Only show developer tag when developer features are on
-              if (!getSetting("General.experimentalDeveloperFeatures") && t === "Developer") {
+              if (
+                !getSetting("General.experimentalDeveloperFeatures") &&
+                t === "Developer"
+              ) {
                 return <></>
               }
               return (
@@ -854,8 +842,7 @@ function SettingsModal() {
                     <>
                       <SetRatesRow />
                     </>
-                  )
-                  }
+                  )}
                 </Tabs.Panel>
               )
             })}
@@ -879,7 +866,7 @@ function SettingsModal() {
                 setting
                   .split(".")
                   .reduce((title, value) => title[value], DefaultSettings)[
-                "display"
+                  "display"
                 ]
               }
             </p>

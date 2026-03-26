@@ -216,8 +216,8 @@ export function handleEmitters(socket, store, action) {
       callback: () =>
         socket.socket.emit("set_stream_rate", {
           stream: action.payload.stream,
-          rate: action.payload.rate
-        })
+          rate: action.payload.rate,
+        }),
     },
 
     {

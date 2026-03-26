@@ -121,7 +121,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_ALL",
+      "display": "STREAM_ALL",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -132,7 +132,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_RAW_SENSORS",
+      "display": "RAW_SENSORS",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -143,7 +143,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_EXTENDED_STATUS",
+      "display": "EXTENDED_STATUS",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -154,7 +154,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_RC_CHANNELS",
+      "display": "RC_CHANNELS",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -165,7 +165,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_RAW_CONTROLLER",
+      "display": "RAW_CONTROLLER",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -176,7 +176,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_POSITION",
+      "display": "POSITION",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -187,7 +187,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_EXTRA1",
+      "display": "EXTRA1",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -198,7 +198,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_EXTRA2",
+      "display": "EXTRA2",
       "suffix": "Hz",
       "group": "Data stream rates"
     },
@@ -209,7 +209,7 @@
         0,
         150
       ],
-      "display": "MAV_DATA_STREAM_EXTRA3",
+      "display": "EXTRA3",
       "suffix": "Hz",
       "group": "Data stream rates"
     }

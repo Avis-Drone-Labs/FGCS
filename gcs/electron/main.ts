@@ -156,6 +156,26 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
 
+// ===== Single Instance Lock =====
+// Ensure only one instance of the application is running
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  // Another instance is already running, quit this one
+  app.quit()
+} else {
+  // This is the primary instance
+  app.on("second-instance", () => {
+    // Someone tried to run a second instance, we should focus our window
+    if (win) {
+      if (win.isMinimized()) {
+        win.restore()
+      }
+      win.focus()
+    }
+  })
+}
+
 function getWindow() {
   return BrowserWindow.getFocusedWindow()
 }

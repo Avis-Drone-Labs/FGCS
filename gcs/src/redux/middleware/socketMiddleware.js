@@ -80,6 +80,7 @@ import {
   setBatteryData,
   setDroneAircraftType,
   setEkfStatusReportData,
+  setEscTelemetryData,
   setFlightSwVersion,
   setGps2RawIntData,
   setGpsData,
@@ -98,7 +99,6 @@ import {
   setTelemetryData,
   setTotalTimeFlying,
   setVibrationData,
-  setEscTelemetryData,
 } from "../slices/droneInfoSlice"
 import {
   addFiles,

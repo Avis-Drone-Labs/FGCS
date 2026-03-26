@@ -161,8 +161,10 @@ let pythonBackend: ChildProcessWithoutNullStreams | null = null
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
-  // Another instance is already running, quit this one
-  app.quit()
+  // Another instance is already running; terminate immediately so no
+  // additional initialization (windows/backend/ipc) can run in this process.
+  app.exit(0)
+  process.exit(0)
 } else {
   // This is the primary instance
   app.on("second-instance", () => {

@@ -6,5 +6,5 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["vite.config.mts", "electron/**/*.ts", "electron/**/*.js"]
+  "include": ["vite.config.mts", "electron/**/*.ts"]
 }

@@ -137,9 +137,12 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
     TIMEOUT = 2.0
 
     def drain_all():
-        """Drain the entire buffer"""
+        """Drain all pending PARAM_VALUE messages from the buffer"""
         while True:
-            msg = droneStatus.drone.master.recv_match(blocking=False)
+            msg = droneStatus.drone.master.recv_match(
+                blocking=False,
+                type="PARAM_VALUE",
+            )
             if msg is None:
                 break
 
@@ -168,13 +171,12 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
 
         while time.time() - start_time < TIMEOUT and pending:
             try:
-                msg = droneStatus.drone.master.recv_match(blocking=False)
+                msg = droneStatus.drone.master.recv_match(
+                    blocking=False, type="PARAM_VALUE"
+                )
 
                 if msg is None:
                     time.sleep(0.005)
-                    continue
-
-                if msg.get_type() != "PARAM_VALUE":
                     continue
 
                 param_name = msg.param_id

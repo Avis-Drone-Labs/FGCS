@@ -222,4 +222,5 @@ def set_params(params: List[tuple[str, Number, int]]) -> None:
 
             drain_all()
 
+    time.sleep(3)  # Allow state to settle
     logger.info(f"Successfully set all {len(params)} parameters")

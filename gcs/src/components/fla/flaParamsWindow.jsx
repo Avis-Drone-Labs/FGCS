@@ -81,6 +81,18 @@ function renderParamValue(value, paramDef) {
   )
 }
 
+function getParamDefinitionText(paramDef) {
+  if (!paramDef || typeof paramDef !== "object") {
+    return null
+  }
+
+  if (typeof paramDef.Description === "string" && paramDef.Description.trim()) {
+    return paramDef.Description
+  }
+
+  return null
+}
+
 export default function FlaParamsWindow() {
   const [params, setParams] = useState(null)
   const [fileName, setFileName] = useState("")
@@ -190,6 +202,7 @@ export default function FlaParamsWindow() {
             <Table.Tr>
               <Table.Th className="w-56">Parameter</Table.Th>
               <Table.Th className="w-40">Value</Table.Th>
+              <Table.Th>Definition</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -204,6 +217,11 @@ export default function FlaParamsWindow() {
                   <Table.Td>{param.name}</Table.Td>
                   <Table.Td>
                     {renderParamValue(param.value, paramDefs[param.name])}
+                  </Table.Td>
+                  <Table.Td>
+                    <div className="max-h-24 overflow-y-auto">
+                      {getParamDefinitionText(paramDefs[param.name])}
+                    </div>
                   </Table.Td>
                 </Table.Tr>
               ))}

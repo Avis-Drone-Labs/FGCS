@@ -19,7 +19,7 @@ export function openFlaParamsWindow(
   }
 
   const windowOptions: Electron.BrowserWindowConstructorOptions = {
-    width: 800,
+    width: 1100,
     height: 1200,
     frame: true,
     icon: path.join(process.env.VITE_PUBLIC, "app_icon.ico"),
@@ -55,7 +55,9 @@ export function openFlaParamsWindow(
   flaParamsWin.on("close", () => {
     flaParamsWin = null
   })
+
   flaParamsWin.setMenuBarVisibility(false)
+  flaParamsWin.center()
   flaParamsWin.show()
 
   if (paramsData !== null) {

@@ -55,7 +55,9 @@ export function openFlaParamsWindow(
   flaParamsWin.on("close", () => {
     flaParamsWin = null
   })
+
   flaParamsWin.setMenuBarVisibility(false)
+  flaParamsWin.center()
   flaParamsWin.show()
 
   if (paramsData !== null) {

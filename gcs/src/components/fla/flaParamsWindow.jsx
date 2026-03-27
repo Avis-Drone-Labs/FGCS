@@ -2,19 +2,169 @@
 
 import { useEffect, useState } from "react"
 
-import { Button, Table, TextInput } from "@mantine/core"
+import { Button, Table, TextInput, Tooltip } from "@mantine/core"
 import { useElementSize, useViewportSize } from "@mantine/hooks"
+import { IconInfoCircle } from "@tabler/icons-react"
+import manifest from "../../../data/gen_apm_params_versions.json"
 import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../helpers/notification"
 
+const paramDefinitionModules = import.meta.glob(
+  "../../../data/gen_apm_params_def_*_*.json",
+)
+
+const modulePathByFileName = Object.fromEntries(
+  Object.keys(paramDefinitionModules).map((path) => [
+    path.split("/").pop(),
+    path,
+  ]),
+)
+
+function parseMajorMinor(versionString) {
+  const match = String(versionString || "").match(/(\d+)\.(\d+)/)
+  if (!match) {
+    return null
+  }
+
+  return `${match[1]}.${match[2]}`
+}
+
+function getResolvedVersion(aircraftKey, firmwareVersion) {
+  if (!aircraftKey) {
+    return null
+  }
+
+  const versions = manifest?.vehicles?.[aircraftKey]?.versions
+  if (!Array.isArray(versions) || versions.length === 0) {
+    return null
+  }
+
+  const requestedVersion = parseMajorMinor(firmwareVersion)
+  if (requestedVersion && versions.includes(requestedVersion)) {
+    return requestedVersion
+  }
+
+  return (
+    manifest?.vehicles?.[aircraftKey]?.latest || versions[versions.length - 1]
+  )
+}
+
+function getModulePath(aircraftKey, resolvedVersion) {
+  if (!aircraftKey || !resolvedVersion) {
+    return null
+  }
+
+  const fileName = manifest?.vehicles?.[aircraftKey]?.files?.[resolvedVersion]
+  if (!fileName) {
+    return null
+  }
+
+  return modulePathByFileName[fileName] || null
+}
+
+function getBitmaskInfo(rawValue, paramDef) {
+  const bitmaskDef = paramDef?.Bitmask
+  if (!bitmaskDef || typeof bitmaskDef !== "object") {
+    return {
+      isBitmask: false,
+      displayValue: String(rawValue),
+      selected: [],
+    }
+  }
+
+  const numericValue = Number(rawValue)
+  if (!Number.isFinite(numericValue)) {
+    return {
+      isBitmask: false,
+      displayValue: String(rawValue),
+      selected: [],
+    }
+  }
+
+  const bitmaskValue = Math.trunc(numericValue) >>> 0
+  const selected = Object.entries(bitmaskDef)
+    .map(([bitKey, label]) => ({
+      bit: Number.parseInt(bitKey, 10),
+      label,
+    }))
+    .filter((item) => Number.isInteger(item.bit) && item.bit >= 0)
+    .sort((a, b) => a.bit - b.bit)
+    .filter((item) => item.bit < 32)
+    .filter((item) => (bitmaskValue & (1 << item.bit)) !== 0)
+
+  return {
+    isBitmask: true,
+    displayValue: String(bitmaskValue),
+    selected,
+  }
+}
+
+function renderParamValue(value, paramDef) {
+  const bitmaskInfo = getBitmaskInfo(value, paramDef)
+
+  if (!bitmaskInfo.isBitmask) {
+    return bitmaskInfo.displayValue
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span>{bitmaskInfo.displayValue}</span>
+      {bitmaskInfo.displayValue !== "0" && (
+        <Tooltip
+          multiline
+          w={300}
+          label={
+            bitmaskInfo.selected.length > 0 && (
+              <div className="text-sm">
+                {bitmaskInfo.selected.map((item) => (
+                  <div key={item.bit}>{`${item.bit}: ${item.label}`}</div>
+                ))}
+              </div>
+            )
+          }
+        >
+          <span className="inline-flex">
+            <IconInfoCircle size={16} color="white" />
+          </span>
+        </Tooltip>
+      )}
+    </div>
+  )
+}
+
 export default function FlaParamsWindow() {
   const [params, setParams] = useState(null)
   const [fileName, setFileName] = useState("")
+  const [aircraftKey, setAircraftKey] = useState(null)
+  const [firmwareVersion, setFirmwareVersion] = useState(null)
+  const [paramDefs, setParamDefs] = useState({})
   const [paramSearchValue, setParamSearchValue] = useState("")
   const { height } = useViewportSize()
   const { ref, height: searchBarHeight } = useElementSize()
+
+  useEffect(() => {
+    const resolvedVersion = getResolvedVersion(aircraftKey, firmwareVersion)
+    const modulePath = getModulePath(aircraftKey, resolvedVersion)
+
+    if (!modulePath) {
+      setParamDefs({})
+      return
+    }
+
+    let cancelled = false
+
+    paramDefinitionModules[modulePath]().then((loadedModule) => {
+      if (!cancelled) {
+        setParamDefs(loadedModule.default || {})
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [aircraftKey, firmwareVersion])
 
   async function saveParamsToFile() {
     try {
@@ -56,6 +206,12 @@ export default function FlaParamsWindow() {
     const handler = (_event, data) => {
       setParams(data.params)
       setFileName(data.fileName)
+      setAircraftKey(
+        data.aircraftType === "plane" || data.aircraftType === "copter"
+          ? data.aircraftType
+          : null,
+      )
+      setFirmwareVersion(data.firmwareVersion ?? null)
     }
     window.ipcRenderer.on("app:send-fla-params", handler)
 
@@ -105,7 +261,9 @@ export default function FlaParamsWindow() {
               .map((param) => (
                 <Table.Tr key={param.name}>
                   <Table.Td>{param.name}</Table.Td>
-                  <Table.Td>{param.value}</Table.Td>
+                  <Table.Td>
+                    {renderParamValue(param.value, paramDefs[param.name])}
+                  </Table.Td>
                 </Table.Tr>
               ))}
           </Table.Tbody>

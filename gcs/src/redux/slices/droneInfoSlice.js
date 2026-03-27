@@ -33,6 +33,10 @@ const droneInfoSlice = createSlice({
       heading: 0.0,
       throttle: 0.0,
     },
+    escData: {
+      ESC_TELEMETRY_1_TO_4: null,
+      ESC_TELEMETRY_5_TO_8: null,
+    },
     gpsData: {
       mavpackettype: "GLOBAL_POSITION_INT",
       time_boot_ms: 0,
@@ -85,9 +89,7 @@ const droneInfoSlice = createSlice({
     notificationSound: "",
     aircraftType: 2, // Default to copter, will be updated on heartbeat
     batteryData: [],
-    extraDroneData: [
-      ...defaultDataMessages, // TODO: Should also be stored in local storage, values set to 0 on launch but actual messages stored
-    ],
+    selectedDisplayTelemetry: [...defaultDataMessages],
     guidedModePinData: {
       lat: 0, // Stored in coords not int
       lon: 0, // Stored in coords not int
@@ -172,21 +174,52 @@ const droneInfoSlice = createSlice({
     soundPlayed: (state) => {
       state.notificationSound = ""
     },
-    changeExtraData: (state, action) => {
-      state.extraDroneData[action.payload.index] = {
-        ...state.extraDroneData[action.payload.index],
+    changeSelectedDisplayTelemetry: (state, action) => {
+      state.selectedDisplayTelemetry[action.payload.index] = {
+        ...state.selectedDisplayTelemetry[action.payload.index],
         ...action.payload.data,
       }
     },
-    setExtraData: (state, action) => {
-      if (action.payload !== state.extraDroneData) {
-        state.extraDroneData = action.payload
+    setSelectedDisplayTelemetry: (state, action) => {
+      if (action.payload !== state.selectedDisplayTelemetry) {
+        state.selectedDisplayTelemetry = action.payload
       }
     },
     setDroneAircraftType: (state, action) => {
       if (action.payload !== state.aircraftType) {
         state.aircraftType = action.payload
       }
+    },
+    setEscTelemetryData: (state, action) => {
+      const packetType = action.payload?.mavpackettype
+      if (!packetType) return
+
+      state.escData = {
+        ...state.escData,
+        [packetType]: {
+          ...action.payload,
+          rpm: Array.isArray(action.payload.rpm) ? [...action.payload.rpm] : [],
+          current: Array.isArray(action.payload.current)
+            ? [...action.payload.current]
+            : [],
+          voltage: Array.isArray(action.payload.voltage)
+            ? [...action.payload.voltage]
+            : [],
+          temperature: Array.isArray(action.payload.temperature)
+            ? [...action.payload.temperature]
+            : [],
+          totalcurrent: Array.isArray(action.payload.totalcurrent)
+            ? [...action.payload.totalcurrent]
+            : [],
+        },
+      }
+
+      console.log("ESC REDUX", {
+        timestamp: action.payload.timestamp,
+        rpm: action.payload.rpm,
+        current: action.payload.current,
+        temperature: action.payload.temperature,
+      })
     },
     setTelemetryData: (state, action) => {
       state.telemetryData = {
@@ -348,6 +381,8 @@ const droneInfoSlice = createSlice({
     selectFlightSwVersion: (state) => state.flightSwVersion,
     selectAttitude: (state) => state.attitudeData,
     selectTelemetry: (state) => state.telemetryData,
+    selectEscTelemetry1To4: (state) => state.escData.ESC_TELEMETRY_1_TO_4,
+    selectEscTelemetry5To8: (state) => state.escData.ESC_TELEMETRY_5_TO_8,
     selectGPS: (state) => state.gpsData,
     selectHeading: (state) => centiDegToDeg(state.gpsData.hdg),
     selectHomePosition: (state) => state.homePosition,
@@ -377,10 +412,11 @@ const droneInfoSlice = createSlice({
     selectHasEverHadGpsFix: (state) => state.hasEverHadGpsFix,
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
+
     selectBatteryData: (state) =>
       state.batteryData.sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
-    selectExtraDroneData: (state) => state.extraDroneData,
+    selectSelectedDisplayTelemetry: (state) => state.selectedDisplayTelemetry,
     selectStatusText: (state) => state.statusText,
     selectGraphValues: (state) => state.graphs.selectedGraphs,
     selectLastGraphMessage: (state) => state.graphs.lastGraphResultsMessage,
@@ -397,9 +433,10 @@ export const {
   setFlightSwVersion,
   setHeartbeatData,
   soundPlayed,
-  changeExtraData,
-  setExtraData,
+  changeSelectedDisplayTelemetry,
+  setSelectedDisplayTelemetry,
   setDroneAircraftType,
+  setEscTelemetryData,
   setTelemetryData,
   setGpsData,
   setHomePosition,
@@ -440,6 +477,44 @@ export const selectAttitudeDeg = createSelector(
       pitch: pitch * (180 / Math.PI),
       yaw: yaw * (180 / Math.PI),
     }
+  },
+)
+
+export const selectEscTelemetry = createSelector(
+  [
+    droneInfoSlice.selectors.selectEscTelemetry1To4,
+    droneInfoSlice.selectors.selectEscTelemetry5To8,
+  ],
+  (esc1To4, esc5To8) => {
+    const escs = []
+
+    function pushEscPacket(packet, baseIndex) {
+      if (!packet) return
+
+      // Most fields are arrays of length 4, but guard anyway
+      const rpm = packet.rpm ?? []
+      const count = Math.min(4, rpm.length)
+
+      for (let i = 0; i < count; i++) {
+        escs.push({
+          escId: baseIndex + i + 1,
+          rpm: packet.rpm?.[i] ?? null,
+          current: packet.current?.[i] ?? null,
+          voltage: packet.voltage?.[i] ?? null,
+          temperature: packet.temperature?.[i] ?? null,
+          totalcurrent: packet.totalcurrent?.[i] ?? null,
+          timestamp: packet.timestamp ?? null,
+        })
+      }
+    }
+
+    // ESC 1-4
+    pushEscPacket(esc1To4, 0)
+
+    // ESC 5-8
+    pushEscPacket(esc5To8, 4)
+
+    return escs
   },
 )
 
@@ -532,11 +607,13 @@ export const {
   selectHeading,
   selectSystemStatus,
   selectNotificationSound,
+  selectEscTelemetry1To4,
+  selectEscTelemetry5To8,
   selectFlightMode,
   selectAircraftType,
   selectBatteryData,
   selectGuidedModePinData,
-  selectExtraDroneData,
+  selectSelectedDisplayTelemetry,
   selectGraphValues,
   selectLastGraphMessage,
   selectEkfStatusReportData,

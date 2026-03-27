@@ -1,24 +1,22 @@
 // Servo Output Configuration Page
-import { useEffect, useState } from "react"
 import {
-  Table,
   Button,
-  NumberInput,
   Checkbox,
-  Select,
   Modal,
-  Text,
+  NumberInput,
   Progress,
+  Select,
+  Table,
+  Text,
 } from "@mantine/core"
+import { useEffect, useState } from "react"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 
 // Custom components, helpers and data
-import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
-import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 
-import { useSelector, useDispatch } from "react-redux"
-import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
+import { useDispatch, useSelector } from "react-redux"
 import {
   emitGetServoConfig,
   emitSetServoConfigParam,
@@ -26,8 +24,10 @@ import {
   selectServoConfig,
   selectServoPwmOutputs,
 } from "../../redux/slices/configSlice"
-import { emitSetState } from "../../redux/slices/droneConnectionSlice"
-import { selectConnectedToDrone } from "../../redux/slices/droneConnectionSlice"
+import {
+  emitSetState,
+  selectConnectedToDrone,
+} from "../../redux/slices/droneConnectionSlice"
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 const PWM_MIN = 1000
@@ -53,7 +53,7 @@ function getPercentageValueFromPWM(pwmValue) {
 
 export default function ServoOutput() {
   const dispatch = useDispatch()
-  const aircraftType = useSelector(selectAircraftType)
+  const { paramDefs } = useParamDefinitions()
   const servoConfig = useSelector(selectServoConfig)
   const servoPwmOutputs = useSelector(selectServoPwmOutputs)
   const connected = useSelector(selectConnectedToDrone)
@@ -64,9 +64,7 @@ export default function ServoOutput() {
 
   // Helper to get paramDef for a given param_id
   function getParamDef(param_id) {
-    if (aircraftType === 1) return apmParamDefsPlane[param_id]
-    if (aircraftType === 2) return apmParamDefsCopter[param_id]
-    return undefined
+    return paramDefs[param_id]
   }
 
   // Helper to handle param change

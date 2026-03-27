@@ -3,7 +3,7 @@
 */
 
 // Base imports
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // 3rd Party Imports
 import { ResizableBox } from "react-resizable"
@@ -28,6 +28,7 @@ import MissionStatistics from "./components/missions/missionStatistics"
 import MissionsMapSection from "./components/missions/missionsMap"
 import RallyItemsTable from "./components/missions/rallyItemsTable"
 import { coordToInt, intToCoord } from "./helpers/dataFormatters"
+import { buildMissionElevationProfile } from "./helpers/missionElevationProfile"
 
 // Redux
 import { useDispatch, useSelector } from "react-redux"
@@ -305,6 +306,36 @@ export default function Missions() {
     }
   }
 
+  const sendElevationGraphUpdate = useCallback(() => {
+    if (!window.ipcRenderer) return
+
+    const profile = buildMissionElevationProfile(
+      missionItems,
+      aircraftType,
+      plannedHomePosition,
+    )
+    window.ipcRenderer
+      .invoke("app:update-elevation-graph", profile)
+      .catch((err) => {
+        console.error("Failed to update elevation graph:", err)
+      })
+  }, [missionItems, aircraftType, plannedHomePosition])
+
+  const openElevationGraph = useCallback(() => {
+    if (!window.ipcRenderer) return
+
+    window.ipcRenderer
+      .invoke("app:open-elevation-graph-window")
+      .then(() => sendElevationGraphUpdate())
+      .catch((err) => {
+        console.error("Failed to open elevation graph window:", err)
+      })
+  }, [sendElevationGraphUpdate])
+
+  useEffect(() => {
+    sendElevationGraphUpdate()
+  }, [sendElevationGraphUpdate])
+
   return (
     <Layout currentPage="missions">
       <Modal
@@ -521,6 +552,7 @@ export default function Missions() {
                 missionItems={missionItems}
                 fenceItems={fenceItems}
                 rallyItems={rallyItems}
+                onOpenElevationGraph={openElevationGraph}
               />
             </div>
 

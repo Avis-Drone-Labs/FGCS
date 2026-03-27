@@ -1,4 +1,5 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
+import { defaultDataMessages } from "../helpers/dashboardDefaultDataMessages"
 import armedMiddleware from "./middleware/armedMiddleware"
 import socketMiddleware from "./middleware/socketMiddleware"
 import applicationSlice from "./slices/applicationSlice"
@@ -16,7 +17,10 @@ import droneConnectionSlice, {
   setPort,
   setSelectedComPorts,
 } from "./slices/droneConnectionSlice"
-import droneInfoSlice, { setGraphValues } from "./slices/droneInfoSlice"
+import droneInfoSlice, {
+  setGraphValues,
+  setSelectedDisplayTelemetry,
+} from "./slices/droneInfoSlice"
 import ftpSlice from "./slices/ftpSlice"
 import logAnalyserSlice from "./slices/logAnalyserSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
@@ -125,6 +129,29 @@ if (selectedRealtimeGraphs !== null) {
   }
 }
 
+const selectedDisplayTelemetry = localStorage.getItem(
+  "selectedDisplayTelemetry",
+)
+if (selectedDisplayTelemetry !== null) {
+  try {
+    const parsedSelectedDisplayTelemetry = JSON.parse(selectedDisplayTelemetry)
+    if (
+      Array.isArray(parsedSelectedDisplayTelemetry) &&
+      parsedSelectedDisplayTelemetry.length > 0
+    ) {
+      store.dispatch(
+        setSelectedDisplayTelemetry(
+          mergeSelectedDisplayTelemetryConfigWithDefaults(
+            parsedSelectedDisplayTelemetry,
+          ),
+        ),
+      )
+    }
+  } catch {
+    store.dispatch(setSelectedDisplayTelemetry([...defaultDataMessages]))
+  }
+}
+
 const plannedHomePosition = localStorage.getItem("plannedHomePosition")
 if (plannedHomePosition !== null) {
   try {
@@ -175,6 +202,49 @@ const updateJSONLocalStorageIfChanged = (key, newValue) => {
       localStorage.setItem(key, stringValue)
     }
   }
+}
+
+// We only want to store the necessary fields of the selected display telemetry
+// in local storage, and not the value which is updated frequently with incoming
+// messages.
+function toSelectedDisplayTelemetryPersistedConfig(selectedDisplayTelemetry) {
+  return selectedDisplayTelemetry.map(
+    ({ boxId, currently_selected, display_name }) => ({
+      boxId,
+      currently_selected,
+      display_name,
+    }),
+  )
+}
+
+// When loading the selected display telemetry config from local storage, we
+// want to merge it with the default config to ensure any new telemetry options
+// are included and old ones that have been removed are not included. We also
+// want to ensure that if the default config changes (e.g. display names updated)
+// that these changes are reflected while still keeping the user's selected
+// telemetry and display names.
+function mergeSelectedDisplayTelemetryConfigWithDefaults(persistedConfig) {
+  const defaultSelectedDisplayTelemetry =
+    store.getState().droneInfo.selectedDisplayTelemetry
+
+  const persistedConfigByBoxId = new Map(
+    persistedConfig
+      .filter((item) => item && item.boxId != null)
+      .map((item) => [item.boxId, item]),
+  )
+
+  return defaultSelectedDisplayTelemetry.map((defaultItem) => {
+    const persistedItem = persistedConfigByBoxId.get(defaultItem.boxId)
+    if (!persistedItem) {
+      return defaultItem
+    }
+
+    return {
+      ...defaultItem,
+      currently_selected: persistedItem.currently_selected,
+      display_name: persistedItem.display_name,
+    }
+  })
 }
 
 // Update states when a new message comes in
@@ -239,6 +309,18 @@ store.subscribe(() => {
     updateJSONLocalStorageIfChanged(
       "selectedRealtimeGraphs",
       store_mut.droneInfo.graphs.selectedGraphs,
+    )
+  }
+
+  if (
+    Array.isArray(store_mut.droneInfo.selectedDisplayTelemetry) &&
+    store_mut.droneInfo.selectedDisplayTelemetry.length > 0
+  ) {
+    updateJSONLocalStorageIfChanged(
+      "selectedDisplayTelemetry",
+      toSelectedDisplayTelemetryPersistedConfig(
+        store_mut.droneInfo.selectedDisplayTelemetry,
+      ),
     )
   }
 

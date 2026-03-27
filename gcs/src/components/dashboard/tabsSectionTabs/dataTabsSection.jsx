@@ -7,8 +7,8 @@
 import { useState } from "react"
 
 // Mantine
+import { Grid, Tabs } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
-import { Tabs, Grid } from "@mantine/core"
 
 // Custom Components
 import DashboardDataModal from "../../dashboardDataModal"
@@ -17,11 +17,11 @@ import DashboardDataModal from "../../dashboardDataModal"
 import { IconInfoCircle } from "@tabler/icons-react"
 
 // Helper
-import { DataMessage } from "../../../helpers/dataDisplay"
 import { useDispatch, useSelector } from "react-redux"
+import { DataMessage } from "../../../helpers/dataDisplay"
 import {
-  changeExtraData,
-  selectExtraDroneData,
+  changeSelectedDisplayTelemetry,
+  selectSelectedDisplayTelemetry,
 } from "../../../redux/slices/droneInfoSlice"
 
 export default function DataTabsSection({ tabPadding }) {
@@ -29,7 +29,7 @@ export default function DataTabsSection({ tabPadding }) {
   const [opened, { open, close }] = useDisclosure(false)
 
   const dispatch = useDispatch()
-  const selectedData = useSelector(selectExtraDroneData)
+  const selectedData = useSelector(selectSelectedDisplayTelemetry)
 
   const handleDoubleClick = (box) => {
     setSelectedBox(box)
@@ -40,7 +40,7 @@ export default function DataTabsSection({ tabPadding }) {
     // Update wantedData on checkbox change
     if (isChecked) {
       dispatch(
-        changeExtraData({
+        changeSelectedDisplayTelemetry({
           index: boxId,
           data: {
             currently_selected: `${key}.${subkey}`,

@@ -24,6 +24,7 @@ from app.controllers.motorTestController import MotorTestController
 from app.controllers.navController import NavController
 from app.controllers.paramsController import ParamsController
 from app.controllers.rcController import RcController
+from app.controllers.serialPortsController import SerialPortsController
 from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
 from app.utils import (
@@ -38,6 +39,7 @@ from app.utils import (
 # Constants
 
 LOG_LINE_LIMIT = 50000
+CONNECT_STATUS_PARAM_THROTTLE_SECS = 0.2
 
 
 DATASTREAM_RATES = {
@@ -103,22 +105,15 @@ class Drone:
         self.fetchingParameterCb = fetchingParameterCb
 
         self.connectionError: Optional[str] = None
+        self._last_connect_progress: float = 0.0
+        self._last_param_progress_emit_time: float = 0.0
+        self._last_connect_status_payload: Optional[dict] = None
 
         self.connection_phases = [
-            "Connecting to drone",
-            "Received heartbeat",
-            "Cleaned temp logs",
-            "Setting up the parameters controller",
-            "Setting up the arm controller",
-            "Setting up the flight modes controller",
-            "Setting up the motor controller",
-            "Setting up the gripper controller",
-            "Setting up the mission controller",
-            "Setting up the frame controller",
-            "Setting up the RC controller",
-            "Setting up the Servo Controller",
-            "Setting up the nav controller",
-            "Setting up the FTP controller",
+            "Waiting for heartbeat",
+            "Setting up forwarding",
+            "Fetching parameters",
+            "Setting up controllers",
             "Connection complete",
         ]
 
@@ -172,8 +167,6 @@ class Drone:
             )
             return
 
-        self.sendConnectionStatusUpdate(1)
-
         self.aircraft_type = getVehicleType(initial_heartbeat.type)
         if self.aircraft_type not in (
             VehicleType.FIXED_WING.value,
@@ -204,8 +197,6 @@ class Drone:
         self.current_log_file: Optional[Path] = None
         self.log_file_names: List[Path] = []
         self.cleanTempLogs()
-
-        self.sendConnectionStatusUpdate(2)
 
         # To ensure that only one command is sent at a time and we wait for a
         # response before sending another command, a thread-safe lock is used
@@ -251,6 +242,7 @@ class Drone:
             return
 
         self.stopAllDataStreams()
+        self.sendConnectionStatusUpdate(1)
 
         if forwarding_address:
             try:
@@ -264,9 +256,28 @@ class Drone:
             except Exception as e:
                 self.logger.error(f"Failed to start forwarding: {e}", exc_info=True)
 
-        self.setupControllers()
+        self.paramsController: ParamsController = ParamsController(self)
+        self.sendConnectionStatusUpdate(2)
+        fetch_all_params_result = self.paramsController.fetchAllParamsBlocking(
+            timeout_secs=120,
+            progress_update_callback=self.sendParamFetchConnectionStatusUpdate,
+        )
 
-        self.sendConnectionStatusUpdate(13)
+        if not fetch_all_params_result.get("success"):
+            self.is_active.clear()
+            self.stopAllThreads()
+            fetch_error_message = fetch_all_params_result.get(
+                "message", "Could not fetch all drone parameters"
+            )
+            self.logger.error(fetch_error_message)
+            self.master.close()
+            self.master = None
+            self.connectionError = fetch_error_message
+            return
+
+        self.sendConnectionStatusUpdate(3)
+        self.setupControllers()
+        self.sendConnectionStatusUpdate(4)
 
         self.sendStatusTextMessage(
             mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
@@ -279,40 +290,73 @@ class Drone:
         return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
     def setupControllers(self) -> None:
-        self.sendConnectionStatusUpdate(3)
-        self.paramsController = ParamsController(self)
-
-        self.sendConnectionStatusUpdate(4)
         self.armController = ArmController(self)
-
-        self.sendConnectionStatusUpdate(5)
         self.flightModesController = FlightModesController(self)
-
-        self.sendConnectionStatusUpdate(6)
         self.motorTestController = MotorTestController(self)
-
-        self.sendConnectionStatusUpdate(7)
         self.gripperController = GripperController(self)
-
-        self.sendConnectionStatusUpdate(8)
         self.missionController = MissionController(self)
-
-        self.sendConnectionStatusUpdate(9)
         self.frameController = FrameController(self)
-
-        self.sendConnectionStatusUpdate(10)
         self.rcController = RcController(self)
-
-        self.sendConnectionStatusUpdate(11)
         self.servoController = ServoController(self)
-
-        self.sendConnectionStatusUpdate(12)
+        self.serialPortsController = SerialPortsController(self)
         self.navController = NavController(self)
-
-        self.sendConnectionStatusUpdate(13)
         self.ftpController = FtpController(self)
 
-    def sendConnectionStatusUpdate(self, msg_index):
+    def _emitConnectionStatus(
+        self, message: str, progress: float, sub_message: str = ""
+    ) -> None:
+        if not self.droneConnectStatusCb:
+            return
+
+        progress = round(min(max(float(progress), 0.0), 100.0), 2)
+        progress = max(progress, self._last_connect_progress)
+        payload = {
+            "message": message,
+            "sub_message": sub_message,
+            "progress": progress,
+        }
+
+        if payload == self._last_connect_status_payload:
+            return
+
+        try:
+            self.droneConnectStatusCb(payload)
+        except Exception:
+            self.logger.exception("Connection status callback failed")
+            return
+
+        self._last_connect_status_payload = payload.copy()
+        self._last_connect_progress = progress
+
+    def sendParamFetchConnectionStatusUpdate(self, data: dict) -> None:
+        total_params = max(int(data.get("total_number_of_params", 0)), 1)
+        current_index = max(int(data.get("current_param_index", 0)) + 1, 1)
+        current_index = min(current_index, total_params)
+        current_param_id = data.get("current_param_id", "")
+
+        # Param fetch owns the entire bar while it is running.
+        progress = round((current_index / total_params) * 100, 2)
+        sub_message = f"{current_index}/{total_params}"
+        if current_param_id:
+            sub_message = f"{sub_message}: {current_param_id}"
+
+        now = time.monotonic()
+        is_final_update = current_index >= total_params
+        if (
+            not is_final_update
+            and now - self._last_param_progress_emit_time
+            < CONNECT_STATUS_PARAM_THROTTLE_SECS
+        ):
+            return
+
+        self._emitConnectionStatus(
+            message="Fetching Params",
+            sub_message=sub_message,
+            progress=progress,
+        )
+        self._last_param_progress_emit_time = now
+
+    def sendConnectionStatusUpdate(self, msg_index: int) -> None:
         total_msgs = len(self.connection_phases)
         if msg_index < 0 or msg_index >= total_msgs:
             self.logger.error(f"Invalid connection status index {msg_index}")
@@ -320,10 +364,9 @@ class Drone:
 
         msg = self.connection_phases[msg_index]
 
-        if self.droneConnectStatusCb:
-            self.droneConnectStatusCb(
-                {"message": msg, "progress": int((msg_index / (total_msgs - 1)) * 100)}
-            )
+        # Do not regress progress during non-fetch stages.
+        progress = 100.0 if msg_index == total_msgs - 1 else self._last_connect_progress
+        self._emitConnectionStatus(message=msg, sub_message="", progress=progress)
 
     @staticmethod
     def checkBaudrateValid(baud: int) -> bool:
@@ -877,12 +920,8 @@ class Drone:
 
         this_thread = current_thread()
 
-        self.paramsController.is_requesting_params = False
-        if (
-            hasattr(self.paramsController, "getAllParamsThread")
-            and self.paramsController.getAllParamsThread is not None
-        ):
-            self.paramsController.getAllParamsThread.join(timeout=3)
+        if getattr(self, "paramsController", None) is not None:
+            self.paramsController.is_requesting_params = False
 
         for thread in [
             getattr(self, "listener_thread", None),

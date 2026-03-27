@@ -29,6 +29,9 @@ import registerAboutIPC, {
 import registerEkfStatusIPC, {
   destroyEkfStatusWindow,
 } from "./modules/ekfStatusWindow"
+import registerElevationGraphIPC, {
+  destroyElevationGraphWindow,
+} from "./modules/elevationGraphWindow"
 import registerFFmpegBinaryIPC from "./modules/ffmpegBinary"
 import registerFlaParamsIPC, {
   destroyFlaParamsWindow,
@@ -54,9 +57,23 @@ function checkRequiredDataFiles(): {
   success: boolean
   missingFiles: string[]
 } {
+  interface ParamVersionManifest {
+    vehicles?: Record<
+      string,
+      {
+        versions?: string[]
+        files?: Record<string, string>
+      }
+    >
+  }
+
+  const manifestPath = path.join(
+    __dirname,
+    "../data/gen_apm_params_versions.json",
+  )
+
   const requiredFiles = [
-    path.join(__dirname, "../data/gen_apm_params_def_copter.json"),
-    path.join(__dirname, "../data/gen_apm_params_def_plane.json"),
+    manifestPath,
     path.join(__dirname, "../data/gen_log_messages_desc_copter.json"),
     path.join(__dirname, "../data/gen_log_messages_desc_plane.json"),
   ]
@@ -66,6 +83,41 @@ function checkRequiredDataFiles(): {
   for (const filePath of requiredFiles) {
     if (!fs.existsSync(filePath)) {
       missingFiles.push(path.basename(filePath))
+    }
+  }
+
+  if (fs.existsSync(manifestPath)) {
+    try {
+      const manifest: ParamVersionManifest = JSON.parse(
+        fs.readFileSync(manifestPath, "utf-8"),
+      )
+
+      for (const aircraftType of ["plane", "copter"]) {
+        const versions = manifest.vehicles?.[aircraftType]?.versions ?? []
+        const fileMap = manifest.vehicles?.[aircraftType]?.files ?? {}
+
+        if (versions.length === 0) {
+          missingFiles.push(`${aircraftType} versions in manifest`)
+          continue
+        }
+
+        for (const version of versions) {
+          const fileName = fileMap[version]
+          if (!fileName) {
+            missingFiles.push(
+              `${aircraftType} ${version} file mapping in manifest`,
+            )
+            continue
+          }
+
+          const filePath = path.join(__dirname, "../data", fileName)
+          if (!fs.existsSync(filePath)) {
+            missingFiles.push(fileName)
+          }
+        }
+      }
+    } catch {
+      missingFiles.push(path.basename(manifestPath))
     }
   }
 
@@ -103,6 +155,28 @@ let quittingApproved = false
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"]
 
 let pythonBackend: ChildProcessWithoutNullStreams | null = null
+
+// ===== Single Instance Lock =====
+// Ensure only one instance of the application is running
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  // Another instance is already running; terminate immediately so no
+  // additional initialization (windows/backend/ipc) can run in this process.
+  app.exit(0)
+  process.exit(0)
+} else {
+  // This is the primary instance
+  app.on("second-instance", () => {
+    // Someone tried to run a second instance, we should focus our window
+    if (win) {
+      if (win.isMinimized()) {
+        win.restore()
+      }
+      win.focus()
+    }
+  })
+}
 
 function getWindow() {
   return BrowserWindow.getFocusedWindow()
@@ -281,6 +355,7 @@ function createWindow() {
   registerAboutIPC()
   registerLinkStatsIPC()
   registerEkfStatusIPC()
+  registerElevationGraphIPC()
   registerVibeStatusIPC()
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
@@ -471,6 +546,7 @@ function closeWindows() {
   destroyAboutWindow()
   destroyLinkStatsWindow()
   destroyEkfStatusWindow()
+  destroyElevationGraphWindow()
   destroyVibeStatusWindow()
   cleanupAllRTSPStreams()
   destroyFlaParamsWindow()

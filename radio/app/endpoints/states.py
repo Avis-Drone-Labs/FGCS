@@ -125,5 +125,12 @@ def set_stream_rate(data: SetStreamRateType):
     if not droneStatus.drone:
         return
 
-    print("Setting data stream rate")
-    droneStatus.drone.sendDataStreamRequestMessage(data["stream"], data["rate"])
+    if (rate := data.get("rate", None)) is None:
+        return missingParameterError("set_state", "state")
+
+    if rate > 15 or rate < 0:
+        logger.error("Cannot set data stream rate outside of range [0, 15]")
+        return
+
+    logger.info(f"Setting data stream rate {data['rate']}")
+    droneStatus.drone.sendDataStreamRequestMessage(data["stream"], rate)

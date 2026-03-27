@@ -5,64 +5,11 @@ import { useEffect, useState } from "react"
 import { Button, Table, TextInput, Tooltip } from "@mantine/core"
 import { useElementSize, useViewportSize } from "@mantine/hooks"
 import { IconInfoCircle } from "@tabler/icons-react"
-import manifest from "../../../data/gen_apm_params_versions.json"
 import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../helpers/notification"
-
-const paramDefinitionModules = import.meta.glob(
-  "../../../data/gen_apm_params_def_*_*.json",
-)
-
-const modulePathByFileName = Object.fromEntries(
-  Object.keys(paramDefinitionModules).map((path) => [
-    path.split("/").pop(),
-    path,
-  ]),
-)
-
-function parseMajorMinor(versionString) {
-  const match = String(versionString || "").match(/(\d+)\.(\d+)/)
-  if (!match) {
-    return null
-  }
-
-  return `${match[1]}.${match[2]}`
-}
-
-function getResolvedVersion(aircraftKey, firmwareVersion) {
-  if (!aircraftKey) {
-    return null
-  }
-
-  const versions = manifest?.vehicles?.[aircraftKey]?.versions
-  if (!Array.isArray(versions) || versions.length === 0) {
-    return null
-  }
-
-  const requestedVersion = parseMajorMinor(firmwareVersion)
-  if (requestedVersion && versions.includes(requestedVersion)) {
-    return requestedVersion
-  }
-
-  return (
-    manifest?.vehicles?.[aircraftKey]?.latest || versions[versions.length - 1]
-  )
-}
-
-function getModulePath(aircraftKey, resolvedVersion) {
-  if (!aircraftKey || !resolvedVersion) {
-    return null
-  }
-
-  const fileName = manifest?.vehicles?.[aircraftKey]?.files?.[resolvedVersion]
-  if (!fileName) {
-    return null
-  }
-
-  return modulePathByFileName[fileName] || null
-}
+import { loadParamDefinitionsForVersion } from "../../helpers/paramDefinitions"
 
 function getBitmaskInfo(rawValue, paramDef) {
   const bitmaskDef = paramDef?.Bitmask
@@ -145,21 +92,15 @@ export default function FlaParamsWindow() {
   const { ref, height: searchBarHeight } = useElementSize()
 
   useEffect(() => {
-    const resolvedVersion = getResolvedVersion(aircraftKey, firmwareVersion)
-    const modulePath = getModulePath(aircraftKey, resolvedVersion)
-
-    if (!modulePath) {
-      setParamDefs({})
-      return
-    }
-
     let cancelled = false
 
-    paramDefinitionModules[modulePath]().then((loadedModule) => {
-      if (!cancelled) {
-        setParamDefs(loadedModule.default || {})
-      }
-    })
+    loadParamDefinitionsForVersion(aircraftKey, firmwareVersion).then(
+      (result) => {
+        if (!cancelled) {
+          setParamDefs(result.paramDefs)
+        }
+      },
+    )
 
     return () => {
       cancelled = true

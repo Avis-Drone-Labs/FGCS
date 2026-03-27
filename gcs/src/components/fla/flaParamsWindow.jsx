@@ -58,7 +58,7 @@ function renderParamValue(value, paramDef) {
   return (
     <div className="flex items-center gap-1.5">
       <span>{bitmaskInfo.displayValue}</span>
-      {bitmaskInfo.displayValue !== "0" && (
+      {bitmaskInfo.displayValue !== "0" && bitmaskInfo.selected.length > 0 && (
         <Tooltip
           multiline
           w={300}

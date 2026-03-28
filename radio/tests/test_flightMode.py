@@ -1,5 +1,4 @@
 import pytest
-from . import falcon_test
 from flask_socketio.test_client import SocketIOTestClient
 from pymavlink.mavutil import mavlink
 
@@ -133,7 +132,6 @@ def test_setFlightMode_wrongModeNumber(
 
 
 @pytest.mark.copter_only
-@falcon_test(pass_drone_status=True)
 def test_setFlightMode_successfullySet(
     socketio_client: SocketIOTestClient, droneStatus
 ):

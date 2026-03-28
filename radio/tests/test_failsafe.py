@@ -2,7 +2,6 @@ import pytest
 from flask_socketio import SocketIOTestClient
 from pymavlink import mavutil
 
-from . import falcon_test
 from .helpers import NoDrone, send_and_receive, set_params
 from app.customTypes import VehicleType
 
@@ -27,7 +26,6 @@ def setup_failsafe_params():
 
 
 @pytest.mark.copter_only
-@falcon_test(pass_drone_status=True)
 def test_getFailsafeConfig(socketio_client: SocketIOTestClient, droneStatus):
     # Failure: wrong state
     droneStatus.state = "params"
@@ -53,7 +51,6 @@ def test_getFailsafeConfig(socketio_client: SocketIOTestClient, droneStatus):
 
 
 @pytest.mark.plane_only
-@falcon_test(pass_drone_status=True)
 def test_getFailsafeConfig_fixedWing(socketio_client: SocketIOTestClient, droneStatus):
     droneStatus.state = "config.failsafe"
     droneStatus.drone.aircraft_type = VehicleType.FIXED_WING.value
@@ -63,7 +60,6 @@ def test_getFailsafeConfig_fixedWing(socketio_client: SocketIOTestClient, droneS
     assert "THR_FS_VALUE" in result["params"]
 
 
-@falcon_test(pass_drone_status=True)
 def test_setFailsafeParam(socketio_client: SocketIOTestClient, droneStatus):
     # Failure: wrong state
     droneStatus.state = "params"

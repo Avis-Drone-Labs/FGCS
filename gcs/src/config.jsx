@@ -17,7 +17,6 @@ import Ftp from "./components/config/ftp"
 import Gripper from "./components/config/gripper"
 import Motortestpanel from "./components/config/motorTest"
 import RadioCalibration from "./components/config/radioCalibration"
-import ServoOutput from "./components/config/servoOutput"
 import Layout from "./components/layout"
 import NoDroneConnected from "./components/noDroneConnected"
 

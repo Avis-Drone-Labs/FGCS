@@ -5,14 +5,12 @@ import { useDebouncedCallback } from "@mantine/hooks"
 
 import { useDispatch, useSelector } from "react-redux"
 
-import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
-import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 
 import {
   emitGetFailsafeConfig,
   emitSetFailsafeConfigParam,
   selectFailsafeConfig,
-  selectRefreshingFailsafeConfigData,
 } from "../../redux/slices/configSlice"
 import {
   emitSetState,
@@ -24,21 +22,16 @@ export default function Failsafes() {
   const dispatch = useDispatch()
   const connected = useSelector(selectConnectedToDrone)
   const failsafeConfig = useSelector(selectFailsafeConfig)
+  const { paramDefs } = useParamDefinitions()
   const aircraftTypeString = useSelector(selectAircraftTypeString)
-  const refreshingFailsafeConfigData = useSelector(
-    selectRefreshingFailsafeConfigData,
-  )
-
-  const paramDefs =
-    aircraftTypeString === "Copter" ? apmParamDefsCopter : apmParamDefsPlane
 
   const params = useMemo(() => {
-    if (!failsafeConfig) {
-      return []
-    }
+      if (!failsafeConfig) {
+        return []
+      }
 
-    return { ...failsafeConfig }
-  }, [failsafeConfig, aircraftTypeString])
+      return paramDefs
+    }, [failsafeConfig, paramDefs])
 
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
     dispatch(emitSetFailsafeConfigParam({ param_id, value }))
@@ -53,13 +46,18 @@ export default function Failsafes() {
     dispatch(emitGetFailsafeConfig())
   }, [connected, dispatch])
 
-  return (
+  if (Object.keys(paramDefs).length === 0) return (
     <div className="relative size-full">
       <LoadingOverlay
-        visible={refreshingFailsafeConfigData}
+        visible={true}
         zIndex={1000}
         overlayProps={{ blur: 2 }}
       />
+    </div>
+  )
+
+  return (
+    <div className="relative size-full">
       <div className="max-w-screen-lg p-4 space-y-16">
         <div className="space-y-2">
           <h1 className="text-lg font-bold tracking-wide pb-2">
@@ -75,7 +73,7 @@ export default function Failsafes() {
                   description="Set to 0 to disable."
                   suffix="V"
                   min={0}
-                  value={params.BATT_LOW_VOLT}
+                  value={failsafeConfig.BATT_LOW_VOLT}
                   onChange={(value) =>
                     debouncedUpdate("BATT_LOW_VOLT", Number(value))
                   }

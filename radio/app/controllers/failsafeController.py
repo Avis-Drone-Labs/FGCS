@@ -53,7 +53,7 @@ class FailsafeController:
     def getConfig(self):
         config = {}
         for param in self.valid_params:
-            self.params[param] = self.drone.paramsController.getCachedParam(param)
+            self.params[param] = self.drone.paramsController.getSingleParam(param)
             config[param] = self.params[param].get("param_value", "UNKNOWN")
 
         return config

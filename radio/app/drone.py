@@ -18,6 +18,7 @@ from app.controllers.armController import ArmController
 from app.controllers.flightModesController import FlightModesController
 from app.controllers.frameController import FrameController
 from app.controllers.ftpController import FtpController
+from app.controllers.failsafeController import FailsafeController
 from app.controllers.gripperController import GripperController
 from app.controllers.missionController import MissionController
 from app.controllers.motorTestController import MotorTestController
@@ -119,7 +120,7 @@ class Drone:
             "Setting up the Servo Controller",
             "Setting up the nav controller",
             "Setting up the FTP controller",
-            "Connection complete",
+            "Setting up the failsafe controller" "Connection complete",
         ]
 
         self.logger.debug(f"Trying to setup master with port {port} and baud {baud}")
@@ -311,6 +312,9 @@ class Drone:
 
         self.sendConnectionStatusUpdate(13)
         self.ftpController = FtpController(self)
+
+        self.sendConnectionStatusUpdate(14)
+        self.failsafeController = FailsafeController(self)
 
     def sendConnectionStatusUpdate(self, msg_index):
         total_msgs = len(self.connection_phases)

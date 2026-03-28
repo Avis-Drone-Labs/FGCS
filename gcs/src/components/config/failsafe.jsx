@@ -67,7 +67,7 @@ export default function Failsafes() {
           </h1>
           <div className="grid grid-cols-2 gap-16">
             <div className="space-y-4">
-              <h2 className="font-semibold">Low Battery (Stage 1)</h2>
+              <h2 className="font-semibold">Low Battery</h2>
               <div className="grid grid-cols-2 gap-4">
                 <NumberInput
                   hideControls
@@ -117,7 +117,7 @@ export default function Failsafes() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="font-semibold">Critical Battery (Stage 2)</h2>
+              <h2 className="font-semibold">Critical Battery</h2>
               <div className="grid grid-cols-2 gap-4">
                 <NumberInput
                   hideControls

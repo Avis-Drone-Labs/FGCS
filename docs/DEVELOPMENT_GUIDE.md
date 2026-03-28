@@ -120,7 +120,7 @@ yarn dev
 **Terminal 3 - SITL Simulator (Optional):**
 
 ```bash
-docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl
 ```
 
 ### Running the Simulator
@@ -136,7 +136,7 @@ docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
 2. **Start basic simulator (ArduCopter):**
 
    ```bash
-   docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
+   docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl
    ```
 
 3. **Connect FGCS to simulator:**
@@ -149,11 +149,37 @@ docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl
 
 ```bash
 # ArduPlane
-docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane
 
-# ArduRover
-docker run -it --rm -p 5760:5760 kushmakkapati/ardupilot_sitl VEHICLE=ArduRover
+# ArduCopter
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduCopter
 ```
+
+##### Firmware Version Selection
+
+```bash
+# Pinned release (recommended format)
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduCopter FIRMWARE_VERSION=4.6.3
+
+# Plane pinned release
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduPlane FIRMWARE_VERSION=4.6.3
+
+# Dynamic selectors
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduCopter FIRMWARE_VERSION=latest
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduCopter FIRMWARE_VERSION=stable
+docker run -it --rm -p 5760:5760 -v fgcs_ardupilot_cache:/ardupilot_cache kushmakkapati/ardupilot_sitl VEHICLE=ArduCopter FIRMWARE_VERSION=beta
+```
+
+Accepted firmware selectors:
+
+- `latest`, `stable`, `beta`
+- `4.x.y` (resolved to `Copter-4.x.y` for ArduCopter and `Plane-4.x.y` for ArduPlane)
+- `Copter-4.x.y` / `Plane-4.x.y`
+- `ArduCopter-stable` / `ArduCopter-beta` / `ArduPlane-stable` / `ArduPlane-beta`
+
+Note: pass `VEHICLE=...` and `FIRMWARE_VERSION=...` as trailing command arguments (as shown above), not as `-e` environment variables.
+
+Using `-v fgcs_ardupilot_cache:/ardupilot_cache` is recommended so pinned versions are reused between runs.
 
 ##### Custom Starting Location
 

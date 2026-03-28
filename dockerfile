@@ -27,6 +27,9 @@ EXPOSE 5760/tcp
 EXPOSE 5762/tcp
 EXPOSE 5763/tcp
 
+RUN mkdir -p /ardupilot_cache
+VOLUME ["/ardupilot_cache"]
+
 WORKDIR /
 
 ADD sitl_setup sitl_setup

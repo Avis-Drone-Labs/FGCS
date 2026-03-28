@@ -40,7 +40,7 @@ class FailsafeController:
     def __init__(self, drone: Drone) -> None:
         self.drone = drone
 
-        self.params = {}
+        self.params: dict = {}
 
         self.valid_params = []
         if self.drone.aircraft_type == VehicleType.FIXED_WING.value:

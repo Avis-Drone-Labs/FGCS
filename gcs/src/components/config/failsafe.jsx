@@ -26,12 +26,12 @@ export default function Failsafes() {
   const aircraftTypeString = useSelector(selectAircraftTypeString)
 
   const params = useMemo(() => {
-      if (!failsafeConfig) {
-        return []
-      }
+    if (!failsafeConfig) {
+      return []
+    }
 
-      return paramDefs
-    }, [failsafeConfig, paramDefs])
+    return paramDefs
+  }, [failsafeConfig, paramDefs])
 
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
     dispatch(emitSetFailsafeConfigParam({ param_id, value }))
@@ -46,15 +46,16 @@ export default function Failsafes() {
     dispatch(emitGetFailsafeConfig())
   }, [connected, dispatch])
 
-  if (Object.keys(paramDefs).length === 0) return (
-    <div className="relative size-full">
-      <LoadingOverlay
-        visible={true}
-        zIndex={1000}
-        overlayProps={{ blur: 2 }}
-      />
-    </div>
-  )
+  if (Object.keys(paramDefs).length === 0)
+    return (
+      <div className="relative size-full">
+        <LoadingOverlay
+          visible={true}
+          zIndex={1000}
+          overlayProps={{ blur: 2 }}
+        />
+      </div>
+    )
 
   return (
     <div className="relative size-full">

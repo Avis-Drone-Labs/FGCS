@@ -14,6 +14,7 @@ REPO_URL="https://github.com/ArduPilot/ardupilot.git"
 DEFAULT_WORKTREE="/ardupilot"
 CACHE_ROOT="/ardupilot_cache"
 
+# Returns the release tag prefix based on selected vehicle type.
 function vehicle_prefix() {
     if [ "$VEHICLE" = "ArduPlane" ]; then
         echo "Plane"
@@ -22,6 +23,7 @@ function vehicle_prefix() {
     fi
 }
 
+# Returns the channel tag prefix based on selected vehicle type.
 function vehicle_channel_prefix() {
     if [ "$VEHICLE" = "ArduPlane" ]; then
         echo "ArduPlane"
@@ -30,12 +32,14 @@ function vehicle_channel_prefix() {
     fi
 }
 
+# Returns true when firmware selector points to a non-dynamic pinned version.
 function is_pinned_firmware() {
     local selector
     selector="${FIRMWARE_VERSION,,}"
-    [ "$selector" != "latest" ] && [ "$selector" != "stable" ]
+    [ "$selector" != "latest" ] && [ "$selector" != "stable" ] && [ "$selector" != "beta" ]
 }
 
+# Lists available release versions for the current vehicle from remote tags.
 function list_valid_release_versions() {
     local prefix
     prefix=$(vehicle_prefix)
@@ -47,6 +51,7 @@ function list_valid_release_versions() {
         | uniq
 }
 
+# Prints a helpful message describing valid firmware selector formats.
 function print_valid_selector_help() {
     local selector="$1"
     local preview
@@ -61,6 +66,7 @@ function print_valid_selector_help() {
     fi
 }
 
+# Resolves the firmware selector to a concrete remote git ref.
 function resolve_remote_ref() {
     local release_prefix
     release_prefix=$(vehicle_prefix)
@@ -117,6 +123,7 @@ function resolve_remote_ref() {
     return 1
 }
 
+# Clones the ArduPilot repo with submodules if the target repo dir is missing.
 function ensure_repo() {
     local repo_dir="$1"
 
@@ -126,13 +133,18 @@ function ensure_repo() {
     fi
 }
 
+# Checks out the resolved ref and syncs submodules in the target repo dir.
 function checkout_ref() {
     local repo_dir="$1"
     local ref="$2"
     local short_ref="${ref#refs/heads/}"
     local short_tag="${ref#refs/tags/}"
+    local before_commit=""
+    local after_commit=""
 
     cd "$repo_dir"
+
+    before_commit=$(git rev-parse HEAD 2>/dev/null || true)
 
     if [[ "$ref" == refs/heads/* ]]; then
         git fetch origin "$short_ref" --depth 1 >&2
@@ -143,24 +155,34 @@ function checkout_ref() {
     fi
 
     git submodule update --init --recursive >&2
+
+    after_commit=$(git rev-parse HEAD 2>/dev/null || true)
+    if [ -n "$before_commit" ] && [ "$before_commit" != "$after_commit" ]; then
+        # Force a rebuild when dynamic refs move to a new commit.
+        rm -f build/sitl/bin/arducopter build/sitl/bin/arduplane
+    fi
 }
 
+# Refreshes dynamic selectors so latest, stable, and beta track current upstream refs.
 function maybe_refresh_dynamic_ref() {
     local repo_dir="$1"
     local selector_lc
     selector_lc="${FIRMWARE_VERSION,,}"
 
-    if [ "$selector_lc" = "latest" ] || [ "$selector_lc" = "stable" ]; then
+    if [ "$selector_lc" = "latest" ] || [ "$selector_lc" = "stable" ] || [ "$selector_lc" = "beta" ]; then
         local resolved_ref
         if resolved_ref=$(resolve_remote_ref); then
             checkout_ref "$repo_dir" "$resolved_ref"
         else
             print_valid_selector_help "$FIRMWARE_VERSION"
-            exit 1
+            return 1
         fi
     fi
+
+    return 0
 }
 
+# Chooses and prepares the firmware worktree path (cache for pinned versions).
 function ensure_firmware_repo() {
     if is_pinned_firmware && [ -d "$CACHE_ROOT" ] && [ -w "$CACHE_ROOT" ]; then
         local key
@@ -174,7 +196,7 @@ function ensure_firmware_repo() {
                 checkout_ref "$repo_dir" "$resolved_ref"
             else
                 print_valid_selector_help "$FIRMWARE_VERSION"
-                exit 1
+                return 1
             fi
         fi
 
@@ -183,27 +205,56 @@ function ensure_firmware_repo() {
     fi
 
     ensure_repo "$DEFAULT_WORKTREE"
-    maybe_refresh_dynamic_ref "$DEFAULT_WORKTREE"
+    if ! maybe_refresh_dynamic_ref "$DEFAULT_WORKTREE"; then
+        return 1
+    fi
     echo "$DEFAULT_WORKTREE"
+    return 0
 }
 
+# Builds the selected vehicle SITL binary if it is not already available.
 function ensure_vehicle_binary() {
     local repo_dir="$1"
     local binary_path=""
+    local stamp_path=""
+    local current_commit=""
+    local built_commit=""
+    local needs_rebuild="false"
 
     if [ "$VEHICLE" = "ArduPlane" ]; then
         binary_path="$repo_dir/build/sitl/bin/arduplane"
+        stamp_path="$repo_dir/build/sitl/.fgcs_last_built_arduplane_commit"
     else
         binary_path="$repo_dir/build/sitl/bin/arducopter"
+        stamp_path="$repo_dir/build/sitl/.fgcs_last_built_arducopter_commit"
     fi
 
+    cd "$repo_dir"
+    current_commit=$(git rev-parse HEAD 2>/dev/null || true)
+
     if [ ! -x "$binary_path" ]; then
+        needs_rebuild="true"
+    elif [ ! -f "$stamp_path" ]; then
+        needs_rebuild="true"
+    else
+        built_commit=$(cat "$stamp_path" 2>/dev/null || true)
+        if [ -n "$current_commit" ] && [ "$built_commit" != "$current_commit" ]; then
+            needs_rebuild="true"
+        fi
+    fi
+
+    if [ "$needs_rebuild" = "true" ]; then
         cd "$repo_dir"
         ./waf configure --board sitl
         if [ "$VEHICLE" = "ArduPlane" ]; then
             ./waf plane
         else
             ./waf copter
+        fi
+
+        if [ -n "$current_commit" ]; then
+            mkdir -p "$(dirname "$stamp_path")"
+            echo "$current_commit" > "$stamp_path"
         fi
     fi
 }
@@ -216,17 +267,23 @@ fi
 
 for ARGUMENT in "$@"
 do
-   KEY=$(echo $ARGUMENT | cut -f1 -d=)
+    if [[ "$ARGUMENT" != *=* ]]; then
+        echo "Skipping malformed argument (expected KEY=VALUE): $ARGUMENT" >&2
+        continue
+    fi
 
-   KEY_LENGTH=${#KEY}
-   VALUE="${ARGUMENT:$KEY_LENGTH+1}"
+    KEY="${ARGUMENT%%=*}"
+    VALUE="${ARGUMENT#*=}"
 
-   export "$KEY"="$VALUE"
+    if [[ -z "$KEY" || ! "$KEY" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        echo "Skipping invalid environment variable name: $KEY" >&2
+        continue
+    fi
+
+    export "$KEY=$VALUE"
 done
 
-ARDUPILOT_DIR=$(ensure_firmware_repo)
-if [ -z "$ARDUPILOT_DIR" ]; then
-    print_valid_selector_help "$FIRMWARE_VERSION"
+if ! ARDUPILOT_DIR=$(ensure_firmware_repo); then
     exit 1
 fi
 ensure_vehicle_binary "$ARDUPILOT_DIR"

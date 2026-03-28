@@ -181,6 +181,23 @@ Note: pass `VEHICLE=...` and `FIRMWARE_VERSION=...` as trailing command argument
 
 Using `-v fgcs_ardupilot_cache:/ardupilot_cache` is recommended so pinned versions are reused between runs.
 
+##### Dynamic Selector Update Behavior (`latest` / `stable` / `beta`)
+
+When you use `FIRMWARE_VERSION=latest` (same idea for `stable` and `beta`), the launcher treats it as a dynamic channel and resolves the current upstream ref each run.
+
+Example timeline:
+
+1. Day 1: run with `latest`. The container checks out the current upstream ref and builds SITL if needed.
+2. Day 2: upstream `latest` moves to a newer commit/tag.
+3. Day 3: run again with `latest`. The launcher resolves the new ref, checks it out, detects commit change, and rebuilds so the binary matches the checked-out source.
+
+This prevents stale binaries from being reused after a ref change.
+
+Important cache note:
+
+- `fgcs_ardupilot_cache` is primarily used for pinned versions (`4.x.y`) under `/ardupilot_cache`.
+- Dynamic channels use the default worktree (`/ardupilot`). With `--rm`, container filesystem state is ephemeral between runs, so dynamic channels may refetch/rebuild more often.
+
 ##### Custom Starting Location
 
 ```bash

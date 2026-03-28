@@ -25,14 +25,6 @@ export default function Failsafes() {
   const { paramDefs } = useParamDefinitions()
   const aircraftTypeString = useSelector(selectAircraftTypeString)
 
-  const params = useMemo(() => {
-    if (!failsafeConfig) {
-      return []
-    }
-
-    return paramDefs
-  }, [failsafeConfig, paramDefs])
-
   const debouncedUpdate = useDebouncedCallback((param_id, value) => {
     dispatch(emitSetFailsafeConfigParam({ param_id, value }))
   }, 500)

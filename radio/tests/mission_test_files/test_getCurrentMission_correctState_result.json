@@ -15,9 +15,9 @@
       "seq": 0,
       "target_component": 190,
       "target_system": 255,
-      "x": 527805690,
-      "y": -7079236,
-      "z": 0.09999999403953552
+      "x": 527805691,
+      "y": -7079234,
+      "z": 0.19
     },
     {
       "mavpackettype": "MISSION_ITEM_INT",

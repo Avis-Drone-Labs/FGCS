@@ -23,18 +23,14 @@ export default function ForceDisarmModal() {
     <Modal
       opened={isOpen}
       onClose={handleCancel}
-      title="Failed to Disarm"
+      title="The aircraft failed to disarm normally."
       centered
     >
       <div className="flex flex-col gap-4">
-        <Text>
-          The aircraft failed to disarm normally. This could be because the
-          aircraft is still in the air or has other safety concerns.
-        </Text>
-        <Text weight={700} color="red">
+        <Text weight={700} c="red">
           Do you want to force disarm the aircraft?
         </Text>
-        <Text size="sm" color="dimmed">
+        <Text size="sm" c="dimmed">
           Warning: Force disarming bypasses safety checks and could cause the
           aircraft to crash if it's still airborne.
         </Text>

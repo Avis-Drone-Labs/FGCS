@@ -44,30 +44,22 @@ class FlightModesController:
     def getFlightModes(self) -> None:
         """
         Get the current flight modes of the drone."""
-        self.drone.logger.debug("Fetching flight modes")
+        self.drone.logger.debug("Fetching flight modes from cache")
         self.flight_modes = []
         for mode in FLIGHT_MODES:
-            flight_mode = self.drone.paramsController.getSingleParam(mode)
-            if flight_mode.get("success"):
-                flight_mode_data = flight_mode.get("data")
-                if flight_mode_data:
-                    self.flight_modes.append(flight_mode_data.param_value)
-            else:
-                self.drone.logger.error(flight_mode.get("message"))
-                self.flight_modes.append("UNKNOWN")
+            self.flight_modes.append(
+                self.drone.paramsController.getSingleParam(mode).get(
+                    "param_value", "UNKNOWN"
+                )
+            )
 
     def getFlightModeChannel(self) -> None:
         """
         Get the flight mode channel of the drone."""
-        self.drone.logger.debug("Fetching flight mode channel")
-        flight_mode_channel = self.drone.paramsController.getSingleParam("FLTMODE_CH")
-
-        if flight_mode_channel.get("success"):
-            flight_mode_channel_data = flight_mode_channel.get("data")
-            if flight_mode_channel_data:
-                self.flight_mode_channel = flight_mode_channel_data.param_value
-        else:
-            self.drone.logger.error(flight_mode_channel.get("message"))
+        self.drone.logger.debug("Fetching flight mode channel from cache")
+        self.flight_mode_channel = self.drone.paramsController.getSingleParam(
+            "FLTMODE_CH"
+        ).get("param_value", "UNKNOWN")
 
     def refreshData(self) -> None:
         """
@@ -122,6 +114,7 @@ class FlightModesController:
             return {
                 "success": True,
                 "message": f"Flight mode {mode_number} set to {mode_name}",
+                "data": {"param_id": f"FLTMODE{mode_number}", "value": flight_mode},
             }
         else:
             return {
@@ -157,6 +150,7 @@ class FlightModesController:
             return {
                 "success": True,
                 "message": f"Flight mode channel set to {channel}",
+                "data": {"param_id": "FLTMODE_CH", "value": channel},
             }
         else:
             return {
@@ -237,13 +231,13 @@ class FlightModesController:
         Returns:
             dict: The flight modes and flight mode channel of the drone
         """
-        self.flight_mode_channel = self.drone.paramsController.getCachedParam(
+        self.flight_mode_channel = self.drone.paramsController.getSingleParam(
             "FLTMODE_CH"
         ).get("param_value", "UNKNOWN")
         self.flight_modes = []
         for mode in FLIGHT_MODES:
             self.flight_modes.append(
-                self.drone.paramsController.getCachedParam(mode).get(
+                self.drone.paramsController.getSingleParam(mode).get(
                     "param_value", "UNKNOWN"
                 )
             )

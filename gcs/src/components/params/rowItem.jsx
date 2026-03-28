@@ -3,20 +3,18 @@
 */
 
 // Base imports
-import { memo, useEffect, useState } from "react"
+import { memo } from "react"
 
 // 3rd party imports
 import { ActionIcon, ScrollArea, Tooltip } from "@mantine/core"
 
 // Custom components, helpers and data
-import apmParamDefsCopter from "../../../data/gen_apm_params_def_copter.json"
-import apmParamDefsPlane from "../../../data/gen_apm_params_def_plane.json"
+import { useParamDefinitions } from "../../helpers/paramDefinitions"
 import ValueInput from "./valueInput"
 
 // Redux
 import { IconArrowBack, IconInfoCircle } from "@tabler/icons-react"
 import { useDispatch, useSelector } from "react-redux"
-import { selectAircraftType } from "../../redux/slices/droneInfoSlice"
 import {
   deleteModifiedParam,
   selectModifiedParams,
@@ -26,11 +24,11 @@ import {
 
 const RowItem = memo(({ index, style }) => {
   const dispatch = useDispatch()
-  const aircraftType = useSelector(selectAircraftType)
+  const { paramDefs } = useParamDefinitions()
   const shownParams = useSelector(selectShownParams)
   const modifiedParams = useSelector(selectModifiedParams)
-  const [paramDef, setParamDef] = useState({})
   const param = shownParams[index]
+  const paramDef = paramDefs[param.param_id]
   const paramPreviousValue = useSelector((state) =>
     selectSingleParam(state, param.param_id),
   )
@@ -49,14 +47,6 @@ const RowItem = memo(({ index, style }) => {
       }),
     )
   }
-
-  useEffect(() => {
-    if (aircraftType === 1) {
-      setParamDef(apmParamDefsPlane[param.param_id])
-    } else if (aircraftType === 2) {
-      setParamDef(apmParamDefsCopter[param.param_id])
-    }
-  }, [aircraftType, param])
 
   return (
     <div
@@ -88,7 +78,12 @@ const RowItem = memo(({ index, style }) => {
       </div>
 
       <div className="flex items-end w-4/12 justify-between gap-x-4">
-        <ValueInput index={index} paramDef={paramDef} className="grow" />
+        <ValueInput
+          index={index}
+          paramDef={paramDef}
+          className="grow"
+          disabled={paramDef?.ReadOnly === "True"}
+        />
         {hasBeenModified && (
           <Tooltip
             label={`Reset to previous value of ${paramPreviousValue?.param_value}`}

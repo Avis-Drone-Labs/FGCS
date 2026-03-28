@@ -25,6 +25,8 @@ import NoDroneConnected from "./components/noDroneConnected"
 import { useDispatch, useSelector } from "react-redux"
 import { selectActiveTab, setActiveTab } from "./redux/slices/configSlice"
 import { selectConnectedToDrone } from "./redux/slices/droneConnectionSlice"
+import SerialPorts from "./components/config/serialPorts"
+import ServoOutput from "./components/config/servoOutput"
 
 export default function Config() {
   const dispatch = useDispatch()
@@ -57,6 +59,7 @@ export default function Config() {
               <Tabs.Tab value="flightmodes">Flight modes</Tabs.Tab>
               <Tabs.Tab value="failsafes">Failsafes</Tabs.Tab>
               <Tabs.Tab value="servo">Servo Output</Tabs.Tab>
+              <Tabs.Tab value="serial_ports">Serial Ports</Tabs.Tab>
               <Tabs.Tab value="ftp">FTP</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="gripper">
@@ -87,6 +90,11 @@ export default function Config() {
             <Tabs.Panel value="servo">
               <div className={paddingTop}>
                 <ServoOutput />
+              </div>
+            </Tabs.Panel>
+            <Tabs.Panel value="serial_ports">
+              <div className={paddingTop}>
+                <SerialPorts />
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="ftp">

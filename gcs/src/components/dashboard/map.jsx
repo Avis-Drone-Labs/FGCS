@@ -24,6 +24,7 @@ import {
 import {
   deletePoiMarker,
   emitReposition,
+  selectConnectedToDrone,
   selectPoiMarkers,
 } from "../../redux/slices/droneConnectionSlice"
 import {
@@ -69,6 +70,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   // Redux
   const dispatch = useDispatch()
   const gpsData = useSelector(selectGPS)
+  const connectedToDrone = useSelector(selectConnectedToDrone)
   const missionItems = useSelector(selectCurrentMissionItems)
   const homePosition = useSelector(selectHomePosition) // use actual home position
   const flightModeString = useSelector(selectFlightModeString)
@@ -138,14 +140,21 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
   }, [contextMenuRef.current])
 
   useEffect(() => {
+    if (!connectedToDrone) {
+      setPosition(null)
+      setFirstCenteredToDrone(false)
+      return
+    }
+
     // Check latest gpsData point is valid
     if (
       isNaN(gpsData.lat) ||
       isNaN(gpsData.lon) ||
       gpsData.lon === 0 ||
       gpsData.lat === 0
-    )
+    ) {
       return
+    }
 
     // Move drone icon on map
     let lat = intToCoord(gpsData.lat)
@@ -159,7 +168,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
       })
       setFirstCenteredToDrone(true)
     }
-  }, [gpsData])
+  }, [gpsData, connectedToDrone, firstCenteredToDrone, initialViewState.zoom])
 
   useEffect(() => {
     setFilteredMissionItems(filterMissionItems(missionItems.missionItems))

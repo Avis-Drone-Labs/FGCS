@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import serial
-from pymavlink import mavutil
-
 from app.customTypes import Number, Response, SetConfigParam
 from app.utils import commandAccepted
+from pymavlink import mavutil
 
 if TYPE_CHECKING:
     from app.drone import Drone
@@ -26,22 +25,6 @@ class ServoController:
 
         self.fetchParams()
 
-    def _getAndSetParam(
-        self, params_dict: dict, param_key: str, param_name: str
-    ) -> None:
-        """
-        Gets and set the value of a parameter inside a dictionary.
-
-        Args:
-            params_dict (dict): The dictionary to store the parameters
-            param_key (str): The key for the parameter within the dictionary
-            param_name (str): The name of the parameter
-        """
-        param = self.drone.paramsController.getSingleParam(param_name).get("data")
-        if param:
-            params_dict[param_key] = param.param_value
-            self.param_types[param_name] = param.param_type
-
     def _getAndSetCachedParam(
         self, params_dict: dict, param_key: str, param_name: str
     ) -> None:
@@ -53,36 +36,31 @@ class ServoController:
             param_key (str): The key for the parameter within the dictionary
             param_name (str): The name of the parameter
         """
-        cached_param = self.drone.paramsController.getCachedParam(param_name)
+        cached_param = self.drone.paramsController.getSingleParam(param_name)
         if cached_param:
             params_dict[param_key] = cached_param.get("param_value")
-        else:
-            self.drone.logger.warning(
-                f"Param {param_name} not found in cache, fetching from drone"
-            )
-            fetched_param = self.drone.paramsController.getSingleParam(param_name).get(
-                "data"
-            )
-            if fetched_param:
-                params_dict[param_key] = fetched_param.param_value
-                self.param_types[param_name] = fetched_param.param_type
+            param_type = cached_param.get("param_type")
+            if param_type is not None:
+                self.param_types[param_name] = param_type
 
     def fetchParams(self) -> None:
         """
         Fetches the servo parameters from the drone.
         """
-        self.drone.logger.debug("Fetching servo parameters")
+        self.drone.logger.debug("Fetching servo parameters from cache")
 
         for servo_number in range(1, 17):
             servo_params = self.params.get(f"SERVO_{servo_number}", {})
 
-            self._getAndSetParam(
+            self._getAndSetCachedParam(
                 servo_params, "function", f"SERVO{servo_number}_FUNCTION"
             )
-            self._getAndSetParam(servo_params, "min", f"SERVO{servo_number}_MIN")
-            self._getAndSetParam(servo_params, "trim", f"SERVO{servo_number}_TRIM")
-            self._getAndSetParam(servo_params, "max", f"SERVO{servo_number}_MAX")
-            self._getAndSetParam(
+            self._getAndSetCachedParam(servo_params, "min", f"SERVO{servo_number}_MIN")
+            self._getAndSetCachedParam(
+                servo_params, "trim", f"SERVO{servo_number}_TRIM"
+            )
+            self._getAndSetCachedParam(servo_params, "max", f"SERVO{servo_number}_MAX")
+            self._getAndSetCachedParam(
                 servo_params, "reversed", f"SERVO{servo_number}_REVERSED"
             )
 

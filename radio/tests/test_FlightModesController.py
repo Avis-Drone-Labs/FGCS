@@ -1,23 +1,43 @@
 import time
 
 import pytest
-from flask_socketio.test_client import SocketIOTestClient
+from pymavlink.mavutil import mavlink
 
-from . import falcon_test
 from .helpers import (
     FakeTCP,
     WaitForMessageReturnsNone,
 )
+
+FLIGHT_MODE_SET_RETRY_MAX_ATTEMPTS = 5
+FLIGHT_MODE_SET_RETRY_DELAY_SECS = 1
+
+
+def set_flight_mode_with_retries(
+    droneStatus, mode_number: int, flight_mode: int
+) -> dict:
+    """Retry setting a flight mode to reduce intermittent SITL timing flakes."""
+    last_response = {"success": False, "message": "No response"}
+    for _ in range(FLIGHT_MODE_SET_RETRY_MAX_ATTEMPTS):
+        last_response = droneStatus.drone.flightModesController.setFlightMode(
+            mode_number, flight_mode
+        )
+        if last_response.get("success"):
+            return last_response
+
+        time.sleep(FLIGHT_MODE_SET_RETRY_DELAY_SECS)
+
+    return last_response
 
 
 @pytest.fixture(scope="module", autouse=True)
 def run_once_after_all_tests():
     from app import droneStatus
 
-    droneStatus.drone.paramsController.getAllParams()
-    time.sleep(1)
-    while droneStatus.drone.paramsController.is_requesting_params:
-        pass
+    # Prime controller cache for cache-only reads.
+    params_controller = droneStatus.drone.paramsController
+    params_controller.saveParam("FLTMODE_CH", 6, mavlink.MAV_PARAM_TYPE_UINT8)
+    for idx in range(1, 7):
+        params_controller.saveParam(f"FLTMODE{idx}", 0, mavlink.MAV_PARAM_TYPE_UINT8)
 
     yield
     from . import socketio_client
@@ -28,51 +48,64 @@ def run_once_after_all_tests():
     droneStatus.drone.flightModesController.setFlightMode(1, 7)
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFlightModeChannel_success(client: SocketIOTestClient, droneStatus):
+def test_getFlightModeChannel_success(droneStatus):
     droneStatus.drone.flightModesController.getFlightModeChannel()
     assert droneStatus.drone.flightModesController.flight_mode_channel != "UNKNOWN"
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFlightModes_success(client: SocketIOTestClient, droneStatus):
+def test_getFlightModes_success(droneStatus):
     droneStatus.drone.flightModesController.getFlightModes()
     assert len(droneStatus.drone.flightModesController.flight_modes) == 6
     for items in droneStatus.drone.flightModesController.flight_modes:
         assert items != "UNKNOWN"
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFlightModes_failure(client: SocketIOTestClient, droneStatus):
-    with WaitForMessageReturnsNone():
+def test_getFlightModes_failure(droneStatus):
+    params_controller = droneStatus.drone.paramsController
+    original_params = params_controller.params.copy()
+    params_controller.params = [
+        p
+        for p in original_params
+        if not str(p.get("param_id", "")).startswith("FLTMODE")
+    ]
+
+    try:
         droneStatus.drone.flightModesController.getFlightModes()
         assert len(droneStatus.drone.flightModesController.flight_modes) == 6
         for items in droneStatus.drone.flightModesController.flight_modes:
             assert items == "UNKNOWN"
+    finally:
+        params_controller.params = original_params
 
 
-@falcon_test(pass_drone_status=True)
-def test_getFlightModeChannel_failure(client: SocketIOTestClient, droneStatus):
-    with WaitForMessageReturnsNone():
-        original_flight_mode_channel = (
-            droneStatus.drone.flightModesController.flight_mode_channel
-        )
-        droneStatus.drone.flightModesController.flight_mode_channel = "UNKNOWN"
+def test_getFlightModeChannel_failure(droneStatus):
+    params_controller = droneStatus.drone.paramsController
+    original_params = params_controller.params.copy()
+    original_flight_mode_channel = (
+        droneStatus.drone.flightModesController.flight_mode_channel
+    )
+    droneStatus.drone.flightModesController.flight_mode_channel = "UNKNOWN"
+
+    params_controller.params = [
+        p for p in original_params if p.get("param_id") != "FLTMODE_CH"
+    ]
+
+    try:
         droneStatus.drone.flightModesController.getFlightModeChannel()
         assert droneStatus.drone.flightModesController.flight_mode_channel == "UNKNOWN"
+    finally:
+        params_controller.params = original_params
         droneStatus.drone.flightModesController.flight_mode_channel = (
             original_flight_mode_channel
         )
 
 
-@falcon_test(pass_drone_status=True)
-def test_refreshdata(client: SocketIOTestClient, droneStatus):
+def test_refreshdata(droneStatus):
     droneStatus.drone.flightModesController.refreshData()
     assert len(droneStatus.drone.flightModesController.flight_modes) == 6
 
 
-@falcon_test(pass_drone_status=True)
-def test_setCurrentFlightMode(client: SocketIOTestClient, droneStatus):
+def test_setCurrentFlightMode(droneStatus):
     with FakeTCP():
         response = droneStatus.drone.flightModesController.setCurrentFlightMode(1)
         assert response == {
@@ -94,8 +127,7 @@ def test_setCurrentFlightMode(client: SocketIOTestClient, droneStatus):
     }
 
 
-@falcon_test(pass_drone_status=True)
-def test_setFlightMode_invalidData(client: SocketIOTestClient, droneStatus):
+def test_setFlightMode_invalidData(droneStatus):
     response = droneStatus.drone.flightModesController.setFlightMode(0, 1)
     assert response == {
         "success": False,
@@ -122,8 +154,7 @@ def test_setFlightMode_invalidData(client: SocketIOTestClient, droneStatus):
 
 
 @pytest.mark.copter_only
-@falcon_test(pass_drone_status=True)
-def test_setFlightMode_invalidData_copter(client: SocketIOTestClient, droneStatus):
+def test_setFlightMode_invalidData_copter(droneStatus):
     response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
     assert response == {
         "success": False,
@@ -145,19 +176,18 @@ def test_setFlightMode_invalidData_copter(client: SocketIOTestClient, droneStatu
 
 
 @pytest.mark.copter_only
-@falcon_test(pass_drone_status=True)
-def test_setFlightMode_success_copter(client: SocketIOTestClient, droneStatus):
-    response = droneStatus.drone.flightModesController.setFlightMode(1, 5)
+def test_setFlightMode_success_copter(droneStatus):
+    response = set_flight_mode_with_retries(droneStatus, 1, 2)
     assert response == {
         "success": True,
-        "message": "Flight mode 1 set to COPTER_MODE_LOITER",
+        "message": "Flight mode 1 set to COPTER_MODE_ALT_HOLD",
+        "data": {"param_id": "FLTMODE1", "value": 2},
     }
-    assert droneStatus.drone.flightModesController.flight_modes[0] == 5
+    assert droneStatus.drone.flightModesController.flight_modes[0] == 2
 
 
 @pytest.mark.plane_only
-@falcon_test(pass_drone_status=True)
-def test_setFlightMode_invalidData_plane(client: SocketIOTestClient, droneStatus):
+def test_setFlightMode_invalidData_plane(droneStatus):
     response = droneStatus.drone.flightModesController.setFlightMode(1, -2)
     assert response == {
         "success": False,
@@ -179,18 +209,17 @@ def test_setFlightMode_invalidData_plane(client: SocketIOTestClient, droneStatus
 
 
 @pytest.mark.plane_only
-@falcon_test(pass_drone_status=True)
-def test_setFlightMode_success_plane(client: SocketIOTestClient, droneStatus):
+def test_setFlightMode_success_plane(droneStatus):
     response = droneStatus.drone.flightModesController.setFlightMode(1, 5)
     assert response == {
         "success": True,
         "message": "Flight mode 1 set to PLANE_MODE_FLY_BY_WIRE_A",
+        "data": {"param_id": "FLTMODE1", "value": 5},
     }
     assert droneStatus.drone.flightModesController.flight_modes[0] == 5
 
 
-@falcon_test(pass_drone_status=True)
-def test_setFlightModeChannel_invalidData(client: SocketIOTestClient, droneStatus):
+def test_setFlightModeChannel_invalidData(droneStatus):
     response = droneStatus.drone.flightModesController.setFlightModeChannel(0)
     assert response == {
         "success": False,

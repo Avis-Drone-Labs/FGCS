@@ -29,7 +29,7 @@ class NavController:
         if (
             self.drone.aircraft_type == VehicleType.FIXED_WING.value
         ):  # Copter doesn't have loiter radius, only Plane
-            self.getLoiterRadiusFromDrone()
+            self.getLoiterRadius()
 
     @sendingCommandLock
     def getHomePosition(self) -> Response:
@@ -330,38 +330,6 @@ class NavController:
                 "message": "Could not reposition, serial exception",
             }
 
-    def getLoiterRadiusFromDrone(self) -> Response:
-        """
-        Get the loiter radius of the drone.
-        """
-        self.drone.logger.debug("Fetching loiter radius")
-        loiter_radius_data = self.drone.paramsController.getSingleParam(
-            "WP_LOITER_RAD", timeout=1.5
-        )
-
-        if loiter_radius_data.get("success"):
-            loiter_radius_param = loiter_radius_data.get("data")
-            if loiter_radius_param is not None:
-                self.loiter_radius = loiter_radius_param.param_value
-                return {
-                    "success": True,
-                    "data": self.loiter_radius,
-                }
-            else:
-                self.drone.logger.error(
-                    "Loiter radius parameter found, but parameter value not found"
-                )
-                return {
-                    "success": False,
-                    "message": "Loiter radius parameter found, but parameter value not found",
-                }
-        else:
-            self.drone.logger.error(loiter_radius_data.get("message"))
-            return {
-                "success": False,
-                "message": loiter_radius_data.get("message", ""),
-            }
-
     def getLoiterRadius(self) -> Response:
         """
         Get the loiter radius of the drone from the cached parameters.
@@ -370,13 +338,14 @@ class NavController:
             Response: The response from the get loiter radius command
         """
 
-        loiter_radius_data = self.drone.paramsController.getCachedParam("WP_LOITER_RAD")
+        loiter_radius_data = self.drone.paramsController.getSingleParam("WP_LOITER_RAD")
 
         if loiter_radius_data.get("param_value") is None:
-            self.drone.logger.warning(
-                "Loiter radius parameter not found in cache, fetching from drone"
-            )
-            return self.getLoiterRadiusFromDrone()
+            self.drone.logger.warning("Loiter radius parameter not found in cache")
+            return {
+                "success": False,
+                "message": "Loiter radius parameter not found in cache",
+            }
 
         self.loiter_radius = loiter_radius_data.get("param_value", self.loiter_radius)
 

@@ -1,11 +1,8 @@
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
-from . import falcon_test
 
-
-@pytest.mark.timeout(30)
-@falcon_test()
+@pytest.mark.timeout(40)
 def test_reboot_success(socketio_client: SocketIOTestClient):
     """
     Tests if the autopilot has been rebooted

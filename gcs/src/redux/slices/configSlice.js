@@ -65,6 +65,7 @@ const configSlice = createSlice({
       16: 0,
     },
     servoConfig: {},
+    serialPortsConfig: {},
   },
   reducers: {
     setActiveTab: (state, action) => {
@@ -206,6 +207,26 @@ const configSlice = createSlice({
       if (state.servoConfig[servoNum][paramType] === value) return
       state.servoConfig[servoNum][paramType] = value
     },
+    setSerialPortsConfig: (state, action) => {
+      if (action.payload === state.serialPortsConfig) return
+      state.serialPortsConfig = action.payload
+    },
+    updateSerialPortConfigParam: (state, action) => {
+      const { param_id, value } = action.payload
+      // Handle SERIALn params
+      const serialMatch = param_id.match(/^SERIAL(\d+)_(.+)$/)
+      if (serialMatch) {
+        const portKey = `SERIAL_${serialMatch[1]}`
+        const paramType = serialMatch[2].toLowerCase()
+        if (!state.serialPortsConfig[portKey]) {
+          state.serialPortsConfig[portKey] = {}
+        }
+        const validParamTypes = ["protocol", "baud", "options"]
+        if (!validParamTypes.includes(paramType)) return
+        if (state.serialPortsConfig[portKey][paramType] === value) return
+        state.serialPortsConfig[portKey][paramType] = value
+      }
+    },
 
     // Emits
     emitGetFailsafeConfig: () => {},
@@ -231,6 +252,9 @@ const configSlice = createSlice({
     emitSetServoConfigParam: () => {},
     emitBatchSetServoConfigParams: () => {},
     emitTestServoPwm: () => {},
+    emitGetSerialPortsConfig: () => {},
+    emitSetSerialPortConfigParam: () => {},
+    emitBatchSetSerialPortConfigParams: () => {},
   },
   selectors: {
     selectActiveTab: (state) => state.activeTab,
@@ -256,6 +280,7 @@ const configSlice = createSlice({
     selectRadioCalibrationModalOpen: (state) => state.radioCalibrationModalOpen,
     selectServoPwmOutputs: (state) => state.servoPwmOutputs,
     selectServoConfig: (state) => state.servoConfig,
+    selectSerialPortsConfig: (state) => state.serialPortsConfig,
   },
 })
 
@@ -285,6 +310,8 @@ export const {
   setServoPwmOutputs,
   setServoConfig,
   updateServoConfigParam,
+  setSerialPortsConfig,
+  updateSerialPortConfigParam,
 
   emitGetFailsafeConfig,
   emitGetGripperEnabled,
@@ -309,6 +336,9 @@ export const {
   emitSetServoConfigParam,
   emitBatchSetServoConfigParams,
   emitTestServoPwm,
+  emitGetSerialPortsConfig,
+  emitSetSerialPortConfigParam,
+  emitBatchSetSerialPortConfigParams,
 } = configSlice.actions
 
 export const {
@@ -333,6 +363,7 @@ export const {
   selectRadioCalibrationModalOpen,
   selectServoPwmOutputs,
   selectServoConfig,
+  selectSerialPortsConfig,
 } = configSlice.selectors
 
 export default configSlice

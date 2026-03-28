@@ -494,13 +494,6 @@ function processAndSaveLogData(
     params = getParamObjects(loadedLogMessages["PARM"] as MessageObject[])
   }
 
-  if (
-    logType === "dataflash_bin" &&
-    canDisplayMapPositionData(loadedLogMessages)
-  ) {
-    mapPositionData = getMapPositionData(loadedLogMessages)
-  }
-
   // 5. Calculate means on the final, fully-expanded data
   const means = calculateMeanValues(finalMessages)
 
@@ -512,6 +505,12 @@ function processAndSaveLogData(
     format: finalFormats,
     aircraftType: aircraftType,
   } // Save the complete data with required properties
+
+  // Extract map position data after UTC conversion is complete
+  if (logType === "dataflash_bin" && canDisplayMapPositionData(logData)) {
+    mapPositionData = getMapPositionData(logData)
+  }
+
   defaultMessageFilters = sortObjectByKeys(finalFilters)
 
   // 7. Get firmware version from VER message if available

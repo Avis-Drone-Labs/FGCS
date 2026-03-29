@@ -24,16 +24,16 @@ import {
 } from "@tabler/icons-react"
 import { Octokit } from "octokit"
 import { memo, useEffect, useState } from "react"
+import { useDispatch } from "react-redux"
 import semverGt from "semver/functions/gt"
 import DefaultSettings from "../../data/default_settings.json"
+import { DATA_STREAM_MAP } from "../helpers/mavlinkConstants"
 import {
   closeLoadingNotification,
   redColor,
   showLoadingNotification,
 } from "../helpers/notification"
-import { useDispatch } from "react-redux"
 import { emitSetStreamRates } from "../redux/slices/droneConnectionSlice"
-import { DATA_STREAM_MAP } from "../helpers/mavlinkConstants"
 
 const octokit = new Octokit({})
 
@@ -203,10 +203,16 @@ function ReleaseCheckRow() {
 function SetRatesRow() {
   const { getSetting } = useSettings()
   const dispatch = useDispatch()
+  const developerDefaults = DefaultSettings?.Developer ?? {}
 
   const onClick = () => {
     for (const [name, value] of Object.entries(DATA_STREAM_MAP)) {
-      let rate = getSetting(`Developer.${name}`)
+      if (!Object.hasOwn(developerDefaults, name)) continue
+
+      const rateSetting = getSetting(`Developer.${name}`)
+      const rate = Number(rateSetting)
+      if (!Number.isFinite(rate)) continue
+      if (rate < 0 || rate > 15) continue
       dispatch(emitSetStreamRates({ stream: value, rate: rate }))
     }
   }

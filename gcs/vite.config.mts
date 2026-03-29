@@ -43,6 +43,7 @@ export default defineConfig(async () => {
           vibeStatus: resolve(__dirname, "vibeStatus.html"),
           flaParams: resolve(__dirname, "flaParams.html"),
           graphWindow: resolve(__dirname, "graphWindow.html"),
+          statusTextWindow: resolve(__dirname, "statusTextWindow.html"),
         },
       },
     },

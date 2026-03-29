@@ -5,27 +5,18 @@
 
 // Base imports
 import moment from "moment"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 
 // Third party imports
 import { ScrollArea } from "@mantine/core"
 
-// Helpers Scripts
-import { useSelector } from "react-redux"
-import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
-import { selectOutsideVisibility } from "../../redux/slices/droneConnectionSlice"
-
 export default function StatusMessages(props) {
   const viewport = useRef(null)
-  const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
+  const outsideVisibility = props.outsideVisibility ?? false
 
-  const outsideVisibility = useSelector(selectOutsideVisibility)
-
-  // Pushes new messages to bottom
+  // Scroll to top when new message arrives
   useEffect(() => {
-    if (scrollPosition.y < 100) {
-      viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
-    }
+    viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
   }, [props.messages])
 
   function getSeverityClassNames(severity) {
@@ -56,12 +47,7 @@ export default function StatusMessages(props) {
 
   return (
     <div className={props.className}>
-      <ScrollArea
-        className="h-full w-full p-4"
-        style={{ backgroundColor: GetOutsideVisibilityColor() }}
-        viewportRef={viewport}
-        onScrollPositionChange={onScrollPositionChange}
-      >
+      <ScrollArea className="h-full w-full" viewportRef={viewport}>
         {props.messages.map((message, index) => {
           return (
             <div

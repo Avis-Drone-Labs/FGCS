@@ -43,6 +43,9 @@ const ALLOWED_INVOKE_CHANNELS = [
   "params:load-params-from-file",
   "app:open-fla-params-window",
   "app:close-fla-params-window",
+  "app:open-statustext-window",
+  "app:close-statustext-window",
+  "app:update-statustext",
   "checklist:open",
 ]
 
@@ -80,6 +83,9 @@ const ALLOWED_ON_CHANNELS = [
   "app:graph-window:init",
   "app:send-graph-point",
   "app:graph-window:closed",
+  "app:send-statustext",
+  "app:statustext-window-opened",
+  "app:statustext-window-closed",
 ]
 
 contextBridge.exposeInMainWorld("ipcRenderer", {

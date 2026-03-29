@@ -119,7 +119,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "RAW_SENSORS",
       "suffix": "Hz",
@@ -130,7 +130,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "EXTENDED_STATUS",
       "suffix": "Hz",
@@ -141,7 +141,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "RC_CHANNELS",
       "suffix": "Hz",
@@ -152,7 +152,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "RAW_CONTROLLER",
       "suffix": "Hz",
@@ -163,7 +163,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "POSITION",
       "suffix": "Hz",
@@ -174,7 +174,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "EXTRA1",
       "suffix": "Hz",
@@ -185,7 +185,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "EXTRA2",
       "suffix": "Hz",
@@ -196,7 +196,7 @@
       "type": "number",
       "range": [
         0,
-        150
+        15
       ],
       "display": "EXTRA3",
       "suffix": "Hz",

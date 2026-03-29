@@ -46,6 +46,7 @@ DATASTREAM_RATES = {
     mavutil.mavlink.MAV_DATA_STREAM_RAW_SENSORS: 1,
     mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS: 1,
     mavutil.mavlink.MAV_DATA_STREAM_RC_CHANNELS: 1,
+    mavutil.mavlink.MAV_DATA_STREAM_RAW_CONTROLLER: 1,
     mavutil.mavlink.MAV_DATA_STREAM_POSITION: 1,
     mavutil.mavlink.MAV_DATA_STREAM_EXTRA1: 4,
     mavutil.mavlink.MAV_DATA_STREAM_EXTRA2: 3,
@@ -520,7 +521,13 @@ class Drone:
         Args:
             stream (int): The data stream to set up
         """
-        self.sendDataStreamRequestMessage(stream, DATASTREAM_RATES[stream])
+        rate = DATASTREAM_RATES.get(stream)
+        if rate is None:
+            self.logger.warning(
+                f"No configured rate for stream {stream}; skipping setup request"
+            )
+            return
+        self.sendDataStreamRequestMessage(stream, rate)
 
     @sendingCommandLock
     def sendDataStreamRequestMessage(self, stream: int, rate: int) -> None:
@@ -888,7 +895,15 @@ class Drone:
 
     def sendHeartbeatMessage(self) -> None:
         """Sends a heartbeat message to the drone every second."""
+        heartbeat_interval_secs = 1.0
+        next_heartbeat_time = time.monotonic()
+
         while self.is_active.is_set():
+            now = time.monotonic()
+            sleep_time = next_heartbeat_time - now
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
             try:
                 self.master.mav.heartbeat_send(
                     mavutil.mavlink.MAV_TYPE_GCS,
@@ -899,7 +914,11 @@ class Drone:
                 )
             except Exception as e:
                 self.logger.error(f"Failed to send heartbeat: {e}", exc_info=True)
-            time.sleep(1)
+
+            # Keep a stable 1Hz cadence and recover if we fall behind.
+            next_heartbeat_time += heartbeat_interval_secs
+            if next_heartbeat_time < time.monotonic():
+                next_heartbeat_time = time.monotonic() + heartbeat_interval_secs
 
     def startThread(self) -> None:
         """Starts the listener and sender threads."""

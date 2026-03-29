@@ -56,10 +56,15 @@ export const SettingsProvider = ({ children }) => {
 
   const getSetting = (setting) => {
     const userSetting = getSettingFromSettings(setting, settings.settings)
+    const defaultSetting = getSettingFromSettings(setting, DefaultSettings)
 
-    return userSetting === null
-      ? getSettingFromSettings(setting, DefaultSettings).default
-      : userSetting
+    if (userSetting !== null) return userSetting
+
+    if (defaultSetting === null || defaultSetting === undefined) {
+      return null
+    }
+
+    return defaultSetting.default
   }
 
   return (

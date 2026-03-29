@@ -114,17 +114,6 @@
     }
   },
   "Developer": {
-    "MAV_DATA_STREAM_ALL": {
-      "default": 1,
-      "type": "number",
-      "range": [
-        0,
-        150
-      ],
-      "display": "STREAM_ALL",
-      "suffix": "Hz",
-      "group": "Data stream rates"
-    },
     "MAV_DATA_STREAM_RAW_SENSORS": {
       "default": 1,
       "type": "number",

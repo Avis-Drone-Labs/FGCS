@@ -218,10 +218,15 @@ function SetRatesRow() {
   }
 
   return (
-    <div className="mt-0! px-10 flex justify-end">
-      <Button size="compact-xs" color="blue" onClick={onClick}>
-        Set rates
-      </Button>
+    <div className="mt-0! px-10">
+      <p className="text-xs text-gray-400 mb-2">
+        Note: Data stream rates here apply to the dashboard only.
+      </p>
+      <div className="flex justify-end">
+        <Button size="compact-xs" color="blue" onClick={onClick}>
+          Set rates
+        </Button>
+      </div>
     </div>
   )
 }

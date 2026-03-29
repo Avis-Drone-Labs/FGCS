@@ -141,6 +141,7 @@ function checkout_ref() {
     local short_tag="${ref#refs/tags/}"
     local before_commit=""
     local after_commit=""
+    local original_dir="$PWD"
 
     cd "$repo_dir"
 
@@ -161,6 +162,8 @@ function checkout_ref() {
         # Force a rebuild when dynamic refs move to a new commit.
         rm -f build/sitl/bin/arducopter build/sitl/bin/arduplane
     fi
+
+    cd "$original_dir"
 }
 
 # Refreshes dynamic selectors so latest, stable, and beta track current upstream refs.
@@ -220,6 +223,7 @@ function ensure_vehicle_binary() {
     local current_commit=""
     local built_commit=""
     local needs_rebuild="false"
+    local original_dir="$PWD"
 
     if [ "$VEHICLE" = "ArduPlane" ]; then
         binary_path="$repo_dir/build/sitl/bin/arduplane"
@@ -244,7 +248,6 @@ function ensure_vehicle_binary() {
     fi
 
     if [ "$needs_rebuild" = "true" ]; then
-        cd "$repo_dir"
         ./waf configure --board sitl
         if [ "$VEHICLE" = "ArduPlane" ]; then
             ./waf plane
@@ -257,6 +260,8 @@ function ensure_vehicle_binary() {
             echo "$current_commit" > "$stamp_path"
         fi
     fi
+
+    cd "$original_dir"
 }
 
 PARAM_PATH="/sitl_setup/custom_params.parm"

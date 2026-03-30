@@ -5,7 +5,7 @@
 
 // Base imports
 import moment from "moment"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // Third party imports
 import { ScrollArea } from "@mantine/core"
@@ -13,10 +13,13 @@ import { ScrollArea } from "@mantine/core"
 export default function StatusMessages(props) {
   const viewport = useRef(null)
   const outsideVisibility = props.outsideVisibility ?? false
+  const [scrollPosition, onScrollPositionChange] = useState({ x: 0, y: 0 })
 
   // Scroll to top when new message arrives
   useEffect(() => {
-    viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
+    if (scrollPosition.y < 100) {
+      viewport.current?.scrollTo({ top: 0, behavior: "smooth" })
+    }
   }, [props.messages])
 
   function getSeverityClassNames(severity) {
@@ -47,7 +50,11 @@ export default function StatusMessages(props) {
 
   return (
     <div className={props.className}>
-      <ScrollArea className="h-full w-full" viewportRef={viewport}>
+      <ScrollArea
+        className="h-full w-full"
+        viewportRef={viewport}
+        onScrollPositionChange={onScrollPositionChange}
+      >
         {props.messages.map((message, index) => {
           return (
             <div

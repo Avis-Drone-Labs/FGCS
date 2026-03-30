@@ -48,8 +48,10 @@ const initialState = {
 
   escTelemetryMaximised: false,
 
-  statusTextWidth: 600,
-  statusTextHeight: 150,
+  statusTextSize: {
+    width: 600,
+    height: 150,
+  },
 
   escTelemetryThresholds: {
     temperature: {
@@ -169,11 +171,15 @@ const droneConnectionSlice = createSlice({
     setEscTelemetryThresholds: (state, action) => {
       state.escTelemetryThresholds = action.payload
     },
-    setStatusTextWidth: (state, action) => {
-      state.statusTextWidth = action.payload
-    },
-    setStatusTextHeight: (state, action) => {
-      state.statusTextHeight = action.payload
+    setStatusTextSize: (state, action) => {
+      const next = action.payload
+      if (!next || typeof next !== "object") return
+
+      const width = Number(next.width)
+      const height = Number(next.height)
+      if (Number.isNaN(width) || Number.isNaN(height)) return
+
+      state.statusTextSize = { width, height }
     },
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
@@ -241,8 +247,7 @@ const droneConnectionSlice = createSlice({
     selectVideoScale: (state) => state.videoScale,
     selectEscTelemetryMaximised: (state) => state.escTelemetryMaximised,
     selectEscTelemetryThresholds: (state) => state.escTelemetryThresholds,
-    selectStatusTextWidth: (state) => state.statusTextWidth,
-    selectStatusTextHeight: (state) => state.statusTextHeight,
+    selectStatusTextSize: (state) => state.statusTextSize,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
     selectForceArmModalOpened: (state) => state.forceArmModalOpened,
     selectPoiMarkers: (state) => state.poiMarkers,
@@ -275,8 +280,7 @@ export const {
   setEscTelemetryMaximised,
   setEscTelemetryScale,
   setEscTelemetryThresholds,
-  setStatusTextWidth,
-  setStatusTextHeight,
+  setStatusTextSize,
   setForceDisarmModalOpened,
   setForceArmModalOpened,
   addPoiMarker,
@@ -327,8 +331,7 @@ export const {
   selectEscTelemetryMaximised,
   selectEscTelemetryScale,
   selectEscTelemetryThresholds,
-  selectStatusTextWidth,
-  selectStatusTextHeight,
+  selectStatusTextSize,
   selectForceDisarmModalOpened,
   selectForceArmModalOpened,
   selectPoiMarkers,

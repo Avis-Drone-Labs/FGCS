@@ -57,27 +57,23 @@ export function openStatusTextWindow(parentWindow?: BrowserWindow) {
 
     statusTextWin = new BrowserWindow(windowOptions)
 
-    statusTextWin.webContents.once("did-finish-load", () => {
-      sendStatusTextMessages()
-      notifyMainStatusTextOpened()
-    })
-
     statusTextWin.on("close", () => {
       notifyMainStatusTextClosed()
       statusTextWin = null
     })
-  }
 
-  if (VITE_DEV_SERVER_URL) {
-    statusTextWin?.loadURL(VITE_DEV_SERVER_URL + "statusTextWindow.html")
-  } else {
-    statusTextWin?.loadFile(
-      path.join(process.env.DIST, "statusTextWindow.html"),
-    )
+    if (VITE_DEV_SERVER_URL) {
+      statusTextWin.loadURL(VITE_DEV_SERVER_URL + "statusTextWindow.html")
+    } else {
+      statusTextWin.loadFile(
+        path.join(process.env.DIST, "statusTextWindow.html"),
+      )
+    }
   }
 
   statusTextWin.setMenuBarVisibility(false)
   statusTextWin.show()
+  statusTextWin.focus()
   notifyMainStatusTextOpened()
 }
 
@@ -96,6 +92,15 @@ export default function registerStatusTextWindowIPC(appWin?: BrowserWindow) {
   ipcMain.removeHandler("app:open-statustext-window")
   ipcMain.removeHandler("app:close-statustext-window")
   ipcMain.removeHandler("app:update-statustext")
+
+  ipcMain.removeAllListeners("app:statustext-window:ready")
+  ipcMain.on("app:statustext-window:ready", (event) => {
+    if (!statusTextWin) return
+    if (statusTextWin.isDestroyed()) return
+    if (statusTextWin.webContents.isDestroyed()) return
+    if (event.sender.id !== statusTextWin.webContents.id) return
+    sendStatusTextMessages()
+  })
 
   ipcMain.handle("app:open-statustext-window", (event) => {
     const parentWindow = BrowserWindow.fromWebContents(event.sender)

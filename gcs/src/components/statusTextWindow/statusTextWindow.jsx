@@ -11,6 +11,7 @@ export default function StatusTextWindow() {
     }
 
     window.ipcRenderer.on("app:send-statustext", onStatusText)
+    window.ipcRenderer.send("app:statustext-window:ready")
 
     return () => {
       window.ipcRenderer.removeListener("app:send-statustext", onStatusText)

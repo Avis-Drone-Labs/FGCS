@@ -8,10 +8,8 @@ import { useDispatch, useSelector } from "react-redux"
 import GetOutsideVisibilityColor from "../../helpers/outsideVisibility"
 import {
   selectOutsideVisibility,
-  selectStatusTextHeight,
-  selectStatusTextWidth,
-  setStatusTextHeight,
-  setStatusTextWidth,
+  selectStatusTextSize,
+  setStatusTextSize,
 } from "../../redux/slices/droneConnectionSlice"
 import { selectMessages } from "../../redux/slices/statusTextSlice"
 import StatusMessages from "./statusMessages"
@@ -19,8 +17,9 @@ import StatusMessages from "./statusMessages"
 export default function StatusTextWidget() {
   const dispatch = useDispatch()
   const messages = useSelector(selectMessages)
-  const width = useSelector(selectStatusTextWidth)
-  const height = useSelector(selectStatusTextHeight)
+  const statusTextSize = useSelector(selectStatusTextSize)
+  const width = statusTextSize?.width ?? 600
+  const height = statusTextSize?.height ?? 150
   const outsideVisibility = useSelector(selectOutsideVisibility)
   const backgroundColor = GetOutsideVisibilityColor()
   const [isPoppedOut, setIsPoppedOut] = useState(false)
@@ -67,8 +66,12 @@ export default function StatusTextWidget() {
       const clampedWidth = Math.max(320, Math.min(1600, newWidth))
       const clampedHeight = Math.max(120, Math.min(900, newHeight))
 
-      dispatch(setStatusTextWidth(clampedWidth))
-      dispatch(setStatusTextHeight(clampedHeight))
+      dispatch(
+        setStatusTextSize({
+          width: clampedWidth,
+          height: clampedHeight,
+        }),
+      )
     }
 
     const handleMouseUp = () => {

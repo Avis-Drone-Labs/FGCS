@@ -66,6 +66,7 @@ const ALLOWED_SEND_CHANNELS = [
   "app:drone-state",
   "app:graph-window:ready",
   "app:elevation-graph:ready",
+  "app:statustext-window:ready",
 ]
 
 const ALLOWED_ON_CHANNELS = [

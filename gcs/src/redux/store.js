@@ -16,6 +16,7 @@ import droneConnectionSlice, {
   setOutsideVisibility,
   setPort,
   setSelectedComPorts,
+  setStatusTextSize,
 } from "./slices/droneConnectionSlice"
 import droneInfoSlice, {
   setGraphValues,
@@ -99,6 +100,42 @@ if (isForwarding !== null) {
 const outsideVisibility = localStorage.getItem("outsideVisibility")
 if (outsideVisibility !== null) {
   store.dispatch(setOutsideVisibility(outsideVisibility === "true"))
+}
+
+const statusTextSize = localStorage.getItem("statusTextSize")
+if (statusTextSize !== null) {
+  try {
+    const parsedStatusTextSize = JSON.parse(statusTextSize)
+    if (
+      parsedStatusTextSize &&
+      typeof parsedStatusTextSize === "object" &&
+      typeof parsedStatusTextSize.width === "number" &&
+      typeof parsedStatusTextSize.height === "number"
+    ) {
+      store.dispatch(setStatusTextSize(parsedStatusTextSize))
+    }
+  } catch {
+    console.log("Failed to parse statusTextSize from local storage.")
+  }
+} else {
+  // Backwards compatibility with legacy separate keys.
+  const legacyStatusTextWidth = localStorage.getItem("statusTextWidth")
+  const legacyStatusTextHeight = localStorage.getItem("statusTextHeight")
+  if (legacyStatusTextWidth !== null && legacyStatusTextHeight !== null) {
+    const parsedStatusTextWidth = Number(legacyStatusTextWidth)
+    const parsedStatusTextHeight = Number(legacyStatusTextHeight)
+    if (
+      !Number.isNaN(parsedStatusTextWidth) &&
+      !Number.isNaN(parsedStatusTextHeight)
+    ) {
+      store.dispatch(
+        setStatusTextSize({
+          width: parsedStatusTextWidth,
+          height: parsedStatusTextHeight,
+        }),
+      )
+    }
+  }
 }
 
 const preFlightChecklist = localStorage.getItem("preFlightChecklist")
@@ -302,6 +339,18 @@ store.subscribe(() => {
     updateLocalStorageIfChanged(
       "outsideVisibility",
       store_mut.droneConnection.outsideVisibility,
+    )
+  }
+
+  if (
+    store_mut.droneConnection.statusTextSize &&
+    typeof store_mut.droneConnection.statusTextSize === "object" &&
+    typeof store_mut.droneConnection.statusTextSize.width === "number" &&
+    typeof store_mut.droneConnection.statusTextSize.height === "number"
+  ) {
+    updateJSONLocalStorageIfChanged(
+      "statusTextSize",
+      store_mut.droneConnection.statusTextSize,
     )
   }
 

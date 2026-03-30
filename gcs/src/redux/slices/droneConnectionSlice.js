@@ -48,6 +48,11 @@ const initialState = {
 
   escTelemetryMaximised: false,
 
+  statusTextSize: {
+    width: 600,
+    height: 150,
+  },
+
   escTelemetryThresholds: {
     temperature: {
       warning: 90,
@@ -166,6 +171,16 @@ const droneConnectionSlice = createSlice({
     setEscTelemetryThresholds: (state, action) => {
       state.escTelemetryThresholds = action.payload
     },
+    setStatusTextSize: (state, action) => {
+      const next = action.payload
+      if (!next || typeof next !== "object") return
+
+      const width = Number(next.width)
+      const height = Number(next.height)
+      if (Number.isNaN(width) || Number.isNaN(height)) return
+
+      state.statusTextSize = { width, height }
+    },
     setForceDisarmModalOpened: (state, action) => {
       state.forceDisarmModalOpened = action.payload
     },
@@ -232,6 +247,7 @@ const droneConnectionSlice = createSlice({
     selectVideoScale: (state) => state.videoScale,
     selectEscTelemetryMaximised: (state) => state.escTelemetryMaximised,
     selectEscTelemetryThresholds: (state) => state.escTelemetryThresholds,
+    selectStatusTextSize: (state) => state.statusTextSize,
     selectForceDisarmModalOpened: (state) => state.forceDisarmModalOpened,
     selectForceArmModalOpened: (state) => state.forceArmModalOpened,
     selectPoiMarkers: (state) => state.poiMarkers,
@@ -264,6 +280,7 @@ export const {
   setEscTelemetryMaximised,
   setEscTelemetryScale,
   setEscTelemetryThresholds,
+  setStatusTextSize,
   setForceDisarmModalOpened,
   setForceArmModalOpened,
   addPoiMarker,
@@ -314,6 +331,7 @@ export const {
   selectEscTelemetryMaximised,
   selectEscTelemetryScale,
   selectEscTelemetryThresholds,
+  selectStatusTextSize,
   selectForceDisarmModalOpened,
   selectForceArmModalOpened,
   selectPoiMarkers,

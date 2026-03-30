@@ -46,6 +46,9 @@ import registerLinkStatsIPC, {
 import registerRTSPStreamIPC, {
   cleanupAllRTSPStreams,
 } from "./modules/rtspStream"
+import registerStatusTextWindowIPC, {
+  destroyStatusTextWindow,
+} from "./modules/statusTextWindow"
 import registerVibeStatusIPC, {
   destroyVibeStatusWindow,
 } from "./modules/vibeStatusWindow"
@@ -357,6 +360,7 @@ function createWindow() {
   registerEkfStatusIPC()
   registerElevationGraphIPC()
   registerVibeStatusIPC()
+  registerStatusTextWindowIPC(win)
   registerFFmpegBinaryIPC()
   registerRTSPStreamIPC(win)
   registerFlaParamsIPC()
@@ -548,6 +552,7 @@ function closeWindows() {
   destroyEkfStatusWindow()
   destroyElevationGraphWindow()
   destroyVibeStatusWindow()
+  destroyStatusTextWindow()
   cleanupAllRTSPStreams()
   destroyFlaParamsWindow()
   destroyAllGraphWindows()

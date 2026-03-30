@@ -300,6 +300,7 @@ const socketMiddleware = (store) => {
         break
       case "STATUSTEXT":
         store.dispatch(pushMessage(msg))
+        window.ipcRenderer.invoke("app:update-statustext", msg)
         break
       case "SYS_STATUS":
         store.dispatch(

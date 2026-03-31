@@ -49,7 +49,7 @@ def test_getTargetInfo(socketio_client: SocketIOTestClient, droneStatus):
     assert len(socketio_result) == 1
     assert socketio_result[0]["name"] == "target_info"
     assert socketio_result[0]["args"][0] == {
-        "target_component": 0,
+        "target_component": 1,
         "target_system": 1,
     }
 

@@ -29,6 +29,11 @@ jobs:
           - 5760:5760
         options: >-
           --name ardupilot-copter
+          --health-cmd "test -f /tmp/fgcs_done || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 240
+          --health-start-period 15s
     steps:
       - uses: actions/checkout@v3
 

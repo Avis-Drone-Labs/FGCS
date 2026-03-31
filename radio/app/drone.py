@@ -149,12 +149,39 @@ class Drone:
             return
 
         try:
-            initial_heartbeat = self.master.wait_heartbeat(timeout=5)
+            initial_heartbeat = None
+            heartbeat_timeout_secs = 5.0
+            deadline = time.monotonic() + heartbeat_timeout_secs
+
+            while True:
+                now = time.monotonic()
+                if now >= deadline:
+                    break
+
+                remaining = deadline - now
+                heartbeat = self.master.recv_match(
+                    type="HEARTBEAT", blocking=True, timeout=max(remaining, 0.0)
+                )
+
+                if heartbeat is None:
+                    continue
+
+                # Ignore heartbeats from non-autopilot MAVLink components.
+                if heartbeat.autopilot == mavutil.mavlink.MAV_AUTOPILOT_INVALID:
+                    continue
+
+                initial_heartbeat = heartbeat
+                break
+
             if initial_heartbeat is None:
-                self.logger.error("Heartbeat timed out after 5 seconds")
+                self.logger.error(
+                    f"No heartbeat received after {heartbeat_timeout_secs:.0f} seconds"
+                )
                 self.master.close()
                 self.master = None
-                self.connectionError = "Could not connect to the drone."
+                self.connectionError = (
+                    f"No heartbeat received after {heartbeat_timeout_secs:.0f} seconds."
+                )
                 return
         except Exception as e:
             self.logger.error(
@@ -182,8 +209,8 @@ class Drone:
         self.logger.info(f"Connected to aircraft of type {self.aircraft_type}")
 
         self.autopilot = initial_heartbeat.autopilot
-        self.target_system = self.master.target_system
-        self.target_component = self.master.target_component
+        self.target_system = initial_heartbeat.get_srcSystem()
+        self.target_component = initial_heartbeat.get_srcComponent()
 
         self.logger.debug(
             f"Heartbeat received (system {self.target_system} component {self.target_component})"

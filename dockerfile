@@ -38,5 +38,7 @@ WORKDIR /sitl_setup
 
 RUN chmod +x run.sh
 
+HEALTHCHECK --interval=5s --timeout=3s --start-period=15s --retries=240 CMD test -f /tmp/fgcs_done || exit 1
+
 # ENTRYPOINT python ./Tools/autotest/sim_vehicle.py -v ArduCopter --custom-location=${LAT},${LON},${ALT},${DIR} --no-mavproxy
 ENTRYPOINT [ "./run.sh" ]

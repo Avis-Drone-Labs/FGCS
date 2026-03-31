@@ -99,7 +99,17 @@ export function handleEmitters(socket, store, action) {
     },
     {
       emitter: emitDisconnectFromDrone,
-      callback: () => socket.socket.emit("disconnect_from_drone"),
+      callback: () => {
+        const storeState = store.getState()
+        const isConnecting = storeState.droneConnection.connecting
+
+        if (isConnecting) {
+          socket.socket.emit("cancel_connect_to_drone")
+          return
+        }
+
+        socket.socket.emit("disconnect_from_drone")
+      },
     },
     {
       emitter: emitConnectToDrone,

@@ -1,3 +1,5 @@
+from threading import Event
+
 import pytest
 from flask_socketio.test_client import SocketIOTestClient
 
@@ -169,6 +171,29 @@ def test_stopForwarding_notForwarding(socketio_client: SocketIOTestClient, drone
         "success": False,
         "message": "Not currently forwarding",
     }
+
+
+def test_cancel_connect_to_drone_signals_cancel_event(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    old_in_progress = droneStatus.connection_in_progress
+    old_cancel_event = droneStatus.connect_cancel_event
+
+    try:
+        droneStatus.connection_in_progress = True
+        droneStatus.connect_cancel_event = Event()
+
+        socketio_client.emit("cancel_connect_to_drone")
+        socketio_result = socketio_client.get_received()
+
+        assert droneStatus.connect_cancel_event.is_set() is True
+        assert socketio_result[0]["name"] == "connection_error"
+        assert socketio_result[0]["args"][0] == {
+            "message": "Connection cancelled by user."
+        }
+    finally:
+        droneStatus.connection_in_progress = old_in_progress
+        droneStatus.connect_cancel_event = old_cancel_event
 
 
 # Has to be the final test otherwise the socket disconnects

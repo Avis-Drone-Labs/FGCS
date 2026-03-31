@@ -85,6 +85,7 @@ class Drone:
         droneConnectStatusCb: Optional[Callable] = None,
         linkDebugStatsCb: Optional[Callable] = None,
         fetchingParameterCb: Optional[Callable] = None,
+        connectionCancelEvent: Optional[Event] = None,
     ) -> None:
         """
         The drone class interfaces with the UAS via MavLink.
@@ -104,6 +105,7 @@ class Drone:
         self.droneConnectStatusCb = droneConnectStatusCb
         self.linkDebugStatsCb = linkDebugStatsCb
         self.fetchingParameterCb = fetchingParameterCb
+        self.connection_cancel_event: Event = connectionCancelEvent or Event()
 
         self.connectionError: Optional[str] = None
         self._last_connect_progress: float = 0.0
@@ -148,12 +150,20 @@ class Drone:
                 self.connectionError = str(e)
             return
 
+        if self._isConnectionCancelRequested():
+            self._setCancelledConnectionErrorAndCloseMaster()
+            return
+
         try:
             initial_heartbeat = None
             heartbeat_timeout_secs = 5.0
             deadline = time.monotonic() + heartbeat_timeout_secs
 
             while True:
+                if self._isConnectionCancelRequested():
+                    self._setCancelledConnectionErrorAndCloseMaster()
+                    return
+
                 now = time.monotonic()
                 if now >= deadline:
                     break
@@ -249,6 +259,12 @@ class Drone:
 
         self.addMessageListener("STATUSTEXT", sendMessage)
 
+        if self._isConnectionCancelRequested():
+            self._setCancelledConnectionErrorAndCloseMaster()
+            self.is_active.clear()
+            self.stopAllThreads()
+            return
+
         self.getAutopilotVersion()
 
         if self.flight_sw_version is None:
@@ -289,6 +305,7 @@ class Drone:
         fetch_all_params_result = self.paramsController.fetchAllParamsBlocking(
             timeout_secs=120,
             progress_update_callback=self.sendParamFetchConnectionStatusUpdate,
+            should_cancel_callback=self._isConnectionCancelRequested,
         )
 
         if not fetch_all_params_result.get("success"):
@@ -310,6 +327,23 @@ class Drone:
         self.sendStatusTextMessage(
             mavutil.mavlink.MAV_SEVERITY_INFO, "FGCS connected to aircraft"
         )
+
+    def _isConnectionCancelRequested(self) -> bool:
+        return self.connection_cancel_event.is_set()
+
+    def requestConnectionCancel(self) -> None:
+        self.connection_cancel_event.set()
+        if getattr(self, "paramsController", None) is not None:
+            self.paramsController.is_requesting_params = False
+
+    def _setCancelledConnectionErrorAndCloseMaster(self) -> None:
+        self.connectionError = "Connection cancelled by user."
+        if getattr(self, "master", None) is not None:
+            try:
+                self.master.close()
+            except Exception:
+                self.logger.exception("Failed to close connection during cancellation")
+            self.master = None
 
     def __getNextLogFilePath(self, line: str) -> str:
         return line.split("==NEXT_FILE==")[-1].split("==END==")[0]

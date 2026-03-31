@@ -1,5 +1,6 @@
 import sys
 import time
+from threading import Event
 from typing import Optional
 
 from serial.tools import list_ports
@@ -11,9 +12,9 @@ from app.drone import Drone
 from app.utils import (
     droneConnectStatusCb,
     droneErrorCb,
+    fetchingParameterCb,
     getComPortNames,
     getFlightSwVersionString,
-    fetchingParameterCb,
 )
 
 
@@ -85,6 +86,13 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneStatus.drone.close()
         droneStatus.drone = None
 
+    if droneStatus.connection_in_progress:
+        socketio.emit(
+            "connection_error",
+            {"message": "A drone connection is already in progress."},
+        )
+        return
+
     connectionType = data.get("connectionType")
 
     if connectionType not in ["serial", "network"]:
@@ -133,35 +141,52 @@ def connectToDrone(data: ConnectionDataType) -> None:
         droneStatus.drone = None
         return
 
-    drone = Drone(
-        port,
-        baud=baud,
-        forwarding_address=forwarding_address,
-        droneErrorCb=droneErrorCb,
-        droneDisconnectCb=disconnectFromDrone,
-        droneConnectStatusCb=droneConnectStatusCb,
-        linkDebugStatsCb=sendLinkDebugStats,
-        fetchingParameterCb=fetchingParameterCb,
-    )
+    droneStatus.connection_in_progress = True
+    cancel_event = Event()
+    droneStatus.connect_cancel_event = cancel_event
 
-    if drone.connectionError is not None:
-        socketio.emit("connection_error", {"message": drone.connectionError})
-        droneStatus.drone = None
-        return
+    try:
+        drone = Drone(
+            port,
+            baud=baud,
+            forwarding_address=forwarding_address,
+            droneErrorCb=droneErrorCb,
+            droneDisconnectCb=disconnectFromDrone,
+            droneConnectStatusCb=droneConnectStatusCb,
+            linkDebugStatsCb=sendLinkDebugStats,
+            fetchingParameterCb=fetchingParameterCb,
+            connectionCancelEvent=cancel_event,
+        )
 
-    # Set droneStatus drone to local drone
-    droneStatus.drone = drone
+        if drone.connectionError is not None:
+            socketio.emit("connection_error", {"message": drone.connectionError})
+            droneStatus.drone = None
+            return
 
-    # Sleeping for buffer time, if errors occur try changing back to 1 second
-    time.sleep(0.2)
-    logger.debug("Created drone instance")
-    socketio.emit(
-        "connected_to_drone",
-        {
-            "aircraft_type": drone.aircraft_type,
-            "flight_sw_version": getFlightSwVersionString(drone.flight_sw_version),
-        },
-    )
+        # Set droneStatus drone to local drone
+        droneStatus.drone = drone
+
+        # Sleeping for buffer time, if errors occur try changing back to 1 second
+        time.sleep(0.2)
+        logger.debug("Created drone instance")
+        socketio.emit(
+            "connected_to_drone",
+            {
+                "aircraft_type": drone.aircraft_type,
+                "flight_sw_version": getFlightSwVersionString(drone.flight_sw_version),
+            },
+        )
+    finally:
+        droneStatus.connection_in_progress = False
+        droneStatus.connect_cancel_event = None
+
+
+@socketio.on("cancel_connect_to_drone")
+def cancelConnectToDrone() -> None:
+    """Cancel an in-progress drone connection attempt."""
+    if droneStatus.connection_in_progress and droneStatus.connect_cancel_event:
+        droneStatus.connect_cancel_event.set()
+        socketio.emit("connection_error", {"message": "Connection cancelled by user."})
 
 
 @socketio.on("disconnect_from_drone")
@@ -172,6 +197,8 @@ def disconnectFromDrone() -> None:
     if droneStatus.drone:
         droneStatus.drone.close()
         droneStatus.drone = None
+    elif droneStatus.connection_in_progress and droneStatus.connect_cancel_event:
+        droneStatus.connect_cancel_event.set()
 
     droneStatus.state = None
     socketio.emit("disconnected_from_drone")

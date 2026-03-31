@@ -9,6 +9,7 @@ ALT=0.1
 DIR=270
 VEHICLE="ArduCopter"
 FIRMWARE_VERSION="latest"
+SENTINEL_FILE="/tmp/fgcs_done"
 
 REPO_URL="https://github.com/ArduPilot/ardupilot.git"
 DEFAULT_WORKTREE="/ardupilot"
@@ -293,5 +294,30 @@ if ! ARDUPILOT_DIR=$(ensure_firmware_repo); then
 fi
 ensure_vehicle_binary "$ARDUPILOT_DIR"
 
-exec python /sitl_setup/mission_upload.py &
-exec python "$ARDUPILOT_DIR/Tools/autotest/sim_vehicle.py" -v $VEHICLE --custom-location=$LAT,$LON,$ALT,$DIR --no-mavproxy --add-param-file=$PARAM_PATH
+rm -f "$SENTINEL_FILE"
+
+python "$ARDUPILOT_DIR/Tools/autotest/sim_vehicle.py" -v "$VEHICLE" --custom-location="$LAT,$LON,$ALT,$DIR" --no-mavproxy --add-param-file="$PARAM_PATH" &
+SIM_PID=$!
+
+python /sitl_setup/mission_upload.py &
+UPLOAD_PID=$!
+
+while kill -0 "$UPLOAD_PID" >/dev/null 2>&1; do
+    if ! kill -0 "$SIM_PID" >/dev/null 2>&1; then
+        echo "sim_vehicle exited before mission upload completed"
+        wait "$UPLOAD_PID" || true
+        exit 1
+    fi
+    sleep 1
+done
+
+if ! wait "$UPLOAD_PID"; then
+    echo "Mission upload failed or timed out"
+    kill "$SIM_PID" >/dev/null 2>&1 || true
+    wait "$SIM_PID" || true
+    exit 1
+fi
+
+touch "$SENTINEL_FILE"
+
+wait "$SIM_PID"

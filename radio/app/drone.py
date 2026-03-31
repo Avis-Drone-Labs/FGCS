@@ -153,8 +153,12 @@ class Drone:
             heartbeat_timeout_secs = 5.0
             deadline = time.monotonic() + heartbeat_timeout_secs
 
-            while time.monotonic() < deadline:
-                remaining = deadline - time.monotonic()
+            while True:
+                now = time.monotonic()
+                if now >= deadline:
+                    break
+
+                remaining = deadline - now
                 heartbeat = self.master.recv_match(
                     type="HEARTBEAT", blocking=True, timeout=max(remaining, 0.0)
                 )

@@ -186,7 +186,6 @@ def cancelConnectToDrone() -> None:
     """Cancel an in-progress drone connection attempt."""
     if droneStatus.connection_in_progress and droneStatus.connect_cancel_event:
         droneStatus.connect_cancel_event.set()
-        socketio.emit("connection_error", {"message": "Connection cancelled by user."})
 
 
 @socketio.on("disconnect_from_drone")

@@ -337,6 +337,7 @@ class Drone:
             self.paramsController.is_requesting_params = False
 
     def _setCancelledConnectionErrorAndCloseMaster(self) -> None:
+        self.logger.info("Connection cancelled by user")
         self.connectionError = "Connection cancelled by user."
         if getattr(self, "master", None) is not None:
             try:
@@ -965,8 +966,13 @@ class Drone:
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
+            master = getattr(self, "master", None)
+            if master is None:
+                # Connection teardown can clear master while this thread is winding down.
+                break
+
             try:
-                self.master.mav.heartbeat_send(
+                master.mav.heartbeat_send(
                     mavutil.mavlink.MAV_TYPE_GCS,
                     mavutil.mavlink.MAV_AUTOPILOT_INVALID,
                     0,
@@ -1262,10 +1268,14 @@ class Drone:
 
         self.is_active.clear()
 
-        self.stopAllDataStreams()
+        if getattr(self, "master", None) is not None:
+            self.stopAllDataStreams()
         self.stopForwarding()
         self.stopAllThreads()
-        self.master.close()
+
+        if getattr(self, "master", None) is not None:
+            self.master.close()
+            self.master = None
 
         if len(self.log_file_names) == 0:
             self.logger.debug("No logs to save")

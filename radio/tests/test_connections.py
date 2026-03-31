@@ -184,13 +184,8 @@ def test_cancel_connect_to_drone_signals_cancel_event(
         droneStatus.connect_cancel_event = Event()
 
         socketio_client.emit("cancel_connect_to_drone")
-        socketio_result = socketio_client.get_received()
 
         assert droneStatus.connect_cancel_event.is_set() is True
-        assert socketio_result[0]["name"] == "connection_error"
-        assert socketio_result[0]["args"][0] == {
-            "message": "Connection cancelled by user."
-        }
     finally:
         droneStatus.connection_in_progress = old_in_progress
         droneStatus.connect_cancel_event = old_cancel_event

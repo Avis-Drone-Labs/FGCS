@@ -37,6 +37,7 @@ import { useDispatch, useSelector } from "react-redux"
 import {
   ConnectionType,
   emitConnectToDrone,
+  emitDisconnectFromDrone,
   emitGetComPorts,
   emitStartForwarding,
   emitStopForwarding,
@@ -169,6 +170,9 @@ export default function Navbar() {
       <Modal
         opened={openedModal}
         onClose={() => {
+          if (connecting) {
+            dispatch(emitDisconnectFromDrone())
+          }
           dispatch(setConnectionModal(false))
           dispatch(setConnecting(false))
         }}
@@ -297,12 +301,14 @@ export default function Navbar() {
               variant="filled"
               color={"red"}
               onClick={() => {
+                if (connecting) {
+                  dispatch(emitDisconnectFromDrone())
+                }
                 dispatch(setConnectionModal(false))
                 dispatch(setConnecting(false))
               }}
-              disabled={connecting}
             >
-              Close
+              {connecting ? "Cancel" : "Close"}
             </Button>
             <Button
               variant="filled"

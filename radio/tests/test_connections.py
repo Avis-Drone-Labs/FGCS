@@ -173,6 +173,34 @@ def test_stopForwarding_notForwarding(socketio_client: SocketIOTestClient, drone
     }
 
 
+def test_connect_while_connection_in_progress_is_rejected(
+    socketio_client: SocketIOTestClient, droneStatus
+):
+    old_in_progress = droneStatus.connection_in_progress
+    old_cancel_event = droneStatus.connect_cancel_event
+
+    try:
+        droneStatus.connection_in_progress = True
+        socketio_client.emit(
+            "connect_to_drone",
+            {
+                "port": "tcp:127.0.0.1:5760",
+                "baud": 115200,
+                "connectionType": "network",
+                "forwardingAddress": None,
+            },
+        )
+
+        socketio_result = socketio_client.get_received()
+        assert socketio_result[0]["name"] == "connection_error"
+        assert socketio_result[0]["args"][0] == {
+            "message": "A drone connection is already in progress."
+        }
+    finally:
+        droneStatus.connection_in_progress = old_in_progress
+        droneStatus.connect_cancel_event = old_cancel_event
+
+
 def test_cancel_connect_to_drone_signals_cancel_event(
     socketio_client: SocketIOTestClient, droneStatus
 ):

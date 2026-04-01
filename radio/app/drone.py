@@ -96,6 +96,9 @@ class Drone:
             droneErrorCb (Optional[Callable], optional): Callback function for drone errors. Defaults to None.
             droneDisconnectCb (Optional[Callable], optional): Callback function for drone disconnection. Defaults to None.
             droneConnectStatusCb (Optional[Callable], optional): Callback function for drone connection providing an update as the drone connects. Defaults to None.
+            linkDebugStatsCb (Optional[Callable], optional): Callback function for link debug stats. Defaults to None.
+            fetchingParameterCb (Optional[Callable], optional): Callback function for when parameters are being fetched. Defaults to None.
+            connectionCancelEvent (Optional[Event], optional): Event to signal if the connection process should be cancelled. Defaults to None.
         """
         self.port = port
         self.baud = baud

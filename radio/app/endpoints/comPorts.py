@@ -79,29 +79,6 @@ def connectToDrone(data: ConnectionDataType) -> None:
     Args:
         data: The message passed in from the client containing the form sent (select com port, baud rate)
     """
-    old_drone = None
-    with droneStatus.connection_state_lock:
-        if droneStatus.connection_in_progress:
-            socketio.emit(
-                "connection_error",
-                {"message": "A drone connection is already in progress."},
-            )
-            return
-
-        if droneStatus.drone:
-            old_drone = droneStatus.drone
-            droneStatus.drone = None
-
-        cancel_event = Event()
-        droneStatus.connect_cancel_event = cancel_event
-        droneStatus.connection_in_progress = True
-
-    if old_drone is not None:
-        old_drone.logger.warning(
-            "Attempting a connection to drone when connection is already established."
-        )
-        old_drone.close()
-
     connectionType = data.get("connectionType")
 
     if connectionType not in ["serial", "network"]:
@@ -149,6 +126,29 @@ def connectToDrone(data: ConnectionDataType) -> None:
         )
         droneStatus.drone = None
         return
+
+    old_drone = None
+    with droneStatus.connection_state_lock:
+        if droneStatus.connection_in_progress:
+            socketio.emit(
+                "connection_error",
+                {"message": "A drone connection is already in progress."},
+            )
+            return
+
+        if droneStatus.drone:
+            old_drone = droneStatus.drone
+            droneStatus.drone = None
+
+        cancel_event = Event()
+        droneStatus.connect_cancel_event = cancel_event
+        droneStatus.connection_in_progress = True
+
+    if old_drone is not None:
+        old_drone.logger.warning(
+            "Attempting a connection to drone when connection is already established."
+        )
+        old_drone.close()
 
     try:
         drone = Drone(

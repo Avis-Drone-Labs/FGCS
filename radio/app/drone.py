@@ -27,7 +27,7 @@ from app.controllers.rcController import RcController
 from app.controllers.serialPortsController import SerialPortsController
 from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
-from app.signals import drone_error
+from app.signals import DroneError, DroneConnectStatus
 from app.utils import (
     commandAccepted,
     decodeFlightSwVersion,
@@ -83,7 +83,6 @@ class Drone:
         forwarding_address: Optional[str] = None,
         droneErrorCb: Optional[Callable] = None,
         droneDisconnectCb: Optional[Callable] = None,
-        droneConnectStatusCb: Optional[Callable] = None,
         linkDebugStatsCb: Optional[Callable] = None,
         fetchingParameterCb: Optional[Callable] = None,
         connectionCancelEvent: Optional[Event] = None,
@@ -96,7 +95,6 @@ class Drone:
             baud (int, optional): The baud rate for the connection. Defaults to 57600.
             droneErrorCb (Optional[Callable], optional): Callback function for drone errors. Defaults to None.
             droneDisconnectCb (Optional[Callable], optional): Callback function for drone disconnection. Defaults to None.
-            droneConnectStatusCb (Optional[Callable], optional): Callback function for drone connection providing an update as the drone connects. Defaults to None.
             linkDebugStatsCb (Optional[Callable], optional): Callback function for link debug stats. Defaults to None.
             fetchingParameterCb (Optional[Callable], optional): Callback function for when parameters are being fetched. Defaults to None.
             connectionCancelEvent (Optional[Event], optional): Event to signal if the connection process should be cancelled. Defaults to None.
@@ -106,7 +104,6 @@ class Drone:
         self.logger = logger
         self.droneErrorCb = droneErrorCb
         self.droneDisconnectCb = droneDisconnectCb
-        self.droneConnectStatusCb = droneConnectStatusCb
         self.linkDebugStatsCb = linkDebugStatsCb
         self.fetchingParameterCb = fetchingParameterCb
         self.connection_cancel_event: Event = connectionCancelEvent or Event()
@@ -372,9 +369,6 @@ class Drone:
     def _emitConnectionStatus(
         self, message: str, progress: float, sub_message: str = ""
     ) -> None:
-        if not self.droneConnectStatusCb:
-            return
-
         progress = round(min(max(float(progress), 0.0), 100.0), 2)
         progress = max(progress, self._last_connect_progress)
         payload = {
@@ -387,7 +381,7 @@ class Drone:
             return
 
         try:
-            self.droneConnectStatusCb(payload)
+            DroneConnectStatus.send(payload)
         except Exception:
             self.logger.exception("Connection status callback failed")
             return
@@ -1264,7 +1258,7 @@ class Drone:
             return {"success": False, "message": "Not currently forwarding"}
 
     def error(self, msg: str) -> None:
-        drone_error.send(msg)
+        DroneError.send(msg)
 
     def close(self) -> None:
         """Close the connection to the drone."""

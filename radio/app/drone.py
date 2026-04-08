@@ -27,6 +27,7 @@ from app.controllers.rcController import RcController
 from app.controllers.serialPortsController import SerialPortsController
 from app.controllers.servoController import ServoController
 from app.customTypes import Number, Response, VehicleType
+from app.signals import drone_error
 from app.utils import (
     commandAccepted,
     decodeFlightSwVersion,
@@ -739,8 +740,7 @@ class Drone:
                 msg = self.master.recv_msg()
             except mavutil.mavlink.MAVError as e:
                 self.logger.error(e, exc_info=True)
-                if self.droneErrorCb:
-                    self.droneErrorCb(str(e))
+                self.error(str(e))
                 continue
             except AttributeError as e:
                 self.logger.error(e, exc_info=True)
@@ -755,8 +755,7 @@ class Drone:
             except Exception as e:
                 # Log any other unexpected exception
                 self.logger.error(e, exc_info=True)
-                if self.droneErrorCb:
-                    self.droneErrorCb(str(e))
+                self.error(str(e))
                 continue
 
             if msg is None:
@@ -1263,6 +1262,9 @@ class Drone:
             return {"success": True, "message": "Stopped forwarding"}
         else:
             return {"success": False, "message": "Not currently forwarding"}
+
+    def error(self, msg: str) -> None:
+        drone_error.send(msg)
 
     def close(self) -> None:
         """Close the connection to the drone."""

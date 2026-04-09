@@ -91,7 +91,7 @@ class ArmController:
             self.drone.error(str(e))
 
             ## Or you can have just have:                 (TODO: remove)
-            DroneError.send(str(e))
+            DroneError.send(self, msg=str(e))
 
             return {
                 "success": False,

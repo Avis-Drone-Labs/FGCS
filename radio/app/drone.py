@@ -381,7 +381,7 @@ class Drone:
             return
 
         try:
-            DroneConnectStatus.send(payload)
+            DroneConnectStatus.send(self, msg=payload)
         except Exception:
             self.logger.exception("Connection status callback failed")
             return
@@ -1258,7 +1258,7 @@ class Drone:
             return {"success": False, "message": "Not currently forwarding"}
 
     def error(self, msg: str) -> None:
-        DroneError.send(msg)
+        DroneError.send(self, msg=msg)
 
     def close(self) -> None:
         """Close the connection to the drone."""

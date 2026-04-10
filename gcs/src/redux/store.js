@@ -23,7 +23,9 @@ import droneInfoSlice, {
   setSelectedDisplayTelemetry,
 } from "./slices/droneInfoSlice"
 import ftpSlice from "./slices/ftpSlice"
-import logAnalyserSlice from "./slices/logAnalyserSlice"
+import logAnalyserSlice, {
+  setPersistentColorMap,
+} from "./slices/logAnalyserSlice"
 import missionInfoSlice, { setPlannedHomePosition } from "./slices/missionSlice"
 import paramsSlice from "./slices/paramsSlice"
 import simulationParamsSlice from "./slices/simulationParamsSlice"
@@ -211,6 +213,18 @@ if (plannedHomePosition !== null) {
   }
 }
 
+const persistentColorMap = localStorage.getItem("flaPersistentColorMap")
+if (persistentColorMap !== null) {
+  try {
+    const parsedColorMap = JSON.parse(persistentColorMap)
+    if (parsedColorMap && typeof parsedColorMap === "object") {
+      store.dispatch(setPersistentColorMap(parsedColorMap))
+    }
+  } catch {
+    console.log("Failed to parse persistent color map from localStorage")
+  }
+}
+
 const updateLocalStorageIfChanged = (key, newValue) => {
   if (newValue !== null && newValue !== undefined) {
     const currentValue = localStorage.getItem(key)
@@ -283,6 +297,8 @@ function mergeSelectedDisplayTelemetryConfigWithDefaults(persistedConfig) {
     }
   })
 }
+
+let prevPersistentColorMap = store.getState().logAnalyser.persistentColorMap
 
 // Update states when a new message comes in
 store.subscribe(() => {
@@ -396,5 +412,18 @@ store.subscribe(() => {
       "plannedHomePosition",
       store_mut.missionInfo.plannedHomePosition,
     )
+  }
+
+  const currentPersistentColorMap = store_mut.logAnalyser.persistentColorMap
+  if (
+    currentPersistentColorMap !== prevPersistentColorMap &&
+    currentPersistentColorMap &&
+    typeof currentPersistentColorMap === "object"
+  ) {
+    updateJSONLocalStorageIfChanged(
+      "flaPersistentColorMap",
+      currentPersistentColorMap,
+    )
+    prevPersistentColorMap = currentPersistentColorMap
   }
 })

@@ -25,10 +25,12 @@ import {
   // Selectors
   selectLogType,
   selectMessageFilters,
+  selectPersistentColorMap,
   setCanSavePreset,
   setColorIndex,
   setCustomColors,
   setMessageFilters,
+  setPersistentColorMapEntry,
 } from "../../redux/slices/logAnalyserSlice.js"
 
 // Utility function to convert a string to title case
@@ -44,6 +46,7 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
   const aircraftType = useSelector(selectAircraftType)
   const logType = useSelector(selectLogType)
   const messageFilters = useSelector(selectMessageFilters)
+  const persistentColorMap = useSelector(selectPersistentColorMap)
 
   // Preset selection
   function selectPreset(preset) {
@@ -60,7 +63,10 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
         newFilters[categoryName][fieldName] = false
       })
     })
-    let newColors = {}
+    // Use preset's custom colors if available, otherwise initialize empty
+    let newColors = preset.customColors
+      ? structuredClone(preset.customColors)
+      : {}
 
     // Turn on filters for the given preset
     Object.keys(preset.filters).forEach((requestedName) => {
@@ -78,10 +84,26 @@ export default function PresetAccordionItem({ category, deleteCustomPreset }) {
           }
           newFilters[actualMessageName][field] = true
 
-          // Assign a color using the actual message name
-          if (!newColors[`${actualMessageName}/${field}`]) {
-            newColors[`${actualMessageName}/${field}`] =
-              colorPalette[Object.keys(newColors).length % colorPalette.length]
+          // Assign a color: check persistent map first, then preset, then palette
+          const fieldKey = `${actualMessageName}/${field}`
+          if (!newColors[fieldKey]) {
+            // First priority: use color from persistent map if it exists
+            if (persistentColorMap[fieldKey]) {
+              newColors[fieldKey] = persistentColorMap[fieldKey]
+            } else {
+              // Fall back to palette color
+              const assignedColor =
+                colorPalette[
+                  Object.keys(newColors).length % colorPalette.length
+                ]
+              newColors[fieldKey] = assignedColor
+              dispatch(
+                setPersistentColorMapEntry({
+                  key: fieldKey,
+                  color: assignedColor,
+                }),
+              )
+            }
           }
         })
       } else {

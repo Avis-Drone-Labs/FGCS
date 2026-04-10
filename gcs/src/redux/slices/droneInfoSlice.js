@@ -413,8 +413,7 @@ const droneInfoSlice = createSlice({
     selectRSSI: (state) => state.rssi,
     selectAircraftType: (state) => state.aircraftType,
 
-    selectBatteryData: (state) =>
-      state.batteryData.sort((b1, b2) => b1.id - b2.id),
+    selectRawBatteryData: (state) => state.batteryData,
     selectGuidedModePinData: (state) => state.guidedModePinData,
     selectSelectedDisplayTelemetry: (state) => state.selectedDisplayTelemetry,
     selectStatusText: (state) => state.statusText,
@@ -462,6 +461,11 @@ export const {
 } = droneInfoSlice.actions
 
 // Memoized selectors because redux is a bitch
+export const selectBatteryData = createSelector(
+  [droneInfoSlice.selectors.selectRawBatteryData],
+  (batteryData) => [...batteryData].sort((b1, b2) => b1.id - b2.id),
+)
+
 export const selectDroneCoords = createSelector(
   [droneInfoSlice.selectors.selectGPS],
   ({ lat, lon }) => {
@@ -611,7 +615,6 @@ export const {
   selectEscTelemetry5To8,
   selectFlightMode,
   selectAircraftType,
-  selectBatteryData,
   selectGuidedModePinData,
   selectSelectedDisplayTelemetry,
   selectGraphValues,

@@ -414,7 +414,7 @@ const droneInfoSlice = createSlice({
     selectAircraftType: (state) => state.aircraftType,
 
     selectBatteryData: (state) =>
-      state.batteryData.sort((b1, b2) => b1.id - b2.id),
+      [...state.batteryData].sort((b1, b2) => b1.id - b2.id),
     selectGuidedModePinData: (state) => state.guidedModePinData,
     selectSelectedDisplayTelemetry: (state) => state.selectedDisplayTelemetry,
     selectStatusText: (state) => state.statusText,

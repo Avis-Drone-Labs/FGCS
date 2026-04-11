@@ -45,7 +45,6 @@ import { selectCurrentMission } from "./redux/slices/missionSlice"
 import { useSettings } from "./helpers/settings"
 
 // Helper javascript files
-import { mavlinkDef } from "./helpers/mavlinkDef.js"
 
 // Import components
 import ForceArmModal from "./components/dashboard/ForceArmModal"
@@ -71,6 +70,7 @@ import flightModeChangedSound from "./assets/sounds/flightmodechanged.mp3"
 import lowBatterySound from "./assets/sounds/lowbattery.mp3"
 import waypointReachedSound from "./assets/sounds/waypointreached.mp3"
 import { formatDurationSecondsToMMSS } from "./helpers/dataFormatters"
+import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants.js"
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -261,13 +261,13 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconRadar />}
-            value={mavlinkDef.GpsFixType[fixType]}
+            value={GPS_FIX_TYPES[fixType]}
             tooltip="GPS fix type"
           />
           {hasSecondaryGps && (
             <StatusSection
               icon={<IconRadar />}
-              value={mavlinkDef.GpsFixType[gps2.fixType]}
+              value={GPS_FIX_TYPES[gps2.fixType]}
               tooltip="GPS2 fix type"
             />
           )}

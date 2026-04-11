@@ -164,31 +164,35 @@ export default function FLA() {
 
   // Restore visible colors from persistent map when messageFilters change
   useEffect(() => {
-    if (messageFilters && Object.keys(persistentColorMap).length > 0) {
-      const visibleColors = Object.keys(messageFilters).reduce(
-        (acc, category) => {
-          Object.keys(messageFilters[category]).forEach((field) => {
-            if (messageFilters[category][field]) {
-              const key = `${category}/${field}`
-              if (persistentColorMap[key]) {
-                acc[key] = persistentColorMap[key]
-              }
-            }
-          })
-          return acc
-        },
-        {},
-      )
-      const isSameAsCurrentColors =
-        Object.keys(visibleColors).length ===
-          Object.keys(customColors).length &&
-        Object.entries(visibleColors).every(
-          ([key, value]) => customColors[key] === value,
-        )
+    if (!messageFilters) return
 
-      if (Object.keys(visibleColors).length > 0 && !isSameAsCurrentColors) {
-        dispatch(setCustomColors(visibleColors))
-      }
+    // Build colors for active filters only.
+    // Prefer persisted colors when present, otherwise keep existing custom color.
+    const mergedVisibleColors = Object.keys(messageFilters).reduce(
+      (acc, category) => {
+        Object.keys(messageFilters[category]).forEach((field) => {
+          if (!messageFilters[category][field]) return
+
+          const key = `${category}/${field}`
+          const resolvedColor = persistentColorMap[key] ?? customColors[key]
+          if (resolvedColor) {
+            acc[key] = resolvedColor
+          }
+        })
+        return acc
+      },
+      {},
+    )
+
+    const isSameAsCurrentColors =
+      Object.keys(mergedVisibleColors).length ===
+        Object.keys(customColors).length &&
+      Object.entries(mergedVisibleColors).every(
+        ([key, value]) => customColors[key] === value,
+      )
+
+    if (Object.keys(mergedVisibleColors).length > 0 && !isSameAsCurrentColors) {
+      dispatch(setCustomColors(mergedVisibleColors))
     }
   }, [messageFilters, persistentColorMap, customColors, dispatch])
 

@@ -222,6 +222,7 @@ if (persistentColorMap !== null) {
     }
   } catch {
     console.log("Failed to parse persistent color map from localStorage")
+    store.dispatch(setPersistentColorMap({}))
   }
 }
 

@@ -8,10 +8,8 @@
 import { Button, Tabs } from "@mantine/core"
 
 // Mavlink
-import {
-  getFlightModeMap,
-  MISSION_STATES,
-} from "../../../helpers/mavlinkConstants"
+import { getFlightModeMap } from "../../../helpers/mavlinkConstants"
+import { mavlinkDef } from "../../../helpers/mavlinkDef"
 
 import { useMemo } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -63,7 +61,7 @@ const MissionInfo = () => {
       <div className="text-lg">
         <p>
           <span className="font-bold"> Mission State:</span>{" "}
-          {MISSION_STATES[currentMission.mission_state]}
+          {mavlinkDef.MissionState[currentMission.mission_state]}
         </p>
         <p>
           <span className="font-bold"> Waypoint: </span> {currentMission.seq}/

@@ -45,7 +45,7 @@ import { selectCurrentMission } from "./redux/slices/missionSlice"
 import { useSettings } from "./helpers/settings"
 
 // Helper javascript files
-import { GPS_FIX_TYPES } from "./helpers/mavlinkConstants"
+import { mavlinkDef } from "./helpers/mavlinkDef.js"
 
 // Import components
 import ForceArmModal from "./components/dashboard/ForceArmModal"
@@ -91,8 +91,6 @@ export default function Dashboard() {
   const { getSetting } = useSettings()
   const gps2 = useSelector(selectGPS2RawInt)
   const hasSecondaryGps = useSelector(selectHasSecondaryGps)
-
-  const secondaryGpsFixLabel = GPS_FIX_TYPES[gps2.fixType]
 
   // Telemetry panel sizing
   const [telemetryPanelSize, setTelemetryPanelSize] = useLocalStorage({
@@ -263,13 +261,13 @@ export default function Dashboard() {
           />
           <StatusSection
             icon={<IconRadar />}
-            value={GPS_FIX_TYPES[fixType]}
+            value={mavlinkDef.GpsFixType[fixType]}
             tooltip="GPS fix type"
           />
           {hasSecondaryGps && (
             <StatusSection
               icon={<IconRadar />}
-              value={secondaryGpsFixLabel}
+              value={mavlinkDef.GpsFixType[gps2.fixType]}
               tooltip="GPS2 fix type"
             />
           )}

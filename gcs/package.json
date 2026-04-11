@@ -57,6 +57,7 @@
     "mapbox-gl": "^3.0.1",
     "maplibre-gl": "^3.6.2",
     "moment": "^2.29.4",
+    "node-mavlink": "^2.3.0",
     "octokit": "^4.0.2",
     "playwright": "^1.56.0",
     "prettier": "3.2.5",

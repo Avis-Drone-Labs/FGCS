@@ -7,8 +7,7 @@ import {
   getFlightModeMap,
   MAV_STATE,
 } from "../../helpers/mavlinkConstants"
-
-const MAV_SYS_STATUS_PREARM_CHECK = 268435456
+import { mavlinkDef } from "../../helpers/mavlinkDef"
 
 // TODO: Make this configurable in the future?
 const GPS_TRACK_MAX_LENGTH = 300
@@ -136,14 +135,14 @@ const droneInfoSlice = createSlice({
     },
     setHeartbeatData: (state, action) => {
       if (
-        action.payload.base_mode & 128 &&
-        !(state.heartbeatData.baseMode & 128)
+        action.payload.base_mode & mavlinkDef.MavModeFlag["SAFETY_ARMED"] &&
+        !(state.heartbeatData.baseMode & mavlinkDef.MavModeFlag["SAFETY_ARMED"])
       ) {
         state.isArmed = true
         state.notificationSound = "armed"
       } else if (
-        !(action.payload.base_mode & 128) &&
-        state.heartbeatData.baseMode & 128
+        !(action.payload.base_mode & mavlinkDef.MavModeFlag["SAFETY_ARMED"]) &&
+        state.heartbeatData.baseMode & mavlinkDef.MavModeFlag["SAFETY_ARMED"]
       ) {
         state.isArmed = false
         state.isFlying = false
@@ -213,13 +212,6 @@ const droneInfoSlice = createSlice({
             : [],
         },
       }
-
-      console.log("ESC REDUX", {
-        timestamp: action.payload.timestamp,
-        rpm: action.payload.rpm,
-        current: action.payload.current,
-        temperature: action.payload.temperature,
-      })
     },
     setTelemetryData: (state, action) => {
       state.telemetryData = {
@@ -344,16 +336,16 @@ const droneInfoSlice = createSlice({
       // Check EKF flags to handle critical errors
       // https://github.com/ArduPilot/MissionPlanner/blob/4d441bd4b1dbc08adce4d8b26e078e93760da3a7/ExtLibs/ArduPilot/CurrentState.cs#L2674-L2736
       const activeFlags = getActiveEKFFlags(state.ekfStatusReportData.flags)
-      if (!activeFlags.includes("EKF_ATTITUDE")) {
+      if (!activeFlags.includes("ATTITUDE")) {
         // If we have no attitude solution
         state.ekfCalculatedStatus = 1
-      } else if (!activeFlags.includes("EKF_VELOCITY_HORIZ")) {
+      } else if (!activeFlags.includes("VELOCITY_HORIZ")) {
         // If we have GPS but no horizontal velocity solution
         const gpsStatus = state.gpsRawIntData.fixType
         if (gpsStatus > 0) {
           state.ekfCalculatedStatus = 1
         }
-      } else if (activeFlags.includes("EKF_UNINITIALIZED")) {
+      } else if (activeFlags.includes("UNINITIALIZED")) {
         // EKF not initialized at all
         state.ekfCalculatedStatus = 1
       }
@@ -396,10 +388,12 @@ const droneInfoSlice = createSlice({
     selectSystemStatus: (state) => MAV_STATE[state.heartbeatData.systemStatus],
     selectReadyToArm: (state) => {
       const isEnabled = !!(
-        state.onboardControlSensorsEnabled & MAV_SYS_STATUS_PREARM_CHECK
+        state.onboardControlSensorsEnabled &
+        mavlinkDef.MavSysStatusSensor.PREARM_CHECK
       )
       const isHealthy = !!(
-        state.onboardControlSensorsHealth & MAV_SYS_STATUS_PREARM_CHECK
+        state.onboardControlSensorsHealth &
+        mavlinkDef.MavSysStatusSensor.PREARM_CHECK
       )
 
       // If pre-arm check is enabled, it must also be healthy
@@ -546,7 +540,6 @@ export const selectAircraftTypeString = createSelector(
 export const selectFlightModeString = createSelector(
   [droneInfoSlice.selectors.selectFlightMode, selectAircraftTypeString],
   (flightMode, aircraftType) => {
-    //TODO: aircraftType should be in local storage apparently (for some reason?)
     const flightModeMap = getFlightModeMap(aircraftType)
     return flightModeMap[flightMode] || "UNKNOWN"
   },

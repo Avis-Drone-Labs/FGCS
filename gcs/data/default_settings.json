@@ -79,6 +79,18 @@
       "display": "Battery Alert",
       "suffix": "%",
       "group": "Battery"
+    },
+    "heartbeatTimeoutSeconds": {
+      "description": "You'll be notified when heartbeats stop arriving from the aircraft for this long.",
+      "default": 10,
+      "type": "number",
+      "range": [
+        1,
+        3600
+      ],
+      "display": "Heartbeat Timeout",
+      "suffix": "s",
+      "group": "Connection"
     }
   },
   "Video": {

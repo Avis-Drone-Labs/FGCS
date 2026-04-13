@@ -1,5 +1,6 @@
 import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import { defaultDataMessages } from "../helpers/dashboardDefaultDataMessages"
+import heartbeatMonitorMiddleware from "./middleware/heartbeatMonitorMiddleware"
 import armedMiddleware from "./middleware/armedMiddleware"
 import socketMiddleware from "./middleware/socketMiddleware"
 import applicationSlice from "./slices/applicationSlice"
@@ -54,7 +55,7 @@ export const store = configureStore({
     return getDefaultMiddleware({
       immutableCheck: false,
       serializableCheck: false,
-    }).concat([socketMiddleware, armedMiddleware])
+    }).concat([socketMiddleware, heartbeatMonitorMiddleware, armedMiddleware])
   },
 })
 

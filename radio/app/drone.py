@@ -1282,6 +1282,9 @@ class Drone:
         self.logger.info(f"Cleaning up resources for drone at {self}")
         self.clearAllMessageListeners()
 
+        if self.droneDisconnectCb:
+            self.droneDisconnectCb()
+
         self.is_active.clear()
 
         if getattr(self, "master", None) is not None:

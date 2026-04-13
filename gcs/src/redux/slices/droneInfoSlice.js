@@ -66,6 +66,9 @@ const droneInfoSlice = createSlice({
       customMode: 0,
       systemStatus: 0,
     },
+    heartbeatMonitor: {
+      lastReceivedAt: 0,
+    },
     onboardControlSensorsEnabled: 0,
     onboardControlSensorsHealth: 0,
     gpsRawIntData: {
@@ -155,6 +158,14 @@ const droneInfoSlice = createSlice({
       }
       state.heartbeatData.customMode = action.payload.custom_mode
       state.heartbeatData.systemStatus = action.payload.system_status
+    },
+    setHeartbeatMonitorLastReceivedAt: (state, action) => {
+      if (action.payload !== state.heartbeatMonitor.lastReceivedAt) {
+        state.heartbeatMonitor.lastReceivedAt = action.payload
+      }
+    },
+    resetHeartbeatMonitor: (state) => {
+      state.heartbeatMonitor.lastReceivedAt = 0
     },
     setBatteryData: (state, action) => {
       const battery = state.batteryData.filter(
@@ -381,6 +392,8 @@ const droneInfoSlice = createSlice({
     selectNavController: (state) => state.navControllerData,
     selectDesiredBearing: (state) => state.navControllerData.navBearing,
     selectHeartbeat: (state) => state.heartbeatData,
+    selectHeartbeatLastReceivedAt: (state) =>
+      state.heartbeatMonitor.lastReceivedAt,
     selectIsArmed: (state) => state.isArmed,
     selectIsFlying: (state) => state.isFlying,
     selectNotificationSound: (state) => state.notificationSound,
@@ -425,6 +438,8 @@ const droneInfoSlice = createSlice({
 export const {
   setFlightSwVersion,
   setHeartbeatData,
+  setHeartbeatMonitorLastReceivedAt,
+  resetHeartbeatMonitor,
   soundPlayed,
   changeSelectedDisplayTelemetry,
   setSelectedDisplayTelemetry,
@@ -593,6 +608,7 @@ export const {
   selectNavController,
   selectDesiredBearing,
   selectHeartbeat,
+  selectHeartbeatLastReceivedAt,
   selectIsArmed,
   selectIsFlying,
   selectReadyToArm,

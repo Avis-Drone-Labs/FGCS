@@ -761,8 +761,6 @@ class Drone:
                 break
             except (serial.serialutil.SerialException, ConnectionAbortedError):
                 self.logger.error("Autopilot disconnected", exc_info=True)
-                if self.droneDisconnectCb:
-                    self.droneDisconnectCb()
                 self.close()
                 break
             except Exception as e:
@@ -1281,6 +1279,9 @@ class Drone:
         """Close the connection to the drone."""
         self.logger.info(f"Cleaning up resources for drone at {self}")
         self.clearAllMessageListeners()
+
+        if self.droneDisconnectCb:
+            self.droneDisconnectCb()
 
         self.is_active.clear()
 

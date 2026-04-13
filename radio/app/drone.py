@@ -158,6 +158,19 @@ class Drone:
             return
 
         try:
+            self.master.mav.heartbeat_send(
+                mavutil.mavlink.MAV_TYPE_GCS,
+                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                0,
+                0,
+                mavutil.mavlink.MAV_STATE_ACTIVE,
+            )
+        except Exception as e:
+            self.logger.warning(
+                f"Failed to send initial outgoing heartbeat: {e}", exc_info=True
+            )
+
+        try:
             initial_heartbeat = None
             heartbeat_timeout_secs = 5.0
             deadline = time.monotonic() + heartbeat_timeout_secs

@@ -186,7 +186,7 @@ export default function Missions() {
       x: plannedHomePosition.lat,
       y: plannedHomePosition.lon,
       z: plannedHomePosition.alt || 0,
-      frame: getFrameKey("MAV_FRAME_GLOBAL"),
+      frame: getFrameKey("GLOBAL"),
       command: 16, // MAV_CMD_NAV_WAYPOINT
       param1: 0,
       param2: 0,

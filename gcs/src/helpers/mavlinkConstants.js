@@ -408,9 +408,9 @@ function getPositionFrameValue(frameName) {
 
 function getFrameDropdownData() {
   const frameMap = {
-    [getPositionFrameValue("MAV_FRAME_GLOBAL")]: "Absolute",
-    [getPositionFrameValue("MAV_FRAME_GLOBAL_RELATIVE_ALT")]: "Relative",
-    [getPositionFrameValue("MAV_FRAME_GLOBAL_TERRAIN_ALT")]: "Terrain",
+    [getPositionFrameValue("GLOBAL")]: "Absolute",
+    [getPositionFrameValue("GLOBAL_RELATIVE_ALT")]: "Relative",
+    [getPositionFrameValue("GLOBAL_TERRAIN_ALT")]: "Terrain",
   }
 
   return Object.entries(frameMap).map(([frameValue, label]) => ({

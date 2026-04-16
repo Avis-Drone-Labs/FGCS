@@ -61,16 +61,13 @@ function resolveAltitudeByFrame(waypoint, homeAltitude, warnings) {
   const frameName = MAV_FRAME_LIST[frameId] || ""
   const hasHomeAltitude = Number.isFinite(homeAltitude)
 
-  if (
-    frameName === "MAV_FRAME_GLOBAL" ||
-    frameName === "MAV_FRAME_GLOBAL_INT"
-  ) {
+  if (frameName === "GLOBAL" || frameName === "GLOBAL_INT") {
     return rawAltitude
   }
 
   if (
-    frameName === "MAV_FRAME_GLOBAL_RELATIVE_ALT" ||
-    frameName === "MAV_FRAME_GLOBAL_RELATIVE_ALT_INT"
+    frameName === "GLOBAL_RELATIVE_ALT" ||
+    frameName === "GLOBAL_RELATIVE_ALT_INT"
   ) {
     if (!hasHomeAltitude) {
       warnings.push(
@@ -83,8 +80,8 @@ function resolveAltitudeByFrame(waypoint, homeAltitude, warnings) {
   }
 
   if (
-    frameName === "MAV_FRAME_GLOBAL_TERRAIN_ALT" ||
-    frameName === "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT"
+    frameName === "GLOBAL_TERRAIN_ALT" ||
+    frameName === "GLOBAL_TERRAIN_ALT_INT"
   ) {
     // TODO: Use terrain elevation model/source instead of approximating via home altitude.
     if (!hasHomeAltitude) {

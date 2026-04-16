@@ -134,7 +134,7 @@ const missionInfoSlice = createSlice({
           x: state.plannedHomePosition.lat,
           y: state.plannedHomePosition.lon,
           z: state.plannedHomePosition.alt || 0,
-          frame: getFrameKey("MAV_FRAME_GLOBAL"),
+          frame: getFrameKey("GLOBAL"),
           command: 16, // MAV_CMD_NAV_WAYPOINT
           param1: 0,
           param2: 0,
@@ -235,7 +235,7 @@ const missionInfoSlice = createSlice({
 
       if (state.activeTab == "fence") {
         drawingItem.param1 = 5
-        drawingItem.frame = getFrameKey("MAV_FRAME_GLOBAL")
+        drawingItem.frame = getFrameKey("GLOBAL")
       }
 
       state.drawingItems[_type].push(drawingItem)
@@ -558,7 +558,7 @@ export const newMissionItem = (x, y, targetInfo) => {
     x: x,
     y: y,
     z: 30,
-    frame: getFrameKey("MAV_FRAME_GLOBAL_RELATIVE_ALT"),
+    frame: getFrameKey("GLOBAL_RELATIVE_ALT"),
     command: null,
     param1: 0,
     param2: 0,

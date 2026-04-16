@@ -18,6 +18,8 @@ function buildHomeWaypoint(homePosition) {
     return null
   }
 
+  // TODO: Allow home waypoint altitude to be used for absolute altitude
+  // calculations in the future.
   return {
     isHome: true,
     seq: "Home",
@@ -70,7 +72,7 @@ export function buildMissionWaypointLegMetrics(missionItems, homePosition) {
     .at(0)
 
   let previousWaypoint = homeWaypoint
-  let previousAltitude = homeWaypoint ? 0 : null
+  let previousAltitude = homeWaypoint ? homeWaypoint.altitude : null
 
   for (let idx = 0; idx < missionItems.length; idx++) {
     const missionItem = missionItems[idx]
@@ -93,7 +95,7 @@ export function buildMissionWaypointLegMetrics(missionItems, homePosition) {
           : previousWaypoint
     const currentAltitude =
       isRtlCommand && homeWaypoint
-        ? 0
+        ? homeWaypoint.altitude
         : resolvedWaypoint.altitude !== null
           ? resolvedWaypoint.altitude
           : previousAltitude

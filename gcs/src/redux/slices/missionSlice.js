@@ -395,6 +395,15 @@ const missionInfoSlice = createSlice({
         y = updatedState.position.y - contextMenuHeight
       }
 
+      // Clamp position so the menu never renders outside the map canvas.
+      const maxX = Math.max(0, updatedState.canvasSize.width - contextMenuWidth)
+      const maxY = Math.max(
+        0,
+        updatedState.canvasSize.height - contextMenuHeight,
+      )
+      x = Math.max(0, Math.min(x, maxX))
+      y = Math.max(0, Math.min(y, maxY))
+
       state.contextMenu = {
         ...updatedState,
         position: { x: x, y: y },

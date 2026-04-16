@@ -30,7 +30,15 @@ import {
 
 const coordsFractionDigits = 9
 
-export default function MissionItemsTableRow({ missionItemIndex }) {
+function formatMetric(value, suffix) {
+  if (!Number.isFinite(value)) {
+    return "-"
+  }
+
+  return `${value.toFixed(2)}${suffix}`
+}
+
+export default function MissionItemsTableRow({ missionItemIndex, rowMetrics }) {
   const dispatch = useDispatch()
   const aircraftType = useSelector(selectAircraftType)
   const missionItem = useSelector(
@@ -166,6 +174,8 @@ export default function MissionItemsTableRow({ missionItemIndex }) {
           hideControls
         />
       </TableTd>
+      <TableTd>{formatMetric(rowMetrics?.distanceMeters, "m")}</TableTd>
+      <TableTd>{formatMetric(rowMetrics?.gradientPercent, "%")}</TableTd>
       <TableTd>
         <Select
           data={MAV_FRAME_DROPDOWN_DATA}

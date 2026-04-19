@@ -8,6 +8,7 @@
 
 // Base imports
 import React, { useEffect, useRef, useState } from "react"
+import { v4 as uuidv4 } from "uuid"
 
 // Maplibre and mantine imports
 import { Button, Divider, Modal, NumberInput } from "@mantine/core"
@@ -18,7 +19,13 @@ import Map from "react-map-gl/maplibre"
 // Redux
 import { useDispatch, useSelector } from "react-redux"
 import {
+  addDashboardDistanceMeasurement,
+  clearDashboardDistanceMeasurementDraftStart,
+  removeDashboardDistanceMeasurement,
   selectDashboardContextMenu,
+  selectDashboardDistanceMeasurementDraftStart,
+  selectDashboardDistanceMeasurements,
+  setDashboardDistanceMeasurementDraftStart,
   updateDashboardContextMenuState,
 } from "../../redux/slices/dashboardSlice"
 import {
@@ -43,10 +50,7 @@ import { useSettings } from "../../helpers/settings"
 
 // Other dashboard imports
 import ContextMenuItem from "../mapComponents/contextMenuItem"
-import {
-  DistanceMeasurementMarkers,
-  DistanceMeasurementModal,
-} from "../mapComponents/distanceMeasurement"
+import { DistanceMeasurementMarkers } from "../mapComponents/distanceMeasurement"
 import DroneMarker from "../mapComponents/droneMarker"
 import FenceItems from "../mapComponents/fenceItems"
 import HomeMarker from "../mapComponents/homeMarker"
@@ -106,14 +110,19 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
   const contextMenuRef = useRef()
   const contextMenuState = useSelector(selectDashboardContextMenu)
+  const measureDistanceStart = useSelector(
+    selectDashboardDistanceMeasurementDraftStart,
+  )
+  const distanceMeasurements = useSelector(selectDashboardDistanceMeasurements)
 
   const [opened, { open, close }] = useDisclosure(false)
   const clipboard = useClipboard({ timeout: 500 })
 
-  // Distance measurement state
-  const [measureDistanceStart, setMeasureDistanceStart] = useState(null)
-  const [measureDistanceEnd, setMeasureDistanceEnd] = useState(null)
-  const [measureDistanceResult, setMeasureDistanceResult] = useState(null)
+  const selectedDistanceMeasurementId =
+    typeof contextMenuState?.markerId === "string" &&
+    contextMenuState.markerId.startsWith("distance:")
+      ? contextMenuState.markerId.split(":")[1]
+      : null
 
   useEffect(() => {
     const closeContextMenu = () =>
@@ -219,24 +228,28 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
   function measureDistance() {
     if (measureDistanceStart === null) {
-      setMeasureDistanceStart(contextMenuState.gpsCoords)
+      dispatch(
+        setDashboardDistanceMeasurementDraftStart(contextMenuState.gpsCoords),
+      )
       showInfoNotification('Click "Measure distance" again to finish measuring')
     } else {
-      setMeasureDistanceEnd(contextMenuState.gpsCoords)
-      setMeasureDistanceResult(
-        distance(
-          [measureDistanceStart.lng, measureDistanceStart.lat],
-          [contextMenuState.gpsCoords.lng, contextMenuState.gpsCoords.lat],
-          { units: "meters" },
-        ),
+      dispatch(
+        addDashboardDistanceMeasurement({
+          id: uuidv4(),
+          start: measureDistanceStart,
+          end: contextMenuState.gpsCoords,
+          distanceMeters: distance(
+            [measureDistanceStart.lng, measureDistanceStart.lat],
+            [contextMenuState.gpsCoords.lng, contextMenuState.gpsCoords.lat],
+            { units: "meters" },
+          ),
+        }),
       )
     }
   }
 
   function stopMeasureDistance() {
-    setMeasureDistanceStart(null)
-    setMeasureDistanceEnd(null)
-    setMeasureDistanceResult(null)
+    dispatch(clearDashboardDistanceMeasurementDraftStart())
   }
 
   return (
@@ -351,7 +364,7 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
 
         <DistanceMeasurementMarkers
           measureDistanceStart={measureDistanceStart}
-          measureDistanceEnd={measureDistanceEnd}
+          distanceMeasurements={distanceMeasurements}
         />
 
         <POIMarkersContainer />
@@ -386,11 +399,6 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
           </form>
         </Modal>
 
-        <DistanceMeasurementModal
-          measureDistanceResult={measureDistanceResult}
-          onClose={stopMeasureDistance}
-        />
-
         <AddPoiMarkerModal
           modalOpened={addPoiMarkerModalOpened}
           setModalOpened={setAddPoiMarkerModalOpened}
@@ -422,6 +430,20 @@ function MapSectionNonMemo({ passedRef, onDragstart, mapId = "dashboard" }) {
             <ContextMenuItem onClick={measureDistance}>
               <p>Measure distance</p>
             </ContextMenuItem>
+            {selectedDistanceMeasurementId && (
+              <ContextMenuItem
+                onClick={() => {
+                  dispatch(
+                    removeDashboardDistanceMeasurement(
+                      selectedDistanceMeasurementId,
+                    ),
+                  )
+                  stopMeasureDistance()
+                }}
+              >
+                <p>Delete distance measurement</p>
+              </ContextMenuItem>
+            )}
             <ContextMenuSubMenuItem title={"POI marker"}>
               <ContextMenuItem
                 onClick={() => {

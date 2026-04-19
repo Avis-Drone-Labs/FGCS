@@ -64,6 +64,10 @@ const missionInfoSlice = createSlice({
       gpsCoords: { lat: 0, lng: 0 },
       markerId: null,
     },
+    distanceMeasurements: {
+      draftStart: null,
+      items: [],
+    },
     shouldFetchAllMissionsOnDashboard: true, // bool so that the dashboard can refresh its data when switched to if needed
     dashboardMissionFetchingNotificationId: null,
     isFetchingDashboardMission: false, // flag to prevent duplicate mission fetches
@@ -409,6 +413,26 @@ const missionInfoSlice = createSlice({
         position: { x: x, y: y },
       }
     },
+    setMissionDistanceMeasurementDraftStart: (state, action) => {
+      state.distanceMeasurements.draftStart = action.payload
+    },
+    addMissionDistanceMeasurement: (state, action) => {
+      state.distanceMeasurements.items.push(action.payload)
+      state.distanceMeasurements.draftStart = null
+    },
+    clearMissionDistanceMeasurementDraftStart: (state) => {
+      state.distanceMeasurements.draftStart = null
+    },
+    removeMissionDistanceMeasurement: (state, action) => {
+      state.distanceMeasurements.items =
+        state.distanceMeasurements.items.filter(
+          (measurement) => measurement.id !== action.payload,
+        )
+    },
+    clearMissionDistanceMeasurements: (state) => {
+      state.distanceMeasurements.items = []
+      state.distanceMeasurements.draftStart = null
+    },
     setShouldFetchAllMissionsOnDashboard: (state, action) => {
       if (action.payload === state.shouldFetchAllMissionsOnDashboard) return
       state.shouldFetchAllMissionsOnDashboard = action.payload
@@ -450,6 +474,10 @@ const missionInfoSlice = createSlice({
     selectMissionProgressData: (state) => state.missionProgressData,
     selectActiveTab: (state) => state.activeTab,
     selectContextMenu: (state) => state.contextMenu,
+    selectMissionDistanceMeasurements: (state) =>
+      state.distanceMeasurements.items,
+    selectMissionDistanceMeasurementDraftStart: (state) =>
+      state.distanceMeasurements.draftStart,
     selectShouldFetchAllMissionsOnDashboard: (state) =>
       state.shouldFetchAllMissionsOnDashboard,
     selectDashboardMissionFetchingNotificationId: (state) =>
@@ -598,6 +626,8 @@ export const {
   selectMissionProgressData,
   selectActiveTab,
   selectContextMenu,
+  selectMissionDistanceMeasurements,
+  selectMissionDistanceMeasurementDraftStart,
   selectShouldFetchAllMissionsOnDashboard,
   selectDashboardMissionFetchingNotificationId,
   selectIsFetchingDashboardMission,
@@ -627,6 +657,11 @@ export const {
   setMissionProgressData,
   resetMissionProgressData,
   updateContextMenuState,
+  setMissionDistanceMeasurementDraftStart,
+  addMissionDistanceMeasurement,
+  clearMissionDistanceMeasurementDraftStart,
+  removeMissionDistanceMeasurement,
+  clearMissionDistanceMeasurements,
   emitGetTargetInfo,
   emitGetCurrentMission,
   emitWriteCurrentMission,

@@ -109,6 +109,15 @@ export default function Navbar() {
   const connectToDroneFromButtonCallback = useConnectToDroneFromButtonCallback()
   const disconnectFromDroneCallback = useDisconnectFromDroneCallback()
 
+  function handleConnectionModalCloseOrCancel() {
+    if (connecting) {
+      dispatch(emitDisconnectFromDrone())
+      return
+    }
+
+    dispatch(setConnectionModal(false))
+  }
+
   function connectToDrone(type) {
     if (type === ConnectionType.Serial) {
       dispatch(
@@ -169,13 +178,7 @@ export default function Navbar() {
       {/* Connect to drone modal - should probably be moved into its own component? */}
       <Modal
         opened={openedModal}
-        onClose={() => {
-          if (connecting) {
-            dispatch(emitDisconnectFromDrone())
-          }
-          dispatch(setConnectionModal(false))
-          dispatch(setConnecting(false))
-        }}
+        onClose={handleConnectionModalCloseOrCancel}
         title="Connect to aircraft"
         centered
         overlayProps={{
@@ -300,13 +303,7 @@ export default function Navbar() {
             <Button
               variant="filled"
               color={"red"}
-              onClick={() => {
-                if (connecting) {
-                  dispatch(emitDisconnectFromDrone())
-                }
-                dispatch(setConnectionModal(false))
-                dispatch(setConnecting(false))
-              }}
+              onClick={handleConnectionModalCloseOrCancel}
             >
               {connecting ? "Cancel" : "Close"}
             </Button>

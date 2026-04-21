@@ -326,8 +326,6 @@ The workflow enforces two checks before building:
 - `RELEASE_ALLOWED_OWNER` must match the repository owner.
 - `RELEASE_ALLOWED_ACTOR` must match the GitHub username that pushed the tag.
 
-These values are defined in [.github/workflows/desktop_release.yml](.github/workflows/desktop_release.yml). Update them if ownership or maintainer account changes.
-
 ### Produced Artifacts
 
 - Windows x64: `FGCS-Windows-<version>-Setup.exe`

@@ -11,7 +11,9 @@
 
 Param (
   [Parameter(Mandatory = $false)]
-  [string]$Version
+  [string]$Version,
+  [Parameter(Mandatory = $false)]
+  [string]$Arch
 )
 
 Write-Output "Assuming location is FGCS\building\windows"
@@ -98,6 +100,11 @@ if ($LASTEXITCODE -ne 0) {
   Write-Error "Failed to generate param definitions"
   exit $LASTEXITCODE
 }
+
+# Check for second argument (arch) via $Arch parameter
+if (-not $Arch) {
+  $Arch = ""
+}
 Write-Output "Generated param definitions"
 
 python generate_log_message_descriptions.py
@@ -110,7 +117,15 @@ Write-Output "Generated log message descriptions"
 Set-Location ../
 yarn
 yarn version --new-version $Version --no-git-tag-version --no-commit-hooks
-yarn build
+
+# Build with optional arch specification
+if ($Arch) {
+  Write-Output "Building for architecture: $Arch"
+  yarn build --arch=$Arch
+} else {
+  Write-Output "Building for host architecture"
+  yarn build
+}
 
 if ($LASTEXITCODE -ne 0) {
   Write-Error "Yarn build failed with exit code $LASTEXITCODE"

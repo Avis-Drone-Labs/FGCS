@@ -9,9 +9,9 @@
   "version": "0.2.7-alpha",
   "license": "GPL-3.0-only",
   "homepage": "https://fgcs.projectfalcon.uk",
-  "githubLink": "https://github.com/Avis-Drone-Labs/FGCS",
+  "githubLink": "https://github.com/1Blademaster/FGCS",
   "bugs": {
-    "url": "https://github.com/Avis-Drone-Labs/FGCS/issues/new/choose"
+    "url": "https://github.com/1Blademaster/FGCS/issues/new/choose"
   },
   "scripts": {
     "test": "tsc && vite build && xvfb-maybe yarn playwright test",

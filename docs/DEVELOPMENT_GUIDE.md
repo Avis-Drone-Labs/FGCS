@@ -303,3 +303,48 @@ If you want to re-run the tests without re-building:
 ```bash
 yarn test:nobuild
 ```
+
+## Automated Desktop Releases
+
+Desktop release artifacts are built automatically when a version tag is pushed.
+
+### Trigger
+
+Push a tag in semver format prefixed with `v`:
+
+```bash
+git tag v0.2.8-alpha.1
+git push origin v0.2.8-alpha.1
+```
+
+The workflow creates or updates a draft GitHub Release and uploads installers.
+
+### Restrict Who Can Release
+
+The workflow enforces two checks before building:
+
+- `RELEASE_ALLOWED_OWNER` must match the repository owner.
+- `RELEASE_ALLOWED_ACTOR` must match the GitHub username that pushed the tag.
+
+### Produced Artifacts
+
+- Windows x64: `FGCS-Windows-<version>-Setup.exe`
+- macOS x64: `FGCS-Mac-<version>-Installer-x64.dmg`
+- macOS arm64: `FGCS-Mac-<version>-Installer-arm64.dmg`
+
+### Publishing
+
+Releases are uploaded as drafts. After validating artifacts, publish the draft release in GitHub.
+
+### Rollback
+
+If a tagged release fails:
+
+1. Delete the tag locally and remotely.
+2. Fix the issue.
+3. Recreate and push the tag.
+
+```bash
+git tag -d v0.2.8-alpha.1
+git push origin :refs/tags/v0.2.8-alpha.1
+```

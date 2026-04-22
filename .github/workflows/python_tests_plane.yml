@@ -19,6 +19,7 @@ on:
 
 jobs:
   build:
+    name: Run plane tests
     runs-on: ubuntu-latest
     services:
       service-name-1:

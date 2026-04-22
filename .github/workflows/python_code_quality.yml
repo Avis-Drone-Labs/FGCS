@@ -19,6 +19,7 @@ on:
 
 jobs:
   build:
+    name: Run Python quality checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

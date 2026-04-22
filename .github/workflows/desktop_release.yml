@@ -9,7 +9,7 @@ on:
       - 'v*'
 
 env:
-  RELEASE_ALLOWED_OWNER: 1Blademaster
+  RELEASE_ALLOWED_OWNER: FalconGCS
   RELEASE_ALLOWED_ACTOR: 1Blademaster
 
 concurrency:

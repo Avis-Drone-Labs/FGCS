@@ -38,6 +38,7 @@ function formatMetric(value, suffix) {
   return `${value.toFixed(2)}${suffix}`
 }
 
+// TODO: Moved into shared helper file
 function parseNumericInput(value) {
   if (value === null || value === undefined || value === "") {
     return null
@@ -181,7 +182,6 @@ export default function MissionItemsTableRow({ missionItemIndex, rowMetrics }) {
           value={missionItem.param4}
           onChange={(val) => {
             const numericValue = parseNumericInput(val)
-            if (numericValue === null) return
             updateMissionItemData("param4", numericValue)
           }}
           hideControls
@@ -192,7 +192,6 @@ export default function MissionItemsTableRow({ missionItemIndex, rowMetrics }) {
           value={intToCoord(missionItem.x).toFixed(coordsFractionDigits)}
           onChange={(val) => {
             const numericValue = parseCoordinateInput(val)
-            if (numericValue === null) return
             updateMissionItemData("x", coordToInt(numericValue))
           }}
           hideControls
@@ -203,7 +202,6 @@ export default function MissionItemsTableRow({ missionItemIndex, rowMetrics }) {
           value={intToCoord(missionItem.y).toFixed(coordsFractionDigits)}
           onChange={(val) => {
             const numericValue = parseCoordinateInput(val)
-            if (numericValue === null) return
             updateMissionItemData("y", coordToInt(numericValue))
           }}
           hideControls

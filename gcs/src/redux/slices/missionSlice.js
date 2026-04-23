@@ -198,6 +198,40 @@ const missionInfoSlice = createSlice({
         [state.activeTab]: true,
       }
     },
+    insertDrawingItemAfter: (state, action) => {
+      const { afterId, x, y } = action.payload
+      const _type = `${state.activeTab}Items`
+      const index = state.drawingItems[_type].findIndex((i) => i.id === afterId)
+
+      if (index === -1) return
+
+      const drawingItem = newMissionItem(x, y, state.targetInfo)
+      drawingItem.seq = index + 1
+      drawingItem.command = { mission: 16, fence: 5004, rally: 5100 }[
+        state.activeTab
+      ]
+      drawingItem.mission_type = { mission: 0, fence: 1, rally: 2 }[
+        state.activeTab
+      ]
+
+      if (state.activeTab === "fence") {
+        drawingItem.param1 = 5
+        drawingItem.frame = getFrameKey("GLOBAL")
+      }
+
+      state.drawingItems[_type].splice(index + 1, 0, drawingItem)
+      state.drawingItems[_type] = state.drawingItems[_type].map(
+        (item, itemIndex) => ({
+          ...item,
+          seq: itemIndex,
+        }),
+      )
+
+      state.unwrittenChanges = {
+        ...state.unwrittenChanges,
+        [state.activeTab]: true,
+      }
+    },
     reorderDrawingItem: (state, action) => {
       const { id, increment } = action.payload
       const _type = `${state.activeTab}Items`
@@ -310,6 +344,65 @@ const missionInfoSlice = createSlice({
           seq: state.drawingItems.fenceItems.length + index,
         })),
       ]
+      state.unwrittenChanges.fence = true
+    },
+    insertFencePolygonVertex: (state, action) => {
+      const { afterId, polygonStartIndex, polygonLength, x, y } = action.payload
+
+      if (
+        typeof polygonStartIndex !== "number" ||
+        typeof polygonLength !== "number"
+      ) {
+        return
+      }
+
+      const fenceItems = state.drawingItems.fenceItems
+      const index = fenceItems.findIndex((item) => item.id === afterId)
+
+      if (index === -1) return
+
+      const insertIndex = index + 1
+      const polygonEndIndex = polygonStartIndex + polygonLength - 1
+
+      if (index < polygonStartIndex || index > polygonEndIndex) {
+        return
+      }
+
+      const polygonItems = fenceItems.slice(
+        polygonStartIndex,
+        polygonStartIndex + polygonLength,
+      )
+
+      if (polygonItems.length === 0) return
+
+      const fenceTypeCommand = polygonItems[0].command
+      const drawingItem = {
+        ...newMissionItem(x, y, state.targetInfo),
+        command: fenceTypeCommand,
+        mission_type: 1,
+        param1: polygonLength + 1,
+        frame: polygonItems[0].frame,
+      }
+
+      fenceItems.splice(insertIndex, 0, drawingItem)
+
+      state.drawingItems.fenceItems = fenceItems.map((item, itemIndex) => {
+        const updatedItem = {
+          ...item,
+          seq: itemIndex,
+        }
+
+        if (
+          itemIndex >= polygonStartIndex &&
+          itemIndex <= polygonEndIndex + 1
+        ) {
+          updatedItem.param1 = polygonLength + 1
+          updatedItem.z = itemIndex - polygonStartIndex
+        }
+
+        return updatedItem
+      })
+
       state.unwrittenChanges.fence = true
     },
     setDrawingMissionItems: (state, action) => {
@@ -643,11 +736,13 @@ export const {
   setTargetInfo,
   updateDrawingItem,
   removeDrawingItem,
+  insertDrawingItemAfter,
   reorderDrawingItem,
   createNewDefaultDrawingItem,
   createNewSpecificMissionItem,
   clearDrawingItems,
   createFencePolygon,
+  insertFencePolygonVertex,
   setDrawingMissionItems,
   setDrawingFenceItems,
   setDrawingRallyItems,

@@ -5,16 +5,17 @@
   connecting them.
 */
 import { useMemo } from "react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { selectCurrentPage } from "../../redux/slices/droneConnectionSlice"
 import { selectHomePosition } from "../../redux/slices/droneInfoSlice"
 import {
+  insertDrawingItemAfter,
   selectActiveTab,
   selectPlannedHomePosition,
 } from "../../redux/slices/missionSlice"
 
 // Helper imports
-import { intToCoord } from "../../helpers/dataFormatters"
+import { coordToInt, intToCoord } from "../../helpers/dataFormatters"
 import { filterMissionItems } from "../../helpers/filterMissions"
 
 // Styling imports
@@ -23,14 +24,17 @@ import "maplibre-gl/dist/maplibre-gl.css"
 // Component imports
 import DrawLineCoordinates from "./drawLineCoordinates"
 import MarkerPin from "./markerPin"
+import MidpointInsertButton from "./midpointInsertButton"
 
 // Tailwind styling
+import { midpoint, point } from "@turf/turf"
 import resolveConfig from "tailwindcss/resolveConfig"
 import tailwindConfig from "../../../tailwind.config"
 
 const tailwindColors = resolveConfig(tailwindConfig).theme.colors
 
 export default function MissionItems({ missionItems }) {
+  const dispatch = useDispatch()
   const currentPage = useSelector(selectCurrentPage)
   const editable =
     useSelector(selectActiveTab) === "mission" && currentPage === "missions"
@@ -49,6 +53,19 @@ export default function MissionItems({ missionItems }) {
     [filteredMissionItems],
   )
 
+  const missionPathItems = useMemo(() => {
+    if (filteredMissionItems.length === 0) return []
+
+    const stopCommandItem = [...missionItems]
+      .filter((item) => [20, 21, 189].includes(item.command))
+      .sort((a, b) => a.seq - b.seq)
+      .at(0)
+
+    return stopCommandItem
+      ? filteredMissionItems.filter((item) => item.seq <= stopCommandItem.seq)
+      : filteredMissionItems
+  }, [filteredMissionItems, missionItems])
+
   const takeoffWaypoint = useMemo(() => {
     return missionItems.find((item) => item.command === 22)
   }, [missionItems])
@@ -57,6 +74,40 @@ export default function MissionItems({ missionItems }) {
     () => getListOfLineCoordinates(filteredMissionItems),
     [filteredMissionItems, homePosition, takeoffWaypoint],
   )
+
+  const insertionMidpoints = useMemo(() => {
+    if (!editable || missionPathItems.length < 2) return []
+
+    return missionPathItems
+      .slice(0, -1)
+      .map((startItem, index) => {
+        const endItem = missionPathItems[index + 1]
+
+        const hasHiddenMissionItemsBetween = missionItems.some((item) => {
+          if (item.seq <= startItem.seq || item.seq >= endItem.seq) {
+            return false
+          }
+
+          const itemIsRenderedOnMap =
+            item.x !== 0 && item.y !== 0 && item.command !== 20
+          return !itemIsRenderedOnMap
+        })
+
+        if (hasHiddenMissionItemsBetween) {
+          return null
+        }
+
+        const midpointCoords = getMidpointCoordinates(startItem, endItem)
+
+        return {
+          afterId: startItem.id,
+          lat: midpointCoords[1],
+          lon: midpointCoords[0],
+          tooltipText: `Insert waypoint between ${startItem.seq} and ${endItem.seq}`,
+        }
+      })
+      .filter(Boolean)
+  }, [editable, missionPathItems])
 
   function getListOfLineCoordinates(filteredMissionItems) {
     if (filteredMissionItems.length === 0) return { solid: [], dotted: [] }
@@ -152,6 +203,13 @@ export default function MissionItems({ missionItems }) {
     return { solid: lineCoordsList, dotted: dottedLineSegmentsList }
   }
 
+  function getMidpointCoordinates(startItem, endItem) {
+    return midpoint(
+      point([intToCoord(startItem.y), intToCoord(startItem.x)]),
+      point([intToCoord(endItem.y), intToCoord(endItem.x)]),
+    ).geometry.coordinates
+  }
+
   return (
     <>
       {/* Show mission item LABELS */}
@@ -169,6 +227,31 @@ export default function MissionItems({ missionItems }) {
           />
         )
       })}
+
+      {insertionMidpoints.map((midpointItem) => (
+        <MidpointInsertButton
+          key={midpointItem.afterId}
+          lat={midpointItem.lat}
+          lon={midpointItem.lon}
+          colour={tailwindColors.yellow[400]}
+          tooltipText={midpointItem.tooltipText}
+          onClick={() => {
+            const afterItem = missionPathItems.find(
+              (item) => item.id === midpointItem.afterId,
+            )
+
+            if (!afterItem) return
+
+            dispatch(
+              insertDrawingItemAfter({
+                afterId: afterItem.id,
+                x: coordToInt(midpointItem.lat),
+                y: coordToInt(midpointItem.lon),
+              }),
+            )
+          }}
+        />
+      ))}
 
       {/* Show mission item outlines */}
       <DrawLineCoordinates
